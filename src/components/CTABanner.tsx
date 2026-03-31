@@ -2,14 +2,14 @@ import Link from 'next/link';
 
 export default function CTABanner() {
   return (
-    <section className="relative w-full h-80 overflow-hidden">
+    <section className="relative w-full py-12 overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-l from-black/50 via-black/50 to-black/0" />
       <div className="absolute inset-0 bg-gradient-to-br from-stone-700/70 to-yellow-950/60" />
 
       {/* Content */}
       <div className="relative z-10 h-full flex items-center justify-center">
-        <div className="max-w-[1200px] w-full flex flex-col items-center gap-10">
+        <div className="max-w-[1440px] w-full flex flex-col items-center gap-10">
           <div className="flex flex-col items-center gap-4">
             <h2 className="text-center text-white text-4xl font-bold font-['Segoe_UI'] leading-[48px]">
               Ready to find the perfect labels?
@@ -21,13 +21,13 @@ export default function CTABanner() {
           <div className="flex items-center gap-4">
             <Link
               href="/products"
-              className="h-12 px-7 py-4 bg-amber-500 rounded-full flex items-center gap-2.5 text-white text-lg font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors"
+              className="px-7 py-4 bg-amber-500 rounded-full flex items-center gap-2.5 text-white text-lg font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors"
             >
               Browse Products
             </Link>
             <Link
               href="/contact"
-              className="h-12 px-7 py-4 bg-white/10 rounded-full border border-white/20 backdrop-blur-sm flex items-center gap-2.5 text-white text-lg font-semibold font-['Segoe_UI'] leading-6 hover:bg-white/20 transition-colors"
+              className="px-7 py-4 bg-white/10 rounded-full border border-white/20 backdrop-blur-sm flex items-center gap-2.5 text-white text-lg font-semibold font-['Segoe_UI'] leading-6 hover:bg-white/20 transition-colors"
             >
               Talk to Expert
             </Link>

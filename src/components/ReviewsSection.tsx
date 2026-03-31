@@ -26,19 +26,19 @@ export default function ReviewsSection() {
       <div className="w-48 h-48 absolute right-52 bottom-0 bg-amber-500/30 rounded-full blur-[132px] pointer-events-none" />
       <div className="w-48 h-48 absolute left-0 top-0 bg-amber-500/30 rounded-full blur-[132px] pointer-events-none" />
 
-      <div className="max-w-[1512px] mx-auto w-full flex flex-col gap-12">
+      <div className="max-w-[1440px] mx-auto w-full flex flex-col gap-12">
         {/* Header */}
         <div className="flex justify-between items-start">
           <h2 className="text-neutral-800 text-4xl font-bold font-['Segoe_UI'] leading-[48px]">
             Over 1000<br />Positive Reviews
           </h2>
           <div className="flex items-center gap-6">
-            <button className="w-12 h-12 p-3 rotate-180 bg-neutral-100 rounded-full shadow border border-gray-200 flex items-center justify-center hover:bg-neutral-200 transition-colors">
+            <button className="px-3 py-3.5 rotate-180 bg-neutral-100 rounded-full shadow border border-gray-200 flex items-center justify-center hover:bg-neutral-200 transition-colors">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path d="M6 3L11 8L6 13" stroke="#404040" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
             </button>
-            <button className="w-12 h-12 p-3 bg-white rounded-full shadow border border-amber-500 flex items-center justify-center hover:bg-amber-50 transition-colors">
+            <button className="px-3 py-3.5 bg-white rounded-full shadow border border-amber-500 flex items-center justify-center hover:bg-amber-50 transition-colors">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path d="M6 3L11 8L6 13" stroke="#F59E0B" strokeWidth="1.5" strokeLinecap="round" />
               </svg>

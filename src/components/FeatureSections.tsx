@@ -34,7 +34,7 @@ const sections = [
 export default function FeatureSections() {
   return (
     <section className="w-full px-10 py-24 bg-slate-50 flex flex-col gap-24">
-      <div className="max-w-[1512px] mx-auto w-full flex flex-col gap-24">
+      <div className="max-w-[1440px] mx-auto w-full flex flex-col gap-24">
         {sections.map((section) => (
           <div
             key={section.title}
@@ -74,7 +74,7 @@ export default function FeatureSections() {
               </div>
               <Link
                 href={section.href}
-                className="h-12 px-7 py-4 bg-amber-500 rounded-full inline-flex items-center gap-2.5 text-white text-lg font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors self-start"
+                className="px-7 py-4 bg-amber-500 rounded-full inline-flex items-center gap-2.5 text-white text-lg font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors self-start"
               >
                 {section.cta}
               </Link>
