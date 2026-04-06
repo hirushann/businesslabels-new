@@ -10,11 +10,11 @@ BusinessLabels — Next.js e-commerce frontend for Epson ColorWorks label printe
 
 ## Stack
 
-Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4 (`@theme` in `globals.css`, no config file). No test framework configured.
+Next.js 16 (App Router), React 19, JavaScript with `.jsx` extensions (no TypeScript), Tailwind CSS v4 (`@theme` in `globals.css`, no config file). No test framework configured.
 
 ## Architecture
 
-Single layout (`Header` + `Footer` in `layout.tsx`). Homepage (`src/app/page.tsx`) composes section components:
+Single layout (`Header` + `Footer` in `layout.jsx`). Homepage (`src/app/page.jsx`) composes section components:
 `HeroSection → StatsBar → CategorySection → WhyChooseUs → PopularProducts → FeatureSections → ReviewsSection → CTABanner`
 
 All components flat in `src/components/`. Server components by default; `'use client'` only when needed.
@@ -25,8 +25,9 @@ All components flat in `src/components/`. Server components by default; `'use cl
 - Inline SVGs for icons, no icon library
 - `next/image` with `placehold.co` remote pattern; static assets in `public/`
 - Content sections: `max-w-[1440px] mx-auto`
-- TypeScript strict — define types for all API responses
-- Product types are `"simple" | "variable"` union, never generic string
+- Use `.jsx` for all React component files, `.js` for non-JSX modules (config, utils)
+- Product types are `"simple"` or `"variable"`, never generic string
+- Centralized routes in `src/config/routes.js` — use `ROUTES` constants instead of hardcoding paths
 - Format prices: `Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' })`
 - Multi-locale fields (`name`, `slug`, `title`, `description`, `excerpt`) return `{ en, nl }` objects — select by active locale
 
