@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ProductPurchase from "@/components/ProductPurchase";
+import { notFound } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Epson CW-C6000Ae MK — BusinessLabels",
@@ -7,10 +8,332 @@ export const metadata: Metadata = {
     "Premium color label printer for product labeling, shipping labels and general purpose use. Compatible with Epson ColorWorks inkjet label printers.",
 };
 
-export default function SingleProductPage() {
+type ProductDetail = {
+  id?: number;
+  type?: string;
+  title?: string | null;
+  name?: string | null;
+  description?: string | null;
+  excerpt?: string | null;
+  slug?: string | null;
+  sku?: string | null;
+  article_number?: string | null;
+  price?: number | null;
+  original_price?: number | null;
+  stock?: number | null;
+  in_stock?: boolean | null;
+  main_image?: string | null;
+  gallery_images?: Array<{ id?: number; url?: string | null; name?: string | null }>;
+  product_information?: Record<string, unknown> | string | null;
+  material?: {
+    id?: number;
+    title?: string | null;
+    slug?: string | null;
+    subtitle?: string | null;
+    category?: { id?: number; name?: string | null; slug?: string | null } | null;
+  } | null;
+  meta?: Record<string, string | number | boolean | null> | null;
+  material_information?: string | null;
+  make?: string | null;
+  packaging_unit?: number | null;
+  jeritech_stock?: number | null;
+  delivery_dates_in_stock?: number | null;
+  delivery_dates_no_stock?: number | null;
+  packing_group?: number | null;
+  dimensions?: {
+    weight?: string | number | null;
+    width?: string | number | null;
+    height?: string | number | null;
+    length?: string | number | null;
+  } | null;
+  categories?: Array<{ id?: number; name?: string | null }>;
+};
+
+const fallbackProductName = "Epson CW-C6000Ae MK";
+const fallbackDescription =
+  "Premium matte paper labels perfect for product labeling, shipping labels, and general purpose use. Compatible with Epson ColorWorks inkjet label printers.";
+
+function normalizeType(raw: string | string[] | undefined): "simple" | "variable" | null {
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  if (value === "simple" || value === "variable") {
+    return value;
+  }
+  return null;
+}
+
+function normalizeValue(value: unknown): string | null {
+  if (value == null) {
+    return null;
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed || null;
+  }
+  if (typeof value === "boolean") {
+    return value ? "Yes" : "No";
+  }
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? String(value) : null;
+  }
+  return String(value).trim() || null;
+}
+
+function normalizeProductInformation(
+  value: ProductDetail["product_information"],
+): Record<string, unknown> | null {
+  if (!value) {
+    return null;
+  }
+  if (typeof value === "object" && !Array.isArray(value)) {
+    return value;
+  }
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function specsFromProduct(product: ProductDetail | null): Array<{ label: string; value: string }> {
+  const missing = "-";
+  const normalizedInfo = normalizeProductInformation(product?.product_information ?? null);
+  const meta = product?.meta ?? {};
+  const categoryNames = (product?.categories ?? [])
+    .map((category) => normalizeValue(category.name))
+    .filter((name): name is string => Boolean(name))
+    .join(", ");
+
+  const pick = (...values: Array<unknown>): string => {
+    for (const value of values) {
+      const normalized = normalizeValue(value);
+      if (normalized) {
+        return normalized;
+      }
+    }
+    return missing;
+  };
+
+  return [
+    { label: "SKU", value: pick(product?.sku) },
+    { label: "Category", value: pick(categoryNames) },
+    { label: "Print Speed", value: pick(meta.print_speed, normalizedInfo?.print_speed) },
+    { label: "Print Resolution", value: pick(meta.print_resolution, normalizedInfo?.print_resolution) },
+    {
+      label: "Maximum Print Width",
+      value: pick(meta.maximum_print_width, meta.meta_width, normalizedInfo?.maximum_print_width),
+    },
+    {
+      label: "Print Technology",
+      value: pick(meta.print_technology, meta.druktype, normalizedInfo?.print_technology),
+    },
+    { label: "Cutter", value: pick(meta.cutter, normalizedInfo?.cutter) },
+    {
+      label: "Printer Type",
+      value: pick(meta.printer_type, meta.printertype, normalizedInfo?.printer_type),
+    },
+    { label: "Usage", value: pick(meta.usage, normalizedInfo?.usage) },
+    {
+      label: "Connectivity",
+      value: pick(meta.connectivity, normalizedInfo?.connectivity),
+    },
+    {
+      label: "Build Type",
+      value: pick(meta.build_type, normalizedInfo?.build_type),
+    },
+  ];
+}
+
+async function fetchProductByType(baseUrl: string, type: "simple" | "variable", slug: string): Promise<ProductDetail | null> {
+  try {
+    const response = await fetch(`${baseUrl}/api/products/${type}/slug/${encodeURIComponent(slug)}`, {
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const json = (await response.json()) as { data?: ProductDetail };
+    return json.data ?? null;
+  } catch (error) {
+    console.error(`Failed to fetch product details for type '${type}' and slug '${slug}'`, error);
+    return null;
+  }
+}
+
+type DemoSectionCard = {
+  id: number;
+  name: string;
+  sku: string;
+  spec1: string;
+  spec2: string;
+  price: string;
+  inStock: boolean;
+  image: string;
+  typeLabel: string;
+};
+
+const DEMO_SECTION_IDS = {
+  inkMaintenance: [1, 2, 3],
+  badgesMedia: [4, 5, 6],
+  hardwares: [7, 8, 9],
+} as const;
+
+function toTitleCaseFromSlug(raw: string): string {
+  return raw
+    .replace(/_/g, " ")
+    .replace(/-/g, " ")
+    .trim()
+    .split(/\s+/)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function formatEuroPrice(value: number | null | undefined): string {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return "-";
+  }
+
+  return new Intl.NumberFormat("nl-NL", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+function buildMetaSpecs(meta: ProductDetail["meta"]): string[] {
+  if (!meta) {
+    return [];
+  }
+
+  return Object.entries(meta)
+    .map(([key, value]) => {
+      const normalized = normalizeValue(value);
+      if (!normalized) {
+        return null;
+      }
+      return `${toTitleCaseFromSlug(key)}: ${normalized}`;
+    })
+    .filter((value): value is string => Boolean(value));
+}
+
+async function fetchProductById(baseUrl: string, id: number): Promise<ProductDetail | null> {
+  for (const type of ["simple", "variable"] as const) {
+    try {
+      const response = await fetch(`${baseUrl}/api/products/${type}/${id}`, { cache: "no-store" });
+      if (!response.ok) {
+        continue;
+      }
+
+      const json = (await response.json()) as { data?: ProductDetail };
+      if (json.data) {
+        return json.data;
+      }
+    } catch (error) {
+      console.error(`Failed to fetch demo section product by id '${id}'`, error);
+    }
+  }
+
+  return null;
+}
+
+function mapProductToDemoCard(id: number, product: ProductDetail | null, placeholderImage: string): DemoSectionCard {
+  const metaSpecs = buildMetaSpecs(product?.meta ?? null);
+  const firstFallbackSpec = normalizeValue(product?.material_information) || normalizeValue(product?.subtitle) || normalizeValue(product?.excerpt);
+  const secondFallbackSpec = normalizeValue(product?.excerpt);
+
+  return {
+    id,
+    name: normalizeValue(product?.title) || normalizeValue(product?.name) || "-",
+    sku: normalizeValue(product?.sku) || "-",
+    spec1: firstFallbackSpec || metaSpecs[0] || "-",
+    spec2: secondFallbackSpec || metaSpecs[1] || "-",
+    price: formatEuroPrice(product?.price),
+    inStock: Boolean(product?.in_stock),
+    image: normalizeValue(product?.main_image) || placeholderImage,
+    typeLabel: normalizeValue(product?.type) ? toTitleCaseFromSlug(String(product?.type)) : "Inkjet",
+  };
+}
+
+async function loadSectionCards(baseUrl: string | undefined, ids: readonly number[], placeholderImage: string): Promise<DemoSectionCard[]> {
+  return Promise.all(
+    ids.map(async (id) => {
+      const product = baseUrl ? await fetchProductById(baseUrl, id) : null;
+      return mapProductToDemoCard(id, product, placeholderImage);
+    }),
+  );
+}
+
+async function loadInkMaintenanceCards(baseUrl: string | undefined): Promise<DemoSectionCard[]> {
+  return loadSectionCards(baseUrl, DEMO_SECTION_IDS.inkMaintenance, "https://placehold.co/222x180");
+}
+
+async function loadBadgesMediaCards(baseUrl: string | undefined): Promise<DemoSectionCard[]> {
+  return loadSectionCards(baseUrl, DEMO_SECTION_IDS.badgesMedia, "https://placehold.co/180x180");
+}
+
+async function loadHardwareCards(baseUrl: string | undefined): Promise<DemoSectionCard[]> {
+  return loadSectionCards(baseUrl, DEMO_SECTION_IDS.hardwares, "https://placehold.co/227x180");
+}
+
+export default async function SingleProductPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ type?: string | string[] }>;
+}) {
+  const { slug } = await params;
+  const query = await searchParams;
+  const baseUrl = process.env.BBNL_API_BASE_URL;
+
+  if (!slug) {
+    notFound();
+  }
+
+  let product: ProductDetail | null = null;
+  const selectedType = normalizeType(query.type);
+
+  if (baseUrl) {
+    const tryTypes: Array<"simple" | "variable"> = selectedType
+      ? [selectedType]
+      : ["simple", "variable"];
+
+    for (const type of tryTypes) {
+      const result = await fetchProductByType(baseUrl, type, slug);
+      if (result) {
+        product = result;
+        break;
+      }
+    }
+  } else {
+    console.error("BBNL_API_BASE_URL is not configured");
+  }
+
+  const productName = product?.title || product?.name || fallbackProductName;
+  const productDescription = product?.description || product?.excerpt || fallbackDescription;
+  const mainImage = product?.main_image || "https://placehold.co/460x509";
+  const galleryImages = (product?.gallery_images ?? [])
+    .map((item) => item.url)
+    .filter((url): url is string => Boolean(url))
+    .slice(0, 4);
+  const specs = specsFromProduct(product);
+  const [inkMaintenanceCards, badgesMediaCards, hardwareCards] = await Promise.all([
+    loadInkMaintenanceCards(baseUrl),
+    loadBadgesMediaCards(baseUrl),
+    loadHardwareCards(baseUrl),
+  ]);
+
   return (
     <div className="bg-white">
-      
+
 
       {/* Main Product Section */}
       <div className="px-10 py-10">
@@ -19,25 +342,21 @@ export default function SingleProductPage() {
           <div className="max-w-[1440px] mx-auto flex items-center gap-2 text-sm text-zinc-500">
             <span>Home</span>
             <span>/</span>
-            <span>Printers</span>
+            <span>Products</span>
             <span>/</span>
-            <span>Color Desktop Labelprinters</span>
-            <span>/</span>
-            <span className="text-neutral-700 font-semibold">Epson CW-C6000Ae MK</span>
+            <span className="text-neutral-700 font-semibold">{productName}</span>
           </div>
         </div>
         <div className="max-w-[1440px] mx-auto flex gap-12 items-start">
-
           {/* LEFT: Images + Description + Specs */}
           <div className="flex-1 flex flex-col gap-12">
             {/* Title & Description */}
             <div className="flex flex-col gap-4">
               <h1 className="text-neutral-800 text-3xl font-bold leading-10">
-                Epson CW-C6000Ae MK
+                {productName}
               </h1>
               <p className="text-neutral-700 text-lg font-normal leading-7">
-                Premium matte paper labels perfect for product labeling, shipping labels, and general
-                purpose use. Compatible with Epson ColorWorks inkjet label printers.
+                {productDescription}
               </p>
             </div>
 
@@ -45,49 +364,34 @@ export default function SingleProductPage() {
             <div className="flex flex-col gap-10">
               <div className="flex justify-center items-center">
                 <img
-                  src="https://placehold.co/460x509"
-                  alt="Epson CW-C6000Ae MK main image"
+                  src={mainImage}
+                  alt={`${productName} main image`}
                   className="w-[460px] h-[509px] object-contain"
                 />
               </div>
               {/* Thumbnails */}
               <div className="flex items-center gap-5">
-                <button className="w-24 h-24 relative bg-slate-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-amber-500 overflow-hidden">
-                  <img
-                    src="https://placehold.co/80x80"
-                    alt="Thumbnail 1"
-                    className="w-20 h-20 absolute top-2 left-2 object-contain"
-                  />
-                </button>
-                <button className="w-24 h-24 relative bg-slate-100 rounded-lg overflow-hidden hover:outline hover:outline-1 hover:outline-amber-500 transition-all">
-                  <img
-                    src="https://placehold.co/80x80"
-                    alt="Thumbnail 2"
-                    className="w-20 h-20 absolute top-2 left-2 object-contain"
-                  />
-                </button>
-                <button className="w-24 h-24 relative bg-slate-100 rounded-lg overflow-hidden hover:outline hover:outline-1 hover:outline-amber-500 transition-all">
-                  <img
-                    src="https://placehold.co/80x80"
-                    alt="Thumbnail 3"
-                    className="w-20 h-20 absolute top-2 left-2 object-contain"
-                  />
-                </button>
-                <button className="w-24 h-24 relative bg-slate-100 rounded-lg overflow-hidden hover:outline hover:outline-1 hover:outline-amber-500 transition-all">
-                  <img
-                    src="https://placehold.co/80x80"
-                    alt="Thumbnail 4"
-                    className="w-20 h-20 absolute top-2 left-2 object-contain"
-                  />
-                  {/* Video overlay indicator */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-8 h-8 bg-white/80 rounded-lg flex items-center justify-center">
-                      <svg className="w-4 h-4 text-neutral-700" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-                      </svg>
-                    </div>
-                  </div>
-                </button>
+                {(galleryImages.length > 0 ? galleryImages : Array.from({ length: 4 }).map(() => "https://placehold.co/80x80")).map((thumbnail, index) => (
+                  <button
+                    key={`${thumbnail}-${index}`}
+                    className={`w-24 h-24 relative bg-slate-100 rounded-lg overflow-hidden hover:outline hover:outline-1 hover:outline-amber-500 transition-all ${index === 0 ? "outline outline-1 outline-offset-[-1px] outline-amber-500" : ""}`}
+                  >
+                    <img
+                      src={thumbnail}
+                      alt={`Thumbnail ${index + 1}`}
+                      className="w-20 h-20 absolute top-2 left-2 object-contain"
+                    />
+                    {index === 3 ? (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-8 h-8 bg-white/80 rounded-lg flex items-center justify-center">
+                          <svg className="w-4 h-4 text-neutral-700" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                          </svg>
+                        </div>
+                      </div>
+                    ) : null}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -101,14 +405,7 @@ export default function SingleProductPage() {
                   </svg>
                 </div>
                 <p className="text-neutral-700 text-base font-normal leading-6">
-                  Introduced in 2024, the Epson ColorWorks CW-C8000e is a true production machine for full-color
-                  labels. The Epson CW-C8000e combines a very high production speed of 300 mm per second with high
-                  print quality (600 x 1200 DPI) and very user-friendly operation. Furthermore, color management
-                  becomes a breeze with the Epson CW-C8000e; using so-called ICM profiles, the user is able to
-                  optimize the desired print colors better than ever before. A good input profile is required for
-                  this optimization, and{" "}
-                  <span className="underline">Smart2B</span>{" "}
-                  (owner of Businesslabels) happens to be the expert in that area, so ask us about the possibilities.
+                  {productDescription}
                 </p>
               </div>
 
@@ -121,19 +418,7 @@ export default function SingleProductPage() {
                   </svg>
                 </div>
                 <div className="rounded-lg overflow-hidden">
-                  {[
-                    { label: "SKU", value: "EP-C3500" },
-                    { label: "Category", value: "Color Labelprinter" },
-                    { label: "Print Speed", value: "119 mm per second" },
-                    { label: "Print Resolution", value: "1200 × 1200 DPI" },
-                    { label: "Maximum Print Width", value: "108 mm" },
-                    { label: "Print Technology", value: "Inkjet (Full-color)" },
-                    { label: "Cutter", value: "Auto Cutter Included" },
-                    { label: "Printer Type", value: "Industrial Label Printer" },
-                    { label: "Usage", value: "Product labeling, Shipping labels, Barcode printing" },
-                    { label: "Connectivity", value: "USB / Ethernet (Typical for this model)" },
-                    { label: "Build Type", value: "Heavy-duty Industrial Design" },
-                  ].map((spec, i) => (
+                  {specs.map((spec, i) => (
                     <div
                       key={spec.label}
                       className={`px-6 py-3 flex justify-between items-center ${i % 2 === 0 ? "bg-white/50" : ""}`}
@@ -171,7 +456,12 @@ export default function SingleProductPage() {
 
           {/* RIGHT: Purchase Card */}
           <div className="flex flex-col gap-6 w-96 sticky top-24">
-            <ProductPurchase />
+            <ProductPurchase
+              sku={product?.sku}
+              inStock={product?.in_stock}
+              price={product?.price}
+              originalPrice={product?.original_price}
+            />
 
             {/* Consumable Items */}
             <div className="flex flex-col gap-3">
@@ -213,15 +503,11 @@ export default function SingleProductPage() {
             </div>
           </div>
           <div className="grid grid-cols-3 gap-6">
-            {[
-              { name: "CW-C4000 ink cartridge Black (BK)", spec1: "Ink content: 50 ml", spec2: "Color system: CMYK", price: "€9,34" },
-              { name: "Banderol glanzend papier 30 mm", spec1: "Core: 38", spec2: "Max outer diameter: 101", price: "€9,34" },
-              { name: "Transfer ribbon, 110 mm x 300 meter", spec1: "Core: 25", spec2: "Ink type: Premium Wax Resin", price: "€15,66" },
-            ].map((product) => (
-              <div key={product.name} className="bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col">
+            {inkMaintenanceCards.map((product) => (
+              <div key={product.id} className="bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col">
                 <div className="h-60 relative bg-slate-100 overflow-hidden rounded-t-xl">
                   <img
-                    src="https://placehold.co/222x180"
+                    src={product.image}
                     alt={product.name}
                     className="absolute left-1/2 top-[34px] -translate-x-1/2 h-44 object-contain"
                   />
@@ -231,21 +517,21 @@ export default function SingleProductPage() {
                         <rect x="1" y="4" width="10" height="7" rx="1" />
                         <path d="M4 4V3a2 2 0 014 0v1" />
                       </svg>
-                      <span className="text-neutral-700 text-xs font-normal leading-4">Inkjet</span>
+                      <span className="text-neutral-700 text-xs font-normal leading-4">{product.typeLabel}</span>
                     </div>
-                    <div className="px-2.5 py-1 bg-green-600 rounded-full flex items-center gap-1.5">
+                    <div className={`px-2.5 py-1 rounded-full flex items-center gap-1.5 ${product.inStock ? "bg-green-600" : "bg-gray-300"}`}>
                       <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={1} viewBox="0 0 12 12">
                         <circle cx="6" cy="6" r="5" />
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4 6l1.5 1.5L8 4" />
                       </svg>
-                      <span className="text-white text-xs font-normal leading-4">In Stock</span>
+                      <span className="text-white text-xs font-normal leading-4">{product.inStock ? "In Stock" : "Out of Stock"}</span>
                     </div>
                   </div>
                 </div>
                 <div className="p-4 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] flex flex-col gap-4 flex-1">
                   <div className="flex flex-col gap-4">
                     <div className="flex flex-col gap-2">
-                      <span className="text-blue-400 text-sm font-normal leading-5">SKU: EP-C3500</span>
+                      <span className="text-blue-400 text-sm font-normal leading-5">SKU: {product.sku}</span>
                       <span className="text-neutral-800 text-xl font-semibold leading-6 line-clamp-1">{product.name}</span>
                     </div>
                     <div className="flex flex-col gap-4">
@@ -303,15 +589,11 @@ export default function SingleProductPage() {
             </div>
           </div>
           <div className="grid grid-cols-3 gap-6">
-            {[
-              { name: "1000T, 100 x 150 mm", spec1: "Core: Fan-fold", spec2: "Max outer diameter: Fan-fold", price: "€9,34" },
-              { name: "A6 shipping labels", spec1: "Core: 76", spec2: "Max outer diameter: 203", price: "€9,34" },
-              { name: "1000T, 100 x 50 mm", spec1: "Core: 25", spec2: "Max outer diameter: 203", price: "€15,66" },
-            ].map((product) => (
-              <div key={product.name} className="bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col">
+            {badgesMediaCards.map((product) => (
+              <div key={product.id} className="bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col">
                 <div className="h-60 relative bg-slate-100 overflow-hidden rounded-t-xl">
                   <img
-                    src="https://placehold.co/180x180"
+                    src={product.image}
                     alt={product.name}
                     className="absolute left-1/2 top-[34px] -translate-x-1/2 h-44 object-contain"
                   />
@@ -321,21 +603,21 @@ export default function SingleProductPage() {
                         <rect x="1" y="4" width="10" height="7" rx="1" />
                         <path d="M4 4V3a2 2 0 014 0v1" />
                       </svg>
-                      <span className="text-neutral-700 text-xs font-normal leading-4">Inkjet</span>
+                      <span className="text-neutral-700 text-xs font-normal leading-4">{product.typeLabel}</span>
                     </div>
-                    <div className="px-2.5 py-1 bg-green-600 rounded-full flex items-center gap-1.5">
+                    <div className={`px-2.5 py-1 rounded-full flex items-center gap-1.5 ${product.inStock ? "bg-green-600" : "bg-gray-300"}`}>
                       <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={1} viewBox="0 0 12 12">
                         <circle cx="6" cy="6" r="5" />
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4 6l1.5 1.5L8 4" />
                       </svg>
-                      <span className="text-white text-xs font-normal leading-4">In Stock</span>
+                      <span className="text-white text-xs font-normal leading-4">{product.inStock ? "In Stock" : "Out of Stock"}</span>
                     </div>
                   </div>
                 </div>
                 <div className="p-4 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] flex flex-col gap-4 flex-1">
                   <div className="flex flex-col gap-4">
                     <div className="flex flex-col gap-2">
-                      <span className="text-blue-400 text-sm font-normal leading-5">SKU: EP-C3500</span>
+                      <span className="text-blue-400 text-sm font-normal leading-5">SKU: {product.sku}</span>
                       <span className="text-neutral-800 text-xl font-semibold leading-6 line-clamp-1">{product.name}</span>
                     </div>
                     <div className="flex flex-col gap-4">
@@ -393,15 +675,11 @@ export default function SingleProductPage() {
             </div>
           </div>
           <div className="grid grid-cols-3 gap-6">
-            {[
-              { name: "Epson CW-C4000 WiFi Dongle", spec1: "Ink content: 50 ml", spec2: "Color system: CMYK", price: "€9,34" },
-              { name: "Power supply cord 220-230V", spec1: "Cable length: 1,8 meter", spec2: "Connector: Schuko male – Female CEE", price: "€9,34" },
-              { name: "SLP power supply extension cord", spec1: "Extension cable length: 1.5 meters", spec2: "Connection: Male – Female connector", price: "€15,66" },
-            ].map((product) => (
-              <div key={product.name} className="bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col">
+            {hardwareCards.map((product) => (
+              <div key={product.id} className="bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col">
                 <div className="h-60 relative bg-slate-100 overflow-hidden rounded-t-xl">
                   <img
-                    src="https://placehold.co/227x180"
+                    src={product.image}
                     alt={product.name}
                     className="absolute left-1/2 top-[34px] -translate-x-1/2 h-44 object-contain"
                   />
@@ -411,21 +689,21 @@ export default function SingleProductPage() {
                         <rect x="1" y="4" width="10" height="7" rx="1" />
                         <path d="M4 4V3a2 2 0 014 0v1" />
                       </svg>
-                      <span className="text-neutral-700 text-xs font-normal leading-4">Inkjet</span>
+                      <span className="text-neutral-700 text-xs font-normal leading-4">{product.typeLabel}</span>
                     </div>
-                    <div className="px-2.5 py-1 bg-green-600 rounded-full flex items-center gap-1.5">
+                    <div className={`px-2.5 py-1 rounded-full flex items-center gap-1.5 ${product.inStock ? "bg-green-600" : "bg-gray-300"}`}>
                       <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={1} viewBox="0 0 12 12">
                         <circle cx="6" cy="6" r="5" />
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4 6l1.5 1.5L8 4" />
                       </svg>
-                      <span className="text-white text-xs font-normal leading-4">In Stock</span>
+                      <span className="text-white text-xs font-normal leading-4">{product.inStock ? "In Stock" : "Out of Stock"}</span>
                     </div>
                   </div>
                 </div>
                 <div className="p-4 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] flex flex-col gap-4 flex-1">
                   <div className="flex flex-col gap-4">
                     <div className="flex flex-col gap-2">
-                      <span className="text-blue-400 text-sm font-normal leading-5">SKU: EP-C3500</span>
+                      <span className="text-blue-400 text-sm font-normal leading-5">SKU: {product.sku}</span>
                       <span className="text-neutral-800 text-xl font-semibold leading-6 line-clamp-1">{product.name}</span>
                     </div>
                     <div className="flex flex-col gap-4">

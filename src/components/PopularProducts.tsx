@@ -4,6 +4,7 @@ import Link from 'next/link';
 type Product = {
   id: number;
   type: string;
+  slug?: string | null;
   name: string;
   sku: string;
   subtitle: string;
@@ -71,11 +72,9 @@ export default async function PopularProducts() {
               <p className='text-neutral-500 text-xl font-medium font-["Segoe_UI"] leading-12'>No Products Available</p>
             </div>
           ) : (
-            products.map((product) => (
-              <div
-                key={product.sku}
-                className="bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] border border-slate-100 flex flex-col overflow-hidden hover:shadow-lg transition-shadow"
-              >
+            products.map((product) => {
+              const cardContent = (
+                <div className="bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] border border-slate-100 flex flex-col overflow-hidden hover:shadow-lg transition-shadow">
                 {/* Image area */}
                 <div className="relative h-56 bg-slate-100 overflow-hidden">
                   {/* Badges */}
@@ -159,7 +158,29 @@ export default async function PopularProducts() {
                   </div>
                 </div>
               </div>
-            ))
+              );
+
+              if (!product.slug) {
+                return (
+                  <div key={product.sku}>
+                    {cardContent}
+                  </div>
+                );
+              }
+
+              return (
+                <Link
+                  key={product.sku}
+                  href={{
+                    pathname: `/products/${product.slug}`,
+                    query: { type: product.type },
+                  }}
+                  className="block"
+                >
+                  {cardContent}
+                </Link>
+              );
+            })
           )}
         </div>
       </div>
