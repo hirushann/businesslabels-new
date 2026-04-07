@@ -71,45 +71,157 @@ const categories = [
   },
 ];
 
-const topProducts = [
-  {
-    sku: "EP-C3500",
-    name: "Epson CW-C6000Ae MK",
-    type: "Inkjet",
-    inStock: true,
-    spec1: "Print speed: 119 mm per second",
-    spec2: "Print resolution: 1200 x 1200 DPI",
-    price: "€2.302,30",
-    pricePrefix: null,
+type ProductDetail = {
+  id?: number;
+  type?: string;
+  title?: string | null;
+  name?: string | null;
+  subtitle?: string | null;
+  excerpt?: string | null;
+  slug?: string | null;
+  sku?: string | null;
+  price?: number | null;
+  in_stock?: boolean | null;
+  main_image?: string | null;
+  material_information?: string | null;
+};
+
+type DemoTopProductCard = {
+  id: number;
+  type: string;
+  inStock: boolean;
+  badge?: string | null;
+  sku: string;
+  name: string;
+  spec1: string;
+  spec2: string;
+  price: string;
+  pricePrefix: string | null;
+  cta: string;
+  image: string;
+  slug: string | null;
+  productType: "simple" | "variable" | null;
+};
+
+const DEMO_TOP_PRODUCT_IDS = [1, 2, 3] as const;
+
+function normalizeType(raw: string | undefined): "simple" | "variable" | null {
+  if (raw === "simple" || raw === "variable") {
+    return raw;
+  }
+  return null;
+}
+
+function normalizeValue(value: unknown): string | null {
+  if (value == null) {
+    return null;
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed || null;
+  }
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? String(value) : null;
+  }
+  if (typeof value === "boolean") {
+    return value ? "Yes" : "No";
+  }
+  return String(value).trim() || null;
+}
+
+function toTitleCaseFromSlug(raw: string): string {
+  return raw
+    .replace(/_/g, " ")
+    .replace(/-/g, " ")
+    .trim()
+    .split(/\s+/)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function formatEuroPrice(value: number | null | undefined): string {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return "-";
+  }
+
+  return new Intl.NumberFormat("nl-NL", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+async function fetchProductById(baseUrl: string, id: number): Promise<ProductDetail | null> {
+  for (const type of ["simple", "variable"] as const) {
+    try {
+      const response = await fetch(`${baseUrl}/api/products/${type}/${id}`, { cache: "no-store" });
+      if (!response.ok) {
+        continue;
+      }
+
+      const json = (await response.json()) as { data?: ProductDetail };
+      if (json.data) {
+        return json.data;
+      }
+    } catch (error) {
+      console.error(`Failed to fetch top product by id '${id}'`, error);
+    }
+  }
+
+  return null;
+}
+
+function mapProductToTopCard(id: number, product: ProductDetail | null): DemoTopProductCard {
+  const type = normalizeType(product?.type ?? undefined);
+  const firstSpec =
+    normalizeValue(product?.material_information) ||
+    normalizeValue(product?.subtitle) ||
+    normalizeValue(product?.excerpt) ||
+    "-";
+  const secondSpec = normalizeValue(product?.excerpt) || normalizeValue(product?.subtitle) || "-";
+
+  return {
+    id,
+    type: normalizeValue(product?.type) ? toTitleCaseFromSlug(String(product?.type)) : "Inkjet",
+    inStock: Boolean(product?.in_stock),
+    badge: null,
+    sku: normalizeValue(product?.sku) || "-",
+    name: normalizeValue(product?.title) || normalizeValue(product?.name) || "-",
+    spec1: firstSpec,
+    spec2: secondSpec,
+    price: formatEuroPrice(product?.price),
+    pricePrefix: type === "variable" ? "From" : null,
     cta: "Add",
-    image: "https://placehold.co/165x183",
-  },
-  {
-    sku: "EP-C3500",
-    name: "1000D, 102 x 102 mm",
-    type: "Roll",
-    inStock: true,
-    badge: "6 per box",
-    spec1: "Mat papier",
-    spec2: "Geen belijming",
-    price: "€30,88",
-    pricePrefix: "From",
-    cta: "Select",
-    image: "https://placehold.co/152x138",
-  },
-  {
-    sku: "EP-C3500",
-    name: "Epson CW-C8000e BK",
-    type: "Inkjet",
-    inStock: false,
-    spec1: "Print resolution: 1,200 x 600 DPI",
-    spec2: "Printing speed: 300 mm per second",
-    price: "€6.495,28",
-    pricePrefix: null,
-    cta: "Add",
-    image: "https://placehold.co/242x183",
-  },
-];
+    image: normalizeValue(product?.main_image) || "https://placehold.co/242x183",
+    slug: normalizeValue(product?.slug),
+    productType: type,
+  };
+}
+
+async function loadTopProducts(baseUrl: string | undefined): Promise<DemoTopProductCard[]> {
+  return Promise.all(
+    DEMO_TOP_PRODUCT_IDS.map(async (id) => {
+      const product = baseUrl ? await fetchProductById(baseUrl, id) : null;
+      return mapProductToTopCard(id, product);
+    }),
+  );
+}
+
+function productHref(product: DemoTopProductCard): { pathname: string; query?: { type: "simple" | "variable" } } | null {
+  if (!product.slug) {
+    return null;
+  }
+
+  if (product.productType) {
+    return {
+      pathname: `/products/${product.slug}`,
+      query: { type: product.productType },
+    };
+  }
+
+  return { pathname: `/products/${product.slug}` };
+}
 
 const reviews = [
   {
@@ -132,7 +244,10 @@ const reviews = [
   },
 ];
 
-export default function CategoryArchivePage() {
+export default async function CategoryArchivePage() {
+  const baseUrl = process.env.BBNL_API_BASE_URL;
+  const topProducts = await loadTopProducts(baseUrl);
+
   return (
     <div className="bg-white">
       {/* ── Hero Banner ─────────────────────────────────── */}
@@ -218,9 +333,9 @@ export default function CategoryArchivePage() {
           </div>
 
           <div className="grid grid-cols-3 gap-6">
-            {topProducts.map((product) => (
+            {topProducts.map((product) => {
+              const cardContent = (
               <div
-                key={product.name}
                 className="bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] outline outline-1 outline-offset-[-1px] outline-orange-50 flex flex-col"
               >
                 {/* Image area */}
@@ -273,8 +388,8 @@ export default function CategoryArchivePage() {
                       <span className="text-neutral-800 text-xl font-semibold leading-6">{product.name}</span>
                     </div>
                     <div className="flex flex-col gap-4">
-                      {[product.spec1, product.spec2].map((spec) => (
-                        <div key={spec} className="flex items-center gap-2">
+                      {[product.spec1, product.spec2].map((spec, index) => (
+                        <div key={`${spec}-${index}`} className="flex items-center gap-2">
                           <svg className="w-3 h-3 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1} viewBox="0 0 12 12">
                             <circle cx="6" cy="6" r="5" />
                             <path strokeLinecap="round" strokeLinejoin="round" d="M4 6l1.5 1.5L8 4" />
@@ -309,7 +424,23 @@ export default function CategoryArchivePage() {
                   </div>
                 </div>
               </div>
-            ))}
+              );
+
+              const href = productHref(product);
+              if (!href) {
+                return (
+                  <div key={product.id}>
+                    {cardContent}
+                  </div>
+                );
+              }
+
+              return (
+                <Link key={product.id} href={href} className="block">
+                  {cardContent}
+                </Link>
+              );
+            })}
           </div>
         </div>
       </div>
