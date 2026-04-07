@@ -11,7 +11,9 @@ export const ROUTES = {
   favorites: '/account/favorites',
   cart: '/cart',
   checkout: '/checkout',
+  checkoutResult: '/checkout/result',
   search: '/search',
   about: '/about',
   contact: '/contact',
+  productFilters: '/filters'
 };
