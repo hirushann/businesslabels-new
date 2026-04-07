@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ProductPurchase from "@/components/ProductPurchase";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 export const metadata: Metadata = {
@@ -13,6 +14,7 @@ type ProductDetail = {
   type?: string;
   title?: string | null;
   name?: string | null;
+  subtitle?: string | null;
   description?: string | null;
   excerpt?: string | null;
   slug?: string | null;
@@ -177,6 +179,8 @@ type DemoSectionCard = {
   inStock: boolean;
   image: string;
   typeLabel: string;
+  slug: string | null;
+  type: "simple" | "variable" | null;
 };
 
 const DEMO_SECTION_IDS = {
@@ -259,6 +263,8 @@ function mapProductToDemoCard(id: number, product: ProductDetail | null, placeho
     inStock: Boolean(product?.in_stock),
     image: normalizeValue(product?.main_image) || placeholderImage,
     typeLabel: normalizeValue(product?.type) ? toTitleCaseFromSlug(String(product?.type)) : "Inkjet",
+    slug: normalizeValue(product?.slug),
+    type: normalizeType(product?.type ?? undefined),
   };
 }
 
@@ -281,6 +287,21 @@ async function loadBadgesMediaCards(baseUrl: string | undefined): Promise<DemoSe
 
 async function loadHardwareCards(baseUrl: string | undefined): Promise<DemoSectionCard[]> {
   return loadSectionCards(baseUrl, DEMO_SECTION_IDS.hardwares, "https://placehold.co/227x180");
+}
+
+function productHref(product: DemoSectionCard): { pathname: string; query?: { type: "simple" | "variable" } } | null {
+  if (!product.slug) {
+    return null;
+  }
+
+  if (product.type) {
+    return {
+      pathname: `/products/${product.slug}`,
+      query: { type: product.type },
+    };
+  }
+
+  return { pathname: `/products/${product.slug}` };
 }
 
 export default async function SingleProductPage({
@@ -503,8 +524,9 @@ export default async function SingleProductPage({
             </div>
           </div>
           <div className="grid grid-cols-3 gap-6">
-            {inkMaintenanceCards.map((product) => (
-              <div key={product.id} className="bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col">
+            {inkMaintenanceCards.map((product) => {
+              const cardContent = (
+                <div className="bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col">
                 <div className="h-60 relative bg-slate-100 overflow-hidden rounded-t-xl">
                   <img
                     src={product.image}
@@ -553,7 +575,7 @@ export default async function SingleProductPage({
                         <span className="text-neutral-800 text-2xl font-bold leading-7">{product.price}</span>
                         <span className="text-zinc-500 text-xs font-normal leading-4">ex. VAT</span>
                       </div>
-                      <button className="h-9 px-4 py-2.5 bg-amber-500 rounded-[100px] flex items-center gap-2 hover:bg-amber-600 transition-colors">
+                      <button className="h-9 px-4 py-2.5 bg-amber-500 rounded-[100px] flex items-center gap-2 hover:bg-amber-600 transition-colors pointer-events-none">
                         <span className="text-white text-base font-semibold leading-6">Add</span>
                         <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 20 16">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M1 1h3l2 9h10l2-7H5" />
@@ -565,7 +587,16 @@ export default async function SingleProductPage({
                   </div>
                 </div>
               </div>
-            ))}
+              );
+
+              if (!product.slug) {
+                return <div key={product.id}>{cardContent}</div>;
+              }
+
+              const href = productHref(product);
+              if (!href) return <div key={product.id}>{cardContent}</div>;
+              return <Link key={product.id} href={href} className="block cursor-pointer">{cardContent}</Link>;
+            })}
           </div>
         </div>
       </div>
@@ -589,8 +620,9 @@ export default async function SingleProductPage({
             </div>
           </div>
           <div className="grid grid-cols-3 gap-6">
-            {badgesMediaCards.map((product) => (
-              <div key={product.id} className="bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col">
+            {badgesMediaCards.map((product) => {
+              const cardContent = (
+                <div className="bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col">
                 <div className="h-60 relative bg-slate-100 overflow-hidden rounded-t-xl">
                   <img
                     src={product.image}
@@ -639,7 +671,7 @@ export default async function SingleProductPage({
                         <span className="text-neutral-800 text-2xl font-bold leading-7">{product.price}</span>
                         <span className="text-zinc-500 text-xs font-normal leading-4">ex. VAT</span>
                       </div>
-                      <button className="h-9 px-4 py-2.5 bg-amber-500 rounded-[100px] flex items-center gap-2 hover:bg-amber-600 transition-colors">
+                      <button className="h-9 px-4 py-2.5 bg-amber-500 rounded-[100px] flex items-center gap-2 hover:bg-amber-600 transition-colors pointer-events-none">
                         <span className="text-white text-base font-semibold leading-6">Add</span>
                         <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 20 16">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M1 1h3l2 9h10l2-7H5" />
@@ -651,7 +683,16 @@ export default async function SingleProductPage({
                   </div>
                 </div>
               </div>
-            ))}
+              );
+
+              if (!product.slug) {
+                return <div key={product.id}>{cardContent}</div>;
+              }
+
+              const href = productHref(product);
+              if (!href) return <div key={product.id}>{cardContent}</div>;
+              return <Link key={product.id} href={href} className="block cursor-pointer">{cardContent}</Link>;
+            })}
           </div>
         </div>
       </div>
@@ -675,8 +716,9 @@ export default async function SingleProductPage({
             </div>
           </div>
           <div className="grid grid-cols-3 gap-6">
-            {hardwareCards.map((product) => (
-              <div key={product.id} className="bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col">
+            {hardwareCards.map((product) => {
+              const cardContent = (
+                <div className="bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col">
                 <div className="h-60 relative bg-slate-100 overflow-hidden rounded-t-xl">
                   <img
                     src={product.image}
@@ -725,7 +767,7 @@ export default async function SingleProductPage({
                         <span className="text-neutral-800 text-2xl font-bold leading-7">{product.price}</span>
                         <span className="text-zinc-500 text-xs font-normal leading-4">ex. VAT</span>
                       </div>
-                      <button className="h-9 px-4 py-2.5 bg-amber-500 rounded-[100px] flex items-center gap-2 hover:bg-amber-600 transition-colors">
+                      <button className="h-9 px-4 py-2.5 bg-amber-500 rounded-[100px] flex items-center gap-2 hover:bg-amber-600 transition-colors pointer-events-none">
                         <span className="text-white text-base font-semibold leading-6">Add</span>
                         <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 20 16">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M1 1h3l2 9h10l2-7H5" />
@@ -737,7 +779,16 @@ export default async function SingleProductPage({
                   </div>
                 </div>
               </div>
-            ))}
+              );
+
+              if (!product.slug) {
+                return <div key={product.id}>{cardContent}</div>;
+              }
+
+              const href = productHref(product);
+              if (!href) return <div key={product.id}>{cardContent}</div>;
+              return <Link key={product.id} href={href} className="block cursor-pointer">{cardContent}</Link>;
+            })}
           </div>
         </div>
       </div>

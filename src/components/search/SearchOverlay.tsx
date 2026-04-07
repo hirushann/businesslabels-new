@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { SearchProvider, useSearch } from '@elastic/react-search-ui';
 import type { SearchDriverOptions } from '@elastic/search-ui';
 import { apiConnector, SORT_TO_SEARCH_UI, type OverlaySortValue } from './api';
@@ -75,6 +76,15 @@ function valueAsBoolean(value: unknown): boolean {
   if (typeof scalar === 'string') return ['1', 'true', 'yes', 'in_stock'].includes(scalar.toLowerCase());
 
   return false;
+}
+
+function normalizeResultType(value: unknown): 'simple' | 'variable' | null {
+  const scalar = valueAsString(value);
+  if (scalar === 'simple' || scalar === 'variable') {
+    return scalar;
+  }
+
+  return null;
 }
 
 function titleForProduct(result: unknown): string {
@@ -320,18 +330,16 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                   {(results || []).map((result, resultIndex) => {
                     const type = valueAsString(getRaw(result, 'product_type')) ?? valueAsString(getRaw(result, 'type'));
+                    const normalizedType = normalizeResultType(getRaw(result, 'product_type')) ?? normalizeResultType(getRaw(result, 'type'));
+                    const slug = valueAsString(getRaw(result, 'slug'));
                     const inStock = valueAsBoolean(getRaw(result, 'in_stock'));
                     const image = toDisplayImageUrl(imageForProduct(result));
                     const articleNumber = valueAsString(getRaw(result, 'article_number'));
                     const sku = valueAsString(getRaw(result, 'sku'));
                     const stock = valueAsNumber(getRaw(result, 'stock'));
                     const id = valueAsString(getRaw(result, 'id')) ?? `result-${resultIndex}`;
-
-                    return (
-                      <div
-                        key={id}
-                        className="bg-white rounded-xl border border-slate-200 overflow-hidden"
-                      >
+                    const cardContent = (
+                      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                         <div className="h-48 bg-slate-100 flex items-center justify-center overflow-hidden">
                           {typeof image === 'string' && image ? (
                             <img src={image} alt={titleForProduct(result)} className="h-full w-full object-cover" />
@@ -370,6 +378,32 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
                           </div>
                         </div>
                       </div>
+                    );
+
+                    if (!slug) {
+                      return (
+                        <div key={id}>
+                          {cardContent}
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <Link
+                        key={id}
+                        href={
+                          normalizedType
+                            ? {
+                                pathname: `/products/${slug}`,
+                                query: { type: normalizedType },
+                              }
+                            : `/products/${slug}`
+                        }
+                        className="block"
+                        onClick={onClose}
+                      >
+                        {cardContent}
+                      </Link>
                     );
                   })}
                 </div>
@@ -448,6 +482,7 @@ export default function SearchOverlay({ onClose }: SearchOverlayProps) {
           type: { raw: {} },
           title: { raw: {} },
           name: { raw: {} },
+          slug: { raw: {} },
           article_number: { raw: {} },
           sku: { raw: {} },
           price: { raw: {} },
