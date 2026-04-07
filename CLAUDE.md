@@ -31,54 +31,65 @@ All components flat in `src/components/`. Server components by default; `'use cl
 - Format prices: `Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' })`
 - Multi-locale fields (`name`, `slug`, `title`, `description`, `excerpt`) return `{ en, nl }` objects — select by active locale
 
-## API
+## API Client
 
 Base URL via `NEXT_PUBLIC_API_URL`. Auth: `Authorization: Bearer <token>` (Laravel Passport).
 
-### Auth
+All API calls go through the typed client layer in `src/lib/api/`:
 
-`POST /api/login` — body: `{ username, password }` → `{ access_token, token_type, user }`
+```
+src/lib/api/
+├── index.js       — barrel export (import { listProducts } from '@/lib/api')
+├── client.js      — axios instance, setAuthToken/clearAuthToken
+├── types.js       — JSDoc type definitions for all API response shapes
+├── auth.js        — login
+├── products.js    — listProducts, getProduct, getProductBySlug
+├── categories.js  — listCategories
+├── filters.js     — getFilters
+├── orders.js      — listOrders, getOrder, createOrder, updateOrder, deleteOrder
+├── profile.js     — getProfile, updateProfile, updatePassword
+├── addresses.js   — listMyAddresses, listCustomerAddresses, createAddress, updateAddress, deleteAddress
+├── favorites.js   — favorite products + printers (list, add, remove, check)
+└── coupons.js     — validateCoupon
+```
 
-### Public
+When consuming the API from pages/components, always import from `@/lib/api` — never call axios directly.
 
-GET /api/products                         Paginated list, query params for filter/sort
-GET /api/products/{simple|variable}/slug/{slug}  By slug
-GET /api/products/{simple|variable}/{id}         By ID
-GET /api/categories                       Category tree grouped by taxonomy
-GET /api/filters                          Filter options (types, sort, categories, meta)
-GET /api/coupons/{code}?cart_total=&email= Validate coupon (422 if invalid)
+### Endpoint Reference
 
-### Authenticated
+**Public:**
+- `GET /api/products` — paginated list, query params for filter/sort
+- `GET /api/products/{simple|variable}/slug/{slug}` — by slug
+- `GET /api/products/{simple|variable}/{id}` — by ID
+- `GET /api/categories` — category tree grouped by taxonomy
+- `GET /api/filters` — filter options (types, sort, categories, meta)
+- `GET /api/coupons/{code}?cart_total=&email=` — validate coupon (422 if invalid)
 
-GET|PUT  /api/user/profile                Profile
-PUT      /api/user/profile/password       Change password
-GET      /api/user/addresses              Saved addresses
-CRUD     /api/customers/{id}/addresses/{id}
-CRUD     /api/orders                      Orders
-GET      /api/user/favorite-products      List favorites
-POST|DEL /api/user/favorite-products/{simple|variable}/{id}
-GET      /api/user/favorite-products/{simple|variable}/{id}/check
-GET      /api/user/favorite-printers
-POST|DEL|GET /api/user/favorite-printers/{id}[/check]
+**Authenticated:**
+- `GET|PUT /api/user/profile` — profile
+- `PUT /api/user/profile/password` — change password
+- `GET /api/user/addresses` — saved addresses
+- `CRUD /api/customers/{id}/addresses/{id}`
+- `CRUD /api/orders` — orders
+- `GET /api/user/favorite-products` — list favorites
+- `POST|DEL /api/user/favorite-products/{simple|variable}/{id}`
+- `GET /api/user/favorite-products/{simple|variable}/{id}/check`
+- `GET /api/user/favorite-printers`
+- `POST|DEL|GET /api/user/favorite-printers/{id}[/check]`
 
-### Response Shapes
+### Response types
 
-**Product (list):**
-`{ id, type, title, name:{en,nl}, slug:{en,nl}, sku, price, original_price, stock, in_stock, main_image, material:{id,title,slug,category}, categories:[{id,name,slug}], meta:{} }`
+All response shapes are defined as JSDoc typedefs in `src/lib/api/types.js`. See that file for the canonical type definitions.
 
-**Product (detail)** — list fields plus:
-`{ description:{en,nl}, content:{en,nl}, product_information, product_template, dimensions:{weight,width,height,length}, gallery_images:[{id,url}], variants:[{id,name,sku,price,original_price,stock,in_stock,attributes:{}}] }`
+## Cross-Repo API Sync Protocol
 
-**Category tree:** `{ id, name:{en,nl}, slug, categories:[{id, name, slug, children:[...]}] }`
+Backend (Laravel admin + API) lives at `/Users/hasanaftab/Desktop/Projects/businessLabels`.
 
-**Order:** `{ id, number, status, total, items:[{product_id,name,price,quantity,total}], billing_address:{firstname,lastname,address,city,postalcode,country_id}, shipping_address:{name,address,city,postalcode,country_id} }`
+When an API endpoint changes on the backend, the corresponding files here must be updated:
 
-**Profile:** `{ id, name, email, phone, is_active, type }`
+1. **New/changed route** → update function in `src/lib/api/{domain}.js`, re-export from `index.js`
+2. **Changed response shape** → update JSDoc types in `src/lib/api/types.js`
+3. **Changed validation** → update JSDoc param types on the API function
+4. **Removed endpoint** → remove function, export, and unused types
 
-**Address:** `{ id, type, firstname, lastname, company_name, address, address2, city, postalcode, country_id, phone, email }`
-
-**Pagination:** `{ data:[...], meta:{ current_page, last_page, per_page, total } }`
-
-## Related
-
-Backend (Laravel admin + API) is a separate repo. API changes are made there. Ask if you need endpoint behavior details — do not guess.
+Each API module file has a `@see` comment pointing to its Laravel controller and resource for traceability.
