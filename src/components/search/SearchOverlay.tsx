@@ -1,14 +1,17 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { fetchSearchResults } from './api';
-import type { SearchApiResponse, SearchProduct, SearchSort } from './types';
+import { SearchProvider, useSearch } from '@elastic/react-search-ui';
+import type { SearchDriverOptions } from '@elastic/search-ui';
+import { apiConnector, SORT_TO_SEARCH_UI, type OverlaySortValue } from './api';
+import { useNextRoutingOptions } from './useNextRouting';
 
 type SearchOverlayProps = {
   onClose: () => void;
 };
 
-const SORT_OPTIONS: Array<{ value: SearchSort; label: string }> = [
+const SORT_OPTIONS: Array<{ value: OverlaySortValue; label: string }> = [
+  { value: 'relevance', label: 'Most Relevant' },
   { value: 'latest', label: 'Latest' },
   { value: 'oldest', label: 'Oldest' },
   { value: 'title_asc', label: 'Name: A - Z' },
@@ -18,59 +21,173 @@ const SORT_OPTIONS: Array<{ value: SearchSort; label: string }> = [
 ];
 
 const PAGE_SIZE = 24;
+const MIN_QUERY_LENGTH = 2;
 
-function formatPrice(value: number | null | undefined): string {
-  if (typeof value !== 'number') return '-';
+function formatPrice(value: unknown): string {
+  const numericValue = valueAsNumber(value);
+  if (numericValue === null) return '-';
 
-  return `€${value.toFixed(2)}`;
+  return `€${numericValue.toFixed(2)}`;
 }
 
-function titleForProduct(product: SearchProduct): string {
-  return product.title || product.name || 'Unnamed product';
+function getRaw(result: unknown, field: string): unknown {
+  const entry = (result as Record<string, { raw?: unknown }>)?.[field];
+  return entry?.raw;
 }
 
-function pageNumbers(current: number, total: number): number[] {
-  const maxVisible = 5;
-  if (total <= maxVisible) {
-    return Array.from({ length: total }, (_, i) => i + 1);
+function firstScalar(value: unknown): string | number | boolean | null {
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return value;
   }
 
-  const start = Math.max(1, Math.min(current - 2, total - (maxVisible - 1)));
-  return Array.from({ length: maxVisible }, (_, i) => start + i);
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const scalar = firstScalar(item);
+      if (scalar !== null) return scalar;
+    }
+  }
+
+  return null;
 }
 
-export default function SearchOverlay({ onClose }: SearchOverlayProps) {
-  const [query, setQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
-  const [sortBy, setSortBy] = useState<SearchSort>('latest');
-  const [page, setPage] = useState(1);
+function valueAsString(value: unknown): string | null {
+  const scalar = firstScalar(value);
+  if (scalar === null) return null;
 
-  const [items, setItems] = useState<SearchProduct[]>([]);
-  const [pagination, setPagination] = useState<SearchApiResponse['pagination']>({
-    page: 1,
-    perPage: PAGE_SIZE,
-    totalPages: 1,
-    totalItems: 0,
+  return String(scalar);
+}
+
+function valueAsNumber(value: unknown): number | null {
+  const scalar = firstScalar(value);
+  if (typeof scalar === 'number') return scalar;
+  if (typeof scalar === 'string' && scalar.trim() !== '') {
+    const parsed = Number(scalar);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
+}
+
+function valueAsBoolean(value: unknown): boolean {
+  const scalar = firstScalar(value);
+  if (typeof scalar === 'boolean') return scalar;
+  if (typeof scalar === 'number') return scalar > 0;
+  if (typeof scalar === 'string') return ['1', 'true', 'yes', 'in_stock'].includes(scalar.toLowerCase());
+
+  return false;
+}
+
+function titleForProduct(result: unknown): string {
+  const title = valueAsString(getRaw(result, 'title'));
+  const name = valueAsString(getRaw(result, 'name'));
+
+  if (typeof title === 'string' && title.trim() !== '') return title;
+  if (typeof name === 'string' && name.trim() !== '') return name;
+  return 'Unnamed product';
+}
+
+function imageForProduct(result: unknown): string | null {
+  const mainImage = valueAsString(getRaw(result, 'main_image'));
+  if (mainImage && mainImage.trim() !== '') return mainImage;
+
+  const fallbackImage = valueAsString(getRaw(result, 'image'));
+  if (fallbackImage && fallbackImage.trim() !== '') return fallbackImage;
+
+  const images = getRaw(result, 'images');
+  if (Array.isArray(images) && images.length > 0) {
+    const first = images[0];
+
+    if (typeof first === 'string' && first.trim() !== '') {
+      return first;
+    }
+
+    if (typeof first === 'object' && first !== null) {
+      const src = valueAsString((first as { src?: unknown }).src);
+      if (src && src.trim() !== '') return src;
+      const url = valueAsString((first as { url?: unknown }).url);
+      if (url && url.trim() !== '') return url;
+    }
+  }
+
+  return null;
+}
+
+function toDisplayImageUrl(url: string | null): string | null {
+  if (!url || url.trim() === '') return null;
+  if (url.startsWith('/') || url.startsWith('data:') || url.startsWith('blob:')) return url;
+
+  // Load remote product media through same-origin route to avoid browser-side host/protocol issues.
+  return `/api/media-proxy?url=${encodeURIComponent(url)}`;
+}
+
+function sortValueFromState(sortField?: string, sortDirection?: string, queryMode = false): OverlaySortValue {
+  if (!sortField && !sortDirection) return queryMode ? 'relevance' : 'latest';
+
+  const match = SORT_OPTIONS.find((option) => {
+    const mapped = SORT_TO_SEARCH_UI[option.value];
+    if (!mapped.field || !mapped.direction) return false;
+    return mapped.field === sortField && mapped.direction === sortDirection;
   });
-  const [inStockCount, setInStockCount] = useState(0);
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  return match?.value ?? (queryMode ? 'relevance' : 'latest');
+}
 
+function OverlayContent({ onClose }: SearchOverlayProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const {
+    searchTerm,
+    setSearchTerm,
+    results,
+    totalResults,
+    current,
+    totalPages,
+    setCurrent,
+    isLoading,
+    error,
+    sortField,
+    sortDirection,
+    setSort,
+  } = useSearch((state) => ({
+    searchTerm: state.searchTerm,
+    setSearchTerm: state.setSearchTerm,
+    results: state.results,
+    totalResults: state.totalResults,
+    current: state.current,
+    totalPages: state.totalPages,
+    setCurrent: state.setCurrent,
+    isLoading: state.isLoading,
+    error: state.error,
+    sortField: state.sortField,
+    sortDirection: state.sortDirection,
+    setSort: state.setSort,
+  }));
+  const [inputValue, setInputValue] = useState(searchTerm || '');
+  const [manualSort, setManualSort] = useState<OverlaySortValue | null>(null);
+  const queryValue = inputValue.trim();
+  const queryMode = queryValue.length >= MIN_QUERY_LENGTH;
+
+  const applySort = (sortValue: OverlaySortValue) => {
+    const mapped = SORT_TO_SEARCH_UI[sortValue];
+
+    // Empty sort in Search UI means fallback to Elasticsearch relevance (_score).
+    if (!mapped.field || !mapped.direction) {
+      (setSort as unknown as (field: unknown, direction?: unknown) => void)([], undefined);
+      return;
+    }
+
+    setSort(mapped.field, mapped.direction);
+  };
+
   useEffect(() => {
+    document.body.style.overflow = 'hidden';
     const timeoutId = setTimeout(() => {
       inputRef.current?.focus();
     }, 0);
 
-    return () => clearTimeout(timeoutId);
-  }, []);
-
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = '';
+      clearTimeout(timeoutId);
     };
   }, []);
 
@@ -88,64 +205,48 @@ export default function SearchOverlay({ onClose }: SearchOverlayProps) {
   }, [onClose]);
 
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      setDebouncedQuery(query.trim());
-    }, 300);
+    const timeoutId = window.setTimeout(() => {
+      const currentSearch = (searchTerm || '').trim();
 
-    return () => clearTimeout(timeoutId);
-  }, [query]);
-
-  useEffect(() => {
-    let isCancelled = false;
-
-    const run = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const result = await fetchSearchResults({
-          q: debouncedQuery,
-          page,
-          perPage: PAGE_SIZE,
-          sort: sortBy,
-        });
-
-        if (isCancelled) return;
-
-        setItems(result.items);
-        setPagination(result.pagination);
-        setInStockCount(result.inStockCount);
-        setError(result.error ?? null);
-      } catch {
-        if (isCancelled) return;
-        setItems([]);
-        setPagination({
-          page: 1,
-          perPage: PAGE_SIZE,
-          totalPages: 1,
-          totalItems: 0,
-        });
-        setInStockCount(0);
-        setError('Search is temporarily unavailable.');
-      } finally {
-        if (!isCancelled) {
-          setLoading(false);
+      if (queryValue.length < MIN_QUERY_LENGTH) {
+        if (currentSearch !== '') {
+          setSearchTerm('', {
+            refresh: true,
+            shouldClearFilters: false,
+          });
+          setCurrent(1);
         }
+        return;
       }
-    };
 
-    void run();
+      if (queryValue === currentSearch) return;
+
+      setSearchTerm(queryValue, {
+        refresh: true,
+        shouldClearFilters: false,
+      });
+      setCurrent(1);
+    }, 350);
 
     return () => {
-      isCancelled = true;
+      window.clearTimeout(timeoutId);
     };
-  }, [debouncedQuery, page, sortBy]);
+  }, [queryValue, searchTerm, setCurrent, setSearchTerm]);
 
-  const pages = useMemo(() => pageNumbers(pagination.page, pagination.totalPages), [pagination.page, pagination.totalPages]);
+  useEffect(() => {
+    if (manualSort) return;
+    applySort(queryMode ? 'relevance' : 'latest');
+  }, [manualSort, queryMode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const selectedSort = manualSort ?? sortValueFromState(sortField, sortDirection, queryMode);
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-slate-900/25" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[9999] bg-slate-900/25 flex items-center justify-center p-0 md:p-10"
+      onClick={onClose}
+    >
       <div
-        className="w-full h-full bg-[#F7F7F7] md:m-10 md:h-[calc(100%-80px)] md:rounded-xl overflow-hidden shadow-2xl"
+        className="w-full h-full bg-[#F7F7F7] overflow-hidden shadow-2xl md:h-[calc(100vh-80px)] md:w-[calc(100vw-80px)] md:max-w-[1680px] md:max-h-[920px] md:rounded-xl"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="bg-white border-b border-slate-200 px-4 py-4">
@@ -158,10 +259,9 @@ export default function SearchOverlay({ onClose }: SearchOverlayProps) {
               <input
                 ref={inputRef}
                 type="text"
-                value={query}
+                value={inputValue}
                 onChange={(event) => {
-                  setQuery(event.target.value);
-                  setPage(1);
+                  setInputValue(event.target.value);
                 }}
                 placeholder="Search products..."
                 className="w-full h-full bg-transparent outline-none text-base text-neutral-800"
@@ -171,10 +271,11 @@ export default function SearchOverlay({ onClose }: SearchOverlayProps) {
 
             <div className="flex items-center gap-3 w-full md:w-auto">
               <select
-                value={sortBy}
+                value={selectedSort}
                 onChange={(event) => {
-                  setSortBy(event.target.value as SearchSort);
-                  setPage(1);
+                  const key = event.target.value as OverlaySortValue;
+                  setManualSort(key);
+                  applySort(key);
                 }}
                 className="h-10 px-3 border border-slate-300 rounded-md bg-white text-sm text-neutral-700 w-full md:w-[220px]"
               >
@@ -199,105 +300,99 @@ export default function SearchOverlay({ onClose }: SearchOverlayProps) {
         <div className="h-[calc(100%-81px)] overflow-y-auto px-4 py-6">
           <div className="max-w-[1440px] mx-auto">
             <div className="mb-4 text-sm text-neutral-600">
-              {loading
-                ? 'Searching...'
-                : `${pagination.totalItems} results` +
-                  (pagination.totalItems > 0 ? ` (${inStockCount} in stock)` : '')}
+              {isLoading ? 'Searching...' : `${totalResults || 0} results`}
             </div>
 
             {error ? (
-              <div className="bg-red-50 text-red-700 border border-red-200 rounded-lg p-4">{error}</div>
-            ) : loading ? (
+              <div className="bg-red-50 text-red-700 border border-red-200 rounded-lg p-4">{String(error)}</div>
+            ) : isLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                 {Array.from({ length: 8 }, (_, i) => (
                   <div key={i} className="h-72 rounded-xl bg-slate-200 animate-pulse" />
                 ))}
               </div>
-            ) : items.length === 0 ? (
+            ) : (results?.length || 0) === 0 ? (
               <div className="bg-white rounded-xl border border-slate-200 p-10 text-center text-neutral-500">
                 No products found.
               </div>
             ) : (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                  {items.map((product) => (
-                    <div
-                      key={`${product.type}-${product.id}`}
-                      className="bg-white rounded-xl border border-slate-200 overflow-hidden"
-                    >
-                      <div className="h-48 bg-slate-100 flex items-center justify-center overflow-hidden">
-                        {product.main_image ? (
-                          <img
-                            src={product.main_image}
-                            alt={titleForProduct(product)}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-sm text-slate-400">No image</span>
-                        )}
-                      </div>
+                  {(results || []).map((result, resultIndex) => {
+                    const type = valueAsString(getRaw(result, 'product_type')) ?? valueAsString(getRaw(result, 'type'));
+                    const inStock = valueAsBoolean(getRaw(result, 'in_stock'));
+                    const image = toDisplayImageUrl(imageForProduct(result));
+                    const articleNumber = valueAsString(getRaw(result, 'article_number'));
+                    const sku = valueAsString(getRaw(result, 'sku'));
+                    const stock = valueAsNumber(getRaw(result, 'stock'));
+                    const id = valueAsString(getRaw(result, 'id')) ?? `result-${resultIndex}`;
 
-                      <div className="p-4 flex flex-col gap-3">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs text-blue-500 uppercase tracking-wide">{product.type}</span>
-                          <span
-                            className={`text-xs px-2 py-1 rounded-full ${
-                              product.in_stock ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'
-                            }`}
-                          >
-                            {product.in_stock ? 'In stock' : 'Out of stock'}
-                          </span>
-                        </div>
-
-                        <h3 className="text-base font-semibold text-neutral-800 line-clamp-2 min-h-12">
-                          {titleForProduct(product)}
-                        </h3>
-
-                        <div className="text-sm text-neutral-500">
-                          {product.article_number ? `Art: ${product.article_number}` : product.sku ? `SKU: ${product.sku}` : '-'}
-                        </div>
-
-                        <div className="flex items-end justify-between gap-3">
-                          <div className="text-lg font-bold text-neutral-800">{formatPrice(product.price)}</div>
-                          {typeof product.stock === 'number' && (
-                            <div className="text-xs text-neutral-500">Stock: {product.stock}</div>
+                    return (
+                      <div
+                        key={id}
+                        className="bg-white rounded-xl border border-slate-200 overflow-hidden"
+                      >
+                        <div className="h-48 bg-slate-100 flex items-center justify-center overflow-hidden">
+                          {typeof image === 'string' && image ? (
+                            <img src={image} alt={titleForProduct(result)} className="h-full w-full object-cover" />
+                          ) : (
+                            <span className="text-sm text-slate-400">No image</span>
                           )}
                         </div>
+
+                        <div className="p-4 flex flex-col gap-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs text-blue-500 uppercase tracking-wide">{String(type ?? '-')}</span>
+                            <span
+                              className={`text-xs px-2 py-1 rounded-full ${
+                                inStock ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'
+                              }`}
+                            >
+                              {inStock ? 'In stock' : 'Out of stock'}
+                            </span>
+                          </div>
+
+                          <h3 className="text-base font-semibold text-neutral-800 line-clamp-2 min-h-12">
+                            {titleForProduct(result)}
+                          </h3>
+
+                          <div className="text-sm text-neutral-500">
+                            {typeof articleNumber === 'string' && articleNumber
+                              ? `Art: ${articleNumber}`
+                              : typeof sku === 'string' && sku
+                                ? `SKU: ${sku}`
+                                : '-'}
+                          </div>
+
+                          <div className="flex items-end justify-between gap-3">
+                            <div className="text-lg font-bold text-neutral-800">{formatPrice(getRaw(result, 'price'))}</div>
+                            {typeof stock === 'number' && <div className="text-xs text-neutral-500">Stock: {stock}</div>}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
-                {pagination.totalPages > 1 && (
+                {(totalPages || 0) > 1 && (
                   <div className="flex items-center justify-center gap-2 mt-8">
                     <button
                       type="button"
-                      onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                      disabled={pagination.page <= 1}
+                      onClick={() => setCurrent(Math.max(1, (current || 1) - 1))}
+                      disabled={(current || 1) <= 1}
                       className="h-9 px-3 border border-slate-300 rounded-md text-sm disabled:opacity-50"
                     >
                       Prev
                     </button>
 
-                    {pages.map((pageNumber) => (
-                      <button
-                        type="button"
-                        key={pageNumber}
-                        onClick={() => setPage(pageNumber)}
-                        className={`h-9 min-w-9 px-3 rounded-md text-sm border ${
-                          pageNumber === pagination.page
-                            ? 'bg-sky-900 text-white border-sky-900'
-                            : 'bg-white text-neutral-700 border-slate-300'
-                        }`}
-                      >
-                        {pageNumber}
-                      </button>
-                    ))}
+                    <div className="text-sm text-neutral-600 px-2">
+                      Page {current || 1} of {totalPages || 1}
+                    </div>
 
                     <button
                       type="button"
-                      onClick={() => setPage((prev) => Math.min(pagination.totalPages, prev + 1))}
-                      disabled={pagination.page >= pagination.totalPages}
+                      onClick={() => setCurrent(Math.min(totalPages || 1, (current || 1) + 1))}
+                      disabled={(current || 1) >= (totalPages || 1)}
                       className="h-9 px-3 border border-slate-300 rounded-md text-sm disabled:opacity-50"
                     >
                       Next
@@ -310,5 +405,66 @@ export default function SearchOverlay({ onClose }: SearchOverlayProps) {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SearchOverlay({ onClose }: SearchOverlayProps) {
+  const routingOptions = useNextRoutingOptions();
+
+  const config = useMemo<SearchDriverOptions>(
+    () => ({
+      apiConnector,
+      trackUrlState: true,
+      routingOptions,
+      alwaysSearchOnInitialLoad: true,
+      initialState: {
+        resultsPerPage: PAGE_SIZE,
+        sortField: 'created_at_timestamp',
+        sortDirection: 'desc',
+      },
+      searchQuery: {
+        search_fields: {
+          article_number: { weight: 10 },
+          sku: { weight: 10 },
+          title: { weight: 8 },
+          name: { weight: 7 },
+          slug: { weight: 2 },
+          variant_skus: { weight: 2 },
+          material_title: { weight: 1.2 },
+          material_slug: { weight: 1 },
+          material_code: { weight: 1.2 },
+          brand: { weight: 1 },
+          merken: { weight: 1 },
+          druktype: { weight: 0.8 },
+          finishing: { weight: 0.8 },
+          excerpt: { weight: 1.5 },
+          description: { weight: 0.4 },
+          content: { weight: 0.3 },
+          product_information: { weight: 0.3 },
+        },
+        result_fields: {
+          id: { raw: {} },
+          product_type: { raw: {} },
+          type: { raw: {} },
+          title: { raw: {} },
+          name: { raw: {} },
+          article_number: { raw: {} },
+          sku: { raw: {} },
+          price: { raw: {} },
+          stock: { raw: {} },
+          in_stock: { raw: {} },
+          main_image: { raw: {} },
+          image: { raw: {} },
+          images: { raw: {} },
+        },
+      },
+    }),
+    [routingOptions]
+  );
+
+  return (
+    <SearchProvider config={config}>
+      <OverlayContent onClose={onClose} />
+    </SearchProvider>
   );
 }

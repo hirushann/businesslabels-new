@@ -1,158 +1,191 @@
 import { NextRequest, NextResponse } from 'next/server';
-import type { SearchApiResponse, SearchProduct, SearchSort } from '@/components/search/types';
+import ElasticsearchAPIConnector from '@elastic/search-ui-elasticsearch-connector';
+import type { QueryConfig, RequestState } from '@elastic/search-ui';
 
-type LaravelProductsResponse = {
-  data?: SearchProduct[];
-  meta?: {
-    current_page?: number;
-    per_page?: number;
-    last_page?: number;
-    total?: number;
-  };
-  in_stock_count?: number;
+const DEFAULT_INDEX = 'business_labels_catalog_products';
+
+function elasticHost(): string {
+  const url = process.env.ELASTICSEARCH_URL;
+  if (url && url.trim()) return url.trim();
+
+  const host = process.env.ELASTIC_HOST?.trim();
+  if (!host) return '';
+
+  if (host.startsWith('http://') || host.startsWith('https://')) {
+    return host;
+  }
+
+  return `http://${host}`;
+}
+
+function normalizeError(message: string, status = 500) {
+  return NextResponse.json(
+    {
+      error: message,
+      results: [],
+      totalResults: 0,
+      totalPages: 0,
+      requestId: '',
+      facets: {},
+      rawResponse: null,
+    },
+    { status }
+  );
+}
+
+type ElasticsearchRequestBody = {
+  sort?: unknown;
+  [key: string]: unknown;
 };
 
-const DEFAULT_PER_PAGE = 24;
-const ALLOWED_SORTS: SearchSort[] = [
-  'latest',
-  'oldest',
-  'title_asc',
-  'title_desc',
-  'price_asc',
-  'price_desc',
-];
-
-function toPositiveInt(value: string | null, fallback: number): number {
-  if (!value) return fallback;
-
-  const parsed = Number.parseInt(value, 10);
-
-  if (!Number.isFinite(parsed) || parsed < 1) {
-    return fallback;
+function normalizeSortClause(sortClause: unknown): unknown {
+  if (!sortClause || typeof sortClause !== 'object' || Array.isArray(sortClause)) {
+    return sortClause;
   }
 
-  return parsed;
-}
+  const entry = Object.entries(sortClause as Record<string, unknown>)[0];
+  if (!entry) return sortClause;
 
-function normalizeSort(value: string | null): SearchSort {
-  if (!value) return 'latest';
+  const [field, value] = entry;
+  if (field === '_score') return sortClause;
 
-  return ALLOWED_SORTS.includes(value as SearchSort) ? (value as SearchSort) : 'latest';
-}
-
-function defaultPayload(perPage: number): SearchApiResponse {
-  return {
-    items: [],
-    pagination: {
-      page: 1,
-      perPage,
-      totalPages: 1,
-      totalItems: 0,
-    },
-    inStockCount: 0,
+  const unmappedTypeByField: Record<string, 'long' | 'double' | 'keyword'> = {
+    created_at_timestamp: 'long',
+    price: 'double',
+    'title_sort.keyword': 'keyword',
   };
-}
 
-function normalizePayload(
-  payload: LaravelProductsResponse | null | undefined,
-  fallbackPage: number,
-  fallbackPerPage: number,
-  error?: string
-): SearchApiResponse {
-  return {
-    items: Array.isArray(payload?.data) ? payload.data : [],
-    pagination: {
-      page:
-        typeof payload?.meta?.current_page === 'number' && payload.meta.current_page > 0
-          ? payload.meta.current_page
-          : fallbackPage,
-      perPage:
-        typeof payload?.meta?.per_page === 'number' && payload.meta.per_page > 0
-          ? payload.meta.per_page
-          : fallbackPerPage,
-      totalPages:
-        typeof payload?.meta?.last_page === 'number' && payload.meta.last_page > 0
-          ? payload.meta.last_page
-          : 1,
-      totalItems:
-        typeof payload?.meta?.total === 'number' && payload.meta.total >= 0
-          ? payload.meta.total
-          : 0,
-    },
-    inStockCount: typeof payload?.in_stock_count === 'number' ? payload.in_stock_count : 0,
-    error,
-  };
-}
+  const unmappedType = unmappedTypeByField[field] ?? 'keyword';
 
-export async function GET(request: NextRequest) {
-  const apiBaseUrl = process.env.BBNL_API_BASE_URL;
-  const page = toPositiveInt(request.nextUrl.searchParams.get('page'), 1);
-  const perPage = toPositiveInt(request.nextUrl.searchParams.get('per_page'), DEFAULT_PER_PAGE);
-  const sort = normalizeSort(request.nextUrl.searchParams.get('sort'));
-  const q = request.nextUrl.searchParams.get('q')?.trim() ?? '';
+  if (typeof value === 'string') {
+    return { [field]: { order: value, unmapped_type: unmappedType } };
+  }
 
-  if (!apiBaseUrl) {
-    return NextResponse.json(
-      {
-        ...defaultPayload(perPage),
-        error: 'Search backend base URL is not configured.',
+  if (value && typeof value === 'object') {
+    return {
+      [field]: {
+        ...(value as Record<string, unknown>),
+        unmapped_type: unmappedType,
       },
-      { status: 500 }
-    );
+    };
   }
 
-  const upstreamUrl = new URL('/api/products', apiBaseUrl);
-  upstreamUrl.searchParams.set('page', String(page));
-  upstreamUrl.searchParams.set('per_page', String(perPage));
-  upstreamUrl.searchParams.set('sort', sort);
-  if (q !== '') {
-    upstreamUrl.searchParams.set('search', q);
+  return sortClause;
+}
+
+function withSafeSort(body: ElasticsearchRequestBody): ElasticsearchRequestBody {
+  if (!body.sort) return body;
+
+  if (Array.isArray(body.sort)) {
+    return {
+      ...body,
+      sort: body.sort.map((clause) => normalizeSortClause(clause)),
+    };
+  }
+
+  return {
+    ...body,
+    sort: normalizeSortClause(body.sort),
+  };
+}
+
+function buildRelevanceQuery(state: RequestState, queryConfig: QueryConfig) {
+  const searchTerm = state.searchTerm?.trim();
+  if (!searchTerm) return { match_all: {} };
+
+  const primaryFields = ['title^8', 'name^7', 'sku^10', 'article_number^10'];
+  const fallbackFields = ['slug^2', 'variant_skus^2', 'excerpt^1.5', 'description^0.4', 'content^0.3', 'product_information^0.3'];
+
+  // Respect queryConfig.search_fields when present, but keep primary/fallback strategy explicit.
+  const configuredPrimary = Object.entries(queryConfig.search_fields || {})
+    .filter(([field]) => ['title', 'name', 'sku', 'article_number'].includes(field))
+    .map(([field, config]) => `${field}^${config.weight ?? 1}`);
+  const primary = configuredPrimary.length > 0 ? configuredPrimary : primaryFields;
+
+  return {
+    bool: {
+      minimum_should_match: 1,
+      should: [
+        {
+          multi_match: {
+            query: searchTerm,
+            fields: primary,
+            type: 'best_fields',
+            operator: 'and',
+            boost: 6,
+          },
+        },
+        {
+          multi_match: {
+            query: searchTerm,
+            fields: primary,
+            type: 'phrase_prefix',
+            boost: 5,
+          },
+        },
+        {
+          multi_match: {
+            query: searchTerm,
+            fields: primary,
+            type: 'best_fields',
+            fuzziness: 'AUTO',
+            prefix_length: 1,
+            boost: 3,
+          },
+        },
+        {
+          multi_match: {
+            query: searchTerm,
+            fields: fallbackFields,
+            type: 'best_fields',
+            operator: 'or',
+            boost: 0.8,
+          },
+        },
+      ],
+    },
+  };
+}
+
+export async function POST(request: NextRequest) {
+  const host = elasticHost();
+  const index = process.env.SEARCH_INDEX || process.env.ELASTICSEARCH_INDEX || DEFAULT_INDEX;
+
+  if (!host) {
+    return normalizeError('Elasticsearch host is not configured.', 500);
+  }
+
+  let body: { state?: RequestState; queryConfig?: QueryConfig };
+  try {
+    body = (await request.json()) as { state?: RequestState; queryConfig?: QueryConfig };
+  } catch {
+    return normalizeError('Invalid search request payload.', 400);
+  }
+
+  if (!body?.state || !body?.queryConfig) {
+    return normalizeError('Missing search state or query config.', 400);
   }
 
   try {
-    const upstreamResponse = await fetch(upstreamUrl.toString(), {
-      method: 'GET',
-      cache: 'no-store',
-      headers: {
-        Accept: 'application/json',
+    const connector = new ElasticsearchAPIConnector({
+      host,
+      index,
+      ...(process.env.ELASTIC_API_KEY ? { apiKey: process.env.ELASTIC_API_KEY } : {}),
+      getQueryFn: (state, queryConfig) => buildRelevanceQuery(state, queryConfig) as never,
+      interceptSearchRequest: async ({ requestBody }, next) => {
+        const safeRequestBody = withSafeSort(requestBody as ElasticsearchRequestBody);
+        return next(safeRequestBody as never);
       },
     });
 
-    const fallback = defaultPayload(perPage);
+    const response = await connector.onSearch(body.state, body.queryConfig);
 
-    if (!upstreamResponse.ok) {
-      const status = upstreamResponse.status >= 500 ? 502 : upstreamResponse.status;
-
-      return NextResponse.json(
-        {
-          ...fallback,
-          error: 'Catalog search is temporarily unavailable.',
-        },
-        { status }
-      );
-    }
-
-    let payload: LaravelProductsResponse | null = null;
-    try {
-      payload = (await upstreamResponse.json()) as LaravelProductsResponse;
-    } catch {
-      return NextResponse.json(
-        {
-          ...fallback,
-          error: 'Catalog search is temporarily unavailable.',
-        },
-        { status: 502 }
-      );
-    }
-
-    return NextResponse.json(normalizePayload(payload, page, perPage));
+    return NextResponse.json(response);
   } catch {
-    return NextResponse.json(
-      {
-        ...defaultPayload(perPage),
-        error: 'Catalog search is temporarily unavailable.',
-      },
-      { status: 503 }
-    );
+    return normalizeError('Search backend is temporarily unavailable.', 503);
   }
+}
+
+export async function GET() {
+  return normalizeError('Method not allowed.', 405);
 }
