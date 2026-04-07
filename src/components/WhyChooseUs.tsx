@@ -61,6 +61,7 @@ export default function WhyChooseUs() {
               src="/whychoose.png"
               alt="Why choose BusinessLabels"
               fill
+              sizes="(max-width: 768px) 100vw, 50vw"
               className="object-cover object-center"
             />
           </div>

@@ -35,7 +35,7 @@ export default function FeatureSections() {
   return (
     <section className="w-full px-10 py-24 bg-slate-50 flex flex-col gap-24">
       <div className="max-w-[1440px] mx-auto w-full flex flex-col gap-24">
-        {sections.map((section) => (
+        {sections.map((section, index) => (
           <div
             key={section.title}
             className={`flex items-center gap-12 ${section.imageLeft ? 'flex-row' : 'flex-row-reverse'}`}
@@ -46,6 +46,8 @@ export default function FeatureSections() {
                 src={section.image}
                 alt={section.title}
                 fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                priority={index === 0}
                 className="object-cover object-center"
               />
             </div>
