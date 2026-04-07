@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
+import SearchOverlay from './search/SearchOverlay';
 
 const navItems = [
   { label: 'Home', href: '/', active: true },
@@ -15,7 +16,7 @@ const navItems = [
 ];
 
 export default function Header() {
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   return (
     <header className="w-full left-0 top-0 z-50 flex flex-col items-center">
@@ -87,13 +88,18 @@ export default function Header() {
           </Link>
 
           {/* Search */}
-          <div className="w-96 px-4 py-3 rounded-full border border-slate-100 flex items-center gap-2 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setIsSearchOpen(true)}
+            className="w-96 px-4 py-3 rounded-full border border-slate-100 flex items-center gap-2 overflow-hidden text-left cursor-text"
+            aria-label="Open product search"
+          >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <circle cx="6.75" cy="6.75" r="5.25" stroke="#9CA3AF" strokeWidth="1.5" />
               <path d="M11.5 11.5L14.5 14.5" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
             <span className="text-zinc-500 text-sm font-normal leading-5">Search...</span>
-          </div>
+          </button>
 
           {/* Right controls */}
           <div className="flex items-center gap-5">
@@ -178,6 +184,8 @@ export default function Header() {
           </div>
         </div>
       </div>
+
+      {isSearchOpen && <SearchOverlay onClose={() => setIsSearchOpen(false)} />}
     </header>
   );
 }
