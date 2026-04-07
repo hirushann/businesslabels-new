@@ -46,3 +46,42 @@ body {
   --font-sans: 'Segoe UI', 'Segoe UI Variable', Inter, system-ui, -apple-system,
     BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
 }
+
+/* Dual range slider */
+.range-slider-thumb::-webkit-slider-runnable-track {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: transparent;
+}
+
+.range-slider-thumb::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: white;
+  border: 3px solid #f59e0b;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  margin-top: -9px;
+}
+
+.range-slider-thumb::-moz-range-track {
+  height: 4px;
+  background: transparent;
+  border: none;
+}
+
+.range-slider-thumb::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: white;
+  border: 3px solid #f59e0b;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
