@@ -47,6 +47,13 @@ body {
     BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
 }
 
+/* Skeleton shimmer */
+@keyframes shimmer {
+  0% { opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { opacity: 0.4; }
+}
+
 /* Dual range slider */
 .range-slider-thumb::-webkit-slider-runnable-track {
   -webkit-appearance: none;

@@ -15,5 +15,4 @@ export const ROUTES = {
   search: '/search',
   about: '/about',
   contact: '/contact',
-  productFilters: '/filters'
 };
