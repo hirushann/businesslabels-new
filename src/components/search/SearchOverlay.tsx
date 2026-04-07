@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { SearchProvider, useSearch } from '@elastic/react-search-ui';
 import type { SearchDriverOptions } from '@elastic/search-ui';
 import { apiConnector, SORT_TO_SEARCH_UI, type OverlaySortValue } from './api';
@@ -340,9 +341,16 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
                     const id = valueAsString(getRaw(result, 'id')) ?? `result-${resultIndex}`;
                     const cardContent = (
                       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                        <div className="h-48 bg-slate-100 flex items-center justify-center overflow-hidden">
+                        <div className="h-48 bg-slate-100 flex items-center justify-center overflow-hidden relative">
                           {typeof image === 'string' && image ? (
-                            <img src={image} alt={titleForProduct(result)} className="h-full w-full object-cover" />
+                            <Image
+                              src={image}
+                              alt={titleForProduct(result)}
+                              fill
+                              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
+                              unoptimized
+                              className="object-cover"
+                            />
                           ) : (
                             <span className="text-sm text-slate-400">No image</span>
                           )}

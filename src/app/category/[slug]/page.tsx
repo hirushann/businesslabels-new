@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 
 export const metadata: Metadata = {
   title: "Labelprinters — BusinessLabels",
@@ -140,9 +141,11 @@ export default function CategoryArchivePage() {
 
           {/* Banner */}
           <div className="relative w-full h-56 rounded-xl overflow-hidden shadow-md">
-            <img
+            <Image
               src="/images/archive-banner.jpg"
               alt="Labelprinters banner"
+              fill
+              sizes="100vw"
               className="absolute inset-0 w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-black/30 bg-gradient-to-t from-black/40 to-transparent" />
@@ -169,7 +172,7 @@ export default function CategoryArchivePage() {
                   href={cat.href}
                   className="px-10 py-6 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col items-center gap-6 hover:shadow-[2px_4px_28px_0px_rgba(109,109,120,0.18)] hover:-translate-y-0.5 transition-all duration-200"
                 >
-                  <img src={cat.image} alt={cat.name} className="h-40 object-contain" />
+                  <Image src={cat.image} alt={cat.name} width={212} height={160} unoptimized className="h-40 w-auto object-contain" />
                   <span className="text-center text-neutral-800 text-xl font-bold leading-6">{cat.name}</span>
                 </Link>
               ))}
@@ -182,7 +185,7 @@ export default function CategoryArchivePage() {
                   href={cat.href}
                   className="px-10 py-6 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col items-center gap-6 hover:shadow-[2px_4px_28px_0px_rgba(109,109,120,0.18)] hover:-translate-y-0.5 transition-all duration-200"
                 >
-                  <img src={cat.image} alt={cat.name} className="h-40 object-contain" />
+                  <Image src={cat.image} alt={cat.name} width={212} height={160} unoptimized className="h-40 w-auto object-contain" />
                   <span className="text-center text-neutral-800 text-xl font-bold leading-6">{cat.name}</span>
                 </Link>
               ))}
@@ -195,7 +198,7 @@ export default function CategoryArchivePage() {
                   href={cat.href}
                   className="px-10 py-6 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col items-center gap-6 hover:shadow-[2px_4px_28px_0px_rgba(109,109,120,0.18)] hover:-translate-y-0.5 transition-all duration-200"
                 >
-                  <img src={cat.image} alt={cat.name} className="h-40 object-contain" />
+                  <Image src={cat.image} alt={cat.name} width={212} height={160} unoptimized className="h-40 w-auto object-contain" />
                   <span className="text-center text-neutral-800 text-xl font-bold leading-6">{cat.name}</span>
                 </Link>
               ))}
@@ -252,9 +255,12 @@ export default function CategoryArchivePage() {
                       <span className="text-neutral-700 text-xs font-normal leading-4">{product.badge}</span>
                     </div>
                   )}
-                  <img
+                  <Image
                     src={product.image}
                     alt={product.name}
+                    width={242}
+                    height={183}
+                    unoptimized
                     className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 max-h-44 object-contain"
                   />
                 </div>

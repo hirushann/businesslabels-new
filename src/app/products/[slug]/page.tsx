@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import ProductPurchase from "@/components/ProductPurchase";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 
 export const metadata: Metadata = {
@@ -384,9 +385,12 @@ export default async function SingleProductPage({
             {/* Image Gallery */}
             <div className="flex flex-col gap-10">
               <div className="flex justify-center items-center">
-                <img
+                <Image
                   src={mainImage}
                   alt={`${productName} main image`}
+                  width={460}
+                  height={509}
+                  unoptimized
                   className="w-[460px] h-[509px] object-contain"
                 />
               </div>
@@ -397,9 +401,12 @@ export default async function SingleProductPage({
                     key={`${thumbnail}-${index}`}
                     className={`w-24 h-24 relative bg-slate-100 rounded-lg overflow-hidden hover:outline hover:outline-1 hover:outline-amber-500 transition-all ${index === 0 ? "outline outline-1 outline-offset-[-1px] outline-amber-500" : ""}`}
                   >
-                    <img
+                    <Image
                       src={thumbnail}
                       alt={`Thumbnail ${index + 1}`}
+                      width={80}
+                      height={80}
+                      unoptimized
                       className="w-20 h-20 absolute top-2 left-2 object-contain"
                     />
                     {index === 3 ? (
@@ -528,9 +535,12 @@ export default async function SingleProductPage({
               const cardContent = (
                 <div className="bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col">
                 <div className="h-60 relative bg-slate-100 overflow-hidden rounded-t-xl">
-                  <img
+                  <Image
                     src={product.image}
                     alt={product.name}
+                    width={227}
+                    height={180}
+                    unoptimized
                     className="absolute left-1/2 top-[34px] -translate-x-1/2 h-44 object-contain"
                   />
                   <div className="absolute left-4 top-4 flex justify-between items-center w-[calc(100%-32px)]">
@@ -624,9 +634,12 @@ export default async function SingleProductPage({
               const cardContent = (
                 <div className="bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col">
                 <div className="h-60 relative bg-slate-100 overflow-hidden rounded-t-xl">
-                  <img
+                  <Image
                     src={product.image}
                     alt={product.name}
+                    width={180}
+                    height={180}
+                    unoptimized
                     className="absolute left-1/2 top-[34px] -translate-x-1/2 h-44 object-contain"
                   />
                   <div className="absolute left-4 top-4 flex justify-between items-center w-[calc(100%-32px)]">
@@ -720,9 +733,12 @@ export default async function SingleProductPage({
               const cardContent = (
                 <div className="bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col">
                 <div className="h-60 relative bg-slate-100 overflow-hidden rounded-t-xl">
-                  <img
+                  <Image
                     src={product.image}
                     alt={product.name}
+                    width={227}
+                    height={180}
+                    unoptimized
                     className="absolute left-1/2 top-[34px] -translate-x-1/2 h-44 object-contain"
                   />
                   <div className="absolute left-4 top-4 flex justify-between items-center w-[calc(100%-32px)]">
