@@ -38,7 +38,7 @@ export default function CategorySection() {
               <div className="absolute bottom-6 left-6 flex items-center gap-2">
                 <span className="text-white text-2xl font-semibold font-['Segoe_UI'] leading-7">{cat.name}</span>
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M10.8225 4.44751L15.375 9.00001L10.8225 13.5525" stroke="white" stroke-width="1.5" stroke-miterlimit="10" strokeLinecap="round" strokeLinejoin="round"/><path d="M2.625 9H15.2475" stroke="white" stroke-width="1.5" stroke-miterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M10.8225 4.44751L15.375 9.00001L10.8225 13.5525" stroke="white" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/><path d="M2.625 9H15.2475" stroke="white" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
             </Link>

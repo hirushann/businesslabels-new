@@ -28,16 +28,21 @@ export default async function PopularProducts() {
     throw new Error('BBNL_API_BASE_URL is not configured');
   }
 
-  const response = await fetch(`${baseUrl}/api/products`, {
-    cache: 'no-store',
-  });
+  let products: Product[] = [];
+  try {
+    const response = await fetch(`${baseUrl}/api/products`, {
+      cache: 'no-store',
+    });
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch products: ${response.status}`);
+    if (response.ok) {
+      const json = (await response.json()) as ProductsResponse;
+      products = json.data.slice(0, 4);
+    } else {
+      console.error(`Failed to fetch products: ${response.status}`);
+    }
+  } catch (error) {
+    console.error('Error fetching products:', error);
   }
-
-  const json = (await response.json()) as ProductsResponse;
-  const products = json.data.slice(0, 4);
 
   return (
     <section className="relative w-full px-10 py-28 overflow-hidden">
