@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import ProductPurchase from "@/components/ProductPurchase";
-import Link from "next/link";
+import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 
@@ -170,19 +170,7 @@ async function fetchProductByType(baseUrl: string, type: "simple" | "variable", 
   }
 }
 
-type DemoSectionCard = {
-  id: number;
-  name: string;
-  sku: string;
-  spec1: string;
-  spec2: string;
-  price: string;
-  inStock: boolean;
-  image: string;
-  typeLabel: string;
-  slug: string | null;
-  type: "simple" | "variable" | null;
-};
+type DemoSectionCard = ProductCardData;
 
 const DEMO_SECTION_IDS = {
   inkMaintenance: [1, 2, 3],
@@ -198,19 +186,6 @@ function toTitleCaseFromSlug(raw: string): string {
     .split(/\s+/)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
-}
-
-function formatEuroPrice(value: number | null | undefined): string {
-  if (typeof value !== "number" || !Number.isFinite(value)) {
-    return "-";
-  }
-
-  return new Intl.NumberFormat("nl-NL", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
 }
 
 function buildMetaSpecs(meta: ProductDetail["meta"]): string[] {
@@ -251,19 +226,25 @@ async function fetchProductById(baseUrl: string, id: number): Promise<ProductDet
 
 function mapProductToDemoCard(id: number, product: ProductDetail | null, placeholderImage: string): DemoSectionCard {
   const metaSpecs = buildMetaSpecs(product?.meta ?? null);
-  const firstFallbackSpec = normalizeValue(product?.material_information) || normalizeValue(product?.subtitle) || normalizeValue(product?.excerpt);
-  const secondFallbackSpec = normalizeValue(product?.excerpt);
+  const subtitle =
+    normalizeValue(product?.subtitle) ||
+    normalizeValue(product?.material_information) ||
+    metaSpecs[0] ||
+    "-";
+  const excerpt = normalizeValue(product?.excerpt) || metaSpecs[1] || "-";
 
   return {
     id,
     name: normalizeValue(product?.title) || normalizeValue(product?.name) || "-",
     sku: normalizeValue(product?.sku) || "-",
-    spec1: firstFallbackSpec || metaSpecs[0] || "-",
-    spec2: secondFallbackSpec || metaSpecs[1] || "-",
-    price: formatEuroPrice(product?.price),
+    subtitle,
+    excerpt,
+    materialTitle: normalizeValue(product?.material?.title),
+    price: product?.price ?? null,
+    originalPrice: product?.original_price ?? null,
     inStock: Boolean(product?.in_stock),
-    image: normalizeValue(product?.main_image) || placeholderImage,
-    typeLabel: normalizeValue(product?.type) ? toTitleCaseFromSlug(String(product?.type)) : "Inkjet",
+    mainImage: normalizeValue(product?.main_image) || placeholderImage,
+    categories: product?.categories ?? [],
     slug: normalizeValue(product?.slug),
     type: normalizeType(product?.type ?? undefined),
   };
@@ -377,9 +358,8 @@ export default async function SingleProductPage({
               <h1 className="text-neutral-800 text-3xl font-bold leading-10">
                 {productName}
               </h1>
-              <p className="text-neutral-700 text-lg font-normal leading-7">
-                {productDescription}
-              </p>
+              <div className="text-neutral-700 text-lg font-normal leading-7" dangerouslySetInnerHTML={{ __html: productDescription }}>
+              </div>
             </div>
 
             {/* Image Gallery */}
@@ -432,9 +412,8 @@ export default async function SingleProductPage({
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
                   </svg>
                 </div>
-                <p className="text-neutral-700 text-base font-normal leading-6">
-                  {productDescription}
-                </p>
+                <div className="text-neutral-700 text-base font-normal leading-6" dangerouslySetInnerHTML={{ __html: productDescription }}>
+                </div>
               </div>
 
               {/* Product Specifications Accordion */}
@@ -532,80 +511,8 @@ export default async function SingleProductPage({
           </div>
           <div className="grid grid-cols-3 gap-6">
             {inkMaintenanceCards.map((product) => {
-              const cardContent = (
-                <div className="bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col">
-                <div className="h-60 relative bg-slate-100 overflow-hidden rounded-t-xl">
-                  <Image
-                    src={product.image}
-                    alt={product.name}
-                    width={227}
-                    height={180}
-                    unoptimized
-                    className="absolute left-1/2 top-[34px] -translate-x-1/2 h-44 object-contain"
-                  />
-                  <div className="absolute left-4 top-4 flex justify-between items-center w-[calc(100%-32px)]">
-                    <div className="h-6 px-2.5 py-1 bg-white rounded-3xl flex items-center gap-1.5">
-                      <svg className="w-3 h-3 text-neutral-700" fill="none" stroke="currentColor" strokeWidth={1} viewBox="0 0 12 12">
-                        <rect x="1" y="4" width="10" height="7" rx="1" />
-                        <path d="M4 4V3a2 2 0 014 0v1" />
-                      </svg>
-                      <span className="text-neutral-700 text-xs font-normal leading-4">{product.typeLabel}</span>
-                    </div>
-                    <div className={`px-2.5 py-1 rounded-full flex items-center gap-1.5 ${product.inStock ? "bg-green-600" : "bg-gray-300"}`}>
-                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={1} viewBox="0 0 12 12">
-                        <circle cx="6" cy="6" r="5" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 6l1.5 1.5L8 4" />
-                      </svg>
-                      <span className="text-white text-xs font-normal leading-4">{product.inStock ? "In Stock" : "Out of Stock"}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-4 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] flex flex-col gap-4 flex-1">
-                  <div className="flex flex-col gap-4">
-                    <div className="flex flex-col gap-2">
-                      <span className="text-blue-400 text-sm font-normal leading-5">SKU: {product.sku}</span>
-                      <span className="text-neutral-800 text-xl font-semibold leading-6 line-clamp-1">{product.name}</span>
-                    </div>
-                    <div className="flex flex-col gap-4">
-                      {[product.spec1, product.spec2].map((spec) => (
-                        <div key={spec} className="flex items-center gap-2">
-                          <svg className="w-3 h-3 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1} viewBox="0 0 12 12">
-                            <circle cx="6" cy="6" r="5" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6l1.5 1.5L8 4" />
-                          </svg>
-                          <span className="text-neutral-700 text-base font-normal leading-5">{spec}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-4 mt-auto">
-                    <div className="h-px bg-slate-100" />
-                    <div className="flex justify-between items-center">
-                      <div className="flex flex-col gap-2">
-                        <span className="text-neutral-800 text-2xl font-bold leading-7">{product.price}</span>
-                        <span className="text-zinc-500 text-xs font-normal leading-4">ex. VAT</span>
-                      </div>
-                      <button className="h-9 px-4 py-2.5 bg-amber-500 rounded-[100px] flex items-center gap-2 hover:bg-amber-600 transition-colors pointer-events-none">
-                        <span className="text-white text-base font-semibold leading-6">Add</span>
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 20 16">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M1 1h3l2 9h10l2-7H5" />
-                          <circle cx="8" cy="13" r="1" />
-                          <circle cx="16" cy="13" r="1" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              );
-
-              if (!product.slug) {
-                return <div key={product.id}>{cardContent}</div>;
-              }
-
               const href = productHref(product);
-              if (!href) return <div key={product.id}>{cardContent}</div>;
-              return <Link key={product.id} href={href} className="block cursor-pointer">{cardContent}</Link>;
+              return <ProductCard key={product.id} product={product} href={href ?? undefined} />;
             })}
           </div>
         </div>
@@ -631,80 +538,8 @@ export default async function SingleProductPage({
           </div>
           <div className="grid grid-cols-3 gap-6">
             {badgesMediaCards.map((product) => {
-              const cardContent = (
-                <div className="bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col">
-                <div className="h-60 relative bg-slate-100 overflow-hidden rounded-t-xl">
-                  <Image
-                    src={product.image}
-                    alt={product.name}
-                    width={180}
-                    height={180}
-                    unoptimized
-                    className="absolute left-1/2 top-[34px] -translate-x-1/2 h-44 object-contain"
-                  />
-                  <div className="absolute left-4 top-4 flex justify-between items-center w-[calc(100%-32px)]">
-                    <div className="h-6 px-2.5 py-1 bg-white rounded-3xl flex items-center gap-1.5">
-                      <svg className="w-3 h-3 text-neutral-700" fill="none" stroke="currentColor" strokeWidth={1} viewBox="0 0 12 12">
-                        <rect x="1" y="4" width="10" height="7" rx="1" />
-                        <path d="M4 4V3a2 2 0 014 0v1" />
-                      </svg>
-                      <span className="text-neutral-700 text-xs font-normal leading-4">{product.typeLabel}</span>
-                    </div>
-                    <div className={`px-2.5 py-1 rounded-full flex items-center gap-1.5 ${product.inStock ? "bg-green-600" : "bg-gray-300"}`}>
-                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={1} viewBox="0 0 12 12">
-                        <circle cx="6" cy="6" r="5" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 6l1.5 1.5L8 4" />
-                      </svg>
-                      <span className="text-white text-xs font-normal leading-4">{product.inStock ? "In Stock" : "Out of Stock"}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-4 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] flex flex-col gap-4 flex-1">
-                  <div className="flex flex-col gap-4">
-                    <div className="flex flex-col gap-2">
-                      <span className="text-blue-400 text-sm font-normal leading-5">SKU: {product.sku}</span>
-                      <span className="text-neutral-800 text-xl font-semibold leading-6 line-clamp-1">{product.name}</span>
-                    </div>
-                    <div className="flex flex-col gap-4">
-                      {[product.spec1, product.spec2].map((spec) => (
-                        <div key={spec} className="flex items-center gap-2">
-                          <svg className="w-3 h-3 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1} viewBox="0 0 12 12">
-                            <circle cx="6" cy="6" r="5" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6l1.5 1.5L8 4" />
-                          </svg>
-                          <span className="text-neutral-700 text-base font-normal leading-5">{spec}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-4 mt-auto">
-                    <div className="h-px bg-slate-100" />
-                    <div className="flex justify-between items-center">
-                      <div className="flex flex-col gap-2">
-                        <span className="text-neutral-800 text-2xl font-bold leading-7">{product.price}</span>
-                        <span className="text-zinc-500 text-xs font-normal leading-4">ex. VAT</span>
-                      </div>
-                      <button className="h-9 px-4 py-2.5 bg-amber-500 rounded-[100px] flex items-center gap-2 hover:bg-amber-600 transition-colors pointer-events-none">
-                        <span className="text-white text-base font-semibold leading-6">Add</span>
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 20 16">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M1 1h3l2 9h10l2-7H5" />
-                          <circle cx="8" cy="13" r="1" />
-                          <circle cx="16" cy="13" r="1" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              );
-
-              if (!product.slug) {
-                return <div key={product.id}>{cardContent}</div>;
-              }
-
               const href = productHref(product);
-              if (!href) return <div key={product.id}>{cardContent}</div>;
-              return <Link key={product.id} href={href} className="block cursor-pointer">{cardContent}</Link>;
+              return <ProductCard key={product.id} product={product} href={href ?? undefined} />;
             })}
           </div>
         </div>
@@ -730,80 +565,8 @@ export default async function SingleProductPage({
           </div>
           <div className="grid grid-cols-3 gap-6">
             {hardwareCards.map((product) => {
-              const cardContent = (
-                <div className="bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col">
-                <div className="h-60 relative bg-slate-100 overflow-hidden rounded-t-xl">
-                  <Image
-                    src={product.image}
-                    alt={product.name}
-                    width={227}
-                    height={180}
-                    unoptimized
-                    className="absolute left-1/2 top-[34px] -translate-x-1/2 h-44 object-contain"
-                  />
-                  <div className="absolute left-4 top-4 flex justify-between items-center w-[calc(100%-32px)]">
-                    <div className="h-6 px-2.5 py-1 bg-white rounded-3xl flex items-center gap-1.5">
-                      <svg className="w-3 h-3 text-neutral-700" fill="none" stroke="currentColor" strokeWidth={1} viewBox="0 0 12 12">
-                        <rect x="1" y="4" width="10" height="7" rx="1" />
-                        <path d="M4 4V3a2 2 0 014 0v1" />
-                      </svg>
-                      <span className="text-neutral-700 text-xs font-normal leading-4">{product.typeLabel}</span>
-                    </div>
-                    <div className={`px-2.5 py-1 rounded-full flex items-center gap-1.5 ${product.inStock ? "bg-green-600" : "bg-gray-300"}`}>
-                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={1} viewBox="0 0 12 12">
-                        <circle cx="6" cy="6" r="5" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 6l1.5 1.5L8 4" />
-                      </svg>
-                      <span className="text-white text-xs font-normal leading-4">{product.inStock ? "In Stock" : "Out of Stock"}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-4 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] flex flex-col gap-4 flex-1">
-                  <div className="flex flex-col gap-4">
-                    <div className="flex flex-col gap-2">
-                      <span className="text-blue-400 text-sm font-normal leading-5">SKU: {product.sku}</span>
-                      <span className="text-neutral-800 text-xl font-semibold leading-6 line-clamp-1">{product.name}</span>
-                    </div>
-                    <div className="flex flex-col gap-4">
-                      {[product.spec1, product.spec2].map((spec) => (
-                        <div key={spec} className="flex items-center gap-2">
-                          <svg className="w-3 h-3 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1} viewBox="0 0 12 12">
-                            <circle cx="6" cy="6" r="5" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6l1.5 1.5L8 4" />
-                          </svg>
-                          <span className="text-neutral-700 text-base font-normal leading-5">{spec}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-4 mt-auto">
-                    <div className="h-px bg-slate-100" />
-                    <div className="flex justify-between items-center">
-                      <div className="flex flex-col gap-2">
-                        <span className="text-neutral-800 text-2xl font-bold leading-7">{product.price}</span>
-                        <span className="text-zinc-500 text-xs font-normal leading-4">ex. VAT</span>
-                      </div>
-                      <button className="h-9 px-4 py-2.5 bg-amber-500 rounded-[100px] flex items-center gap-2 hover:bg-amber-600 transition-colors pointer-events-none">
-                        <span className="text-white text-base font-semibold leading-6">Add</span>
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 20 16">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M1 1h3l2 9h10l2-7H5" />
-                          <circle cx="8" cy="13" r="1" />
-                          <circle cx="16" cy="13" r="1" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              );
-
-              if (!product.slug) {
-                return <div key={product.id}>{cardContent}</div>;
-              }
-
               const href = productHref(product);
-              if (!href) return <div key={product.id}>{cardContent}</div>;
-              return <Link key={product.id} href={href} className="block cursor-pointer">{cardContent}</Link>;
+              return <ProductCard key={product.id} product={product} href={href ?? undefined} />;
             })}
           </div>
         </div>

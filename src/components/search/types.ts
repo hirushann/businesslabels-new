@@ -5,6 +5,8 @@ export type SearchProduct = {
   type: 'simple' | 'variable' | string;
   title?: string | null;
   name?: string | null;
+  subtitle?: string | null;
+  excerpt?: string | null;
   slug?: string | null;
   sku?: string | null;
   article_number?: string | null;
@@ -13,6 +15,9 @@ export type SearchProduct = {
   stock?: number | null;
   in_stock?: boolean | null;
   main_image?: string | null;
+  categories?: Array<{ id?: number; name?: string | null }>;
+  material?: { title?: string | null } | null;
+  material_title?: string | null;
 };
 
 export type SearchPagination = {

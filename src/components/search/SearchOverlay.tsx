@@ -1,12 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
 import { SearchProvider, useSearch } from '@elastic/react-search-ui';
 import type { SearchDriverOptions } from '@elastic/search-ui';
 import { apiConnector, SORT_TO_SEARCH_UI, type OverlaySortValue } from './api';
 import { useNextRoutingOptions } from './useNextRouting';
+import ProductCard, { type ProductCardData } from '@/components/ProductCard';
 
 type SearchOverlayProps = {
   onClose: () => void;
@@ -24,13 +23,6 @@ const SORT_OPTIONS: Array<{ value: OverlaySortValue; label: string }> = [
 
 const PAGE_SIZE = 24;
 const MIN_QUERY_LENGTH = 2;
-
-function formatPrice(value: unknown): string {
-  const numericValue = valueAsNumber(value);
-  if (numericValue === null) return '-';
-
-  return `€${numericValue.toFixed(2)}`;
-}
 
 function getRaw(result: unknown, field: string): unknown {
   const entry = (result as Record<string, { raw?: unknown }>)?.[field];
@@ -118,6 +110,39 @@ function imageForProduct(result: unknown): string | null {
       const url = valueAsString((first as { url?: unknown }).url);
       if (url && url.trim() !== '') return url;
     }
+  }
+
+  return null;
+}
+
+function categoriesForProduct(result: unknown): Array<{ id?: number; name?: string | null }> {
+  const categories = getRaw(result, 'categories');
+  if (!Array.isArray(categories)) return [];
+
+  return categories
+    .map((category) => {
+      if (typeof category === 'string') {
+        return { name: category };
+      }
+
+      if (typeof category === 'object' && category !== null) {
+        const id = valueAsNumber((category as { id?: unknown }).id) ?? undefined;
+        const name = valueAsString((category as { name?: unknown }).name);
+        return { id, name };
+      }
+
+      return null;
+    })
+    .filter((category): category is { id?: number; name?: string | null } => Boolean(category));
+}
+
+function materialTitleForProduct(result: unknown): string | null {
+  const direct = valueAsString(getRaw(result, 'material_title'));
+  if (direct) return direct;
+
+  const material = getRaw(result, 'material');
+  if (material && typeof material === 'object') {
+    return valueAsString((material as { title?: unknown }).title);
   }
 
   return null;
@@ -330,89 +355,38 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                   {(results || []).map((result, resultIndex) => {
-                    const type = valueAsString(getRaw(result, 'product_type')) ?? valueAsString(getRaw(result, 'type'));
                     const normalizedType = normalizeResultType(getRaw(result, 'product_type')) ?? normalizeResultType(getRaw(result, 'type'));
                     const slug = valueAsString(getRaw(result, 'slug'));
-                    const inStock = valueAsBoolean(getRaw(result, 'in_stock'));
                     const image = toDisplayImageUrl(imageForProduct(result));
-                    const articleNumber = valueAsString(getRaw(result, 'article_number'));
                     const sku = valueAsString(getRaw(result, 'sku'));
-                    const stock = valueAsNumber(getRaw(result, 'stock'));
                     const id = valueAsString(getRaw(result, 'id')) ?? `result-${resultIndex}`;
-                    const cardContent = (
-                      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                        <div className="h-48 bg-slate-100 flex items-center justify-center overflow-hidden relative">
-                          {typeof image === 'string' && image ? (
-                            <Image
-                              src={image}
-                              alt={titleForProduct(result)}
-                              fill
-                              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
-                              unoptimized
-                              className="object-cover"
-                            />
-                          ) : (
-                            <span className="text-sm text-slate-400">No image</span>
-                          )}
-                        </div>
+                    const cardProduct: ProductCardData = {
+                      id,
+                      sku: sku || '-',
+                      name: titleForProduct(result),
+                      subtitle: valueAsString(getRaw(result, 'subtitle')),
+                      excerpt: valueAsString(getRaw(result, 'excerpt')),
+                      materialTitle: materialTitleForProduct(result),
+                      price: valueAsNumber(getRaw(result, 'price')),
+                      originalPrice: valueAsNumber(getRaw(result, 'original_price')),
+                      inStock: valueAsBoolean(getRaw(result, 'in_stock')),
+                      mainImage: image,
+                      categories: categoriesForProduct(result),
+                      slug,
+                      type: normalizedType,
+                    };
 
-                        <div className="p-4 flex flex-col gap-3">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-xs text-blue-500 uppercase tracking-wide">{String(type ?? '-')}</span>
-                            <span
-                              className={`text-xs px-2 py-1 rounded-full ${
-                                inStock ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'
-                              }`}
-                            >
-                              {inStock ? 'In stock' : 'Out of stock'}
-                            </span>
-                          </div>
+                    const href =
+                      slug && normalizedType
+                        ? {
+                            pathname: `/products/${slug}`,
+                            query: { type: normalizedType },
+                          }
+                        : slug
+                          ? `/products/${slug}`
+                          : undefined;
 
-                          <h3 className="text-base font-semibold text-neutral-800 line-clamp-2 min-h-12">
-                            {titleForProduct(result)}
-                          </h3>
-
-                          <div className="text-sm text-neutral-500">
-                            {typeof articleNumber === 'string' && articleNumber
-                              ? `Art: ${articleNumber}`
-                              : typeof sku === 'string' && sku
-                                ? `SKU: ${sku}`
-                                : '-'}
-                          </div>
-
-                          <div className="flex items-end justify-between gap-3">
-                            <div className="text-lg font-bold text-neutral-800">{formatPrice(getRaw(result, 'price'))}</div>
-                            {typeof stock === 'number' && <div className="text-xs text-neutral-500">Stock: {stock}</div>}
-                          </div>
-                        </div>
-                      </div>
-                    );
-
-                    if (!slug) {
-                      return (
-                        <div key={id}>
-                          {cardContent}
-                        </div>
-                      );
-                    }
-
-                    return (
-                      <Link
-                        key={id}
-                        href={
-                          normalizedType
-                            ? {
-                                pathname: `/products/${slug}`,
-                                query: { type: normalizedType },
-                              }
-                            : `/products/${slug}`
-                        }
-                        className="block"
-                        onClick={onClose}
-                      >
-                        {cardContent}
-                      </Link>
-                    );
+                    return <ProductCard key={id} product={cardProduct} href={href} onClick={onClose} />;
                   })}
                 </div>
 
@@ -493,12 +467,18 @@ export default function SearchOverlay({ onClose }: SearchOverlayProps) {
           slug: { raw: {} },
           article_number: { raw: {} },
           sku: { raw: {} },
+          subtitle: { raw: {} },
+          excerpt: { raw: {} },
           price: { raw: {} },
+          original_price: { raw: {} },
           stock: { raw: {} },
           in_stock: { raw: {} },
           main_image: { raw: {} },
           image: { raw: {} },
           images: { raw: {} },
+          categories: { raw: {} },
+          material: { raw: {} },
+          material_title: { raw: {} },
         },
       },
     }),

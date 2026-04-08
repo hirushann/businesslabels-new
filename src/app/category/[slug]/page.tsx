@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
+import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 
 export const metadata: Metadata = {
   title: "Labelprinters — BusinessLabels",
@@ -81,27 +82,17 @@ type ProductDetail = {
   slug?: string | null;
   sku?: string | null;
   price?: number | null;
+  original_price?: number | null;
   in_stock?: boolean | null;
   main_image?: string | null;
+  categories?: Array<{ id?: number; name?: string | null }>;
+  material?: {
+    title?: string | null;
+  } | null;
   material_information?: string | null;
 };
 
-type DemoTopProductCard = {
-  id: number;
-  type: string;
-  inStock: boolean;
-  badge?: string | null;
-  sku: string;
-  name: string;
-  spec1: string;
-  spec2: string;
-  price: string;
-  pricePrefix: string | null;
-  cta: string;
-  image: string;
-  slug: string | null;
-  productType: "simple" | "variable" | null;
-};
+type DemoTopProductCard = ProductCardData;
 
 const DEMO_TOP_PRODUCT_IDS = [1, 2, 3] as const;
 
@@ -129,29 +120,6 @@ function normalizeValue(value: unknown): string | null {
   return String(value).trim() || null;
 }
 
-function toTitleCaseFromSlug(raw: string): string {
-  return raw
-    .replace(/_/g, " ")
-    .replace(/-/g, " ")
-    .trim()
-    .split(/\s+/)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
-
-function formatEuroPrice(value: number | null | undefined): string {
-  if (typeof value !== "number" || !Number.isFinite(value)) {
-    return "-";
-  }
-
-  return new Intl.NumberFormat("nl-NL", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-}
-
 async function fetchProductById(baseUrl: string, id: number): Promise<ProductDetail | null> {
   for (const type of ["simple", "variable"] as const) {
     try {
@@ -173,29 +141,20 @@ async function fetchProductById(baseUrl: string, id: number): Promise<ProductDet
 }
 
 function mapProductToTopCard(id: number, product: ProductDetail | null): DemoTopProductCard {
-  const type = normalizeType(product?.type ?? undefined);
-  const firstSpec =
-    normalizeValue(product?.material_information) ||
-    normalizeValue(product?.subtitle) ||
-    normalizeValue(product?.excerpt) ||
-    "-";
-  const secondSpec = normalizeValue(product?.excerpt) || normalizeValue(product?.subtitle) || "-";
-
   return {
     id,
-    type: normalizeValue(product?.type) ? toTitleCaseFromSlug(String(product?.type)) : "Inkjet",
-    inStock: Boolean(product?.in_stock),
-    badge: null,
     sku: normalizeValue(product?.sku) || "-",
     name: normalizeValue(product?.title) || normalizeValue(product?.name) || "-",
-    spec1: firstSpec,
-    spec2: secondSpec,
-    price: formatEuroPrice(product?.price),
-    pricePrefix: type === "variable" ? "From" : null,
-    cta: "Add",
-    image: normalizeValue(product?.main_image) || "https://placehold.co/242x183",
+    subtitle: normalizeValue(product?.subtitle),
+    excerpt: normalizeValue(product?.excerpt),
+    materialTitle: normalizeValue(product?.material?.title),
+    price: product?.price ?? null,
+    originalPrice: product?.original_price ?? null,
+    inStock: Boolean(product?.in_stock),
+    mainImage: normalizeValue(product?.main_image) || "https://placehold.co/242x183",
+    categories: product?.categories ?? [],
     slug: normalizeValue(product?.slug),
-    productType: type,
+    type: normalizeType(product?.type ?? undefined),
   };
 }
 
@@ -213,10 +172,10 @@ function productHref(product: DemoTopProductCard): { pathname: string; query?: {
     return null;
   }
 
-  if (product.productType) {
+  if (product.type) {
     return {
       pathname: `/products/${product.slug}`,
-      query: { type: product.productType },
+      query: { type: product.type },
     };
   }
 
@@ -334,112 +293,8 @@ export default async function CategoryArchivePage() {
 
           <div className="grid grid-cols-3 gap-6">
             {topProducts.map((product) => {
-              const cardContent = (
-              <div
-                className="bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] outline outline-1 outline-offset-[-1px] outline-orange-50 flex flex-col"
-              >
-                {/* Image area */}
-                <div className="h-56 relative bg-slate-100 overflow-hidden rounded-t-xl">
-                  <div className="absolute left-4 top-4 flex justify-between items-center w-[calc(100%-32px)]">
-                    {/* Type badge */}
-                    <div className="h-6 px-2.5 py-1 bg-white rounded-3xl flex items-center gap-1.5">
-                      <svg className="w-3 h-3 text-neutral-700" fill="none" stroke="currentColor" strokeWidth={1} viewBox="0 0 12 12">
-                        <rect x="1" y="4" width="10" height="7" rx="1" />
-                        <path d="M4 4V3a2 2 0 014 0v1" />
-                      </svg>
-                      <span className="text-neutral-700 text-xs font-normal leading-4">{product.type}</span>
-                    </div>
-                    {/* Stock badge */}
-                    {product.inStock ? (
-                      <div className="px-2.5 py-1 bg-green-600 rounded-full flex items-center gap-1.5">
-                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={1} viewBox="0 0 12 12">
-                          <circle cx="6" cy="6" r="5" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 6l1.5 1.5L8 4" />
-                        </svg>
-                        <span className="text-white text-xs font-normal leading-4">In Stock</span>
-                      </div>
-                    ) : (
-                      <div className="px-2.5 py-1 bg-gray-100 rounded-full">
-                        <span className="text-zinc-500 text-xs font-normal leading-4">Out of Stock</span>
-                      </div>
-                    )}
-                  </div>
-                  {/* Per-box badge for label rolls */}
-                  {product.badge && (
-                    <div className="absolute right-4 bottom-4 h-6 px-2.5 py-1 bg-white rounded-md">
-                      <span className="text-neutral-700 text-xs font-normal leading-4">{product.badge}</span>
-                    </div>
-                  )}
-                  <Image
-                    src={product.image}
-                    alt={product.name}
-                    width={242}
-                    height={183}
-                    unoptimized
-                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 max-h-44 object-contain"
-                  />
-                </div>
-
-                {/* Card body */}
-                <div className="p-5 flex flex-col gap-4 flex-1">
-                  <div className="flex flex-col gap-4">
-                    <div className="flex flex-col gap-2">
-                      <span className="text-blue-400 text-sm font-normal leading-5">SKU: {product.sku}</span>
-                      <span className="text-neutral-800 text-xl font-semibold leading-6">{product.name}</span>
-                    </div>
-                    <div className="flex flex-col gap-4">
-                      {[product.spec1, product.spec2].map((spec, index) => (
-                        <div key={`${spec}-${index}`} className="flex items-center gap-2">
-                          <svg className="w-3 h-3 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1} viewBox="0 0 12 12">
-                            <circle cx="6" cy="6" r="5" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6l1.5 1.5L8 4" />
-                          </svg>
-                          <span className="text-neutral-700 text-base font-normal leading-5">{spec}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-4 mt-auto">
-                    <div className="h-px bg-orange-50" />
-                    <div className="flex justify-between items-center">
-                      <div className="flex flex-col gap-2">
-                        <div className="flex items-end gap-1.5">
-                          {product.pricePrefix && (
-                            <span className="text-neutral-800 text-xl font-normal leading-6">{product.pricePrefix}</span>
-                          )}
-                          <span className="text-neutral-800 text-2xl font-bold leading-7">{product.price}</span>
-                        </div>
-                        <span className="text-zinc-500 text-xs font-normal leading-4">ex. VAT</span>
-                      </div>
-                      <button className="h-9 px-4 py-2.5 bg-amber-500 rounded-[100px] flex items-center gap-2 hover:bg-amber-600 transition-colors">
-                        <span className="text-white text-base font-semibold leading-6">{product.cta}</span>
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 20 16">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M1 1h3l2 9h10l2-7H5" />
-                          <circle cx="8" cy="13" r="1" />
-                          <circle cx="16" cy="13" r="1" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              );
-
               const href = productHref(product);
-              if (!href) {
-                return (
-                  <div key={product.id}>
-                    {cardContent}
-                  </div>
-                );
-              }
-
-              return (
-                <Link key={product.id} href={href} className="block">
-                  {cardContent}
-                </Link>
-              );
+              return <ProductCard key={product.id} product={product} href={href ?? undefined} />;
             })}
           </div>
         </div>
