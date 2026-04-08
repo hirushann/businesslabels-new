@@ -33,16 +33,10 @@ function normalizeText(value: string | null | undefined): string | null {
 }
 
 function featureLines(product: ProductCardData): string[] {
-  const values = [product.subtitle, product.materialTitle, product.excerpt]
+  return [product.subtitle, product.materialTitle, product.excerpt]
     .map((value) => normalizeText(value))
     .filter((value): value is string => Boolean(value))
     .slice(0, 3);
-
-  while (values.length < 3) {
-    values.push("-");
-  }
-
-  return values;
 }
 
 export function lastCategoryLabel(categories: ProductCardData["categories"]): string {
@@ -108,24 +102,26 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
             <span className="text-blue-400 text-sm font-normal font-['Segoe_UI'] leading-5">SKU: {product.sku}</span>
             <h3 className="text-neutral-800 text-xl font-semibold font-['Segoe_UI'] leading-6">{product.name}</h3>
           </div>
-          <div className="flex flex-col gap-4">
-            {features.map((feature, index) => (
-              <div key={`${feature}-${index}`} className="flex items-center gap-2">
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <g clipPath="url(#clip0_89_3133)">
-                    <path d="M10.9013 4.99975C11.1296 6.1204 10.9669 7.28546 10.4402 8.30065C9.91352 9.31583 9.05473 10.1198 8.00704 10.5784C6.95935 11.037 5.7861 11.1226 4.68293 10.8209C3.57977 10.5192 2.61338 9.84845 1.94492 8.92046C1.27646 7.99247 0.946343 6.86337 1.00961 5.72144C1.07289 4.57952 1.52572 3.4938 2.29261 2.64534C3.05949 1.79688 4.09407 1.23697 5.22381 1.05898C6.35356 0.880989 7.51017 1.09568 8.50078 1.66725" stroke="#00C950" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M4.5 5.5L6 7L11 2" stroke="#00C950" strokeLinecap="round" strokeLinejoin="round" />
-                  </g>
-                  <defs>
-                    <clipPath id="clip0_89_3133">
-                      <rect width="12" height="12" fill="white" />
-                    </clipPath>
-                  </defs>
-                </svg>
-                <span className="text-neutral-700 text-base font-normal font-['Segoe_UI'] leading-5">{feature}</span>
-              </div>
-            ))}
-          </div>
+          {features.length > 0 && (
+            <div className="flex flex-col gap-4">
+              {features.map((feature, index) => (
+                <div key={`${feature}-${index}`} className="flex items-start gap-2">
+                  <svg className="shrink-0 mt-1" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g clipPath="url(#clip0_757_364)">
+                      <path d="M10.9013 4.99975C11.1296 6.1204 10.9669 7.28546 10.4402 8.30065C9.91352 9.31583 9.05473 10.1198 8.00704 10.5784C6.95935 11.037 5.7861 11.1226 4.68293 10.8209C3.57977 10.5192 2.61338 9.84845 1.94492 8.92046C1.27646 7.99247 0.946343 6.86337 1.00961 5.72144C1.07289 4.57952 1.52572 3.4938 2.29261 2.64534C3.05949 1.79688 4.09407 1.23697 5.22381 1.05898C6.35356 0.880989 7.51017 1.09568 8.50078 1.66725" stroke="#00C950" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M4.5 5.5L6 7L11 2" stroke="#00C950" strokeLinecap="round" strokeLinejoin="round" />
+                    </g>
+                    <defs>
+                      <clipPath id="clip0_757_364">
+                        <rect width="12" height="12" fill="white" />
+                      </clipPath>
+                    </defs>
+                  </svg>
+                  <span className="text-neutral-700 text-base font-normal font-['Segoe_UI'] leading-5">{feature}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col gap-4 mt-auto">
