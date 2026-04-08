@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import ProductPurchase from "@/components/ProductPurchase";
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
-import Image from "next/image";
+import ProductImageGallery from "@/components/ProductImageGallery";
 import { notFound } from "next/navigation";
 
 export const metadata: Metadata = {
@@ -81,75 +81,42 @@ function normalizeValue(value: unknown): string | null {
   return String(value).trim() || null;
 }
 
-function normalizeProductInformation(
-  value: ProductDetail["product_information"],
-): Record<string, unknown> | null {
-  if (!value) {
+function normalizeDisplayValue(value: unknown): string | null {
+  const normalized = normalizeValue(value);
+  if (!normalized) {
     return null;
   }
-  if (typeof value === "object" && !Array.isArray(value)) {
-    return value;
-  }
-  if (typeof value === "string") {
-    try {
-      const parsed = JSON.parse(value);
-      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-        return parsed as Record<string, unknown>;
-      }
-    } catch {
-      return null;
-    }
-  }
-  return null;
+
+  return toTitleCaseFromSlug(normalized);
 }
 
 function specsFromProduct(product: ProductDetail | null): Array<{ label: string; value: string }> {
   const missing = "-";
-  const normalizedInfo = normalizeProductInformation(product?.product_information ?? null);
   const meta = product?.meta ?? {};
   const categoryNames = (product?.categories ?? [])
-    .map((category) => normalizeValue(category.name))
+    .map((category) => normalizeDisplayValue(category.name))
     .filter((name): name is string => Boolean(name))
     .join(", ");
-
-  const pick = (...values: Array<unknown>): string => {
-    for (const value of values) {
-      const normalized = normalizeValue(value);
-      if (normalized) {
-        return normalized;
-      }
-    }
-    return missing;
-  };
-
-  return [
-    { label: "SKU", value: pick(product?.sku) },
-    { label: "Category", value: pick(categoryNames) },
-    { label: "Print Speed", value: pick(meta.print_speed, normalizedInfo?.print_speed) },
-    { label: "Print Resolution", value: pick(meta.print_resolution, normalizedInfo?.print_resolution) },
-    {
-      label: "Maximum Print Width",
-      value: pick(meta.maximum_print_width, meta.meta_width, normalizedInfo?.maximum_print_width),
-    },
-    {
-      label: "Print Technology",
-      value: pick(meta.print_technology, meta.druktype, normalizedInfo?.print_technology),
-    },
-    { label: "Cutter", value: pick(meta.cutter, normalizedInfo?.cutter) },
-    {
-      label: "Printer Type",
-      value: pick(meta.printer_type, meta.printertype, normalizedInfo?.printer_type),
-    },
-    { label: "Usage", value: pick(meta.usage, normalizedInfo?.usage) },
-    {
-      label: "Connectivity",
-      value: pick(meta.connectivity, normalizedInfo?.connectivity),
-    },
-    {
-      label: "Build Type",
-      value: pick(meta.build_type, normalizedInfo?.build_type),
-    },
+  const specRows: Array<{ label: string; value: string }> = [
+    { label: "SKU", value: normalizeDisplayValue(product?.sku) || missing },
+    { label: "Category", value: categoryNames || missing },
   ];
+
+  const metaRows = Object.entries(meta)
+    .map(([key, value]) => {
+      const normalizedValue = normalizeDisplayValue(value);
+      if (!normalizedValue) {
+        return null;
+      }
+
+      return {
+        label: toTitleCaseFromSlug(key),
+        value: normalizedValue,
+      };
+    })
+    .filter((entry): entry is { label: string; value: string } => Boolean(entry));
+
+  return [...specRows, ...metaRows];
 }
 
 async function fetchProductByType(baseUrl: string, type: "simple" | "variable", slug: string): Promise<ProductDetail | null> {
@@ -325,8 +292,7 @@ export default async function SingleProductPage({
   const mainImage = product?.main_image || "https://placehold.co/460x509";
   const galleryImages = (product?.gallery_images ?? [])
     .map((item) => item.url)
-    .filter((url): url is string => Boolean(url))
-    .slice(0, 4);
+    .filter((url): url is string => Boolean(url));
   const specs = specsFromProduct(product);
   const [inkMaintenanceCards, badgesMediaCards, hardwareCards] = await Promise.all([
     loadInkMaintenanceCards(baseUrl),
@@ -363,45 +329,11 @@ export default async function SingleProductPage({
             </div>
 
             {/* Image Gallery */}
-            <div className="flex flex-col gap-10">
-              <div className="flex justify-center items-center">
-                <Image
-                  src={mainImage}
-                  alt={`${productName} main image`}
-                  width={460}
-                  height={509}
-                  unoptimized
-                  className="w-[460px] h-[509px] object-contain"
-                />
-              </div>
-              {/* Thumbnails */}
-              <div className="flex items-center gap-5">
-                {(galleryImages.length > 0 ? galleryImages : Array.from({ length: 4 }).map(() => "https://placehold.co/80x80")).map((thumbnail, index) => (
-                  <button
-                    key={`${thumbnail}-${index}`}
-                    className={`w-24 h-24 relative bg-slate-100 rounded-lg overflow-hidden hover:outline hover:outline-1 hover:outline-amber-500 transition-all ${index === 0 ? "outline outline-1 outline-offset-[-1px] outline-amber-500" : ""}`}
-                  >
-                    <Image
-                      src={thumbnail}
-                      alt={`Thumbnail ${index + 1}`}
-                      width={80}
-                      height={80}
-                      unoptimized
-                      className="w-20 h-20 absolute top-2 left-2 object-contain"
-                    />
-                    {index === 3 ? (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-8 h-8 bg-white/80 rounded-lg flex items-center justify-center">
-                          <svg className="w-4 h-4 text-neutral-700" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-                          </svg>
-                        </div>
-                      </div>
-                    ) : null}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <ProductImageGallery
+              productName={productName}
+              mainImage={mainImage}
+              galleryImages={galleryImages}
+            />
 
             {/* Product Description Accordion */}
             <div className="flex flex-col gap-6">
@@ -424,7 +356,7 @@ export default async function SingleProductPage({
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
                   </svg>
                 </div>
-                <div className="rounded-lg overflow-hidden">
+                <div className="rounded-lg overflow-hidden pb-3">
                   {specs.map((spec, i) => (
                     <div
                       key={spec.label}
