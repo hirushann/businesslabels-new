@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
+import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 
 export const metadata: Metadata = {
   title: "Labelprinters — BusinessLabels",
@@ -70,45 +72,115 @@ const categories = [
   },
 ];
 
-const topProducts = [
-  {
-    sku: "EP-C3500",
-    name: "Epson CW-C6000Ae MK",
-    type: "Inkjet",
-    inStock: true,
-    spec1: "Print speed: 119 mm per second",
-    spec2: "Print resolution: 1200 x 1200 DPI",
-    price: "€2.302,30",
-    pricePrefix: null,
-    cta: "Add",
-    image: "https://placehold.co/165x183",
-  },
-  {
-    sku: "EP-C3500",
-    name: "1000D, 102 x 102 mm",
-    type: "Roll",
-    inStock: true,
-    badge: "6 per box",
-    spec1: "Mat papier",
-    spec2: "Geen belijming",
-    price: "€30,88",
-    pricePrefix: "From",
-    cta: "Select",
-    image: "https://placehold.co/152x138",
-  },
-  {
-    sku: "EP-C3500",
-    name: "Epson CW-C8000e BK",
-    type: "Inkjet",
-    inStock: false,
-    spec1: "Print resolution: 1,200 x 600 DPI",
-    spec2: "Printing speed: 300 mm per second",
-    price: "€6.495,28",
-    pricePrefix: null,
-    cta: "Add",
-    image: "https://placehold.co/242x183",
-  },
-];
+type ProductDetail = {
+  id?: number;
+  type?: string;
+  title?: string | null;
+  name?: string | null;
+  subtitle?: string | null;
+  excerpt?: string | null;
+  slug?: string | null;
+  sku?: string | null;
+  price?: number | null;
+  original_price?: number | null;
+  in_stock?: boolean | null;
+  main_image?: string | null;
+  categories?: Array<{ id?: number; name?: string | null }>;
+  material?: {
+    title?: string | null;
+  } | null;
+  material_information?: string | null;
+};
+
+type DemoTopProductCard = ProductCardData;
+
+const DEMO_TOP_PRODUCT_IDS = [1, 2, 3] as const;
+
+function normalizeType(raw: string | undefined): "simple" | "variable" | null {
+  if (raw === "simple" || raw === "variable") {
+    return raw;
+  }
+  return null;
+}
+
+function normalizeValue(value: unknown): string | null {
+  if (value == null) {
+    return null;
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed || null;
+  }
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? String(value) : null;
+  }
+  if (typeof value === "boolean") {
+    return value ? "Yes" : "No";
+  }
+  return String(value).trim() || null;
+}
+
+async function fetchProductById(baseUrl: string, id: number): Promise<ProductDetail | null> {
+  for (const type of ["simple", "variable"] as const) {
+    try {
+      const response = await fetch(`${baseUrl}/api/products/${type}/${id}`, { cache: "no-store" });
+      if (!response.ok) {
+        continue;
+      }
+
+      const json = (await response.json()) as { data?: ProductDetail };
+      if (json.data) {
+        return json.data;
+      }
+    } catch (error) {
+      console.error(`Failed to fetch top product by id '${id}'`, error);
+    }
+  }
+
+  return null;
+}
+
+function mapProductToTopCard(id: number, product: ProductDetail | null): DemoTopProductCard {
+  return {
+    id,
+    sku: normalizeValue(product?.sku) || "-",
+    name: normalizeValue(product?.title) || normalizeValue(product?.name) || "-",
+    subtitle: normalizeValue(product?.subtitle),
+    excerpt: normalizeValue(product?.excerpt),
+    materialTitle: normalizeValue(product?.material?.title),
+    price: product?.price ?? null,
+    originalPrice: product?.original_price ?? null,
+    inStock: Boolean(product?.in_stock),
+    mainImage: normalizeValue(product?.main_image) || "https://placehold.co/242x183",
+    categories: product?.categories ?? [],
+    slug: normalizeValue(product?.slug),
+    type: normalizeType(product?.type ?? undefined),
+  };
+}
+
+async function loadTopProducts(baseUrl: string | undefined): Promise<DemoTopProductCard[]> {
+  return Promise.all(
+    DEMO_TOP_PRODUCT_IDS.map(async (id) => {
+      const product = baseUrl ? await fetchProductById(baseUrl, id) : null;
+      return mapProductToTopCard(id, product);
+    }),
+  );
+}
+
+function productHref(product: DemoTopProductCard): { pathname: string; query?: { type: "simple" | "variable" } } | null {
+  if (!product.slug) {
+    return null;
+  }
+
+  if (product.type) {
+    return {
+      pathname: `/products/${product.slug}`,
+      query: { type: product.type },
+    };
+  }
+
+  return { pathname: `/products/${product.slug}` };
+}
 
 const reviews = [
   {
@@ -131,7 +203,10 @@ const reviews = [
   },
 ];
 
-export default function CategoryArchivePage() {
+export default async function CategoryArchivePage() {
+  const baseUrl = process.env.BBNL_API_BASE_URL;
+  const topProducts = await loadTopProducts(baseUrl);
+
   return (
     <div className="bg-white">
       {/* ── Hero Banner ─────────────────────────────────── */}
@@ -140,9 +215,11 @@ export default function CategoryArchivePage() {
 
           {/* Banner */}
           <div className="relative w-full h-56 rounded-xl overflow-hidden shadow-md">
-            <img
+            <Image
               src="/images/archive-banner.jpg"
               alt="Labelprinters banner"
+              fill
+              sizes="100vw"
               className="absolute inset-0 w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-black/30 bg-gradient-to-t from-black/40 to-transparent" />
@@ -167,7 +244,7 @@ export default function CategoryArchivePage() {
                   href={cat.href}
                   className="px-10 py-6 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col items-center gap-6 hover:shadow-[2px_4px_28px_0px_rgba(109,109,120,0.18)] hover:-translate-y-0.5 transition-all duration-200"
                 >
-                  <img src={cat.image} alt={cat.name} className="h-40 object-contain" />
+                  <Image src={cat.image} alt={cat.name} width={212} height={160} unoptimized className="h-40 w-auto object-contain" />
                   <span className="text-center text-neutral-800 text-xl font-bold leading-6">{cat.name}</span>
                 </Link>
               ))}
@@ -180,7 +257,7 @@ export default function CategoryArchivePage() {
                   href={cat.href}
                   className="px-10 py-6 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col items-center gap-6 hover:shadow-[2px_4px_28px_0px_rgba(109,109,120,0.18)] hover:-translate-y-0.5 transition-all duration-200"
                 >
-                  <img src={cat.image} alt={cat.name} className="h-40 object-contain" />
+                  <Image src={cat.image} alt={cat.name} width={212} height={160} unoptimized className="h-40 w-auto object-contain" />
                   <span className="text-center text-neutral-800 text-xl font-bold leading-6">{cat.name}</span>
                 </Link>
               ))}
@@ -193,7 +270,7 @@ export default function CategoryArchivePage() {
                   href={cat.href}
                   className="px-10 py-6 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col items-center gap-6 hover:shadow-[2px_4px_28px_0px_rgba(109,109,120,0.18)] hover:-translate-y-0.5 transition-all duration-200"
                 >
-                  <img src={cat.image} alt={cat.name} className="h-40 object-contain" />
+                  <Image src={cat.image} alt={cat.name} width={212} height={160} unoptimized className="h-40 w-auto object-contain" />
                   <span className="text-center text-neutral-800 text-xl font-bold leading-6">{cat.name}</span>
                 </Link>
               ))}
@@ -213,95 +290,10 @@ export default function CategoryArchivePage() {
           </div>
 
           <div className="grid grid-cols-3 gap-6">
-            {topProducts.map((product) => (
-              <div
-                key={product.name}
-                className="bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] outline outline-1 outline-offset-[-1px] outline-orange-50 flex flex-col"
-              >
-                {/* Image area */}
-                <div className="h-56 relative bg-slate-100 overflow-hidden rounded-t-xl">
-                  <div className="absolute left-4 top-4 flex justify-between items-center w-[calc(100%-32px)]">
-                    {/* Type badge */}
-                    <div className="h-6 px-2.5 py-1 bg-white rounded-3xl flex items-center gap-1.5">
-                      <svg className="w-3 h-3 text-neutral-700" fill="none" stroke="currentColor" strokeWidth={1} viewBox="0 0 12 12">
-                        <rect x="1" y="4" width="10" height="7" rx="1" />
-                        <path d="M4 4V3a2 2 0 014 0v1" />
-                      </svg>
-                      <span className="text-neutral-700 text-xs font-normal leading-4">{product.type}</span>
-                    </div>
-                    {/* Stock badge */}
-                    {product.inStock ? (
-                      <div className="px-2.5 py-1 bg-green-600 rounded-full flex items-center gap-1.5">
-                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={1} viewBox="0 0 12 12">
-                          <circle cx="6" cy="6" r="5" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 6l1.5 1.5L8 4" />
-                        </svg>
-                        <span className="text-white text-xs font-normal leading-4">In Stock</span>
-                      </div>
-                    ) : (
-                      <div className="px-2.5 py-1 bg-gray-100 rounded-full">
-                        <span className="text-zinc-500 text-xs font-normal leading-4">Out of Stock</span>
-                      </div>
-                    )}
-                  </div>
-                  {/* Per-box badge for label rolls */}
-                  {product.badge && (
-                    <div className="absolute right-4 bottom-4 h-6 px-2.5 py-1 bg-white rounded-md">
-                      <span className="text-neutral-700 text-xs font-normal leading-4">{product.badge}</span>
-                    </div>
-                  )}
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 max-h-44 object-contain"
-                  />
-                </div>
-
-                {/* Card body */}
-                <div className="p-5 flex flex-col gap-4 flex-1">
-                  <div className="flex flex-col gap-4">
-                    <div className="flex flex-col gap-2">
-                      <span className="text-blue-400 text-sm font-normal leading-5">SKU: {product.sku}</span>
-                      <span className="text-neutral-800 text-xl font-semibold leading-6">{product.name}</span>
-                    </div>
-                    <div className="flex flex-col gap-4">
-                      {[product.spec1, product.spec2].map((spec) => (
-                        <div key={spec} className="flex items-center gap-2">
-                          <svg className="w-3 h-3 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1} viewBox="0 0 12 12">
-                            <circle cx="6" cy="6" r="5" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6l1.5 1.5L8 4" />
-                          </svg>
-                          <span className="text-neutral-700 text-base font-normal leading-5">{spec}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-4 mt-auto">
-                    <div className="h-px bg-orange-50" />
-                    <div className="flex justify-between items-center">
-                      <div className="flex flex-col gap-2">
-                        <div className="flex items-end gap-1.5">
-                          {product.pricePrefix && (
-                            <span className="text-neutral-800 text-xl font-normal leading-6">{product.pricePrefix}</span>
-                          )}
-                          <span className="text-neutral-800 text-2xl font-bold leading-7">{product.price}</span>
-                        </div>
-                        <span className="text-zinc-500 text-xs font-normal leading-4">ex. VAT</span>
-                      </div>
-                      <button className="h-9 px-4 py-2.5 bg-amber-500 rounded-[100px] flex items-center gap-2 hover:bg-amber-600 transition-colors">
-                        <span className="text-white text-base font-semibold leading-6">{product.cta}</span>
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 20 16">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M1 1h3l2 9h10l2-7H5" />
-                          <circle cx="8" cy="13" r="1" />
-                          <circle cx="16" cy="13" r="1" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+            {topProducts.map((product) => {
+              const href = productHref(product);
+              return <ProductCard key={product.id} product={product} href={href ?? undefined} />;
+            })}
           </div>
         </div>
       </div>
