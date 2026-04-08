@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import SearchOverlay from './search/SearchOverlay';
+import HelpDrawer from './HelpDrawer';
 
 const navItems = [
   { label: 'Home', href: '/', active: true },
@@ -17,6 +18,7 @@ const navItems = [
 
 export default function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   return (
     <header className="w-full left-0 top-0 z-50 flex flex-col items-center">
@@ -104,7 +106,13 @@ export default function Header() {
           {/* Right controls */}
           <div className="flex items-center gap-5">
             {/* Need help CTA */}
-            <div className="pl-1.5 pr-8 py-2.5 bg-white rounded-full shadow border border-slate-100 flex items-center gap-2">
+            <button
+              type="button"
+              id="need-help-btn"
+              onClick={() => setIsHelpOpen(true)}
+              className="pl-1.5 pr-8 py-2.5 bg-white rounded-full shadow border border-slate-100 flex items-center gap-2 hover:shadow-md hover:border-sky-200 transition-all cursor-pointer"
+              aria-label="Open help drawer"
+            >
               <div className="flex items-center -space-x-2">
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="p-1.5 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 border-2 border-white flex items-center justify-center">
@@ -116,7 +124,7 @@ export default function Header() {
                 ))}
               </div>
               <span className="text-neutral-800 text-sm font-semibold leading-5">Need help?</span>
-            </div>
+            </button>
             {/* Language */}
             <div className="flex items-center gap-1">
               <div className="w-6 h-4 bg-sky-600 rounded-sm flex items-center justify-center overflow-hidden">
@@ -186,6 +194,7 @@ export default function Header() {
       </div>
 
       {isSearchOpen && <SearchOverlay onClose={() => setIsSearchOpen(false)} />}
+      {isHelpOpen && <HelpDrawer onClose={() => setIsHelpOpen(false)} />}
     </header>
   );
 }
