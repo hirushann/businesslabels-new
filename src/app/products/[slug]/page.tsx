@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import ProductPurchase from "@/components/ProductPurchase";
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 import ProductImageGallery from "@/components/ProductImageGallery";
+import { getDemoProductBySlug } from "@/lib/demoCatalog";
 import { notFound } from "next/navigation";
 
 export const metadata: Metadata = {
@@ -51,10 +52,6 @@ type ProductDetail = {
   } | null;
   categories?: Array<{ id?: number; name?: string | null }>;
 };
-
-const fallbackProductName = "Epson CW-C6000Ae MK";
-const fallbackDescription =
-  "Premium matte paper labels perfect for product labeling, shipping labels, and general purpose use. Compatible with Epson ColorWorks inkjet label printers.";
 
 function normalizeType(raw: string | string[] | undefined): "simple" | "variable" | null {
   const value = Array.isArray(raw) ? raw[0] : raw;
@@ -270,8 +267,13 @@ export default async function SingleProductPage({
 
   let product: ProductDetail | null = null;
   const selectedType = normalizeType(query.type);
+  const demoProduct = getDemoProductBySlug(slug);
 
-  if (baseUrl) {
+  if (demoProduct) {
+    product = demoProduct;
+  }
+
+  if (!product && baseUrl) {
     const tryTypes: Array<"simple" | "variable"> = selectedType
       ? [selectedType]
       : ["simple", "variable"];
@@ -287,10 +289,14 @@ export default async function SingleProductPage({
     console.error("BBNL_API_BASE_URL is not configured");
   }
 
-  const productName = product?.title || product?.name || fallbackProductName;
-  const productDescription = product?.description || product?.excerpt || fallbackDescription;
-  const mainImage = product?.main_image || "https://placehold.co/460x509";
-  const galleryImages = (product?.gallery_images ?? [])
+  if (!product) {
+    notFound();
+  }
+
+  const productName = product.title || product.name || "";
+  const productDescription = product.description || product.excerpt || "";
+  const mainImage = product.main_image || "";
+  const galleryImages = (product.gallery_images ?? [])
     .map((item) => item.url)
     .filter((url): url is string => Boolean(url));
   const specs = specsFromProduct(product);
@@ -321,11 +327,15 @@ export default async function SingleProductPage({
           <div className="flex-1 flex flex-col gap-12">
             {/* Title & Description */}
             <div className="flex flex-col gap-4">
-              <h1 className="text-neutral-800 text-3xl font-bold leading-10">
-                {productName}
-              </h1>
-              <div className="text-neutral-700 text-lg font-normal leading-7" dangerouslySetInnerHTML={{ __html: productDescription }}>
-              </div>
+              {productName ? (
+                <h1 className="text-neutral-800 text-3xl font-bold leading-10">
+                  {productName}
+                </h1>
+              ) : null}
+              {productDescription ? (
+                <div className="text-neutral-700 text-lg font-normal leading-7" dangerouslySetInnerHTML={{ __html: productDescription }}>
+                </div>
+              ) : null}
             </div>
 
             {/* Image Gallery */}
@@ -344,8 +354,14 @@ export default async function SingleProductPage({
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
                   </svg>
                 </div>
-                <div className="text-neutral-700 text-base font-normal leading-6" dangerouslySetInnerHTML={{ __html: productDescription }}>
-                </div>
+                {productDescription ? (
+                  <div className="text-neutral-700 text-base font-normal leading-6" dangerouslySetInnerHTML={{ __html: productDescription }}>
+                  </div>
+                ) : (
+                  <div className="text-neutral-500 text-base font-normal leading-6">
+                    No product description available.
+                  </div>
+                )}
               </div>
 
               {/* Product Specifications Accordion */}

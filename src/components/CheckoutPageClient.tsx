@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import EmptyState from "@/components/EmptyState";
-import { useCart } from "@/components/CartProvider";
+import { type CartItem, useCart } from "@/components/CartProvider";
 
 type CheckoutFormState = {
   firstName: string;
@@ -19,6 +19,13 @@ type CheckoutFormState = {
   cardNumber: string;
   expiryDate: string;
   cvv: string;
+};
+
+type CheckoutMode = "live" | "demo";
+
+type CheckoutPageClientProps = {
+  mode?: CheckoutMode;
+  demoItems?: CartItem[];
 };
 
 const DELIVERY_FEE = 9.95;
@@ -38,6 +45,21 @@ const initialFormState: CheckoutFormState = {
   cvv: "",
 };
 
+const demoFormState: CheckoutFormState = {
+  firstName: "Emma",
+  lastName: "van Dijk",
+  email: "emma.vandijk@example.com",
+  mobileNumber: "+31 6 1234 5678",
+  streetAddress: "Keizersgracht 214",
+  country: "Netherlands",
+  city: "Amsterdam",
+  state: "North Holland",
+  postcode: "1016 DW",
+  cardNumber: "4242 4242 4242 4242",
+  expiryDate: "08/28",
+  cvv: "428",
+};
+
 function formatEuro(value: number): string {
   return new Intl.NumberFormat("nl-NL", {
     style: "currency",
@@ -55,86 +77,52 @@ function inputClasses(hasError = false): string {
   }`;
 }
 
-export default function CheckoutPageClient() {
-  const {
-    items,
-    totalAmount,
-    removeItem,
-    incrementItemQuantity,
-    decrementItemQuantity,
-    clearCart,
-  } = useCart();
-  const [form, setForm] = useState<CheckoutFormState>(initialFormState);
-  const [errors, setErrors] = useState<Partial<Record<keyof CheckoutFormState, string>>>({});
-  const [isSubmitted, setIsSubmitted] = useState(false);
+function linePrice(item: CartItem): number {
+  const price = typeof item.price === "number" && Number.isFinite(item.price) ? item.price : 0;
+  return price * item.quantity;
+}
 
+function CheckoutShell({
+  items,
+  isSubmitted,
+  totalAmount,
+  removeItem,
+  incrementItemQuantity,
+  decrementItemQuantity,
+  handleSubmit,
+  form,
+  errors,
+  handleChange,
+  browseHref,
+  successDescription,
+}: {
+  items: CartItem[];
+  isSubmitted: boolean;
+  totalAmount: number;
+  removeItem: (key: string) => void;
+  incrementItemQuantity: (key: string) => void;
+  decrementItemQuantity: (key: string) => void;
+  handleSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  form: CheckoutFormState;
+  errors: Partial<Record<keyof CheckoutFormState, string>>;
+  handleChange: (field: keyof CheckoutFormState, value: string) => void;
+  browseHref: string;
+  successDescription: string;
+}) {
   const finalTotal = useMemo(
     () => totalAmount + (items.length > 0 ? DELIVERY_FEE : 0),
     [items.length, totalAmount],
   );
 
-  const handleChange = (field: keyof CheckoutFormState, value: string) => {
-    setForm((current) => ({ ...current, [field]: value }));
-    setErrors((current) => ({ ...current, [field]: undefined }));
-  };
-
-  const validate = (): boolean => {
-    const nextErrors: Partial<Record<keyof CheckoutFormState, string>> = {};
-    const requiredFields: Array<keyof CheckoutFormState> = [
-      "firstName",
-      "lastName",
-      "email",
-      "mobileNumber",
-      "streetAddress",
-      "city",
-      "state",
-      "postcode",
-      "cardNumber",
-      "expiryDate",
-      "cvv",
-    ];
-
-    for (const field of requiredFields) {
-      if (!form[field].trim()) {
-        nextErrors[field] = "Required";
-      }
-    }
-
-    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      nextErrors.email = "Enter a valid email";
-    }
-
-    setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
-  };
-
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (items.length === 0) {
-      return;
-    }
-
-    if (!validate()) {
-      return;
-    }
-
-    clearCart();
-    setIsSubmitted(true);
-  };
-
   if (isSubmitted) {
     return (
-      <div className="bg-slate-50 px-6 py-12 lg:px-10 lg:py-16">
-        <div className="mx-auto max-w-[1240px]">
-          <div className="rounded-[28px] border border-slate-200 bg-white px-8 py-16 shadow-[2px_8px_40px_0px_rgba(109,109,120,0.10)]">
-            <EmptyState
-              title="Order placed successfully"
-              description="This is a demo checkout flow. Your cart has been cleared and no payment was processed."
-            />
+      <div className="bg-slate-50 px-5 py-15">
+        <div className="mx-auto max-w-[80%]">
+          <div className="rounded-3xl border border-slate-200 bg-white px-8 py-16 shadow-[2px_8px_40px_0px_rgba(109,109,120,0.10)]">
+            <EmptyState title="Order placed successfully" description={successDescription} />
             <div className="mt-8 flex justify-center">
               <Link
-                href="/products"
+                href={browseHref}
                 className="inline-flex h-12 items-center justify-center rounded-full bg-amber-500 px-6 text-base font-semibold text-white transition-colors hover:bg-amber-600"
               >
                 Continue Shopping
@@ -147,9 +135,9 @@ export default function CheckoutPageClient() {
   }
 
   return (
-    <div className="bg-slate-50 px-6 py-12 lg:px-10 lg:py-16">
-      <div className="mx-auto max-w-[1240px]">
-        <div className="rounded-[28px] border border-slate-200 bg-white shadow-[2px_8px_40px_0px_rgba(109,109,120,0.10)]">
+    <div className="bg-slate-50 px-5 py-15">
+      <div className="mx-auto max-w-[80%]">
+        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[2px_8px_40px_0px_rgba(109,109,120,0.10)]">
           {items.length === 0 ? (
             <div className="px-8 py-16">
               <EmptyState
@@ -167,7 +155,11 @@ export default function CheckoutPageClient() {
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_0.9fr]">
-              <form id="checkout-form" onSubmit={handleSubmit} className="border-b border-slate-200 p-8 lg:border-b-0 lg:border-r">
+              <form
+                id="checkout-form"
+                onSubmit={handleSubmit}
+                className="border-b border-slate-200 p-8 lg:border-b-0 lg:border-r"
+              >
                 <div className="flex flex-col gap-8">
                   <Link
                     href="/products"
@@ -279,14 +271,14 @@ export default function CheckoutPageClient() {
                 </div>
               </form>
 
-              <aside className="bg-slate-50 p-8">
+              <aside className="bg-slate-50 p-8 lg:rounded-br-3xl lg:rounded-tr-3xl">
                 <div className="flex flex-col gap-8">
                   <div className="flex flex-col gap-3">
                     <span className="text-neutral-600 text-base font-semibold leading-6">Total Price</span>
                     <span className="text-neutral-800 text-5xl font-bold leading-[56px]">{formatEuro(finalTotal)}</span>
                   </div>
 
-                  <div className="flex flex-col gap-3 rounded-2xl bg-white p-5 border border-slate-200">
+                  <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-5">
                     <div className="flex items-center justify-between text-neutral-700">
                       <span>Subtotal</span>
                       <span className="font-semibold">{formatEuro(totalAmount)}</span>
@@ -311,32 +303,40 @@ export default function CheckoutPageClient() {
                     <div className="flex flex-col gap-4">
                       {items.map((item) => {
                         const imageSrc = item.mainImage?.trim() || "https://placehold.co/120x96";
-                        const linePrice = (item.price ?? 0) * item.quantity;
 
                         return (
-                          <div key={item.key} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[2px_6px_20px_0px_rgba(109,109,120,0.06)]">
-                            <div className="flex gap-4">
+                          <div
+                            key={item.key}
+                            className="relative rounded-3xl border border-slate-200 bg-white p-4 shadow-[2px_6px_20px_0px_rgba(109,109,120,0.06)]"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => removeItem(item.key)}
+                              aria-label={`Remove ${item.name} from checkout`}
+                              className="absolute right-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-zinc-500 transition-colors hover:bg-red-50 hover:text-red-600"
+                            >
+                              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                <path d="M2 2L10 10M10 2L2 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                              </svg>
+                            </button>
+
+                            <div className="flex gap-4 pr-8">
                               <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-slate-100">
                                 <Image src={imageSrc} alt={item.name} fill sizes="96px" className="object-cover" unoptimized />
                               </div>
 
-                              <div className="flex min-w-0 flex-1 flex-col gap-3">
-                                <div className="flex items-start justify-between gap-3">
-                                  <div className="min-w-0">
-                                    <h3 className="text-neutral-800 text-base font-semibold leading-6">{item.name}</h3>
+                              <div className="flex min-w-0 flex-1 flex-col justify-between gap-3">
+                                <div className="flex items-start gap-3">
+                                  <div className="min-w-0 flex-1">
+                                    <h3 className="truncate text-neutral-800 text-base font-semibold leading-6">
+                                      {item.name}
+                                    </h3>
                                     <p className="text-blue-400 text-sm leading-5">SKU: {item.sku}</p>
                                   </div>
-                                  <button
-                                    type="button"
-                                    onClick={() => removeItem(item.key)}
-                                    className="text-zinc-500 text-sm underline underline-offset-2 transition-colors hover:text-red-600"
-                                  >
-                                    Remove
-                                  </button>
                                 </div>
 
-                                <div className="flex items-center justify-between gap-3">
-                                  <span className="text-neutral-800 text-lg font-bold leading-6">{formatEuro(linePrice)}</span>
+                                <div className="mt-auto flex items-end justify-between gap-3">
+                                  <span className="text-neutral-800 text-lg font-bold leading-6">{formatEuro(linePrice(item))}</span>
 
                                   <div className="flex h-10 items-center rounded-full border border-slate-200 bg-white px-1">
                                     <button
@@ -380,5 +380,127 @@ export default function CheckoutPageClient() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CheckoutPageClient({
+  mode = "live",
+  demoItems = [],
+}: CheckoutPageClientProps) {
+  const cart = useCart();
+  const isDemoMode = mode === "demo";
+  const [form, setForm] = useState<CheckoutFormState>(
+    isDemoMode ? demoFormState : initialFormState,
+  );
+  const [errors, setErrors] = useState<Partial<Record<keyof CheckoutFormState, string>>>({});
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [localDemoItems, setLocalDemoItems] = useState<CartItem[]>(demoItems);
+
+  const handleChange = (field: keyof CheckoutFormState, value: string) => {
+    setForm((current) => ({ ...current, [field]: value }));
+    setErrors((current) => ({ ...current, [field]: undefined }));
+  };
+
+  const validate = (): boolean => {
+    const nextErrors: Partial<Record<keyof CheckoutFormState, string>> = {};
+    const requiredFields: Array<keyof CheckoutFormState> = [
+      "firstName",
+      "lastName",
+      "email",
+      "mobileNumber",
+      "streetAddress",
+      "city",
+      "state",
+      "postcode",
+      "cardNumber",
+      "expiryDate",
+      "cvv",
+    ];
+
+    for (const field of requiredFields) {
+      if (!form[field].trim()) {
+        nextErrors[field] = "Required";
+      }
+    }
+
+    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      nextErrors.email = "Enter a valid email";
+    }
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const items = isDemoMode ? localDemoItems : cart.items;
+  const totalAmount = useMemo(
+    () => items.reduce((sum, item) => sum + linePrice(item), 0),
+    [items],
+  );
+
+  const removeItem = (key: string) => {
+    if (isDemoMode) {
+      setLocalDemoItems((current) => current.filter((item) => item.key !== key));
+      return;
+    }
+    cart.removeItem(key);
+  };
+
+  const incrementItemQuantity = (key: string) => {
+    if (isDemoMode) {
+      setLocalDemoItems((current) =>
+        current.map((item) => (item.key === key ? { ...item, quantity: item.quantity + 1 } : item)),
+      );
+      return;
+    }
+    cart.incrementItemQuantity(key);
+  };
+
+  const decrementItemQuantity = (key: string) => {
+    if (isDemoMode) {
+      setLocalDemoItems((current) =>
+        current.map((item) =>
+          item.key === key
+            ? { ...item, quantity: item.quantity > 1 ? item.quantity - 1 : 1 }
+            : item,
+        ),
+      );
+      return;
+    }
+    cart.decrementItemQuantity(key);
+  };
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (items.length === 0 || !validate()) {
+      return;
+    }
+
+    if (!isDemoMode) {
+      cart.clearCart();
+    }
+
+    setIsSubmitted(true);
+  };
+
+  return (
+    <CheckoutShell
+      items={items}
+      isSubmitted={isSubmitted}
+      totalAmount={totalAmount}
+      removeItem={removeItem}
+      incrementItemQuantity={incrementItemQuantity}
+      decrementItemQuantity={decrementItemQuantity}
+      handleSubmit={handleSubmit}
+      form={form}
+      errors={errors}
+      handleChange={handleChange}
+      browseHref={isDemoMode ? "/category/demo" : "/products"}
+      successDescription={
+        isDemoMode
+          ? "This demo checkout completed successfully. The live cart was left unchanged."
+          : "This is a demo checkout flow. Your cart has been cleared and no payment was processed."
+      }
+    />
   );
 }

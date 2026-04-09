@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function CheckoutPage() {
-  return <CheckoutPageClient />;
+  return <CheckoutPageClient mode="live" />;
 }

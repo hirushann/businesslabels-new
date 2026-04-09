@@ -42,7 +42,7 @@ export default function ProductPurchase({
   const increment = () => setQuantity((prev) => prev + 1);
   const decrement = () => setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
 
-  const displaySku = sku?.trim() ? sku : "EP-C3500";
+  const displaySku = sku?.trim() ? sku : "-";
   const displayName = name?.trim() ? name : "Product";
   const hasPrice = typeof price === "number" && Number.isFinite(price);
   const hasOriginalPrice =
@@ -90,7 +90,7 @@ export default function ProductPurchase({
         </div>
         <div className="flex items-baseline gap-2">
           <span className="text-neutral-800 text-4xl font-bold leading-[48px]">
-            {hasPrice ? formatEuro(price) : "€0,00"}
+            {hasPrice ? formatEuro(price) : "-"}
           </span>
           {hasOriginalPrice ? (
             <span className="text-zinc-500 text-2xl font-normal line-through leading-7">

@@ -20,7 +20,14 @@ function formatEuro(value: number): string {
 }
 
 export default function CartDrawer({ onClose }: CartDrawerProps) {
-  const { items, uniqueItemCount, totalAmount, removeItem } = useCart();
+  const {
+    items,
+    uniqueItemCount,
+    totalAmount,
+    removeItem,
+    incrementItemQuantity,
+    decrementItemQuantity,
+  } = useCart();
 
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
@@ -129,9 +136,27 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                         </div>
 
                         <div className="flex items-center justify-between gap-3">
-                          <span className="text-neutral-600 text-sm font-normal font-['Segoe_UI'] leading-5">
-                            Qty: {item.quantity}
-                          </span>
+                          <div className="flex h-9 items-center rounded-full border border-slate-200 bg-white px-1">
+                            <button
+                              type="button"
+                              onClick={() => decrementItemQuantity(item.key)}
+                              className="flex h-7 w-7 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-slate-100"
+                              aria-label={`Decrease quantity for ${item.name}`}
+                            >
+                              -
+                            </button>
+                            <span className="min-w-7 text-center text-sm font-semibold text-neutral-800">
+                              {item.quantity}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => incrementItemQuantity(item.key)}
+                              className="flex h-7 w-7 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-slate-100"
+                              aria-label={`Increase quantity for ${item.name}`}
+                            >
+                              +
+                            </button>
+                          </div>
                           <span className="text-neutral-800 text-lg font-bold font-['Segoe_UI'] leading-6">
                             {formatEuro(linePrice)}
                           </span>
@@ -163,7 +188,6 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
           <Link
             href="/checkout"
             onClick={onClose}
-            disabled={items.length === 0}
             aria-disabled={items.length === 0}
             className={`h-12 px-4 py-2.5 rounded-full text-white text-base font-semibold font-['Segoe_UI'] leading-6 transition-colors flex items-center justify-center ${
               items.length === 0
