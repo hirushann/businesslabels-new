@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useEffect } from 'react';
 import EmptyState from '@/components/EmptyState';
 import { useCart } from '@/components/CartProvider';
@@ -159,13 +160,19 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
             </span>
           </div>
 
-          <button
-            type="button"
+          <Link
+            href="/checkout"
+            onClick={onClose}
             disabled={items.length === 0}
-            className="h-12 px-4 py-2.5 bg-amber-500 rounded-full text-white text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors disabled:bg-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed"
+            aria-disabled={items.length === 0}
+            className={`h-12 px-4 py-2.5 rounded-full text-white text-base font-semibold font-['Segoe_UI'] leading-6 transition-colors flex items-center justify-center ${
+              items.length === 0
+                ? 'bg-slate-200 text-slate-500 pointer-events-none'
+                : 'bg-amber-500 hover:bg-amber-600'
+            }`}
           >
             Checkout
-          </button>
+          </Link>
         </div>
       </div>
 
