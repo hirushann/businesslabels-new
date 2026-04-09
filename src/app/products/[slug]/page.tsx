@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Accordion from "@/components/Accordion";
 import ProductPurchase from "@/components/ProductPurchase";
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 import ProductImageGallery from "@/components/ProductImageGallery";
@@ -345,45 +346,37 @@ export default async function SingleProductPage({
               galleryImages={galleryImages}
             />
 
-            {/* Product Description Accordion */}
             <div className="flex flex-col gap-6">
-              <div className="p-6 bg-gray-50 rounded-xl outline outline-1 outline-offset-[-1px] outline-black/10">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-neutral-700 text-2xl font-bold leading-7">Product Description</h2>
-                  <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
-                  </svg>
-                </div>
+              <Accordion
+                title="Product Description"
+              >
                 {productDescription ? (
-                  <div className="text-neutral-700 text-base font-normal leading-6" dangerouslySetInnerHTML={{ __html: productDescription }}>
-                  </div>
+                  <div
+                    className="text-neutral-700 text-base font-normal leading-6"
+                    dangerouslySetInnerHTML={{ __html: productDescription }}
+                  />
                 ) : (
                   <div className="text-neutral-500 text-base font-normal leading-6">
                     No product description available.
                   </div>
                 )}
-              </div>
+              </Accordion>
 
-              {/* Product Specifications Accordion */}
-              <div className="pt-6 bg-gray-50 rounded-xl outline outline-1 outline-offset-[-1px] outline-black/10">
-                <div className="px-6 flex justify-between items-center mb-4">
-                  <h2 className="text-neutral-700 text-2xl font-bold leading-7">Product specifications</h2>
-                  <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
-                  </svg>
-                </div>
-                <div className="rounded-lg overflow-hidden pb-3">
+              <Accordion
+                title="Product specifications"
+              >
+                <div className="rounded-lg overflow-hidden flex flex-col gap-2">
                   {specs.map((spec, i) => (
                     <div
                       key={spec.label}
-                      className={`px-6 py-3 flex justify-between items-center ${i % 2 === 0 ? "bg-white/50" : ""}`}
+                      className={`flex py-3 justify-between items-center ${i % 2 === 0 ? "bg-white/50" : ""}`}
                     >
-                      <span className="text-neutral-700 text-base font-normal leading-6">{spec.label}</span>
-                      <span className="text-neutral-700 text-base font-semibold leading-6">{spec.value}</span>
+                      <span className="text-neutral-500 text-base font-normal">{spec.label}</span>
+                      <span className="text-neutral-700 text-base font-medium">{spec.value}</span>
                     </div>
                   ))}
                 </div>
-              </div>
+              </Accordion>
 
               {/* Compatibility CTA */}
               <div className="p-6 bg-gradient-to-br from-orange-50 to-white rounded-xl outline outline-2 outline-offset-[-2px] outline-orange-100">

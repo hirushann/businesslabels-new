@@ -154,7 +154,7 @@ function CheckoutShell({
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_0.9fr]">
+            <div className="grid grid-cols-1 lg:grid-cols-[1.45fr_0.75fr]">
               <form
                 id="checkout-form"
                 onSubmit={handleSubmit}
@@ -307,32 +307,31 @@ function CheckoutShell({
                         return (
                           <div
                             key={item.key}
-                            className="relative rounded-3xl border border-slate-200 bg-white p-4 shadow-[2px_6px_20px_0px_rgba(109,109,120,0.06)]"
+                            className="rounded-3xl border border-slate-200 bg-white p-4 shadow-[2px_6px_20px_0px_rgba(109,109,120,0.06)]"
                           >
-                            <button
-                              type="button"
-                              onClick={() => removeItem(item.key)}
-                              aria-label={`Remove ${item.name} from checkout`}
-                              className="absolute right-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-zinc-500 transition-colors hover:bg-red-50 hover:text-red-600"
-                            >
-                              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                                <path d="M2 2L10 10M10 2L2 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                              </svg>
-                            </button>
-
-                            <div className="flex gap-4 pr-8">
+                            <div className="flex gap-4">
                               <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-slate-100">
                                 <Image src={imageSrc} alt={item.name} fill sizes="96px" className="object-cover" unoptimized />
                               </div>
 
                               <div className="flex min-w-0 flex-1 flex-col justify-between gap-3">
-                                <div className="flex items-start gap-3">
+                                <div className="flex items-start justify-between gap-3">
                                   <div className="min-w-0 flex-1">
                                     <h3 className="truncate text-neutral-800 text-base font-semibold leading-6">
                                       {item.name}
                                     </h3>
                                     <p className="text-blue-400 text-sm leading-5">SKU: {item.sku}</p>
                                   </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeItem(item.key)}
+                                    aria-label={`Remove ${item.name} from checkout`}
+                                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-zinc-500 transition-colors hover:bg-red-50 hover:text-red-600"
+                                  >
+                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                      <path d="M2 2L10 10M10 2L2 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                                    </svg>
+                                  </button>
                                 </div>
 
                                 <div className="mt-auto flex items-end justify-between gap-3">
