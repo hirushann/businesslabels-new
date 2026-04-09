@@ -40,6 +40,10 @@ type CategoryProductsResponse = {
 };
 
 const DEMO_TOP_PRODUCT_IDS = [1, 2, 3] as const;
+const CATEGORY_TITLES: Record<string, string> = {
+  labelprinters: "Label Printers",
+  specials: "Special Labels",
+};
 
 function normalizeType(raw: string | undefined): "simple" | "variable" | null {
   if (raw === "simple" || raw === "variable") {
@@ -161,6 +165,10 @@ function slugToTitle(slug: string): string {
     .join(" ");
 }
 
+function categoryTitleForSlug(slug: string): string {
+  return CATEGORY_TITLES[slug] ?? slugToTitle(slug);
+}
+
 function productHref(product: DemoTopProductCard): { pathname: string; query?: { type: "simple" | "variable" } } | null {
   if (!product.slug) {
     return null;
@@ -204,7 +212,7 @@ export default async function CategoryArchivePage({
 }) {
   const { slug } = await params;
   const baseUrl = process.env.BBNL_API_BASE_URL;
-  const categoryTitle = slugToTitle(slug);
+  const categoryTitle = categoryTitleForSlug(slug);
   const categoryProducts = await loadCategoryProducts(baseUrl, slug);
   const topProducts = await loadTopProducts(baseUrl);
 
@@ -218,7 +226,7 @@ export default async function CategoryArchivePage({
           <div className="relative w-full h-56 rounded-xl overflow-hidden shadow-md">
             <Image
               src="/images/archive-banner.jpg"
-              alt="Labelprinters banner"
+              alt={`${categoryTitle} banner`}
               fill
               sizes="100vw"
               className="absolute inset-0 w-full h-full object-cover"
