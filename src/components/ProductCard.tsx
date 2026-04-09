@@ -1,6 +1,9 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import type { LinkProps } from "next/link";
+import { useCart } from "@/components/CartProvider";
 
 export type ProductRouteType = "simple" | "variable";
 
@@ -45,6 +48,7 @@ export function lastCategoryLabel(categories: ProductCardData["categories"]): st
 }
 
 export default function ProductCard({ product, href, onClick }: ProductCardProps) {
+  const { addItem } = useCart();
   const categoryBadge = lastCategoryLabel(product.categories);
   const features = featureLines(product);
   const hasPrice = typeof product.price === "number" && Number.isFinite(product.price);
@@ -53,6 +57,21 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
     Number.isFinite(product.originalPrice) &&
     (!hasPrice || product.originalPrice > product.price);
   const imageSrc = normalizeText(product.mainImage) || "https://placehold.co/600x400";
+
+  const handleAddToCart = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    addItem({
+      id: product.id,
+      slug: product.slug,
+      type: product.type,
+      name: product.name,
+      sku: product.sku,
+      price: product.price ?? null,
+      mainImage: product.mainImage ?? null,
+    });
+  };
 
   const cardContent = (
     <div className="bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] border border-slate-100 flex flex-col overflow-hidden hover:shadow-lg transition-shadow">
@@ -140,7 +159,12 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
               </div>
               <span className="text-zinc-500 text-xs font-normal font-['Segoe_UI'] leading-4">ex. VAT</span>
             </div>
-            <button className="px-4 py-2.5 bg-amber-500 rounded-full flex items-center gap-2 text-white text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors pointer-events-none">
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              className="px-4 py-2.5 bg-amber-500 rounded-full flex items-center gap-2 text-white text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors"
+              aria-label={`Add ${product.name} to cart`}
+            >
               Add
               <svg width="22" height="16" viewBox="0 0 22 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M7.33268 14.6663C7.83894 14.6663 8.24935 14.3679 8.24935 13.9997C8.24935 13.6315 7.83894 13.333 7.33268 13.333C6.82642 13.333 6.41602 13.6315 6.41602 13.9997C6.41602 14.3679 6.82642 14.6663 7.33268 14.6663Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />

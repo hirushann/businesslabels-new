@@ -396,10 +396,15 @@ export default async function SingleProductPage({
           {/* RIGHT: Purchase Card */}
           <div className="flex flex-col gap-6 w-96 sticky top-24">
             <ProductPurchase
+              id={product?.id}
+              slug={product?.slug}
+              type={normalizeType(product?.type)}
+              name={productName}
               sku={product?.sku}
               inStock={product?.in_stock}
               price={product?.price}
               originalPrice={product?.original_price}
+              mainImage={product?.main_image}
             />
 
             {/* Consumable Items */}
