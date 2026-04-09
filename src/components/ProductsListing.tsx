@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import EmptyState from "@/components/EmptyState";
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 
 export type ListingProductCardData = ProductCardData;
@@ -98,9 +99,10 @@ export default function ProductsListing({ products, currentPage, lastPage }: Pro
       </div>
 
       {products.length === 0 ? (
-        <div className="rounded-xl border-2 border-neutral-200 p-10 text-center text-xl font-medium text-neutral-500">
-          No Products Available
-        </div>
+        <EmptyState
+          title="No products found"
+          description="There are currently no products available in this listing."
+        />
       ) : (
         <>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">

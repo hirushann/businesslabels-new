@@ -5,6 +5,7 @@ import { SearchProvider, useSearch } from '@elastic/react-search-ui';
 import type { SearchDriverOptions } from '@elastic/search-ui';
 import { apiConnector, SORT_TO_SEARCH_UI, type OverlaySortValue } from './api';
 import { useNextRoutingOptions } from './useNextRouting';
+import EmptyState from '@/components/EmptyState';
 import ProductCard, { type ProductCardData } from '@/components/ProductCard';
 
 type SearchOverlayProps = {
@@ -348,9 +349,10 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
                 ))}
               </div>
             ) : (results?.length || 0) === 0 ? (
-              <div className="bg-white rounded-xl border border-slate-200 p-10 text-center text-neutral-500">
-                No products found.
-              </div>
+              <EmptyState
+                title="No products found"
+                description="Try a different search term or adjust the sort to see more results."
+              />
             ) : (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">

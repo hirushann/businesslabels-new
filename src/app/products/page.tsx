@@ -115,13 +115,13 @@ export default async function ProductsPage({
           <div className="mb-4 flex items-center gap-2 text-sm text-zinc-500">
             <span>Home</span>
             <span>/</span>
-            <span>Printers</span>
+            <span>Products</span>
             <span>/</span>
-            <span className="font-semibold text-neutral-700">All Printers</span>
+            <span>All Products</span>
           </div>
           <div className="flex flex-col gap-5">
             <h1 className="text-3xl font-bold font-['Segoe_UI'] leading-8 text-neutral-800">
-              All Printers
+              All Products
             </h1>
             <ProductsListing products={products} currentPage={currentPage} lastPage={lastPage} />
           </div>

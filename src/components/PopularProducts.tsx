@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import EmptyState from "@/components/EmptyState";
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 
 type Product = {
@@ -79,9 +80,11 @@ export default async function PopularProducts() {
         {/* Product grid */}
         <div className="grid grid-cols-4 gap-6">
           {products.length === 0 ? (
-            <div className='flex col-span-4 justify-center items-center p-10 border-2 border-neutral-200 rounded-xl'>
-              <p className='text-neutral-500 text-xl font-medium font-["Segoe_UI"] leading-12'>No Products Available</p>
-            </div>
+            <EmptyState
+              className="col-span-4"
+              title="No products found"
+              description="There are currently no popular products available."
+            />
           ) : (
             products.map((product) => {
               const cardProduct: ProductCardData = {

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import Image from "next/image";
+import EmptyState from "@/components/EmptyState";
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 
 export const metadata: Metadata = {
@@ -8,69 +8,6 @@ export const metadata: Metadata = {
   description:
     "Browse our full range of color label printers including desktop, midrange and industrial models. Epson ColorWorks Gold Partner.",
 };
-
-const categories = [
-  {
-    name: "Color Desktop labelprinters",
-    image: "https://placehold.co/176x160",
-    href: "#",
-  },
-  {
-    name: "Color Midrange labelprinters",
-    image: "https://placehold.co/145x160",
-    href: "#",
-  },
-  {
-    name: "Color Industrial labelprinters",
-    image: "https://placehold.co/212x160",
-    href: "#",
-  },
-  {
-    name: "Color Starterkits",
-    image: "https://placehold.co/160x160",
-    href: "#",
-  },
-  {
-    name: "Shippinglabel printers",
-    image: "https://placehold.co/160x160",
-    href: "#",
-  },
-  {
-    name: "All starterkits",
-    image: "https://placehold.co/160x160",
-    href: "#",
-  },
-  {
-    name: "Expobadge starterkits",
-    image: "https://placehold.co/160x160",
-    href: "#",
-  },
-  {
-    name: "Shippinglabels starterkits",
-    image: "https://placehold.co/160x160",
-    href: "#",
-  },
-  {
-    name: "Beer labeling starterkits",
-    image: "https://placehold.co/160x160",
-    href: "#",
-  },
-  {
-    name: "Ink cartridges",
-    image: "https://placehold.co/198x160",
-    href: "#",
-  },
-  {
-    name: "Maintenance boxes",
-    image: "https://placehold.co/199x160",
-    href: "#",
-  },
-  {
-    name: "TT print ribbons",
-    image: "https://placehold.co/160x160",
-    href: "#",
-  },
-];
 
 type ProductDetail = {
   id?: number;
@@ -93,6 +30,14 @@ type ProductDetail = {
 };
 
 type DemoTopProductCard = ProductCardData;
+type CategoryProductsResponse = {
+  data?: ProductDetail[];
+  meta?: {
+    current_page?: number;
+    last_page?: number;
+    total?: number;
+  };
+};
 
 const DEMO_TOP_PRODUCT_IDS = [1, 2, 3] as const;
 
@@ -167,6 +112,55 @@ async function loadTopProducts(baseUrl: string | undefined): Promise<DemoTopProd
   );
 }
 
+function mapProductToCard(product: ProductDetail, fallbackId: number): ProductCardData {
+  return {
+    id: product.id ?? fallbackId,
+    sku: normalizeValue(product.sku) || "-",
+    name: normalizeValue(product.title) || normalizeValue(product.name) || "-",
+    subtitle: normalizeValue(product.subtitle),
+    excerpt: normalizeValue(product.excerpt),
+    materialTitle: normalizeValue(product.material?.title),
+    price: product.price ?? null,
+    originalPrice: product.original_price ?? null,
+    inStock: Boolean(product.in_stock),
+    mainImage: normalizeValue(product.main_image) || "https://placehold.co/600x400",
+    categories: product.categories ?? [],
+    slug: normalizeValue(product.slug),
+    type: normalizeType(product.type ?? undefined),
+  };
+}
+
+async function loadCategoryProducts(baseUrl: string | undefined, slug: string): Promise<ProductCardData[]> {
+  if (!baseUrl || !slug) {
+    return [];
+  }
+
+  try {
+    const response = await fetch(
+      `${baseUrl}/api/products?category_slug=${encodeURIComponent(slug)}`,
+      { cache: "no-store" },
+    );
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const json = (await response.json()) as CategoryProductsResponse;
+    return (json.data ?? []).map((product, index) => mapProductToCard(product, index));
+  } catch (error) {
+    console.error(`Failed to fetch category products for slug '${slug}'`, error);
+    return [];
+  }
+}
+
+function slugToTitle(slug: string): string {
+  return slug
+    .split("-")
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(" ");
+}
+
 function productHref(product: DemoTopProductCard): { pathname: string; query?: { type: "simple" | "variable" } } | null {
   if (!product.slug) {
     return null;
@@ -203,8 +197,15 @@ const reviews = [
   },
 ];
 
-export default async function CategoryArchivePage() {
+export default async function CategoryArchivePage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
   const baseUrl = process.env.BBNL_API_BASE_URL;
+  const categoryTitle = slugToTitle(slug);
+  const categoryProducts = await loadCategoryProducts(baseUrl, slug);
   const topProducts = await loadTopProducts(baseUrl);
 
   return (
@@ -230,52 +231,24 @@ export default async function CategoryArchivePage() {
                 <span className="text-white/70 text-sm font-normal leading-5">/</span>
                 <span className="text-white text-sm font-semibold leading-5">Printers</span>
               </div>
-              <h1 className="text-white text-4xl font-bold leading-[48px]">Labelprinters</h1>
+              <h1 className="text-white text-4xl font-bold leading-[48px]">{categoryTitle}</h1>
             </div>
           </div>
 
           {/* ── Category Grid ───────────────────────────── */}
-          <div className="flex flex-col gap-6">
-            {/* Row 1 – 4 cards */}
+          {categoryProducts.length > 0 ? (
             <div className="grid grid-cols-4 gap-6">
-              {categories.slice(0, 4).map((cat) => (
-                <Link
-                  key={cat.name}
-                  href={cat.href}
-                  className="px-10 py-6 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col items-center gap-6 hover:shadow-[2px_4px_28px_0px_rgba(109,109,120,0.18)] hover:-translate-y-0.5 transition-all duration-200"
-                >
-                  <Image src={cat.image} alt={cat.name} width={212} height={160} unoptimized className="h-40 w-auto object-contain" />
-                  <span className="text-center text-neutral-800 text-xl font-bold leading-6">{cat.name}</span>
-                </Link>
-              ))}
+              {categoryProducts.map((product) => {
+                const href = productHref(product);
+                return <ProductCard key={product.id} product={product} href={href ?? undefined} />;
+              })}
             </div>
-            {/* Row 2 – 4 cards */}
-            <div className="grid grid-cols-4 gap-6">
-              {categories.slice(4, 8).map((cat) => (
-                <Link
-                  key={cat.name}
-                  href={cat.href}
-                  className="px-10 py-6 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col items-center gap-6 hover:shadow-[2px_4px_28px_0px_rgba(109,109,120,0.18)] hover:-translate-y-0.5 transition-all duration-200"
-                >
-                  <Image src={cat.image} alt={cat.name} width={212} height={160} unoptimized className="h-40 w-auto object-contain" />
-                  <span className="text-center text-neutral-800 text-xl font-bold leading-6">{cat.name}</span>
-                </Link>
-              ))}
-            </div>
-            {/* Row 3 – 4 cards */}
-            <div className="grid grid-cols-4 gap-6">
-              {categories.slice(8, 12).map((cat) => (
-                <Link
-                  key={cat.name}
-                  href={cat.href}
-                  className="px-10 py-6 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col items-center gap-6 hover:shadow-[2px_4px_28px_0px_rgba(109,109,120,0.18)] hover:-translate-y-0.5 transition-all duration-200"
-                >
-                  <Image src={cat.image} alt={cat.name} width={212} height={160} unoptimized className="h-40 w-auto object-contain" />
-                  <span className="text-center text-neutral-800 text-xl font-bold leading-6">{cat.name}</span>
-                </Link>
-              ))}
-            </div>
-          </div>
+          ) : (
+            <EmptyState
+              title="No products found"
+              description={`There are currently no products available for the ${categoryTitle} category.`}
+            />
+          )}
         </div>
       </div>
 
