@@ -86,7 +86,7 @@ export default function ProductsListing({ products, currentPage, lastPage }: Pro
           <span className="sr-only">Sort products</span>
           <select
             value={sort}
-            readOnly
+            disabled
             className="bg-transparent text-base font-normal font-['Segoe_UI'] leading-5 outline-none"
           >
             {Object.entries(SORT_LABELS).map(([value, label]) => (
