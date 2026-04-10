@@ -134,7 +134,7 @@ function categoriesForProduct(result: unknown): Array<{ id?: number; name?: stri
 
       return null;
     })
-    .filter((category): category is { id?: number; name?: string | null } => Boolean(category));
+    .filter((category) => category !== null) as Array<{ id?: number; name?: string | null }>;
 }
 
 function materialTitleForProduct(result: unknown): string | null {
