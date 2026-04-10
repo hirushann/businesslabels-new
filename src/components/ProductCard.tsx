@@ -51,7 +51,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
   const hasOriginalPrice =
     typeof product.originalPrice === "number" &&
     Number.isFinite(product.originalPrice) &&
-    (!hasPrice || (hasPrice && product.price !== null && product.originalPrice > product.price));
+    (!hasPrice || (hasPrice && (product.price !== undefined && product.price !== null) && product.originalPrice > product.price));
   const imageSrc = normalizeText(product.mainImage) || "https://placehold.co/600x400";
 
   const cardContent = (
