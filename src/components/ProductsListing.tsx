@@ -84,7 +84,7 @@ export default function ProductsListing({
               <path d="M5.5 10H14.5" stroke="#52525B" strokeWidth="1.5" strokeLinecap="round" />
               <path d="M8 15H12" stroke="#52525B" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
-            <span className="text-xl font-semibold font-['Segoe_UI'] leading-6">Filters</span>
+            <span className="text-lg font font-['Segoe_UI'] leading-6">Filters</span>
           </span>
         </button>
 

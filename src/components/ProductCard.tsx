@@ -74,7 +74,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
   };
 
   const cardContent = (
-    <div className="bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] border border-slate-100 flex flex-col overflow-hidden hover:shadow-lg transition-shadow">
+    <div className="mx-auto h-full w-full max-w-[22rem] bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] border border-slate-100 flex flex-col overflow-hidden hover:shadow-lg transition-shadow">
       <div className="relative h-56 bg-slate-100 overflow-hidden">
         <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
           <div className="px-2.5 py-1 bg-white rounded-full flex items-center gap-1.5">
@@ -108,9 +108,9 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
         <Image
           src={imageSrc}
           alt={product.name}
-          fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
-          className="object-cover"
+          width={600}
+          height={400}
+          className="h-full w-auto object-contain mx-auto py-5"
           unoptimized
         />
       </div>
@@ -136,7 +136,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
                       </clipPath>
                     </defs>
                   </svg>
-                  <span className="text-neutral-700 text-base font-normal font-['Segoe_UI'] leading-5">{feature}</span>
+                  <span className="line-clamp-2 break-words text-neutral-700 text-base font-normal font-['Segoe_UI'] leading-5">{feature}</span>
                 </div>
               ))}
             </div>
@@ -183,7 +183,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
   }
 
   return (
-    <Link href={href} className="block" onClick={onClick}>
+    <Link href={href} className="block h-full w-full" onClick={onClick}>
       {cardContent}
     </Link>
   );
