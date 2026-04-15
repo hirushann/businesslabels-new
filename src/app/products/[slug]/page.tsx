@@ -410,6 +410,9 @@ export default async function SingleProductPage({
               type={normalizeType(product?.type)}
               name={productName}
               sku={product?.sku}
+              subtitle={normalizeValue(product?.subtitle)}
+              excerpt={normalizeValue(product?.excerpt)}
+              materialTitle={normalizeValue(product?.material?.title)}
               inStock={product?.in_stock}
               price={product?.price}
               originalPrice={product?.original_price}

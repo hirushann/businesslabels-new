@@ -1,10 +1,10 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect } from 'react';
 import EmptyState from '@/components/EmptyState';
 import { useCart } from '@/components/CartProvider';
+import DrawerProductCard from '@/components/DrawerProductCard';
 
 type CartDrawerProps = {
   onClose: () => void;
@@ -96,74 +96,59 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                   typeof item.price === 'number' && Number.isFinite(item.price) ? item.price : 0;
                 const linePrice = unitPrice * item.quantity;
                 const imageSrc = item.mainImage?.trim() || 'https://placehold.co/140x100';
+                const href = item.slug
+                  ? item.type
+                    ? { pathname: `/products/${item.slug}`, query: { type: item.type } }
+                    : { pathname: `/products/${item.slug}` }
+                  : undefined;
 
                 return (
-                  <div
+                  <DrawerProductCard
                     key={item.key}
-                    className="relative rounded-xl border border-slate-100 bg-white p-4 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.08)]"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => removeItem(item.key)}
-                      aria-label={`Remove ${item.name} from cart`}
-                      className="absolute right-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-zinc-500 hover:bg-red-50 hover:text-red-600 transition-colors"
-                    >
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                        <path d="M2 2L10 10M10 2L2 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                      </svg>
-                    </button>
-
-                    <div className="flex items-center gap-4 pr-8">
-                      <div className="relative h-20 w-24 shrink-0 overflow-hidden rounded-lg bg-slate-100">
-                        <Image
-                          src={imageSrc}
-                          alt={item.name}
-                          fill
-                          sizes="96px"
-                          className="object-cover"
-                          unoptimized
-                        />
+                    name={item.name}
+                    sku={item.sku}
+                    imageSrc={imageSrc}
+                    href={href}
+                    onCardClick={onClose}
+                    removeLabel={`Remove ${item.name} from cart`}
+                    onRemove={() => removeItem(item.key)}
+                    priceNode={
+                      <span className="text-neutral-800 text-lg font-bold leading-6">
+                        {formatEuro(linePrice)}
+                      </span>
+                    }
+                    actionNode={
+                      <div className="flex h-10 items-center rounded-full border border-slate-200 bg-white px-1">
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            decrementItemQuantity(item.key);
+                          }}
+                          className="flex h-8 w-8 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-slate-100"
+                          aria-label={`Decrease quantity for ${item.name}`}
+                        >
+                          -
+                        </button>
+                        <span className="min-w-8 text-center text-sm font-semibold text-neutral-800">
+                          {item.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            incrementItemQuantity(item.key);
+                          }}
+                          className="flex h-8 w-8 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-slate-100"
+                          aria-label={`Increase quantity for ${item.name}`}
+                        >
+                          +
+                        </button>
                       </div>
-
-                      <div className="min-w-0 flex-1 flex flex-col gap-2">
-                        <div className="flex flex-col gap-1">
-                          <span className="text-blue-400 text-xs font-normal font-['Segoe_UI'] leading-4">
-                            SKU: {item.sku}
-                          </span>
-                          <h3 className="text-neutral-800 text-base font-semibold font-['Segoe_UI'] leading-5">
-                            {item.name}
-                          </h3>
-                        </div>
-
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="flex h-9 items-center rounded-full border border-slate-200 bg-white px-1">
-                            <button
-                              type="button"
-                              onClick={() => decrementItemQuantity(item.key)}
-                              className="flex h-7 w-7 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-slate-100"
-                              aria-label={`Decrease quantity for ${item.name}`}
-                            >
-                              -
-                            </button>
-                            <span className="min-w-7 text-center text-sm font-semibold text-neutral-800">
-                              {item.quantity}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => incrementItemQuantity(item.key)}
-                              className="flex h-7 w-7 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-slate-100"
-                              aria-label={`Increase quantity for ${item.name}`}
-                            >
-                              +
-                            </button>
-                          </div>
-                          <span className="text-neutral-800 text-lg font-bold font-['Segoe_UI'] leading-6">
-                            {formatEuro(linePrice)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                    }
+                  />
                 );
               })}
             </div>

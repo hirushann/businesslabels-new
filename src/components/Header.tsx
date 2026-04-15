@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useCart } from './CartProvider';
 import CartDrawer from './CartDrawer';
+import WishlistDrawer from './WishlistDrawer';
+import { useWishlist } from './WishlistProvider';
 import SearchOverlay from './search/SearchOverlay';
 import HelpDrawer from './HelpDrawer';
 
@@ -22,7 +24,9 @@ export default function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const { uniqueItemCount } = useCart();
+  const { uniqueItemCount: uniqueWishlistCount } = useWishlist();
 
   return (
     <header className="w-full left-0 top-0 z-50 flex flex-col items-center">
@@ -144,9 +148,21 @@ export default function Header() {
               <path d="M4 20c0-4.42 3.58-8 8-8s8 3.58 8 8" stroke="#404040" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
             {/* Wishlist */}
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="cursor-pointer">
-              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" stroke="#404040" strokeWidth="1.5" />
-            </svg>
+            <button
+              type="button"
+              onClick={() => setIsWishlistOpen(true)}
+              className="relative cursor-pointer"
+              aria-label="Open wishlist drawer"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" stroke="#404040" strokeWidth="1.5" />
+              </svg>
+              {uniqueWishlistCount > 0 ? (
+                <span className="absolute -right-2 -top-2 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white">
+                  {uniqueWishlistCount}
+                </span>
+              ) : null}
+            </button>
             {/* Cart */}
             <button
               type="button"
@@ -210,6 +226,7 @@ export default function Header() {
 
       {isSearchOpen && <SearchOverlay onClose={() => setIsSearchOpen(false)} />}
       {isHelpOpen && <HelpDrawer onClose={() => setIsHelpOpen(false)} />}
+      {isWishlistOpen && <WishlistDrawer onClose={() => setIsWishlistOpen(false)} />}
       {isCartOpen && <CartDrawer onClose={() => setIsCartOpen(false)} />}
     </header>
   );

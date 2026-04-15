@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { CartProvider } from "@/components/CartProvider";
+import { WishlistProvider } from "@/components/WishlistProvider";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -19,9 +20,11 @@ export default function RootLayout({
     <html lang="en">
       <body className="bg-white min-h-screen flex flex-col">
         <CartProvider>
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          <WishlistProvider>
+            <Header />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </WishlistProvider>
         </CartProvider>
       </body>
     </html>

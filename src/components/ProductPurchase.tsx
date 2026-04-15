@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { ProductRouteType } from "@/components/ProductCard";
 import { useCart } from "@/components/CartProvider";
+import { useWishlist } from "@/components/WishlistProvider";
 
 type ProductPurchaseProps = {
   id?: string | number | null;
@@ -10,6 +11,9 @@ type ProductPurchaseProps = {
   type?: ProductRouteType | null;
   name?: string | null;
   sku?: string | null;
+  subtitle?: string | null;
+  excerpt?: string | null;
+  materialTitle?: string | null;
   inStock?: boolean | null;
   price?: number | null;
   originalPrice?: number | null;
@@ -31,12 +35,16 @@ export default function ProductPurchase({
   type,
   name,
   sku,
+  subtitle,
+  excerpt,
+  materialTitle,
   inStock,
   price,
   originalPrice,
   mainImage,
 }: ProductPurchaseProps) {
   const { addItem } = useCart();
+  const wishlist = useWishlist();
   const [quantity, setQuantity] = useState(1);
 
   const increment = () => setQuantity((prev) => prev + 1);
@@ -58,6 +66,12 @@ export default function ProductPurchase({
     hasPrice && hasOriginalPrice
       ? Math.round(((originalPrice - price) / originalPrice) * 100)
       : null;
+  const itemIdentity = {
+    id: id ?? displaySku,
+    slug,
+    type,
+  };
+  const isWishlisted = wishlist.hasItem(itemIdentity);
 
   const handleAddToCart = () => {
     addItem(
@@ -72,6 +86,20 @@ export default function ProductPurchase({
       },
       quantity,
     );
+  };
+
+  const handleAddToWishlist = () => {
+    wishlist.addItem({
+      ...itemIdentity,
+      name: displayName,
+      sku: displaySku,
+      price,
+      mainImage,
+      subtitle,
+      excerpt,
+      materialTitle,
+      inStock: Boolean(inStock),
+    });
   };
 
   return (
@@ -168,11 +196,20 @@ export default function ProductPurchase({
 
       {/* Wishlist + Share (Standard logic) */}
       <div className="flex items-center gap-4">
-        <button className="flex-1 h-12 px-4 py-2.5 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-black/10 flex justify-center items-center gap-2 hover:bg-slate-50 transition-colors">
-          <svg className="w-5 h-5 text-neutral-700" fill="none" stroke="currentColor" strokeWidth={1.67} viewBox="0 0 24 24">
+        <button
+          type="button"
+          onClick={handleAddToWishlist}
+          disabled={isWishlisted}
+          className={`flex-1 h-12 px-4 py-2.5 rounded-[100px] outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2 transition-colors ${
+            isWishlisted
+              ? "bg-slate-100 outline-slate-200 text-neutral-500"
+              : "outline-black/10 text-neutral-700 hover:bg-slate-50"
+          }`}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.67} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
           </svg>
-          <span className="text-neutral-700 text-base font-semibold">Add to Wishlist</span>
+          <span className="text-base font-semibold">{isWishlisted ? "Saved to Wishlist" : "Add to Wishlist"}</span>
         </button>
         <button className="w-12 h-12 p-3 bg-slate-100 rounded-2xl flex items-center justify-center hover:bg-slate-200 transition-colors">
           <svg className="w-5 h-5 text-neutral-700" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
