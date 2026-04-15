@@ -1,14 +1,37 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import EmptyState from "@/components/EmptyState";
 import ProductsListing, { type ListingProductCardData } from "@/components/ProductsListing";
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 import { demoProducts, mapDemoProductToCard } from "@/lib/demoCatalog";
+import InfiniteCategoryListing from "@/components/InfiniteCategoryListing";
 
 export const metadata: Metadata = {
   title: "Labelprinters — BusinessLabels",
   description:
     "Browse our full range of color label printers including desktop, midrange and industrial models. Epson ColorWorks Gold Partner.",
+};
+
+type CategoryTreeItem = {
+  id?: number;
+  name?: string | null;
+  slug?: string | null;
+  parent_id?: number | null;
+  count?: number | null;
+  children?: CategoryTreeItem[];
+};
+
+type CategoryGroup = {
+  id?: number;
+  name?: string | null;
+  slug?: string | null;
+  count?: number | null;
+  categories?: CategoryTreeItem[];
+};
+
+type CategoriesResponse = {
+  data?: CategoryGroup[];
 };
 
 type ProductDetail = {
@@ -32,6 +55,12 @@ type ProductDetail = {
 };
 
 type DemoTopProductCard = ProductCardData;
+type CategoryLinkCard = {
+  id: number;
+  name: string;
+  slug: string;
+  image: string;
+};
 type CategoryProductsResponse = {
   data?: ProductDetail[];
   meta?: {
@@ -45,6 +74,7 @@ const DEMO_TOP_PRODUCT_IDS = [1, 2, 3] as const;
 const CATEGORY_TITLES: Record<string, string> = {
   labelprinters: "Label Printers",
   specials: "Special Labels",
+  "product-category": "Product Category",
 };
 
 function normalizeType(raw: string | undefined): "simple" | "variable" | null {
@@ -69,6 +99,73 @@ function normalizeValue(value: unknown): string | null {
     return value ? "Yes" : "No";
   }
   return String(value).trim() || null;
+}
+
+function normalizeCategoryTreeItem(item: CategoryTreeItem | null | undefined): CategoryLinkCard | null {
+  const id = item?.id;
+  const name = normalizeValue(item?.name);
+  const slug = normalizeValue(item?.slug);
+
+  if (typeof id !== "number" || !name || !slug) {
+    return null;
+  }
+
+  return {
+    id,
+    name,
+    slug,
+    image: "/images/archive-banner.jpg",
+  };
+}
+
+function dedupeCategoryCards(items: CategoryLinkCard[]): CategoryLinkCard[] {
+  const seen = new Set<string>();
+
+  return items.filter((item) => {
+    const key = item.slug.toLowerCase();
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+}
+
+async function loadProductCategories(baseUrl: string | undefined): Promise<CategoryLinkCard[]> {
+  if (!baseUrl) {
+    return [];
+  }
+
+  try {
+    const response = await fetch(`${baseUrl}/api/categories`, { cache: "no-store" });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const json = (await response.json()) as CategoriesResponse;
+    const productCategoryGroup = (json.data ?? []).find((group) => {
+      const slug = normalizeValue(group.slug)?.toLowerCase();
+      const name = normalizeValue(group.name)?.toLowerCase();
+
+      return slug === "product-category" || name === "product category";
+    });
+
+    if (!productCategoryGroup?.categories?.length) {
+      return [];
+    }
+
+    return dedupeCategoryCards(
+      productCategoryGroup.categories
+        .map((item) => normalizeCategoryTreeItem(item))
+        .filter((item): item is CategoryLinkCard => item !== null)
+        .filter((item) => item.slug.toLowerCase() !== "uncategorized"),
+    );
+  } catch (error) {
+    console.error("Failed to fetch product categories", error);
+    return [];
+  }
 }
 
 async function fetchProductById(baseUrl: string, id: number): Promise<ProductDetail | null> {
@@ -143,7 +240,7 @@ async function loadCategoryProducts(baseUrl: string | undefined, slug: string): 
 
   try {
     const response = await fetch(
-      `${baseUrl}/api/products?category_slug=${encodeURIComponent(slug)}`,
+      `${baseUrl}/api/products?page=1`,
       { cache: "no-store" },
     );
 
@@ -186,6 +283,11 @@ function productHref(product: DemoTopProductCard): { pathname: string; query?: {
   return { pathname: `/products/${product.slug}` };
 }
 
+function categoryHref(slug: string, categoriesPage?: number) {
+  const search = categoriesPage && categoriesPage > 1 ? `?categories_page=${categoriesPage}` : "";
+  return `/category/${slug}${search}`;
+}
+
 const reviews = [
   {
     text: "\u201cLorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\u2019s standard dummy text ever since the 1500s, when an unknown printer took\u201d",
@@ -212,22 +314,55 @@ export default async function CategoryArchivePage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ page?: string | string[] }>;
+  searchParams: Promise<{ page?: string | string[]; categories_page?: string | string[] }>;
 }) {
   const { slug } = await params;
   const query = await searchParams;
   const baseUrl = process.env.BBNL_API_BASE_URL;
   const categoryTitle = categoryTitleForSlug(slug);
   const requestedPage = Array.isArray(query.page) ? query.page[0] : query.page;
+  const requestedCategoriesPage = Array.isArray(query.categories_page)
+    ? query.categories_page[0]
+    : query.categories_page;
   const normalizedPage = Number.parseInt(requestedPage ?? "1", 10);
   const currentPage = Number.isFinite(normalizedPage) && normalizedPage > 0 ? normalizedPage : 1;
+  const normalizedCategoriesPage = Number.parseInt(requestedCategoriesPage ?? "1", 10);
+  const currentCategoriesPage = Number.isFinite(normalizedCategoriesPage) && normalizedCategoriesPage > 0
+    ? normalizedCategoriesPage
+    : 1;
   const isDemoCategory = slug === "demo";
   const demoCategoryProducts = demoProducts.map(mapDemoProductToCard);
   const demoLastPage = Math.max(1, Math.ceil(demoCategoryProducts.length / 12));
   const safeDemoPage = Math.min(currentPage, demoLastPage);
   const paginatedDemoProducts = demoCategoryProducts.slice((safeDemoPage - 1) * 12, safeDemoPage * 12);
+  const productCategories = await loadProductCategories(baseUrl);
+  const categoryCardsPerPage = 12;
+  const productCategoriesLastPage = Math.max(1, Math.ceil(productCategories.length / categoryCardsPerPage));
+  const safeCategoriesPage = Math.min(currentCategoriesPage, productCategoriesLastPage);
+  const paginatedProductCategories = productCategories.slice(
+    (safeCategoriesPage - 1) * categoryCardsPerPage,
+    safeCategoriesPage * categoryCardsPerPage,
+  );
   const categoryProducts = isDemoCategory ? [] : await loadCategoryProducts(baseUrl, slug);
   const topProducts = await loadTopProducts(baseUrl);
+
+  async function fetchMoreProducts(targetSlug: string, page: number): Promise<ProductCardData[]> {
+    "use server";
+    const url = process.env.BBNL_API_BASE_URL;
+    if (!url) return [];
+    try {
+      const response = await fetch(
+        `${url}/api/products?page=${page}`,
+        { cache: "no-store" }
+      );
+      if (!response.ok) return [];
+      const json = await response.json();
+      return (json.data ?? []).map((product: any, index: number) => mapProductToCard(product, index));
+    } catch (error) {
+      console.error("Failed to fetch more products", error);
+      return [];
+    }
+  }
 
   return (
     <div className="bg-white">
@@ -256,32 +391,90 @@ export default async function CategoryArchivePage({
             </div>
           </div>
 
-          {/* ── Category Grid ───────────────────────────── */}
-          {isDemoCategory ? (
-            <ProductsListing
-              products={paginatedDemoProducts as ListingProductCardData[]}
-              currentPage={safeDemoPage}
-              lastPage={demoLastPage}
-              basePath="/category/demo"
-            />
-          ) : categoryProducts.length > 0 ? (
-            <div className="grid grid-cols-4 gap-6">
-              {categoryProducts.map((product) => {
-                const href = productHref(product);
-                return <ProductCard key={product.id} product={product} href={href ?? undefined} />;
-              })}
+          {/* ── Product Categories ─────────────────────── */}
+          {productCategories.length > 0 && (
+            <div className="flex flex-col gap-8">
+              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                {paginatedProductCategories.map((category) => (
+                  <Link
+                    key={category.id}
+                    href={categoryHref(category.slug, 1)}
+                    className="group rounded-2xl border border-gray-100 bg-white p-6 shadow-[0_4px_24px_rgba(0,0,0,0.03)] transition-all hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(0,0,0,0.08)] flex flex-col items-center justify-center"
+                  >
+                    <div className="relative mb-5 flex h-[180px] w-full items-center justify-center overflow-hidden">
+                      <Image
+                        src={category.image}
+                        alt={category.name}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
+                        className="object-contain transition-transform duration-300 group-hover:scale-105"
+                      />
+                    </div>
+
+                    <div className="flex min-h-[56px] items-center justify-center text-center">
+                      <span className="text-neutral-900 text-[18px] font-bold leading-tight transition-colors group-hover:text-amber-600">
+                        {category.name}
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+
+              {productCategoriesLastPage > 1 && (
+                <div className="flex items-center justify-center gap-3">
+                  <Link
+                    href={categoryHref(slug, safeCategoriesPage - 1)}
+                    className={`inline-flex h-10 min-w-10 items-center justify-center rounded-full border px-4 text-sm font-medium transition-colors ${
+                      safeCategoriesPage <= 1
+                        ? "pointer-events-none border-gray-200 text-gray-300"
+                        : "border-gray-300 text-neutral-800 hover:border-amber-500 hover:text-amber-600"
+                    }`}
+                  >
+                    Previous
+                  </Link>
+
+                  {Array.from({ length: productCategoriesLastPage }, (_, index) => index + 1).map((pageNumber) => (
+                    <Link
+                      key={pageNumber}
+                      href={categoryHref(slug, pageNumber)}
+                      className={`inline-flex h-10 w-10 items-center justify-center rounded-full border text-sm font-medium transition-colors ${
+                        pageNumber === safeCategoriesPage
+                          ? "border-amber-500 bg-amber-500 text-white"
+                          : "border-gray-300 text-neutral-800 hover:border-amber-500 hover:text-amber-600"
+                      }`}
+                    >
+                      {pageNumber}
+                    </Link>
+                  ))}
+
+                  <Link
+                    href={categoryHref(slug, safeCategoriesPage + 1)}
+                    className={`inline-flex h-10 min-w-10 items-center justify-center rounded-full border px-4 text-sm font-medium transition-colors ${
+                      safeCategoriesPage >= productCategoriesLastPage
+                        ? "pointer-events-none border-gray-200 text-gray-300"
+                        : "border-gray-300 text-neutral-800 hover:border-amber-500 hover:text-amber-600"
+                    }`}
+                  >
+                    Next
+                  </Link>
+                </div>
+              )}
             </div>
-          ) : (
-            <EmptyState
-              title="No products found"
-              description={`There are currently no products available for the ${categoryTitle} category.`}
-            />
           )}
+
+          {/* ── Product Grid ───────────────────────────── */}
+          <InfiniteCategoryListing 
+            categoryTitle={categoryTitle} 
+            categorySlug={slug}
+            initialProducts={isDemoCategory ? paginatedDemoProducts as ProductCardData[] : categoryProducts}
+            fetchMoreProducts={fetchMoreProducts}
+          />
+
         </div>
       </div>
 
       {/* ── Top Selling Products ─────────────────────────── */}
-      <div className="px-40 py-24 bg-gray-50">
+      {/* <div className="px-40 py-24 bg-gray-50">
         <div className="max-w-[1200px] mx-auto flex flex-col gap-12">
           <div className="flex justify-between items-center">
             <h2 className="text-neutral-800 text-4xl font-bold leading-[48px]">Top Selling Products</h2>
@@ -306,7 +499,7 @@ export default async function CategoryArchivePage({
             })}
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* ── Reviews ─────────────────────────────────────── */}
       <div className="relative px-10 py-24 bg-white overflow-hidden">
