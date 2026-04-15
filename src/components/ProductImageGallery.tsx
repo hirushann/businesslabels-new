@@ -37,10 +37,10 @@ export default function ProductImageGallery({
         <Image
           src={selectedImage}
           alt={`${productName} main image`}
-          width={500}
-          height={509}
+          width={400}
+          height={400}
           unoptimized
-          className="w-full h-auto object-contain"
+          // className="w-full h-auto object-contain"
         />
       </div>
 
