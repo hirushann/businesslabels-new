@@ -1,0 +1,146 @@
+"use client";
+
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import type { ProductRouteType } from "@/components/ProductCard";
+
+const CART_STORAGE_KEY = "businesslabels-cart";
+
+export type CartItem = {
+  key: string;
+  id: string | number;
+  slug?: string | null;
+  type?: ProductRouteType | null;
+  name: string;
+  sku: string;
+  price?: number | null;
+  mainImage?: string | null;
+  quantity: number;
+};
+
+type CartInput = Omit<CartItem, "key" | "quantity">;
+
+type CartContextValue = {
+  items: CartItem[];
+  uniqueItemCount: number;
+  totalAmount: number;
+  addItem: (item: CartInput, quantity?: number) => void;
+  removeItem: (key: string) => void;
+  incrementItemQuantity: (key: string) => void;
+  decrementItemQuantity: (key: string) => void;
+  clearCart: () => void;
+};
+
+const CartContext = createContext<CartContextValue | null>(null);
+
+function cartItemKey(item: Pick<CartInput, "id" | "slug" | "type">): string {
+  const slug = item.slug?.trim();
+  const type = item.type?.trim();
+  if (slug) {
+    return type ? `${slug}::${type}` : slug;
+  }
+  return type ? `${item.id}::${type}` : String(item.id);
+}
+
+export function CartProvider({ children }: { children: React.ReactNode }) {
+  const [items, setItems] = useState<CartItem[]>([]);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(CART_STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored) as CartItem[];
+        if (Array.isArray(parsed)) {
+          setItems(parsed);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load cart", error);
+    } finally {
+      setIsHydrated(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isHydrated) {
+      return;
+    }
+
+    try {
+      window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+    } catch (error) {
+      console.error("Failed to persist cart", error);
+    }
+  }, [isHydrated, items]);
+
+  const value = useMemo<CartContextValue>(
+    () => ({
+      items,
+      uniqueItemCount: items.length,
+      totalAmount: items.reduce((sum, item) => {
+        const price = typeof item.price === "number" && Number.isFinite(item.price) ? item.price : 0;
+        return sum + price * item.quantity;
+      }, 0),
+      addItem: (item, quantity = 1) => {
+        const normalizedQuantity = Number.isFinite(quantity) && quantity > 0 ? Math.floor(quantity) : 1;
+        const key = cartItemKey(item);
+
+        setItems((currentItems) => {
+          const existingItem = currentItems.find((currentItem) => currentItem.key === key);
+
+          if (existingItem) {
+            return currentItems.map((currentItem) =>
+              currentItem.key === key
+                ? { ...currentItem, quantity: currentItem.quantity + normalizedQuantity }
+                : currentItem,
+            );
+          }
+
+          return [
+            ...currentItems,
+            {
+              ...item,
+              key,
+              quantity: normalizedQuantity,
+            },
+          ];
+        });
+      },
+      removeItem: (key) => {
+        setItems((currentItems) => currentItems.filter((item) => item.key !== key));
+      },
+      incrementItemQuantity: (key) => {
+        setItems((currentItems) =>
+          currentItems.map((item) =>
+            item.key === key ? { ...item, quantity: item.quantity + 1 } : item,
+          ),
+        );
+      },
+      decrementItemQuantity: (key) => {
+        setItems((currentItems) =>
+          currentItems.map((item) =>
+            item.key === key
+              ? { ...item, quantity: item.quantity > 1 ? item.quantity - 1 : 1 }
+              : item,
+          ),
+        );
+      },
+      clearCart: () => {
+        setItems([]);
+      },
+    }),
+    [items],
+  );
+
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+}
+
+export function useCart(): CartContextValue {
+  const context = useContext(CartContext);
+
+  if (!context) {
+    throw new Error("useCart must be used within a CartProvider");
+  }
+
+  return context;
+}

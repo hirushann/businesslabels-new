@@ -3,6 +3,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
+import { useCart } from './CartProvider';
+import CartDrawer from './CartDrawer';
 import SearchOverlay from './search/SearchOverlay';
 import HelpDrawer from './HelpDrawer';
 
@@ -19,6 +21,8 @@ const navItems = [
 export default function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const { uniqueItemCount } = useCart();
 
   return (
     <header className="w-full left-0 top-0 z-50 flex flex-col items-center">
@@ -144,11 +148,23 @@ export default function Header() {
               <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" stroke="#404040" strokeWidth="1.5" />
             </svg>
             {/* Cart */}
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M8 22C8.55228 22 9 21.5523 9 21C9 20.4477 8.55228 20 8 20C7.44772 20 7 20.4477 7 21C7 21.5523 7.44772 22 8 22Z" stroke="#444444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M19 22C19.5523 22 20 21.5523 20 21C20 20.4477 19.5523 20 19 20C18.4477 20 18 20.4477 18 21C18 21.5523 18.4477 22 19 22Z" stroke="#444444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M2.05078 2.04999H4.05078L6.71078 14.47C6.80836 14.9248 7.06145 15.3315 7.42649 15.6198C7.79153 15.9082 8.24569 16.0603 8.71078 16.05H18.4908C18.946 16.0493 19.3873 15.8933 19.7418 15.6078C20.0963 15.3224 20.3429 14.9245 20.4408 14.48L22.0908 7.04999H5.12078" stroke="#444444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <button
+              type="button"
+              onClick={() => setIsCartOpen(true)}
+              className="relative"
+              aria-label="Open cart drawer"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 22C8.55228 22 9 21.5523 9 21C9 20.4477 8.55228 20 8 20C7.44772 20 7 20.4477 7 21C7 21.5523 7.44772 22 8 22Z" stroke="#444444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M19 22C19.5523 22 20 21.5523 20 21C20 20.4477 19.5523 20 19 20C18.4477 20 18 20.4477 18 21C18 21.5523 18.4477 22 19 22Z" stroke="#444444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M2.05078 2.04999H4.05078L6.71078 14.47C6.80836 14.9248 7.06145 15.3315 7.42649 15.6198C7.79153 15.9082 8.24569 16.0603 8.71078 16.05H18.4908C18.946 16.0493 19.3873 15.8933 19.7418 15.6078C20.0963 15.3224 20.3429 14.9245 20.4408 14.48L22.0908 7.04999H5.12078" stroke="#444444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              {uniqueItemCount > 0 ? (
+                <span className="absolute -right-2 -top-2 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white">
+                  {uniqueItemCount}
+                </span>
+              ) : null}
+            </button>
           </div>
         </div>
       </div>
@@ -195,6 +211,7 @@ export default function Header() {
 
       {isSearchOpen && <SearchOverlay onClose={() => setIsSearchOpen(false)} />}
       {isHelpOpen && <HelpDrawer onClose={() => setIsHelpOpen(false)} />}
+      {isCartOpen && <CartDrawer onClose={() => setIsCartOpen(false)} />}
     </header>
   );
 }

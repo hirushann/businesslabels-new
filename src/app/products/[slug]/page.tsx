@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import Accordion from "@/components/Accordion";
 import ProductPurchase from "@/components/ProductPurchase";
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 import ProductImageGallery from "@/components/ProductImageGallery";
+import { getDemoProductBySlug } from "@/lib/demoCatalog";
 import { notFound } from "next/navigation";
 
 export const metadata: Metadata = {
@@ -51,10 +53,6 @@ type ProductDetail = {
   } | null;
   categories?: Array<{ id?: number; name?: string | null }>;
 };
-
-const fallbackProductName = "Epson CW-C6000Ae MK";
-const fallbackDescription =
-  "Premium matte paper labels perfect for product labeling, shipping labels, and general purpose use. Compatible with Epson ColorWorks inkjet label printers.";
 
 function normalizeType(raw: string | string[] | undefined): "simple" | "variable" | null {
   const value = Array.isArray(raw) ? raw[0] : raw;
@@ -270,8 +268,13 @@ export default async function SingleProductPage({
 
   let product: ProductDetail | null = null;
   const selectedType = normalizeType(query.type);
+  const demoProduct = getDemoProductBySlug(slug);
 
-  if (baseUrl) {
+  if (demoProduct) {
+    product = demoProduct;
+  }
+
+  if (!product && baseUrl) {
     const tryTypes: Array<"simple" | "variable"> = selectedType
       ? [selectedType]
       : ["simple", "variable"];
@@ -287,10 +290,14 @@ export default async function SingleProductPage({
     console.error("BBNL_API_BASE_URL is not configured");
   }
 
-  const productName = product?.title || product?.name || fallbackProductName;
-  const productDescription = product?.description || product?.excerpt || fallbackDescription;
-  const mainImage = product?.main_image || "https://placehold.co/460x509";
-  const galleryImages = (product?.gallery_images ?? [])
+  if (!product) {
+    notFound();
+  }
+
+  const productName = product.title || product.name || "";
+  const productDescription = product.description || product.excerpt || "";
+  const mainImage = product.main_image || "";
+  const galleryImages = (product.gallery_images ?? [])
     .map((item) => item.url)
     .filter((url): url is string => Boolean(url));
   const specs = specsFromProduct(product);
@@ -321,11 +328,15 @@ export default async function SingleProductPage({
           <div className="flex-1 flex flex-col gap-12">
             {/* Title & Description */}
             <div className="flex flex-col gap-4">
-              <h1 className="text-neutral-800 text-3xl font-bold leading-10">
-                {productName}
-              </h1>
-              <div className="text-neutral-700 text-lg font-normal leading-7" dangerouslySetInnerHTML={{ __html: productDescription }}>
-              </div>
+              {productName ? (
+                <h1 className="text-neutral-800 text-3xl font-bold leading-10">
+                  {productName}
+                </h1>
+              ) : null}
+              {productDescription ? (
+                <div className="text-neutral-700 text-lg font-normal leading-7" dangerouslySetInnerHTML={{ __html: productDescription }}>
+                </div>
+              ) : null}
             </div>
 
             {/* Image Gallery */}
@@ -335,39 +346,37 @@ export default async function SingleProductPage({
               galleryImages={galleryImages}
             />
 
-            {/* Product Description Accordion */}
             <div className="flex flex-col gap-6">
-              <div className="p-6 bg-gray-50 rounded-xl outline outline-1 outline-offset-[-1px] outline-black/10">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-neutral-700 text-2xl font-bold leading-7">Product Description</h2>
-                  <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
-                  </svg>
-                </div>
-                <div className="text-neutral-700 text-base font-normal leading-6" dangerouslySetInnerHTML={{ __html: productDescription }}>
-                </div>
-              </div>
+              <Accordion
+                title="Product Description"
+              >
+                {productDescription ? (
+                  <div
+                    className="text-neutral-700 text-base font-normal leading-6"
+                    dangerouslySetInnerHTML={{ __html: productDescription }}
+                  />
+                ) : (
+                  <div className="text-neutral-500 text-base font-normal leading-6">
+                    No product description available.
+                  </div>
+                )}
+              </Accordion>
 
-              {/* Product Specifications Accordion */}
-              <div className="pt-6 bg-gray-50 rounded-xl outline outline-1 outline-offset-[-1px] outline-black/10">
-                <div className="px-6 flex justify-between items-center mb-4">
-                  <h2 className="text-neutral-700 text-2xl font-bold leading-7">Product specifications</h2>
-                  <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
-                  </svg>
-                </div>
-                <div className="rounded-lg overflow-hidden pb-3">
+              <Accordion
+                title="Product specifications"
+              >
+                <div className="rounded-lg overflow-hidden flex flex-col gap-2">
                   {specs.map((spec, i) => (
                     <div
                       key={spec.label}
-                      className={`px-6 py-3 flex justify-between items-center ${i % 2 === 0 ? "bg-white/50" : ""}`}
+                      className={`flex py-3 justify-between items-center ${i % 2 === 0 ? "bg-white/50" : ""}`}
                     >
-                      <span className="text-neutral-700 text-base font-normal leading-6">{spec.label}</span>
-                      <span className="text-neutral-700 text-base font-semibold leading-6">{spec.value}</span>
+                      <span className="text-neutral-500 text-base font-normal">{spec.label}</span>
+                      <span className="text-neutral-700 text-base font-medium">{spec.value}</span>
                     </div>
                   ))}
                 </div>
-              </div>
+              </Accordion>
 
               {/* Compatibility CTA */}
               <div className="p-6 bg-gradient-to-br from-orange-50 to-white rounded-xl outline outline-2 outline-offset-[-2px] outline-orange-100">
@@ -396,10 +405,15 @@ export default async function SingleProductPage({
           {/* RIGHT: Purchase Card */}
           <div className="flex flex-col gap-6 w-96 sticky top-24">
             <ProductPurchase
+              id={product?.id}
+              slug={product?.slug}
+              type={normalizeType(product?.type)}
+              name={productName}
               sku={product?.sku}
               inStock={product?.in_stock}
               price={product?.price}
               originalPrice={product?.original_price}
+              mainImage={product?.main_image}
             />
 
             {/* Consumable Items */}

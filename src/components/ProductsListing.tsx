@@ -11,6 +11,7 @@ type ProductsListingProps = {
   products: ListingProductCardData[];
   currentPage: number;
   lastPage: number;
+  basePath?: string;
 };
 
 type SortOption = "latest" | "oldest" | "name_asc" | "name_desc" | "price_asc" | "price_desc";
@@ -57,11 +58,16 @@ function buildVisiblePages(currentPage: number, lastPage: number): Array<number 
   return visible;
 }
 
-function pageHref(page: number): string {
-  return page <= 1 ? "/products" : `/products?page=${page}`;
+function pageHref(basePath: string, page: number): string {
+  return page <= 1 ? basePath : `${basePath}?page=${page}`;
 }
 
-export default function ProductsListing({ products, currentPage, lastPage }: ProductsListingProps) {
+export default function ProductsListing({
+  products,
+  currentPage,
+  lastPage,
+  basePath = "/products",
+}: ProductsListingProps) {
   const [sort] = useState<SortOption>("latest");
   const visiblePages = buildVisiblePages(currentPage, lastPage);
 
@@ -120,7 +126,7 @@ export default function ProductsListing({ products, currentPage, lastPage }: Pro
           <div className="flex flex-wrap items-center justify-center gap-3">
             {currentPage > 1 ? (
               <Link
-                href={pageHref(currentPage - 1)}
+                href={pageHref(basePath, currentPage - 1)}
                 className="rounded-[50px] border border-slate-100 px-6 py-2.5 text-base font-medium text-neutral-800"
               >
                 Previous
@@ -139,7 +145,7 @@ export default function ProductsListing({ products, currentPage, lastPage }: Pro
               ) : (
                 <Link
                   key={item}
-                  href={pageHref(item)}
+                  href={pageHref(basePath, item)}
                   className={`flex h-10 min-w-10 items-center justify-center rounded-[50px] border border-slate-100 px-3 text-sm font-semibold ${
                     item === currentPage ? "bg-amber-500 text-white" : "text-neutral-700"
                   }`}
@@ -151,7 +157,7 @@ export default function ProductsListing({ products, currentPage, lastPage }: Pro
 
             {currentPage < lastPage ? (
               <Link
-                href={pageHref(currentPage + 1)}
+                href={pageHref(basePath, currentPage + 1)}
                 className="rounded-[50px] border border-slate-100 px-6 py-2.5 text-base font-semibold text-neutral-800"
               >
                 Next

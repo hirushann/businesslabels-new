@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import EmptyState from "@/components/EmptyState";
+import ProductsListing, { type ListingProductCardData } from "@/components/ProductsListing";
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
+import { demoProducts, mapDemoProductToCard } from "@/lib/demoCatalog";
 
 export const metadata: Metadata = {
   title: "Labelprinters — BusinessLabels",
@@ -207,13 +209,24 @@ const reviews = [
 
 export default async function CategoryArchivePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ page?: string | string[] }>;
 }) {
   const { slug } = await params;
+  const query = await searchParams;
   const baseUrl = process.env.BBNL_API_BASE_URL;
   const categoryTitle = categoryTitleForSlug(slug);
-  const categoryProducts = await loadCategoryProducts(baseUrl, slug);
+  const requestedPage = Array.isArray(query.page) ? query.page[0] : query.page;
+  const normalizedPage = Number.parseInt(requestedPage ?? "1", 10);
+  const currentPage = Number.isFinite(normalizedPage) && normalizedPage > 0 ? normalizedPage : 1;
+  const isDemoCategory = slug === "demo";
+  const demoCategoryProducts = demoProducts.map(mapDemoProductToCard);
+  const demoLastPage = Math.max(1, Math.ceil(demoCategoryProducts.length / 12));
+  const safeDemoPage = Math.min(currentPage, demoLastPage);
+  const paginatedDemoProducts = demoCategoryProducts.slice((safeDemoPage - 1) * 12, safeDemoPage * 12);
+  const categoryProducts = isDemoCategory ? [] : await loadCategoryProducts(baseUrl, slug);
   const topProducts = await loadTopProducts(baseUrl);
 
   return (
@@ -244,7 +257,14 @@ export default async function CategoryArchivePage({
           </div>
 
           {/* ── Category Grid ───────────────────────────── */}
-          {categoryProducts.length > 0 ? (
+          {isDemoCategory ? (
+            <ProductsListing
+              products={paginatedDemoProducts as ListingProductCardData[]}
+              currentPage={safeDemoPage}
+              lastPage={demoLastPage}
+              basePath="/category/demo"
+            />
+          ) : categoryProducts.length > 0 ? (
             <div className="grid grid-cols-4 gap-6">
               {categoryProducts.map((product) => {
                 const href = productHref(product);
@@ -261,13 +281,22 @@ export default async function CategoryArchivePage({
       </div>
 
       {/* ── Top Selling Products ─────────────────────────── */}
-      <div className="px-10 py-24 bg-gray-50">
-        <div className="max-w-[1440px] mx-auto flex flex-col gap-12">
+      <div className="px-40 py-24 bg-gray-50">
+        <div className="max-w-[1200px] mx-auto flex flex-col gap-12">
           <div className="flex justify-between items-center">
             <h2 className="text-neutral-800 text-4xl font-bold leading-[48px]">Top Selling Products</h2>
-            <button className="h-12 px-6 py-4 rounded-[50px] outline outline-1 outline-offset-[-1px] outline-amber-500 flex items-center gap-2.5 hover:bg-amber-50 transition-colors">
-              <span className="text-amber-500 text-base font-semibold leading-6">View All Products</span>
-            </button>
+            <div className="flex items-center gap-6">
+              <button className="w-12 h-12 p-3 bg-gray-50 rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-gray-200 flex justify-center items-center hover:bg-white transition-colors">
+                <svg className="w-4 h-4 text-neutral-700" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <button className="w-12 h-12 p-3 bg-white rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-amber-500 flex justify-center items-center hover:bg-amber-50 transition-colors">
+                <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-3 gap-6">

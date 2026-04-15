@@ -1,12 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import type { ProductRouteType } from "@/components/ProductCard";
+import { useCart } from "@/components/CartProvider";
 
 type ProductPurchaseProps = {
+  id?: string | number | null;
+  slug?: string | null;
+  type?: ProductRouteType | null;
+  name?: string | null;
   sku?: string | null;
   inStock?: boolean | null;
   price?: number | null;
   originalPrice?: number | null;
+  mainImage?: string | null;
 };
 
 function formatEuro(value: number): string {
@@ -19,17 +26,24 @@ function formatEuro(value: number): string {
 }
 
 export default function ProductPurchase({
+  id,
+  slug,
+  type,
+  name,
   sku,
   inStock,
   price,
   originalPrice,
+  mainImage,
 }: ProductPurchaseProps) {
+  const { addItem } = useCart();
   const [quantity, setQuantity] = useState(1);
 
   const increment = () => setQuantity((prev) => prev + 1);
   const decrement = () => setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
 
-  const displaySku = sku?.trim() ? sku : "EP-C3500";
+  const displaySku = sku?.trim() ? sku : "-";
+  const displayName = name?.trim() ? name : "Product";
   const hasPrice = typeof price === "number" && Number.isFinite(price);
   const hasOriginalPrice =
     typeof originalPrice === "number" &&
@@ -44,6 +58,21 @@ export default function ProductPurchase({
     hasPrice && hasOriginalPrice
       ? Math.round(((originalPrice - price) / originalPrice) * 100)
       : null;
+
+  const handleAddToCart = () => {
+    addItem(
+      {
+        id: id ?? displaySku,
+        slug,
+        type,
+        name: displayName,
+        sku: displaySku,
+        price,
+        mainImage,
+      },
+      quantity,
+    );
+  };
 
   return (
     <div className="p-6 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col gap-6">
@@ -61,7 +90,7 @@ export default function ProductPurchase({
         </div>
         <div className="flex items-baseline gap-2">
           <span className="text-neutral-800 text-4xl font-bold leading-[48px]">
-            {hasPrice ? formatEuro(price) : "€0,00"}
+            {hasPrice ? formatEuro(price) : "-"}
           </span>
           {hasOriginalPrice ? (
             <span className="text-zinc-500 text-2xl font-normal line-through leading-7">
@@ -125,7 +154,11 @@ export default function ProductPurchase({
             </button>
           </div>
         </div>
-        <button className="flex-1 h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] flex justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm">
+        <button
+          type="button"
+          onClick={handleAddToCart}
+          className="flex-1 h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] flex justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm"
+        >
           <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
