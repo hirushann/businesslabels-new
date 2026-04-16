@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import ElasticsearchAPIConnector from '@elastic/search-ui-elasticsearch-connector';
 import type { QueryConfig, RequestState } from '@elastic/search-ui';
 
-const DEFAULT_INDEX = 'business_labels_catalog_products';
+const DEFAULT_INDEX_SUFFIXES = ['catalog_products_simple', 'catalog_products_variable'] as const;
 
 function elasticHost(): string {
   const url = process.env.ELASTICSEARCH_URL;
@@ -12,10 +12,48 @@ function elasticHost(): string {
   if (!host) return '';
 
   if (host.startsWith('http://') || host.startsWith('https://')) {
-    return host;
+    return appendPortIfMissing(host);
   }
 
-  return `http://${host}`;
+  const scheme = process.env.ELASTIC_SCHEME?.trim() || 'http';
+  return appendPortIfMissing(`${scheme}://${host}`);
+}
+
+function appendPortIfMissing(rawUrl: string): string {
+  try {
+    const url = new URL(rawUrl);
+    if (url.port || !process.env.ELASTIC_PORT?.trim()) {
+      return url.toString().replace(/\/$/, '');
+    }
+
+    url.port = process.env.ELASTIC_PORT.trim();
+    return url.toString().replace(/\/$/, '');
+  } catch {
+    return rawUrl.replace(/\/$/, '');
+  }
+}
+
+function elasticIndex(): string {
+  const configured = process.env.SEARCH_INDEX || process.env.ELASTICSEARCH_INDEX;
+  if (configured?.trim()) return configured.trim();
+
+  const prefix = process.env.SCOUT_PREFIX?.trim() ?? '';
+  return DEFAULT_INDEX_SUFFIXES.map((suffix) => `${prefix}${suffix}`).join(',');
+}
+
+function elasticConnectionHeaders(): Record<string, string> | undefined {
+  const apiKey = process.env.ELASTIC_API_KEY?.trim();
+  if (apiKey) return undefined;
+
+  const username = process.env.ELASTIC_USERNAME?.trim();
+  if (!username) return undefined;
+
+  const password = process.env.ELASTIC_PASSWORD ?? '';
+  const encoded = Buffer.from(`${username}:${password}`).toString('base64');
+
+  return {
+    Authorization: `Basic ${encoded}`,
+  };
 }
 
 function normalizeError(message: string, status = 500) {
@@ -149,7 +187,8 @@ function buildRelevanceQuery(state: RequestState, queryConfig: QueryConfig) {
 
 export async function POST(request: NextRequest) {
   const host = elasticHost();
-  const index = process.env.SEARCH_INDEX || process.env.ELASTICSEARCH_INDEX || DEFAULT_INDEX;
+  const index = elasticIndex();
+  const connectionHeaders = elasticConnectionHeaders();
 
   if (!host) {
     return normalizeError('Elasticsearch host is not configured.', 500);
@@ -171,6 +210,7 @@ export async function POST(request: NextRequest) {
       host,
       index,
       ...(process.env.ELASTIC_API_KEY ? { apiKey: process.env.ELASTIC_API_KEY } : {}),
+      ...(connectionHeaders ? { connectionOptions: { headers: connectionHeaders } } : {}),
       getQueryFn: (state, queryConfig) => buildRelevanceQuery(state, queryConfig) as never,
       interceptSearchRequest: async ({ requestBody }, next) => {
         const safeRequestBody = withSafeSort(requestBody as ElasticsearchRequestBody);
@@ -181,7 +221,14 @@ export async function POST(request: NextRequest) {
     const response = await connector.onSearch(body.state, body.queryConfig);
 
     return NextResponse.json(response);
-  } catch {
+  } catch (error) {
+    console.error('Search proxy request failed.', {
+      host,
+      index,
+      hasApiKey: Boolean(process.env.ELASTIC_API_KEY?.trim()),
+      hasBasicAuth: Boolean(process.env.ELASTIC_USERNAME?.trim()),
+      error,
+    });
     return normalizeError('Search backend is temporarily unavailable.', 503);
   }
 }

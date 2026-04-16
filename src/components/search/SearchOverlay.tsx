@@ -283,7 +283,7 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
       onClick={onClose}
     >
       <div
-        className="w-full h-full bg-[#F7F7F7] overflow-hidden shadow-2xl md:h-[calc(100vh-80px)] md:w-[calc(100vw-80px)] md:max-w-[1680px] md:max-h-[920px] md:rounded-xl"
+        className="w-full h-full bg-white overflow-hidden shadow-2xl md:h-[calc(100vh-80px)] md:w-[calc(100vw-80px)] md:max-w-[1680px] md:max-h-[920px] md:rounded-xl"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="bg-white border-b border-slate-200 px-4 py-4">
