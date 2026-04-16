@@ -122,7 +122,7 @@ export default function ReviewsSlider({ reviews, totalRatings }: ReviewsSliderPr
               <div className="flex items-center gap-4 mb-5">
                 <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 shrink-0">
                   {r.profile_photo_url ? (
-                    <img src={r.profile_photo_url} alt={r.author_name} className="w-full h-full object-cover" />
+                    <img src={r.profile_photo_url} alt={r.author_name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-amber-100 text-amber-600 font-bold text-lg">
                       {r.author_name.charAt(0)}

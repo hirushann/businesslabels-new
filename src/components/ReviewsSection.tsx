@@ -23,8 +23,13 @@ const FALLBACK_REVIEWS = [
 ];
 
 async function getGoogleReviews() {
-  const apiKey = "AIzaSyCDyRGFZTxiz8WxeeoVknwRwHAB5X3E1Ps";
-  const placeId = "ChIJZbgtBIKBx0cRvKyEql2ogvc";
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  const placeId = process.env.GOOGLE_PLACE_ID;
+  
+  if (!apiKey || !placeId) {
+    console.warn("Missing GOOGLE_PLACES_API_KEY or GOOGLE_PLACE_ID in environment variables.");
+    return null;
+  }
   
   try {
     const res = await fetch(
