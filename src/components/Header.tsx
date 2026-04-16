@@ -23,9 +23,8 @@ const navItems = [
 export default function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
-  const [isCartOpen, setIsCartOpen] = useState(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
-  const { uniqueItemCount } = useCart();
+  const { uniqueItemCount, isCartOpen, openCart, closeCart } = useCart();
   const { uniqueItemCount: uniqueWishlistCount } = useWishlist();
 
   return (
@@ -166,7 +165,7 @@ export default function Header() {
             {/* Cart */}
             <button
               type="button"
-              onClick={() => setIsCartOpen(true)}
+              onClick={openCart}
               className="relative cursor-pointer"
               aria-label="Open cart drawer"
             >
@@ -227,7 +226,7 @@ export default function Header() {
       {isSearchOpen && <SearchOverlay onClose={() => setIsSearchOpen(false)} />}
       {isHelpOpen && <HelpDrawer onClose={() => setIsHelpOpen(false)} />}
       {isWishlistOpen && <WishlistDrawer onClose={() => setIsWishlistOpen(false)} />}
-      {isCartOpen && <CartDrawer onClose={() => setIsCartOpen(false)} />}
+      {isCartOpen && <CartDrawer onClose={closeCart} />}
     </header>
   );
 }

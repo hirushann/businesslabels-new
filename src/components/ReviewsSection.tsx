@@ -1,76 +1,58 @@
-const reviews = [
+import React from 'react';
+import ReviewsSlider from './ReviewsSlider';
+
+const FALLBACK_REVIEWS = [
   {
-    quote: '"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took"',
-    name: 'David Tui',
-    role: 'Marketing Manager, HubSync',
-    featured: false,
+    text: '"Excellent fast delivery and great support. Highly recommend their label printers and accessories!"',
+    author_name: 'David Tui',
+    relative_time_description: 'a month ago',
+    rating: 5,
   },
   {
-    quote: '"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took"',
-    name: 'Sarah Mitchell',
-    role: 'Software Engineer, Anydesk',
-    featured: true,
+    text: '"Quality of the products is super. Happy with the custom form submission procedure as well."',
+    author_name: 'Sarah Mitchell',
+    relative_time_description: '2 months ago',
+    rating: 5,
   },
   {
-    quote: '"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took"',
-    name: 'Priya Sharma',
-    role: 'Product Designer, Designdot',
-    featured: false,
+    text: '"Great team to work with. They helped me find the perfect Epson printer for my business."',
+    author_name: 'Priya Sharma',
+    relative_time_description: '3 months ago',
+    rating: 5,
   },
 ];
 
-export default function ReviewsSection() {
+async function getGoogleReviews() {
+  const apiKey = "AIzaSyCDyRGFZTxiz8WxeeoVknwRwHAB5X3E1Ps";
+  const placeId = "ChIJZbgtBIKBx0cRvKyEql2ogvc";
+  
+  try {
+    const res = await fetch(
+      `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=reviews,rating,user_ratings_total&key=${apiKey}&reviews_sort=newest`,
+      { next: { revalidate: 86400 } } // Cache for 24 hours
+    );
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.result ?? null;
+  } catch (error) {
+    console.error("Failed to fetch Google Reviews:", error);
+    return null;
+  }
+}
+
+export default async function ReviewsSection() {
+  const googleData = await getGoogleReviews();
+  const reviews = googleData?.reviews?.length ? googleData.reviews : FALLBACK_REVIEWS;
+  const totalRatings = googleData?.user_ratings_total || "1000";
+
   return (
-    <section className="relative w-full px-10 py-24 bg-white overflow-hidden">
-      {/* Decorative blobs */}
-      <div className="w-48 h-48 absolute right-52 bottom-0 bg-amber-500/30 rounded-full blur-[132px] pointer-events-none" />
-      <div className="w-48 h-48 absolute left-0 top-0 bg-amber-500/30 rounded-full blur-[132px] pointer-events-none" />
+    <section className="relative w-full px-10 py-24 overflow-hidden" style={{ background: "linear-gradient(135deg, #FFFDF8 0%, #FFFFFF 100%)" }}>
+      {/* Decorative blobs matching the softer design background */}
+      <div className="w-[600px] h-[600px] absolute -right-20 -bottom-20 bg-orange-50/60 rounded-full blur-[100px] pointer-events-none" />
+      <div className="w-[600px] h-[600px] absolute -left-20 -top-20 bg-amber-50/60 rounded-full blur-[100px] pointer-events-none" />
 
-      <div className="max-w-[1440px] mx-auto w-full flex flex-col gap-12">
-        {/* Header */}
-        <div className="flex justify-between items-start">
-          <h2 className="text-neutral-800 text-4xl font-bold font-['Segoe_UI'] leading-[48px]">
-            Over 1000<br />Positive Reviews
-          </h2>
-          <div className="flex items-center gap-6">
-            <button className="px-3 py-3.5 rotate-180 bg-neutral-100 rounded-full shadow border border-gray-200 flex items-center justify-center hover:bg-neutral-200 transition-colors">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M6 3L11 8L6 13" stroke="#404040" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-            </button>
-            <button className="px-3 py-3.5 bg-white rounded-full shadow border border-amber-500 flex items-center justify-center hover:bg-amber-50 transition-colors">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M6 3L11 8L6 13" stroke="#F59E0B" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Review cards */}
-        <div className="grid grid-cols-3 gap-6">
-          {reviews.map((r) => (
-            <div
-              key={r.name}
-              className={`p-6 rounded-xl flex flex-col gap-8 ${
-                r.featured
-                  ? 'bg-gradient-to-br from-orange-50 to-white border-2 border-orange-100'
-                  : 'bg-white border border-zinc-100'
-              }`}
-            >
-              <p className="text-neutral-700 text-lg font-normal font-['Segoe_UI'] leading-7">
-                {r.quote}
-              </p>
-              <div className="flex items-center gap-4">
-                <div className="w-1 self-stretch bg-amber-500 rounded-full" />
-                <div className="flex flex-col gap-2">
-                  <span className="text-neutral-800 text-xl font-bold font-['Segoe_UI'] leading-6">{r.name}</span>
-                  <span className="text-zinc-500 text-base font-normal font-['Segoe_UI'] leading-6">{r.role}</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <ReviewsSlider reviews={reviews} totalRatings={totalRatings} />
     </section>
   );
 }
