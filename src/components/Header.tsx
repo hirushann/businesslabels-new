@@ -142,10 +142,12 @@ export default function Header() {
               </svg>
             </div>
             {/* User */}
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="cursor-pointer">
-              <circle cx="12" cy="8" r="4" stroke="#404040" strokeWidth="1.5" />
-              <path d="M4 20c0-4.42 3.58-8 8-8s8 3.58 8 8" stroke="#404040" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
+            <Link href="/my-account" aria-label="Go to My Account">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="cursor-pointer">
+                <circle cx="12" cy="8" r="4" stroke="#404040" strokeWidth="1.5" />
+                <path d="M4 20c0-4.42 3.58-8 8-8s8 3.58 8 8" stroke="#404040" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </Link>
             {/* Wishlist */}
             <button
               type="button"
