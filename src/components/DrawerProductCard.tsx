@@ -34,7 +34,7 @@ export default function DrawerProductCard({
     <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-[2px_6px_20px_0px_rgba(109,109,120,0.06)]">
       <div className="flex gap-4">
         <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-slate-100">
-          <Image src={imageSrc} alt={name} fill sizes="96px" className="object-cover" unoptimized />
+          <Image src={imageSrc} alt={name} fill sizes="96px" className="p-2 object-contain" unoptimized />
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col justify-between gap-3">
