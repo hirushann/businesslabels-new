@@ -44,14 +44,6 @@ const relatedSections = [
     title: "Ink & Maintenance",
     products: demoProducts.slice(0, 3).map(mapDemoProductToCard),
   },
-  {
-    title: "Badges / Media",
-    products: demoProducts.slice(3, 6).map(mapDemoProductToCard),
-  },
-  {
-    title: "Hardwares",
-    products: demoProducts.slice(6, 9).map(mapDemoProductToCard),
-  },
 ];
 
 async function getMaterial(slug: string): Promise<Material | null> {
