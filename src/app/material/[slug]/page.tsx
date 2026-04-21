@@ -4,6 +4,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Accordion from "@/components/Accordion";
 import CTABanner from "@/components/CTABanner";
+import ProductCard, { type ProductCardData } from "@/components/ProductCard";
+import { demoProducts, mapDemoProductToCard } from "@/lib/demoCatalog";
 
 type Material = {
   id: number;
@@ -36,6 +38,21 @@ type MaterialResponse = {
 type MaterialPageProps = {
   params: Promise<{ slug: string }>;
 };
+
+const relatedSections = [
+  {
+    title: "Ink & Maintenance",
+    products: demoProducts.slice(0, 3).map(mapDemoProductToCard),
+  },
+  {
+    title: "Badges / Media",
+    products: demoProducts.slice(3, 6).map(mapDemoProductToCard),
+  },
+  {
+    title: "Hardwares",
+    products: demoProducts.slice(6, 9).map(mapDemoProductToCard),
+  },
+];
 
 async function getMaterial(slug: string): Promise<Material | null> {
   const baseUrl = process.env.BBNL_API_BASE_URL;
@@ -202,6 +219,59 @@ function SpecsTable({ material }: { material: Material }) {
   );
 }
 
+function productHref(product: ProductCardData): { pathname: string; query?: { type: "simple" | "variable" } } | undefined {
+  if (!product.slug) {
+    return undefined;
+  }
+
+  if (product.type) {
+    return {
+      pathname: `/products/${product.slug}`,
+      query: { type: product.type },
+    };
+  }
+
+  return { pathname: `/products/${product.slug}` };
+}
+
+function RelatedProductsSection({ title, products }: { title: string; products: ProductCardData[] }) {
+  return (
+    <section className="px-4 py-24 odd:bg-gray-50 even:bg-white sm:px-6 lg:px-10">
+      <div className="mx-auto flex max-w-[1200px] flex-col gap-12">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-4xl font-bold leading-[48px] text-neutral-800">{title}</h2>
+          <div className="flex items-center gap-6">
+            <button
+              type="button"
+              className="flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-white text-neutral-700 shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)]"
+              aria-label={`Previous ${title}`}
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              className="flex h-12 w-12 items-center justify-center rounded-full border border-amber-500 bg-white text-amber-500 shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)]"
+              aria-label={`Next ${title}`}
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {products.map((product) => (
+            <ProductCard key={product.id} product={product} href={productHref(product)} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default async function SingleMaterialPage({ params }: MaterialPageProps) {
   const { slug } = await params;
   const material = await getMaterial(slug);
@@ -220,6 +290,8 @@ export default async function SingleMaterialPage({ params }: MaterialPageProps) 
             <Link href="/" className="hover:text-neutral-800">
               Home
             </Link>
+            <span>/</span>
+            <span>Category</span>
             <span>/</span>
             <Link href="/material" className="hover:text-neutral-800">
               Materials
@@ -264,6 +336,10 @@ export default async function SingleMaterialPage({ params }: MaterialPageProps) 
           </div>
         </div>
       </section>
+
+      {relatedSections.map((section) => (
+        <RelatedProductsSection key={section.title} title={section.title} products={section.products} />
+      ))}
 
       <CTABanner />
     </div>
