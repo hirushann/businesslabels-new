@@ -1,9 +1,17 @@
+import Image from 'next/image';
 import Link from 'next/link';
 
 export default function CTABanner() {
   return (
-    <section className="relative w-full py-12 overflow-hidden">
+    <section className="relative h-120 w-full py-12 overflow-hidden">
       {/* Background */}
+      <Image
+        src="/images/cta_image.jpg"
+        alt=""
+        fill
+        sizes="100vw"
+        className="object-cover"
+      />
       <div className="absolute inset-0 bg-gradient-to-l from-black/50 via-black/50 to-black/0" />
       <div className="absolute inset-0 bg-gradient-to-br from-stone-700/70 to-yellow-950/60" />
 
