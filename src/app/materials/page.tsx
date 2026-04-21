@@ -88,7 +88,7 @@ function MaterialCard({ material }: { material: Material }) {
         <div className="mt-auto flex flex-col gap-4">
           <div className="h-px bg-gray-100" />
           <Link
-            href={`/material/${material.slug}`}
+            href={`/materials/${material.slug}`}
             className="flex h-9 items-center justify-center rounded-full bg-blue-400 px-4 text-base font-semibold leading-6 text-white transition-colors hover:bg-blue-500"
           >
             View
@@ -233,7 +233,7 @@ export default async function MaterialPage({
               <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                 {currentPage > 1 && (
                   <Link
-                    href={`/material?page=${currentPage - 1}`}
+                    href={`/materials?page=${currentPage - 1}`}
                     className="rounded-[50px] border border-slate-100 px-6 py-2.5 text-base font-medium text-neutral-800"
                   >
                     Previous
@@ -244,7 +244,7 @@ export default async function MaterialPage({
                   return (
                     <Link
                       key={p}
-                      href={`/material?page=${p}`}
+                      href={`/materials?page=${p}`}
                       className={`flex h-10 min-w-10 items-center justify-center rounded-[50px] border border-slate-100 px-3 text-sm font-semibold ${
                         p === currentPage ? "bg-amber-500 text-white" : "text-neutral-700"
                       }`}
@@ -256,7 +256,7 @@ export default async function MaterialPage({
                 {lastPage > 5 && <span className="px-2 text-sm font-semibold text-zinc-500">...</span>}
                 {currentPage < lastPage && (
                   <Link
-                    href={`/material?page=${currentPage + 1}`}
+                    href={`/materials?page=${currentPage + 1}`}
                     className="rounded-[50px] border border-slate-100 px-6 py-2.5 text-base font-semibold text-neutral-800"
                   >
                     Next

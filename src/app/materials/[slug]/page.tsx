@@ -293,7 +293,7 @@ export default async function SingleMaterialPage({ params }: MaterialPageProps) 
             <span>/</span>
             <span>Category</span>
             <span>/</span>
-            <Link href="/material" className="hover:text-neutral-800">
+            <Link href="/materials" className="hover:text-neutral-800">
               Materials
             </Link>
             <span>/</span>
