@@ -28,6 +28,9 @@ type CartContextValue = {
   incrementItemQuantity: (key: string) => void;
   decrementItemQuantity: (key: string) => void;
   clearCart: () => void;
+  isCartOpen: boolean;
+  openCart: () => void;
+  closeCart: () => void;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -44,6 +47,7 @@ function cartItemKey(item: Pick<CartInput, "id" | "slug" | "type">): string {
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -128,8 +132,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       clearCart: () => {
         setItems([]);
       },
+      isCartOpen,
+      openCart: () => setIsCartOpen(true),
+      closeCart: () => setIsCartOpen(false),
     }),
-    [items],
+    [items, isCartOpen],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

@@ -23,9 +23,8 @@ const navItems = [
 export default function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
-  const [isCartOpen, setIsCartOpen] = useState(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
-  const { uniqueItemCount } = useCart();
+  const { uniqueItemCount, isCartOpen, openCart, closeCart } = useCart();
   const { uniqueItemCount: uniqueWishlistCount } = useWishlist();
 
   return (
@@ -143,10 +142,12 @@ export default function Header() {
               </svg>
             </div>
             {/* User */}
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="cursor-pointer">
-              <circle cx="12" cy="8" r="4" stroke="#404040" strokeWidth="1.5" />
-              <path d="M4 20c0-4.42 3.58-8 8-8s8 3.58 8 8" stroke="#404040" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
+            <Link href="/my-account" aria-label="Go to My Account">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="cursor-pointer">
+                <circle cx="12" cy="8" r="4" stroke="#404040" strokeWidth="1.5" />
+                <path d="M4 20c0-4.42 3.58-8 8-8s8 3.58 8 8" stroke="#404040" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </Link>
             {/* Wishlist */}
             <button
               type="button"
@@ -166,7 +167,7 @@ export default function Header() {
             {/* Cart */}
             <button
               type="button"
-              onClick={() => setIsCartOpen(true)}
+              onClick={openCart}
               className="relative cursor-pointer"
               aria-label="Open cart drawer"
             >
@@ -227,7 +228,7 @@ export default function Header() {
       {isSearchOpen && <SearchOverlay onClose={() => setIsSearchOpen(false)} />}
       {isHelpOpen && <HelpDrawer onClose={() => setIsHelpOpen(false)} />}
       {isWishlistOpen && <WishlistDrawer onClose={() => setIsWishlistOpen(false)} />}
-      {isCartOpen && <CartDrawer onClose={() => setIsCartOpen(false)} />}
+      {isCartOpen && <CartDrawer onClose={closeCart} />}
     </header>
   );
 }
