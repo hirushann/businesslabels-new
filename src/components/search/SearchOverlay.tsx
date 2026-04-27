@@ -7,6 +7,7 @@ import { apiConnector, SORT_TO_SEARCH_UI, type OverlaySortValue } from './api';
 import { useNextRoutingOptions } from './useNextRouting';
 import EmptyState from '@/components/EmptyState';
 import ProductCard, { type ProductCardData } from '@/components/ProductCard';
+import PriceFilter from './PriceFilter';
 
 type SearchOverlayProps = {
   onClose: () => void;
@@ -185,6 +186,8 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
     sortField,
     sortDirection,
     setSort,
+    filters,
+    removeFilter,
   } = useSearch((state) => ({
     searchTerm: state.searchTerm,
     setSearchTerm: state.setSearchTerm,
@@ -198,9 +201,12 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
     sortField: state.sortField,
     sortDirection: state.sortDirection,
     setSort: state.setSort,
+    filters: state.filters,
+    removeFilter: state.removeFilter,
   }));
   const [inputValue, setInputValue] = useState(searchTerm || '');
   const [manualSort, setManualSort] = useState<OverlaySortValue | null>(null);
+  const activeFilters = filters ?? [];
   const queryValue = inputValue.trim();
   const queryMode = queryValue.length >= MIN_QUERY_LENGTH;
 
@@ -334,16 +340,39 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
           </div>
         </div>
 
-        <div className="h-[calc(100%-81px)] overflow-y-auto px-4 py-6">
-          <div className="max-w-[1440px] mx-auto">
-            <div className="mb-4 text-sm text-neutral-600">
-              {isLoading ? 'Searching...' : `${totalResults || 0} results`}
+        <div className="h-[calc(100%-81px)] flex flex-col md:flex-row overflow-hidden">
+          {/* Sidebar */}
+          <aside className="w-full md:w-[320px] lg:w-[360px] border-r border-slate-100 overflow-y-auto p-4 lg:p-6 bg-slate-50/50">
+            <div className="flex flex-col gap-6">
+              <div className="flex items-center justify-between px-1">
+                <h2 className="text-neutral-800 text-xl font-bold">Filters</h2>
+                {activeFilters.length > 0 && (
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      activeFilters.forEach(f => removeFilter(f.field));
+                    }}
+                    className="text-amber-500 text-sm font-medium hover:underline"
+                  >
+                    Clear all
+                  </button>
+                )}
+              </div>
+              <PriceFilter />
             </div>
+          </aside>
+
+          {/* Results Area */}
+          <div className="flex-1 overflow-y-auto px-4 py-6 lg:px-8">
+            <div className="max-w-[1440px] mx-auto">
+              <div className="mb-4 text-sm text-neutral-600">
+                {isLoading ? 'Searching...' : `${totalResults || 0} results`}
+              </div>
 
             {error ? (
               <div className="bg-red-50 text-red-700 border border-red-200 rounded-lg p-4">{String(error)}</div>
             ) : isLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-5">
                 {Array.from({ length: 8 }, (_, i) => (
                   <div key={i} className="h-72 rounded-xl bg-slate-200 animate-pulse" />
                 ))}
@@ -351,11 +380,11 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
             ) : (results?.length || 0) === 0 ? (
               <EmptyState
                 title="No products found"
-                description="Try a different search term or adjust the sort to see more results."
+                description="Try a different search term or adjust the filters to see more results."
               />
             ) : (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-5">
                   {(results || []).map((result, resultIndex) => {
                     const normalizedType = normalizeResultType(getRaw(result, 'product_type')) ?? normalizeResultType(getRaw(result, 'type'));
                     const slug = valueAsString(getRaw(result, 'slug'));
@@ -419,6 +448,7 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
                 )}
               </>
             )}
+            </div>
           </div>
         </div>
       </div>
