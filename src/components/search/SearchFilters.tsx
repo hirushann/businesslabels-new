@@ -54,6 +54,7 @@ const KERN_RANGE_FILTER: RangeFilterConfig = {
 const MATERIAL_CODE_FIELD = "meta_material_code";
 const MATERIAL_FIELD = "meta_material";
 const FINISHING_FIELD = "meta_finishing";
+const GLUE_FIELD = "meta_glue";
 
 type PillOption = {
   value: string;
@@ -64,7 +65,7 @@ type PillOption = {
 type PillFilterConfig = {
   title: string;
   field: string;
-  responseKey: "materialCode" | "material" | "finishing";
+  responseKey: "materialCode" | "material" | "finishing" | "glue";
 };
 
 const PILL_FILTERS: PillFilterConfig[] = [
@@ -82,6 +83,11 @@ const PILL_FILTERS: PillFilterConfig[] = [
     title: "Finishing",
     field: FINISHING_FIELD,
     responseKey: "finishing",
+  },
+  {
+    title: "Glue",
+    field: GLUE_FIELD,
+    responseKey: "glue",
   },
 ];
 
@@ -146,6 +152,9 @@ function pillOptions(rawResponse: unknown, responseKey: PillFilterConfig["respon
         options?: unknown;
       };
       finishing?: {
+        options?: unknown;
+      };
+      glue?: {
         options?: unknown;
       };
     };

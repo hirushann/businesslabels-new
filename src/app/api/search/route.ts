@@ -120,6 +120,11 @@ const FINISHING_FIELD = {
   runtimeField: 'meta_finishing',
 } as const;
 
+const GLUE_FIELD = {
+  key: 'glue',
+  runtimeField: 'meta_glue',
+} as const;
+
 const MATERIAL_FIELD = {
   runtimeField: 'meta_material',
 } as const;
@@ -231,6 +236,12 @@ function metaRuntimeMappings(): Record<string, unknown> {
         source: keywordRuntimeScript(FINISHING_FIELD.key),
       },
     },
+    [GLUE_FIELD.runtimeField]: {
+      type: 'keyword',
+      script: {
+        source: keywordRuntimeScript(GLUE_FIELD.key),
+      },
+    },
     [MATERIAL_FIELD.runtimeField]: {
       type: 'keyword',
       script: {
@@ -336,6 +347,13 @@ type SearchStats = {
         count: number;
       }>;
     };
+    glue: {
+      options: Array<{
+        value: string;
+        label: string;
+        count: number;
+      }>;
+    };
   };
 };
 
@@ -372,6 +390,9 @@ async function loadSearchStats(
         options: [],
       },
       finishing: {
+        options: [],
+      },
+      glue: {
         options: [],
       },
     },
@@ -432,6 +453,15 @@ async function loadSearchStats(
               },
             },
           },
+          glues: {
+            terms: {
+              field: GLUE_FIELD.runtimeField,
+              size: 100,
+              order: {
+                _key: 'asc',
+              },
+            },
+          },
         },
       }),
       cache: 'no-store',
@@ -468,6 +498,12 @@ async function loadSearchStats(
           }>;
         };
         finishings?: {
+          buckets?: Array<{
+            key?: string | number;
+            doc_count?: number;
+          }>;
+        };
+        glues?: {
           buckets?: Array<{
             key?: string | number;
             doc_count?: number;
@@ -521,6 +557,18 @@ async function loadSearchStats(
         },
         finishing: {
           options: (json.aggregations?.finishings?.buckets ?? [])
+            .map((bucket) => {
+              const value = typeof bucket.key === 'string' ? bucket.key : String(bucket.key ?? '');
+              return {
+                value,
+                label: labelFromCode(value),
+                count: typeof bucket.doc_count === 'number' ? bucket.doc_count : 0,
+              };
+            })
+            .filter((option) => option.value.trim() !== ''),
+        },
+        glue: {
+          options: (json.aggregations?.glues?.buckets ?? [])
             .map((bucket) => {
               const value = typeof bucket.key === 'string' ? bucket.key : String(bucket.key ?? '');
               return {
