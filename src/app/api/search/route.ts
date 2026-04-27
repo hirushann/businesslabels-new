@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import ElasticsearchAPIConnector from '@elastic/search-ui-elasticsearch-connector';
-import type { QueryConfig, RequestState } from '@elastic/search-ui';
+import type { QueryConfig, RequestState, ResponseState } from '@elastic/search-ui';
 
 const DEFAULT_INDEX_SUFFIXES = ['catalog_products_simple', 'catalog_products_variable'] as const;
 
@@ -54,6 +54,24 @@ function elasticConnectionHeaders(): Record<string, string> | undefined {
   return {
     Authorization: `Basic ${encoded}`,
   };
+}
+
+function elasticFetchHeaders(connectionHeaders: Record<string, string> | undefined): Record<string, string> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(connectionHeaders ?? {}),
+  };
+
+  const apiKey = process.env.ELASTIC_API_KEY?.trim();
+  if (apiKey) {
+    headers.Authorization = `ApiKey ${apiKey}`;
+  }
+
+  return headers;
+}
+
+function elasticIndexPath(index: string): string {
+  return index.split(',').map((part) => encodeURIComponent(part)).join(',');
 }
 
 function normalizeError(message: string, status = 500) {
@@ -125,6 +143,46 @@ function withSafeSort(body: ElasticsearchRequestBody): ElasticsearchRequestBody 
     ...body,
     sort: normalizeSortClause(body.sort),
   };
+}
+
+async function loadMaxProductPrice(
+  host: string,
+  index: string,
+  connectionHeaders: Record<string, string> | undefined,
+): Promise<number | null> {
+  try {
+    const response = await fetch(`${host}/${elasticIndexPath(index)}/_search`, {
+      method: 'POST',
+      headers: elasticFetchHeaders(connectionHeaders),
+      body: JSON.stringify({
+        size: 0,
+        aggs: {
+          max_price: {
+            max: {
+              field: 'price',
+            },
+          },
+        },
+      }),
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const json = (await response.json()) as {
+      aggregations?: {
+        max_price?: {
+          value?: number | null;
+        };
+      };
+    };
+    const maxPrice = json.aggregations?.max_price?.value;
+    return typeof maxPrice === 'number' && Number.isFinite(maxPrice) ? maxPrice : null;
+  } catch {
+    return null;
+  }
 }
 
 function buildRelevanceQuery(state: RequestState, queryConfig: QueryConfig) {
@@ -218,9 +276,22 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const response = await connector.onSearch(body.state, body.queryConfig);
+    const [response, maxProductPrice] = await Promise.all([
+      connector.onSearch(body.state, body.queryConfig),
+      loadMaxProductPrice(host, index, connectionHeaders),
+    ]);
 
-    return NextResponse.json(response);
+    const responseWithPriceMetadata: ResponseState = {
+      ...response,
+      rawResponse: {
+        ...(response.rawResponse && typeof response.rawResponse === 'object' ? response.rawResponse : {}),
+        priceStats: {
+          max: maxProductPrice,
+        },
+      },
+    };
+
+    return NextResponse.json(responseWithPriceMetadata);
   } catch (error) {
     console.error('Search proxy request failed.', {
       host,
