@@ -41,17 +41,15 @@ export default function PriceFilter() {
   };
 
   return (
-    <Accordion title="Price" defaultOpen={true}>
-      <div className="pt-4">
-        <RangeSlider
-          min={INITIAL_MIN}
-          max={INITIAL_MAX}
-          value={range}
-          onChange={() => {}}
-          onAfterChange={handleAfterChange}
-          formatValue={(v) => `€${v}`}
-        />
-      </div>
+    <Accordion title="Price" defaultOpen={true} size="compact">
+      <RangeSlider
+        min={INITIAL_MIN}
+        max={INITIAL_MAX}
+        value={range}
+        onChange={() => { }}
+        onAfterChange={handleAfterChange}
+        formatValue={(v) => `€${v}`}
+      />
     </Accordion>
   );
 }

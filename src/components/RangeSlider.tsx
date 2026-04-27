@@ -83,8 +83,8 @@ export default function RangeSlider({
   const maxPos = ((localValue[1] - min) / (max - min)) * 100;
 
   return (
-    <div className="flex flex-col gap-6 select-none">
-      <div className="relative h-6 flex items-center">
+    <div className="flex flex-col gap-4 select-none">
+      <div className="relative h-6 flex items-center mb-2 mx-2">
         {/* Track */}
         <div
           ref={trackRef}
