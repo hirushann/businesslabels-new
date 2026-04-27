@@ -10,9 +10,10 @@ const FALLBACK_MAX_BY_FIELD: Record<RangeFilterField, number> = {
   price: 5000,
   meta_width_mm: 100,
   meta_height_mm: 100,
+  meta_kern_mm: 100,
 };
 
-type RangeFilterField = "price" | "meta_width_mm" | "meta_height_mm";
+type RangeFilterField = "price" | "meta_width_mm" | "meta_height_mm" | "meta_kern_mm";
 
 type RangeFilterConfig = {
   title: string;
@@ -43,13 +44,46 @@ const RANGE_FILTERS: RangeFilterConfig[] = [
   },
 ];
 
+const KERN_RANGE_FILTER: RangeFilterConfig = {
+  title: "Kern",
+  field: "meta_kern_mm",
+  name: "kern",
+  unitSuffix: "mm",
+};
+
 const MATERIAL_CODE_FIELD = "meta_material_code";
+const MATERIAL_FIELD = "meta_material";
+const FINISHING_FIELD = "meta_finishing";
 
 type PillOption = {
   value: string;
   label: string;
   count?: number;
 };
+
+type PillFilterConfig = {
+  title: string;
+  field: string;
+  responseKey: "materialCode" | "material" | "finishing";
+};
+
+const PILL_FILTERS: PillFilterConfig[] = [
+  {
+    title: "Material Code",
+    field: MATERIAL_CODE_FIELD,
+    responseKey: "materialCode",
+  },
+  {
+    title: "Material",
+    field: MATERIAL_FIELD,
+    responseKey: "material",
+  },
+  {
+    title: "Finishing",
+    field: FINISHING_FIELD,
+    responseKey: "finishing",
+  },
+];
 
 function isPriceRangeFilter(value: unknown): value is FilterValueRange {
   return typeof value === "object" && value !== null && "name" in value;
@@ -69,6 +103,7 @@ function rawMaxValue(rawResponse: unknown, field: RangeFilterField): number | nu
     dimensionStats?: {
       width?: { max?: unknown };
       height?: { max?: unknown };
+      kern?: { max?: unknown };
     };
   };
 
@@ -77,7 +112,9 @@ function rawMaxValue(rawResponse: unknown, field: RangeFilterField): number | nu
       ? stats.priceStats?.max
       : field === "meta_width_mm"
         ? stats.dimensionStats?.width?.max
-        : stats.dimensionStats?.height?.max;
+        : field === "meta_height_mm"
+          ? stats.dimensionStats?.height?.max
+          : stats.dimensionStats?.kern?.max;
 
   return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : null;
 }
@@ -95,7 +132,7 @@ function formatRangeValue(value: number, config: RangeFilterConfig): string {
   return `${config.unitPrefix ?? ""}${value}${config.unitSuffix ? ` ${config.unitSuffix}` : ""}`;
 }
 
-function materialCodeOptions(rawResponse: unknown): PillOption[] {
+function pillOptions(rawResponse: unknown, responseKey: PillFilterConfig["responseKey"]): PillOption[] {
   if (!rawResponse || typeof rawResponse !== "object") {
     return [];
   }
@@ -105,8 +142,14 @@ function materialCodeOptions(rawResponse: unknown): PillOption[] {
       materialCode?: {
         options?: unknown;
       };
+      material?: {
+        options?: unknown;
+      };
+      finishing?: {
+        options?: unknown;
+      };
     };
-  }).pillFilters?.materialCode?.options;
+  }).pillFilters?.[responseKey]?.options;
 
   if (!Array.isArray(options)) {
     return [];
@@ -181,60 +224,62 @@ function RangeFilter({
 }
 
 function PillSelectFilter({
+  config,
   activeFilters,
   rawResponse,
   addFilter,
   removeFilter,
 }: {
+  config: PillFilterConfig;
   activeFilters: Filter[];
   rawResponse: unknown;
   addFilter: (name: string, value: string, type?: "any") => void;
   removeFilter: (name: string, value?: string, type?: "any") => void;
 }) {
-  const options = materialCodeOptions(rawResponse);
+  const options = pillOptions(rawResponse, config.responseKey);
   const selectedValues = new Set(
     activeFilters
-      .find((activeFilter) => activeFilter.field === MATERIAL_CODE_FIELD && activeFilter.type === "any")
+      .find((activeFilter) => activeFilter.field === config.field && activeFilter.type === "any")
       ?.values.filter(isSelectedValue) ?? [],
   );
 
-  if (options.length === 0) {
-    return null;
-  }
-
   return (
-    <Accordion title="Material Code" defaultOpen={true} size="compact">
-      <div className="flex flex-wrap gap-2">
-        {options.map((option) => {
-          const selected = selectedValues.has(option.value);
+    <Accordion title={config.title} defaultOpen={true} size="compact">
+      {options.length === 0 ? (
+        <p className="text-sm text-slate-400">No options available</p>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {options.map((option) => {
+            const selected = selectedValues.has(option.value);
 
-          return (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => {
-                if (selected) {
-                  removeFilter(MATERIAL_CODE_FIELD, option.value, "any");
-                } else {
-                  addFilter(MATERIAL_CODE_FIELD, option.value, "any");
-                }
-              }}
-              className={`inline-flex min-h-9 items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-                selected
-                  ? "bg-amber-500 text-white shadow-sm hover:bg-amber-600"
-                  : "bg-slate-100 text-neutral-700 hover:bg-amber-50 hover:text-amber-600"
-              }`}
-              aria-pressed={selected}
-            >
-              <span>{option.label}</span>
-              {typeof option.count === "number" ? (
-                <span className={selected ? "text-white/75" : "text-slate-400"}>{option.count}</span>
-              ) : null}
-              {selected ? <span className="text-base leading-none text-white/80">×</span> : null}
-            </button>
-          );
-        })}
-      </div>
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  if (selected) {
+                    removeFilter(config.field, option.value, "any");
+                  } else {
+                    addFilter(config.field, option.value, "any");
+                  }
+                }}
+                className={`inline-flex min-h-9 items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                  selected
+                    ? "bg-amber-500 text-white shadow-sm hover:bg-amber-600"
+                    : "bg-slate-100 text-neutral-700 hover:bg-amber-50 hover:text-amber-600"
+                }`}
+                aria-pressed={selected}
+              >
+                <span>{option.label}</span>
+                {typeof option.count === "number" ? (
+                  <span className={selected ? "text-white/75" : "text-slate-400"}>{option.count}</span>
+                ) : null}
+                {selected ? <span className="text-base leading-none text-white/80">×</span> : null}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </Accordion>
   );
 }
@@ -262,11 +307,22 @@ export default function SearchFilters() {
           setFilter={setFilter}
         />
       ))}
-      <PillSelectFilter
+      {PILL_FILTERS.map((config) => (
+        <PillSelectFilter
+          key={config.field}
+          config={config}
+          activeFilters={activeFilters}
+          rawResponse={rawResponse}
+          addFilter={addFilter}
+          removeFilter={removeFilter}
+        />
+      ))}
+      <RangeFilter
+        config={KERN_RANGE_FILTER}
         activeFilters={activeFilters}
         rawResponse={rawResponse}
-        addFilter={addFilter}
         removeFilter={removeFilter}
+        setFilter={setFilter}
       />
     </div>
   );

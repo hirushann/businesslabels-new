@@ -104,11 +104,20 @@ const DIMENSION_FIELDS = {
     key: 'meta_height',
     runtimeField: 'meta_height_mm',
   },
+  kern: {
+    key: 'kern',
+    runtimeField: 'meta_kern_mm',
+  },
 } as const;
 
 const MATERIAL_CODE_FIELD = {
   key: 'material_code',
   runtimeField: 'meta_material_code',
+} as const;
+
+const FINISHING_FIELD = {
+  key: 'finishing',
+  runtimeField: 'meta_finishing',
 } as const;
 
 const MATERIAL_FIELD = {
@@ -216,6 +225,12 @@ function metaRuntimeMappings(): Record<string, unknown> {
         source: keywordRuntimeScript(MATERIAL_CODE_FIELD.key),
       },
     },
+    [FINISHING_FIELD.runtimeField]: {
+      type: 'keyword',
+      script: {
+        source: keywordRuntimeScript(FINISHING_FIELD.key),
+      },
+    },
     [MATERIAL_FIELD.runtimeField]: {
       type: 'keyword',
       script: {
@@ -295,6 +310,9 @@ type SearchStats = {
     height: {
       max: number | null;
     };
+    kern: {
+      max: number | null;
+    };
   };
   pillFilters: {
     materialCode: {
@@ -305,6 +323,13 @@ type SearchStats = {
       }>;
     };
     material: {
+      options: Array<{
+        value: string;
+        label: string;
+        count: number;
+      }>;
+    };
+    finishing: {
       options: Array<{
         value: string;
         label: string;
@@ -337,12 +362,16 @@ async function loadSearchStats(
     dimensions: {
       width: { max: null },
       height: { max: null },
+      kern: { max: null },
     },
     pillFilters: {
       materialCode: {
         options: [],
       },
       material: {
+        options: [],
+      },
+      finishing: {
         options: [],
       },
     },
@@ -371,6 +400,11 @@ async function loadSearchStats(
               field: DIMENSION_FIELDS.height.runtimeField,
             },
           },
+          max_kern: {
+            max: {
+              field: DIMENSION_FIELDS.kern.runtimeField,
+            },
+          },
           material_codes: {
             terms: {
               field: MATERIAL_CODE_FIELD.runtimeField,
@@ -383,6 +417,15 @@ async function loadSearchStats(
           materials: {
             terms: {
               field: MATERIAL_FIELD.runtimeField,
+              size: 100,
+              order: {
+                _key: 'asc',
+              },
+            },
+          },
+          finishings: {
+            terms: {
+              field: FINISHING_FIELD.runtimeField,
               size: 100,
               order: {
                 _key: 'asc',
@@ -409,6 +452,9 @@ async function loadSearchStats(
         max_height?: {
           value?: number | null;
         };
+        max_kern?: {
+          value?: number | null;
+        };
         material_codes?: {
           buckets?: Array<{
             key?: string | number;
@@ -416,6 +462,12 @@ async function loadSearchStats(
           }>;
         };
         materials?: {
+          buckets?: Array<{
+            key?: string | number;
+            doc_count?: number;
+          }>;
+        };
+        finishings?: {
           buckets?: Array<{
             key?: string | number;
             doc_count?: number;
@@ -438,6 +490,9 @@ async function loadSearchStats(
         height: {
           max: numberOrNull(json.aggregations?.max_height?.value),
         },
+        kern: {
+          max: numberOrNull(json.aggregations?.max_kern?.value),
+        },
       },
       pillFilters: {
         materialCode: {
@@ -454,6 +509,18 @@ async function loadSearchStats(
         },
         material: {
           options: (json.aggregations?.materials?.buckets ?? [])
+            .map((bucket) => {
+              const value = typeof bucket.key === 'string' ? bucket.key : String(bucket.key ?? '');
+              return {
+                value,
+                label: labelFromCode(value),
+                count: typeof bucket.doc_count === 'number' ? bucket.doc_count : 0,
+              };
+            })
+            .filter((option) => option.value.trim() !== ''),
+        },
+        finishing: {
+          options: (json.aggregations?.finishings?.buckets ?? [])
             .map((bucket) => {
               const value = typeof bucket.key === 'string' ? bucket.key : String(bucket.key ?? '');
               return {
