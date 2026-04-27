@@ -91,8 +91,69 @@ function normalizeError(message: string, status = 500) {
 
 type ElasticsearchRequestBody = {
   sort?: unknown;
+  runtime_mappings?: Record<string, unknown>;
   [key: string]: unknown;
 };
+
+const DIMENSION_FIELDS = {
+  width: {
+    key: 'meta_width',
+    runtimeField: 'meta_width_mm',
+  },
+  height: {
+    key: 'meta_height',
+    runtimeField: 'meta_height_mm',
+  },
+} as const;
+
+function dimensionRuntimeScript(metaKey: string): string {
+  return `
+def value = null;
+if (params._source.containsKey('${metaKey}')) {
+  value = params._source['${metaKey}'];
+}
+if (value == null && params._source.containsKey('meta')) {
+  def meta = params._source['meta'];
+  if (meta instanceof Map) {
+    value = meta['${metaKey}'];
+  } else if (meta instanceof List) {
+    for (def item : meta) {
+      if (item instanceof Map) {
+        if (item.containsKey('${metaKey}')) {
+          value = item['${metaKey}'];
+          break;
+        }
+        if (item.containsKey('key') && item['key'] == '${metaKey}') {
+          value = item['value'];
+          break;
+        }
+      }
+    }
+  }
+}
+if (value == null) {
+  return;
+}
+def matcher = /[-+]?[0-9]*\\.?[0-9]+/.matcher(value.toString());
+if (matcher.find()) {
+  emit(Double.parseDouble(matcher.group()));
+}
+`;
+}
+
+function dimensionRuntimeMappings(): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.values(DIMENSION_FIELDS).map(({ key, runtimeField }) => [
+      runtimeField,
+      {
+        type: 'double',
+        script: {
+          source: dimensionRuntimeScript(key),
+        },
+      },
+    ]),
+  );
+}
 
 function normalizeSortClause(sortClause: unknown): unknown {
   if (!sortClause || typeof sortClause !== 'object' || Array.isArray(sortClause)) {
@@ -130,36 +191,77 @@ function normalizeSortClause(sortClause: unknown): unknown {
 }
 
 function withSafeSort(body: ElasticsearchRequestBody): ElasticsearchRequestBody {
-  if (!body.sort) return body;
+  const bodyWithRuntimeMappings = {
+    ...body,
+    runtime_mappings: {
+      ...dimensionRuntimeMappings(),
+      ...(body.runtime_mappings ?? {}),
+    },
+  };
 
-  if (Array.isArray(body.sort)) {
+  if (!bodyWithRuntimeMappings.sort) return bodyWithRuntimeMappings;
+
+  if (Array.isArray(bodyWithRuntimeMappings.sort)) {
     return {
-      ...body,
-      sort: body.sort.map((clause) => normalizeSortClause(clause)),
+      ...bodyWithRuntimeMappings,
+      sort: bodyWithRuntimeMappings.sort.map((clause) => normalizeSortClause(clause)),
     };
   }
 
   return {
-    ...body,
-    sort: normalizeSortClause(body.sort),
+    ...bodyWithRuntimeMappings,
+    sort: normalizeSortClause(bodyWithRuntimeMappings.sort),
   };
 }
 
-async function loadMaxProductPrice(
+type SearchStats = {
+  price: {
+    max: number | null;
+  };
+  dimensions: {
+    width: {
+      max: number | null;
+    };
+    height: {
+      max: number | null;
+    };
+  };
+};
+
+async function loadSearchStats(
   host: string,
   index: string,
   connectionHeaders: Record<string, string> | undefined,
-): Promise<number | null> {
+): Promise<SearchStats> {
+  const fallbackStats: SearchStats = {
+    price: { max: null },
+    dimensions: {
+      width: { max: null },
+      height: { max: null },
+    },
+  };
+
   try {
     const response = await fetch(`${host}/${elasticIndexPath(index)}/_search`, {
       method: 'POST',
       headers: elasticFetchHeaders(connectionHeaders),
       body: JSON.stringify({
         size: 0,
+        runtime_mappings: dimensionRuntimeMappings(),
         aggs: {
           max_price: {
             max: {
               field: 'price',
+            },
+          },
+          max_width: {
+            max: {
+              field: DIMENSION_FIELDS.width.runtimeField,
+            },
+          },
+          max_height: {
+            max: {
+              field: DIMENSION_FIELDS.height.runtimeField,
             },
           },
         },
@@ -168,7 +270,7 @@ async function loadMaxProductPrice(
     });
 
     if (!response.ok) {
-      return null;
+      return fallbackStats;
     }
 
     const json = (await response.json()) as {
@@ -176,12 +278,33 @@ async function loadMaxProductPrice(
         max_price?: {
           value?: number | null;
         };
+        max_width?: {
+          value?: number | null;
+        };
+        max_height?: {
+          value?: number | null;
+        };
       };
     };
-    const maxPrice = json.aggregations?.max_price?.value;
-    return typeof maxPrice === 'number' && Number.isFinite(maxPrice) ? maxPrice : null;
+
+    const numberOrNull = (value: unknown) =>
+      typeof value === 'number' && Number.isFinite(value) ? value : null;
+
+    return {
+      price: {
+        max: numberOrNull(json.aggregations?.max_price?.value),
+      },
+      dimensions: {
+        width: {
+          max: numberOrNull(json.aggregations?.max_width?.value),
+        },
+        height: {
+          max: numberOrNull(json.aggregations?.max_height?.value),
+        },
+      },
+    };
   } catch {
-    return null;
+    return fallbackStats;
   }
 }
 
@@ -276,9 +399,9 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const [response, maxProductPrice] = await Promise.all([
+    const [response, searchStats] = await Promise.all([
       connector.onSearch(body.state, body.queryConfig),
-      loadMaxProductPrice(host, index, connectionHeaders),
+      loadSearchStats(host, index, connectionHeaders),
     ]);
 
     const responseWithPriceMetadata: ResponseState = {
@@ -286,8 +409,9 @@ export async function POST(request: NextRequest) {
       rawResponse: {
         ...(response.rawResponse && typeof response.rawResponse === 'object' ? response.rawResponse : {}),
         priceStats: {
-          max: maxProductPrice,
+          max: searchStats.price.max,
         },
+        dimensionStats: searchStats.dimensions,
       },
     };
 

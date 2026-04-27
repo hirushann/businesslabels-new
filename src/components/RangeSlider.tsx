@@ -10,6 +10,7 @@ type RangeSliderProps = {
   onChange: (value: [number, number]) => void;
   onAfterChange?: (value: [number, number]) => void;
   formatValue?: (value: number) => string;
+  inputPrefix?: string;
 };
 
 export default function RangeSlider({
@@ -20,6 +21,7 @@ export default function RangeSlider({
   onChange,
   onAfterChange,
   formatValue = (v) => String(v),
+  inputPrefix,
 }: RangeSliderProps) {
   const [localValue, setLocalValue] = useState<[number, number]>(value);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -126,7 +128,7 @@ export default function RangeSlider({
         <div className="flex-1">
           <label className="text-xs text-slate-400 mb-1 block">From</label>
           <div className="h-10 px-3 border border-slate-200 rounded-lg flex items-center bg-white">
-            <span className="text-slate-400 mr-1">€</span>
+            {inputPrefix ? <span className="text-slate-400 mr-1">{inputPrefix}</span> : null}
             <input
               type="number"
               value={localValue[0]}
@@ -145,7 +147,7 @@ export default function RangeSlider({
         <div className="flex-1">
           <label className="text-xs text-slate-400 mb-1 block">To</label>
           <div className="h-10 px-3 border border-slate-200 rounded-lg flex items-center bg-white">
-            <span className="text-slate-400 mr-1">€</span>
+            {inputPrefix ? <span className="text-slate-400 mr-1">{inputPrefix}</span> : null}
             <input
               type="number"
               value={localValue[1]}
