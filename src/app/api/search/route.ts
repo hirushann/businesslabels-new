@@ -106,7 +106,16 @@ const DIMENSION_FIELDS = {
   },
 } as const;
 
-function dimensionRuntimeScript(metaKey: string): string {
+const MATERIAL_CODE_FIELD = {
+  key: 'material_code',
+  runtimeField: 'meta_material_code',
+} as const;
+
+const MATERIAL_FIELD = {
+  runtimeField: 'meta_material',
+} as const;
+
+function metaValueRuntimeScript(metaKey: string, emitExpression: string): string {
   return `
 def value = null;
 if (params._source.containsKey('${metaKey}')) {
@@ -134,15 +143,60 @@ if (value == null && params._source.containsKey('meta')) {
 if (value == null) {
   return;
 }
+${emitExpression}
+`;
+}
+
+function dimensionRuntimeScript(metaKey: string): string {
+  return metaValueRuntimeScript(metaKey, `
 def matcher = /[-+]?[0-9]*\\.?[0-9]+/.matcher(value.toString());
 if (matcher.find()) {
   emit(Double.parseDouble(matcher.group()));
 }
+`);
+}
+
+function keywordRuntimeScript(metaKey: string): string {
+  return metaValueRuntimeScript(metaKey, `
+def text = value.toString();
+if (text.length() > 0) {
+  emit(text);
+}
+`);
+}
+
+function materialRuntimeScript(): string {
+  return `
+def value = null;
+if (params._source.containsKey('material_title')) {
+  value = params._source['material_title'];
+}
+if (value == null && params._source.containsKey('material')) {
+  def material = params._source['material'];
+  if (material instanceof Map) {
+    if (material.containsKey('title')) {
+      value = material['title'];
+    } else if (material.containsKey('name')) {
+      value = material['name'];
+    } else if (material.containsKey('slug')) {
+      value = material['slug'];
+    }
+  } else if (material != null) {
+    value = material;
+  }
+}
+if (value == null) {
+  return;
+}
+def text = value.toString();
+if (text.length() > 0) {
+  emit(text);
+}
 `;
 }
 
-function dimensionRuntimeMappings(): Record<string, unknown> {
-  return Object.fromEntries(
+function metaRuntimeMappings(): Record<string, unknown> {
+  const dimensionMappings = Object.fromEntries(
     Object.values(DIMENSION_FIELDS).map(({ key, runtimeField }) => [
       runtimeField,
       {
@@ -153,6 +207,22 @@ function dimensionRuntimeMappings(): Record<string, unknown> {
       },
     ]),
   );
+
+  return {
+    ...dimensionMappings,
+    [MATERIAL_CODE_FIELD.runtimeField]: {
+      type: 'keyword',
+      script: {
+        source: keywordRuntimeScript(MATERIAL_CODE_FIELD.key),
+      },
+    },
+    [MATERIAL_FIELD.runtimeField]: {
+      type: 'keyword',
+      script: {
+        source: materialRuntimeScript(),
+      },
+    },
+  };
 }
 
 function normalizeSortClause(sortClause: unknown): unknown {
@@ -194,7 +264,7 @@ function withSafeSort(body: ElasticsearchRequestBody): ElasticsearchRequestBody 
   const bodyWithRuntimeMappings = {
     ...body,
     runtime_mappings: {
-      ...dimensionRuntimeMappings(),
+      ...metaRuntimeMappings(),
       ...(body.runtime_mappings ?? {}),
     },
   };
@@ -226,7 +296,36 @@ type SearchStats = {
       max: number | null;
     };
   };
+  pillFilters: {
+    materialCode: {
+      options: Array<{
+        value: string;
+        label: string;
+        count: number;
+      }>;
+    };
+    material: {
+      options: Array<{
+        value: string;
+        label: string;
+        count: number;
+      }>;
+    };
+  };
 };
+
+function labelFromCode(value: string): string {
+  const normalized = value.trim().replace(/^\[\s*/, '').replace(/\s*\]$/, '').replace(/^["']|["']$/g, '');
+
+  return normalized
+    .split(/[_\-\s]+/)
+    .filter(Boolean)
+    .map((part) => {
+      const upper = part.toUpperCase();
+      return upper.length <= 3 ? upper : `${upper.charAt(0)}${upper.slice(1).toLowerCase()}`;
+    })
+    .join(' ');
+}
 
 async function loadSearchStats(
   host: string,
@@ -239,6 +338,14 @@ async function loadSearchStats(
       width: { max: null },
       height: { max: null },
     },
+    pillFilters: {
+      materialCode: {
+        options: [],
+      },
+      material: {
+        options: [],
+      },
+    },
   };
 
   try {
@@ -247,7 +354,7 @@ async function loadSearchStats(
       headers: elasticFetchHeaders(connectionHeaders),
       body: JSON.stringify({
         size: 0,
-        runtime_mappings: dimensionRuntimeMappings(),
+        runtime_mappings: metaRuntimeMappings(),
         aggs: {
           max_price: {
             max: {
@@ -262,6 +369,24 @@ async function loadSearchStats(
           max_height: {
             max: {
               field: DIMENSION_FIELDS.height.runtimeField,
+            },
+          },
+          material_codes: {
+            terms: {
+              field: MATERIAL_CODE_FIELD.runtimeField,
+              size: 100,
+              order: {
+                _key: 'asc',
+              },
+            },
+          },
+          materials: {
+            terms: {
+              field: MATERIAL_FIELD.runtimeField,
+              size: 100,
+              order: {
+                _key: 'asc',
+              },
             },
           },
         },
@@ -284,6 +409,18 @@ async function loadSearchStats(
         max_height?: {
           value?: number | null;
         };
+        material_codes?: {
+          buckets?: Array<{
+            key?: string | number;
+            doc_count?: number;
+          }>;
+        };
+        materials?: {
+          buckets?: Array<{
+            key?: string | number;
+            doc_count?: number;
+          }>;
+        };
       };
     };
 
@@ -300,6 +437,32 @@ async function loadSearchStats(
         },
         height: {
           max: numberOrNull(json.aggregations?.max_height?.value),
+        },
+      },
+      pillFilters: {
+        materialCode: {
+          options: (json.aggregations?.material_codes?.buckets ?? [])
+            .map((bucket) => {
+              const value = typeof bucket.key === 'string' ? bucket.key : String(bucket.key ?? '');
+              return {
+                value,
+                label: labelFromCode(value),
+                count: typeof bucket.doc_count === 'number' ? bucket.doc_count : 0,
+              };
+            })
+            .filter((option) => option.value.trim() !== ''),
+        },
+        material: {
+          options: (json.aggregations?.materials?.buckets ?? [])
+            .map((bucket) => {
+              const value = typeof bucket.key === 'string' ? bucket.key : String(bucket.key ?? '');
+              return {
+                value,
+                label: labelFromCode(value),
+                count: typeof bucket.doc_count === 'number' ? bucket.doc_count : 0,
+              };
+            })
+            .filter((option) => option.value.trim() !== ''),
         },
       },
     };
@@ -412,6 +575,7 @@ export async function POST(request: NextRequest) {
           max: searchStats.price.max,
         },
         dimensionStats: searchStats.dimensions,
+        pillFilters: searchStats.pillFilters,
       },
     };
 

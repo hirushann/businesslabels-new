@@ -43,6 +43,14 @@ const RANGE_FILTERS: RangeFilterConfig[] = [
   },
 ];
 
+const MATERIAL_CODE_FIELD = "meta_material_code";
+
+type PillOption = {
+  value: string;
+  label: string;
+  count?: number;
+};
+
 function isPriceRangeFilter(value: unknown): value is FilterValueRange {
   return typeof value === "object" && value !== null && "name" in value;
 }
@@ -85,6 +93,47 @@ function sliderMax(rawResponse: unknown, field: RangeFilterField): number {
 
 function formatRangeValue(value: number, config: RangeFilterConfig): string {
   return `${config.unitPrefix ?? ""}${value}${config.unitSuffix ? ` ${config.unitSuffix}` : ""}`;
+}
+
+function materialCodeOptions(rawResponse: unknown): PillOption[] {
+  if (!rawResponse || typeof rawResponse !== "object") {
+    return [];
+  }
+
+  const options = (rawResponse as {
+    pillFilters?: {
+      materialCode?: {
+        options?: unknown;
+      };
+    };
+  }).pillFilters?.materialCode?.options;
+
+  if (!Array.isArray(options)) {
+    return [];
+  }
+
+  return options
+    .map((option): PillOption | null => {
+      if (!option || typeof option !== "object") {
+        return null;
+      }
+
+      const item = option as { value?: unknown; label?: unknown; count?: unknown };
+      if (typeof item.value !== "string" || item.value.trim() === "") {
+        return null;
+      }
+
+      return {
+        value: item.value,
+        label: typeof item.label === "string" && item.label.trim() !== "" ? item.label : item.value,
+        count: typeof item.count === "number" ? item.count : undefined,
+      };
+    })
+    .filter((option) => option !== null);
+}
+
+function isSelectedValue(value: unknown): value is string {
+  return typeof value === "string";
 }
 
 function RangeFilter({
@@ -131,10 +180,70 @@ function RangeFilter({
   );
 }
 
-export default function PriceFilter() {
-  const { filters, rawResponse, removeFilter, setFilter } = useSearch((state) => ({
+function PillSelectFilter({
+  activeFilters,
+  rawResponse,
+  addFilter,
+  removeFilter,
+}: {
+  activeFilters: Filter[];
+  rawResponse: unknown;
+  addFilter: (name: string, value: string, type?: "any") => void;
+  removeFilter: (name: string, value?: string, type?: "any") => void;
+}) {
+  const options = materialCodeOptions(rawResponse);
+  const selectedValues = new Set(
+    activeFilters
+      .find((activeFilter) => activeFilter.field === MATERIAL_CODE_FIELD && activeFilter.type === "any")
+      ?.values.filter(isSelectedValue) ?? [],
+  );
+
+  if (options.length === 0) {
+    return null;
+  }
+
+  return (
+    <Accordion title="Material Code" defaultOpen={true} size="compact">
+      <div className="flex flex-wrap gap-2">
+        {options.map((option) => {
+          const selected = selectedValues.has(option.value);
+
+          return (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => {
+                if (selected) {
+                  removeFilter(MATERIAL_CODE_FIELD, option.value, "any");
+                } else {
+                  addFilter(MATERIAL_CODE_FIELD, option.value, "any");
+                }
+              }}
+              className={`inline-flex min-h-9 items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                selected
+                  ? "bg-amber-500 text-white shadow-sm hover:bg-amber-600"
+                  : "bg-slate-100 text-neutral-700 hover:bg-amber-50 hover:text-amber-600"
+              }`}
+              aria-pressed={selected}
+            >
+              <span>{option.label}</span>
+              {typeof option.count === "number" ? (
+                <span className={selected ? "text-white/75" : "text-slate-400"}>{option.count}</span>
+              ) : null}
+              {selected ? <span className="text-base leading-none text-white/80">×</span> : null}
+            </button>
+          );
+        })}
+      </div>
+    </Accordion>
+  );
+}
+
+export default function SearchFilters() {
+  const { filters, rawResponse, addFilter, removeFilter, setFilter } = useSearch((state) => ({
     filters: state.filters,
     rawResponse: state.rawResponse,
+    addFilter: state.addFilter,
     removeFilter: state.removeFilter,
     setFilter: state.setFilter,
   }));
@@ -153,6 +262,12 @@ export default function PriceFilter() {
           setFilter={setFilter}
         />
       ))}
+      <PillSelectFilter
+        activeFilters={activeFilters}
+        rawResponse={rawResponse}
+        addFilter={addFilter}
+        removeFilter={removeFilter}
+      />
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { apiConnector, SORT_TO_SEARCH_UI, type OverlaySortValue } from './api';
 import { useNextRoutingOptions } from './useNextRouting';
 import EmptyState from '@/components/EmptyState';
 import ProductCard, { type ProductCardData } from '@/components/ProductCard';
-import PriceFilter from './PriceFilter';
+import SearchFilters from './SearchFilters';
 
 type SearchOverlayProps = {
   onClose: () => void;
@@ -358,7 +358,7 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
                   </button>
                 )}
               </div>
-              <PriceFilter />
+              <SearchFilters />
             </div>
           </aside>
 
