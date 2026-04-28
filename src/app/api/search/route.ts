@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import ElasticsearchAPIConnector from '@elastic/search-ui-elasticsearch-connector';
-import type { QueryConfig, RequestState } from '@elastic/search-ui';
+import type { QueryConfig, RequestState, ResponseState } from '@elastic/search-ui';
 
 const DEFAULT_INDEX_SUFFIXES = ['catalog_products_simple', 'catalog_products_variable'] as const;
 
@@ -56,6 +56,24 @@ function elasticConnectionHeaders(): Record<string, string> | undefined {
   };
 }
 
+function elasticFetchHeaders(connectionHeaders: Record<string, string> | undefined): Record<string, string> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(connectionHeaders ?? {}),
+  };
+
+  const apiKey = process.env.ELASTIC_API_KEY?.trim();
+  if (apiKey) {
+    headers.Authorization = `ApiKey ${apiKey}`;
+  }
+
+  return headers;
+}
+
+function elasticIndexPath(index: string): string {
+  return index.split(',').map((part) => encodeURIComponent(part)).join(',');
+}
+
 function normalizeError(message: string, status = 500) {
   return NextResponse.json(
     {
@@ -73,8 +91,165 @@ function normalizeError(message: string, status = 500) {
 
 type ElasticsearchRequestBody = {
   sort?: unknown;
+  runtime_mappings?: Record<string, unknown>;
   [key: string]: unknown;
 };
+
+const DIMENSION_FIELDS = {
+  width: {
+    key: 'meta_width',
+    runtimeField: 'meta_width_mm',
+  },
+  height: {
+    key: 'meta_height',
+    runtimeField: 'meta_height_mm',
+  },
+  kern: {
+    key: 'kern',
+    runtimeField: 'meta_kern_mm',
+  },
+} as const;
+
+const MATERIAL_CODE_FIELD = {
+  key: 'material_code',
+  runtimeField: 'meta_material_code',
+} as const;
+
+const FINISHING_FIELD = {
+  key: 'finishing',
+  runtimeField: 'meta_finishing',
+} as const;
+
+const GLUE_FIELD = {
+  key: 'glue',
+  runtimeField: 'meta_glue',
+} as const;
+
+const MATERIAL_FIELD = {
+  runtimeField: 'meta_material',
+} as const;
+
+function metaValueRuntimeScript(metaKey: string, emitExpression: string): string {
+  return `
+def value = null;
+if (params._source.containsKey('${metaKey}')) {
+  value = params._source['${metaKey}'];
+}
+if (value == null && params._source.containsKey('meta')) {
+  def meta = params._source['meta'];
+  if (meta instanceof Map) {
+    value = meta['${metaKey}'];
+  } else if (meta instanceof List) {
+    for (def item : meta) {
+      if (item instanceof Map) {
+        if (item.containsKey('${metaKey}')) {
+          value = item['${metaKey}'];
+          break;
+        }
+        if (item.containsKey('key') && item['key'] == '${metaKey}') {
+          value = item['value'];
+          break;
+        }
+      }
+    }
+  }
+}
+if (value == null) {
+  return;
+}
+${emitExpression}
+`;
+}
+
+function dimensionRuntimeScript(metaKey: string): string {
+  return metaValueRuntimeScript(metaKey, `
+def matcher = /[-+]?[0-9]*\\.?[0-9]+/.matcher(value.toString());
+if (matcher.find()) {
+  emit(Double.parseDouble(matcher.group()));
+}
+`);
+}
+
+function keywordRuntimeScript(metaKey: string): string {
+  return metaValueRuntimeScript(metaKey, `
+def text = value.toString();
+if (text.length() > 0) {
+  emit(text);
+}
+`);
+}
+
+function materialRuntimeScript(): string {
+  return `
+def value = null;
+if (params._source.containsKey('material_title')) {
+  value = params._source['material_title'];
+}
+if (value == null && params._source.containsKey('material')) {
+  def material = params._source['material'];
+  if (material instanceof Map) {
+    if (material.containsKey('title')) {
+      value = material['title'];
+    } else if (material.containsKey('name')) {
+      value = material['name'];
+    } else if (material.containsKey('slug')) {
+      value = material['slug'];
+    }
+  } else if (material != null) {
+    value = material;
+  }
+}
+if (value == null) {
+  return;
+}
+def text = value.toString();
+if (text.length() > 0) {
+  emit(text);
+}
+`;
+}
+
+function metaRuntimeMappings(): Record<string, unknown> {
+  const dimensionMappings = Object.fromEntries(
+    Object.values(DIMENSION_FIELDS).map(({ key, runtimeField }) => [
+      runtimeField,
+      {
+        type: 'double',
+        script: {
+          source: dimensionRuntimeScript(key),
+        },
+      },
+    ]),
+  );
+
+  return {
+    ...dimensionMappings,
+    [MATERIAL_CODE_FIELD.runtimeField]: {
+      type: 'keyword',
+      script: {
+        source: keywordRuntimeScript(MATERIAL_CODE_FIELD.key),
+      },
+    },
+    [FINISHING_FIELD.runtimeField]: {
+      type: 'keyword',
+      script: {
+        source: keywordRuntimeScript(FINISHING_FIELD.key),
+      },
+    },
+    [GLUE_FIELD.runtimeField]: {
+      type: 'keyword',
+      script: {
+        source: keywordRuntimeScript(GLUE_FIELD.key),
+      },
+    },
+    [MATERIAL_FIELD.runtimeField]: {
+      type: 'keyword',
+      script: {
+        source: materialRuntimeScript(),
+      },
+    },
+  };
+}
 
 function normalizeSortClause(sortClause: unknown): unknown {
   if (!sortClause || typeof sortClause !== 'object' || Array.isArray(sortClause)) {
@@ -112,19 +287,303 @@ function normalizeSortClause(sortClause: unknown): unknown {
 }
 
 function withSafeSort(body: ElasticsearchRequestBody): ElasticsearchRequestBody {
-  if (!body.sort) return body;
+  const bodyWithRuntimeMappings = {
+    ...body,
+    runtime_mappings: {
+      ...metaRuntimeMappings(),
+      ...(body.runtime_mappings ?? {}),
+    },
+  };
 
-  if (Array.isArray(body.sort)) {
+  if (!bodyWithRuntimeMappings.sort) return bodyWithRuntimeMappings;
+
+  if (Array.isArray(bodyWithRuntimeMappings.sort)) {
     return {
-      ...body,
-      sort: body.sort.map((clause) => normalizeSortClause(clause)),
+      ...bodyWithRuntimeMappings,
+      sort: bodyWithRuntimeMappings.sort.map((clause) => normalizeSortClause(clause)),
     };
   }
 
   return {
-    ...body,
-    sort: normalizeSortClause(body.sort),
+    ...bodyWithRuntimeMappings,
+    sort: normalizeSortClause(bodyWithRuntimeMappings.sort),
   };
+}
+
+type SearchStats = {
+  price: {
+    max: number | null;
+  };
+  dimensions: {
+    width: {
+      max: number | null;
+    };
+    height: {
+      max: number | null;
+    };
+    kern: {
+      max: number | null;
+    };
+  };
+  pillFilters: {
+    materialCode: {
+      options: Array<{
+        value: string;
+        label: string;
+        count: number;
+      }>;
+    };
+    material: {
+      options: Array<{
+        value: string;
+        label: string;
+        count: number;
+      }>;
+    };
+    finishing: {
+      options: Array<{
+        value: string;
+        label: string;
+        count: number;
+      }>;
+    };
+    glue: {
+      options: Array<{
+        value: string;
+        label: string;
+        count: number;
+      }>;
+    };
+  };
+};
+
+function labelFromCode(value: string): string {
+  const normalized = value.trim().replace(/^\[\s*/, '').replace(/\s*\]$/, '').replace(/^["']|["']$/g, '');
+
+  return normalized
+    .split(/[_\-\s]+/)
+    .filter(Boolean)
+    .map((part) => {
+      const upper = part.toUpperCase();
+      return upper.length <= 3 ? upper : `${upper.charAt(0)}${upper.slice(1).toLowerCase()}`;
+    })
+    .join(' ');
+}
+
+async function loadSearchStats(
+  host: string,
+  index: string,
+  connectionHeaders: Record<string, string> | undefined,
+): Promise<SearchStats> {
+  const fallbackStats: SearchStats = {
+    price: { max: null },
+    dimensions: {
+      width: { max: null },
+      height: { max: null },
+      kern: { max: null },
+    },
+    pillFilters: {
+      materialCode: {
+        options: [],
+      },
+      material: {
+        options: [],
+      },
+      finishing: {
+        options: [],
+      },
+      glue: {
+        options: [],
+      },
+    },
+  };
+
+  try {
+    const response = await fetch(`${host}/${elasticIndexPath(index)}/_search`, {
+      method: 'POST',
+      headers: elasticFetchHeaders(connectionHeaders),
+      body: JSON.stringify({
+        size: 0,
+        runtime_mappings: metaRuntimeMappings(),
+        aggs: {
+          max_price: {
+            max: {
+              field: 'price',
+            },
+          },
+          max_width: {
+            max: {
+              field: DIMENSION_FIELDS.width.runtimeField,
+            },
+          },
+          max_height: {
+            max: {
+              field: DIMENSION_FIELDS.height.runtimeField,
+            },
+          },
+          max_kern: {
+            max: {
+              field: DIMENSION_FIELDS.kern.runtimeField,
+            },
+          },
+          material_codes: {
+            terms: {
+              field: MATERIAL_CODE_FIELD.runtimeField,
+              size: 100,
+              order: {
+                _key: 'asc',
+              },
+            },
+          },
+          materials: {
+            terms: {
+              field: MATERIAL_FIELD.runtimeField,
+              size: 100,
+              order: {
+                _key: 'asc',
+              },
+            },
+          },
+          finishings: {
+            terms: {
+              field: FINISHING_FIELD.runtimeField,
+              size: 100,
+              order: {
+                _key: 'asc',
+              },
+            },
+          },
+          glues: {
+            terms: {
+              field: GLUE_FIELD.runtimeField,
+              size: 100,
+              order: {
+                _key: 'asc',
+              },
+            },
+          },
+        },
+      }),
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      return fallbackStats;
+    }
+
+    const json = (await response.json()) as {
+      aggregations?: {
+        max_price?: {
+          value?: number | null;
+        };
+        max_width?: {
+          value?: number | null;
+        };
+        max_height?: {
+          value?: number | null;
+        };
+        max_kern?: {
+          value?: number | null;
+        };
+        material_codes?: {
+          buckets?: Array<{
+            key?: string | number;
+            doc_count?: number;
+          }>;
+        };
+        materials?: {
+          buckets?: Array<{
+            key?: string | number;
+            doc_count?: number;
+          }>;
+        };
+        finishings?: {
+          buckets?: Array<{
+            key?: string | number;
+            doc_count?: number;
+          }>;
+        };
+        glues?: {
+          buckets?: Array<{
+            key?: string | number;
+            doc_count?: number;
+          }>;
+        };
+      };
+    };
+
+    const numberOrNull = (value: unknown) =>
+      typeof value === 'number' && Number.isFinite(value) ? value : null;
+
+    return {
+      price: {
+        max: numberOrNull(json.aggregations?.max_price?.value),
+      },
+      dimensions: {
+        width: {
+          max: numberOrNull(json.aggregations?.max_width?.value),
+        },
+        height: {
+          max: numberOrNull(json.aggregations?.max_height?.value),
+        },
+        kern: {
+          max: numberOrNull(json.aggregations?.max_kern?.value),
+        },
+      },
+      pillFilters: {
+        materialCode: {
+          options: (json.aggregations?.material_codes?.buckets ?? [])
+            .map((bucket) => {
+              const value = typeof bucket.key === 'string' ? bucket.key : String(bucket.key ?? '');
+              return {
+                value,
+                label: labelFromCode(value),
+                count: typeof bucket.doc_count === 'number' ? bucket.doc_count : 0,
+              };
+            })
+            .filter((option) => option.value.trim() !== ''),
+        },
+        material: {
+          options: (json.aggregations?.materials?.buckets ?? [])
+            .map((bucket) => {
+              const value = typeof bucket.key === 'string' ? bucket.key : String(bucket.key ?? '');
+              return {
+                value,
+                label: labelFromCode(value),
+                count: typeof bucket.doc_count === 'number' ? bucket.doc_count : 0,
+              };
+            })
+            .filter((option) => option.value.trim() !== ''),
+        },
+        finishing: {
+          options: (json.aggregations?.finishings?.buckets ?? [])
+            .map((bucket) => {
+              const value = typeof bucket.key === 'string' ? bucket.key : String(bucket.key ?? '');
+              return {
+                value,
+                label: labelFromCode(value),
+                count: typeof bucket.doc_count === 'number' ? bucket.doc_count : 0,
+              };
+            })
+            .filter((option) => option.value.trim() !== ''),
+        },
+        glue: {
+          options: (json.aggregations?.glues?.buckets ?? [])
+            .map((bucket) => {
+              const value = typeof bucket.key === 'string' ? bucket.key : String(bucket.key ?? '');
+              return {
+                value,
+                label: labelFromCode(value),
+                count: typeof bucket.doc_count === 'number' ? bucket.doc_count : 0,
+              };
+            })
+            .filter((option) => option.value.trim() !== ''),
+        },
+      },
+    };
+  } catch {
+    return fallbackStats;
+  }
 }
 
 function buildRelevanceQuery(state: RequestState, queryConfig: QueryConfig) {
@@ -218,9 +677,24 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const response = await connector.onSearch(body.state, body.queryConfig);
+    const [response, searchStats] = await Promise.all([
+      connector.onSearch(body.state, body.queryConfig),
+      loadSearchStats(host, index, connectionHeaders),
+    ]);
 
-    return NextResponse.json(response);
+    const responseWithPriceMetadata: ResponseState = {
+      ...response,
+      rawResponse: {
+        ...(response.rawResponse && typeof response.rawResponse === 'object' ? response.rawResponse : {}),
+        priceStats: {
+          max: searchStats.price.max,
+        },
+        dimensionStats: searchStats.dimensions,
+        pillFilters: searchStats.pillFilters,
+      },
+    };
+
+    return NextResponse.json(responseWithPriceMetadata);
   } catch (error) {
     console.error('Search proxy request failed.', {
       host,
