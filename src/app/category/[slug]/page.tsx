@@ -240,7 +240,7 @@ async function loadCategoryProducts(baseUrl: string | undefined, slug: string): 
 
   try {
     const response = await fetch(
-      `${baseUrl}/api/products?page=1`,
+      `${baseUrl}/api/categories/${slug}?page=1`,
       { cache: "no-store" },
     );
 
@@ -368,7 +368,7 @@ export default async function CategoryArchivePage({
     <div className="bg-white">
       {/* ── Hero Banner ─────────────────────────────────── */}
       <div className="px-10 py-10">
-        <div className="max-w-[1440px] mx-auto flex flex-col gap-12">
+        <div className="max-w-360 mx-auto flex flex-col gap-12">
 
           {/* Banner */}
           <div className="relative w-full h-56 rounded-xl overflow-hidden shadow-md">
@@ -392,6 +392,7 @@ export default async function CategoryArchivePage({
           </div>
 
           {/* ── Product Categories ─────────────────────── */}
+          
           {productCategories.length > 0 && (
             <div className="flex flex-col gap-8">
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -475,7 +476,7 @@ export default async function CategoryArchivePage({
 
       {/* ── Top Selling Products ─────────────────────────── */}
       {/* <div className="px-40 py-24 bg-gray-50">
-        <div className="max-w-[1200px] mx-auto flex flex-col gap-12">
+        <div className="max-w-300 mx-auto flex flex-col gap-12">
           <div className="flex justify-between items-center">
             <h2 className="text-neutral-800 text-4xl font-bold leading-[48px]">Top Selling Products</h2>
             <div className="flex items-center gap-6">
@@ -507,7 +508,7 @@ export default async function CategoryArchivePage({
         <div className="absolute right-0 top-0 translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-amber-500/30 rounded-full blur-[132px] pointer-events-none" />
         <div className="absolute left-0 bottom-0 -translate-x-1/2 translate-y-1/2 w-48 h-48 bg-amber-500/30 rounded-full blur-[132px] pointer-events-none" />
 
-        <div className="max-w-[1440px] mx-auto flex flex-col gap-12">
+        <div className="max-w-360 mx-auto flex flex-col gap-12">
           {/* Header */}
           <div className="flex justify-between items-start">
             <h2 className="text-neutral-800 text-4xl font-bold leading-[48px]">Over 1000 Positive Reviews</h2>

@@ -110,7 +110,7 @@ export default async function ProductsPage({
 
   return (
     <section className="bg-white px-4 py-10 sm:px-6 lg:px-10">
-      <div className="mx-auto flex max-w-[1440px] flex-col gap-10">
+      <div className="mx-auto flex max-w-360 flex-col gap-10">
         <div className="border-b border-slate-200 pb-5">
           <div className="mb-4 flex items-center gap-2 text-sm text-zinc-500">
             <span>Home</span>

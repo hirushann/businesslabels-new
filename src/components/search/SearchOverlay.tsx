@@ -293,7 +293,7 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
         onClick={(event) => event.stopPropagation()}
       >
         <div className="bg-white border-b border-slate-200 px-4 py-4">
-          <div className="max-w-[1440px] mx-auto flex flex-col md:flex-row items-center gap-4">
+          <div className="max-w-360 mx-auto flex flex-col md:flex-row items-center gap-4">
             <div className="flex-1 w-full flex items-center h-12 bg-white border border-slate-200 rounded-md px-3 gap-2">
               <svg width="18" height="18" viewBox="0 0 16 16" fill="none" className="shrink-0">
                 <circle cx="6.75" cy="6.75" r="5.25" stroke="#9CA3AF" strokeWidth="1.5" />
@@ -364,7 +364,7 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
 
           {/* Results Area */}
           <div className="flex-1 overflow-y-auto px-4 py-6 lg:px-8">
-            <div className="max-w-[1440px] mx-auto">
+            <div className="max-w-360 mx-auto">
               <div className="mb-4 text-sm text-neutral-600">
                 {isLoading ? 'Searching...' : `${totalResults || 0} results`}
               </div>

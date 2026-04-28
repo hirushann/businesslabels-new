@@ -184,7 +184,7 @@ export default async function PrinterPage({
       <div className="pointer-events-none absolute right-0 top-[900px] h-48 w-48 translate-x-1/2 rounded-full bg-amber-500/30 blur-[132px]" />
 
       <section className="px-4 py-10 sm:px-6 lg:px-10">
-        <div className="mx-auto flex max-w-[1440px] flex-col gap-12">
+        <div className="mx-auto flex max-w-360 flex-col gap-12">
           
 
           
@@ -264,7 +264,7 @@ export default async function PrinterPage({
       </section>
 
       <section className="bg-gray-50 px-4 py-24 sm:px-6 lg:px-10">
-        <div className="mx-auto flex max-w-[1440px] flex-col gap-12">
+        <div className="mx-auto flex max-w-360 flex-col gap-12">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
             <h2 className="text-4xl font-bold leading-[48px] text-neutral-800">Over 1000 Positive Reviews</h2>
             <div className="flex items-center gap-6">

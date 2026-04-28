@@ -17,7 +17,7 @@ export default function CTABanner() {
 
       {/* Content */}
       <div className="relative z-10 h-full flex items-center justify-center">
-        <div className="max-w-[1440px] w-full flex flex-col items-center gap-10">
+        <div className="max-w-360 w-full flex flex-col items-center gap-10">
           <div className="flex flex-col items-center gap-4">
             <h2 className="text-center text-white text-4xl font-bold font-['Segoe_UI'] leading-[48px]">
               Ready to find the perfect labels?

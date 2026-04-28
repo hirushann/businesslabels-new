@@ -41,7 +41,7 @@ const stats = [
 export default function StatsBar() {
   return (
     <div className="w-full px-10 py-8 bg-slate-50 border-b border-slate-100">
-      <div className="max-w-[1440px] mx-auto w-full grid grid-cols-4 gap-4">
+      <div className="max-w-360 mx-auto w-full grid grid-cols-4 gap-4">
         {stats.map((stat) => (
           <div key={stat.label} className="flex-1 rounded-[10px] flex justify-center items-center gap-4">
             {/* Icon box */}

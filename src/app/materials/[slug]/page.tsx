@@ -229,7 +229,7 @@ function productHref(product: ProductCardData): { pathname: string; query?: { ty
 function RelatedProductsSection({ title, products }: { title: string; products: ProductCardData[] }) {
   return (
     <section className="px-4 py-24 odd:bg-gray-50 even:bg-white sm:px-6 lg:px-10">
-      <div className="mx-auto flex max-w-[1200px] flex-col gap-12">
+      <div className="mx-auto flex max-w-300 flex-col gap-12">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-4xl font-bold leading-[48px] text-neutral-800">{title}</h2>
           <div className="flex items-center gap-6">
@@ -277,7 +277,7 @@ export default async function SingleMaterialPage({ params }: MaterialPageProps) 
   return (
     <div className="bg-white">
       <section className="px-4 py-10 sm:px-6 lg:px-10">
-        <div className="mx-auto flex max-w-[1200px] flex-col gap-4">
+        <div className="mx-auto flex max-w-300 flex-col gap-4">
           <nav className="flex flex-wrap items-center gap-2 text-sm leading-5 text-zinc-500" aria-label="Breadcrumb">
             <Link href="/" className="hover:text-neutral-800">
               Home

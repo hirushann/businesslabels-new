@@ -315,7 +315,7 @@ export default async function SingleProductPage({
       <div className="px-10 py-10">
         {/* Breadcrumb */}
         <div className="pb-8">
-          <div className="max-w-[1440px] mx-auto flex items-center gap-2 text-sm text-zinc-500">
+          <div className="max-w-360 mx-auto flex items-center gap-2 text-sm text-zinc-500">
             <span>Home</span>
             <span>/</span>
             <span>Products</span>
@@ -323,7 +323,7 @@ export default async function SingleProductPage({
             <span className="text-neutral-700 font-semibold">{productName}</span>
           </div>
         </div>
-        <div className="max-w-[1440px] mx-auto flex gap-12 items-start">
+        <div className="max-w-360 mx-auto flex gap-12 items-start">
           {/* LEFT: Images + Description + Specs */}
           <div className="flex-1 flex flex-col gap-12">
             {/* Title & Description */}
@@ -417,6 +417,7 @@ export default async function SingleProductPage({
               price={product?.price}
               originalPrice={product?.original_price}
               mainImage={product?.main_image}
+              packingGroup={(product?.packing_group?.toFixed(2))}
             />
 
             {/* Consumable Items */}
@@ -442,7 +443,7 @@ export default async function SingleProductPage({
 
       {/* Ink & Maintenance Section */}
       <div className="px-40 py-24 bg-gray-50">
-        <div className="max-w-[1200px] mx-auto flex flex-col gap-12">
+        <div className="max-w-300 mx-auto flex flex-col gap-12">
           <div className="flex justify-between items-center">
             <h2 className="text-neutral-800 text-4xl font-bold leading-[48px]">Ink &amp; Maintenance</h2>
             <div className="flex items-center gap-6">
@@ -469,7 +470,7 @@ export default async function SingleProductPage({
 
       {/* Badges / Media Section */}
       <div className="px-40 py-24 bg-white">
-        <div className="max-w-[1200px] mx-auto flex flex-col gap-12">
+        <div className="max-w-300 mx-auto flex flex-col gap-12">
           <div className="flex justify-between items-center">
             <h2 className="text-neutral-800 text-4xl font-bold leading-[48px]">Badges / Media</h2>
             <div className="flex items-center gap-6">
@@ -496,7 +497,7 @@ export default async function SingleProductPage({
 
       {/* Hardwares Section */}
       <div className="px-40 py-24 bg-gray-50">
-        <div className="max-w-[1200px] mx-auto flex flex-col gap-12">
+        <div className="max-w-300 mx-auto flex flex-col gap-12">
           <div className="flex justify-between items-center">
             <h2 className="text-neutral-800 text-4xl font-bold leading-[48px]">Hardwares</h2>
             <div className="flex items-center gap-6">

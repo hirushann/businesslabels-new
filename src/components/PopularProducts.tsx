@@ -63,7 +63,7 @@ export default async function PopularProducts() {
       <div className="w-48 h-48 absolute right-52 top-0 bg-amber-500/30 rounded-full blur-[132px] pointer-events-none" />
       <div className="w-48 h-48 absolute left-0 top-0 bg-amber-500/30 rounded-full blur-[132px] pointer-events-none" />
 
-      <div className="max-w-[1440px] mx-auto w-full flex flex-col gap-12">
+      <div className="max-w-360 mx-auto w-full flex flex-col gap-12">
         {/* Header row */}
         <div className="flex justify-between items-center">
           <h2 className="text-neutral-800 text-4xl font-bold font-['Segoe_UI'] leading-[48px]">

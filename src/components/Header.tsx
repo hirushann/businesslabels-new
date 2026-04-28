@@ -31,7 +31,7 @@ export default function Header() {
     <header className="w-full left-0 top-0 z-50 flex flex-col items-center">
       {/* Top bar */}
       <div className="w-full px-10 py-2.5 bg-sky-950 flex flex-col">
-        <div className="max-w-[1440px] mx-auto w-full flex justify-between items-center">
+        <div className="max-w-360 mx-auto w-full flex justify-between items-center">
           <div className="flex items-center gap-8">
             <div className="flex items-end gap-2">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -83,7 +83,7 @@ export default function Header() {
 
       {/* Main nav row */}
       <div className="w-full px-10 py-4 bg-white border-b border-slate-100">
-        <div className="max-w-[1440px] mx-auto w-full flex justify-between items-center">
+        <div className="max-w-360 mx-auto w-full flex justify-between items-center">
           {/* Logo */}
           <Link href="/" className="flex items-center">
             <Image
@@ -188,7 +188,7 @@ export default function Header() {
 
       {/* Sub-nav */}
       <div className="w-full px-10 py-2 relative bg-gray-50 border-t border-violet-50">
-        <div className="max-w-[1440px] mx-auto w-full flex justify-between items-center">
+        <div className="max-w-360 mx-auto w-full flex justify-between items-center">
           <nav className="flex items-center gap-6">
             {navItems.map((item) => (
               <Link

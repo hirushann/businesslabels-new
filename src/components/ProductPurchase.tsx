@@ -18,6 +18,7 @@ type ProductPurchaseProps = {
   price?: number | null;
   originalPrice?: number | null;
   mainImage?: string | null;
+  packingGroup?: string | null;
 };
 
 function formatEuro(value: number): string {
@@ -42,13 +43,21 @@ export default function ProductPurchase({
   price,
   originalPrice,
   mainImage,
+  packingGroup,
 }: ProductPurchaseProps) {
   const { addItem } = useCart();
   const wishlist = useWishlist();
   const [quantity, setQuantity] = useState(1);
+  const [quantityError, setQuantityError] = useState<string | null>(null);
 
-  const increment = () => setQuantity((prev) => prev + 1);
-  const decrement = () => setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
+  const increment = () => {
+    setQuantityError(null);
+    setQuantity((prev) => prev + 1);
+  };
+  const decrement = () => {
+    setQuantityError(null);
+    setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
+  };
 
   const displaySku = sku?.trim() ? sku : "-";
   const displayName = name?.trim() ? name : "Product";
@@ -72,8 +81,21 @@ export default function ProductPurchase({
     type,
   };
   const isWishlisted = wishlist.hasItem(itemIdentity);
+  const normalizedPackingGroup = packingGroup ? Number.parseInt(packingGroup, 10) : null;
+  const hasPackingGroup =
+    typeof normalizedPackingGroup === "number" &&
+    Number.isFinite(normalizedPackingGroup) &&
+    normalizedPackingGroup > 0;
 
   const handleAddToCart = () => {
+    setQuantityError(null);
+
+    if (!hasPrice) return; // Prevent adding to cart if price is invalid
+    if (hasPackingGroup && quantity % normalizedPackingGroup !== 0) {
+      setQuantityError(`Quantity must be divisible by the packing group (${normalizedPackingGroup}).`);
+      return;
+    }
+
     addItem(
       {
         id: id ?? displaySku,
@@ -182,29 +204,41 @@ export default function ProductPurchase({
             </button>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={handleAddToCart}
-          className="flex-1 h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] flex justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm"
-        >
-          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-          </svg>
-          <span className="text-white text-base font-bold whitespace-nowrap">Add to Cart</span>
-        </button>
+        <div className="flex flex-1 flex-col gap-2">
+          <button
+            type="button"
+            onClick={handleAddToCart}
+            aria-describedby={quantityError ? "quantity-error" : undefined}
+            className="flex h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm"
+          >
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <span className="text-white text-base font-bold whitespace-nowrap">Add to Cart</span>
+          </button>
+
+        </div>
+
       </div>
 
+      <div>
+        {quantityError ? (
+          <p id="quantity-error" className="px-2 text-sm font-medium leading-5 text-red-600">
+            {quantityError}
+          </p>
+        ) : null}
+      </div>
+      
       {/* Wishlist + Share (Standard logic) */}
       <div className="flex items-center gap-4">
         <button
           type="button"
           onClick={handleAddToWishlist}
           disabled={isWishlisted}
-          className={`flex-1 h-12 px-4 py-2.5 rounded-[100px] outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2 transition-colors ${
-            isWishlisted
+          className={`flex-1 h-12 px-4 py-2.5 rounded-[100px] outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2 transition-colors ${isWishlisted
               ? "bg-slate-100 outline-slate-200 text-neutral-500"
               : "outline-black/10 text-neutral-700 hover:bg-slate-50"
-          }`}
+            }`}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.67} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
@@ -258,7 +292,7 @@ export default function ProductPurchase({
               label: "WhatsApp",
               icon: (
                 <svg className="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .018 5.396.015 12.03c0 2.12.554 4.189 1.602 6.06L0 24l6.105-1.602a11.832 11.832 0 005.937 1.578h.005c6.637 0 12.032-5.396 12.035-12.03a11.85 11.85 0 00-3.529-8.511z"/>
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .018 5.396.015 12.03c0 2.12.554 4.189 1.602 6.06L0 24l6.105-1.602a11.832 11.832 0 005.937 1.578h.005c6.637 0 12.032-5.396 12.035-12.03a11.85 11.85 0 00-3.529-8.511z" />
                 </svg>
               )
             },

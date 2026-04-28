@@ -34,7 +34,7 @@ const sections = [
 export default function FeatureSections() {
   return (
     <section className="w-full px-10 py-24 bg-slate-50 flex flex-col gap-24">
-      <div className="max-w-[1440px] mx-auto w-full flex flex-col gap-24">
+      <div className="max-w-360 mx-auto w-full flex flex-col gap-24">
         {sections.map((section, index) => (
           <div
             key={section.title}

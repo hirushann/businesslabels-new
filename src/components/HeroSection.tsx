@@ -17,7 +17,7 @@ export default function HeroSection() {
       <div className="absolute inset-0 bg-gradient-to-br from-stone-700/70 to-yellow-950/60" />
 
       {/* Content */}
-      <div className="relative z-10 max-w-[1440px] mx-auto h-full flex items-center">
+      <div className="relative z-10 max-w-360 mx-auto h-full flex items-center">
         <div className="w-full flex justify-start items-center gap-12">
           {/* Left: text & CTAs */}
           <div className="flex-1 flex flex-col gap-12">

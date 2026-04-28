@@ -69,7 +69,7 @@ export default function ReviewsSlider({ reviews, totalRatings }: ReviewsSliderPr
   };
 
   return (
-    <div className="flex flex-col gap-10 relative z-10 w-full max-w-[1440px] mx-auto">
+    <div className="flex flex-col gap-10 relative z-10 w-full max-w-360 mx-auto">
       {/* Header & Controls */}
       <div className="flex justify-between items-end">
         <h2 className="text-neutral-900 text-[40px] font-bold font-['Segoe_UI'] leading-tight">

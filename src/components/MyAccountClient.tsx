@@ -49,7 +49,7 @@ export default function MyAccountClient() {
 
   return (
     <div className="bg-slate-50 min-h-screen py-12 px-6 font-['Segoe_UI']">
-      <div className="max-w-[1440px] mx-auto w-full">
+      <div className="max-w-360 mx-auto w-full">
         {/* Header Section */}
         <div className="mb-10">
           <h1 className="text-neutral-800 text-4xl font-bold leading-tight mb-2 uppercase tracking-tight">My Account</h1>

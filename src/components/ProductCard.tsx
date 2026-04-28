@@ -21,6 +21,7 @@ export type ProductCardData = {
   categories?: Array<{ id?: number; name?: string | null }>;
   slug?: string | null;
   type?: ProductRouteType | null;
+  packing_group?: number | null;
 };
 
 type ProductCardProps = {
@@ -76,7 +77,8 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
   };
 
   const cardContent = (
-    <div className="mx-auto h-full w-full max-w-[22rem] bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] border border-slate-100 flex flex-col overflow-hidden hover:shadow-lg transition-shadow">
+    console.log("Rendering ProductCard for:", product),
+    <div className="mx-auto h-full w-full max-w-88 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] border border-slate-100 flex flex-col overflow-hidden hover:shadow-lg transition-shadow">
       <div className="relative h-56 bg-slate-100 overflow-hidden">
         <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
           <div className="px-2.5 py-1 bg-white rounded-full flex items-center gap-1.5">
