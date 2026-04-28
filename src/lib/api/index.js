@@ -20,3 +20,4 @@ export {
   listFavoritePrinters, addFavoritePrinter, removeFavoritePrinter, checkFavoritePrinter,
 } from './favorites';
 export { validateCoupon } from './coupons';
+export { listReviews, createReview } from './reviews';

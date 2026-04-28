@@ -287,6 +287,31 @@
  * @property {number} usage_count
  */
 
+// ─── Customer Review ─────────────────────────────────────────
+
+/**
+ * @typedef {Object} CustomerReview
+ * @property {number} id
+ * @property {string} name
+ * @property {number} rating  1-5
+ * @property {string} comment
+ * @property {string} source  e.g. 'manual' | 'google' | 'api'
+ * @property {string|null} avatar  absolute URL or null
+ * @property {number|null} product_id  null for site-wide reviews
+ * @property {'simple'|'variable'|null} product_type
+ * @property {string} created_at
+ */
+
+/**
+ * @typedef {Object} CreateReviewRequest
+ * @property {string} name
+ * @property {string} [email]
+ * @property {number} rating  1-5
+ * @property {string} comment
+ * @property {number} [product_id]
+ * @property {'simple'|'variable'} [product_type]
+ */
+
 // ─── Printer ─────────────────────────────────────────────────
 
 /**
