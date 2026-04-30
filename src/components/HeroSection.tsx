@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { PrinterSelect } from "./PrinterSelect";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -9,8 +10,10 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { toast } from "sonner";
 
 export default function HeroSection() {
+  const router = useRouter();
   const [selectedPrinters, setSelectedPrinters] = useState<number[]>([]);
   const [productType, setProductType] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleShowProducts = () => {
     if (selectedPrinters.length === 0) {
@@ -21,8 +24,15 @@ export default function HeroSection() {
       toast.error("Please select a product type");
       return;
     }
-    // TODO: Make API call with selectedPrinters and productType
-    console.log("API call with:", { selectedPrinters, productType });
+
+    // Set loading state and navigate to finder page with parameters
+    setIsLoading(true);
+    const params = new URLSearchParams({
+      printer_ids: selectedPrinters.join(","),
+      product_type: productType,
+    });
+
+    router.push(`/finder?${params.toString()}`);
   };
 
   return (
@@ -282,26 +292,57 @@ export default function HeroSection() {
             <div className="px-6">
               <button
                 onClick={handleShowProducts}
-                className="w-full py-3 bg-blue-400 rounded-full flex justify-center items-center gap-2 hover:bg-blue-500 transition-colors"
+                disabled={isLoading}
+                className="w-full py-3 bg-blue-400 rounded-full flex justify-center items-center gap-2 hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <circle
-                    cx="6.75"
-                    cy="6.75"
-                    r="4.75"
-                    stroke="white"
-                    strokeWidth="1.5"
-                  />
-                  <path
-                    d="M10.5 10.5L13.5 13.5"
-                    stroke="white"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <span className="text-white text-base font-semibold font-['Segoe_UI'] leading-6">
-                  Show Compatible Products
-                </span>
+                {isLoading ? (
+                  <>
+                    <svg
+                      className="animate-spin h-4 w-4 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    <span className="text-white text-base font-semibold font-['Segoe_UI'] leading-6">
+                      Loading...
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <circle
+                        cx="6.75"
+                        cy="6.75"
+                        r="4.75"
+                        stroke="white"
+                        strokeWidth="1.5"
+                      />
+                      <path
+                        d="M10.5 10.5L13.5 13.5"
+                        stroke="white"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <span className="text-white text-base font-semibold font-['Segoe_UI'] leading-6">
+                      Show Compatible Products
+                    </span>
+                  </>
+                )}
               </button>
             </div>
           </div>
