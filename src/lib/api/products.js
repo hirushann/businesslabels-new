@@ -37,3 +37,15 @@ export async function getProductBySlug(type, slug) {
   const { data } = await api.get(`/products/${type}/slug/${slug}`);
   return data;
 }
+
+/**
+ * Get warranty upsell options available for a printer.
+ * Returns an empty list when the printer is opted out, has no brand,
+ * or no matching warranty SKUs are configured for its brand.
+ * @param {number} printerId
+ * @returns {Promise<{ data: import('./types').WarrantyOption[] }>}
+ */
+export async function getWarrantyOptions(printerId) {
+  const { data } = await api.get(`/printers/${printerId}/warranty-options`);
+  return data;
+}

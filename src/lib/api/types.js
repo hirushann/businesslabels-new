@@ -329,4 +329,28 @@
  * @property {string} updated_at
  */
 
+// ─── Warranty ────────────────────────────────────────────────
+
+/**
+ * One warranty SKU, scoped to a brand and a duration. Surfaced only as a
+ * cart upsell when a printer of the matching brand is in the cart.
+ *
+ * @typedef {Object} Warranty
+ * @property {number} id
+ * @property {string} sku
+ * @property {string|LocalizedString} name
+ * @property {string} brand  Matches a key in config('products.merken') (e.g. 'zebra').
+ * @property {3|5} duration_years
+ * @property {number|null} price
+ * @property {string|null} formatted_price
+ * @property {{ id: number, name: string, rate: number|null }|null} tax
+ */
+
+/**
+ * Alias used when the warranty appears as one of several upsell options
+ * returned for a given printer.
+ *
+ * @typedef {Warranty} WarrantyOption
+ */
+
 export {};

@@ -9,7 +9,7 @@
 
 export { setAuthToken, clearAuthToken } from './client';
 export { login } from './auth';
-export { listProducts, getProduct, getProductBySlug } from './products';
+export { listProducts, getProduct, getProductBySlug, getWarrantyOptions } from './products';
 export { listCategories } from './categories';
 export { getFilters } from './filters';
 export { listOrders, getOrder, createOrder, updateOrder, deleteOrder } from './orders';
