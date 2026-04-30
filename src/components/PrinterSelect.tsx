@@ -17,8 +17,8 @@ import { fetchPrinterOptions } from "@/lib/api/printers";
 import type { PrinterOption } from "@/lib/types/printer";
 
 type PrinterSelectProps = {
-  value?: string[];
-  onValueChange?: (value: string[]) => void;
+  value?: number[];
+  onValueChange?: (value: number[]) => void;
   placeholder?: string;
   className?: string;
 };
@@ -75,9 +75,9 @@ export function PrinterSelect({
     );
   }
 
-  // Convert slugs to printer objects for display
+  // Convert IDs to printer objects for display
   const selectedPrinters = (value || [])
-    .map((slug) => printers.find((p) => p.slug === slug))
+    .map((id) => printers.find((p) => p.id === id))
     .filter(Boolean) as PrinterOption[];
 
   return (
@@ -88,15 +88,15 @@ export function PrinterSelect({
         autoHighlight
         value={selectedPrinters}
         onValueChange={(selectedPrinters) => {
-          const slugs = selectedPrinters.map((p) => p.slug);
-          onValueChange?.(slugs);
+          const ids = selectedPrinters.map((p) => p.id);
+          onValueChange?.(ids);
         }}
         itemToStringValue={(printer) => printer?.name || ""}
       >
         <ComboboxChips ref={anchor} className="w-full px-5 py-3 rounded-full">
           <ComboboxValue>
             {selectedPrinters.map((printer) => (
-              <ComboboxChip key={printer.slug}>{printer.name}</ComboboxChip>
+              <ComboboxChip key={printer.id}>{printer.name}</ComboboxChip>
             ))}
           </ComboboxValue>
           <ComboboxChipsInput placeholder={placeholder} />

@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
@@ -30,6 +31,7 @@ export default function RootLayout({
             <Footer />
           </WishlistProvider>
         </CartProvider>
+        <Toaster />
       </body>
     </html>
   );

@@ -4,9 +4,27 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { PrinterSelect } from "./PrinterSelect";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { toast } from "sonner";
 
 export default function HeroSection() {
-  const [selectedPrinters, setSelectedPrinters] = useState<string[]>([]);
+  const [selectedPrinters, setSelectedPrinters] = useState<number[]>([]);
+  const [productType, setProductType] = useState<string>("");
+
+  const handleShowProducts = () => {
+    if (selectedPrinters.length === 0) {
+      toast.error("Please select at least one printer model");
+      return;
+    }
+    if (!productType) {
+      toast.error("Please select a product type");
+      return;
+    }
+    // TODO: Make API call with selectedPrinters and productType
+    console.log("API call with:", { selectedPrinters, productType });
+  };
+
   return (
     <section className="relative w-full h-[85vh] overflow-hidden">
       {/* Background image */}
@@ -149,97 +167,123 @@ export default function HeroSection() {
               <span className="text-neutral-800 text-lg font-semibold font-['Segoe_UI'] leading-5">
                 What are you looking for?
               </span>
-              <div className="flex gap-4">
-                <div className="w-60 px-3 py-3 bg-gray-50 rounded-lg border border-zinc-100 flex items-center gap-3 cursor-pointer hover:border-amber-300 transition-colors">
-                  <svg
-                    width="32"
-                    height="32"
-                    viewBox="0 0 32 32"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M14.6667 28.9729C15.0721 29.2069 15.5319 29.3301 16 29.3301C16.4681 29.3301 16.9279 29.2069 17.3333 28.9729L26.6667 23.6395C27.0717 23.4057 27.408 23.0695 27.6421 22.6647C27.8761 22.2598 27.9995 21.8005 28 21.3329V10.6662C27.9995 10.1986 27.8761 9.73929 27.6421 9.33443C27.408 8.92956 27.0717 8.59336 26.6667 8.35954L17.3333 3.02621C16.9279 2.79216 16.4681 2.66895 16 2.66895C15.5319 2.66895 15.0721 2.79216 14.6667 3.02621L5.33333 8.35954C4.92835 8.59336 4.59197 8.92956 4.35795 9.33443C4.12392 9.73929 4.00048 10.1986 4 10.6662V21.3329C4.00048 21.8005 4.12392 22.2598 4.35795 22.6647C4.59197 23.0695 4.92835 23.4057 5.33333 23.6395L14.6667 28.9729Z"
-                      stroke="#888888"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M16 29.3333V16"
-                      stroke="#888888"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M4.38672 9.33301L16.0001 15.9997L27.6134 9.33301"
-                      stroke="#888888"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M10 5.69336L22 12.56"
-                      stroke="#888888"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-neutral-700 text-base font-semibold font-['Segoe_UI'] leading-5">
-                      Label Rolls
-                    </span>
-                    <span className="text-zinc-500 text-sm font-normal font-['Segoe_UI'] leading-5">
-                      Paper, BOPP, etc.
-                    </span>
-                  </div>
+              <RadioGroup value={productType} onValueChange={setProductType}>
+                <div className="flex gap-4">
+                  <Field>
+                    <FieldLabel
+                      htmlFor="labels"
+                      className="w-60 px-3 py-3 bg-gray-50 rounded-lg border border-zinc-100 flex items-center gap-3 cursor-pointer hover:border-amber-300 transition-colors data-checked:border-amber-400 data-checked:bg-amber-50"
+                    >
+                      <RadioGroupItem
+                        value="labels"
+                        id="labels"
+                        className="sr-only"
+                      />
+                      <svg
+                        width="32"
+                        height="32"
+                        viewBox="0 0 32 32"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M14.6667 28.9729C15.0721 29.2069 15.5319 29.3301 16 29.3301C16.4681 29.3301 16.9279 29.2069 17.3333 28.9729L26.6667 23.6395C27.0717 23.4057 27.408 23.0695 27.6421 22.6647C27.8761 22.2598 27.9995 21.8005 28 21.3329V10.6662C27.9995 10.1986 27.8761 9.73929 27.6421 9.33443C27.408 8.92956 27.0717 8.59336 26.6667 8.35954L17.3333 3.02621C16.9279 2.79216 16.4681 2.66895 16 2.66895C15.5319 2.66895 15.0721 2.79216 14.6667 3.02621L5.33333 8.35954C4.92835 8.59336 4.59197 8.92956 4.35795 9.33443C4.12392 9.73929 4.00048 10.1986 4 10.6662V21.3329C4.00048 21.8005 4.12392 22.2598 4.35795 22.6647C4.59197 23.0695 4.92835 23.4057 5.33333 23.6395L14.6667 28.9729Z"
+                          stroke="#888888"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M16 29.3333V16"
+                          stroke="#888888"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M4.38672 9.33301L16.0001 15.9997L27.6134 9.33301"
+                          stroke="#888888"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M10 5.69336L22 12.56"
+                          stroke="#888888"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-neutral-700 text-base font-semibold font-['Segoe_UI'] leading-5">
+                          Label Rolls
+                        </span>
+                        <span className="text-zinc-500 text-sm font-normal font-['Segoe_UI'] leading-5">
+                          Paper, BOPP, etc.
+                        </span>
+                      </div>
+                    </FieldLabel>
+                  </Field>
+
+                  <Field>
+                    <FieldLabel
+                      htmlFor="ink"
+                      className="w-60 px-3 py-3 bg-gray-50 rounded-lg border border-zinc-100 flex items-center gap-3 cursor-pointer hover:border-amber-300 transition-colors data-checked:border-amber-400 data-checked:bg-amber-50"
+                    >
+                      <RadioGroupItem
+                        value="ink"
+                        id="ink"
+                        className="sr-only"
+                      />
+                      <svg
+                        width="32"
+                        height="32"
+                        viewBox="0 0 32 32"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M8.0013 24H5.33464C4.62739 24 3.94911 23.719 3.44902 23.219C2.94892 22.7189 2.66797 22.0406 2.66797 21.3333V14.6667C2.66797 13.9594 2.94892 13.2811 3.44902 12.781C3.94911 12.281 4.62739 12 5.33464 12H26.668C27.3752 12 28.0535 12.281 28.5536 12.781C29.0537 13.2811 29.3346 13.9594 29.3346 14.6667V21.3333C29.3346 22.0406 29.0537 22.7189 28.5536 23.219C28.0535 23.719 27.3752 24 26.668 24H24.0013"
+                          stroke="#888888"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M8 12.0003V4.00033C8 3.6467 8.14048 3.30756 8.39052 3.05752C8.64057 2.80747 8.97971 2.66699 9.33333 2.66699H22.6667C23.0203 2.66699 23.3594 2.80747 23.6095 3.05752C23.8595 3.30756 24 3.6467 24 4.00033V12.0003"
+                          stroke="#888888"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M22.6667 18.667H9.33333C8.59695 18.667 8 19.2639 8 20.0003V28.0003C8 28.7367 8.59695 29.3337 9.33333 29.3337H22.6667C23.403 29.3337 24 28.7367 24 28.0003V20.0003C24 19.2639 23.403 18.667 22.6667 18.667Z"
+                          stroke="#888888"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-neutral-700 text-base font-semibold font-['Segoe_UI'] leading-5">
+                          Ink
+                        </span>
+                        <span className="text-zinc-500 text-sm font-normal font-['Segoe_UI'] leading-5">
+                          Cartridges
+                        </span>
+                      </div>
+                    </FieldLabel>
+                  </Field>
                 </div>
-                <div className="w-60 px-3 py-3 bg-gray-50 rounded-lg border border-zinc-100 flex items-center gap-3 cursor-pointer hover:border-amber-300 transition-colors">
-                  <svg
-                    width="32"
-                    height="32"
-                    viewBox="0 0 32 32"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M8.0013 24H5.33464C4.62739 24 3.94911 23.719 3.44902 23.219C2.94892 22.7189 2.66797 22.0406 2.66797 21.3333V14.6667C2.66797 13.9594 2.94892 13.2811 3.44902 12.781C3.94911 12.281 4.62739 12 5.33464 12H26.668C27.3752 12 28.0535 12.281 28.5536 12.781C29.0537 13.2811 29.3346 13.9594 29.3346 14.6667V21.3333C29.3346 22.0406 29.0537 22.7189 28.5536 23.219C28.0535 23.719 27.3752 24 26.668 24H24.0013"
-                      stroke="#888888"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M8 12.0003V4.00033C8 3.6467 8.14048 3.30756 8.39052 3.05752C8.64057 2.80747 8.97971 2.66699 9.33333 2.66699H22.6667C23.0203 2.66699 23.3594 2.80747 23.6095 3.05752C23.8595 3.30756 24 3.6467 24 4.00033V12.0003"
-                      stroke="#888888"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M22.6667 18.667H9.33333C8.59695 18.667 8 19.2639 8 20.0003V28.0003C8 28.7367 8.59695 29.3337 9.33333 29.3337H22.6667C23.403 29.3337 24 28.7367 24 28.0003V20.0003C24 19.2639 23.403 18.667 22.6667 18.667Z"
-                      stroke="#888888"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-neutral-700 text-base font-semibold font-['Segoe_UI'] leading-5">
-                      Ink
-                    </span>
-                    <span className="text-zinc-500 text-sm font-normal font-['Segoe_UI'] leading-5">
-                      Cartridges
-                    </span>
-                  </div>
-                </div>
-              </div>
+              </RadioGroup>
             </div>
             {/* CTA Button */}
             <div className="px-6">
-              <button className="w-full py-3 bg-blue-400 rounded-full flex justify-center items-center gap-2 hover:bg-blue-500 transition-colors">
+              <button
+                onClick={handleShowProducts}
+                className="w-full py-3 bg-blue-400 rounded-full flex justify-center items-center gap-2 hover:bg-blue-500 transition-colors"
+              >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <circle
                     cx="6.75"
