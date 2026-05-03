@@ -110,6 +110,17 @@
  */
 
 /**
+ * @typedef {Object} RelatedProductSummary
+ * @property {number} id
+ * @property {LocalizedString} title
+ * @property {LocalizedString} slug
+ * @property {string|null} [sku]
+ * @property {number|null} [price]
+ * @property {number|null} [original_price]
+ * @property {string|null} [main_image]
+ */
+
+/**
  * @typedef {Object} Product
  * @property {number} id
  * @property {'simple'|'variable'} type
@@ -148,6 +159,8 @@
  * @property {{ weight: number|null, width: number|null, height: number|null, length: number|null }} [dimensions]
  * @property {GalleryImage[]} [gallery_images]
  * @property {ProductVariant[]} [variants]
+ * @property {RelatedProductSummary[]} [up_sells]
+ * @property {RelatedProductSummary[]} [cross_sells]
  */
 
 /**
