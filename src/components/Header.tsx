@@ -2,30 +2,54 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useCart } from './CartProvider';
 import CartDrawer from './CartDrawer';
 import WishlistDrawer from './WishlistDrawer';
 import { useWishlist } from './WishlistProvider';
 import SearchOverlay from './search/SearchOverlay';
 import HelpDrawer from './HelpDrawer';
+import PrintersMenu from './nav/PrintersMenu';
+import LabelsMenu from './nav/LabelsMenu';
+import AccessoriesMenu from './nav/AccessoriesMenu';
+import ResourcesMenu from './nav/ResourcesMenu';
+
+type DropdownKey = 'printers' | 'labels' | 'accessories' | 'resources' | null;
 
 const navItems = [
-  { label: 'Home', href: '/', active: true },
-  { label: 'Printers', href: '/printers', dropdown: true },
-  { label: 'Accessories', href: '/accessories', dropdown: true },
-  { label: 'Labels and tickets', href: '/labels', dropdown: true },
-  { label: 'Resources', href: '/resources', dropdown: true },
-  { label: 'Brands', href: '/brands' },
-  { label: 'Support', href: '/support' },
+  { label: 'Home', href: '/', active: true, dropdownKey: null },
+  { label: 'Printers', href: '/printers', dropdown: true, dropdownKey: 'printers' as DropdownKey },
+  { label: 'Labels and tickets', href: '/labels', dropdown: true, dropdownKey: 'labels' as DropdownKey },
+  { label: 'Accessories', href: '/accessories', dropdown: true, dropdownKey: 'accessories' as DropdownKey },
+  { label: 'Resources', href: '/resources', dropdown: true, dropdownKey: 'resources' as DropdownKey },
+  { label: 'Brands', href: '/brands', dropdownKey: null },
+  { label: 'Support', href: '/support', dropdownKey: null },
 ];
 
 export default function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<DropdownKey>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { uniqueItemCount, isCartOpen, openCart, closeCart } = useCart();
   const { uniqueItemCount: uniqueWishlistCount } = useWishlist();
+
+  const handleMouseEnter = (key: DropdownKey) => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    setActiveDropdown(key);
+  };
+
+  const handleMouseLeave = () => {
+    closeTimer.current = setTimeout(() => setActiveDropdown(null), 120);
+  };
+
+  const dropdownMap: Record<string, React.ReactNode> = {
+    printers: <PrintersMenu />,
+    labels: <LabelsMenu />,
+    accessories: <AccessoriesMenu />,
+    resources: <ResourcesMenu />,
+  };
 
   return (
     <header className="w-full left-0 top-0 z-50 flex flex-col items-center">
@@ -191,24 +215,49 @@ export default function Header() {
         <div className="max-w-360 mx-auto w-full flex justify-between items-center">
           <nav className="flex items-center gap-6">
             {navItems.map((item) => (
-              <Link
+              <div
                 key={item.href}
-                href={item.href}
-                className={`flex items-end gap-2 relative ${item.active
-                    ? 'text-sky-950 font-semibold'
-                    : 'text-stone-500 font-normal hover:text-sky-950 transition-colors'
-                  } text-base font-['Segoe_UI'] leading-5`}
+                className="relative"
+                onMouseEnter={() => handleMouseEnter(item.dropdownKey ?? null)}
+                onMouseLeave={handleMouseLeave}
               >
-                {item.label}
-                {item.dropdown && (
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M4 6L8 10L12 6" stroke="currentColor" />
-                  </svg>
+                <Link
+                  href={item.href}
+                  className={`flex items-end gap-2 relative ${
+                    item.active
+                      ? 'text-sky-950 font-semibold'
+                      : 'text-stone-500 font-normal hover:text-sky-950 transition-colors'
+                  } text-base font-['Segoe_UI'] leading-5`}
+                >
+                  {item.label}
+                  {item.dropdown && (
+                    <svg
+                      width="16" height="16" viewBox="0 0 16 16" fill="none"
+                      className={`transition-transform duration-200 ${
+                        activeDropdown === item.dropdownKey ? 'rotate-180' : ''
+                      }`}
+                    >
+                      <path d="M4 6L8 10L12 6" stroke="currentColor" />
+                    </svg>
+                  )}
+                  {item.active && (
+                    <span className="absolute -bottom-2 left-0 w-11 h-0.5 bg-sky-950 rounded" />
+                  )}
+                </Link>
+
+                {/* Dropdown panel */}
+                {item.dropdownKey && activeDropdown === item.dropdownKey && (
+                  <div
+                    className="absolute top-full left-1/2 -translate-x-1/4 pt-3 z-50"
+                    onMouseEnter={() => handleMouseEnter(item.dropdownKey ?? null)}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                      {dropdownMap[item.dropdownKey]}
+                    </div>
+                  </div>
                 )}
-                {item.active && (
-                  <span className="absolute -bottom-2 left-0 w-11 h-0.5 bg-sky-950 rounded" />
-                )}
-              </Link>
+              </div>
             ))}
           </nav>
           <div className="flex items-center gap-4">
