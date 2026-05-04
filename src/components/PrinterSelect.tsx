@@ -3,22 +3,21 @@
 import { useEffect, useState } from "react";
 import {
   Combobox,
-  ComboboxChip,
-  ComboboxChips,
-  ComboboxChipsInput,
   ComboboxContent,
   ComboboxEmpty,
+  ComboboxInput,
   ComboboxItem,
   ComboboxList,
+  ComboboxTrigger,
   ComboboxValue,
-  useComboboxAnchor,
 } from "@/components/ui/combobox";
+import { Button } from "@/components/ui/button";
 import { fetchPrinterOptions } from "@/lib/api/printers";
 import type { PrinterOption } from "@/lib/types/printer";
 
 type PrinterSelectProps = {
-  value?: number[];
-  onValueChange?: (value: number[]) => void;
+  value?: number | null;
+  onValueChange?: (value: number | null) => void;
   placeholder?: string;
   className?: string;
 };
@@ -32,8 +31,6 @@ export function PrinterSelect({
   const [printers, setPrinters] = useState<PrinterOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const anchor = useComboboxAnchor();
 
   useEffect(() => {
     async function loadPrinters() {
@@ -75,33 +72,33 @@ export function PrinterSelect({
     );
   }
 
-  // Convert IDs to printer objects for display
-  const selectedPrinters = (value || [])
-    .map((id) => printers.find((p) => p.id === id))
-    .filter(Boolean) as PrinterOption[];
+  // Convert ID to printer object for display
+  const selectedPrinter = value ? printers.find((p) => p.id === value) : null;
 
   return (
     <div className={className}>
       <Combobox
         items={printers}
-        multiple
         autoHighlight
-        value={selectedPrinters}
-        onValueChange={(selectedPrinters) => {
-          const ids = selectedPrinters.map((p) => p.id);
-          onValueChange?.(ids);
+        value={selectedPrinter}
+        onValueChange={(selectedPrinter) => {
+          const id = selectedPrinter?.id ?? null;
+          onValueChange?.(id);
         }}
         itemToStringValue={(printer) => printer?.name || ""}
       >
-        <ComboboxChips ref={anchor} className="w-full px-5 py-3 rounded-full">
-          <ComboboxValue>
-            {selectedPrinters.map((printer) => (
-              <ComboboxChip key={printer.id}>{printer.name}</ComboboxChip>
-            ))}
-          </ComboboxValue>
-          <ComboboxChipsInput placeholder={placeholder} />
-        </ComboboxChips>
-        <ComboboxContent anchor={anchor}>
+        <ComboboxTrigger
+          render={
+            <Button
+              variant="outline"
+              className="w-full justify-between font-normal"
+            >
+              {selectedPrinter ? selectedPrinter.name : placeholder}
+            </Button>
+          }
+        />
+        <ComboboxContent>
+          <ComboboxInput showTrigger={false} placeholder="Search" />
           <ComboboxEmpty>No printer found.</ComboboxEmpty>
           <ComboboxList>
             {(printer) => (
