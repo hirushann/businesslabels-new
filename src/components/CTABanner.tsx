@@ -1,7 +1,11 @@
+"use client";
+
 import Image from 'next/image';
 import Link from 'next/link';
+import { useHelp } from './HelpProvider';
 
 export default function CTABanner() {
+  const { openHelp } = useHelp();
   return (
     <section className="relative h-120 w-full py-12 overflow-hidden">
       {/* Background */}
@@ -33,12 +37,13 @@ export default function CTABanner() {
             >
               Browse Products
             </Link>
-            <Link
-              href="/contact"
+            <button
+              type="button"
+              onClick={openHelp}
               className="px-7 py-4 bg-white/10 rounded-full border border-white/20 backdrop-blur-sm flex items-center gap-2.5 text-white text-lg font-semibold font-['Segoe_UI'] leading-6 hover:bg-white/20 transition-colors"
             >
-              Talk to Expert
-            </Link>
+              Talk to an Expert
+            </button>
           </div>
         </div>
       </div>
