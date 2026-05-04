@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PrinterSelect } from "./PrinterSelect";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Field, FieldLabel } from "@/components/ui/field";
@@ -11,13 +11,47 @@ import { toast } from "sonner";
 
 export default function HeroSection() {
   const router = useRouter();
-  const [selectedPrinters, setSelectedPrinters] = useState<number[]>([]);
+  const [selectedPrinter, setSelectedPrinter] = useState<number | null>(null);
+  const [selectedPrinterName, setSelectedPrinterName] = useState<string>("");
   const [productType, setProductType] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
 
+  // Check if the selected printer is an Epson
+  const isEpsonPrinter = selectedPrinterName.toLowerCase().includes("epson");
+
+  // Fetch printer details when selected printer changes
+  useEffect(() => {
+    async function fetchPrinterDetails() {
+      if (!selectedPrinter) {
+        setSelectedPrinterName("");
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/printers/select');
+        const data = await response.json();
+        const printer = data.data?.find((p: { id: number; name: string }) => p.id === selectedPrinter);
+        
+        if (printer) {
+          setSelectedPrinterName(printer.name);
+          
+          // If switching to non-Epson printer and ink is selected, clear the selection
+          if (!printer.name.toLowerCase().includes("epson") && productType === "ink") {
+            setProductType("");
+            toast.info("Ink cartridges are only available for Epson printers");
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching printer details:", error);
+      }
+    }
+
+    fetchPrinterDetails();
+  }, [selectedPrinter, productType]);
+
   const handleShowProducts = () => {
-    if (selectedPrinters.length === 0) {
-      toast.error("Please select at least one printer model");
+    if (!selectedPrinter) {
+      toast.error("Please select a printer model");
       return;
     }
     if (!productType) {
@@ -28,7 +62,7 @@ export default function HeroSection() {
     // Set loading state and navigate to finder page with parameters
     setIsLoading(true);
     const params = new URLSearchParams({
-      printer_ids: selectedPrinters.join(","),
+      printer_id: selectedPrinter.toString(),
       product_type: productType,
     });
 
@@ -167,8 +201,8 @@ export default function HeroSection() {
                 Select your printer model
               </span>
               <PrinterSelect
-                value={selectedPrinters}
-                onValueChange={setSelectedPrinters}
+                value={selectedPrinter}
+                onValueChange={setSelectedPrinter}
                 placeholder="Search printers"
               />
             </div>
@@ -239,12 +273,17 @@ export default function HeroSection() {
                   <Field>
                     <FieldLabel
                       htmlFor="ink"
-                      className="w-60 px-3 py-3 bg-gray-50 rounded-lg border border-zinc-100 flex items-center gap-3 cursor-pointer hover:border-amber-300 transition-colors data-checked:border-amber-400 data-checked:bg-amber-50"
+                      className={`w-60 px-3 py-3 rounded-lg border flex items-center gap-3 transition-colors ${
+                        !isEpsonPrinter
+                          ? "bg-gray-100 border-gray-200 opacity-50 cursor-not-allowed"
+                          : "bg-gray-50 border-zinc-100 cursor-pointer hover:border-amber-300 data-checked:border-amber-400 data-checked:bg-amber-50"
+                      }`}
                     >
                       <RadioGroupItem
                         value="ink"
                         id="ink"
                         className="sr-only"
+                        disabled={!isEpsonPrinter}
                       />
                       <svg
                         width="32"
@@ -276,11 +315,15 @@ export default function HeroSection() {
                         />
                       </svg>
                       <div className="flex flex-col gap-0.5">
-                        <span className="text-neutral-700 text-base font-semibold font-['Segoe_UI'] leading-5">
+                        <span className={`text-base font-semibold font-['Segoe_UI'] leading-5 ${
+                          !isEpsonPrinter ? "text-gray-400" : "text-neutral-700"
+                        }`}>
                           Ink
                         </span>
-                        <span className="text-zinc-500 text-sm font-normal font-['Segoe_UI'] leading-5">
-                          Cartridges
+                        <span className={`text-sm font-normal font-['Segoe_UI'] leading-5 ${
+                          !isEpsonPrinter ? "text-gray-400" : "text-zinc-500"
+                        }`}>
+                          {!isEpsonPrinter ? "Epson only" : "Cartridges"}
                         </span>
                       </div>
                     </FieldLabel>

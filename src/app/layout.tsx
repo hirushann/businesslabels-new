@@ -22,8 +22,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("font-sans", inter.variable)}>
-      <body className="bg-white min-h-screen flex flex-col">
+    <html lang="en" className={cn("font-sans", inter.variable)} suppressHydrationWarning>
+      <body className="bg-white min-h-screen flex flex-col" suppressHydrationWarning>
         <CartProvider>
           <WishlistProvider>
             <Header />
