@@ -3,8 +3,8 @@ import Link from 'next/link';
 
 const categories = [
   { name: 'Label Printers', href: '/category/labelprinters', image: '/labelprinters.jpeg' },
-  { name: 'Label Rolls', href: '/labels', image: '/labelrolls.png' },
-  { name: 'Ink & Supplies', href: '/ink', image: '/inkandsupplies.png' },
+  { name: 'Label Rolls', href: '/category/labels-en-tickets', image: '/labelrolls.png' },
+  { name: 'Ink & Supplies', href: '/category/inkt-cartridges', image: '/inkandsupplies.png' },
   { name: 'Special Labels', href: '/category/specials', image: '/speciallabels.png' },
 ];
 
