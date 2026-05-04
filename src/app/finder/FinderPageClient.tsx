@@ -99,7 +99,8 @@ export default function FinderPageClient() {
 
       try {
         if (!printerId) {
-          throw new Error("Printer ID is required");
+          setError("Printer ID is required");
+          return;
         }
 
         const requestBody: {
