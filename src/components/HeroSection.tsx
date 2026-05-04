@@ -8,9 +8,11 @@ import { PrinterSelect } from "./PrinterSelect";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { toast } from "sonner";
+import { useHelp } from "./HelpProvider";
 
 export default function HeroSection() {
   const router = useRouter();
+  const { openHelp } = useHelp();
   const [selectedPrinter, setSelectedPrinter] = useState<number | null>(null);
   const [selectedPrinterName, setSelectedPrinterName] = useState<string>("");
   const [productType, setProductType] = useState<string>("");
@@ -135,12 +137,13 @@ export default function HeroSection() {
               >
                 Browse Products
               </Link>
-              <Link
-                href="/contact"
+              <button
+                type="button"
+                onClick={openHelp}
                 className="px-7 py-4 bg-white/10 rounded-full border border-white/20 backdrop-blur-sm flex items-center gap-2.5 text-white text-lg font-semibold font-['Segoe_UI'] leading-6 hover:bg-white/20 transition-colors"
               >
-                Talk to Expert
-              </Link>
+                Talk to an Expert
+              </button>
             </div>
           </div>
 
