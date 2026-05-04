@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import ElasticsearchAPIConnector from '@elastic/search-ui-elasticsearch-connector';
 import type { QueryConfig, RequestState, ResponseState } from '@elastic/search-ui';
 
-const DEFAULT_INDEX_SUFFIXES = ['catalog_products_simple', 'catalog_products_variable'] as const;
-
 function elasticHost(): string {
   const url = process.env.ELASTICSEARCH_URL;
   if (url && url.trim()) return url.trim();
@@ -38,7 +36,15 @@ function elasticIndex(): string {
   if (configured?.trim()) return configured.trim();
 
   const prefix = process.env.SCOUT_PREFIX?.trim() ?? '';
-  return DEFAULT_INDEX_SUFFIXES.map((suffix) => `${prefix}${suffix}`).join(',');
+  const patterns = new Set<string>();
+
+  if (prefix) {
+    patterns.add(`${prefix}catalog_products_*`);
+  }
+
+  patterns.add('catalog_products_*');
+
+  return Array.from(patterns).join(',');
 }
 
 function elasticConnectionHeaders(): Record<string, string> | undefined {
@@ -97,31 +103,31 @@ type ElasticsearchRequestBody = {
 
 const DIMENSION_FIELDS = {
   width: {
-    key: 'meta_width',
+    keys: ['breedte', 'meta_width', 'width'],
     runtimeField: 'meta_width_mm',
   },
   height: {
-    key: 'meta_height',
+    keys: ['hoogte', 'meta_height', 'height'],
     runtimeField: 'meta_height_mm',
   },
   kern: {
-    key: 'kern',
+    keys: ['kern_numeric', 'kern', 'meta_kern'],
     runtimeField: 'meta_kern_mm',
   },
 } as const;
 
 const MATERIAL_CODE_FIELD = {
-  key: 'material_code',
+  keys: ['materiaal-code', 'material_code'],
   runtimeField: 'meta_material_code',
 } as const;
 
 const FINISHING_FIELD = {
-  key: 'finishing',
+  keys: ['afwerking', 'finishing'],
   runtimeField: 'meta_finishing',
 } as const;
 
 const GLUE_FIELD = {
-  key: 'glue',
+  keys: ['lijm', 'glue'],
   runtimeField: 'meta_glue',
 } as const;
 
@@ -129,27 +135,53 @@ const MATERIAL_FIELD = {
   runtimeField: 'meta_material',
 } as const;
 
-function metaValueRuntimeScript(metaKey: string, emitExpression: string): string {
+const CATEGORY_FIELD = {
+  runtimeField: 'search_category_slug',
+} as const;
+
+const BRAND_FIELD = {
+  runtimeField: 'search_brand_slug',
+} as const;
+
+function painlessList(values: readonly string[]): string {
+  return `[${values.map((value) => `'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`).join(', ')}]`;
+}
+
+function metaValueRuntimeScript(metaKeys: readonly string[], emitExpression: string): string {
   return `
+def metaKeys = ${painlessList(metaKeys)};
 def value = null;
-if (params._source.containsKey('${metaKey}')) {
-  value = params._source['${metaKey}'];
+for (def metaKey : metaKeys) {
+  if (params._source.containsKey(metaKey)) {
+    value = params._source[metaKey];
+    break;
+  }
 }
 if (value == null && params._source.containsKey('meta')) {
   def meta = params._source['meta'];
   if (meta instanceof Map) {
-    value = meta['${metaKey}'];
+    for (def metaKey : metaKeys) {
+      if (meta.containsKey(metaKey)) {
+        value = meta[metaKey];
+        break;
+      }
+    }
   } else if (meta instanceof List) {
     for (def item : meta) {
       if (item instanceof Map) {
-        if (item.containsKey('${metaKey}')) {
-          value = item['${metaKey}'];
-          break;
+        for (def metaKey : metaKeys) {
+          if (item.containsKey(metaKey)) {
+            value = item[metaKey];
+            break;
+          }
+          if (item.containsKey('key') && item['key'] == metaKey) {
+            value = item['value'];
+            break;
+          }
         }
-        if (item.containsKey('key') && item['key'] == '${metaKey}') {
-          value = item['value'];
-          break;
-        }
+      }
+      if (value != null) {
+        break;
       }
     }
   }
@@ -161,8 +193,8 @@ ${emitExpression}
 `;
 }
 
-function dimensionRuntimeScript(metaKey: string): string {
-  return metaValueRuntimeScript(metaKey, `
+function dimensionRuntimeScript(metaKeys: readonly string[]): string {
+  return metaValueRuntimeScript(metaKeys, `
 def matcher = /[-+]?[0-9]*\\.?[0-9]+/.matcher(value.toString());
 if (matcher.find()) {
   emit(Double.parseDouble(matcher.group()));
@@ -170,11 +202,27 @@ if (matcher.find()) {
 `);
 }
 
-function keywordRuntimeScript(metaKey: string): string {
-  return metaValueRuntimeScript(metaKey, `
-def text = value.toString();
-if (text.length() > 0) {
-  emit(text);
+function keywordRuntimeScript(metaKeys: readonly string[]): string {
+  return metaValueRuntimeScript(metaKeys, `
+if (value instanceof List) {
+  for (def item : value) {
+    if (item == null) {
+      continue;
+    }
+    def itemValue = item;
+    if (item instanceof Map && item.containsKey('value')) {
+      itemValue = item['value'];
+    }
+    def text = itemValue.toString();
+    if (text.length() > 0) {
+      emit(text);
+    }
+  }
+} else {
+  def text = value.toString();
+  if (text.length() > 0) {
+    emit(text);
+  }
 }
 `);
 }
@@ -184,6 +232,9 @@ function materialRuntimeScript(): string {
 def value = null;
 if (params._source.containsKey('material_title')) {
   value = params._source['material_title'];
+}
+if (value == null && params._source.containsKey('materiaal')) {
+  value = params._source['materiaal'];
 }
 if (value == null && params._source.containsKey('material')) {
   def material = params._source['material'];
@@ -202,21 +253,99 @@ if (value == null && params._source.containsKey('material')) {
 if (value == null) {
   return;
 }
-def text = value.toString();
-if (text.length() > 0) {
-  emit(text);
+if (value instanceof List) {
+  for (def item : value) {
+    if (item == null) {
+      continue;
+    }
+    def text = item.toString();
+    if (text.length() > 0) {
+      emit(text);
+    }
+  }
+} else {
+  def text = value.toString();
+  if (text.length() > 0) {
+    emit(text);
+  }
+}
+`;
+}
+
+function categoryRuntimeScript(): string {
+  return `
+if (params._source.containsKey('category_slugs')) {
+  def categories = params._source['category_slugs'];
+  if (categories instanceof List) {
+    for (def category : categories) {
+      if (category != null && category.toString().length() > 0) {
+        emit(category.toString());
+      }
+    }
+  } else if (categories != null && categories.toString().length() > 0) {
+    emit(categories.toString());
+  }
+}
+if (params._source.containsKey('terms')) {
+  def terms = params._source['terms'];
+  if (terms instanceof Map && terms.containsKey('product_cat')) {
+    def productCategories = terms['product_cat'];
+    if (productCategories instanceof List) {
+      for (def category : productCategories) {
+        if (category instanceof Map && category.containsKey('slug') && category['slug'] != null) {
+          emit(category['slug'].toString());
+        }
+      }
+    }
+  }
+}
+`;
+}
+
+function brandRuntimeScript(): string {
+  return `
+if (params._source.containsKey('brand')) {
+  def brand = params._source['brand'];
+  if (brand != null && brand.toString().length() > 0) {
+    emit(brand.toString());
+  }
+}
+if (params._source.containsKey('merken')) {
+  def merken = params._source['merken'];
+  if (merken instanceof List) {
+    for (def item : merken) {
+      if (item != null && item.toString().length() > 0) {
+        emit(item.toString());
+      }
+    }
+  } else if (merken != null && merken.toString().length() > 0) {
+    emit(merken.toString());
+  }
+}
+if (params._source.containsKey('terms')) {
+  def terms = params._source['terms'];
+  if (terms instanceof Map && terms.containsKey('product_brand')) {
+    def productBrands = terms['product_brand'];
+    if (productBrands instanceof List) {
+      for (def brandTerm : productBrands) {
+        if (brandTerm instanceof Map && brandTerm.containsKey('slug') && brandTerm['slug'] != null) {
+          emit(brandTerm['slug'].toString());
+        }
+      }
+    }
+  }
 }
 `;
 }
 
 function metaRuntimeMappings(): Record<string, unknown> {
   const dimensionMappings = Object.fromEntries(
-    Object.values(DIMENSION_FIELDS).map(({ key, runtimeField }) => [
+    Object.values(DIMENSION_FIELDS).map(({ keys, runtimeField }) => [
       runtimeField,
       {
         type: 'double',
         script: {
-          source: dimensionRuntimeScript(key),
+          source: dimensionRuntimeScript(keys),
         },
       },
     ]),
@@ -227,25 +356,37 @@ function metaRuntimeMappings(): Record<string, unknown> {
     [MATERIAL_CODE_FIELD.runtimeField]: {
       type: 'keyword',
       script: {
-        source: keywordRuntimeScript(MATERIAL_CODE_FIELD.key),
+        source: keywordRuntimeScript(MATERIAL_CODE_FIELD.keys),
       },
     },
     [FINISHING_FIELD.runtimeField]: {
       type: 'keyword',
       script: {
-        source: keywordRuntimeScript(FINISHING_FIELD.key),
+        source: keywordRuntimeScript(FINISHING_FIELD.keys),
       },
     },
     [GLUE_FIELD.runtimeField]: {
       type: 'keyword',
       script: {
-        source: keywordRuntimeScript(GLUE_FIELD.key),
+        source: keywordRuntimeScript(GLUE_FIELD.keys),
       },
     },
     [MATERIAL_FIELD.runtimeField]: {
       type: 'keyword',
       script: {
         source: materialRuntimeScript(),
+      },
+    },
+    [CATEGORY_FIELD.runtimeField]: {
+      type: 'keyword',
+      script: {
+        source: categoryRuntimeScript(),
+      },
+    },
+    [BRAND_FIELD.runtimeField]: {
+      type: 'keyword',
+      script: {
+        source: brandRuntimeScript(),
       },
     },
   };
@@ -326,6 +467,20 @@ type SearchStats = {
     };
   };
   pillFilters: {
+    category: {
+      options: Array<{
+        value: string;
+        label: string;
+        count: number;
+      }>;
+    };
+    brand: {
+      options: Array<{
+        value: string;
+        label: string;
+        count: number;
+      }>;
+    };
     materialCode: {
       options: Array<{
         value: string;
@@ -383,6 +538,12 @@ async function loadSearchStats(
       kern: { max: null },
     },
     pillFilters: {
+      category: {
+        options: [],
+      },
+      brand: {
+        options: [],
+      },
       materialCode: {
         options: [],
       },
@@ -462,6 +623,24 @@ async function loadSearchStats(
               },
             },
           },
+          categories: {
+            terms: {
+              field: CATEGORY_FIELD.runtimeField,
+              size: 100,
+              order: {
+                _key: 'asc',
+              },
+            },
+          },
+          brands: {
+            terms: {
+              field: BRAND_FIELD.runtimeField,
+              size: 100,
+              order: {
+                _key: 'asc',
+              },
+            },
+          },
         },
       }),
       cache: 'no-store',
@@ -509,6 +688,28 @@ async function loadSearchStats(
             doc_count?: number;
           }>;
         };
+        categories?: {
+          buckets?: Array<{
+            key?: string | number;
+            doc_count?: number;
+            names?: {
+              buckets?: Array<{
+                key?: string | number;
+              }>;
+            };
+          }>;
+        };
+        brands?: {
+          buckets?: Array<{
+            key?: string | number;
+            doc_count?: number;
+            names?: {
+              buckets?: Array<{
+                key?: string | number;
+              }>;
+            };
+          }>;
+        };
       };
     };
 
@@ -531,6 +732,32 @@ async function loadSearchStats(
         },
       },
       pillFilters: {
+        category: {
+          options: (json.aggregations?.categories?.buckets ?? [])
+            .map((bucket) => {
+              const value = typeof bucket.key === 'string' ? bucket.key : String(bucket.key ?? '');
+              const label = bucket.names?.buckets?.[0]?.key;
+              return {
+                value,
+                label: typeof label === 'string' && label.trim() !== '' ? label : labelFromCode(value),
+                count: typeof bucket.doc_count === 'number' ? bucket.doc_count : 0,
+              };
+            })
+            .filter((option) => option.value.trim() !== ''),
+        },
+        brand: {
+          options: (json.aggregations?.brands?.buckets ?? [])
+            .map((bucket) => {
+              const value = typeof bucket.key === 'string' ? bucket.key : String(bucket.key ?? '');
+              const label = bucket.names?.buckets?.[0]?.key;
+              return {
+                value,
+                label: typeof label === 'string' && label.trim() !== '' ? label : labelFromCode(value),
+                count: typeof bucket.doc_count === 'number' ? bucket.doc_count : 0,
+              };
+            })
+            .filter((option) => option.value.trim() !== ''),
+        },
         materialCode: {
           options: (json.aggregations?.material_codes?.buckets ?? [])
             .map((bucket) => {
@@ -590,12 +817,23 @@ function buildRelevanceQuery(state: RequestState, queryConfig: QueryConfig) {
   const searchTerm = state.searchTerm?.trim();
   if (!searchTerm) return { match_all: {} };
 
-  const primaryFields = ['title^8', 'name^7', 'sku^10', 'article_number^10'];
-  const fallbackFields = ['slug^2', 'variant_skus^2', 'excerpt^1.5', 'description^0.4', 'content^0.3', 'product_information^0.3'];
+  const primaryFields = ['title^8', 'name^7', 'post_title^8', 'sku^10', 'meta._sku.value^10', 'article_number^10'];
+  const fallbackFields = [
+    'slug^2',
+    'post_name^2',
+    'variant_skus^2',
+    'excerpt^1.5',
+    'description^0.4',
+    'content^0.3',
+    'post_content^0.4',
+    'product_information^0.3',
+    'meta.*.value^0.8',
+    'terms.*.name^0.6',
+  ];
 
   // Respect queryConfig.search_fields when present, but keep primary/fallback strategy explicit.
   const configuredPrimary = Object.entries(queryConfig.search_fields || {})
-    .filter(([field]) => ['title', 'name', 'sku', 'article_number'].includes(field))
+    .filter(([field]) => ['title', 'name', 'post_title', 'sku', 'meta._sku.value', 'article_number'].includes(field))
     .map(([field, config]) => `${field}^${config.weight ?? 1}`);
   const primary = configuredPrimary.length > 0 ? configuredPrimary : primaryFields;
 
