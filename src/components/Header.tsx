@@ -9,6 +9,7 @@ import WishlistDrawer from './WishlistDrawer';
 import { useWishlist } from './WishlistProvider';
 import SearchOverlay from './search/SearchOverlay';
 import HelpDrawer from './HelpDrawer';
+import { useHelp } from './HelpProvider';
 import PrintersMenu from './nav/PrintersMenu';
 import LabelsMenu from './nav/LabelsMenu';
 import AccessoriesMenu from './nav/AccessoriesMenu';
@@ -28,7 +29,7 @@ const navItems = [
 
 export default function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const { isHelpOpen, openHelp, closeHelp } = useHelp();
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<DropdownKey>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -140,7 +141,7 @@ export default function Header() {
             <button
               type="button"
               id="need-help-btn"
-              onClick={() => setIsHelpOpen(true)}
+              onClick={openHelp}
               className="pl-1.5 pr-8 py-2.5 bg-white rounded-full shadow border border-slate-100 flex items-center gap-2 hover:shadow-md hover:border-sky-200 transition-all cursor-pointer"
               aria-label="Open help drawer"
             >
@@ -275,7 +276,7 @@ export default function Header() {
       </div>
 
       {isSearchOpen && <SearchOverlay onClose={() => setIsSearchOpen(false)} />}
-      {isHelpOpen && <HelpDrawer onClose={() => setIsHelpOpen(false)} />}
+      {isHelpOpen && <HelpDrawer onClose={closeHelp} />}
       {isWishlistOpen && <WishlistDrawer onClose={() => setIsWishlistOpen(false)} />}
       {isCartOpen && <CartDrawer onClose={closeCart} />}
     </header>
