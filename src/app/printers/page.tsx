@@ -43,7 +43,7 @@ function mapApiProductToCardData(apiProduct: ApiProduct): ProductCardData {
   return {
     id: apiProduct.id,
     sku: apiProduct.sku || apiProduct.article_number || "",
-    name: apiProduct.title || apiProduct.name,
+    name: apiProduct.title ?? apiProduct.name ?? "",
     subtitle: apiProduct.subtitle,
     excerpt: apiProduct.excerpt,
     materialTitle: apiProduct.material?.title,
