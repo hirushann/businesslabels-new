@@ -190,27 +190,34 @@ function ProductOptionFilter({
       {options.length === 0 ? (
         <p className="text-sm text-slate-400">No options available</p>
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap gap-2">
           {options.map((option) => {
             const selected = selectedValues.has(option.value);
 
             return (
-              <label key={option.value} className="flex items-center gap-2 text-sm text-neutral-700">
-                <input
-                  type="checkbox"
-                  checked={selected}
-                  onChange={() => {
-                    if (selected) {
-                      removeFilter(config.field, option.value, "any");
-                    } else {
-                      addFilter(config.field, option.value, "any");
-                    }
-                  }}
-                  className="h-3.5 w-3.5 rounded border-slate-300 accent-amber-500"
-                />
-                <span className="min-w-0 flex-1">{option.label}</span>
-                {typeof option.count === "number" ? <span className="text-xs text-zinc-500">{option.count}</span> : null}
-              </label>
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  if (selected) {
+                    removeFilter(config.field, option.value, "any");
+                  } else {
+                    addFilter(config.field, option.value, "any");
+                  }
+                }}
+                className={`inline-flex min-h-9 items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                  selected
+                    ? "bg-amber-500 text-white shadow-sm hover:bg-amber-600"
+                    : "bg-slate-100 text-neutral-700 hover:bg-amber-50 hover:text-amber-600"
+                }`}
+                aria-pressed={selected}
+              >
+                <span>{option.label}</span>
+                {typeof option.count === "number" ? (
+                  <span className={selected ? "text-white/75" : "text-slate-400"}>{option.count}</span>
+                ) : null}
+                {selected ? <span className="text-base leading-none text-white/80">×</span> : null}
+              </button>
             );
           })}
         </div>
