@@ -1,15 +1,14 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import { materialReviews } from "@/lib/materialCatalog";
+import PrintersListing from "@/components/PrintersListing";
+import type { ProductCardData } from "@/components/ProductCard";
 
 export const metadata: Metadata = {
   title: "Material Overview — BusinessLabels",
   description:
     "Discover printer media materials selected for precision, durability, color accuracy, and reliable professional output.",
 };
-
-import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 
 type ApiProduct = {
   id: string | number;
@@ -43,7 +42,7 @@ function mapApiProductToCardData(apiProduct: ApiProduct): ProductCardData {
   return {
     id: apiProduct.id,
     sku: apiProduct.sku || apiProduct.article_number || "",
-    name: apiProduct.title || apiProduct.name,
+    name: apiProduct.title || apiProduct.name || "Unnamed printer",
     subtitle: apiProduct.subtitle,
     excerpt: apiProduct.excerpt,
     materialTitle: apiProduct.material?.title,
@@ -56,14 +55,6 @@ function mapApiProductToCardData(apiProduct: ApiProduct): ProductCardData {
     type: apiProduct.type,
     packing_group: apiProduct.packing_group,
   };
-}
-
-function cardHref(product: ProductCardData) {
-  if (!product.slug) return undefined;
-
-  return product.type
-    ? { pathname: `/products/${product.slug}`, query: { type: product.type } }
-    : { pathname: `/products/${product.slug}` };
 }
 
 export default async function PrinterPage({
@@ -110,77 +101,7 @@ export default async function PrinterPage({
 
       <section className="px-4 py-10 sm:px-6 lg:px-10">
         <div className="mx-auto flex max-w-360 flex-col gap-12">
-          <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-4 border-b border-gray-100 pb-4">
-              <h2 className="text-4xl font-bold leading-[48px] text-neutral-800">Printer Products</h2>
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <button
-                  type="button"
-                  className="inline-flex h-10 w-fit items-center gap-2 rounded-[42px] border border-slate-200 px-5 text-neutral-800"
-                >
-                  <svg className="h-5 w-5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                    <path d="M3 5H17" stroke="#52525B" strokeWidth="1.5" strokeLinecap="round" />
-                    <path d="M5.5 10H14.5" stroke="#52525B" strokeWidth="1.5" strokeLinecap="round" />
-                    <path d="M8 15H12" stroke="#52525B" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
-                  <span className="text-xl font-semibold leading-6">Filters</span>
-                </button>
-
-                <label className="flex h-10 w-fit items-center gap-3 rounded-[42px] border border-slate-200 px-5 text-neutral-800">
-                  <span className="sr-only">Sort printers</span>
-                  <select
-                    value="name_asc"
-                    disabled
-                    className="bg-transparent text-base leading-5 outline-none disabled:opacity-100"
-                  >
-                    <option value="name_asc">Name: A to Z</option>
-                  </select>
-                </label>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product} href={cardHref(product)} />
-              ))}
-            </div>
-
-            {lastPage > 1 && (
-              <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-                {currentPage > 1 && (
-                  <Link
-                    href={`/printers?page=${currentPage - 1}`}
-                    className="rounded-[50px] border border-slate-100 px-6 py-2.5 text-base font-medium text-neutral-800"
-                  >
-                    Previous
-                  </Link>
-                )}
-                {Array.from({ length: Math.min(5, lastPage) }, (_, i) => {
-                  const p = i + 1;
-                  return (
-                    <Link
-                      key={p}
-                      href={`/printers?page=${p}`}
-                      className={`flex h-10 min-w-10 items-center justify-center rounded-[50px] border border-slate-100 px-3 text-sm font-semibold ${
-                        p === currentPage ? "bg-amber-500 text-white" : "text-neutral-700"
-                      }`}
-                    >
-                      {p}
-                    </Link>
-                  );
-                })}
-                {lastPage > 5 && <span className="px-2 text-sm font-semibold text-zinc-500">...</span>}
-                {currentPage < lastPage && (
-                  <Link
-                    href={`/printers?page=${currentPage + 1}`}
-                    className="rounded-[50px] border border-slate-100 px-6 py-2.5 text-base font-semibold text-neutral-800"
-                  >
-                    Next
-                  </Link>
-                )}
-              </div>
-            )}
-          </div>
+          <PrintersListing printers={products} currentPage={currentPage} lastPage={lastPage} />
         </div>
       </section>
 

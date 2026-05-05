@@ -226,16 +226,19 @@ function ProductOptionFilter({
   );
 }
 
-export default function ProductListingFilters() {
-  const { filters, rawResponse, addFilter, removeFilter, setFilter } = useSearch((state) => ({
-    filters: state.filters,
-    rawResponse: state.rawResponse,
-    addFilter: state.addFilter,
-    removeFilter: state.removeFilter,
-    setFilter: state.setFilter,
-  }));
-  const activeFilters = filters ?? [];
-
+export function ProductListingFiltersView({
+  activeFilters,
+  rawResponse,
+  addFilter,
+  removeFilter,
+  setFilter,
+}: {
+  activeFilters: Filter[];
+  rawResponse: unknown;
+  addFilter: (name: string, value: string, type?: "any") => void;
+  removeFilter: (name: string, value?: string, type?: "any") => void;
+  setFilter: (name: string, value: FilterValueRange) => void;
+}) {
   return (
     <div className="flex flex-col gap-3">
       {RANGE_FILTERS.map((config) => (
@@ -259,5 +262,26 @@ export default function ProductListingFilters() {
         />
       ))}
     </div>
+  );
+}
+
+export default function ProductListingFilters() {
+  const { filters, rawResponse, addFilter, removeFilter, setFilter } = useSearch((state) => ({
+    filters: state.filters,
+    rawResponse: state.rawResponse,
+    addFilter: state.addFilter,
+    removeFilter: state.removeFilter,
+    setFilter: state.setFilter,
+  }));
+  const activeFilters = filters ?? [];
+
+  return (
+    <ProductListingFiltersView
+      activeFilters={activeFilters}
+      rawResponse={rawResponse}
+      addFilter={addFilter}
+      removeFilter={removeFilter}
+      setFilter={setFilter}
+    />
   );
 }
