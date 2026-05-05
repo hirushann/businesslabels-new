@@ -266,7 +266,7 @@ export default function Header() {
               Custom-made Form
             </Link>
             <Link
-              href="/printers"
+              href="/finder"
               className="px-4 py-2 bg-amber-500 rounded-full flex items-center gap-2 text-white text-base font-semibold hover:bg-amber-600 transition-colors"
             >
               Product Finder
