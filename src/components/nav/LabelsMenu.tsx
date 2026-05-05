@@ -7,7 +7,7 @@ const menuItems = [
   {
     title: 'Inkjet',
     description: 'For high-quality labels using ink-based printing',
-    href: '/labels/inkjet',
+    href: '/category/inkjet-printer-medialabels-and-tickets',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 22C13.8565 22 15.637 21.2625 16.9497 19.9497C18.2625 18.637 19 16.8565 19 15C19 13 18 11.1 16 9.5C14 7.9 12.5 5.5 12 3C11.5 5.5 10 7.9 8 9.5C6 11.1 5 13 5 15C5 16.8565 5.7375 18.637 7.05025 19.9497C8.36301 21.2625 10.1435 22 12 22Z" stroke="#F18800" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
     ),
@@ -15,7 +15,7 @@ const menuItems = [
   {
     title: 'TD: Thermal Direct',
     description: 'For fast, ink-free labels with short-term use',
-    href: '/labels/thermal-direct',
+    href: '/category/thermal-direct',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.99999 14C3.81076 14.0006 3.62522 13.9476 3.46495 13.847C3.30467 13.7464 3.17623 13.6023 3.09454 13.4316C3.01286 13.2609 2.98129 13.0706 3.00349 12.8826C3.0257 12.6947 3.10077 12.5169 3.21999 12.37L13.12 2.16998C13.1943 2.08426 13.2955 2.02634 13.407 2.00571C13.5185 1.98509 13.6337 2.00299 13.7337 2.05648C13.8337 2.10998 13.9126 2.19588 13.9573 2.30009C14.0021 2.4043 14.0101 2.52063 13.98 2.62998L12.06 8.64998C12.0034 8.8015 11.9844 8.9645 12.0046 9.12499C12.0248 9.28547 12.0837 9.43866 12.1761 9.57141C12.2685 9.70415 12.3918 9.8125 12.5353 9.88714C12.6788 9.96179 12.8382 10.0005 13 9.99998H20C20.1892 9.99934 20.3748 10.0524 20.535 10.153C20.6953 10.2536 20.8238 10.3976 20.9054 10.5683C20.9871 10.739 21.0187 10.9294 20.9965 11.1173C20.9743 11.3053 20.8992 11.483 20.78 11.63L10.88 21.83C10.8057 21.9157 10.7045 21.9736 10.593 21.9942C10.4815 22.0149 10.3663 21.997 10.2663 21.9435C10.1663 21.89 10.0874 21.8041 10.0427 21.6999C9.99791 21.5957 9.98991 21.4793 10.02 21.37L11.94 15.35C11.9966 15.1985 12.0156 15.0355 11.9954 14.875C11.9752 14.7145 11.9163 14.5613 11.8239 14.4286C11.7315 14.2958 11.6082 14.1875 11.4647 14.1128C11.3212 14.0382 11.1617 13.9995 11 14H3.99999Z" stroke="#F18800" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
     ),
@@ -23,7 +23,7 @@ const menuItems = [
   {
     title: 'TT: Thermal Transfer',
     description: 'For durable labels that last in tough conditions',
-    href: '/labels/thermal-transfer',
+    href: '/category/thermal-transfer',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8.5 14.5C9.16304 14.5 9.79893 14.2366 10.2678 13.7678C10.7366 13.2989 11 12.663 11 12C11 10.62 10.5 10 10 9C8.928 6.857 9.776 4.946 12 3C12.5 5.5 14 7.9 16 9.5C18 11.1 19 13 19 15C19 15.9193 18.8189 16.8295 18.4672 17.6788C18.1154 18.5281 17.5998 19.2997 16.9497 19.9497C16.2997 20.5998 15.5281 21.1154 14.6788 21.4672C13.8295 21.8189 12.9193 22 12 22C11.0807 22 10.1705 21.8189 9.32122 21.4672C8.47194 21.1154 7.70026 20.5998 7.05025 19.9497C6.40024 19.2997 5.88463 18.5281 5.53284 17.6788C5.18106 16.8295 5 15.9193 5 15C5 13.847 5.433 12.706 6 12C6 12.663 6.26339 13.2989 6.73223 13.7678C7.20107 14.2366 7.83696 14.5 8.5 14.5Z" stroke="#F18800" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
     ),
@@ -31,7 +31,7 @@ const menuItems = [
   {
     title: 'Applications',
     description: 'Find printers by use case and industry needs',
-    href: '/labels/applications',
+    href: '#',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#F18800" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M12 18C15.3137 18 18 15.3137 18 12C18 8.68629 15.3137 6 12 6C8.68629 6 6 8.68629 6 12C6 15.3137 8.68629 18 12 18Z" stroke="#F18800" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M12 14C13.1046 14 14 13.1046 14 12C14 10.8954 13.1046 10 12 10C10.8954 10 10 10.8954 10 12C10 13.1046 10.8954 14 12 14Z" stroke="#F18800" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
     ),
@@ -119,7 +119,7 @@ export default function LabelsMenu() {
 
       {/* Bottom CTA bar */}
       <Link
-        href="/labels"
+        href="/category/labels-en-tickets-en"
         className="self-stretch px-6 py-4 bg-amber-500 rounded-bl-xl rounded-br-xl inline-flex justify-between items-center hover:bg-amber-600 transition-colors"
       >
         <span className="text-white text-base font-semibold font-['Segoe_UI'] leading-6">
