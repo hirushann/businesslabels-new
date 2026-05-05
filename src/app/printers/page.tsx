@@ -130,7 +130,7 @@ function PrinterCard({ printer }: { printer: Printer }) {
         <div className="mt-auto flex flex-col gap-4">
           <div className="h-px bg-gray-100" />
           <Link
-            href={`/printers/${printer.slug}`}
+            href={`/finder/?printer_id=${printer.id}`}
             className="flex h-9 items-center justify-center rounded-full bg-blue-400 px-4 text-base font-semibold leading-6 text-white transition-colors hover:bg-blue-500"
           >
             View
@@ -185,10 +185,6 @@ export default async function PrinterPage({
 
       <section className="px-4 py-10 sm:px-6 lg:px-10">
         <div className="mx-auto flex max-w-360 flex-col gap-12">
-          
-
-          
-
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-4 border-b border-gray-100 pb-4">
               <h2 className="text-4xl font-bold leading-[48px] text-neutral-800">All Printers</h2>

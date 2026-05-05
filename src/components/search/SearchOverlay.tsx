@@ -31,6 +31,43 @@ function getRaw(result: unknown, field: string): unknown {
   return entry?.raw;
 }
 
+function getMetaValue(result: unknown, key: string): unknown {
+  const direct = getRaw(result, key);
+  if (direct !== undefined && direct !== null) return direct;
+
+  const meta = getRaw(result, 'meta');
+  if (!meta) return null;
+
+  if (Array.isArray(meta)) {
+    const entry = meta.find((item) => {
+      if (!item || typeof item !== 'object') return false;
+      const record = item as { key?: unknown };
+      return record.key === key;
+    });
+
+    return entry && typeof entry === 'object' ? (entry as { value?: unknown }).value : null;
+  }
+
+  if (typeof meta === 'object') {
+    const value = (meta as Record<string, unknown>)[key];
+    if (Array.isArray(value)) {
+      const first = value[0];
+      if (first && typeof first === 'object' && 'value' in first) {
+        return (first as { value?: unknown }).value;
+      }
+      return first ?? null;
+    }
+
+    if (value && typeof value === 'object' && 'value' in value) {
+      return (value as { value?: unknown }).value;
+    }
+
+    return value ?? null;
+  }
+
+  return null;
+}
+
 function firstScalar(value: unknown): string | number | boolean | null {
   if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
     return value;
@@ -85,9 +122,11 @@ function normalizeResultType(value: unknown): 'simple' | 'variable' | null {
 function titleForProduct(result: unknown): string {
   const title = valueAsString(getRaw(result, 'title'));
   const name = valueAsString(getRaw(result, 'name'));
+  const postTitle = valueAsString(getRaw(result, 'post_title'));
 
   if (typeof title === 'string' && title.trim() !== '') return title;
   if (typeof name === 'string' && name.trim() !== '') return name;
+  if (typeof postTitle === 'string' && postTitle.trim() !== '') return postTitle;
   return 'Unnamed product';
 }
 
@@ -97,6 +136,15 @@ function imageForProduct(result: unknown): string | null {
 
   const fallbackImage = valueAsString(getRaw(result, 'image'));
   if (fallbackImage && fallbackImage.trim() !== '') return fallbackImage;
+
+  const thumbnail = getRaw(result, 'thumbnail');
+  if (typeof thumbnail === 'string' && thumbnail.trim() !== '') return thumbnail;
+  if (thumbnail && typeof thumbnail === 'object') {
+    const src = valueAsString((thumbnail as { src?: unknown }).src);
+    if (src && src.trim() !== '') return src;
+    const url = valueAsString((thumbnail as { url?: unknown }).url);
+    if (url && url.trim() !== '') return url;
+  }
 
   const images = getRaw(result, 'images');
   if (Array.isArray(images) && images.length > 0) {
@@ -119,17 +167,41 @@ function imageForProduct(result: unknown): string | null {
 
 function categoriesForProduct(result: unknown): Array<{ id?: number; name?: string | null }> {
   const categories = getRaw(result, 'categories');
-  if (!Array.isArray(categories)) return [];
+  if (Array.isArray(categories)) {
+    return categories
+      .map((category) => {
+        if (typeof category === 'string') {
+          return { name: category };
+        }
 
-  return categories
+        if (typeof category === 'object' && category !== null) {
+          const record = category as { id?: unknown; term_id?: unknown; name?: unknown };
+          const id = valueAsNumber(record.id) ?? valueAsNumber(record.term_id) ?? undefined;
+          const name = valueAsString(record.name);
+          return { id, name };
+        }
+
+        return null;
+      })
+      .filter((category) => category !== null) as Array<{ id?: number; name?: string | null }>;
+  }
+
+  const terms = getRaw(result, 'terms');
+  const productCategories =
+    terms && typeof terms === 'object' ? (terms as { product_cat?: unknown }).product_cat : null;
+
+  if (!Array.isArray(productCategories)) return [];
+
+  return productCategories
     .map((category) => {
       if (typeof category === 'string') {
         return { name: category };
       }
 
       if (typeof category === 'object' && category !== null) {
-        const id = valueAsNumber((category as { id?: unknown }).id) ?? undefined;
-        const name = valueAsString((category as { name?: unknown }).name);
+        const record = category as { id?: unknown; term_id?: unknown; name?: unknown };
+        const id = valueAsNumber(record.id) ?? valueAsNumber(record.term_id) ?? undefined;
+        const name = valueAsString(record.name);
         return { id, name };
       }
 
@@ -148,6 +220,10 @@ function materialTitleForProduct(result: unknown): string | null {
   }
 
   return null;
+}
+
+function skuForProduct(result: unknown): string | null {
+  return valueAsString(getRaw(result, 'sku')) ?? valueAsString(getMetaValue(result, '_sku'));
 }
 
 function toDisplayImageUrl(url: string | null): string | null {
@@ -387,10 +463,10 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-5">
                   {(results || []).map((result, resultIndex) => {
                     const normalizedType = normalizeResultType(getRaw(result, 'product_type')) ?? normalizeResultType(getRaw(result, 'type'));
-                    const slug = valueAsString(getRaw(result, 'slug'));
+                    const slug = valueAsString(getRaw(result, 'slug')) ?? valueAsString(getRaw(result, 'post_name'));
                     const image = toDisplayImageUrl(imageForProduct(result));
-                    const sku = valueAsString(getRaw(result, 'sku'));
-                    const id = valueAsString(getRaw(result, 'id')) ?? `result-${resultIndex}`;
+                    const sku = skuForProduct(result);
+                    const id = valueAsString(getRaw(result, 'id')) ?? valueAsString(getRaw(result, 'ID')) ?? `result-${resultIndex}`;
                     const cardProduct: ProductCardData = {
                       id,
                       sku: sku || '-',
@@ -474,9 +550,12 @@ export default function SearchOverlay({ onClose }: SearchOverlayProps) {
         search_fields: {
           article_number: { weight: 10 },
           sku: { weight: 10 },
+          'meta._sku.value': { weight: 10 },
           title: { weight: 8 },
           name: { weight: 7 },
+          post_title: { weight: 8 },
           slug: { weight: 2 },
+          post_name: { weight: 2 },
           variant_skus: { weight: 2 },
           material_title: { weight: 1.2 },
           material_slug: { weight: 1 },
@@ -488,15 +567,19 @@ export default function SearchOverlay({ onClose }: SearchOverlayProps) {
           excerpt: { weight: 1.5 },
           description: { weight: 0.4 },
           content: { weight: 0.3 },
+          post_content: { weight: 0.4 },
           product_information: { weight: 0.3 },
         },
         result_fields: {
           id: { raw: {} },
+          ID: { raw: {} },
           product_type: { raw: {} },
           type: { raw: {} },
           title: { raw: {} },
           name: { raw: {} },
+          post_title: { raw: {} },
           slug: { raw: {} },
+          post_name: { raw: {} },
           article_number: { raw: {} },
           sku: { raw: {} },
           subtitle: { raw: {} },
@@ -507,8 +590,11 @@ export default function SearchOverlay({ onClose }: SearchOverlayProps) {
           in_stock: { raw: {} },
           main_image: { raw: {} },
           image: { raw: {} },
+          thumbnail: { raw: {} },
           images: { raw: {} },
           categories: { raw: {} },
+          terms: { raw: {} },
+          meta: { raw: {} },
           material: { raw: {} },
           material_title: { raw: {} },
         },

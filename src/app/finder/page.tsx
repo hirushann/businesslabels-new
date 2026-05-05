@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import FinderPageClient from "./FinderPageClient";
+import PrinterPage from "@/app/printers/page";
 
 export const metadata = {
   title: "Product Finder — BusinessLabels",
@@ -14,7 +15,24 @@ function FinderPageFallback() {
   );
 }
 
-export default function FinderPage() {
+type FinderSearchParams = {
+  page?: string | string[];
+  printer_id?: string | string[];
+  product_type?: string | string[];
+};
+
+export default async function FinderPage({
+  searchParams,
+}: {
+  searchParams: Promise<FinderSearchParams>;
+}) {
+  const query = await searchParams;
+  const hasFinderParameters = Boolean(query.printer_id || query.product_type);
+
+  if (!hasFinderParameters) {
+    return <PrinterPage searchParams={Promise.resolve({ page: query.page })} />;
+  }
+
   return (
     <Suspense fallback={<FinderPageFallback />}>
       <FinderPageClient />

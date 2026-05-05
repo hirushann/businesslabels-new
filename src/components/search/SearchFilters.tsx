@@ -65,10 +65,20 @@ type PillOption = {
 type PillFilterConfig = {
   title: string;
   field: string;
-  responseKey: "materialCode" | "material" | "finishing" | "glue";
+  responseKey: "category" | "brand" | "materialCode" | "material" | "finishing" | "glue";
 };
 
 const PILL_FILTERS: PillFilterConfig[] = [
+  {
+    title: "Category",
+    field: "search_category_slug",
+    responseKey: "category",
+  },
+  {
+    title: "Brand",
+    field: "search_brand_slug",
+    responseKey: "brand",
+  },
   {
     title: "Material Code",
     field: MATERIAL_CODE_FIELD,
@@ -145,6 +155,12 @@ function pillOptions(rawResponse: unknown, responseKey: PillFilterConfig["respon
 
   const options = (rawResponse as {
     pillFilters?: {
+      category?: {
+        options?: unknown;
+      };
+      brand?: {
+        options?: unknown;
+      };
       materialCode?: {
         options?: unknown;
       };
