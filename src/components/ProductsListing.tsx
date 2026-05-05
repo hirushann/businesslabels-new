@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { SearchProvider, useSearch } from "@elastic/react-search-ui";
 import type { SearchDriverOptions } from "@elastic/search-ui";
 import { ApiProxyConnector } from "@elastic/search-ui-elasticsearch-connector";
@@ -171,9 +171,6 @@ function ProductSkeletonGrid({ isSidebarOpen }: { isSidebarOpen: boolean }) {
 
 function ProductsListingContent({ products }: { products: ListingProductCardData[] }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [gridHeight, setGridHeight] = useState(0);
-  const [isDesktopLayout, setIsDesktopLayout] = useState(false);
-  const gridRef = useRef<HTMLDivElement>(null);
   const {
     results,
     totalResults,
@@ -215,47 +212,6 @@ function ProductsListingContent({ products }: { products: ListingProductCardData
     : [];
   const hasFallbackProducts = fallbackProducts.length > 0;
   const hasSearchProducts = searchProducts.length > 0;
-  const sidebarStyle =
-    isSidebarOpen && isDesktopLayout && gridHeight > 0
-      ? {
-          height: `${gridHeight}px`,
-          maxHeight: `${gridHeight}px`,
-        }
-      : undefined;
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(min-width: 1024px)");
-    const handleChange = () => {
-      setIsDesktopLayout(mediaQuery.matches);
-    };
-
-    handleChange();
-    mediaQuery.addEventListener("change", handleChange);
-
-    return () => {
-      mediaQuery.removeEventListener("change", handleChange);
-    };
-  }, []);
-
-  useEffect(() => {
-    const grid = gridRef.current;
-    if (!grid) {
-      setGridHeight(0);
-      return;
-    }
-
-    const updateGridHeight = () => {
-      setGridHeight(Math.ceil(grid.getBoundingClientRect().height));
-    };
-    const resizeObserver = new ResizeObserver(updateGridHeight);
-
-    updateGridHeight();
-    resizeObserver.observe(grid);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [hasFallbackProducts, hasSearchProducts, isLoading, isSidebarOpen, searchProducts.length, fallbackProducts.length]);
 
   const handleSortChange = (value: ProductListingSortValue) => {
     applyProductListingSort(setSort as (field: string, direction: "asc" | "desc") => void, value);
@@ -311,10 +267,7 @@ function ProductsListingContent({ products }: { products: ListingProductCardData
 
       <div className={`flex flex-col gap-6 ${isSidebarOpen ? "lg:flex-row lg:items-start" : ""}`}>
         {isSidebarOpen ? (
-          <aside
-            className="scrollbar-none w-full shrink-0 overscroll-contain rounded-xl border border-slate-100 bg-white p-4 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.08)] lg:w-96 lg:overflow-y-auto"
-            style={sidebarStyle}
-          >
+          <aside className="w-full shrink-0 rounded-xl border border-slate-100 bg-white p-4 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.08)] lg:w-80">
             <div className="flex flex-col gap-5">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
@@ -348,17 +301,12 @@ function ProductsListingContent({ products }: { products: ListingProductCardData
           {error ? (
             <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">{String(error)}</div>
           ) : isLoading && !hasFallbackProducts ? (
-            <div ref={gridRef}>
-              <ProductSkeletonGrid isSidebarOpen={isSidebarOpen} />
-            </div>
+            <ProductSkeletonGrid isSidebarOpen={isSidebarOpen} />
           ) : !hasFallbackProducts && !hasSearchProducts ? (
-            <div ref={gridRef}>
-              <EmptyState title="No products found" description="Try adjusting the filters to see more products." />
-            </div>
+            <EmptyState title="No products found" description="Try adjusting the filters to see more products." />
           ) : (
             <>
               <div
-                ref={gridRef}
                 className={`grid grid-cols-1 gap-6 sm:grid-cols-2 ${
                   isSidebarOpen ? "xl:grid-cols-3" : "xl:grid-cols-4"
                 }`}
