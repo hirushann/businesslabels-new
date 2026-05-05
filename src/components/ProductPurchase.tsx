@@ -87,11 +87,14 @@ export default function ProductPurchase({
     Number.isFinite(normalizedPackingGroup) &&
     normalizedPackingGroup > 0;
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (customQuantity?: number) => {
     setQuantityError(null);
 
     if (!hasPrice) return; // Prevent adding to cart if price is invalid
-    if (hasPackingGroup && quantity % normalizedPackingGroup !== 0) {
+    
+    const qtyToAdd = customQuantity ?? quantity;
+    
+    if (hasPackingGroup && !customQuantity && quantity % normalizedPackingGroup !== 0) {
       setQuantityError(`Quantity must be divisible by the packing group (${normalizedPackingGroup}).`);
       return;
     }
@@ -106,7 +109,7 @@ export default function ProductPurchase({
         price,
         mainImage,
       },
-      quantity,
+      qtyToAdd,
     );
   };
 
@@ -179,47 +182,75 @@ export default function ProductPurchase({
       </div>
 
       {/* Quantity + Add to Cart */}
-      <div className="flex items-end gap-4">
+      {hasPackingGroup ? (
+        // Two-button layout for products with packing groups
         <div className="flex flex-col gap-3">
-          <span className="text-neutral-800 text-lg font-bold leading-5 w-full">Select Quantity</span>
-          <div className="h-12 px-1 rounded-[50px] outline outline-1 outline-offset-[-1px] outline-black/10 flex justify-between items-center bg-white">
+          <span className="text-neutral-800 text-lg font-bold leading-5">Select Quantity</span>
+          <div className="flex items-center gap-3">
             <button
-              onClick={decrement}
-              className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
+              type="button"
+              onClick={() => handleAddToCart(1)}
+              className="flex-1 h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm flex"
             >
-              <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
-                <path strokeLinecap="round" d="M2 6h8" />
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
+              <span className="text-white text-base font-bold whitespace-nowrap">Rolls/Stack</span>
             </button>
-            <div className="flex-1 self-stretch flex justify-center items-center overflow-hidden">
-              <span className="text-neutral-800 text-sm font-semibold leading-5 px-2">{quantity}</span>
-            </div>
             <button
-              onClick={increment}
-              className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
+              type="button"
+              onClick={() => handleAddToCart(normalizedPackingGroup!)}
+              className="flex-1 h-12 px-4 py-2.5 bg-amber-100 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-amber-300 justify-center items-center gap-2 hover:bg-amber-300 transition-colors flex"
             >
-              <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
-                <path strokeLinecap="round" d="M6 2v8M2 6h8" />
+              <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
+              <span className="text-amber-600 text-base font-bold whitespace-nowrap">Box <span className="text-xs text-amber-600">({normalizedPackingGroup} Rolls/Stack)</span></span>
             </button>
           </div>
         </div>
-        <div className="flex flex-1 flex-col gap-2">
-          <button
-            type="button"
-            onClick={handleAddToCart}
-            aria-describedby={quantityError ? "quantity-error" : undefined}
-            className="flex h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm"
-          >
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            <span className="text-white text-base font-bold whitespace-nowrap">Add to Cart</span>
-          </button>
-
+      ) : (
+        // Original single-button layout with quantity selector
+        <div className="flex items-end gap-4">
+          <div className="flex flex-col gap-3">
+            <span className="text-neutral-800 text-lg font-bold leading-5 w-full">Select Quantity</span>
+            <div className="h-12 px-1 rounded-[50px] outline outline-1 outline-offset-[-1px] outline-black/10 flex justify-between items-center bg-white">
+              <button
+                onClick={decrement}
+                className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
+                  <path strokeLinecap="round" d="M2 6h8" />
+                </svg>
+              </button>
+              <div className="flex-1 self-stretch flex justify-center items-center overflow-hidden">
+                <span className="text-neutral-800 text-sm font-semibold leading-5 px-2">{quantity}</span>
+              </div>
+              <button
+                onClick={increment}
+                className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
+                  <path strokeLinecap="round" d="M6 2v8M2 6h8" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div className="flex flex-1 flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => handleAddToCart()}
+              aria-describedby={quantityError ? "quantity-error" : undefined}
+              className="flex h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm"
+            >
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <span className="text-white text-base font-bold whitespace-nowrap">Add to Cart</span>
+            </button>
+          </div>
         </div>
-
-      </div>
+      )}
 
       <div>
         {quantityError ? (

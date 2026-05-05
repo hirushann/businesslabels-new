@@ -283,6 +283,8 @@ export default async function SingleProductPage({
       const result = await fetchProductByType(baseUrl, type, slug);
       if (result) {
         product = result;
+        console.log(`Fetched product details for slug '${slug}' with type '${type}'`);
+        console.log("Product details:", product);
         break;
       }
     }

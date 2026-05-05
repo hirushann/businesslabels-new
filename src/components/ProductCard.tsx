@@ -77,7 +77,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
   };
 
   const cardContent = (
-    console.log("Rendering ProductCard for:", product),
+    // console.log("Rendering ProductCard for:", product)
     <div className="mx-auto h-full w-full max-w-88 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] border border-slate-100 flex flex-col overflow-hidden hover:shadow-lg transition-shadow">
       <div className="relative h-56 bg-slate-100 overflow-hidden">
         <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
