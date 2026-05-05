@@ -1,13 +1,32 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
+import { useHelp } from './HelpProvider';
 
 type Tab = 'dashboard' | 'orders' | 'downloads' | 'addresses' | 'details' | 'printers' | 'favourites';
 
 export default function MyAccountClient() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <MyAccountContent />
+    </Suspense>
+  );
+}
+
+function MyAccountContent() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+  const searchParams = useSearchParams();
+  const { openHelp } = useHelp();
+
+  useEffect(() => {
+    const tab = searchParams.get('tab') as Tab;
+    if (tab && ['dashboard', 'orders', 'downloads', 'addresses', 'details', 'printers', 'favourites'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: (

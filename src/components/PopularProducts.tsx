@@ -44,12 +44,12 @@ export default async function PopularProducts() {
   let products: Product[] = [];
   try {
     const response = await fetch(`${baseUrl}/api/products`, {
-      cache: 'no-store',
+      next: { revalidate: 3600 },
     });
 
     if (response.ok) {
       const json = (await response.json()) as ProductsResponse;
-      products = json.data.slice(0, 4);
+      products = json.data.slice(0, 6);
     } else {
       console.error(`Failed to fetch products: ${response.status}`);
     }
@@ -78,10 +78,10 @@ export default async function PopularProducts() {
         </div>
 
         {/* Product grid */}
-        <div className="grid grid-cols-4 gap-6">
+        <div className="grid grid-cols-3 gap-8">
           {products.length === 0 ? (
             <EmptyState
-              className="col-span-4"
+              className="col-span-3"
               title="No products found"
               description="There are currently no popular products available."
             />
