@@ -267,7 +267,7 @@ function ProductsListingContent({ products }: { products: ListingProductCardData
 
       <div className={`flex flex-col gap-6 ${isSidebarOpen ? "lg:flex-row lg:items-start" : ""}`}>
         {isSidebarOpen ? (
-          <aside className="w-full shrink-0 rounded-xl border border-slate-100 bg-white p-4 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.08)] lg:w-80">
+          <aside className="w-full shrink-0 rounded-xl border border-slate-100 bg-white p-4 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.08)] md:w-96 lg:w-96">
             <div className="flex flex-col gap-5">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
