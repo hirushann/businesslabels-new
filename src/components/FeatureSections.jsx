@@ -16,7 +16,7 @@ const sections = [
     desc: 'Already have a printer? Find compatible labels with our Diamondlabels brand - known for best material selection and quality.',
     bullets: ['Order from 1 roll - no high MOQ', 'Free custom ICC profiles', 'Expert material knowledge'],
     cta: 'Explore Labels',
-    href: '/labels',
+    href: '/category/labels-en-tickets',
     image: '/find_labels_and_materials.jpeg',
     imageLeft: true,
   },
@@ -25,7 +25,7 @@ const sections = [
     desc: "Returning customer? Quickly reorder your favorite products or browse new materials for your next project.",
     bullets: ['View order history', 'Saved favorites & preferences', 'Priority support'],
     cta: 'Reorder Now',
-    href: '/account',
+    href: '/my-account?tab=favourites',
     image: '/quick_reorder.jpeg',
     imageLeft: false,
   },
@@ -34,8 +34,8 @@ const sections = [
 export default function FeatureSections() {
   return (
     <section className="w-full px-10 py-24 bg-slate-50 flex flex-col gap-24">
-      <div className="max-w-[1440px] mx-auto w-full flex flex-col gap-24">
-        {sections.map((section) => (
+      <div className="max-w-360 mx-auto w-full flex flex-col gap-24">
+        {sections.map((section, index) => (
           <div
             key={section.title}
             className={`flex items-center gap-12 ${section.imageLeft ? 'flex-row' : 'flex-row-reverse'}`}
@@ -46,6 +46,8 @@ export default function FeatureSections() {
                 src={section.image}
                 alt={section.title}
                 fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                priority={index === 0}
                 className="object-cover object-center"
               />
             </div>

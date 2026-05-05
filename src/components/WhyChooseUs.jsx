@@ -42,7 +42,7 @@ const features = [
 export default function WhyChooseUs() {
   return (
     <section className="w-full px-10 py-24 bg-slate-50">
-      <div className="max-w-[1440px] mx-auto w-full flex flex-col gap-12">
+      <div className="max-w-360 mx-auto w-full flex flex-col gap-12">
         {/* Header */}
         <div className="flex flex-col items-center gap-4">
           <h2 className="text-center text-neutral-800 text-4xl font-bold font-['Segoe_UI'] leading-[48px]">
@@ -61,6 +61,7 @@ export default function WhyChooseUs() {
               src="/whychoose.png"
               alt="Why choose BusinessLabels"
               fill
+              sizes="(max-width: 768px) 100vw, 50vw"
               className="object-cover object-center"
             />
           </div>

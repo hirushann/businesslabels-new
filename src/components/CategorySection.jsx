@@ -2,10 +2,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 const categories = [
-  { name: 'Label Printers', href: '/printers', image: '/labelprinters.jpeg' },
-  { name: 'Label Rolls', href: '/labels', image: '/labelrolls.png' },
-  { name: 'Ink & Supplies', href: '/ink', image: '/inkandsupplies.png' },
-  { name: 'Special Labels', href: '/special-labels', image: '/speciallabels.png' },
+  { name: 'Label Printers', href: '/category/labelprinters', image: '/labelprinters.jpeg' },
+  { name: 'Label Rolls', href: '/category/labels-en-tickets', image: '/labelrolls.png' },
+  { name: 'Ink & Supplies', href: '/category/inkt-cartridges', image: '/inkandsupplies.png' },
+  { name: 'Special Labels', href: '/category/specials', image: '/speciallabels.png' },
 ];
 
 export default function CategorySection() {
@@ -15,7 +15,7 @@ export default function CategorySection() {
       <div className="w-48 absolute left-0 top-0 bg-amber-500/30 rounded-full blur-[132px] pointer-events-none" />
       <div className="w-48 absolute right-52 bottom-0 bg-amber-500/30 rounded-full blur-[132px] pointer-events-none" />
 
-      <div className="max-w-[1440px] mx-auto w-full flex flex-col gap-12">
+      <div className="max-w-360 mx-auto w-full flex flex-col gap-12">
         <h2 className="text-center text-neutral-800 text-4xl font-bold font-['Segoe_UI'] leading-[48px]">
           Browse by Category
         </h2>
@@ -30,6 +30,7 @@ export default function CategorySection() {
                 src={cat.image}
                 alt={cat.name}
                 fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                 className="object-cover object-center"
               />
               {/* Gradient overlay */}

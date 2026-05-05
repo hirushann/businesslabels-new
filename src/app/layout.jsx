@@ -1,6 +1,14 @@
 import "./globals.css";
+import { CartProvider } from "@/components/CartProvider";
+import { WishlistProvider } from "@/components/WishlistProvider";
+import { HelpProvider } from "@/components/HelpProvider";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { Inter } from "next/font/google";
+import { cn } from "@/lib/utils";
+import { Toaster } from "@/components/ui/sonner";
+
+const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata = {
   title: "BusinessLabels — Labels for Epson ColorWorks Printers",
@@ -10,11 +18,18 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body className="bg-white min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
+    <html lang="en" className={cn("font-sans", inter.variable)} suppressHydrationWarning>
+      <body className="bg-white min-h-screen flex flex-col" suppressHydrationWarning>
+        <CartProvider>
+          <WishlistProvider>
+            <HelpProvider>
+              <Header />
+              <main className="flex-1">{children}</main>
+              <Footer />
+            </HelpProvider>
+          </WishlistProvider>
+        </CartProvider>
+        <Toaster />
       </body>
     </html>
   );
