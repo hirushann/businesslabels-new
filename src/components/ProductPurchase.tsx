@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { ProductRouteType } from "@/components/ProductCard";
 import { useCart } from "@/components/CartProvider";
 import { useWishlist } from "@/components/WishlistProvider";
+import { getExpectedDeliveryMessage } from "@/lib/utils/delivery";
 
 type ProductPurchaseProps = {
   id?: string | number | null;
@@ -19,6 +20,9 @@ type ProductPurchaseProps = {
   originalPrice?: number | null;
   mainImage?: string | null;
   packingGroup?: string | null;
+  stock?: number | null;
+  deliveryDatesInStock?: number | null;
+  deliveryDatesNoStock?: number | null;
 };
 
 function formatEuro(value: number): string {
@@ -44,11 +48,24 @@ export default function ProductPurchase({
   originalPrice,
   mainImage,
   packingGroup,
+  stock,
+  deliveryDatesInStock,
+  deliveryDatesNoStock,
 }: ProductPurchaseProps) {
   const { addItem } = useCart();
   const wishlist = useWishlist();
   const [quantity, setQuantity] = useState(1);
   const [quantityError, setQuantityError] = useState<string | null>(null);
+  const [currentTime, setCurrentTime] = useState(() => new Date());
+
+  // Update countdown every minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every 60 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   const increment = () => {
     setQuantityError(null);
@@ -86,6 +103,29 @@ export default function ProductPurchase({
     typeof normalizedPackingGroup === "number" &&
     Number.isFinite(normalizedPackingGroup) &&
     normalizedPackingGroup > 0;
+
+  // Calculate delivery message
+  const deliveryInfo = useMemo(() => {
+    if (
+      typeof stock !== "number" ||
+      typeof deliveryDatesInStock !== "number" ||
+      typeof deliveryDatesNoStock !== "number"
+    ) {
+      return null;
+    }
+
+    try {
+      return getExpectedDeliveryMessage({
+        stock,
+        delivery_dates_in_stock: deliveryDatesInStock,
+        delivery_dates_no_stock: deliveryDatesNoStock,
+        now: currentTime,
+      });
+    } catch (error) {
+      console.error("Failed to calculate delivery message:", error);
+      return null;
+    }
+  }, [stock, deliveryDatesInStock, deliveryDatesNoStock, currentTime]);
 
   const handleAddToCart = (customQuantity?: number) => {
     setQuantityError(null);
@@ -284,19 +324,26 @@ export default function ProductPurchase({
       </div>
 
       {/* Delivery Estimate */}
-      <div className="p-3 bg-green-600/10 rounded-[10px] outline outline-1 outline-offset-[-1px] outline-green-600/20">
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-2">
-            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" strokeWidth={1.67} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0 m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0 m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
-            </svg>
-            <span className="text-neutral-800 text-base font-semibold leading-5">Expected Delivery</span>
+      {deliveryInfo && (
+        <div className="p-3 bg-green-600/10 rounded-[10px] outline outline-1 outline-offset-[-1px] outline-green-600/20">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" strokeWidth={1.67} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0 m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0 m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+              </svg>
+              <span className="text-neutral-800 text-base font-semibold leading-5">Expected Delivery</span>
+            </div>
+            <p className="text-xs text-neutral-700 leading-5">
+              Order within{' '}
+              <span className="text-green-600 font-semibold">
+                {deliveryInfo.countdown.hours} hours {deliveryInfo.countdown.formattedMinutes} minutes
+              </span>
+              {' '}for delivery{' '}
+              <span className="text-green-600 font-semibold">{deliveryInfo.deliveryLabel}</span>
+            </p>
           </div>
-          <p className="text-xs text-neutral-700 leading-5">
-            Order within <span className="text-green-600 font-semibold">2 hours 34 minutes</span> for delivery <span className="text-green-600 font-semibold">tomorrow</span>
-          </p>
         </div>
-      </div>
+      )}
 
       {/* Need Help Section with Custom Icons */}
       <div className="flex flex-col gap-4">

@@ -364,6 +364,9 @@ export default async function SingleProductPage({
               originalPrice={product?.original_price}
               mainImage={product?.main_image}
               packingGroup={(product?.packing_group?.toFixed(2))}
+              stock={product?.stock}
+              deliveryDatesInStock={product?.delivery_dates_in_stock}
+              deliveryDatesNoStock={product?.delivery_dates_no_stock}
             />
 
             {/* Consumable Items */}
