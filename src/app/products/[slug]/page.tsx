@@ -5,11 +5,28 @@ import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 import ProductImageGallery from "@/components/ProductImageGallery";
 import { getDemoProductBySlug } from "@/lib/demoCatalog";
 import { notFound } from "next/navigation";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 export const metadata: Metadata = {
   title: "Epson CW-C6000Ae MK — BusinessLabels",
   description:
     "Premium color label printer for product labeling, shipping labels and general purpose use. Compatible with Epson ColorWorks inkjet label printers.",
+};
+
+type UpsellProduct = {
+  id: number;
+  title: string;
+  slug: string;
+  sku: string;
+  price: number;
+  original_price: number;
+  main_image: string;
 };
 
 type ProductDetail = {
@@ -52,6 +69,8 @@ type ProductDetail = {
     length?: string | number | null;
   } | null;
   categories?: Array<{ id?: number; name?: string | null }>;
+  up_sells?: UpsellProduct[];
+  cross_sells?: UpsellProduct[];
 };
 
 function normalizeType(raw: string | string[] | undefined): "simple" | "variable" | null {
@@ -135,13 +154,7 @@ async function fetchProductByType(baseUrl: string, type: "simple" | "variable", 
   }
 }
 
-type DemoSectionCard = ProductCardData;
 
-const DEMO_SECTION_IDS = {
-  inkMaintenance: [1, 2, 3],
-  badgesMedia: [4, 5, 6],
-  hardwares: [7, 8, 9],
-} as const;
 
 function toTitleCaseFromSlug(raw: string): string {
   return raw
@@ -153,90 +166,25 @@ function toTitleCaseFromSlug(raw: string): string {
     .join(" ");
 }
 
-function buildMetaSpecs(meta: ProductDetail["meta"]): string[] {
-  if (!meta) {
-    return [];
-  }
-
-  return Object.entries(meta)
-    .map(([key, value]) => {
-      const normalized = normalizeValue(value);
-      if (!normalized) {
-        return null;
-      }
-      return `${toTitleCaseFromSlug(key)}: ${normalized}`;
-    })
-    .filter((value): value is string => Boolean(value));
-}
-
-async function fetchProductById(baseUrl: string, id: number): Promise<ProductDetail | null> {
-  for (const type of ["simple", "variable"] as const) {
-    try {
-      const response = await fetch(`${baseUrl}/api/products/${type}/${id}`, { cache: "no-store" });
-      if (!response.ok) {
-        continue;
-      }
-
-      const json = (await response.json()) as { data?: ProductDetail };
-      if (json.data) {
-        return json.data;
-      }
-    } catch (error) {
-      console.error(`Failed to fetch demo section product by id '${id}'`, error);
-    }
-  }
-
-  return null;
-}
-
-function mapProductToDemoCard(id: number, product: ProductDetail | null, placeholderImage: string): DemoSectionCard {
-  const metaSpecs = buildMetaSpecs(product?.meta ?? null);
-  const subtitle =
-    normalizeValue(product?.subtitle) ||
-    normalizeValue(product?.material_information) ||
-    metaSpecs[0] ||
-    "-";
-  const excerpt = normalizeValue(product?.excerpt) || metaSpecs[1] || "-";
-
+function mapUpsellToProductCard(upsell: UpsellProduct): ProductCardData {
   return {
-    id,
-    name: normalizeValue(product?.title) || normalizeValue(product?.name) || "-",
-    sku: normalizeValue(product?.sku) || "-",
-    subtitle,
-    excerpt,
-    materialTitle: normalizeValue(product?.material?.title),
-    price: product?.price ?? null,
-    originalPrice: product?.original_price ?? null,
-    inStock: Boolean(product?.in_stock),
-    mainImage: normalizeValue(product?.main_image) || placeholderImage,
-    categories: product?.categories ?? [],
-    slug: normalizeValue(product?.slug),
-    type: normalizeType(product?.type ?? undefined),
+    id: upsell.id,
+    name: upsell.title,
+    sku: upsell.sku,
+    subtitle: null,
+    excerpt: null,
+    materialTitle: null,
+    price: upsell.price,
+    originalPrice: upsell.original_price,
+    inStock: true,
+    mainImage: upsell.main_image,
+    categories: [],
+    slug: upsell.slug,
+    type: "simple",
   };
 }
 
-async function loadSectionCards(baseUrl: string | undefined, ids: readonly number[], placeholderImage: string): Promise<DemoSectionCard[]> {
-  return Promise.all(
-    ids.map(async (id) => {
-      const product = baseUrl ? await fetchProductById(baseUrl, id) : null;
-      return mapProductToDemoCard(id, product, placeholderImage);
-    }),
-  );
-}
-
-async function loadInkMaintenanceCards(baseUrl: string | undefined): Promise<DemoSectionCard[]> {
-  return loadSectionCards(baseUrl, DEMO_SECTION_IDS.inkMaintenance, "https://placehold.co/222x180");
-}
-
-async function loadBadgesMediaCards(baseUrl: string | undefined): Promise<DemoSectionCard[]> {
-  return loadSectionCards(baseUrl, DEMO_SECTION_IDS.badgesMedia, "https://placehold.co/180x180");
-}
-
-async function loadHardwareCards(baseUrl: string | undefined): Promise<DemoSectionCard[]> {
-  return loadSectionCards(baseUrl, DEMO_SECTION_IDS.hardwares, "https://placehold.co/227x180");
-}
-
-function productHref(product: DemoSectionCard): { pathname: string; query?: { type: "simple" | "variable" } } | null {
+function productHref(product: ProductCardData): { pathname: string; query?: { type: "simple" | "variable" } } | null {
   if (!product.slug) {
     return null;
   }
@@ -303,11 +251,7 @@ export default async function SingleProductPage({
     .map((item) => item.url)
     .filter((url): url is string => Boolean(url));
   const specs = specsFromProduct(product);
-  const [inkMaintenanceCards, badgesMediaCards, hardwareCards] = await Promise.all([
-    loadInkMaintenanceCards(baseUrl),
-    loadBadgesMediaCards(baseUrl),
-    loadHardwareCards(baseUrl),
-  ]);
+  const relatedProducts = (product.up_sells ?? []).map(mapUpsellToProductCard);
 
   return (
     <div className="bg-white">
@@ -443,86 +387,38 @@ export default async function SingleProductPage({
         </div>
       </div>
 
-      {/* Ink & Maintenance Section */}
-      <div className="px-40 py-24 bg-gray-50">
-        <div className="max-w-300 mx-auto flex flex-col gap-12">
-          <div className="flex justify-between items-center">
-            <h2 className="text-neutral-800 text-4xl font-bold leading-[48px]">Ink &amp; Maintenance</h2>
-            <div className="flex items-center gap-6">
-              <button className="w-12 h-12 p-3 bg-gray-50 rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-gray-200 flex justify-center items-center hover:bg-white transition-colors">
-                <svg className="w-4 h-4 text-neutral-700" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <button className="w-12 h-12 p-3 bg-white rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-amber-500 flex justify-center items-center hover:bg-amber-50 transition-colors">
-                <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-6">
-            {inkMaintenanceCards.map((product) => {
-              const href = productHref(product);
-              return <ProductCard key={product.id} product={product} href={href ?? undefined} />;
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Badges / Media Section */}
-      <div className="px-40 py-24 bg-white">
-        <div className="max-w-300 mx-auto flex flex-col gap-12">
-          <div className="flex justify-between items-center">
-            <h2 className="text-neutral-800 text-4xl font-bold leading-[48px]">Badges / Media</h2>
-            <div className="flex items-center gap-6">
-              <button className="w-12 h-12 p-3 bg-white rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-gray-200 flex justify-center items-center hover:bg-gray-50 transition-colors">
-                <svg className="w-4 h-4 text-neutral-700" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <button className="w-12 h-12 p-3 bg-white rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-amber-500 flex justify-center items-center hover:bg-amber-50 transition-colors">
-                <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-6">
-            {badgesMediaCards.map((product) => {
-              const href = productHref(product);
-              return <ProductCard key={product.id} product={product} href={href ?? undefined} />;
-            })}
+      {/* Related Products Section */}
+      {relatedProducts.length > 0 && (
+        <div className="px-10 py-10 bg-gray-50">
+          <div className="mx-auto flex flex-col gap-12">
+            <Carousel
+              opts={{
+                align: "start",
+                loop: true,
+              }}
+              className="w-full"
+            >
+              <div className="flex justify-between items-center px-20">
+                <h2 className="text-neutral-800 text-4xl font-bold leading-[48px]">Related Products</h2>
+                <div className="flex items-center gap-6">
+                  <CarouselPrevious className="static translate-y-0 w-12 h-12 p-3 bg-gray-50 rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-gray-200 hover:bg-white transition-colors" />
+                  <CarouselNext className="static translate-y-0 w-12 h-12 p-3 bg-white rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-amber-500 hover:bg-amber-50 transition-colors" />
+                </div>
+              </div>
+              <CarouselContent className="-ml-6 mt-6">
+                {relatedProducts.map((product) => {
+                  const href = productHref(product);
+                  return (
+                    <CarouselItem key={product.id} className="pl-6 basis-1/3">
+                      <ProductCard product={product} href={href ?? undefined} />
+                    </CarouselItem>
+                  );
+                })}
+              </CarouselContent>
+            </Carousel>
           </div>
         </div>
-      </div>
-
-      {/* Hardwares Section */}
-      <div className="px-40 py-24 bg-gray-50">
-        <div className="max-w-300 mx-auto flex flex-col gap-12">
-          <div className="flex justify-between items-center">
-            <h2 className="text-neutral-800 text-4xl font-bold leading-[48px]">Hardwares</h2>
-            <div className="flex items-center gap-6">
-              <button className="w-12 h-12 p-3 bg-gray-50 rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-gray-200 flex justify-center items-center hover:bg-white transition-colors">
-                <svg className="w-4 h-4 text-neutral-700" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <button className="w-12 h-12 p-3 bg-white rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-amber-500 flex justify-center items-center hover:bg-amber-50 transition-colors">
-                <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-6">
-            {hardwareCards.map((product) => {
-              const href = productHref(product);
-              return <ProductCard key={product.id} product={product} href={href ?? undefined} />;
-            })}
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
