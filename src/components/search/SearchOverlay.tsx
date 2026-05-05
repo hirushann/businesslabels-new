@@ -418,7 +418,7 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
 
         <div className="h-[calc(100%-81px)] flex flex-col md:flex-row overflow-hidden">
           {/* Sidebar */}
-          <aside className="w-full md:w-[320px] lg:w-[360px] border-r border-slate-100 overflow-y-auto p-4 lg:p-6 bg-slate-50/50">
+          <aside className="scrollbar-none w-full md:w-96 lg:w-96 border-r border-slate-100 overflow-y-auto p-4 lg:p-6 bg-slate-50/50">
             <div className="flex flex-col gap-6">
               <div className="flex items-center justify-between px-1">
                 <h2 className="text-neutral-800 text-xl font-bold">Filters</h2>

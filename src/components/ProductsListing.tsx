@@ -1,10 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SearchProvider, useSearch } from "@elastic/react-search-ui";
 import type { SearchDriverOptions } from "@elastic/search-ui";
 import { ApiProxyConnector } from "@elastic/search-ui-elasticsearch-connector";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import EmptyState from "@/components/EmptyState";
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 import ProductListingFilters from "@/components/products-listing/ProductListingFilters";
@@ -119,61 +118,6 @@ function applyProductListingSort(
   setSort(mapped.field, mapped.direction);
 }
 
-function useProductListingRoutingOptions() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const pathnameRef = useRef(pathname);
-  const searchRef = useRef(searchParams?.toString() ?? "");
-
-  useEffect(() => {
-    pathnameRef.current = pathname;
-  }, [pathname]);
-
-  useEffect(() => {
-    searchRef.current = searchParams?.toString() ?? "";
-  }, [searchParams]);
-
-  const readUrl = useCallback(() => {
-    const current = searchRef.current;
-    return current ? `?${current}` : "";
-  }, []);
-
-  const writeUrl = useCallback(
-    (url: string, { replaceUrl }: { replaceUrl?: boolean } = {}) => {
-      const query = url.startsWith("?") ? url.slice(1) : url;
-      const basePath = pathnameRef.current || "/";
-      const href = query ? `${basePath}?${query}` : basePath;
-
-      if (replaceUrl !== false) {
-        router.replace(href, { scroll: false });
-        return;
-      }
-
-      router.push(href, { scroll: false });
-    },
-    [router],
-  );
-
-  const routeChangeHandler = useCallback((callback: (url: string) => void) => {
-    const onPopState = () => callback(window.location.search);
-
-    window.addEventListener("popstate", onPopState);
-    return () => {
-      window.removeEventListener("popstate", onPopState);
-    };
-  }, []);
-
-  return useMemo(
-    () => ({
-      readUrl,
-      writeUrl,
-      routeChangeHandler,
-    }),
-    [readUrl, routeChangeHandler, writeUrl],
-  );
-}
-
 function buildVisiblePages(currentPage: number, lastPage: number): Array<number | "ellipsis"> {
   if (lastPage <= 1) {
     return [1];
@@ -227,6 +171,9 @@ function ProductSkeletonGrid({ isSidebarOpen }: { isSidebarOpen: boolean }) {
 
 function ProductsListingContent({ products }: { products: ListingProductCardData[] }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [gridHeight, setGridHeight] = useState(0);
+  const [isDesktopLayout, setIsDesktopLayout] = useState(false);
+  const gridRef = useRef<HTMLDivElement>(null);
   const {
     results,
     totalResults,
@@ -268,6 +215,47 @@ function ProductsListingContent({ products }: { products: ListingProductCardData
     : [];
   const hasFallbackProducts = fallbackProducts.length > 0;
   const hasSearchProducts = searchProducts.length > 0;
+  const sidebarStyle =
+    isSidebarOpen && isDesktopLayout && gridHeight > 0
+      ? {
+          height: `${gridHeight}px`,
+          maxHeight: `${gridHeight}px`,
+        }
+      : undefined;
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 1024px)");
+    const handleChange = () => {
+      setIsDesktopLayout(mediaQuery.matches);
+    };
+
+    handleChange();
+    mediaQuery.addEventListener("change", handleChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    const grid = gridRef.current;
+    if (!grid) {
+      setGridHeight(0);
+      return;
+    }
+
+    const updateGridHeight = () => {
+      setGridHeight(Math.ceil(grid.getBoundingClientRect().height));
+    };
+    const resizeObserver = new ResizeObserver(updateGridHeight);
+
+    updateGridHeight();
+    resizeObserver.observe(grid);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [hasFallbackProducts, hasSearchProducts, isLoading, isSidebarOpen, searchProducts.length, fallbackProducts.length]);
 
   const handleSortChange = (value: ProductListingSortValue) => {
     applyProductListingSort(setSort as (field: string, direction: "asc" | "desc") => void, value);
@@ -323,7 +311,10 @@ function ProductsListingContent({ products }: { products: ListingProductCardData
 
       <div className={`flex flex-col gap-6 ${isSidebarOpen ? "lg:flex-row lg:items-start" : ""}`}>
         {isSidebarOpen ? (
-          <aside className="w-full shrink-0 rounded-xl border border-slate-100 bg-white p-4 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.08)] lg:w-80">
+          <aside
+            className="scrollbar-none w-full shrink-0 overscroll-contain rounded-xl border border-slate-100 bg-white p-4 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.08)] lg:w-96 lg:overflow-y-auto"
+            style={sidebarStyle}
+          >
             <div className="flex flex-col gap-5">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
@@ -357,12 +348,17 @@ function ProductsListingContent({ products }: { products: ListingProductCardData
           {error ? (
             <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">{String(error)}</div>
           ) : isLoading && !hasFallbackProducts ? (
-            <ProductSkeletonGrid isSidebarOpen={isSidebarOpen} />
+            <div ref={gridRef}>
+              <ProductSkeletonGrid isSidebarOpen={isSidebarOpen} />
+            </div>
           ) : !hasFallbackProducts && !hasSearchProducts ? (
-            <EmptyState title="No products found" description="Try adjusting the filters to see more products." />
+            <div ref={gridRef}>
+              <EmptyState title="No products found" description="Try adjusting the filters to see more products." />
+            </div>
           ) : (
             <>
               <div
+                ref={gridRef}
                 className={`grid grid-cols-1 gap-6 sm:grid-cols-2 ${
                   isSidebarOpen ? "xl:grid-cols-3" : "xl:grid-cols-4"
                 }`}
@@ -426,12 +422,10 @@ function ProductsListingContent({ products }: { products: ListingProductCardData
 }
 
 export default function ProductsListing({ products }: ProductsListingProps) {
-  const routingOptions = useProductListingRoutingOptions();
   const config = useMemo<SearchDriverOptions>(
     () => ({
       apiConnector: productListingConnector,
-      trackUrlState: true,
-      routingOptions,
+      trackUrlState: false,
       alwaysSearchOnInitialLoad: true,
       initialState: {
         resultsPerPage: PAGE_SIZE,
@@ -440,7 +434,7 @@ export default function ProductsListing({ products }: ProductsListingProps) {
       },
       searchQuery: PRODUCT_LISTING_SEARCH_QUERY,
     }),
-    [routingOptions],
+    [],
   );
 
   return (
