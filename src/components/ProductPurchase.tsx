@@ -109,7 +109,9 @@ export default function ProductPurchase({
     if (
       typeof stock !== "number" ||
       typeof deliveryDatesInStock !== "number" ||
-      typeof deliveryDatesNoStock !== "number"
+      typeof deliveryDatesNoStock !== "number" ||
+      deliveryDatesInStock === 0 ||
+      deliveryDatesNoStock === 0
     ) {
       return null;
     }
