@@ -1,9 +1,14 @@
 "use client";
 
-import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { SearchProvider, useSearch } from "@elastic/react-search-ui";
+import type { SearchDriverOptions } from "@elastic/search-ui";
+import { ApiProxyConnector } from "@elastic/search-ui-elasticsearch-connector";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import EmptyState from "@/components/EmptyState";
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
+import ProductListingFilters from "@/components/products-listing/ProductListingFilters";
+import { mapProductListingResult } from "@/components/products-listing/productResult";
 
 export type ListingProductCardData = ProductCardData;
 
@@ -14,16 +19,160 @@ type ProductsListingProps = {
   basePath?: string;
 };
 
-type SortOption = "latest" | "oldest" | "name_asc" | "name_desc" | "price_asc" | "price_desc";
+const PAGE_SIZE = 24;
 
-const SORT_LABELS: Record<SortOption, string> = {
-  latest: "Latest",
-  oldest: "Oldest",
-  name_asc: "Name: A to Z",
-  name_desc: "Name: Z to A",
-  price_asc: "Price: Low to High",
-  price_desc: "Price: High to Low",
+type ProductListingSortValue = "latest" | "oldest" | "title_asc" | "title_desc" | "price_asc" | "price_desc";
+
+const productListingConnector = new ApiProxyConnector({
+  basePath: "/api",
+});
+
+const LISTING_SORT_OPTIONS: Array<{ value: ProductListingSortValue; label: string }> = [
+  { value: "latest", label: "Latest" },
+  { value: "oldest", label: "Oldest" },
+  { value: "title_asc", label: "Name: A - Z" },
+  { value: "title_desc", label: "Name: Z - A" },
+  { value: "price_asc", label: "Price: Low to High" },
+  { value: "price_desc", label: "Price: High to Low" },
+];
+
+const LISTING_SORT_TO_SEARCH_UI: Record<ProductListingSortValue, { field: string; direction: "asc" | "desc" }> = {
+  latest: { field: "created_at_timestamp", direction: "desc" },
+  oldest: { field: "created_at_timestamp", direction: "asc" },
+  title_asc: { field: "title_sort.keyword", direction: "asc" },
+  title_desc: { field: "title_sort.keyword", direction: "desc" },
+  price_asc: { field: "price", direction: "asc" },
+  price_desc: { field: "price", direction: "desc" },
 };
+
+const PRODUCT_LISTING_SEARCH_QUERY = {
+  search_fields: {
+    article_number: { weight: 10 },
+    sku: { weight: 10 },
+    "meta._sku.value": { weight: 10 },
+    title: { weight: 8 },
+    name: { weight: 7 },
+    post_title: { weight: 8 },
+    slug: { weight: 2 },
+    post_name: { weight: 2 },
+    variant_skus: { weight: 2 },
+    material_title: { weight: 1.2 },
+    material_slug: { weight: 1 },
+    material_code: { weight: 1.2 },
+    brand: { weight: 1 },
+    merken: { weight: 1 },
+    druktype: { weight: 0.8 },
+    finishing: { weight: 0.8 },
+    excerpt: { weight: 1.5 },
+    description: { weight: 0.4 },
+    content: { weight: 0.3 },
+    post_content: { weight: 0.4 },
+    product_information: { weight: 0.3 },
+  },
+  result_fields: {
+    id: { raw: {} },
+    ID: { raw: {} },
+    product_type: { raw: {} },
+    type: { raw: {} },
+    title: { raw: {} },
+    name: { raw: {} },
+    post_title: { raw: {} },
+    slug: { raw: {} },
+    post_name: { raw: {} },
+    article_number: { raw: {} },
+    sku: { raw: {} },
+    subtitle: { raw: {} },
+    excerpt: { raw: {} },
+    price: { raw: {} },
+    original_price: { raw: {} },
+    stock: { raw: {} },
+    in_stock: { raw: {} },
+    main_image: { raw: {} },
+    image: { raw: {} },
+    thumbnail: { raw: {} },
+    images: { raw: {} },
+    categories: { raw: {} },
+    terms: { raw: {} },
+    meta: { raw: {} },
+    material: { raw: {} },
+    material_title: { raw: {} },
+  },
+};
+
+function productListingSortValueFromState(
+  sortField?: string,
+  sortDirection?: string,
+): ProductListingSortValue {
+  const match = LISTING_SORT_OPTIONS.find((option) => {
+    const mapped = LISTING_SORT_TO_SEARCH_UI[option.value];
+    return mapped.field === sortField && mapped.direction === sortDirection;
+  });
+
+  return match?.value ?? "latest";
+}
+
+function applyProductListingSort(
+  setSort: (field: string, direction: "asc" | "desc") => void,
+  sortValue: ProductListingSortValue,
+) {
+  const mapped = LISTING_SORT_TO_SEARCH_UI[sortValue];
+  setSort(mapped.field, mapped.direction);
+}
+
+function useProductListingRoutingOptions() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const pathnameRef = useRef(pathname);
+  const searchRef = useRef(searchParams?.toString() ?? "");
+
+  useEffect(() => {
+    pathnameRef.current = pathname;
+  }, [pathname]);
+
+  useEffect(() => {
+    searchRef.current = searchParams?.toString() ?? "";
+  }, [searchParams]);
+
+  const readUrl = useCallback(() => {
+    const current = searchRef.current;
+    return current ? `?${current}` : "";
+  }, []);
+
+  const writeUrl = useCallback(
+    (url: string, { replaceUrl }: { replaceUrl?: boolean } = {}) => {
+      const query = url.startsWith("?") ? url.slice(1) : url;
+      const basePath = pathnameRef.current || "/";
+      const href = query ? `${basePath}?${query}` : basePath;
+
+      if (replaceUrl !== false) {
+        router.replace(href, { scroll: false });
+        return;
+      }
+
+      router.push(href, { scroll: false });
+    },
+    [router],
+  );
+
+  const routeChangeHandler = useCallback((callback: (url: string) => void) => {
+    const onPopState = () => callback(window.location.search);
+
+    window.addEventListener("popstate", onPopState);
+    return () => {
+      window.removeEventListener("popstate", onPopState);
+    };
+  }, []);
+
+  return useMemo(
+    () => ({
+      readUrl,
+      writeUrl,
+      routeChangeHandler,
+    }),
+    [readUrl, routeChangeHandler, writeUrl],
+  );
+}
 
 function buildVisiblePages(currentPage: number, lastPage: number): Array<number | "ellipsis"> {
   if (lastPage <= 1) {
@@ -58,118 +207,245 @@ function buildVisiblePages(currentPage: number, lastPage: number): Array<number 
   return visible;
 }
 
-function pageHref(basePath: string, page: number): string {
-  return page <= 1 ? basePath : `${basePath}?page=${page}`;
+function cardHref(product: ListingProductCardData) {
+  if (!product.slug) return undefined;
+
+  return product.type
+    ? { pathname: `/products/${product.slug}`, query: { type: product.type } }
+    : { pathname: `/products/${product.slug}` };
 }
 
-export default function ProductsListing({
-  products,
-  currentPage,
-  lastPage,
-  basePath = "/products",
-}: ProductsListingProps) {
-  const [sort] = useState<SortOption>("latest");
-  const visiblePages = buildVisiblePages(currentPage, lastPage);
+function ProductSkeletonGrid({ isSidebarOpen }: { isSidebarOpen: boolean }) {
+  return (
+    <div className={`grid grid-cols-1 gap-6 sm:grid-cols-2 ${isSidebarOpen ? "xl:grid-cols-3" : "xl:grid-cols-4"}`}>
+      {Array.from({ length: 8 }, (_, index) => (
+        <div key={index} className="h-[520px] rounded-xl bg-slate-100 animate-pulse" />
+      ))}
+    </div>
+  );
+}
+
+function ProductsListingContent({ products }: { products: ListingProductCardData[] }) {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const {
+    results,
+    totalResults,
+    current,
+    totalPages,
+    setCurrent,
+    isLoading,
+    error,
+    sortField,
+    sortDirection,
+    setSort,
+    filters,
+    removeFilter,
+  } = useSearch((state) => ({
+    results: state.results,
+    totalResults: state.totalResults,
+    current: state.current,
+    totalPages: state.totalPages,
+    setCurrent: state.setCurrent,
+    isLoading: state.isLoading,
+    error: state.error,
+    sortField: state.sortField,
+    sortDirection: state.sortDirection,
+    setSort: state.setSort,
+    filters: state.filters,
+    removeFilter: state.removeFilter,
+  }));
+
+  const activeFilters = filters ?? [];
+  const activeFilterCount = activeFilters.reduce((count, filter) => count + filter.values.length, 0);
+  const page = current || 1;
+  const pageCount = totalPages || 1;
+  const visiblePages = buildVisiblePages(page, pageCount);
+  const selectedSort = productListingSortValueFromState(sortField, sortDirection);
+  const searchHasResolved = Array.isArray(results) && (typeof totalResults === "number" || !isLoading);
+  const fallbackProducts = !searchHasResolved && !error ? products : [];
+  const searchProducts = searchHasResolved
+    ? (results ?? []).map((result, resultIndex) => mapProductListingResult(result, resultIndex))
+    : [];
+  const hasFallbackProducts = fallbackProducts.length > 0;
+  const hasSearchProducts = searchProducts.length > 0;
+
+  const handleSortChange = (value: ProductListingSortValue) => {
+    applyProductListingSort(setSort as (field: string, direction: "asc" | "desc") => void, value);
+    setCurrent(1);
+  };
+
+  const clearFilters = () => {
+    activeFilters.forEach((filter) => removeFilter(filter.field));
+    setCurrent(1);
+  };
 
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <button
           type="button"
-          className="inline-flex h-10 items-center gap-4 rounded-[42px] border border-slate-200 px-5 py-2 text-neutral-800"
+          onClick={() => setIsSidebarOpen((currentValue) => !currentValue)}
+          className={`inline-flex h-10 w-fit items-center gap-4 rounded-[42px] border px-5 py-2 text-neutral-800 transition-colors ${
+            isSidebarOpen ? "border-amber-500 bg-amber-50 text-amber-600" : "border-slate-200 hover:border-amber-200"
+          }`}
+          aria-expanded={isSidebarOpen}
         >
           <span className="flex items-center gap-2">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-              <path d="M3 5H17" stroke="#52525B" strokeWidth="1.5" strokeLinecap="round" />
-              <path d="M5.5 10H14.5" stroke="#52525B" strokeWidth="1.5" strokeLinecap="round" />
-              <path d="M8 15H12" stroke="#52525B" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M3 5H17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M5.5 10H14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M8 15H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
-            <span className="text-lg font font-['Segoe_UI'] leading-6">Filters</span>
+            <span className="text-lg font-semibold font-['Segoe_UI'] leading-6">Filters</span>
+            {activeFilterCount > 0 ? (
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-100 px-1.5 text-xs font-semibold text-amber-600">
+                {activeFilterCount}
+              </span>
+            ) : null}
           </span>
         </button>
 
         <label className="flex h-10 items-center gap-3 rounded-[42px] border border-slate-200 px-5 py-2 text-neutral-800">
           <span className="sr-only">Sort products</span>
           <select
-            value={sort}
-            disabled
+            value={selectedSort}
+            onChange={(event) => handleSortChange(event.target.value as ProductListingSortValue)}
             className="bg-transparent text-base font-normal font-['Segoe_UI'] leading-5 outline-none"
           >
-            {Object.entries(SORT_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
+            {LISTING_SORT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
               </option>
             ))}
           </select>
         </label>
       </div>
 
-      {products.length === 0 ? (
-        <EmptyState
-          title="No products found"
-          description="There are currently no products available in this listing."
-        />
-      ) : (
-        <>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
-            {products.map((product) => {
-              const href = product.slug
-                ? product.type
-                  ? { pathname: `/products/${product.slug}`, query: { type: product.type } }
-                  : { pathname: `/products/${product.slug}` }
-                : undefined;
+      <div className={`flex flex-col gap-6 ${isSidebarOpen ? "lg:flex-row lg:items-start" : ""}`}>
+        {isSidebarOpen ? (
+          <aside className="w-full shrink-0 rounded-xl border border-slate-100 bg-white p-4 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.08)] lg:w-80">
+            <div className="flex flex-col gap-5">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl font-bold text-neutral-800">Filters</h2>
+                  {activeFilterCount > 0 ? (
+                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-100 px-1.5 text-xs font-semibold text-amber-600">
+                      {activeFilterCount}
+                    </span>
+                  ) : null}
+                </div>
+                {activeFilterCount > 0 ? (
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="text-sm font-medium text-amber-500 hover:underline"
+                  >
+                    Clear all
+                  </button>
+                ) : null}
+              </div>
+              <ProductListingFilters />
+            </div>
+          </aside>
+        ) : null}
 
-              return <ProductCard key={product.id} product={product} href={href} />;
-            })}
+        <div className="min-w-0 flex-1">
+          <div className="mb-4 text-sm text-neutral-600">
+            {isLoading && !hasFallbackProducts ? "Loading products..." : `${totalResults ?? products.length} results`}
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            {currentPage > 1 ? (
-              <Link
-                href={pageHref(basePath, currentPage - 1)}
-                className="rounded-[50px] border border-slate-100 px-6 py-2.5 text-base font-medium text-neutral-800"
+          {error ? (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">{String(error)}</div>
+          ) : isLoading && !hasFallbackProducts ? (
+            <ProductSkeletonGrid isSidebarOpen={isSidebarOpen} />
+          ) : !hasFallbackProducts && !hasSearchProducts ? (
+            <EmptyState title="No products found" description="Try adjusting the filters to see more products." />
+          ) : (
+            <>
+              <div
+                className={`grid grid-cols-1 gap-6 sm:grid-cols-2 ${
+                  isSidebarOpen ? "xl:grid-cols-3" : "xl:grid-cols-4"
+                }`}
               >
-                Previous
-              </Link>
-            ) : (
-              <span className="rounded-[50px] border border-slate-100 px-6 py-2.5 text-base font-medium text-neutral-800 opacity-50">
-                Previous
-              </span>
-            )}
+                {hasSearchProducts
+                  ? searchProducts.map(({ id, product, href }) => (
+                      <ProductCard key={id} product={product} href={href} />
+                    ))
+                  : fallbackProducts.map((product) => (
+                      <ProductCard key={product.id} product={product} href={cardHref(product)} />
+                    ))}
+              </div>
 
-            {visiblePages.map((item, index) =>
-              item === "ellipsis" ? (
-                <span key={`ellipsis-${index}`} className="px-2 text-sm font-semibold text-zinc-500">
-                  ...
-                </span>
-              ) : (
-                <Link
-                  key={item}
-                  href={pageHref(basePath, item)}
-                  className={`flex h-10 min-w-10 items-center justify-center rounded-[50px] border border-slate-100 px-3 text-sm font-semibold ${
-                    item === currentPage ? "bg-amber-500 text-white" : "text-neutral-700"
-                  }`}
-                >
-                  {item}
-                </Link>
-              )
-            )}
+              {pageCount > 1 && hasSearchProducts ? (
+                <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setCurrent(Math.max(1, page - 1))}
+                    disabled={page <= 1}
+                    className="rounded-[50px] border border-slate-100 px-6 py-2.5 text-base font-medium text-neutral-800 disabled:opacity-50"
+                  >
+                    Previous
+                  </button>
 
-            {currentPage < lastPage ? (
-              <Link
-                href={pageHref(basePath, currentPage + 1)}
-                className="rounded-[50px] border border-slate-100 px-6 py-2.5 text-base font-semibold text-neutral-800"
-              >
-                Next
-              </Link>
-            ) : (
-              <span className="rounded-[50px] border border-slate-100 px-6 py-2.5 text-base font-semibold text-neutral-800 opacity-50">
-                Next
-              </span>
-            )}
-          </div>
-        </>
-      )}
+                  {visiblePages.map((item, index) =>
+                    item === "ellipsis" ? (
+                      <span key={`ellipsis-${index}`} className="px-2 text-sm font-semibold text-zinc-500">
+                        ...
+                      </span>
+                    ) : (
+                      <button
+                        key={item}
+                        type="button"
+                        onClick={() => setCurrent(item)}
+                        className={`flex h-10 min-w-10 items-center justify-center rounded-[50px] border border-slate-100 px-3 text-sm font-semibold ${
+                          item === page ? "bg-amber-500 text-white" : "text-neutral-700"
+                        }`}
+                        aria-current={item === page ? "page" : undefined}
+                      >
+                        {item}
+                      </button>
+                    ),
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => setCurrent(Math.min(pageCount, page + 1))}
+                    disabled={page >= pageCount}
+                    className="rounded-[50px] border border-slate-100 px-6 py-2.5 text-base font-semibold text-neutral-800 disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              ) : null}
+            </>
+          )}
+        </div>
+      </div>
     </div>
+  );
+}
+
+export default function ProductsListing({ products }: ProductsListingProps) {
+  const routingOptions = useProductListingRoutingOptions();
+  const config = useMemo<SearchDriverOptions>(
+    () => ({
+      apiConnector: productListingConnector,
+      trackUrlState: true,
+      routingOptions,
+      alwaysSearchOnInitialLoad: true,
+      initialState: {
+        resultsPerPage: PAGE_SIZE,
+        sortField: "created_at_timestamp",
+        sortDirection: "desc",
+      },
+      searchQuery: PRODUCT_LISTING_SEARCH_QUERY,
+    }),
+    [routingOptions],
+  );
+
+  return (
+    <SearchProvider config={config}>
+      <ProductsListingContent products={products} />
+    </SearchProvider>
   );
 }
