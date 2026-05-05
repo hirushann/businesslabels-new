@@ -7,6 +7,7 @@ import { apiConnector, SORT_TO_SEARCH_UI, type OverlaySortValue } from './api';
 import { useNextRoutingOptions } from './useNextRouting';
 import EmptyState from '@/components/EmptyState';
 import ProductCard, { type ProductCardData } from '@/components/ProductCard';
+import ProductPaginationSwitcher from '@/components/ProductPaginationSwitcher';
 import SearchFilters from './SearchFilters';
 
 type SearchOverlayProps = {
@@ -285,6 +286,8 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
   const activeFilters = filters ?? [];
   const queryValue = inputValue.trim();
   const queryMode = queryValue.length >= MIN_QUERY_LENGTH;
+  const page = current || 1;
+  const pageCount = totalPages || 1;
 
   const applySort = (sortValue: OverlaySortValue) => {
     const mapped = SORT_TO_SEARCH_UI[sortValue];
@@ -497,31 +500,9 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
                   })}
                 </div>
 
-                {(totalPages || 0) > 1 && (
-                  <div className="flex items-center justify-center gap-2 mt-8">
-                    <button
-                      type="button"
-                      onClick={() => setCurrent(Math.max(1, (current || 1) - 1))}
-                      disabled={(current || 1) <= 1}
-                      className="h-9 px-3 border border-slate-300 rounded-md text-sm disabled:opacity-50"
-                    >
-                      Prev
-                    </button>
-
-                    <div className="text-sm text-neutral-600 px-2">
-                      Page {current || 1} of {totalPages || 1}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setCurrent(Math.min(totalPages || 1, (current || 1) + 1))}
-                      disabled={(current || 1) >= (totalPages || 1)}
-                      className="h-9 px-3 border border-slate-300 rounded-md text-sm disabled:opacity-50"
-                    >
-                      Next
-                    </button>
-                  </div>
-                )}
+                {pageCount > 1 ? (
+                  <ProductPaginationSwitcher currentPage={page} pageCount={pageCount} onPageChange={setCurrent} />
+                ) : null}
               </>
             )}
             </div>

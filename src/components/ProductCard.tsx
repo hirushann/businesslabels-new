@@ -50,6 +50,7 @@ export function lastCategoryLabel(categories: ProductCardData["categories"]): st
 
 export default function ProductCard({ product, href, onClick }: ProductCardProps) {
   const { addItem, openCart } = useCart();
+  const productName = product.name ?? "";
   const categoryBadge = lastCategoryLabel(product.categories);
   const features = featureLines(product);
   const hasPrice = typeof product.price === "number" && Number.isFinite(product.price);

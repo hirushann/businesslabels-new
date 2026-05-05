@@ -4,8 +4,22 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Accordion from "@/components/Accordion";
 import CTABanner from "@/components/CTABanner";
+import EmptyState from "@/components/EmptyState";
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
-import { demoProducts, mapDemoProductToCard } from "@/lib/demoCatalog";
+
+type MaterialProduct = {
+  id: number;
+  name: string;
+  slug: string;
+  sku: string | null;
+  article_number: string | null;
+  state: "draft" | "active" | "inactive" | "retired";
+  price: number | null;
+  stock: number;
+  in_stock: boolean;
+  main_image: string | null;
+  updated_at: string;
+};
 
 type Material = {
   id: number;
@@ -16,19 +30,21 @@ type Material = {
   brand: string;
   status: string;
   description: string;
-  specifications: Record<string, string>;
-  print_method: string;
-  base_material: string;
-  finish: string;
-  adhesive: string;
-  supplier: string;
-  price_per_sq_meter: number;
-  certificate: string;
+  specifications: Record<string, string | number | boolean> | null;
+  print_method: string | null;
+  base_material: string | null;
+  finish: string | null;
+  adhesive: string | null;
+  supplier: string | null;
+  price_per_sq_meter: number | null;
+  certificate: string | null;
   category: {
     id: number;
     name: string;
     slug: string;
   } | null;
+  products: MaterialProduct[];
+  products_count: number;
 };
 
 type MaterialResponse = {
@@ -37,14 +53,43 @@ type MaterialResponse = {
 
 type MaterialPageProps = {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ page?: string | string[] }>;
 };
 
-const relatedSections = [
-  {
-    title: "Ink & Maintenance",
-    products: demoProducts.slice(0, 3).map(mapDemoProductToCard),
-  },
-];
+function buildVisiblePages(currentPage: number, lastPage: number): Array<number | "ellipsis"> {
+  if (lastPage <= 1) {
+    return [1];
+  }
+
+  const pages = new Set<number>();
+  pages.add(1);
+  pages.add(lastPage);
+
+  const start = Math.max(1, currentPage - 3);
+  const end = Math.min(lastPage, currentPage + 3);
+
+  for (let page = start; page <= end; page += 1) {
+    pages.add(page);
+  }
+
+  const sortedPages = [...pages].sort((left, right) => left - right);
+  const visible: Array<number | "ellipsis"> = [];
+
+  for (let index = 0; index < sortedPages.length; index += 1) {
+    const page = sortedPages[index];
+    const previous = sortedPages[index - 1];
+
+    if (previous && page - previous > 1) {
+      visible.push("ellipsis");
+    }
+
+    visible.push(page);
+  }
+
+  return visible;
+}
+
+// relatedSections is deprecated in favor of server-fetched products
 
 async function getMaterial(slug: string): Promise<Material | null> {
   const baseUrl = process.env.BBNL_API_BASE_URL;
@@ -189,10 +234,13 @@ function SpecsTable({ material }: { material: Material }) {
     { label: "Base Material", value: material.base_material },
     { label: "Finish", value: material.finish },
     { label: "Adhesive", value: material.adhesive },
-    { label: "Price per m²", value: `€${material.price_per_sq_meter}` },
+    { label: "Price per m²", value: material.price_per_sq_meter != null ? `€${material.price_per_sq_meter}` : null },
     { label: "Certificate", value: material.certificate },
-    ...Object.entries(material.specifications || {}).map(([label, value]) => ({ label, value })),
-  ];
+    ...Object.entries(material.specifications || {}).map(([label, value]) => ({
+      label,
+      value: typeof value === "string" ? value : String(value),
+    })),
+  ].filter((spec) => spec.value != null && spec.value !== "" && spec.value !== "null");
 
   return (
     <div className="overflow-hidden rounded-lg">
@@ -226,51 +274,127 @@ function productHref(product: ProductCardData): { pathname: string; query?: { ty
   return { pathname: `/products/${product.slug}` };
 }
 
-function RelatedProductsSection({ title, products }: { title: string; products: ProductCardData[] }) {
+function MaterialProductsSection({
+  title,
+  products,
+  currentPage,
+  lastPage,
+  materialSlug,
+}: {
+  title: string;
+  products: ProductCardData[];
+  currentPage: number;
+  lastPage: number;
+  materialSlug: string;
+}) {
+  const visiblePages = buildVisiblePages(currentPage, lastPage);
+
   return (
     <section className="px-4 py-24 odd:bg-gray-50 even:bg-white sm:px-6 lg:px-10">
       <div className="mx-auto flex max-w-300 flex-col gap-12">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-4xl font-bold leading-[48px] text-neutral-800">{title}</h2>
-          <div className="flex items-center gap-6">
-            <button
-              type="button"
-              className="flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-white text-neutral-700 shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)]"
-              aria-label={`Previous ${title}`}
-            >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              className="flex h-12 w-12 items-center justify-center rounded-full border border-amber-500 bg-white text-amber-500 shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)]"
-              aria-label={`Next ${title}`}
-            >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
+          <h2 className="text-4xl font-bold leading-12 text-neutral-800">{title}</h2>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} href={productHref(product)} />
-          ))}
-        </div>
+        {products.length === 0 ? (
+          <EmptyState 
+            title="No products found" 
+            description="We couldn't find any products associated with this material at the moment." 
+          />
+        ) : (
+          <>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {products.map((product) => (
+                <ProductCard key={product.id} product={product} href={productHref(product)} />
+              ))}
+            </div>
+
+            {lastPage > 1 && (
+              <div className="mt-12 flex flex-wrap items-center justify-center gap-3">
+                <Link
+                  href={{ pathname: `/materials/${materialSlug}`, query: { page: Math.max(1, currentPage - 1) } }}
+                  className={`rounded-[50px] border border-slate-100 px-6 py-2.5 text-base font-medium text-neutral-800 transition-colors hover:bg-slate-50 ${
+                    currentPage <= 1 ? "pointer-events-none opacity-50" : ""
+                  }`}
+                >
+                  Previous
+                </Link>
+
+                {visiblePages.map((item, index) =>
+                  item === "ellipsis" ? (
+                    <span key={`ellipsis-${index}`} className="px-2 text-sm font-semibold text-zinc-500">
+                      ...
+                    </span>
+                  ) : (
+                    <Link
+                      key={item}
+                      href={{ pathname: `/materials/${materialSlug}`, query: { page: item } }}
+                      className={`flex h-10 min-w-10 items-center justify-center rounded-[50px] border border-slate-100 px-3 text-sm font-semibold transition-colors ${
+                        item === currentPage 
+                          ? "bg-amber-500 text-white border-amber-500" 
+                          : "text-neutral-700 hover:bg-slate-50"
+                      }`}
+                      aria-current={item === currentPage ? "page" : undefined}
+                    >
+                      {item}
+                    </Link>
+                  ),
+                )}
+
+                <Link
+                  href={{ pathname: `/materials/${materialSlug}`, query: { page: Math.min(lastPage, currentPage + 1) } }}
+                  className={`rounded-[50px] border border-slate-100 px-6 py-2.5 text-base font-semibold text-neutral-800 transition-colors hover:bg-slate-50 ${
+                    currentPage >= lastPage ? "pointer-events-none opacity-50" : ""
+                  }`}
+                >
+                  Next
+                </Link>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </section>
   );
 }
 
-export default async function SingleMaterialPage({ params }: MaterialPageProps) {
+export default async function SingleMaterialPage({ params, searchParams }: MaterialPageProps) {
   const { slug } = await params;
+  const query = await searchParams;
   const material = await getMaterial(slug);
 
   if (!material) {
     notFound();
   }
+
+  // Transform MaterialProduct[] to ProductCardData[]
+  const products: ProductCardData[] = (material.products || []).map((product) => ({
+    id: product.id,
+    sku: product.sku || "",
+    name: product.name,
+    subtitle: null,
+    excerpt: null,
+    materialTitle: material.title,
+    price: product.price || 0,
+    originalPrice: null,
+    inStock: product.in_stock,
+    mainImage: product.main_image,
+    categories: [],
+    slug: product.slug,
+    type: null,
+    createdAt: Date.parse(product.updated_at),
+  }));
+
+  // Client-side pagination for products
+  const requestedPage = Array.isArray(query.page) ? query.page[0] : query.page;
+  const normalizedPage = Number.parseInt(requestedPage ?? "1", 10);
+  const currentPage = Number.isFinite(normalizedPage) && normalizedPage > 0 ? normalizedPage : 1;
+  const perPage = 9;
+  const totalProducts = products.length;
+  const lastPage = Math.ceil(totalProducts / perPage);
+  const startIndex = (currentPage - 1) * perPage;
+  const endIndex = startIndex + perPage;
+  const paginatedProducts = products.slice(startIndex, endIndex);
 
   const materialImage = `https://placehold.co/1200x800?text=${encodeURIComponent(material.title)}`;
 
@@ -297,7 +421,7 @@ export default async function SingleMaterialPage({ params }: MaterialPageProps) 
               <div className="flex flex-col gap-4">
                 <h1 className="text-3xl font-bold leading-10 text-neutral-800">{material.title}</h1>
                 <p className="text-lg leading-7 text-neutral-700">{material.subtitle}</p>
-                <div className="relative min-h-[320px] overflow-hidden rounded-xl bg-gray-100 sm:min-h-[509px]">
+                <div className="relative min-h-80 overflow-hidden rounded-xl bg-gray-100 sm:min-h-127.25">
                   <Image
                     src={materialImage}
                     alt={`${material.title} material`}
@@ -329,9 +453,13 @@ export default async function SingleMaterialPage({ params }: MaterialPageProps) 
         </div>
       </section>
 
-      {relatedSections.map((section) => (
-        <RelatedProductsSection key={section.title} title={section.title} products={section.products} />
-      ))}
+      <MaterialProductsSection 
+        title="Products from This Material" 
+        products={paginatedProducts} 
+        currentPage={currentPage}
+        lastPage={lastPage}
+        materialSlug={slug}
+      />
 
       <CTABanner />
     </div>
