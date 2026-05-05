@@ -7,6 +7,20 @@ import CTABanner from "@/components/CTABanner";
 import EmptyState from "@/components/EmptyState";
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 
+type MaterialProduct = {
+  id: number;
+  name: string;
+  slug: string;
+  sku: string | null;
+  article_number: string | null;
+  state: "draft" | "active" | "inactive" | "retired";
+  price: number | null;
+  stock: number;
+  in_stock: boolean;
+  main_image: string | null;
+  updated_at: string;
+};
+
 type Material = {
   id: number;
   title: string;
@@ -16,19 +30,21 @@ type Material = {
   brand: string;
   status: string;
   description: string;
-  specifications: Record<string, string>;
-  print_method: string;
-  base_material: string;
-  finish: string;
-  adhesive: string;
-  supplier: string;
-  price_per_sq_meter: number;
-  certificate: string;
+  specifications: Record<string, string | number | boolean> | null;
+  print_method: string | null;
+  base_material: string | null;
+  finish: string | null;
+  adhesive: string | null;
+  supplier: string | null;
+  price_per_sq_meter: number | null;
+  certificate: string | null;
   category: {
     id: number;
     name: string;
     slug: string;
   } | null;
+  products: MaterialProduct[];
+  products_count: number;
 };
 
 type MaterialResponse = {
@@ -39,56 +55,6 @@ type MaterialPageProps = {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ page?: string | string[] }>;
 };
-
-type Product = {
-  id: number;
-  type: "simple" | "variable" | string;
-  slug?: string | null;
-  title?: string | null;
-  name: string;
-  sku: string;
-  subtitle?: string | null;
-  excerpt?: string | null;
-  article_number?: string | null;
-  price: number;
-  original_price?: number | null;
-  in_stock: boolean;
-  main_image?: string | null;
-  created_at?: string | null;
-  material?: {
-    title?: string | null;
-  } | null;
-  categories?: Array<{
-    id?: number;
-    name?: string | null;
-  }>;
-};
-
-type ProductsResponse = {
-  data: Product[];
-  meta?: {
-    current_page?: number;
-    last_page?: number;
-    total?: number;
-    per_page?: number;
-  };
-};
-
-function normalizeType(raw: string | undefined): "simple" | "variable" | null {
-  if (raw === "simple" || raw === "variable") {
-    return raw;
-  }
-  return null;
-}
-
-function createdAtTimestamp(value: string | null | undefined, fallback: number): number {
-  if (!value) {
-    return fallback;
-  }
-
-  const timestamp = Date.parse(value);
-  return Number.isFinite(timestamp) ? timestamp : fallback;
-}
 
 function buildVisiblePages(currentPage: number, lastPage: number): Array<number | "ellipsis"> {
   if (lastPage <= 1) {
@@ -268,10 +234,13 @@ function SpecsTable({ material }: { material: Material }) {
     { label: "Base Material", value: material.base_material },
     { label: "Finish", value: material.finish },
     { label: "Adhesive", value: material.adhesive },
-    { label: "Price per m²", value: `€${material.price_per_sq_meter}` },
+    { label: "Price per m²", value: material.price_per_sq_meter != null ? `€${material.price_per_sq_meter}` : null },
     { label: "Certificate", value: material.certificate },
-    ...Object.entries(material.specifications || {}).map(([label, value]) => ({ label, value })),
-  ];
+    ...Object.entries(material.specifications || {}).map(([label, value]) => ({
+      label,
+      value: typeof value === "string" ? value : String(value),
+    })),
+  ].filter((spec) => spec.value != null && spec.value !== "" && spec.value !== "null");
 
   return (
     <div className="overflow-hidden rounded-lg">
@@ -324,7 +293,7 @@ function MaterialProductsSection({
     <section className="px-4 py-24 odd:bg-gray-50 even:bg-white sm:px-6 lg:px-10">
       <div className="mx-auto flex max-w-300 flex-col gap-12">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-4xl font-bold leading-[48px] text-neutral-800">{title}</h2>
+          <h2 className="text-4xl font-bold leading-12 text-neutral-800">{title}</h2>
         </div>
 
         {products.length === 0 ? (
@@ -398,46 +367,34 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
     notFound();
   }
 
-  const baseUrl = process.env.BBNL_API_BASE_URL;
+  // Transform MaterialProduct[] to ProductCardData[]
+  const products: ProductCardData[] = (material.products || []).map((product) => ({
+    id: product.id,
+    sku: product.sku || "",
+    name: product.name,
+    subtitle: null,
+    excerpt: null,
+    materialTitle: material.title,
+    price: product.price || 0,
+    originalPrice: null,
+    inStock: product.in_stock,
+    mainImage: product.main_image,
+    categories: [],
+    slug: product.slug,
+    type: null,
+    createdAt: Date.parse(product.updated_at),
+  }));
+
+  // Client-side pagination for products
   const requestedPage = Array.isArray(query.page) ? query.page[0] : query.page;
   const normalizedPage = Number.parseInt(requestedPage ?? "1", 10);
-  const page = Number.isFinite(normalizedPage) && normalizedPage > 0 ? normalizedPage : 1;
-
-  let products: ProductCardData[] = [];
-  let currentPage = 1;
-  let lastPage = 1;
-
-  if (baseUrl) {
-    try {
-      const response = await fetch(`${baseUrl}/api/products?page=${page}&per_page=9`, {
-        cache: "no-store",
-      });
-
-      if (response.ok) {
-        const json = (await response.json()) as ProductsResponse;
-        currentPage = json.meta?.current_page ?? page;
-        lastPage = json.meta?.last_page ?? 1;
-        products = json.data.map((product, index) => ({
-          id: product.id,
-          sku: product.sku,
-          name: product.title?.trim() || product.name,
-          subtitle: product.subtitle ?? null,
-          excerpt: product.excerpt ?? null,
-          materialTitle: product.material?.title ?? null,
-          price: product.price,
-          originalPrice: product.original_price ?? null,
-          inStock: product.in_stock,
-          mainImage: product.main_image ?? null,
-          categories: product.categories ?? [],
-          slug: product.slug ?? null,
-          type: normalizeType(product.type),
-          createdAt: createdAtTimestamp(product.created_at, json.data.length - index),
-        }));
-      }
-    } catch (error) {
-      console.error("Error fetching material products:", error);
-    }
-  }
+  const currentPage = Number.isFinite(normalizedPage) && normalizedPage > 0 ? normalizedPage : 1;
+  const perPage = 9;
+  const totalProducts = products.length;
+  const lastPage = Math.ceil(totalProducts / perPage);
+  const startIndex = (currentPage - 1) * perPage;
+  const endIndex = startIndex + perPage;
+  const paginatedProducts = products.slice(startIndex, endIndex);
 
   const materialImage = `https://placehold.co/1200x800?text=${encodeURIComponent(material.title)}`;
 
@@ -464,7 +421,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
               <div className="flex flex-col gap-4">
                 <h1 className="text-3xl font-bold leading-10 text-neutral-800">{material.title}</h1>
                 <p className="text-lg leading-7 text-neutral-700">{material.subtitle}</p>
-                <div className="relative min-h-[320px] overflow-hidden rounded-xl bg-gray-100 sm:min-h-[509px]">
+                <div className="relative min-h-80 overflow-hidden rounded-xl bg-gray-100 sm:min-h-127.25">
                   <Image
                     src={materialImage}
                     alt={`${material.title} material`}
@@ -498,7 +455,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
 
       <MaterialProductsSection 
         title="Products from This Material" 
-        products={products} 
+        products={paginatedProducts} 
         currentPage={currentPage}
         lastPage={lastPage}
         materialSlug={slug}
