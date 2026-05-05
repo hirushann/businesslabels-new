@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { materialReviews } from "@/lib/materialCatalog";
@@ -10,28 +9,29 @@ export const metadata: Metadata = {
     "Discover printer media materials selected for precision, durability, color accuracy, and reliable professional output.",
 };
 
-type Printer = {
-  id: number;
-  title: string;
-  subtitle: string;
-  slug: string;
-  code: string;
-  brand: string;
-  status: string;
-  image?: string;
-  category: {
-    id: number;
-    name: string;
-    slug: string;
-  } | null;
-  meta?: Record<string, PrinterMetaValue>;
+import ProductCard, { type ProductCardData } from "@/components/ProductCard";
+
+type ApiProduct = {
+  id: string | number;
+  sku?: string;
+  article_number?: string;
+  title?: string;
+  name?: string;
+  subtitle?: string;
+  excerpt?: string;
+  material?: { title?: string };
+  price?: number;
+  original_price?: number;
+  in_stock?: boolean;
+  main_image?: string;
+  categories?: Array<{ id?: number; name?: string }>;
+  slug?: string;
+  type?: "simple" | "variable";
+  packing_group?: number;
 };
 
-type PrinterMetaScalar = string | number | boolean;
-type PrinterMetaValue = PrinterMetaScalar | PrinterMetaScalar[] | null | undefined;
-
-type PrintersResponse = {
-  data: Printer[];
+type ProductsApiResponse = {
+  data: ApiProduct[];
   meta?: {
     current_page: number;
     last_page: number;
@@ -39,106 +39,31 @@ type PrintersResponse = {
   };
 };
 
-function CheckIcon() {
-  return (
-    <svg className="mt-1 h-3 w-3 shrink-0" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-      <path
-        d="M10.9 5A5 5 0 1 1 8.5 1.67"
-        stroke="#00C950"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="M4.5 5.5L6 7L11 2" stroke="#00C950" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
+function mapApiProductToCardData(apiProduct: ApiProduct): ProductCardData {
+  return {
+    id: apiProduct.id,
+    sku: apiProduct.sku || apiProduct.article_number || "",
+    name: apiProduct.title || apiProduct.name,
+    subtitle: apiProduct.subtitle,
+    excerpt: apiProduct.excerpt,
+    materialTitle: apiProduct.material?.title,
+    price: apiProduct.price,
+    originalPrice: apiProduct.original_price,
+    inStock: apiProduct.in_stock ?? true,
+    mainImage: apiProduct.main_image,
+    categories: apiProduct.categories,
+    slug: apiProduct.slug,
+    type: apiProduct.type,
+    packing_group: apiProduct.packing_group,
+  };
 }
 
-function DetailRow({ children }: { children: ReactNode }) {
-  return (
-    <div className="flex items-start gap-2">
-      <CheckIcon />
-      <span className="min-w-0 truncate text-base leading-5 text-neutral-700 capitalize">{children}</span>
-    </div>
-  );
-}
+function cardHref(product: ProductCardData) {
+  if (!product.slug) return undefined;
 
-function formatMetaKey(key: string) {
-  return key.replaceAll("_", " ");
-}
-
-function formatMetaValue(value: PrinterMetaValue) {
-  if (Array.isArray(value)) {
-    const items = value.map((item) => String(item).trim()).filter(Boolean);
-    return items.length > 0 ? items.join(", ") : null;
-  }
-
-  if (value === null || value === undefined) {
-    return null;
-  }
-
-  const text = String(value).trim();
-  return text.length > 0 ? text : null;
-}
-
-function truncateMetaText(text: string, maxLength = 25) {
-  return text.length > maxLength ? `${text.slice(0, maxLength - 3)}...` : text;
-}
-
-function PrinterCard({ printer }: { printer: Printer }) {
-  // Use a fallback image if none provided by the API (though currently MaterialResource doesn't include images)
-  const listingImage = printer.image ? printer.image : `https://placehold.co/600x400?text=${encodeURIComponent(printer.title)}`;
-  const metaItems = Object.entries(printer.meta ?? {})
-    .map(([key, value]) => ({
-      key,
-      label: formatMetaKey(key),
-      value: formatMetaValue(value),
-    }))
-    .filter((item): item is { key: string; label: string; value: string } => item.value !== null && item.key !== 'featured')
-    .map((item) => ({
-      ...item,
-      value: truncateMetaText(item.value),
-    }));
-
-  return (
-    <article className="flex h-full flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)]">
-      <div className="relative h-56 bg-gray-100">
-        <Image
-          src={listingImage}
-          alt={`${printer.code} printer preview`}
-          fill
-          sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 384px"
-          className="object-contain"
-          unoptimized
-        />
-      </div>
-
-      <div className="flex flex-1 flex-col gap-4 p-4">
-        <div className="flex flex-col gap-4">
-          <Link href={`/printers/${printer.slug}`} >
-          <h2 className="line-clamp-1 text-xl font-semibold leading-6 text-neutral-800">{printer.title}</h2>
-          </Link>
-          <div className="flex flex-col gap-2">
-            {metaItems.slice(0, 2).map(({ key, label, value }) => (
-              <DetailRow key={key}>
-                <span className="font-medium text-neutral-800 capitalize">{label}:</span> {value}
-              </DetailRow>
-            ))}
-            {printer.category && <DetailRow>{printer.category.name}</DetailRow>}
-          </div>
-        </div>
-
-        <div className="mt-auto flex flex-col gap-4">
-          <div className="h-px bg-gray-100" />
-          <Link
-            href={`/finder/?printer_id=${printer.id}`}
-            className="flex h-9 items-center justify-center rounded-full bg-blue-400 px-4 text-base font-semibold leading-6 text-white transition-colors hover:bg-blue-500"
-          >
-            View
-          </Link>
-        </div>
-      </div>
-    </article>
-  );
+  return product.type
+    ? { pathname: `/products/${product.slug}`, query: { type: product.type } }
+    : { pathname: `/products/${product.slug}` };
 }
 
 export default async function PrinterPage({
@@ -157,7 +82,7 @@ export default async function PrinterPage({
   const normalizedPage = Number.parseInt(requestedPage ?? "1", 10);
   const page = Number.isFinite(normalizedPage) && normalizedPage > 0 ? normalizedPage : 1;
 
-  let printers: Printer[] = [];
+  let products: ProductCardData[] = [];
   let currentPage = 1;
   let lastPage = 1;
 
@@ -167,8 +92,8 @@ export default async function PrinterPage({
     });
 
     if (response.ok) {
-      const json = (await response.json()) as PrintersResponse;
-      printers = json.data;
+      const json = (await response.json()) as ProductsApiResponse;
+      products = json.data.map(mapApiProductToCardData);
       currentPage = json.meta?.current_page ?? page;
       lastPage = json.meta?.last_page ?? 1;
     } else {
@@ -187,7 +112,7 @@ export default async function PrinterPage({
         <div className="mx-auto flex max-w-360 flex-col gap-12">
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-4 border-b border-gray-100 pb-4">
-              <h2 className="text-4xl font-bold leading-[48px] text-neutral-800">All Printers</h2>
+              <h2 className="text-4xl font-bold leading-[48px] text-neutral-800">Printer Products</h2>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <button
                   type="button"
@@ -214,9 +139,9 @@ export default async function PrinterPage({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {printers.map((printer) => (
-                <PrinterCard key={printer.id} printer={printer} />
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+              {products.map((product) => (
+                <ProductCard key={product.id} product={product} href={cardHref(product)} />
               ))}
             </div>
 

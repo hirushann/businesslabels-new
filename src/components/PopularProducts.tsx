@@ -78,7 +78,7 @@ export default async function PopularProducts() {
         </div>
 
         {/* Product grid */}
-        <div className="grid grid-cols-3 gap-8">
+        <div className="grid grid-cols-[repeat(3,minmax(0,22rem))] justify-center gap-8">
           {products.length === 0 ? (
             <EmptyState
               className="col-span-3"
