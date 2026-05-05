@@ -4,8 +4,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Accordion from "@/components/Accordion";
 import CTABanner from "@/components/CTABanner";
+import EmptyState from "@/components/EmptyState";
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
-import { demoProducts, mapDemoProductToCard } from "@/lib/demoCatalog";
 
 type Material = {
   id: number;
@@ -37,14 +37,93 @@ type MaterialResponse = {
 
 type MaterialPageProps = {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ page?: string | string[] }>;
 };
 
-const relatedSections = [
-  {
-    title: "Ink & Maintenance",
-    products: demoProducts.slice(0, 3).map(mapDemoProductToCard),
-  },
-];
+type Product = {
+  id: number;
+  type: "simple" | "variable" | string;
+  slug?: string | null;
+  title?: string | null;
+  name: string;
+  sku: string;
+  subtitle?: string | null;
+  excerpt?: string | null;
+  article_number?: string | null;
+  price: number;
+  original_price?: number | null;
+  in_stock: boolean;
+  main_image?: string | null;
+  created_at?: string | null;
+  material?: {
+    title?: string | null;
+  } | null;
+  categories?: Array<{
+    id?: number;
+    name?: string | null;
+  }>;
+};
+
+type ProductsResponse = {
+  data: Product[];
+  meta?: {
+    current_page?: number;
+    last_page?: number;
+    total?: number;
+    per_page?: number;
+  };
+};
+
+function normalizeType(raw: string | undefined): "simple" | "variable" | null {
+  if (raw === "simple" || raw === "variable") {
+    return raw;
+  }
+  return null;
+}
+
+function createdAtTimestamp(value: string | null | undefined, fallback: number): number {
+  if (!value) {
+    return fallback;
+  }
+
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) ? timestamp : fallback;
+}
+
+function buildVisiblePages(currentPage: number, lastPage: number): Array<number | "ellipsis"> {
+  if (lastPage <= 1) {
+    return [1];
+  }
+
+  const pages = new Set<number>();
+  pages.add(1);
+  pages.add(lastPage);
+
+  const start = Math.max(1, currentPage - 3);
+  const end = Math.min(lastPage, currentPage + 3);
+
+  for (let page = start; page <= end; page += 1) {
+    pages.add(page);
+  }
+
+  const sortedPages = [...pages].sort((left, right) => left - right);
+  const visible: Array<number | "ellipsis"> = [];
+
+  for (let index = 0; index < sortedPages.length; index += 1) {
+    const page = sortedPages[index];
+    const previous = sortedPages[index - 1];
+
+    if (previous && page - previous > 1) {
+      visible.push("ellipsis");
+    }
+
+    visible.push(page);
+  }
+
+  return visible;
+}
+
+// relatedSections is deprecated in favor of server-fetched products
 
 async function getMaterial(slug: string): Promise<Material | null> {
   const baseUrl = process.env.BBNL_API_BASE_URL;
@@ -226,50 +305,138 @@ function productHref(product: ProductCardData): { pathname: string; query?: { ty
   return { pathname: `/products/${product.slug}` };
 }
 
-function RelatedProductsSection({ title, products }: { title: string; products: ProductCardData[] }) {
+function MaterialProductsSection({
+  title,
+  products,
+  currentPage,
+  lastPage,
+  materialSlug,
+}: {
+  title: string;
+  products: ProductCardData[];
+  currentPage: number;
+  lastPage: number;
+  materialSlug: string;
+}) {
+  const visiblePages = buildVisiblePages(currentPage, lastPage);
+
   return (
     <section className="px-4 py-24 odd:bg-gray-50 even:bg-white sm:px-6 lg:px-10">
       <div className="mx-auto flex max-w-300 flex-col gap-12">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-4xl font-bold leading-[48px] text-neutral-800">{title}</h2>
-          <div className="flex items-center gap-6">
-            <button
-              type="button"
-              className="flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-white text-neutral-700 shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)]"
-              aria-label={`Previous ${title}`}
-            >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              className="flex h-12 w-12 items-center justify-center rounded-full border border-amber-500 bg-white text-amber-500 shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)]"
-              aria-label={`Next ${title}`}
-            >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} href={productHref(product)} />
-          ))}
-        </div>
+        {products.length === 0 ? (
+          <EmptyState 
+            title="No products found" 
+            description="We couldn't find any products associated with this material at the moment." 
+          />
+        ) : (
+          <>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {products.map((product) => (
+                <ProductCard key={product.id} product={product} href={productHref(product)} />
+              ))}
+            </div>
+
+            {lastPage > 1 && (
+              <div className="mt-12 flex flex-wrap items-center justify-center gap-3">
+                <Link
+                  href={{ pathname: `/materials/${materialSlug}`, query: { page: Math.max(1, currentPage - 1) } }}
+                  className={`rounded-[50px] border border-slate-100 px-6 py-2.5 text-base font-medium text-neutral-800 transition-colors hover:bg-slate-50 ${
+                    currentPage <= 1 ? "pointer-events-none opacity-50" : ""
+                  }`}
+                >
+                  Previous
+                </Link>
+
+                {visiblePages.map((item, index) =>
+                  item === "ellipsis" ? (
+                    <span key={`ellipsis-${index}`} className="px-2 text-sm font-semibold text-zinc-500">
+                      ...
+                    </span>
+                  ) : (
+                    <Link
+                      key={item}
+                      href={{ pathname: `/materials/${materialSlug}`, query: { page: item } }}
+                      className={`flex h-10 min-w-10 items-center justify-center rounded-[50px] border border-slate-100 px-3 text-sm font-semibold transition-colors ${
+                        item === currentPage 
+                          ? "bg-amber-500 text-white border-amber-500" 
+                          : "text-neutral-700 hover:bg-slate-50"
+                      }`}
+                      aria-current={item === currentPage ? "page" : undefined}
+                    >
+                      {item}
+                    </Link>
+                  ),
+                )}
+
+                <Link
+                  href={{ pathname: `/materials/${materialSlug}`, query: { page: Math.min(lastPage, currentPage + 1) } }}
+                  className={`rounded-[50px] border border-slate-100 px-6 py-2.5 text-base font-semibold text-neutral-800 transition-colors hover:bg-slate-50 ${
+                    currentPage >= lastPage ? "pointer-events-none opacity-50" : ""
+                  }`}
+                >
+                  Next
+                </Link>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </section>
   );
 }
 
-export default async function SingleMaterialPage({ params }: MaterialPageProps) {
+export default async function SingleMaterialPage({ params, searchParams }: MaterialPageProps) {
   const { slug } = await params;
+  const query = await searchParams;
   const material = await getMaterial(slug);
 
   if (!material) {
     notFound();
+  }
+
+  const baseUrl = process.env.BBNL_API_BASE_URL;
+  const requestedPage = Array.isArray(query.page) ? query.page[0] : query.page;
+  const normalizedPage = Number.parseInt(requestedPage ?? "1", 10);
+  const page = Number.isFinite(normalizedPage) && normalizedPage > 0 ? normalizedPage : 1;
+
+  let products: ProductCardData[] = [];
+  let currentPage = 1;
+  let lastPage = 1;
+
+  if (baseUrl) {
+    try {
+      const response = await fetch(`${baseUrl}/api/products?page=${page}&per_page=9`, {
+        cache: "no-store",
+      });
+
+      if (response.ok) {
+        const json = (await response.json()) as ProductsResponse;
+        currentPage = json.meta?.current_page ?? page;
+        lastPage = json.meta?.last_page ?? 1;
+        products = json.data.map((product, index) => ({
+          id: product.id,
+          sku: product.sku,
+          name: product.title?.trim() || product.name,
+          subtitle: product.subtitle ?? null,
+          excerpt: product.excerpt ?? null,
+          materialTitle: product.material?.title ?? null,
+          price: product.price,
+          originalPrice: product.original_price ?? null,
+          inStock: product.in_stock,
+          mainImage: product.main_image ?? null,
+          categories: product.categories ?? [],
+          slug: product.slug ?? null,
+          type: normalizeType(product.type),
+          createdAt: createdAtTimestamp(product.created_at, json.data.length - index),
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching material products:", error);
+    }
   }
 
   const materialImage = `https://placehold.co/1200x800?text=${encodeURIComponent(material.title)}`;
@@ -329,9 +496,13 @@ export default async function SingleMaterialPage({ params }: MaterialPageProps) 
         </div>
       </section>
 
-      {relatedSections.map((section) => (
-        <RelatedProductsSection key={section.title} title={section.title} products={section.products} />
-      ))}
+      <MaterialProductsSection 
+        title="Products from This Material" 
+        products={products} 
+        currentPage={currentPage}
+        lastPage={lastPage}
+        materialSlug={slug}
+      />
 
       <CTABanner />
     </div>
