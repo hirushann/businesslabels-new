@@ -151,7 +151,7 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="max-w-[1512px] mx-auto w-full px-10 pt-6 pb-10 border-t border-slate-800 flex justify-between items-center">
           <span className="text-white/60 text-sm font-normal font-['Segoe_UI'] leading-5">
-            © 2026 BusinessLabels by Supplify. All rights reserved.
+            © 2026 BusinessLabels. All rights reserved.
           </span>
           <div className="flex gap-5">
             {['Privacy Policy', 'Terms & Conditions', 'Cookie Policy'].map((item) => (
