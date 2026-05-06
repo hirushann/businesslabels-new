@@ -30,7 +30,7 @@ export default async function FinderPage({
   const hasFinderParameters = Boolean(query.printer_id || query.product_type);
 
   if (!hasFinderParameters) {
-    return <PrinterPage searchParams={Promise.resolve({ page: query.page })} />;
+    return <PrinterPage />;
   }
 
   return (

@@ -2,97 +2,112 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { materialReviews } from "@/lib/materialCatalog";
 import PrintersListing from "@/components/PrintersListing";
-import type { ProductCardData } from "@/components/ProductCard";
+import type { PrinterCardData } from "@/components/PrintersListing";
 
 export const metadata: Metadata = {
-  title: "Material Overview — BusinessLabels",
+  title: "Printer Products — BusinessLabels",
   description:
     "Discover printer media materials selected for precision, durability, color accuracy, and reliable professional output.",
 };
 
-type ApiProduct = {
-  id: string | number;
-  sku?: string;
-  article_number?: string;
-  title?: string;
-  name?: string;
-  subtitle?: string;
-  excerpt?: string;
-  material?: { title?: string };
-  price?: number;
-  original_price?: number;
-  in_stock?: boolean;
-  main_image?: string;
-  categories?: Array<{ id?: number; name?: string }>;
-  slug?: string;
-  type?: "simple" | "variable";
-  packing_group?: number;
-};
+// ---------------------------------------------------------------------------
+// SSR seed: fetch first page directly from Elasticsearch so the page renders
+// with visible products immediately, before the client-side ES query resolves.
+// ---------------------------------------------------------------------------
 
-type ProductsApiResponse = {
-  data: ApiProduct[];
-  meta?: {
-    current_page: number;
-    last_page: number;
-    total: number;
+type EsHit = {
+  _source: {
+    id?: number;
+    type?: string;
+    title?: string | string[];
+    name?: string | string[];
+    subtitle?: string | string[];
+    excerpt?: string | string[];
+    material_title?: string | string[];
+    price?: number;
+    original_price?: number;
+    in_stock?: boolean;
+    main_image?: string;
+    slug?: string | string[];
+    sku?: string;
   };
 };
 
-function mapApiProductToCardData(apiProduct: ApiProduct): ProductCardData {
+function scalar(value: string | string[] | undefined | null): string | null {
+  if (!value) return null;
+  return Array.isArray(value) ? (value[0] ?? null) : value;
+}
+
+function normalizeType(raw?: string): "simple" | "variable" | null {
+  return raw === "simple" || raw === "variable" ? raw : null;
+}
+
+function mapHitToCardData(hit: EsHit): PrinterCardData {
+  const src = hit._source;
   return {
-    id: apiProduct.id,
-    sku: apiProduct.sku || apiProduct.article_number || "",
-    name: apiProduct.title || apiProduct.name || "Unnamed printer",
-    subtitle: apiProduct.subtitle,
-    excerpt: apiProduct.excerpt,
-    materialTitle: apiProduct.material?.title,
-    price: apiProduct.price,
-    originalPrice: apiProduct.original_price,
-    inStock: apiProduct.in_stock ?? true,
-    mainImage: apiProduct.main_image,
-    categories: apiProduct.categories,
-    slug: apiProduct.slug,
-    type: apiProduct.type,
-    packing_group: apiProduct.packing_group,
+    id: src.id ?? 0,
+    sku: src.sku ?? "",
+    name: scalar(src.title) ?? scalar(src.name) ?? "Unnamed printer",
+    subtitle: scalar(src.subtitle),
+    excerpt: scalar(src.excerpt),
+    materialTitle: scalar(src.material_title),
+    price: src.price ?? null,
+    originalPrice: src.original_price ?? null,
+    inStock: src.in_stock ?? false,
+    mainImage: src.main_image
+      ? `/api/media-proxy?url=${encodeURIComponent(src.main_image)}`
+      : null,
+    categories: [],
+    slug: scalar(src.slug),
+    type: normalizeType(src.type ?? undefined),
   };
 }
 
-export default async function PrinterPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ page?: string | string[] }>;
-}) {
-  const baseUrl = process.env.BBNL_API_BASE_URL;
-  const query = await searchParams;
-
-  if (!baseUrl) {
-    throw new Error("BBNL_API_BASE_URL is not configured");
-  }
-
-  const requestedPage = Array.isArray(query.page) ? query.page[0] : query.page;
-  const normalizedPage = Number.parseInt(requestedPage ?? "1", 10);
-  const page = Number.isFinite(normalizedPage) && normalizedPage > 0 ? normalizedPage : 1;
-
-  let products: ProductCardData[] = [];
-  let currentPage = 1;
-  let lastPage = 1;
-
+async function fetchPrintersSeed(): Promise<PrinterCardData[]> {
   try {
-    const response = await fetch(`${baseUrl}/api/printers?page=${page}`, {
+    const rawHost = process.env.ELASTICSEARCH_URL?.trim()
+      || `${process.env.ELASTIC_SCHEME?.trim() || "http"}://${process.env.ELASTIC_HOST?.trim() || "localhost:9200"}`;
+    const host = rawHost.replace(/\/$/, "");
+    const prefix = process.env.SCOUT_PREFIX?.trim() ?? "";
+    const index = process.env.SEARCH_INDEX?.trim() || `${prefix}catalog_products_simple`;
+
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (process.env.ELASTIC_API_KEY?.trim()) {
+      headers.Authorization = `ApiKey ${process.env.ELASTIC_API_KEY.trim()}`;
+    } else if (process.env.ELASTIC_USERNAME?.trim()) {
+      const encoded = Buffer.from(
+        `${process.env.ELASTIC_USERNAME.trim()}:${process.env.ELASTIC_PASSWORD ?? ""}`,
+      ).toString("base64");
+      headers.Authorization = `Basic ${encoded}`;
+    }
+
+    const response = await fetch(`${host}/${index}/_search`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        from: 0,
+        size: 24,
+        query: { terms: { category_slugs: ["labelprinters"] } },
+        sort: [{ created_at_timestamp: { order: "desc", unmapped_type: "long" } }],
+        _source: [
+          "id", "type", "title", "name", "subtitle", "excerpt",
+          "material_title", "price", "original_price", "in_stock",
+          "main_image", "slug", "sku",
+        ],
+      }),
       cache: "no-store",
     });
 
-    if (response.ok) {
-      const json = (await response.json()) as ProductsApiResponse;
-      products = json.data.map(mapApiProductToCardData);
-      currentPage = json.meta?.current_page ?? page;
-      lastPage = json.meta?.last_page ?? 1;
-    } else {
-      console.error(`Failed to fetch printers: ${response.status}`);
-    }
-  } catch (error) {
-    console.error("Error fetching printers:", error);
+    if (!response.ok) return [];
+    const json = (await response.json()) as { hits?: { hits?: EsHit[] } };
+    return (json.hits?.hits ?? []).map(mapHitToCardData);
+  } catch {
+    return [];
   }
+}
+
+export default async function PrinterPage() {
+  const printers = await fetchPrintersSeed();
 
   return (
     <div className="relative overflow-hidden bg-white">
@@ -101,7 +116,7 @@ export default async function PrinterPage({
 
       <section className="px-4 py-10 sm:px-6 lg:px-10">
         <div className="mx-auto flex max-w-360 flex-col gap-12">
-          <PrintersListing printers={products} currentPage={currentPage} lastPage={lastPage} />
+          <PrintersListing printers={printers} />
         </div>
       </section>
 

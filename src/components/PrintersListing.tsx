@@ -1,51 +1,27 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { Filter, FilterValueRange } from "@elastic/search-ui";
+import { useMemo, useState } from "react";
+import { SearchProvider, useSearch } from "@elastic/react-search-ui";
+import type { SearchDriverOptions } from "@elastic/search-ui";
+import { CategoryScopedProxyConnector } from "@/lib/categoryScopedConnector";
 import EmptyState from "@/components/EmptyState";
-import ProductCard, { type ProductCardData } from "@/components/ProductCard";
+import ProductCard from "@/components/ProductCard";
+import type { ProductCardData } from "@/components/ProductCard";
 import ProductPaginationSwitcher from "@/components/ProductPaginationSwitcher";
-import { ProductListingFiltersView } from "@/components/products-listing/ProductListingFilters";
+import ProductListingFilters from "@/components/products-listing/ProductListingFilters";
+import { mapProductListingResult } from "@/components/products-listing/productResult";
 
-type ApiProduct = {
-  id: string | number;
-  sku?: string | null;
-  article_number?: string | null;
-  title?: string | null;
-  name?: string | null;
-  subtitle?: string | null;
-  excerpt?: string | null;
-  material?: { title?: string | null } | null;
-  price?: number | null;
-  original_price?: number | null;
-  in_stock?: boolean | null;
-  main_image?: string | null;
-  categories?: Array<{ id?: number; name?: string | null }>;
-  slug?: string | null;
-  type?: "simple" | "variable" | string | null;
-  packing_group?: number | null;
-};
-
-type PrinterProductsListingResponse = {
-  data?: ApiProduct[];
-  meta?: {
-    current_page?: number;
-    last_page?: number;
-    total?: number;
-  };
-  rawResponse?: unknown;
-  error?: string;
-};
+export type PrinterCardData = ProductCardData;
 
 type PrintersListingProps = {
-  printers: ProductCardData[];
-  currentPage: number;
-  lastPage: number;
+  printers: PrinterCardData[];
+  currentPage?: number;
+  lastPage?: number;
 };
 
-type PrinterListingSortValue = "latest" | "oldest" | "title_asc" | "title_desc" | "price_asc" | "price_desc";
-
 const PAGE_SIZE = 24;
+
+type PrinterListingSortValue = "latest" | "oldest" | "title_asc" | "title_desc" | "price_asc" | "price_desc";
 
 const LISTING_SORT_OPTIONS: Array<{ value: PrinterListingSortValue; label: string }> = [
   { value: "latest", label: "Latest" },
@@ -56,35 +32,54 @@ const LISTING_SORT_OPTIONS: Array<{ value: PrinterListingSortValue; label: strin
   { value: "price_desc", label: "Price: High to Low" },
 ];
 
-function normalizeType(raw: string | null | undefined): "simple" | "variable" | null {
-  return raw === "simple" || raw === "variable" ? raw : null;
-}
+const LISTING_SORT_TO_SEARCH_UI: Record<PrinterListingSortValue, { field: string; direction: "asc" | "desc" }> = {
+  latest: { field: "created_at_timestamp", direction: "desc" },
+  oldest: { field: "created_at_timestamp", direction: "asc" },
+  title_asc: { field: "title_sort.keyword", direction: "asc" },
+  title_desc: { field: "title_sort.keyword", direction: "desc" },
+  price_asc: { field: "price", direction: "asc" },
+  price_desc: { field: "price", direction: "desc" },
+};
 
-function mapProductToCardData(apiProduct: ApiProduct): ProductCardData {
-  return {
-    id: apiProduct.id,
-    sku: apiProduct.sku || apiProduct.article_number || "",
-    name: apiProduct.title || apiProduct.name || "Unnamed printer",
-    subtitle: apiProduct.subtitle,
-    excerpt: apiProduct.excerpt,
-    materialTitle: apiProduct.material?.title,
-    price: apiProduct.price,
-    originalPrice: apiProduct.original_price,
-    inStock: apiProduct.in_stock ?? true,
-    mainImage: apiProduct.main_image,
-    categories: apiProduct.categories ?? [],
-    slug: apiProduct.slug,
-    type: normalizeType(apiProduct.type),
-    packing_group: apiProduct.packing_group,
-  };
-}
+const PRINTERS_SEARCH_QUERY = {
+  search_fields: {
+    article_number: { weight: 10 },
+    sku: { weight: 10 },
+    title: { weight: 8 },
+    name: { weight: 7 },
+    slug: { weight: 2 },
+    excerpt: { weight: 1.5 },
+    description: { weight: 0.4 },
+    brand: { weight: 1 },
+    merken: { weight: 1 },
+  },
+  result_fields: {
+    id: { raw: {} },
+    product_type: { raw: {} },
+    type: { raw: {} },
+    title: { raw: {} },
+    name: { raw: {} },
+    slug: { raw: {} },
+    article_number: { raw: {} },
+    sku: { raw: {} },
+    subtitle: { raw: {} },
+    excerpt: { raw: {} },
+    price: { raw: {} },
+    original_price: { raw: {} },
+    in_stock: { raw: {} },
+    main_image: { raw: {} },
+    categories: { raw: {} },
+    material: { raw: {} },
+    material_title: { raw: {} },
+  },
+};
 
-function cardHref(product: ProductCardData) {
-  if (!product.slug) return undefined;
-
-  return product.type
-    ? { pathname: `/products/${product.slug}`, query: { type: product.type } }
-    : { pathname: `/products/${product.slug}` };
+function sortValueFromState(sortField?: string, sortDirection?: string): PrinterListingSortValue {
+  const match = LISTING_SORT_OPTIONS.find((option) => {
+    const mapped = LISTING_SORT_TO_SEARCH_UI[option.value];
+    return mapped.field === sortField && mapped.direction === sortDirection;
+  });
+  return match?.value ?? "latest";
 }
 
 function PrinterSkeletonGrid({ isSidebarOpen }: { isSidebarOpen: boolean }) {
@@ -97,121 +92,69 @@ function PrinterSkeletonGrid({ isSidebarOpen }: { isSidebarOpen: boolean }) {
   );
 }
 
-export default function PrintersListing({ printers, currentPage, lastPage }: PrintersListingProps) {
+function PrintersListingContent({ printers }: { printers: PrinterCardData[] }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [filters, setFilters] = useState<Filter[]>([]);
-  const [sort, setSort] = useState<PrinterListingSortValue>("title_asc");
-  const [page, setPage] = useState(currentPage || 1);
-  const [items, setItems] = useState<ProductCardData[]>(printers);
-  const [pageCount, setPageCount] = useState(lastPage || 1);
-  const [totalResults, setTotalResults] = useState(printers.length);
-  const [rawResponse, setRawResponse] = useState<unknown>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const activeFilterCount = useMemo(
-    () => filters.reduce((count, filter) => count + filter.values.length, 0),
-    [filters],
-  );
+  const {
+    results,
+    totalResults,
+    current,
+    totalPages,
+    setCurrent,
+    isLoading,
+    error,
+    sortField,
+    sortDirection,
+    setSort,
+    filters,
+    removeFilter,
+  } = useSearch((state) => ({
+    results: state.results,
+    totalResults: state.totalResults,
+    current: state.current,
+    totalPages: state.totalPages,
+    setCurrent: state.setCurrent,
+    isLoading: state.isLoading,
+    error: state.error,
+    sortField: state.sortField,
+    sortDirection: state.sortDirection,
+    setSort: state.setSort,
+    filters: state.filters,
+    removeFilter: state.removeFilter,
+  }));
 
-  const addFilter = useCallback((name: string, value: string, type: "any" = "any") => {
-    setFilters((currentFilters) => {
-      const existing = currentFilters.find((filter) => filter.field === name && filter.type === type);
-      const otherFilters = currentFilters.filter((filter) => filter.field !== name || filter.type !== type);
-      const values = existing?.values ?? [];
-      const nextValues = values.includes(value) ? values : [...values, value];
-      return [...otherFilters, { field: name, values: nextValues, type }];
-    });
-    setPage(1);
-  }, []);
-
-  const removeFilter = useCallback((name: string, value?: string, type?: "any") => {
-    setFilters((currentFilters) => {
-      if (value === undefined) {
-        return currentFilters.filter((filter) => filter.field !== name || (type !== undefined && filter.type !== type));
-      }
-
-      return currentFilters.flatMap((filter) => {
-        if (filter.field !== name || (type !== undefined && filter.type !== type)) return [filter];
-
-        const nextValues = filter.values.filter((filterValue) => filterValue !== value);
-        return nextValues.length > 0 ? [{ ...filter, values: nextValues }] : [];
-      });
-    });
-    setPage(1);
-  }, []);
-
-  const setFilter = useCallback((name: string, value: FilterValueRange) => {
-    setFilters((currentFilters) => [
-      ...currentFilters.filter((filter) => filter.field !== name),
-      { field: name, values: [value], type: "all" },
-    ]);
-    setPage(1);
-  }, []);
-
-  const clearFilters = () => {
-    setFilters([]);
-    setPage(1);
-  };
+  const activeFilters = filters ?? [];
+  const activeFilterCount = activeFilters.reduce((count, filter) => count + filter.values.length, 0);
+  const page = current || 1;
+  const pageCount = totalPages || 1;
+  const selectedSort = sortValueFromState(sortField, sortDirection);
+  const searchHasResolved = Array.isArray(results) && (typeof totalResults === "number" || !isLoading);
+  const fallbackPrinters = !searchHasResolved && !error ? printers : [];
+  const searchPrinters = searchHasResolved
+    ? (results ?? []).map((result, resultIndex) => mapProductListingResult(result, resultIndex))
+    : [];
+  const hasFallbackPrinters = fallbackPrinters.length > 0;
+  const hasSearchPrinters = searchPrinters.length > 0;
 
   const handleSortChange = (value: PrinterListingSortValue) => {
-    setSort(value);
-    setPage(1);
+    const mapped = LISTING_SORT_TO_SEARCH_UI[value];
+    (setSort as (field: string, direction: "asc" | "desc") => void)(mapped.field, mapped.direction);
+    setCurrent(1);
   };
 
-  useEffect(() => {
-    const controller = new AbortController();
-    const params = new URLSearchParams({
-      page: String(page),
-      per_page: String(PAGE_SIZE),
-      sort,
-    });
-
-    if (filters.length > 0) {
-      params.set("filters", JSON.stringify(filters));
-    }
-
-    async function loadPrinters() {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch(`/api/printers?${params.toString()}`, {
-          signal: controller.signal,
-        });
-        const json = (await response.json()) as PrinterProductsListingResponse;
-
-        if (!response.ok) {
-          throw new Error(json.error || "Failed to fetch printers");
-        }
-
-        setItems((json.data ?? []).map(mapProductToCardData));
-        setPageCount(json.meta?.last_page ?? 1);
-        setTotalResults(json.meta?.total ?? 0);
-        setRawResponse(json.rawResponse ?? null);
-      } catch (fetchError) {
-        if (fetchError instanceof DOMException && fetchError.name === "AbortError") return;
-        setError(fetchError instanceof Error ? fetchError.message : "Failed to fetch printers");
-      } finally {
-        if (!controller.signal.aborted) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    loadPrinters();
-
-    return () => controller.abort();
-  }, [filters, page, sort]);
+  const clearFilters = () => {
+    activeFilters.forEach((filter) => removeFilter(filter.field));
+    setCurrent(1);
+  };
 
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-4 border-b border-gray-100 pb-4">
         <h2 className="text-4xl font-bold leading-[48px] text-neutral-800">Printer Products</h2>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <button
             type="button"
-            onClick={() => setIsSidebarOpen((currentValue) => !currentValue)}
+            onClick={() => setIsSidebarOpen((v) => !v)}
             className={`inline-flex h-10 w-fit items-center gap-4 rounded-[42px] border px-5 py-2 text-neutral-800 transition-colors ${
               isSidebarOpen ? "border-amber-500 bg-amber-50 text-amber-600" : "border-slate-200 hover:border-amber-200"
             }`}
@@ -232,12 +175,12 @@ export default function PrintersListing({ printers, currentPage, lastPage }: Pri
             </span>
           </button>
 
-          <label className="flex h-10 w-fit items-center gap-3 rounded-[42px] border border-slate-200 px-5 text-neutral-800">
+          <label className="flex h-10 items-center gap-3 rounded-[42px] border border-slate-200 px-5 py-2 text-neutral-800">
             <span className="sr-only">Sort printers</span>
             <select
-              value={sort}
-              onChange={(event) => handleSortChange(event.target.value as PrinterListingSortValue)}
-              className="bg-transparent text-base leading-5 outline-none"
+              value={selectedSort}
+              onChange={(e) => handleSortChange(e.target.value as PrinterListingSortValue)}
+              className="bg-transparent text-base font-normal font-['Segoe_UI'] leading-5 outline-none"
             >
               {LISTING_SORT_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -272,27 +215,21 @@ export default function PrintersListing({ printers, currentPage, lastPage }: Pri
                   </button>
                 ) : null}
               </div>
-              <ProductListingFiltersView
-                activeFilters={filters}
-                rawResponse={rawResponse}
-                addFilter={addFilter}
-                removeFilter={removeFilter}
-                setFilter={setFilter}
-              />
+              <ProductListingFilters />
             </div>
           </aside>
         ) : null}
 
         <div className="min-w-0 flex-1">
           <div className="mb-4 text-sm text-neutral-600">
-            {isLoading && items.length === 0 ? "Loading printers..." : `${totalResults} results`}
+            {isLoading && !hasFallbackPrinters ? "Loading printers..." : `${totalResults ?? printers.length} results`}
           </div>
 
           {error ? (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>
-          ) : isLoading && items.length === 0 ? (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">{String(error)}</div>
+          ) : isLoading && !hasFallbackPrinters ? (
             <PrinterSkeletonGrid isSidebarOpen={isSidebarOpen} />
-          ) : items.length === 0 ? (
+          ) : !hasFallbackPrinters && !hasSearchPrinters ? (
             <EmptyState title="No printers found" description="Try adjusting the filters to see more printers." />
           ) : (
             <>
@@ -301,18 +238,60 @@ export default function PrintersListing({ printers, currentPage, lastPage }: Pri
                   isSidebarOpen ? "xl:grid-cols-3" : "xl:grid-cols-4"
                 }`}
               >
-                {items.map((product) => (
-                  <ProductCard key={product.id} product={product} href={cardHref(product)} />
-                ))}
+                {hasSearchPrinters
+                  ? searchPrinters.map(({ id, product, href }) => (
+                      <ProductCard key={id} product={product} href={href} />
+                    ))
+                  : fallbackPrinters.map((product) => (
+                      <ProductCard
+                        key={String(product.id)}
+                        product={product}
+                        href={
+                          product.slug && product.type
+                            ? { pathname: `/products/${product.slug}`, query: { type: product.type } }
+                            : product.slug
+                              ? `/products/${product.slug}`
+                              : undefined
+                        }
+                      />
+                    ))}
               </div>
 
-              {pageCount > 1 ? (
-                <ProductPaginationSwitcher currentPage={page} pageCount={pageCount} onPageChange={setPage} />
+              {pageCount > 1 && hasSearchPrinters ? (
+                <ProductPaginationSwitcher currentPage={page} pageCount={pageCount} onPageChange={setCurrent} />
               ) : null}
             </>
           )}
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PrintersListing({ printers }: PrintersListingProps) {
+  const connector = useMemo(
+    () => new CategoryScopedProxyConnector({ basePath: "/api", categorySlug: "labelprinters" }),
+    [],
+  );
+
+  const config = useMemo<SearchDriverOptions>(
+    () => ({
+      apiConnector: connector,
+      trackUrlState: false,
+      alwaysSearchOnInitialLoad: true,
+      initialState: {
+        resultsPerPage: PAGE_SIZE,
+        sortField: "created_at_timestamp",
+        sortDirection: "desc",
+      },
+      searchQuery: PRINTERS_SEARCH_QUERY,
+    }),
+    [connector],
+  );
+
+  return (
+    <SearchProvider config={config}>
+      <PrintersListingContent printers={printers} />
+    </SearchProvider>
   );
 }
