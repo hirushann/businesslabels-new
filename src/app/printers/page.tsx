@@ -1,107 +1,113 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import { materialReviews } from "@/lib/materialCatalog";
+import PrintersListing from "@/components/PrintersListing";
+import type { PrinterCardData } from "@/components/PrintersListing";
 
 export const metadata: Metadata = {
-  title: "Material Overview — BusinessLabels",
+  title: "Printer Products — BusinessLabels",
   description:
     "Discover printer media materials selected for precision, durability, color accuracy, and reliable professional output.",
 };
 
-import ProductCard, { type ProductCardData } from "@/components/ProductCard";
+// ---------------------------------------------------------------------------
+// SSR seed: fetch first page directly from Elasticsearch so the page renders
+// with visible products immediately, before the client-side ES query resolves.
+// ---------------------------------------------------------------------------
 
-type ApiProduct = {
-  id: string | number;
-  sku?: string;
-  article_number?: string;
-  title?: string;
-  name?: string;
-  subtitle?: string;
-  excerpt?: string;
-  material?: { title?: string };
-  price?: number;
-  original_price?: number;
-  in_stock?: boolean;
-  main_image?: string;
-  categories?: Array<{ id?: number; name?: string }>;
-  slug?: string;
-  type?: "simple" | "variable";
-  packing_group?: number;
-};
-
-type ProductsApiResponse = {
-  data: ApiProduct[];
-  meta?: {
-    current_page: number;
-    last_page: number;
-    total: number;
+type EsHit = {
+  _source: {
+    id?: number;
+    type?: string;
+    title?: string | string[];
+    name?: string | string[];
+    subtitle?: string | string[];
+    excerpt?: string | string[];
+    material_title?: string | string[];
+    price?: number;
+    original_price?: number;
+    in_stock?: boolean;
+    main_image?: string;
+    slug?: string | string[];
+    sku?: string;
   };
 };
 
-function mapApiProductToCardData(apiProduct: ApiProduct): ProductCardData {
+function scalar(value: string | string[] | undefined | null): string | null {
+  if (!value) return null;
+  return Array.isArray(value) ? (value[0] ?? null) : value;
+}
+
+function normalizeType(raw?: string): "simple" | "variable" | null {
+  return raw === "simple" || raw === "variable" ? raw : null;
+}
+
+function mapHitToCardData(hit: EsHit): PrinterCardData {
+  const src = hit._source;
   return {
-    id: apiProduct.id,
-    sku: apiProduct.sku || apiProduct.article_number || "",
-    name: apiProduct.title ?? apiProduct.name ?? "",
-    subtitle: apiProduct.subtitle,
-    excerpt: apiProduct.excerpt,
-    materialTitle: apiProduct.material?.title,
-    price: apiProduct.price,
-    originalPrice: apiProduct.original_price,
-    inStock: apiProduct.in_stock ?? true,
-    mainImage: apiProduct.main_image,
-    categories: apiProduct.categories,
-    slug: apiProduct.slug,
-    type: apiProduct.type,
-    packing_group: apiProduct.packing_group,
+    id: src.id ?? 0,
+    sku: src.sku ?? "",
+    name: scalar(src.title) ?? scalar(src.name) ?? "Unnamed printer",
+    subtitle: scalar(src.subtitle),
+    excerpt: scalar(src.excerpt),
+    materialTitle: scalar(src.material_title),
+    price: src.price ?? null,
+    originalPrice: src.original_price ?? null,
+    inStock: src.in_stock ?? false,
+    mainImage: src.main_image
+      ? `/api/media-proxy?url=${encodeURIComponent(src.main_image)}`
+      : null,
+    categories: [],
+    slug: scalar(src.slug),
+    type: normalizeType(src.type ?? undefined),
   };
 }
 
-function cardHref(product: ProductCardData) {
-  if (!product.slug) return undefined;
-
-  return product.type
-    ? { pathname: `/products/${product.slug}`, query: { type: product.type } }
-    : { pathname: `/products/${product.slug}` };
-}
-
-export default async function PrinterPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ page?: string | string[] }>;
-}) {
-  const baseUrl = process.env.BBNL_API_BASE_URL;
-  const query = await searchParams;
-
-  if (!baseUrl) {
-    throw new Error("BBNL_API_BASE_URL is not configured");
-  }
-
-  const requestedPage = Array.isArray(query.page) ? query.page[0] : query.page;
-  const normalizedPage = Number.parseInt(requestedPage ?? "1", 10);
-  const page = Number.isFinite(normalizedPage) && normalizedPage > 0 ? normalizedPage : 1;
-
-  let products: ProductCardData[] = [];
-  let currentPage = 1;
-  let lastPage = 1;
-
+async function fetchPrintersSeed(): Promise<PrinterCardData[]> {
   try {
-    const response = await fetch(`${baseUrl}/api/printers?page=${page}`, {
+    const rawHost = process.env.ELASTICSEARCH_URL?.trim()
+      || `${process.env.ELASTIC_SCHEME?.trim() || "http"}://${process.env.ELASTIC_HOST?.trim() || "localhost:9200"}`;
+    const host = rawHost.replace(/\/$/, "");
+    const prefix = process.env.SCOUT_PREFIX?.trim() ?? "";
+    const index = process.env.SEARCH_INDEX?.trim() || `${prefix}catalog_products_simple`;
+
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (process.env.ELASTIC_API_KEY?.trim()) {
+      headers.Authorization = `ApiKey ${process.env.ELASTIC_API_KEY.trim()}`;
+    } else if (process.env.ELASTIC_USERNAME?.trim()) {
+      const encoded = Buffer.from(
+        `${process.env.ELASTIC_USERNAME.trim()}:${process.env.ELASTIC_PASSWORD ?? ""}`,
+      ).toString("base64");
+      headers.Authorization = `Basic ${encoded}`;
+    }
+
+    const response = await fetch(`${host}/${index}/_search`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        from: 0,
+        size: 24,
+        query: { terms: { category_slugs: ["labelprinters"] } },
+        sort: [{ created_at_timestamp: { order: "desc", unmapped_type: "long" } }],
+        _source: [
+          "id", "type", "title", "name", "subtitle", "excerpt",
+          "material_title", "price", "original_price", "in_stock",
+          "main_image", "slug", "sku",
+        ],
+      }),
       cache: "no-store",
     });
 
-    if (response.ok) {
-      const json = (await response.json()) as ProductsApiResponse;
-      products = json.data.map(mapApiProductToCardData);
-      currentPage = json.meta?.current_page ?? page;
-      lastPage = json.meta?.last_page ?? 1;
-    } else {
-      console.error(`Failed to fetch printers: ${response.status}`);
-    }
-  } catch (error) {
-    console.error("Error fetching printers:", error);
+    if (!response.ok) return [];
+    const json = (await response.json()) as { hits?: { hits?: EsHit[] } };
+    return (json.hits?.hits ?? []).map(mapHitToCardData);
+  } catch {
+    return [];
   }
+}
+
+export default async function PrinterPage() {
+  const printers = await fetchPrintersSeed();
 
   return (
     <div className="relative overflow-hidden bg-white">
@@ -110,77 +116,7 @@ export default async function PrinterPage({
 
       <section className="px-4 py-10 sm:px-6 lg:px-10">
         <div className="mx-auto flex max-w-360 flex-col gap-12">
-          <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-4 border-b border-gray-100 pb-4">
-              <h2 className="text-4xl font-bold leading-[48px] text-neutral-800">Printer Products</h2>
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <button
-                  type="button"
-                  className="inline-flex h-10 w-fit items-center gap-2 rounded-[42px] border border-slate-200 px-5 text-neutral-800"
-                >
-                  <svg className="h-5 w-5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                    <path d="M3 5H17" stroke="#52525B" strokeWidth="1.5" strokeLinecap="round" />
-                    <path d="M5.5 10H14.5" stroke="#52525B" strokeWidth="1.5" strokeLinecap="round" />
-                    <path d="M8 15H12" stroke="#52525B" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
-                  <span className="text-xl font-semibold leading-6">Filters</span>
-                </button>
-
-                <label className="flex h-10 w-fit items-center gap-3 rounded-[42px] border border-slate-200 px-5 text-neutral-800">
-                  <span className="sr-only">Sort printers</span>
-                  <select
-                    value="name_asc"
-                    disabled
-                    className="bg-transparent text-base leading-5 outline-none disabled:opacity-100"
-                  >
-                    <option value="name_asc">Name: A to Z</option>
-                  </select>
-                </label>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product} href={cardHref(product)} />
-              ))}
-            </div>
-
-            {lastPage > 1 && (
-              <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-                {currentPage > 1 && (
-                  <Link
-                    href={`/printers?page=${currentPage - 1}`}
-                    className="rounded-[50px] border border-slate-100 px-6 py-2.5 text-base font-medium text-neutral-800"
-                  >
-                    Previous
-                  </Link>
-                )}
-                {Array.from({ length: Math.min(5, lastPage) }, (_, i) => {
-                  const p = i + 1;
-                  return (
-                    <Link
-                      key={p}
-                      href={`/printers?page=${p}`}
-                      className={`flex h-10 min-w-10 items-center justify-center rounded-[50px] border border-slate-100 px-3 text-sm font-semibold ${
-                        p === currentPage ? "bg-amber-500 text-white" : "text-neutral-700"
-                      }`}
-                    >
-                      {p}
-                    </Link>
-                  );
-                })}
-                {lastPage > 5 && <span className="px-2 text-sm font-semibold text-zinc-500">...</span>}
-                {currentPage < lastPage && (
-                  <Link
-                    href={`/printers?page=${currentPage + 1}`}
-                    className="rounded-[50px] border border-slate-100 px-6 py-2.5 text-base font-semibold text-neutral-800"
-                  >
-                    Next
-                  </Link>
-                )}
-              </div>
-            )}
-          </div>
+          <PrintersListing printers={printers} />
         </div>
       </section>
 

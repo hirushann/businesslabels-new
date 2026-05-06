@@ -451,6 +451,15 @@ function withSafeSort(body: ElasticsearchRequestBody): ElasticsearchRequestBody 
   };
 }
 
+function withCategoryConstraint(body: ElasticsearchRequestBody, categorySlug: string): ElasticsearchRequestBody {
+  const constraintClause = { terms: { category_slugs: [categorySlug] } };
+  const existingQuery = body.query;
+  const newQuery = existingQuery
+    ? { bool: { must: [existingQuery], filter: [constraintClause] } }
+    : { bool: { filter: [constraintClause] } };
+  return { ...body, query: newQuery };
+}
+
 type SearchStats = {
   price: {
     max: number | null;
@@ -529,6 +538,7 @@ async function loadSearchStats(
   host: string,
   index: string,
   connectionHeaders: Record<string, string> | undefined,
+  categorySlug?: string,
 ): Promise<SearchStats> {
   const fallbackStats: SearchStats = {
     price: { max: null },
@@ -560,12 +570,20 @@ async function loadSearchStats(
   };
 
   try {
+    const statsBody: Record<string, unknown> = {
+      size: 0,
+      runtime_mappings: metaRuntimeMappings(),
+    };
+
+    if (categorySlug) {
+      statsBody.query = { bool: { filter: [{ terms: { category_slugs: [categorySlug] } }] } };
+    }
+
     const response = await fetch(`${host}/${elasticIndexPath(index)}/_search`, {
       method: 'POST',
       headers: elasticFetchHeaders(connectionHeaders),
       body: JSON.stringify({
-        size: 0,
-        runtime_mappings: metaRuntimeMappings(),
+        ...statsBody,
         aggs: {
           max_price: {
             max: {
@@ -891,9 +909,9 @@ export async function POST(request: NextRequest) {
     return normalizeError('Elasticsearch host is not configured.', 500);
   }
 
-  let body: { state?: RequestState; queryConfig?: QueryConfig };
+  let body: { state?: RequestState; queryConfig?: QueryConfig; categorySlug?: string };
   try {
-    body = (await request.json()) as { state?: RequestState; queryConfig?: QueryConfig };
+    body = (await request.json()) as { state?: RequestState; queryConfig?: QueryConfig; categorySlug?: string };
   } catch {
     return normalizeError('Invalid search request payload.', 400);
   }
@@ -901,6 +919,10 @@ export async function POST(request: NextRequest) {
   if (!body?.state || !body?.queryConfig) {
     return normalizeError('Missing search state or query config.', 400);
   }
+
+  const categorySlug = typeof body.categorySlug === 'string' && body.categorySlug.trim()
+    ? body.categorySlug.trim()
+    : undefined;
 
   try {
     const connector = new ElasticsearchAPIConnector({
@@ -910,14 +932,17 @@ export async function POST(request: NextRequest) {
       ...(connectionHeaders ? { connectionOptions: { headers: connectionHeaders } } : {}),
       getQueryFn: (state, queryConfig) => buildRelevanceQuery(state, queryConfig) as never,
       interceptSearchRequest: async ({ requestBody }, next) => {
-        const safeRequestBody = withSafeSort(requestBody as ElasticsearchRequestBody);
+        let safeRequestBody = withSafeSort(requestBody as ElasticsearchRequestBody);
+        if (categorySlug) {
+          safeRequestBody = withCategoryConstraint(safeRequestBody, categorySlug);
+        }
         return next(safeRequestBody as never);
       },
     });
 
     const [response, searchStats] = await Promise.all([
       connector.onSearch(body.state, body.queryConfig),
-      loadSearchStats(host, index, connectionHeaders),
+      loadSearchStats(host, index, connectionHeaders, categorySlug),
     ]);
 
     const responseWithPriceMetadata: ResponseState = {
