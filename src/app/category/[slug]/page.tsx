@@ -5,8 +5,7 @@ import EmptyState from "@/components/EmptyState";
 import ProductsListing, { type ListingProductCardData } from "@/components/ProductsListing";
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 import { demoProducts, mapDemoProductToCard } from "@/lib/demoCatalog";
-import InfiniteCategoryListing from "@/components/InfiniteCategoryListing";
-
+import CategoryListing from "@/components/CategoryListing";
 export const metadata: Metadata = {
   title: "Labelprinters — BusinessLabels",
   description:
@@ -346,23 +345,7 @@ export default async function CategoryArchivePage({
   const categoryProducts = isDemoCategory ? [] : await loadCategoryProducts(baseUrl, slug);
   const topProducts = await loadTopProducts(baseUrl);
 
-  async function fetchMoreProducts(targetSlug: string, page: number): Promise<ProductCardData[]> {
-    "use server";
-    const url = process.env.BBNL_API_BASE_URL;
-    if (!url) return [];
-    try {
-      const response = await fetch(
-        `${url}/api/products?page=${page}`,
-        { cache: "no-store" }
-      );
-      if (!response.ok) return [];
-      const json = await response.json();
-      return (json.data ?? []).map((product: any, index: number) => mapProductToCard(product, index));
-    } catch (error) {
-      console.error("Failed to fetch more products", error);
-      return [];
-    }
-  }
+
 
   return (
     <div className="bg-white">
@@ -464,11 +447,9 @@ export default async function CategoryArchivePage({
           )}
 
           {/* ── Product Grid ───────────────────────────── */}
-          <InfiniteCategoryListing 
-            categoryTitle={categoryTitle} 
+          <CategoryListing 
             categorySlug={slug}
-            initialProducts={isDemoCategory ? paginatedDemoProducts as ProductCardData[] : categoryProducts}
-            fetchMoreProducts={fetchMoreProducts}
+            products={isDemoCategory ? (paginatedDemoProducts as ProductCardData[]) : categoryProducts}
           />
 
         </div>
