@@ -13,11 +13,57 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 
-export const metadata: Metadata = {
-  title: "Epson CW-C6000Ae MK — BusinessLabels",
-  description:
-    "Premium color label printer for product labeling, shipping labels and general purpose use. Compatible with Epson ColorWorks inkjet label printers.",
-};
+export async function generateMetadata({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ type?: string | string[] }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const query = await searchParams;
+  const baseUrl = process.env.BBNL_API_BASE_URL;
+
+  if (!slug || !baseUrl) {
+    return { title: "Product — BusinessLabels" };
+  }
+
+  const selectedType = normalizeType(query.type);
+  const tryTypes: Array<"simple" | "variable"> = selectedType
+    ? [selectedType]
+    : ["simple", "variable"];
+
+  let product: ProductDetail | null = null;
+  for (const type of tryTypes) {
+    product = await fetchProductByType(baseUrl, type, slug);
+    if (product) break;
+  }
+
+  if (!product) {
+    return { title: "Product Not Found — BusinessLabels" };
+  }
+
+  const title = product.meta_title || `${product.title || product.name} — BusinessLabels`;
+  const description = product.meta_description || product.description || product.excerpt || "Premium product from BusinessLabels";
+  const mainImage = product.main_image || "";
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: mainImage ? [mainImage] : [],
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: mainImage ? [mainImage] : [],
+    },
+  };
+}
 
 type UpsellProduct = {
   id: number;
@@ -55,6 +101,8 @@ type ProductDetail = {
     category?: { id?: number; name?: string | null; slug?: string | null } | null;
   } | null;
   meta?: Record<string, string | number | boolean | null> | null;
+  meta_title?: string | null;
+  meta_description?: string | null;
   material_information?: string | null;
   make?: string | null;
   packaging_unit?: number | null;
@@ -147,6 +195,7 @@ async function fetchProductByType(baseUrl: string, type: "simple" | "variable", 
     }
 
     const json = (await response.json()) as { data?: ProductDetail };
+    console.log("Full API Response:", JSON.stringify(json, null, 2));
     return json.data ?? null;
   } catch (error) {
     console.error(`Failed to fetch product details for type '${type}' and slug '${slug}'`, error);
