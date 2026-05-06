@@ -195,7 +195,6 @@ async function fetchProductByType(baseUrl: string, type: "simple" | "variable", 
     }
 
     const json = (await response.json()) as { data?: ProductDetail };
-    console.log("Full API Response:", JSON.stringify(json, null, 2));
     return json.data ?? null;
   } catch (error) {
     console.error(`Failed to fetch product details for type '${type}' and slug '${slug}'`, error);
