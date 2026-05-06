@@ -6,11 +6,60 @@ import ProductsListing, { type ListingProductCardData } from "@/components/Produ
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 import { demoProducts, mapDemoProductToCard } from "@/lib/demoCatalog";
 import CategoryListing from "@/components/CategoryListing";
-export const metadata: Metadata = {
-  title: "Labelprinters — BusinessLabels",
-  description:
-    "Browse our full range of color label printers including desktop, midrange and industrial models. Epson ColorWorks Gold Partner.",
-};
+
+function slugToTitle(slug: string): string {
+  return slug
+    .split("-")
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(" ");
+}
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const baseUrl = process.env.BBNL_API_BASE_URL;
+
+  if (!slug || !baseUrl || slug === "demo") {
+    return { title: "Category — BusinessLabels" };
+  }
+
+  try {
+    const fetchUrl = `${baseUrl}/api/categories/${slug}/products?page=1`;
+    console.log("Metadata Debug - Fetching URL:", fetchUrl);
+    const response = await fetch(fetchUrl, { cache: "no-store" });
+    if (!response.ok) {
+      console.log("Metadata Debug - Fetch Failed with status:", response.status);
+      return { title: `${slugToTitle(slug)} — BusinessLabels` };
+    }
+
+    const json = (await response.json()) as CategoryProductsResponse;
+    const category = json.category;
+
+    const title = category?.meta_title || `${category?.name || slugToTitle(slug)} — BusinessLabels`;
+    const description = category?.meta_description || `Browse our full range of ${category?.name || slugToTitle(slug)} products. Epson ColorWorks Gold Partner.`;
+
+    return {
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+        type: "website",
+      },
+      twitter: {
+        card: "summary",
+        title,
+        description,
+      },
+    };
+  } catch (error) {
+    console.error("Failed to generate category metadata:", error);
+    return { title: `${slugToTitle(slug)} — BusinessLabels` };
+  }
+}
 
 type CategoryTreeItem = {
   id?: number;
@@ -67,6 +116,13 @@ type CategoryProductsResponse = {
     last_page?: number;
     total?: number;
   };
+  category?: {
+    id?: number;
+    name?: string | null;
+    slug?: string | null;
+    meta_title?: string | null;
+    meta_description?: string | null;
+  } | null;
 };
 
 const DEMO_TOP_PRODUCT_IDS = [1, 2, 3] as const;
@@ -239,7 +295,7 @@ async function loadCategoryProducts(baseUrl: string | undefined, slug: string): 
 
   try {
     const response = await fetch(
-      `${baseUrl}/api/categories/${slug}?page=1`,
+      `${baseUrl}/api/categories/${slug}/products?page=1`,
       { cache: "no-store" },
     );
 
@@ -255,13 +311,7 @@ async function loadCategoryProducts(baseUrl: string | undefined, slug: string): 
   }
 }
 
-function slugToTitle(slug: string): string {
-  return slug
-    .split("-")
-    .filter(Boolean)
-    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-    .join(" ");
-}
+
 
 function categoryTitleForSlug(slug: string): string {
   return CATEGORY_TITLES[slug] ?? slugToTitle(slug);
