@@ -129,11 +129,16 @@ function CategoryListingContent({ products }: { products: CategoryCardData[] }) 
   const selectedSort = sortValueFromState(sortField, sortDirection);
   const searchHasResolved = Array.isArray(results) && (typeof totalResults === "number" || !isLoading);
   const fallbackProducts = !searchHasResolved && !error ? products : [];
-  const searchProducts = searchHasResolved
-    ? (results ?? []).map((result, resultIndex) => mapProductListingResult(result, resultIndex))
-    : [];
+  const searchProducts = useMemo(() => {
+    return searchHasResolved
+      ? (results ?? []).map((result, resultIndex) => mapProductListingResult(result, resultIndex))
+      : [];
+  }, [searchHasResolved, results]);
+  
+  const [accumulatedProducts, setAccumulatedProducts] = useState<any[]>([]);
+
   const hasFallbackProducts = fallbackProducts.length > 0;
-  const hasSearchProducts = searchProducts.length > 0;
+  const hasSearchProducts = accumulatedProducts.length > 0 || searchProducts.length > 0;
 
   const handleSortChange = (value: CategoryListingSortValue) => {
     const mapped = LISTING_SORT_TO_SEARCH_UI[value];
@@ -146,9 +151,14 @@ function CategoryListingContent({ products }: { products: CategoryCardData[] }) 
     setCurrent(1);
   };
 
-  const [accumulatedProducts, setAccumulatedProducts] = useState<any[]>([]);
-
   useEffect(() => {
+    if (isLoading) {
+      if (current === 1) {
+        setAccumulatedProducts([]);
+      }
+      return;
+    }
+
     if (current === 1) {
       setAccumulatedProducts(searchProducts);
     } else if (searchProducts.length > 0) {
@@ -158,7 +168,7 @@ function CategoryListingContent({ products }: { products: CategoryCardData[] }) 
         return [...prev, ...newProducts];
       });
     }
-  }, [searchProducts, current]);
+  }, [searchProducts, current, isLoading]);
 
   const observerTarget = useRef<HTMLDivElement>(null);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
@@ -271,9 +281,9 @@ function CategoryListingContent({ products }: { products: CategoryCardData[] }) 
 
           {error ? (
             <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">{String(error)}</div>
-          ) : isLoading && !hasFallbackProducts ? (
+          ) : isLoading && current === 1 && !hasFallbackProducts ? (
             <CategorySkeletonGrid isSidebarOpen={isSidebarOpen} />
-          ) : !hasFallbackProducts && !hasSearchProducts ? (
+          ) : !hasFallbackProducts && !hasSearchProducts && !isLoading ? (
             <EmptyState title="No products found" description="Try adjusting the filters to see more products." />
           ) : (
             <>
@@ -299,6 +309,15 @@ function CategoryListingContent({ products }: { products: CategoryCardData[] }) 
                         }
                       />
                     ))}
+
+                {isLoading && (current ?? 1) > 1 && Array.from({ length: isSidebarOpen ? 3 : 4 }).map((_, i) => (
+                  <div key={`loading-skeleton-${i}`} className="flex flex-col gap-4 w-full bg-white border border-gray-100/50 rounded-2xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] animate-pulse">
+                    <div className="w-full aspect-[4/3] bg-slate-100 rounded-xl mb-2"></div>
+                    <div className="w-2/3 h-5 bg-slate-100 rounded-full mt-2"></div>
+                    <div className="w-1/2 h-5 bg-slate-100 rounded-full"></div>
+                    <div className="w-1/3 h-5 bg-slate-100 rounded-full mt-1"></div>
+                  </div>
+                ))}
               </div>
 
               {page < pageCount && hasSearchProducts ? (
