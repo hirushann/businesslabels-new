@@ -131,6 +131,11 @@ const GLUE_FIELD = {
   runtimeField: 'meta_glue',
 } as const;
 
+const KERN_STRING_FIELD = {
+  keys: ['kern_numeric', 'kern', 'meta_kern'],
+  runtimeField: 'meta_kern_string',
+} as const;
+
 const MATERIAL_FIELD = {
   runtimeField: 'meta_material',
 } as const;
@@ -371,6 +376,12 @@ function metaRuntimeMappings(): Record<string, unknown> {
         source: keywordRuntimeScript(GLUE_FIELD.keys),
       },
     },
+    [KERN_STRING_FIELD.runtimeField]: {
+      type: 'keyword',
+      script: {
+        source: keywordRuntimeScript(KERN_STRING_FIELD.keys),
+      },
+    },
     [MATERIAL_FIELD.runtimeField]: {
       type: 'keyword',
       script: {
@@ -518,6 +529,13 @@ type SearchStats = {
         count: number;
       }>;
     };
+    kern: {
+      options: Array<{
+        value: string;
+        label: string;
+        count: number;
+      }>;
+    };
   };
 };
 
@@ -564,6 +582,9 @@ async function loadSearchStats(
         options: [],
       },
       glue: {
+        options: [],
+      },
+      kern: {
         options: [],
       },
     },
@@ -641,6 +662,15 @@ async function loadSearchStats(
               },
             },
           },
+          kern_strings: {
+            terms: {
+              field: KERN_STRING_FIELD.runtimeField,
+              size: 100,
+              order: {
+                _key: 'asc',
+              },
+            },
+          },
           categories: {
             terms: {
               field: CATEGORY_FIELD.runtimeField,
@@ -701,6 +731,12 @@ async function loadSearchStats(
           }>;
         };
         glues?: {
+          buckets?: Array<{
+            key?: string | number;
+            doc_count?: number;
+          }>;
+        };
+        kern_strings?: {
           buckets?: Array<{
             key?: string | number;
             doc_count?: number;
@@ -823,6 +859,18 @@ async function loadSearchStats(
               };
             })
             .filter((option) => option.value.trim() !== ''),
+        },
+        kern: {
+          options: (json.aggregations?.kern_strings?.buckets ?? [])
+            .map((bucket) => {
+              const value = typeof bucket.key === 'string' ? bucket.key : String(bucket.key ?? '');
+              return {
+                value,
+                label: labelFromCode(value),
+                count: typeof bucket.doc_count === 'number' ? bucket.doc_count : 0,
+              };
+            })
+            .filter((option) => option.value.trim() !== '' && !/[-+]?[0-9]*\.?[0-9]+/.test(option.value)),
         },
       },
     };

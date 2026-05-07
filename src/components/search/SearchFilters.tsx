@@ -65,7 +65,7 @@ type PillOption = {
 type PillFilterConfig = {
   title: string;
   field: string;
-  responseKey: "category" | "brand" | "materialCode" | "material" | "finishing" | "glue";
+  responseKey: "category" | "brand" | "materialCode" | "material" | "finishing" | "glue" | "kern";
 };
 
 const PILL_FILTERS: PillFilterConfig[] = [
@@ -100,6 +100,12 @@ const PILL_FILTERS: PillFilterConfig[] = [
     responseKey: "glue",
   },
 ];
+
+const KERN_PILL_FILTER: PillFilterConfig = {
+  title: "Kern",
+  field: "meta_kern_string",
+  responseKey: "kern",
+};
 
 function isPriceRangeFilter(value: unknown): value is FilterValueRange {
   return typeof value === "object" && value !== null && "name" in value;
@@ -210,12 +216,16 @@ function RangeFilter({
   rawResponse,
   removeFilter,
   setFilter,
+  addFilter,
+  pillConfig,
 }: {
   config: RangeFilterConfig;
   activeFilters: Filter[];
   rawResponse: unknown;
-  removeFilter: (name: string) => void;
+  removeFilter: (name: string, value?: string, type?: "any") => void;
   setFilter: (name: string, value: FilterValueRange) => void;
+  addFilter?: (name: string, value: string, type?: "any") => void;
+  pillConfig?: PillFilterConfig;
 }) {
   const max = sliderMax(rawResponse, config.field);
   const filter = activeFilters.find((activeFilter) => activeFilter.field === config.field);
@@ -235,15 +245,61 @@ function RangeFilter({
 
   return (
     <Accordion title={config.title} defaultOpen={true} size="compact">
-      <RangeSlider
-        min={INITIAL_MIN}
-        max={max}
-        value={range}
-        onChange={() => { }}
-        onAfterChange={handleAfterChange}
-        formatValue={(value) => formatRangeValue(value, config)}
-        inputPrefix={config.unitPrefix}
-      />
+      <div className="flex flex-col gap-4">
+        <RangeSlider
+          min={INITIAL_MIN}
+          max={max}
+          value={range}
+          onChange={() => { }}
+          onAfterChange={handleAfterChange}
+          formatValue={(value) => formatRangeValue(value, config)}
+          inputPrefix={config.unitPrefix}
+        />
+        {pillConfig && addFilter && (() => {
+          const options = pillOptions(rawResponse, pillConfig.responseKey);
+          if (options.length === 0) return null;
+
+          const selectedValues = new Set(
+            activeFilters
+              .find((activeFilter) => activeFilter.field === pillConfig.field && activeFilter.type === "any")
+              ?.values.filter(isSelectedValue) ?? [],
+          );
+
+          return (
+            <div className="flex flex-wrap gap-2 pt-3 border-t border-slate-100">
+              {options.map((option) => {
+                const selected = selectedValues.has(option.value);
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => {
+                      if (selected) {
+                        removeFilter(pillConfig.field, option.value, "any");
+                      } else {
+                        addFilter(pillConfig.field, option.value, "any");
+                      }
+                    }}
+                    className={`inline-flex min-h-8 items-center gap-2 rounded-full px-3 py-1 text-sm font-medium transition-colors ${
+                      selected
+                        ? "bg-amber-500 text-white shadow-sm hover:bg-amber-600"
+                        : "bg-slate-100 text-neutral-700 hover:bg-amber-50 hover:text-amber-600"
+                    }`}
+                    aria-pressed={selected}
+                  >
+                    <span>{option.label}</span>
+                    {typeof option.count === "number" ? (
+                      <span className={selected ? "text-white/75" : "text-slate-400"}>{option.count}</span>
+                    ) : null}
+                    {selected ? <span className="text-base leading-none text-white/80">×</span> : null}
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })()}
+      </div>
     </Accordion>
   );
 }
@@ -344,10 +400,12 @@ export default function SearchFilters() {
       ))}
       <RangeFilter
         config={KERN_RANGE_FILTER}
+        pillConfig={KERN_PILL_FILTER}
         activeFilters={activeFilters}
         rawResponse={rawResponse}
         removeFilter={removeFilter}
         setFilter={setFilter}
+        addFilter={addFilter}
       />
     </div>
   );

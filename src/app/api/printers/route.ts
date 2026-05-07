@@ -11,7 +11,7 @@ type Printer = {
   content: string;
   status: string;
   template: string;
-  meta: Record<string, any>;
+  meta: Record<string, unknown>;
   image: string | null;
   created_at: string;
   updated_at: string;
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
       {
         headers: { 'Accept': 'application/json' },
         next: { revalidate: 600 }, // Cache for 10 minutes
-      }
+      } as RequestInit & { next?: { revalidate?: number | false } }
     );
 
     if (!response.ok) {
