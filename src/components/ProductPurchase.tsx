@@ -381,10 +381,33 @@ export default function ProductPurchase({
           <PopoverAnchor asChild>
             <div className="flex flex-col gap-3">
               <span className="text-neutral-800 text-lg font-bold leading-5">Select Quantity</span>
+              <div className="h-12 px-1 rounded-[50px] outline outline-offset-[-1px] outline-black/10 flex justify-between items-center bg-white">
+                <button
+                  type="button"
+                  onClick={decrement}
+                  className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
+                    <path strokeLinecap="round" d="M2 6h8" />
+                  </svg>
+                </button>
+                <div className="flex-1 self-stretch flex justify-center items-center overflow-hidden">
+                  <span className="text-neutral-800 text-sm font-semibold leading-5 px-2">{quantity}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={increment}
+                  className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
+                    <path strokeLinecap="round" d="M6 2v8M2 6h8" />
+                  </svg>
+                </button>
+              </div>
               <div className="flex items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => handleAddToCart(1)}
+                  onClick={() => handleAddToCart(quantity)}
                   className="flex-1 h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm flex"
                 >
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
