@@ -261,6 +261,13 @@ function LoginContent() {
                 )}
               </Button>
             </form>
+
+            <p className="mt-7 text-center text-sm font-semibold text-neutral-500">
+              New to BusinessLabels?{' '}
+              <Link href="/register" className="font-black text-amber-600 transition-colors hover:text-amber-700">
+                Create an account
+              </Link>
+            </p>
           </div>
         </div>
       </div>

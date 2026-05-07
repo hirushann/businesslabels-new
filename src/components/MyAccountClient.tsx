@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense, useSyncExternalStore } from 'react';
+import { useEffect, useState, Suspense, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -9,6 +9,23 @@ import { toast } from 'sonner';
 type Tab = 'dashboard' | 'orders' | 'downloads' | 'addresses' | 'details' | 'printers' | 'favourites';
 
 type StoredUser = Record<string, unknown>;
+type OrderStatus = 'completed' | 'processing' | 'pending' | 'cancelled' | 'failed' | string;
+type AccountOrder = {
+  id: string;
+  date: string;
+  status: OrderStatus;
+  total: string;
+  items: number | null;
+};
+type AddressType = 'billing' | 'shipping' | string;
+type AccountAddress = {
+  id: string;
+  type: AddressType;
+  name: string;
+  company: string;
+  lines: string[];
+  country: string;
+};
 
 const emptyUser: StoredUser = {};
 const validTabs: Tab[] = ['dashboard', 'orders', 'downloads', 'addresses', 'details', 'printers', 'favourites'];
@@ -46,6 +63,10 @@ function parseStoredUser(value: string): StoredUser {
   } catch {
     return emptyUser;
   }
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
 function useStoredUser() {
@@ -88,6 +109,250 @@ function splitDisplayName(name: string) {
     firstName: parts[0] ?? '',
     lastName: parts.slice(1).join(' '),
   };
+}
+
+function formatEuro(value: number) {
+  return new Intl.NumberFormat('nl-NL', {
+    style: 'currency',
+    currency: 'EUR',
+  }).format(value);
+}
+
+function readStringValue(source: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = source[key];
+
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+
+    if (typeof value === 'number') {
+      return String(value);
+    }
+  }
+
+  return '';
+}
+
+function readNumberValue(source: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = source[key];
+
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
+
+    if (typeof value === 'string' && value.trim()) {
+      const normalized = Number(value.replace(/[^\d.-]/g, ''));
+
+      if (Number.isFinite(normalized)) {
+        return normalized;
+      }
+    }
+  }
+
+  return null;
+}
+
+function formatOrderId(order: Record<string, unknown>) {
+  const id = readStringValue(order, ['number', 'order_number', 'order_no', 'reference', 'id']);
+
+  if (!id) {
+    return 'Order';
+  }
+
+  return id.startsWith('#') ? id : `#${id}`;
+}
+
+function formatOrderDate(order: Record<string, unknown>) {
+  const dateValue = readStringValue(order, ['date', 'ordered_at', 'created_at', 'createdAt']);
+
+  if (!dateValue) {
+    return '-';
+  }
+
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) {
+    return dateValue;
+  }
+
+  return date.toLocaleDateString('en-US', {
+    month: 'long',
+    day: '2-digit',
+    year: 'numeric',
+  });
+}
+
+function formatOrderTotal(order: Record<string, unknown>) {
+  const formattedTotal = readStringValue(order, ['formatted_total', 'total_formatted', 'display_total']);
+  if (formattedTotal) {
+    return formattedTotal;
+  }
+
+  const total = readNumberValue(order, ['total', 'grand_total', 'order_total', 'total_price', 'amount']);
+  return total === null ? '-' : formatEuro(total);
+}
+
+function readOrderItemCount(order: Record<string, unknown>) {
+  const count = readNumberValue(order, ['items_count', 'item_count', 'line_items_count', 'products_count']);
+  if (count !== null) {
+    return count;
+  }
+
+  const items = order.items ?? order.line_items ?? order.order_items;
+  return Array.isArray(items) ? items.length : null;
+}
+
+function extractOrderList(payload: unknown): unknown[] {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (!isPlainObject(payload)) {
+    return [];
+  }
+
+  if (Array.isArray(payload.data)) {
+    return payload.data;
+  }
+
+  if (Array.isArray(payload.orders)) {
+    return payload.orders;
+  }
+
+  if (isPlainObject(payload.data) && Array.isArray(payload.data.orders)) {
+    return payload.data.orders;
+  }
+
+  return [];
+}
+
+function normalizeOrders(payload: unknown): AccountOrder[] {
+  return extractOrderList(payload)
+    .filter(isPlainObject)
+    .map((order) => ({
+      id: formatOrderId(order),
+      date: formatOrderDate(order),
+      status: readStringValue(order, ['status', 'order_status', 'fulfillment_status']) || 'Pending',
+      total: formatOrderTotal(order),
+      items: readOrderItemCount(order),
+    }));
+}
+
+async function requestAccountOrders() {
+  const response = await fetch('/api/account/orders', {
+    headers: {
+      Accept: 'application/json',
+    },
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(
+      isPlainObject(data) && typeof data.message === 'string'
+        ? data.message
+        : 'Unable to load your orders.'
+    );
+  }
+
+  return normalizeOrders(data);
+}
+
+function formatAddressId(address: Record<string, unknown>, index: number) {
+  const id = readStringValue(address, ['id', 'address_id', 'uuid']);
+  return id || `address-${index}`;
+}
+
+function readAddressType(address: Record<string, unknown>) {
+  return readStringValue(address, ['type', 'address_type', 'kind']);
+}
+
+function formatAddressName(address: Record<string, unknown>) {
+  const explicitName = readStringValue(address, ['name', 'full_name', 'display_name']);
+  if (explicitName) {
+    return explicitName;
+  }
+
+  const firstName = readStringValue(address, ['first_name', 'firstname', 'billing_first_name', 'shipping_first_name']);
+  const lastName = readStringValue(address, ['last_name', 'lastname', 'billing_last_name', 'shipping_last_name']);
+  const combinedName = [firstName, lastName].filter(Boolean).join(' ');
+
+  return combinedName || 'Saved address';
+}
+
+function normalizeAddress(address: Record<string, unknown>, index: number): AccountAddress {
+  const street = readStringValue(address, ['street', 'address', 'address_1', 'line1', 'street_address']);
+  const street2 = readStringValue(address, ['street2', 'address_2', 'line2', 'apartment', 'suite']);
+  const postcode = readStringValue(address, ['postcode', 'postal_code', 'zip', 'zip_code']);
+  const city = readStringValue(address, ['city', 'town']);
+  const state = readStringValue(address, ['state', 'province', 'region']);
+  const country = readStringValue(address, ['country', 'country_name']) || 'Netherlands';
+  const cityLine = [postcode, city, state].filter(Boolean).join(' ');
+
+  return {
+    id: formatAddressId(address, index),
+    type: readAddressType(address) || 'shipping',
+    name: formatAddressName(address),
+    company: readStringValue(address, ['company', 'company_name', 'business_name']),
+    lines: [street, street2, cityLine].filter(Boolean),
+    country,
+  };
+}
+
+function extractAddressList(payload: unknown): unknown[] {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (!isPlainObject(payload)) {
+    return [];
+  }
+
+  if (Array.isArray(payload.data)) {
+    return payload.data;
+  }
+
+  if (Array.isArray(payload.addresses)) {
+    return payload.addresses;
+  }
+
+  if (isPlainObject(payload.data) && Array.isArray(payload.data.addresses)) {
+    return payload.data.addresses;
+  }
+
+  const typedAddresses = [
+    isPlainObject(payload.billing) ? { ...payload.billing, type: readAddressType(payload.billing) || 'billing' } : null,
+    isPlainObject(payload.shipping) ? { ...payload.shipping, type: readAddressType(payload.shipping) || 'shipping' } : null,
+    isPlainObject(payload.billing_address) ? { ...payload.billing_address, type: readAddressType(payload.billing_address) || 'billing' } : null,
+    isPlainObject(payload.shipping_address) ? { ...payload.shipping_address, type: readAddressType(payload.shipping_address) || 'shipping' } : null,
+  ].filter(isPlainObject);
+
+  return typedAddresses.length > 0 ? typedAddresses : [];
+}
+
+function normalizeAddresses(payload: unknown): AccountAddress[] {
+  return extractAddressList(payload)
+    .filter(isPlainObject)
+    .map(normalizeAddress);
+}
+
+async function requestAccountAddresses() {
+  const response = await fetch('/api/account/addresses', {
+    headers: {
+      Accept: 'application/json',
+    },
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(
+      isPlainObject(data) && typeof data.message === 'string'
+        ? data.message
+        : 'Unable to load your addresses.'
+    );
+  }
+
+  return normalizeAddresses(data);
 }
 
 function formatCustomerSince(user: StoredUser) {
@@ -252,7 +517,7 @@ function MyAccountContent() {
                 {activeTab === 'printers' && <PrintersView />}
                 {activeTab === 'favourites' && <FavouriteProductsView />}
                 {activeTab === 'downloads' && <DownloadsView />}
-                {activeTab === 'addresses' && <AddressesView user={user} />}
+                {activeTab === 'addresses' && <AddressesView />}
                 {activeTab === 'details' && <AccountDetailsView user={user} />}
              </div>
           </main>
@@ -328,11 +593,52 @@ function DashboardView({ setActiveTab, user }: { setActiveTab: (tab: Tab) => voi
 }
 
 function OrdersView() {
-  const mockOrders = [
-    { id: '#4582', date: 'June 12, 2023', status: 'Completed', total: '€ 450.00', items: 3 },
-    { id: '#4120', date: 'May 28, 2023', status: 'Processing', total: '€ 1,205.50', items: 1 },
-    { id: '#3994', date: 'April 05, 2023', status: 'Completed', total: '€ 89.90', items: 2 },
-  ];
+  const [orders, setOrders] = useState<AccountOrder[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const fetchOrders = async () => {
+    setIsLoading(true);
+    setErrorMessage('');
+
+    try {
+      setOrders(await requestAccountOrders());
+    } catch (error) {
+      setOrders([]);
+      setErrorMessage(error instanceof Error ? error.message : 'Unable to load your orders.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadOrders() {
+      try {
+        const nextOrders = await requestAccountOrders();
+
+        if (isMounted) {
+          setOrders(nextOrders);
+        }
+      } catch (error) {
+        if (isMounted) {
+          setOrders([]);
+          setErrorMessage(error instanceof Error ? error.message : 'Unable to load your orders.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadOrders();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -340,46 +646,90 @@ function OrdersView() {
         <h2 className="text-3xl font-black text-neutral-800 tracking-tight">Order History</h2>
         <p className="text-neutral-500 font-medium">Manage and track all your printer and supply orders.</p>
       </div>
-      
-      <div className="overflow-x-auto -mx-1">
-        <table className="w-full text-left border-collapse min-w-[700px]">
-          <thead>
-            <tr className="border-b-2 border-slate-100 text-neutral-400">
-              <th className="py-5 font-black text-[11px] uppercase tracking-widest pl-2">Order</th>
-              <th className="py-5 font-black text-[11px] uppercase tracking-widest">Date</th>
-              <th className="py-5 font-black text-[11px] uppercase tracking-widest">Status</th>
-              <th className="py-5 font-black text-[11px] uppercase tracking-widest">Total</th>
-              <th className="py-5 font-black text-[11px] uppercase tracking-widest text-right pr-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {mockOrders.map((order) => (
-              <tr key={order.id} className="border-b border-slate-50 hover:bg-slate-50/70 transition-all group">
-                <td className="py-6 font-bold text-neutral-800 text-lg pl-2">{order.id}</td>
-                <td className="py-6 text-neutral-500 font-medium">{order.date}</td>
-                <td className="py-6">
-                  <span className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-tight ${
-                    order.status === 'Completed' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
-                  }`}>
-                    {order.status}
-                  </span>
-                </td>
-                <td className="py-6 flex flex-col">
-                   <span className="text-neutral-800 font-bold">{order.total}</span>
-                   <span className="text-neutral-400 text-xs font-medium">{order.items} items</span>
-                </td>
-                <td className="py-6 text-right pr-2">
-                  <button className="text-neutral-400 font-bold text-sm bg-white border border-slate-200 px-5 py-2.5 rounded-full group-hover:bg-amber-500 group-hover:text-white group-hover:border-amber-500 transition-all shadow-sm">
-                    Details
-                  </button>
-                </td>
+
+      {isLoading ? (
+        <div className="flex min-h-64 items-center justify-center rounded-3xl border border-slate-100 bg-slate-50">
+          <div className="flex flex-col items-center gap-3 text-neutral-500">
+            <div className="size-10 animate-spin rounded-full border-4 border-slate-200 border-t-amber-500" />
+            <p className="font-bold">Loading orders...</p>
+          </div>
+        </div>
+      ) : errorMessage ? (
+        <div className="rounded-3xl border border-red-100 bg-red-50 p-8">
+          <h3 className="text-lg font-black text-red-700">Orders could not be loaded</h3>
+          <p className="mt-2 font-medium text-red-600">{errorMessage}</p>
+          <button
+            type="button"
+            onClick={() => void fetchOrders()}
+            className="mt-5 rounded-full bg-red-600 px-6 py-2.5 text-sm font-black text-white transition-colors hover:bg-red-700"
+          >
+            Try again
+          </button>
+        </div>
+      ) : orders.length === 0 ? (
+        <div className="rounded-3xl border border-slate-100 bg-slate-50 p-10 text-center">
+          <h3 className="text-xl font-black text-neutral-800">No orders yet</h3>
+          <p className="mt-2 font-medium text-neutral-500">Your order history will appear here after your first purchase.</p>
+          <Link
+            href="/products"
+            className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-amber-500 px-7 text-sm font-black text-white transition-colors hover:bg-amber-600"
+          >
+            Browse products
+          </Link>
+        </div>
+      ) : (
+        <div className="overflow-x-auto -mx-1">
+          <table className="w-full text-left border-collapse min-w-[700px]">
+            <thead>
+              <tr className="border-b-2 border-slate-100 text-neutral-400">
+                <th className="py-5 font-black text-[11px] uppercase tracking-widest pl-2">Order</th>
+                <th className="py-5 font-black text-[11px] uppercase tracking-widest">Date</th>
+                <th className="py-5 font-black text-[11px] uppercase tracking-widest">Status</th>
+                <th className="py-5 font-black text-[11px] uppercase tracking-widest">Total</th>
+                <th className="py-5 font-black text-[11px] uppercase tracking-widest text-right pr-2">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {orders.map((order, index) => (
+                <tr key={`${order.id}-${order.date}-${index}`} className="border-b border-slate-50 hover:bg-slate-50/70 transition-all group">
+                  <td className="py-6 font-bold text-neutral-800 text-lg pl-2">{order.id}</td>
+                  <td className="py-6 text-neutral-500 font-medium">{order.date}</td>
+                  <td className="py-6">
+                    <span className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-tight ${orderStatusClass(order.status)}`}>
+                      {order.status}
+                    </span>
+                  </td>
+                  <td className="py-6 flex flex-col">
+                     <span className="text-neutral-800 font-bold">{order.total}</span>
+                     <span className="text-neutral-400 text-xs font-medium">{order.items === null ? 'Items unavailable' : `${order.items} ${order.items === 1 ? 'item' : 'items'}`}</span>
+                  </td>
+                  <td className="py-6 text-right pr-2">
+                    <button className="text-neutral-400 font-bold text-sm bg-white border border-slate-200 px-5 py-2.5 rounded-full group-hover:bg-amber-500 group-hover:text-white group-hover:border-amber-500 transition-all shadow-sm">
+                      Details
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
+}
+
+function orderStatusClass(status: string) {
+  const normalizedStatus = status.toLowerCase();
+
+  if (['completed', 'complete', 'paid', 'delivered'].includes(normalizedStatus)) {
+    return 'bg-emerald-50 text-emerald-600';
+  }
+
+  if (['cancelled', 'canceled', 'failed', 'refunded'].includes(normalizedStatus)) {
+    return 'bg-red-50 text-red-600';
+  }
+
+  return 'bg-amber-50 text-amber-600';
 }
 
 function PrintersView() {
@@ -528,10 +878,57 @@ function DownloadsView() {
   );
 }
 
-function AddressesView({ user }: { user: StoredUser }) {
+function AddressesView() {
   const [editingAddress, setEditingAddress] = useState<'billing' | 'shipping' | null>(null);
-  const displayName = userDisplayName(user);
-  const company = userString(user, ['company', 'company_name', 'business_name'], 'BusinessLabels Inc.');
+  const [addresses, setAddresses] = useState<AccountAddress[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const fetchAddresses = async () => {
+    setIsLoading(true);
+    setErrorMessage('');
+
+    try {
+      setAddresses(await requestAccountAddresses());
+    } catch (error) {
+      setAddresses([]);
+      setErrorMessage(error instanceof Error ? error.message : 'Unable to load your addresses.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadAddresses() {
+      try {
+        const nextAddresses = await requestAccountAddresses();
+
+        if (isMounted) {
+          setAddresses(nextAddresses);
+        }
+      } catch (error) {
+        if (isMounted) {
+          setAddresses([]);
+          setErrorMessage(error instanceof Error ? error.message : 'Unable to load your addresses.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadAddresses();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const billingAddress = addresses.find((address) => address.type.toLowerCase().includes('billing'));
+  const shippingAddress = addresses.find((address) => address.type.toLowerCase().includes('shipping'));
 
   if (editingAddress) {
     const isBilling = editingAddress === 'billing';
@@ -622,48 +1019,101 @@ function AddressesView({ user }: { user: StoredUser }) {
         <p className="text-neutral-500 font-medium">Standard shipping and billing profiles for fast checkout.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-        <div className="flex flex-col gap-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xl font-black text-neutral-800">Billing Address</h3>
-            <button 
-              onClick={() => setEditingAddress('billing')}
-              className="text-amber-500 font-black text-sm uppercase tracking-wider hover:underline"
-            >
-              Change
-            </button>
-          </div>
-          <div className="p-8 rounded-[32px] bg-white border border-slate-200 text-neutral-600 shadow-sm relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-               <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
-            </div>
-            <div className="relative z-10 flex flex-col gap-2">
-              <p className="text-xl font-black text-neutral-800 mb-1">{displayName}</p>
-              <p className="font-medium">{company}</p>
-              <p className="font-medium">123 Business Parkway</p>
-              <p className="font-medium">Suite 101</p>
-              <p className="font-medium">6741 GK Ede</p>
-              <p className="font-bold text-amber-600">Netherlands</p>
-            </div>
+      {isLoading ? (
+        <div className="flex min-h-64 items-center justify-center rounded-3xl border border-slate-100 bg-slate-50">
+          <div className="flex flex-col items-center gap-3 text-neutral-500">
+            <div className="size-10 animate-spin rounded-full border-4 border-slate-200 border-t-amber-500" />
+            <p className="font-bold">Loading addresses...</p>
           </div>
         </div>
+      ) : errorMessage ? (
+        <div className="rounded-3xl border border-red-100 bg-red-50 p-8">
+          <h3 className="text-lg font-black text-red-700">Addresses could not be loaded</h3>
+          <p className="mt-2 font-medium text-red-600">{errorMessage}</p>
+          <button
+            type="button"
+            onClick={() => void fetchAddresses()}
+            className="mt-5 rounded-full bg-red-600 px-6 py-2.5 text-sm font-black text-white transition-colors hover:bg-red-700"
+          >
+            Try again
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+          <AddressProfile
+            title="Billing Address"
+            address={billingAddress}
+            emptyLabel="No billing profile saved"
+            actionLabel={billingAddress ? 'Change' : 'Add New'}
+            variant="billing"
+            onEdit={() => setEditingAddress('billing')}
+          />
 
-        <div className="flex flex-col gap-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xl font-black text-neutral-800">Shipping Address</h3>
-            <button 
-              onClick={() => setEditingAddress('shipping')}
-              className="h-9 px-5 bg-amber-500 text-white rounded-full font-black text-xs uppercase tracking-widest hover:bg-amber-600 transition-all shadow-lg shadow-amber-500/20"
-            >
-              Add New
-            </button>
+          <AddressProfile
+            title="Shipping Address"
+            address={shippingAddress}
+            emptyLabel="No shipping profile saved"
+            actionLabel={shippingAddress ? 'Change' : 'Add New'}
+            variant="shipping"
+            onEdit={() => setEditingAddress('shipping')}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AddressProfile({
+  title,
+  address,
+  emptyLabel,
+  actionLabel,
+  variant,
+  onEdit,
+}: {
+  title: string;
+  address?: AccountAddress;
+  emptyLabel: string;
+  actionLabel: string;
+  variant: 'billing' | 'shipping';
+  onEdit: () => void;
+}) {
+  const isShipping = variant === 'shipping';
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between gap-4">
+        <h3 className="text-xl font-black text-neutral-800">{title}</h3>
+        <button
+          onClick={onEdit}
+          className={isShipping
+            ? 'h-9 px-5 bg-amber-500 text-white rounded-full font-black text-xs uppercase tracking-widest hover:bg-amber-600 transition-all shadow-lg shadow-amber-500/20'
+            : 'text-amber-500 font-black text-sm uppercase tracking-wider hover:underline'}
+        >
+          {actionLabel}
+        </button>
+      </div>
+
+      {address ? (
+        <div className="p-8 rounded-[32px] bg-white border border-slate-200 text-neutral-600 shadow-sm relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+             <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
           </div>
-          <div className="p-8 rounded-[32px] bg-slate-50 border-2 border-dashed border-slate-200 text-neutral-300 min-h-[220px] flex flex-col items-center justify-center gap-4 text-center">
-             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-             <span className="font-bold italic">No shipping profiles saved</span>
+          <div className="relative z-10 flex flex-col gap-2">
+            <p className="text-xl font-black text-neutral-800 mb-1">{address.name}</p>
+            {address.company ? <p className="font-medium">{address.company}</p> : null}
+            {address.lines.map((line) => (
+              <p key={line} className="font-medium">{line}</p>
+            ))}
+            <p className="font-bold text-amber-600">{address.country}</p>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="p-8 rounded-[32px] bg-slate-50 border-2 border-dashed border-slate-200 text-neutral-300 min-h-[220px] flex flex-col items-center justify-center gap-4 text-center">
+           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+           <span className="font-bold italic">{emptyLabel}</span>
+        </div>
+      )}
     </div>
   );
 }
