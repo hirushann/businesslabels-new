@@ -5,6 +5,7 @@ import EmptyState from "@/components/EmptyState";
 import ProductsListing, { type ListingProductCardData } from "@/components/ProductsListing";
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 import { demoProducts, mapDemoProductToCard } from "@/lib/demoCatalog";
+import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 import InfiniteCategoryListing from "@/components/InfiniteCategoryListing";
 
 export const metadata: Metadata = {
@@ -132,13 +133,13 @@ function dedupeCategoryCards(items: CategoryLinkCard[]): CategoryLinkCard[] {
   });
 }
 
-async function loadProductCategories(baseUrl: string | undefined): Promise<CategoryLinkCard[]> {
+async function loadProductCategories(baseUrl: string | undefined, locale: "en" | "nl"): Promise<CategoryLinkCard[]> {
   if (!baseUrl) {
     return [];
   }
 
   try {
-    const response = await fetch(`${baseUrl}/api/categories`, { cache: "no-store" });
+    const response = await fetch(withLocaleParam(`${baseUrl}/api/categories`, locale), { cache: "no-store" });
 
     if (!response.ok) {
       return [];
@@ -168,10 +169,10 @@ async function loadProductCategories(baseUrl: string | undefined): Promise<Categ
   }
 }
 
-async function fetchProductById(baseUrl: string, id: number): Promise<ProductDetail | null> {
+async function fetchProductById(baseUrl: string, id: number, locale: "en" | "nl"): Promise<ProductDetail | null> {
   for (const type of ["simple", "variable"] as const) {
     try {
-      const response = await fetch(`${baseUrl}/api/products/${type}/${id}`, { cache: "no-store" });
+      const response = await fetch(withLocaleParam(`${baseUrl}/api/products/${type}/${id}`, locale), { cache: "no-store" });
       if (!response.ok) {
         continue;
       }
@@ -206,10 +207,10 @@ function mapProductToTopCard(id: number, product: ProductDetail | null): DemoTop
   };
 }
 
-async function loadTopProducts(baseUrl: string | undefined): Promise<DemoTopProductCard[]> {
+async function loadTopProducts(baseUrl: string | undefined, locale: "en" | "nl"): Promise<DemoTopProductCard[]> {
   return Promise.all(
     DEMO_TOP_PRODUCT_IDS.map(async (id) => {
-      const product = baseUrl ? await fetchProductById(baseUrl, id) : null;
+      const product = baseUrl ? await fetchProductById(baseUrl, id, locale) : null;
       return mapProductToTopCard(id, product);
     }),
   );
@@ -233,14 +234,14 @@ function mapProductToCard(product: ProductDetail, fallbackId: number): ProductCa
   };
 }
 
-async function loadCategoryProducts(baseUrl: string | undefined, slug: string): Promise<ProductCardData[]> {
+async function loadCategoryProducts(baseUrl: string | undefined, slug: string, locale: "en" | "nl"): Promise<ProductCardData[]> {
   if (!baseUrl || !slug) {
     return [];
   }
 
   try {
     const response = await fetch(
-      `${baseUrl}/api/categories/${slug}?page=1`,
+      withLocaleParam(`${baseUrl}/api/categories/${slug}?page=1`, locale),
       { cache: "no-store" },
     );
 
@@ -331,11 +332,12 @@ export default async function CategoryArchivePage({
     ? normalizedCategoriesPage
     : 1;
   const isDemoCategory = slug === "demo";
+  const locale = await getServerLocale();
   const demoCategoryProducts = demoProducts.map(mapDemoProductToCard);
   const demoLastPage = Math.max(1, Math.ceil(demoCategoryProducts.length / 12));
   const safeDemoPage = Math.min(currentPage, demoLastPage);
   const paginatedDemoProducts = demoCategoryProducts.slice((safeDemoPage - 1) * 12, safeDemoPage * 12);
-  const productCategories = await loadProductCategories(baseUrl);
+  const productCategories = await loadProductCategories(baseUrl, locale);
   const categoryCardsPerPage = 12;
   const productCategoriesLastPage = Math.max(1, Math.ceil(productCategories.length / categoryCardsPerPage));
   const safeCategoriesPage = Math.min(currentCategoriesPage, productCategoriesLastPage);
@@ -343,16 +345,17 @@ export default async function CategoryArchivePage({
     (safeCategoriesPage - 1) * categoryCardsPerPage,
     safeCategoriesPage * categoryCardsPerPage,
   );
-  const categoryProducts = isDemoCategory ? [] : await loadCategoryProducts(baseUrl, slug);
-  const topProducts = await loadTopProducts(baseUrl);
+  const categoryProducts = isDemoCategory ? [] : await loadCategoryProducts(baseUrl, slug, locale);
+  const topProducts = await loadTopProducts(baseUrl, locale);
 
   async function fetchMoreProducts(targetSlug: string, page: number): Promise<ProductCardData[]> {
     "use server";
     const url = process.env.BBNL_API_BASE_URL;
     if (!url) return [];
+    const actionLocale = await getServerLocale();
     try {
       const response = await fetch(
-        `${url}/api/products?page=${page}`,
+        withLocaleParam(`${url}/api/products?page=${page}`, actionLocale),
         { cache: "no-store" }
       );
       if (!response.ok) return [];

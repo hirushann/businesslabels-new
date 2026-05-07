@@ -6,6 +6,7 @@ import Accordion from "@/components/Accordion";
 import CTABanner from "@/components/CTABanner";
 import EmptyState from "@/components/EmptyState";
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
+import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 
 type MaterialProduct = {
   id: number;
@@ -96,7 +97,8 @@ async function getMaterial(slug: string): Promise<Material | null> {
   if (!baseUrl) return null;
 
   try {
-    const response = await fetch(`${baseUrl}/api/materials/slug/${slug}`, {
+    const locale = await getServerLocale();
+    const response = await fetch(withLocaleParam(`${baseUrl}/api/materials/slug/${slug}`, locale), {
       cache: "no-store",
     });
 

@@ -19,6 +19,7 @@ type DropdownKey = 'printers' | 'labels' | 'accessories' | 'resources' | null;
 // import { useCart } from '@/context/CartContext';
 import { ROUTES } from '@/config/routes';
 import SearchPopup from '@/components/SearchPopup';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 const navItems = [
   { label: 'Home', href: '/', active: true, dropdownKey: null },
@@ -161,14 +162,7 @@ export default function Header() {
               <span className="text-neutral-800 text-sm font-semibold leading-5">Need help?</span>
             </button>
             {/* Language */}
-            <div className="flex items-center gap-1">
-              <div className="w-6 h-4 bg-sky-600 rounded-sm flex items-center justify-center overflow-hidden">
-                <div className="w-full h-full bg-gradient-to-r from-sky-600 via-white to-sky-600" />
-              </div>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M4 6L8 10L12 6" stroke="#6B7280" strokeWidth="1.33" strokeLinecap="round" />
-              </svg>
-            </div>
+            <LanguageSwitcher />
             {/* User */}
             <Link href="/my-account" aria-label="Go to My Account">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="cursor-pointer">

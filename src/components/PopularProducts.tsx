@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import EmptyState from "@/components/EmptyState";
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
+import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 
 type Product = {
   id: number;
@@ -41,9 +42,10 @@ export default async function PopularProducts() {
     throw new Error('BBNL_API_BASE_URL is not configured');
   }
 
+  const locale = await getServerLocale();
   let products: Product[] = [];
   try {
-    const response = await fetch(`${baseUrl}/api/products`, {
+    const response = await fetch(withLocaleParam(`${baseUrl}/api/products`, locale), {
       next: { revalidate: 3600 },
     });
 
