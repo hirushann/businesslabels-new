@@ -1,12 +1,112 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, Suspense, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useSearchParams } from 'next/navigation';
-import { useHelp } from './HelpProvider';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { toast } from 'sonner';
 
 type Tab = 'dashboard' | 'orders' | 'downloads' | 'addresses' | 'details' | 'printers' | 'favourites';
+
+type StoredUser = Record<string, unknown>;
+
+const emptyUser: StoredUser = {};
+const validTabs: Tab[] = ['dashboard', 'orders', 'downloads', 'addresses', 'details', 'printers', 'favourites'];
+
+function getValidTab(value: string | null): Tab | null {
+  return validTabs.includes(value as Tab) ? (value as Tab) : null;
+}
+
+function readStoredUser() {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+
+  return window.localStorage.getItem('auth_user') ?? '';
+}
+
+function subscribeToStoredUser(callback: () => void) {
+  window.addEventListener('storage', callback);
+  window.addEventListener('auth-user-updated', callback);
+
+  return () => {
+    window.removeEventListener('storage', callback);
+    window.removeEventListener('auth-user-updated', callback);
+  };
+}
+
+function parseStoredUser(value: string): StoredUser {
+  if (!value) {
+    return emptyUser;
+  }
+
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : emptyUser;
+  } catch {
+    return emptyUser;
+  }
+}
+
+function useStoredUser() {
+  const userSnapshot = useSyncExternalStore(subscribeToStoredUser, readStoredUser, () => '');
+
+  return parseStoredUser(userSnapshot);
+}
+
+function userString(user: StoredUser, keys: string[], fallback = '') {
+  for (const key of keys) {
+    const value = user[key];
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+    if (typeof value === 'number') {
+      return String(value);
+    }
+  }
+
+  return fallback;
+}
+
+function userDisplayName(user: StoredUser) {
+  const explicitName = userString(user, ['name', 'full_name', 'display_name']);
+  if (explicitName) {
+    return explicitName;
+  }
+
+  const firstName = userString(user, ['first_name', 'firstname']);
+  const lastName = userString(user, ['last_name', 'lastname']);
+  const combinedName = [firstName, lastName].filter(Boolean).join(' ');
+
+  return combinedName || userString(user, ['email'], 'Customer');
+}
+
+function splitDisplayName(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+
+  return {
+    firstName: parts[0] ?? '',
+    lastName: parts.slice(1).join(' '),
+  };
+}
+
+function formatCustomerSince(user: StoredUser) {
+  const dateValue = userString(user, ['created_at', 'createdAt']);
+
+  if (!dateValue) {
+    return 'Account details loaded';
+  }
+
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) {
+    return 'Account details loaded';
+  }
+
+  return `Customer since ${date.toLocaleDateString('en-US', {
+    month: 'long',
+    year: 'numeric',
+  })}`;
+}
 
 export default function MyAccountClient() {
   return (
@@ -17,16 +117,39 @@ export default function MyAccountClient() {
 }
 
 function MyAccountContent() {
-  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const { openHelp } = useHelp();
+  const [activeTab, setActiveTab] = useState<Tab>(() => getValidTab(searchParams.get('tab')) ?? 'dashboard');
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const user = useStoredUser();
 
-  useEffect(() => {
-    const tab = searchParams.get('tab') as Tab;
-    if (tab && ['dashboard', 'orders', 'downloads', 'addresses', 'details', 'printers', 'favourites'].includes(tab)) {
-      setActiveTab(tab);
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+
+    try {
+      const response = await fetch('/api/logout', {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(typeof data.message === 'string' ? data.message : 'Unable to logout.');
+      }
+
+      toast.success('Logged out successfully');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to logout.');
+    } finally {
+      localStorage.removeItem('auth_user');
+      window.dispatchEvent(new Event('auth-user-updated'));
+      setIsLoggingOut(false);
+      router.push('/login');
+      router.refresh();
     }
-  }, [searchParams]);
+  };
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: (
@@ -107,11 +230,16 @@ function MyAccountContent() {
                 </button>
               ))}
               <div className="h-px bg-slate-100 my-5 mx-2" />
-              <button className="flex items-center gap-3.5 px-5 py-4 rounded-2xl text-red-500 hover:bg-red-50 transition-all text-left font-semibold">
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className="flex items-center gap-3.5 px-5 py-4 rounded-2xl text-red-500 hover:bg-red-50 transition-all text-left font-semibold disabled:pointer-events-none disabled:opacity-60"
+              >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>
                 </svg>
-                <span className="text-base">Logout</span>
+                <span className="text-base">{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
               </button>
             </div>
           </aside>
@@ -119,13 +247,13 @@ function MyAccountContent() {
           {/* Content Area */}
           <main className="bg-white rounded-[40px] border border-slate-200 p-10 lg:p-14 shadow-[2px_12px_44px_0px_rgba(109,109,120,0.06)] min-h-[700px]">
              <div className="max-w-4xl mx-auto">
-                {activeTab === 'dashboard' && <DashboardView setActiveTab={setActiveTab} />}
+                {activeTab === 'dashboard' && <DashboardView setActiveTab={setActiveTab} user={user} />}
                 {activeTab === 'orders' && <OrdersView />}
                 {activeTab === 'printers' && <PrintersView />}
                 {activeTab === 'favourites' && <FavouriteProductsView />}
                 {activeTab === 'downloads' && <DownloadsView />}
-                {activeTab === 'addresses' && <AddressesView />}
-                {activeTab === 'details' && <AccountDetailsView />}
+                {activeTab === 'addresses' && <AddressesView user={user} />}
+                {activeTab === 'details' && <AccountDetailsView user={user} />}
              </div>
           </main>
         </div>
@@ -134,17 +262,21 @@ function MyAccountContent() {
   );
 }
 
-function DashboardView({ setActiveTab }: { setActiveTab: (tab: Tab) => void }) {
+function DashboardView({ setActiveTab, user }: { setActiveTab: (tab: Tab) => void; user: StoredUser }) {
+  const displayName = userDisplayName(user);
+  const email = userString(user, ['email']);
+  const avatarUrl = userString(user, ['avatar', 'avatar_url', 'profile_photo_url', 'image']);
+
   return (
     <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col gap-6">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-full bg-slate-100 border-4 border-white shadow-sm overflow-hidden relative">
-            <Image src="https://placehold.co/128x128" alt="Profile" fill className="object-cover" />
+            <Image src={avatarUrl || "https://placehold.co/128x128"} alt="Profile" fill className="object-cover" />
           </div>
           <div>
-            <h2 className="text-3xl font-black text-neutral-800 tracking-tight">Welcome, John Doe</h2>
-            <p className="text-neutral-500 font-medium">Customer since April 2024</p>
+            <h2 className="text-3xl font-black text-neutral-800 tracking-tight">Welcome, {displayName}</h2>
+            <p className="text-neutral-500 font-medium">{email || formatCustomerSince(user)}</p>
           </div>
         </div>
         <p className="text-neutral-600 text-lg leading-relaxed max-w-2xl">
@@ -396,8 +528,10 @@ function DownloadsView() {
   );
 }
 
-function AddressesView() {
+function AddressesView({ user }: { user: StoredUser }) {
   const [editingAddress, setEditingAddress] = useState<'billing' | 'shipping' | null>(null);
+  const displayName = userDisplayName(user);
+  const company = userString(user, ['company', 'company_name', 'business_name'], 'BusinessLabels Inc.');
 
   if (editingAddress) {
     const isBilling = editingAddress === 'billing';
@@ -504,8 +638,8 @@ function AddressesView() {
                <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
             </div>
             <div className="relative z-10 flex flex-col gap-2">
-              <p className="text-xl font-black text-neutral-800 mb-1">John Doe</p>
-              <p className="font-medium">BusinessLabels Inc.</p>
+              <p className="text-xl font-black text-neutral-800 mb-1">{displayName}</p>
+              <p className="font-medium">{company}</p>
               <p className="font-medium">123 Business Parkway</p>
               <p className="font-medium">Suite 101</p>
               <p className="font-medium">6741 GK Ede</p>
@@ -535,9 +669,14 @@ function AddressesView() {
 }
 
 
-function AccountDetailsView() {
+function AccountDetailsView({ user }: { user: StoredUser }) {
   const inputClasses = "w-full h-14 px-6 rounded-2xl border border-slate-200 focus:border-amber-400 outline-none transition-all text-neutral-800 text-base bg-white focus:ring-[6px] focus:ring-amber-500/5 font-medium";
   const labelClasses = "text-xs font-black text-neutral-500 uppercase tracking-widest mb-2.5 block ml-1";
+  const displayName = userDisplayName(user);
+  const splitName = splitDisplayName(displayName);
+  const firstName = userString(user, ['first_name', 'firstname'], splitName.firstName);
+  const lastName = userString(user, ['last_name', 'lastname'], splitName.lastName);
+  const email = userString(user, ['email']);
 
   return (
     <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -550,23 +689,23 @@ function AccountDetailsView() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className={labelClasses}>First name</label>
-            <input type="text" defaultValue="John" className={inputClasses} />
+            <input type="text" defaultValue={firstName} className={inputClasses} />
           </div>
           <div>
             <label className={labelClasses}>Last name</label>
-            <input type="text" defaultValue="Doe" className={inputClasses} />
+            <input type="text" defaultValue={lastName} className={inputClasses} />
           </div>
         </div>
 
         <div>
           <label className={labelClasses}>Display name</label>
-          <input type="text" defaultValue="John Doe" className={inputClasses} />
+          <input type="text" defaultValue={displayName} className={inputClasses} />
           <p className="text-xs font-bold text-neutral-400 mt-3 ml-1 italic opacity-60">* This is how your name will appear in reviews and forum posts.</p>
         </div>
 
         <div>
           <label className={labelClasses}>Email address</label>
-          <input type="email" defaultValue="john.doe@example.com" className={inputClasses} />
+          <input type="email" defaultValue={email} className={inputClasses} />
         </div>
 
         <div className="relative pt-6">
@@ -601,4 +740,3 @@ function AccountDetailsView() {
     </div>
   );
 }
-
