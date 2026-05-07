@@ -120,6 +120,7 @@ type ProductDetail = {
   delivery_dates_in_stock?: number | null;
   delivery_dates_no_stock?: number | null;
   packing_group?: number | null;
+  discounts?: string | Array<{ discount?: string | number | null; quantity?: string | number | null }> | null;
   dimensions?: {
     weight?: string | number | null;
     width?: string | number | null;
@@ -429,6 +430,7 @@ export default async function SingleProductPage({
               stock={product?.stock}
               deliveryDatesInStock={product?.delivery_dates_in_stock}
               deliveryDatesNoStock={product?.delivery_dates_no_stock}
+              discounts={product?.discounts}
               warranty={product?.warranty}
             />
 

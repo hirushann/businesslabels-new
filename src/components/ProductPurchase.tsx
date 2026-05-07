@@ -28,6 +28,7 @@ type ProductPurchaseProps = {
   stock?: number | null;
   deliveryDatesInStock?: number | null;
   deliveryDatesNoStock?: number | null;
+  discounts?: ProductDiscountInput;
   warranty?: {
     is_available?: boolean | null;
     has_options?: boolean | null;
@@ -50,7 +51,19 @@ type ProductPurchaseProps = {
   } | null;
 };
 
+type ProductDiscountInput =
+  | string
+  | Array<{
+      discount?: string | number | null;
+      quantity?: string | number | null;
+    }>
+  | null
+  | undefined;
 
+type BulkDiscount = {
+  discount: string;
+  quantity: string;
+};
 
 function formatEuro(value: number): string {
   return new Intl.NumberFormat("nl-NL", {
@@ -59,6 +72,63 @@ function formatEuro(value: number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value);
+}
+
+function normalizeDiscountNumber(value: string | number | null | undefined): string | null {
+  if (value == null) {
+    return null;
+  }
+
+  const normalizedValue = typeof value === "number" ? String(value) : value.trim();
+  if (!normalizedValue) {
+    return null;
+  }
+
+  const numericValue = Number(normalizedValue);
+  if (!Number.isFinite(numericValue) || numericValue <= 0) {
+    return null;
+  }
+
+  return Number.isInteger(numericValue) ? String(numericValue) : String(numericValue);
+}
+
+function normalizeBulkDiscounts(discounts: ProductDiscountInput): BulkDiscount[] {
+  const parsedDiscounts = typeof discounts === "string"
+    ? (() => {
+        try {
+          return JSON.parse(discounts) as unknown;
+        } catch (error) {
+          console.error("Failed to parse product discounts:", error);
+          return null;
+        }
+      })()
+    : discounts;
+
+  if (!Array.isArray(parsedDiscounts)) {
+    return [];
+  }
+
+  return parsedDiscounts
+    .map((discount) => {
+      if (!discount || typeof discount !== "object") {
+        return null;
+      }
+
+      const tier = discount as { discount?: string | number | null; quantity?: string | number | null };
+      const normalizedDiscount = normalizeDiscountNumber(tier.discount);
+      const normalizedQuantity = normalizeDiscountNumber(tier.quantity);
+
+      if (!normalizedDiscount || !normalizedQuantity) {
+        return null;
+      }
+
+      return {
+        discount: `${normalizedDiscount}%`,
+        quantity: normalizedQuantity,
+      };
+    })
+    .filter((discount): discount is BulkDiscount => Boolean(discount))
+    .sort((a, b) => Number(a.quantity) - Number(b.quantity));
 }
 
 export default function ProductPurchase({
@@ -78,6 +148,7 @@ export default function ProductPurchase({
   stock,
   deliveryDatesInStock,
   deliveryDatesNoStock,
+  discounts,
   warranty,
 }: ProductPurchaseProps) {
   const { addItem } = useCart();
@@ -135,6 +206,8 @@ export default function ProductPurchase({
     Number.isFinite(normalizedPackingGroup) &&
     normalizedPackingGroup > 0;
   const normalizedWarranty = useMemo(() => normalizeWarrantyOptions(warranty), [warranty]);
+  const bulkDiscounts = useMemo(() => normalizeBulkDiscounts(discounts), [discounts]);
+  const hasBulkDiscounts = bulkDiscounts.length > 0;
   const hasWarrantyOptions = normalizedWarranty.options.length > 0;
   const defaultWarrantyOption = normalizedWarranty.options.find(
     (option) => option.id === normalizedWarranty.defaultOptionId,
@@ -342,29 +415,32 @@ export default function ProductPurchase({
         <span className="text-zinc-500 text-base font-normal leading-5 text-left">ex. VAT</span>
       </div>
 
-      {/* Bulk Discounts */}
-      <div className="p-4 bg-slate-100 rounded-[10px]">
-        <div className="flex flex-col gap-3">
-          <span className="text-neutral-800 text-base font-bold leading-5">Bulk Discounts</span>
-          <div className="flex-1 flex justify-between">
-            <div className="flex flex-col gap-2">
-              <span className="text-neutral-700 text-base font-semibold leading-5">Quantity</span>
-              {["10", "50", "100"].map((qty) => (
-                <div key={qty} className="flex items-center gap-1.5">
-                  <div className="w-3.5 h-3.5 bg-white rounded-[3px] border border-zinc-500/20" />
-                  <span className="text-neutral-700 text-base font-normal leading-5">{qty}</span>
-                </div>
-              ))}
-            </div>
-            <div className="flex flex-col gap-2">
-              <span className="text-neutral-700 text-base font-semibold leading-5">Discount</span>
-              {["5%", "10%", "15%"].map((d) => (
-                <span key={d} className="text-green-600 text-base font-normal leading-5">{d}</span>
-              ))}
+      {hasBulkDiscounts ? (
+        <div className="p-4 bg-slate-100 rounded-[10px]">
+          <div className="flex flex-col gap-3">
+            <span className="text-neutral-800 text-base font-bold leading-5">Bulk Discounts</span>
+            <div className="flex-1 flex justify-between">
+              <div className="flex flex-col gap-2">
+                <span className="text-neutral-700 text-base font-semibold leading-5">Quantity</span>
+                {bulkDiscounts.map((tier) => (
+                  <div key={`${tier.quantity}-${tier.discount}`} className="flex items-center gap-1.5">
+                    <div className="w-3.5 h-3.5 bg-white rounded-[3px] border border-zinc-500/20" />
+                    <span className="text-neutral-700 text-base font-normal leading-5">{tier.quantity}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-col gap-2">
+                <span className="text-neutral-700 text-base font-semibold leading-5">Discount</span>
+                {bulkDiscounts.map((tier) => (
+                  <span key={`${tier.discount}-${tier.quantity}`} className="text-green-600 text-base font-normal leading-5">
+                    {tier.discount}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      ) : null}
 
       {/* Quantity + Add to Cart */}
       <Popover
