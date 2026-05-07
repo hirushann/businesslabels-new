@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Accordion from "@/components/Accordion";
 import ProductPurchase from "@/components/ProductPurchase";
 import ProductCard, { type ProductCardData, type ProductRouteType } from "@/components/ProductCard";
+import ProductCompatibilityDialog from "@/components/ProductCompatibilityDialog";
 import ProductImageGallery from "@/components/ProductImageGallery";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 import { notFound } from "next/navigation";
@@ -471,9 +472,7 @@ export default async function SingleProductPage({
                         Use our product finder to check compatibility with your specific printer model.
                       </p>
                     </div>
-                    <button className="text-amber-500 text-base font-semibold underline text-left">
-                      Check Compatibility
-                    </button>
+                    <ProductCompatibilityDialog productId={product.id} />
                   </div>
                 </div>
               </div>
