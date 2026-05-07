@@ -2,11 +2,14 @@
 
 import { useState, useMemo, useEffect } from "react";
 import type { ProductRouteType } from "@/components/ProductCard";
-import { useCart } from "@/components/CartProvider";
+import { buildCartItemKey, useCart } from "@/components/CartProvider";
 import { useWishlist } from "@/components/WishlistProvider";
 import { getExpectedDeliveryMessage } from "@/lib/utils/delivery";
 import Link from "next/link";
 import { toast } from "sonner";
+import { Popover, PopoverAnchor, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle } from "@/components/ui/popover";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Field, FieldContent, FieldDescription, FieldLabel, FieldTitle } from "@/components/ui/field";
 
 type ProductPurchaseProps = {
   id?: string | number | null;
@@ -25,7 +28,82 @@ type ProductPurchaseProps = {
   stock?: number | null;
   deliveryDatesInStock?: number | null;
   deliveryDatesNoStock?: number | null;
+  warranty?: {
+    is_available?: boolean | null;
+    has_options?: boolean | null;
+    options?: Array<{
+      id: number;
+      name?: string | null;
+      duration_months?: number | null;
+      price?: number | null;
+      description?: string | null;
+      sort_order?: number | null;
+    }> | null;
+    default_option?: {
+      id: number;
+      name?: string | null;
+      duration_months?: number | null;
+      price?: number | null;
+      description?: string | null;
+      sort_order?: number | null;
+    } | null;
+  } | null;
 };
+
+type WarrantyOption = {
+  id: number;
+  name: string;
+  durationMonths: number | null;
+  price: number;
+  description: string | null;
+  sortOrder: number;
+};
+
+function normalizeWarrantyOptions(
+  warranty: ProductPurchaseProps["warranty"],
+): { options: WarrantyOption[]; defaultOptionId: number | null } {
+  if (!warranty?.is_available || !warranty?.has_options || !Array.isArray(warranty.options)) {
+    return { options: [], defaultOptionId: null };
+  }
+
+  const options = warranty.options
+    .map((option) => {
+      if (typeof option?.id !== "number" || !Number.isFinite(option.id)) {
+        return null;
+      }
+
+      const normalizedPrice =
+        typeof option.price === "number" && Number.isFinite(option.price) ? option.price : 0;
+
+      return {
+        id: option.id,
+        name: option.name?.trim() || "Warranty option",
+        durationMonths:
+          typeof option.duration_months === "number" && Number.isFinite(option.duration_months)
+            ? option.duration_months
+            : null,
+        price: normalizedPrice,
+        description: option.description?.trim() || null,
+        sortOrder:
+          typeof option.sort_order === "number" && Number.isFinite(option.sort_order)
+            ? option.sort_order
+            : 0,
+      } satisfies WarrantyOption;
+    })
+    .filter((option): option is WarrantyOption => Boolean(option))
+    .sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id);
+
+  if (!options.length) {
+    return { options: [], defaultOptionId: null };
+  }
+
+  const defaultOptionId =
+    options.find((option) => option.id === warranty.default_option?.id)?.id ??
+    options.find((option) => option.price <= 0)?.id ??
+    options[0].id;
+
+  return { options, defaultOptionId };
+}
 
 function formatEuro(value: number): string {
   return new Intl.NumberFormat("nl-NL", {
@@ -53,12 +131,16 @@ export default function ProductPurchase({
   stock,
   deliveryDatesInStock,
   deliveryDatesNoStock,
+  warranty,
 }: ProductPurchaseProps) {
   const { addItem } = useCart();
   const wishlist = useWishlist();
   const [quantity, setQuantity] = useState(1);
   const [quantityError, setQuantityError] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(() => new Date());
+  const [isWarrantyPopoverOpen, setIsWarrantyPopoverOpen] = useState(false);
+  const [selectedWarrantyId, setSelectedWarrantyId] = useState<number | null>(null);
+  const [pendingQuantity, setPendingQuantity] = useState<number | null>(null);
 
   // Update countdown every minute
   useEffect(() => {
@@ -105,6 +187,25 @@ export default function ProductPurchase({
     typeof normalizedPackingGroup === "number" &&
     Number.isFinite(normalizedPackingGroup) &&
     normalizedPackingGroup > 0;
+  const normalizedWarranty = useMemo(() => normalizeWarrantyOptions(warranty), [warranty]);
+  const hasWarrantyOptions = normalizedWarranty.options.length > 0;
+  const defaultWarrantyOption = normalizedWarranty.options.find(
+    (option) => option.id === normalizedWarranty.defaultOptionId,
+  ) ?? null;
+  const selectedWarrantyOption = normalizedWarranty.options.find(
+    (option) => option.id === selectedWarrantyId,
+  ) ?? defaultWarrantyOption;
+
+  useEffect(() => {
+    if (!hasWarrantyOptions) {
+      setSelectedWarrantyId(null);
+      return;
+    }
+
+    if (!selectedWarrantyId || !normalizedWarranty.options.some((option) => option.id === selectedWarrantyId)) {
+      setSelectedWarrantyId(normalizedWarranty.defaultOptionId);
+    }
+  }, [hasWarrantyOptions, normalizedWarranty, selectedWarrantyId]);
 
   // Calculate delivery message
   const deliveryInfo = useMemo(() => {
@@ -131,18 +232,22 @@ export default function ProductPurchase({
     }
   }, [stock, deliveryDatesInStock, deliveryDatesNoStock, currentTime]);
 
-  const handleAddToCart = (customQuantity?: number) => {
+  const validateQuantity = (customQuantity?: number): number | null => {
     setQuantityError(null);
 
-    if (!hasPrice) return; // Prevent adding to cart if price is invalid
+    if (!hasPrice) return null;
     
     const qtyToAdd = customQuantity ?? quantity;
     
     if (hasPackingGroup && !customQuantity && quantity % normalizedPackingGroup !== 0) {
       setQuantityError(`Quantity must be divisible by the packing group (${normalizedPackingGroup}).`);
-      return;
+      return null;
     }
 
+    return qtyToAdd;
+  };
+
+  const addProductWithWarranty = (qtyToAdd: number, selectedOption: WarrantyOption | null) => {
     addItem(
       {
         id: id ?? displaySku,
@@ -155,6 +260,60 @@ export default function ProductPurchase({
       },
       qtyToAdd,
     );
+
+    const warrantyPrice =
+      selectedOption && typeof selectedOption.price === "number" && Number.isFinite(selectedOption.price)
+        ? selectedOption.price
+        : 0;
+
+    if (selectedOption && warrantyPrice > 0) {
+      const parentKey = buildCartItemKey({ id: id ?? displaySku, slug, type });
+      const warrantyName = selectedOption.name || `${displayName} Extended Warranty`;
+
+      addItem(
+        {
+          id: `warranty-${parentKey}-${selectedOption.id}`,
+          name: warrantyName,
+          sku: `${displaySku}-WARRANTY`,
+          price: warrantyPrice,
+          mainImage,
+          itemKind: "warranty",
+          linkedToKey: parentKey,
+          warranty: {
+            optionId: selectedOption.id,
+            durationMonths: selectedOption.durationMonths,
+            parentSku: displaySku,
+            parentName: displayName,
+          },
+        },
+        qtyToAdd,
+      );
+    }
+  };
+
+  const handleAddToCart = (customQuantity?: number) => {
+    const qtyToAdd = validateQuantity(customQuantity);
+    if (!qtyToAdd) {
+      return;
+    }
+
+    if (hasWarrantyOptions) {
+      setPendingQuantity(qtyToAdd);
+      setIsWarrantyPopoverOpen(true);
+      return;
+    }
+
+    addProductWithWarranty(qtyToAdd, null);
+  };
+
+  const handleConfirmWarrantyAdd = () => {
+    if (!pendingQuantity) {
+      return;
+    }
+
+    addProductWithWarranty(pendingQuantity, selectedWarrantyOption ?? defaultWarrantyOption);
+    setIsWarrantyPopoverOpen(false);
+    setPendingQuantity(null);
   };
 
   const handleAddToWishlist = () => {
@@ -260,75 +419,161 @@ export default function ProductPurchase({
       </div>
 
       {/* Quantity + Add to Cart */}
-      {hasPackingGroup ? (
-        // Two-button layout for products with packing groups
-        <div className="flex flex-col gap-3">
-          <span className="text-neutral-800 text-lg font-bold leading-5">Select Quantity</span>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => handleAddToCart(1)}
-              className="flex-1 h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm flex"
-            >
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              <span className="text-white text-base font-bold whitespace-nowrap">Rolls/Stack</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleAddToCart(normalizedPackingGroup!)}
-              className="flex-1 h-12 px-4 py-2.5 bg-amber-100 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-amber-300 justify-center items-center gap-2 hover:bg-amber-300 transition-colors flex"
-            >
-              <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              <span className="text-amber-600 text-base font-bold whitespace-nowrap">Box <span className="text-xs text-amber-600">({normalizedPackingGroup} Rolls/Stack)</span></span>
-            </button>
-          </div>
-        </div>
-      ) : (
-        // Original single-button layout with quantity selector
-        <div className="flex items-end gap-4">
-          <div className="flex flex-col gap-3">
-            <span className="text-neutral-800 text-lg font-bold leading-5 w-full">Select Quantity</span>
-            <div className="h-12 px-1 rounded-[50px] outline outline-1 outline-offset-[-1px] outline-black/10 flex justify-between items-center bg-white">
-              <button
-                onClick={decrement}
-                className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
-              >
-                <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
-                  <path strokeLinecap="round" d="M2 6h8" />
-                </svg>
-              </button>
-              <div className="flex-1 self-stretch flex justify-center items-center overflow-hidden">
-                <span className="text-neutral-800 text-sm font-semibold leading-5 px-2">{quantity}</span>
+      <Popover
+        open={isWarrantyPopoverOpen}
+        onOpenChange={(nextOpen) => {
+          setIsWarrantyPopoverOpen(nextOpen);
+          if (!nextOpen) {
+            setPendingQuantity(null);
+          }
+        }}
+      >
+        {hasPackingGroup ? (
+          // Two-button layout for products with packing groups
+          <PopoverAnchor asChild>
+            <div className="flex flex-col gap-3">
+              <span className="text-neutral-800 text-lg font-bold leading-5">Select Quantity</span>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => handleAddToCart(1)}
+                  className="flex-1 h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm flex"
+                >
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  <span className="text-white text-base font-bold whitespace-nowrap">Rolls/Stack</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAddToCart(normalizedPackingGroup!)}
+                  className="flex-1 h-12 px-4 py-2.5 bg-amber-100 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-amber-300 justify-center items-center gap-2 hover:bg-amber-300 transition-colors flex"
+                >
+                  <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  <span className="text-amber-600 text-base font-bold whitespace-nowrap">Box <span className="text-xs text-amber-600">({normalizedPackingGroup} Rolls/Stack)</span></span>
+                </button>
               </div>
+            </div>
+          </PopoverAnchor>
+        ) : (
+          // Original single-button layout with quantity selector
+          <PopoverAnchor asChild>
+            <div className="flex items-end gap-4">
+              <div className="flex flex-col gap-3">
+                <span className="text-neutral-800 text-lg font-bold leading-5 w-full">Select Quantity</span>
+                <div className="h-12 px-1 rounded-[50px] outline outline-1 outline-offset-[-1px] outline-black/10 flex justify-between items-center bg-white">
+                  <button
+                    onClick={decrement}
+                    className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
+                  >
+                    <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
+                      <path strokeLinecap="round" d="M2 6h8" />
+                    </svg>
+                  </button>
+                  <div className="flex-1 self-stretch flex justify-center items-center overflow-hidden">
+                    <span className="text-neutral-800 text-sm font-semibold leading-5 px-2">{quantity}</span>
+                  </div>
+                  <button
+                    onClick={increment}
+                    className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
+                  >
+                    <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
+                      <path strokeLinecap="round" d="M6 2v8M2 6h8" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div className="flex flex-1 flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleAddToCart()}
+                  aria-describedby={quantityError ? "quantity-error" : undefined}
+                  className="flex h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm"
+                >
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  <span className="text-white text-base font-bold whitespace-nowrap">Add to Cart</span>
+                </button>
+              </div>
+            </div>
+          </PopoverAnchor>
+        )}
+
+        {hasWarrantyOptions ? (
+          <PopoverContent align="end" className="w-[420px] p-4">
+            <PopoverHeader>
+              <PopoverTitle className="text-base">Choose Warranty</PopoverTitle>
+              <PopoverDescription>
+                Select a warranty option before adding this item to your cart.
+              </PopoverDescription>
+            </PopoverHeader>
+
+            <RadioGroup
+              value={selectedWarrantyOption ? String(selectedWarrantyOption.id) : undefined}
+              onValueChange={(value) => {
+                const parsed = Number.parseInt(value, 10);
+                if (Number.isFinite(parsed)) {
+                  setSelectedWarrantyId(parsed);
+                }
+              }}
+              className="gap-2"
+            >
+              {normalizedWarranty.options.map((option) => {
+                const optionId = `warranty-option-${option.id}`;
+                const isDefaultOption = option.id === normalizedWarranty.defaultOptionId;
+                const hasExtraPrice = option.price > 0;
+
+                return (
+                  <FieldLabel key={option.id} htmlFor={optionId} className="cursor-pointer rounded-xl border border-slate-200 p-0">
+                    <Field orientation="horizontal" className="items-start rounded-xl border-none p-3">
+                      <RadioGroupItem id={optionId} value={String(option.id)} className="mt-1" />
+                      <FieldContent>
+                        <div className="flex items-start justify-between gap-3">
+                          <FieldTitle className="text-sm font-semibold text-neutral-800">{option.name}</FieldTitle>
+                          <span className={`text-sm font-semibold ${hasExtraPrice ? "text-amber-600" : "text-emerald-600"}`}>
+                            {hasExtraPrice ? `+${formatEuro(option.price)}` : "No extra cost"}
+                          </span>
+                        </div>
+                        <FieldDescription className="text-xs">
+                          {option.description || (option.durationMonths ? `${option.durationMonths} months coverage` : "Extended coverage")}
+                        </FieldDescription>
+                        {isDefaultOption ? (
+                          <span className="mt-1 inline-flex w-fit rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                            Default Option
+                          </span>
+                        ) : null}
+                      </FieldContent>
+                    </Field>
+                  </FieldLabel>
+                );
+              })}
+            </RadioGroup>
+
+            <div className="mt-2 flex items-center justify-end gap-2">
               <button
-                onClick={increment}
-                className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
+                type="button"
+                onClick={() => {
+                  setIsWarrantyPopoverOpen(false);
+                  setPendingQuantity(null);
+                }}
+                className="h-9 rounded-full border border-slate-200 px-4 text-sm font-semibold text-neutral-700 transition-colors hover:bg-slate-100"
               >
-                <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
-                  <path strokeLinecap="round" d="M6 2v8M2 6h8" />
-                </svg>
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmWarrantyAdd}
+                className="h-9 rounded-full bg-amber-500 px-4 text-sm font-semibold text-white transition-colors hover:bg-amber-600"
+              >
+                Add to Cart
               </button>
             </div>
-          </div>
-          <div className="flex flex-1 flex-col gap-2">
-            <button
-              type="button"
-              onClick={() => handleAddToCart()}
-              aria-describedby={quantityError ? "quantity-error" : undefined}
-              className="flex h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm"
-            >
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              <span className="text-white text-base font-bold whitespace-nowrap">Add to Cart</span>
-            </button>
-          </div>
-        </div>
-      )}
+          </PopoverContent>
+        ) : null}
+      </Popover>
 
       <div>
         {quantityError ? (

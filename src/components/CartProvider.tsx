@@ -15,6 +15,14 @@ export type CartItem = {
   price?: number | null;
   mainImage?: string | null;
   quantity: number;
+  itemKind?: "product" | "warranty";
+  linkedToKey?: string | null;
+  warranty?: {
+    optionId: number;
+    durationMonths?: number | null;
+    parentSku?: string | null;
+    parentName?: string | null;
+  } | null;
 };
 
 type CartInput = Omit<CartItem, "key" | "quantity">;
@@ -35,7 +43,7 @@ type CartContextValue = {
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-function cartItemKey(item: Pick<CartInput, "id" | "slug" | "type">): string {
+export function buildCartItemKey(item: Pick<CartInput, "id" | "slug" | "type">): string {
   const slug = item.slug?.trim();
   const type = item.type?.trim();
   if (slug) {
@@ -87,7 +95,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }, 0),
       addItem: (item, quantity = 1) => {
         const normalizedQuantity = Number.isFinite(quantity) && quantity > 0 ? Math.floor(quantity) : 1;
-        const key = cartItemKey(item);
+        const key = buildCartItemKey(item);
 
         setItems((currentItems) => {
           const existingItem = currentItems.find((currentItem) => currentItem.key === key);
@@ -111,23 +119,64 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         });
       },
       removeItem: (key) => {
-        setItems((currentItems) => currentItems.filter((item) => item.key !== key));
+        setItems((currentItems) => {
+          const target = currentItems.find((item) => item.key === key);
+          if (!target) {
+            return currentItems;
+          }
+
+          if (target.itemKind === "warranty") {
+            return currentItems.filter((item) => item.key !== key);
+          }
+
+          return currentItems.filter((item) => item.key !== key && item.linkedToKey !== key);
+        });
       },
       incrementItemQuantity: (key) => {
-        setItems((currentItems) =>
-          currentItems.map((item) =>
-            item.key === key ? { ...item, quantity: item.quantity + 1 } : item,
-          ),
-        );
+        setItems((currentItems) => {
+          const target = currentItems.find((item) => item.key === key);
+          if (!target) {
+            return currentItems;
+          }
+
+          return currentItems.map((item) => {
+            if (item.key === key) {
+              return { ...item, quantity: item.quantity + 1 };
+            }
+
+            if (target.itemKind !== "warranty" && item.linkedToKey === key) {
+              return { ...item, quantity: item.quantity + 1 };
+            }
+
+            return item;
+          });
+        });
       },
       decrementItemQuantity: (key) => {
-        setItems((currentItems) =>
-          currentItems.map((item) =>
-            item.key === key
-              ? { ...item, quantity: item.quantity > 1 ? item.quantity - 1 : 1 }
-              : item,
-          ),
-        );
+        setItems((currentItems) => {
+          const target = currentItems.find((item) => item.key === key);
+          if (!target) {
+            return currentItems;
+          }
+
+          return currentItems.map((item) => {
+            if (item.key === key) {
+              return {
+                ...item,
+                quantity: item.quantity > 1 ? item.quantity - 1 : 1,
+              };
+            }
+
+            if (target.itemKind !== "warranty" && item.linkedToKey === key) {
+              return {
+                ...item,
+                quantity: item.quantity > 1 ? item.quantity - 1 : 1,
+              };
+            }
+
+            return item;
+          });
+        });
       },
       clearCart: () => {
         setItems([]);

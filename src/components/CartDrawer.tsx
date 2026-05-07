@@ -96,6 +96,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                   typeof item.price === 'number' && Number.isFinite(item.price) ? item.price : 0;
                 const linePrice = unitPrice * item.quantity;
                 const imageSrc = item.mainImage?.trim() || 'https://placehold.co/140x100';
+                const isWarrantyItem = item.itemKind === 'warranty';
                 const href = item.slug
                   ? item.type
                     ? { pathname: `/products/${item.slug}`, query: { type: item.type } }
@@ -108,45 +109,56 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                     name={item.name}
                     sku={item.sku}
                     imageSrc={imageSrc}
-                    href={href}
+                    href={isWarrantyItem ? undefined : href}
                     onCardClick={onClose}
                     removeLabel={`Remove ${item.name} from cart`}
                     onRemove={() => removeItem(item.key)}
+                    descriptionNode={
+                      isWarrantyItem ? (
+                        <p className="text-xs leading-4 text-neutral-500">Linked warranty</p>
+                      ) : undefined
+                    }
                     priceNode={
                       <span className="text-neutral-800 text-lg font-bold leading-6">
                         {formatEuro(linePrice)}
                       </span>
                     }
                     actionNode={
-                      <div className="flex h-10 items-center rounded-full border border-slate-200 bg-white px-1">
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            decrementItemQuantity(item.key);
-                          }}
-                          className="flex h-8 w-8 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-slate-100"
-                          aria-label={`Decrease quantity for ${item.name}`}
-                        >
-                          -
-                        </button>
-                        <span className="min-w-8 text-center text-sm font-semibold text-neutral-800">
-                          {item.quantity}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            incrementItemQuantity(item.key);
-                          }}
-                          className="flex h-8 w-8 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-slate-100"
-                          aria-label={`Increase quantity for ${item.name}`}
-                        >
-                          +
-                        </button>
-                      </div>
+                      isWarrantyItem ? (
+                        <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-neutral-600">
+                          Qty {item.quantity}
+                        </div>
+                      ) : (
+                        <div className="flex h-10 items-center rounded-full border border-slate-200 bg-white px-1">
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              decrementItemQuantity(item.key);
+                            }}
+                            className="flex h-8 w-8 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-slate-100"
+                            aria-label={`Decrease quantity for ${item.name}`}
+                          >
+                            -
+                          </button>
+                          <span className="min-w-8 text-center text-sm font-semibold text-neutral-800">
+                            {item.quantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              incrementItemQuantity(item.key);
+                            }}
+                            className="flex h-8 w-8 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-slate-100"
+                            aria-label={`Increase quantity for ${item.name}`}
+                          >
+                            +
+                          </button>
+                        </div>
+                      )
                     }
                   />
                 );

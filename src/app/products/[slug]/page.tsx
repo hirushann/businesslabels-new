@@ -75,6 +75,15 @@ type UpsellProduct = {
   main_image: string;
 };
 
+type ProductWarrantyOption = {
+  id: number;
+  name?: string | null;
+  duration_months?: number | null;
+  price?: number | null;
+  description?: string | null;
+  sort_order?: number | null;
+};
+
 type ProductDetail = {
   id?: number;
   type?: string;
@@ -119,6 +128,12 @@ type ProductDetail = {
   categories?: Array<{ id?: number; name?: string | null }>;
   up_sells?: UpsellProduct[];
   cross_sells?: UpsellProduct[];
+  warranty?: {
+    is_available?: boolean | null;
+    has_options?: boolean | null;
+    options?: ProductWarrantyOption[] | null;
+    default_option?: ProductWarrantyOption | null;
+  } | null;
 };
 
 function normalizeType(raw: string | string[] | undefined): "simple" | "variable" | null {
@@ -415,6 +430,7 @@ export default async function SingleProductPage({
               stock={product?.stock}
               deliveryDatesInStock={product?.delivery_dates_in_stock}
               deliveryDatesNoStock={product?.delivery_dates_no_stock}
+              warranty={product?.warranty}
             />
 
             {/* Consumable Items */}
