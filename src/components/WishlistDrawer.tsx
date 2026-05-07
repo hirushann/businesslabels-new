@@ -1,9 +1,13 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import EmptyState from '@/components/EmptyState';
 import DrawerProductCard from '@/components/DrawerProductCard';
 import { useWishlist } from '@/components/WishlistProvider';
+import { Popover, PopoverAnchor, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle } from '@/components/ui/popover';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Field, FieldContent, FieldDescription, FieldLabel, FieldTitle } from '@/components/ui/field';
+import { normalizeWarrantyOptions, type WarrantyOption } from '@/lib/utils/warranty';
 
 type WishlistDrawerProps = {
   onClose: () => void;
@@ -20,6 +24,8 @@ function formatEuro(value: number): string {
 
 export default function WishlistDrawer({ onClose }: WishlistDrawerProps) {
   const { items, uniqueItemCount, removeItem, moveToCart } = useWishlist();
+  const [warrantyPendingKey, setWarrantyPendingKey] = useState<string | null>(null);
+  const [selectedWarrantyId, setSelectedWarrantyId] = useState<number | null>(null);
 
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
@@ -92,6 +98,32 @@ export default function WishlistDrawer({ onClose }: WishlistDrawerProps) {
                     : { pathname: `/products/${item.slug}` }
                   : undefined;
 
+                const normalizedWarranty = normalizeWarrantyOptions(item.warranty);
+                const hasWarrantyOptions = normalizedWarranty.options.length > 0;
+                const isWarrantyOpen = warrantyPendingKey === item.key;
+                const activeWarrantyId = isWarrantyOpen ? (selectedWarrantyId ?? normalizedWarranty.defaultOptionId) : normalizedWarranty.defaultOptionId;
+                const selectedWarrantyOption: WarrantyOption | null =
+                  normalizedWarranty.options.find((o) => o.id === activeWarrantyId) ?? null;
+
+                const handleAddToCartClick = (event: React.MouseEvent) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  if (hasWarrantyOptions) {
+                    setSelectedWarrantyId(normalizedWarranty.defaultOptionId);
+                    setWarrantyPendingKey(item.key);
+                  } else {
+                    moveToCart(item.key);
+                  }
+                };
+
+                const handleConfirmWarranty = (event: React.MouseEvent) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  moveToCart(item.key, selectedWarrantyOption ?? undefined);
+                  setWarrantyPendingKey(null);
+                  setSelectedWarrantyId(null);
+                };
+
                 return (
                   <DrawerProductCard
                     key={item.key}
@@ -108,22 +140,76 @@ export default function WishlistDrawer({ onClose }: WishlistDrawerProps) {
                       </span>
                     }
                     actionNode={
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          moveToCart(item.key);
+                      <Popover
+                        open={isWarrantyOpen}
+                        onOpenChange={(open) => {
+                          if (!open) {
+                            setWarrantyPendingKey(null);
+                            setSelectedWarrantyId(null);
+                          }
                         }}
-                        disabled={!item.inStock}
-                        className={`h-10 px-4 rounded-full text-sm font-semibold leading-5 transition-colors flex items-center justify-center ${
-                          item.inStock
-                            ? 'bg-amber-500 text-white hover:bg-amber-600'
-                            : 'bg-slate-200 text-slate-500 cursor-not-allowed'
-                        }`}
                       >
-                        Add to Cart
-                      </button>
+                        <PopoverAnchor asChild>
+                          <button
+                            type="button"
+                            onClick={handleAddToCartClick}
+                            disabled={!item.inStock}
+                            className={`h-10 px-4 rounded-full text-sm font-semibold leading-5 transition-colors flex items-center justify-center ${
+                              item.inStock
+                                ? 'bg-amber-500 text-white hover:bg-amber-600'
+                                : 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                            }`}
+                          >
+                            Add to Cart
+                          </button>
+                        </PopoverAnchor>
+                        {hasWarrantyOptions && isWarrantyOpen ? (
+                          <PopoverContent side="left" align="start" className="w-80 p-4" onClick={(e) => e.stopPropagation()}>
+                            <PopoverHeader>
+                              <PopoverTitle>Warranty Options</PopoverTitle>
+                              <PopoverDescription>Select a warranty plan for this product.</PopoverDescription>
+                            </PopoverHeader>
+                            <RadioGroup
+                              value={activeWarrantyId !== null ? String(activeWarrantyId) : undefined}
+                              onValueChange={(val) => setSelectedWarrantyId(Number(val))}
+                              className="flex flex-col gap-2 mt-3"
+                            >
+                              {normalizedWarranty.options.map((option) => (
+                                <Field key={option.id}>
+                                  <RadioGroupItem value={String(option.id)} id={`warranty-wish-${item.key}-${option.id}`} />
+                                  <FieldLabel htmlFor={`warranty-wish-${item.key}-${option.id}`}>
+                                    <FieldContent>
+                                      <FieldTitle>{option.name}</FieldTitle>
+                                      {option.description ? (
+                                        <FieldDescription>{option.description}</FieldDescription>
+                                      ) : null}
+                                    </FieldContent>
+                                    <span className="text-sm font-semibold text-neutral-800 shrink-0">
+                                      {option.price > 0 ? `+€${option.price.toFixed(2)}` : 'Free'}
+                                    </span>
+                                  </FieldLabel>
+                                </Field>
+                              ))}
+                            </RadioGroup>
+                            <div className="flex gap-2 mt-4">
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); setWarrantyPendingKey(null); setSelectedWarrantyId(null); }}
+                                className="flex-1 py-2 rounded-full border border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleConfirmWarranty}
+                                className="flex-1 py-2 rounded-full bg-amber-500 text-white text-sm font-semibold hover:bg-amber-600 transition-colors"
+                              >
+                                Add to Cart
+                              </button>
+                            </div>
+                          </PopoverContent>
+                        ) : null}
+                      </Popover>
                     }
                   />
                 );

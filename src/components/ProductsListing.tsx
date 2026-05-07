@@ -96,6 +96,11 @@ const PRODUCT_LISTING_SEARCH_QUERY = {
     meta: { raw: {} },
     material: { raw: {} },
     material_title: { raw: {} },
+    warranty_available: { raw: {} },
+    warranty_option_ids: { raw: {} },
+    warranty_option_names: { raw: {} },
+    warranty_option_months: { raw: {} },
+    warranty_option_prices: { raw: {} },
   },
 };
 
@@ -279,12 +284,12 @@ function ProductsListingContent({ products }: { products: ListingProductCardData
                 }`}
               >
                 {hasSearchProducts
-                  ? searchProducts.map(({ id, product, href }) => (
-                      <ProductCard key={id} product={product} href={href} />
-                    ))
-                  : fallbackProducts.map((product) => (
-                      <ProductCard key={product.id} product={product} href={cardHref(product)} />
-                    ))}
+                  ? searchProducts.map(({ id, product, href }) => {
+                      return <ProductCard key={id} product={product} href={href} />;
+                    })
+                  : fallbackProducts.map((product) => {
+                      return <ProductCard key={product.id} product={product} href={cardHref(product)} />;
+                    })}
               </div>
 
               {pageCount > 1 && hasSearchProducts ? (
