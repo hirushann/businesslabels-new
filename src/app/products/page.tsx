@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ProductsListing, { type ListingProductCardData } from "@/components/ProductsListing";
+import type { WarrantyRawData } from "@/lib/utils/warranty";
 
 export const metadata: Metadata = {
   title: "All Printers — BusinessLabels",
@@ -28,6 +29,7 @@ type Product = {
     id?: number;
     name?: string | null;
   }>;
+  warranty?: WarrantyRawData | null;
 };
 
 type ProductsResponse = {
@@ -99,8 +101,10 @@ export default async function ProductsPage({
         categories: product.categories ?? [],
         slug: product.slug ?? null,
         type: normalizeType(product.type),
+        warranty: product.warranty ?? null,
         createdAt: createdAtTimestamp(product.created_at, json.data.length - index),
       }));
+      console.log("Fetched products test:", products);
     } else {
       console.error(`Failed to fetch products: ${response.status}`);
     }

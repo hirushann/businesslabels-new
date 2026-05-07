@@ -7,9 +7,9 @@ import { useWishlist } from "@/components/WishlistProvider";
 import { getExpectedDeliveryMessage } from "@/lib/utils/delivery";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Popover, PopoverAnchor, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle } from "@/components/ui/popover";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Field, FieldContent, FieldDescription, FieldLabel, FieldTitle } from "@/components/ui/field";
+import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
+import { type WarrantyOption, normalizeWarrantyOptions } from "@/lib/utils/warranty";
+import WarrantyOptionsContent from "@/components/WarrantyOptionsContent";
 
 type ProductPurchaseProps = {
   id?: string | number | null;
@@ -50,60 +50,7 @@ type ProductPurchaseProps = {
   } | null;
 };
 
-type WarrantyOption = {
-  id: number;
-  name: string;
-  durationMonths: number | null;
-  price: number;
-  description: string | null;
-  sortOrder: number;
-};
 
-function normalizeWarrantyOptions(
-  warranty: ProductPurchaseProps["warranty"],
-): { options: WarrantyOption[]; defaultOptionId: number | null } {
-  if (!warranty?.is_available || !warranty?.has_options || !Array.isArray(warranty.options)) {
-    return { options: [], defaultOptionId: null };
-  }
-
-  const options = warranty.options
-    .map((option) => {
-      if (typeof option?.id !== "number" || !Number.isFinite(option.id)) {
-        return null;
-      }
-
-      const normalizedPrice =
-        typeof option.price === "number" && Number.isFinite(option.price) ? option.price : 0;
-
-      return {
-        id: option.id,
-        name: option.name?.trim() || "Warranty option",
-        durationMonths:
-          typeof option.duration_months === "number" && Number.isFinite(option.duration_months)
-            ? option.duration_months
-            : null,
-        price: normalizedPrice,
-        description: option.description?.trim() || null,
-        sortOrder:
-          typeof option.sort_order === "number" && Number.isFinite(option.sort_order)
-            ? option.sort_order
-            : 0,
-      } satisfies WarrantyOption;
-    })
-    .filter((option): option is WarrantyOption => Boolean(option))
-    .sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id);
-
-  if (!options.length) {
-    return { options: [], defaultOptionId: null };
-  }
-
-  const defaultOptionId =
-    options.find((option) => option.id === warranty.default_option?.id)?.id ??
-    options.find((option) => option.price <= 0)?.id ??
-    options[0].id;
-
-  return { options, defaultOptionId };
-}
 
 function formatEuro(value: number): string {
   return new Intl.NumberFormat("nl-NL", {
@@ -327,6 +274,7 @@ export default function ProductPurchase({
       excerpt,
       materialTitle,
       inStock: Boolean(inStock),
+      warranty: warranty ?? null,
     });
   };
   
@@ -504,73 +452,18 @@ export default function ProductPurchase({
 
         {hasWarrantyOptions ? (
           <PopoverContent align="end" className="w-[420px] p-4">
-            <PopoverHeader>
-              <PopoverTitle className="text-base">Choose Warranty</PopoverTitle>
-              <PopoverDescription>
-                Select a warranty option before adding this item to your cart.
-              </PopoverDescription>
-            </PopoverHeader>
-
-            <RadioGroup
-              value={selectedWarrantyOption ? String(selectedWarrantyOption.id) : undefined}
-              onValueChange={(value) => {
-                const parsed = Number.parseInt(value, 10);
-                if (Number.isFinite(parsed)) {
-                  setSelectedWarrantyId(parsed);
-                }
+            <WarrantyOptionsContent
+              options={normalizedWarranty.options}
+              defaultOptionId={normalizedWarranty.defaultOptionId}
+              selectedId={selectedWarrantyId}
+              instanceId={id ?? slug ?? "purchase"}
+              onSelect={setSelectedWarrantyId}
+              onCancel={() => {
+                setIsWarrantyPopoverOpen(false);
+                setPendingQuantity(null);
               }}
-              className="gap-2"
-            >
-              {normalizedWarranty.options.map((option) => {
-                const optionId = `warranty-option-${option.id}`;
-                const isDefaultOption = option.id === normalizedWarranty.defaultOptionId;
-                const hasExtraPrice = option.price > 0;
-
-                return (
-                  <FieldLabel key={option.id} htmlFor={optionId} className="cursor-pointer rounded-xl border border-slate-200 p-0">
-                    <Field orientation="horizontal" className="items-start rounded-xl border-none p-3">
-                      <RadioGroupItem id={optionId} value={String(option.id)} className="mt-1" />
-                      <FieldContent>
-                        <div className="flex items-start justify-between gap-3">
-                          <FieldTitle className="text-sm font-semibold text-neutral-800">{option.name}</FieldTitle>
-                          <span className={`text-sm font-semibold ${hasExtraPrice ? "text-amber-600" : "text-emerald-600"}`}>
-                            {hasExtraPrice ? `+${formatEuro(option.price)}` : "No extra cost"}
-                          </span>
-                        </div>
-                        <FieldDescription className="text-xs">
-                          {option.description || (option.durationMonths ? `${option.durationMonths} months coverage` : "Extended coverage")}
-                        </FieldDescription>
-                        {isDefaultOption ? (
-                          <span className="mt-1 inline-flex w-fit rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
-                            Default Option
-                          </span>
-                        ) : null}
-                      </FieldContent>
-                    </Field>
-                  </FieldLabel>
-                );
-              })}
-            </RadioGroup>
-
-            <div className="mt-2 flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsWarrantyPopoverOpen(false);
-                  setPendingQuantity(null);
-                }}
-                className="h-9 rounded-full border border-slate-200 px-4 text-sm font-semibold text-neutral-700 transition-colors hover:bg-slate-100"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmWarrantyAdd}
-                className="h-9 rounded-full bg-amber-500 px-4 text-sm font-semibold text-white transition-colors hover:bg-amber-600"
-              >
-                Add to Cart
-              </button>
-            </div>
+              onConfirm={handleConfirmWarrantyAdd}
+            />
           </PopoverContent>
         ) : null}
       </Popover>

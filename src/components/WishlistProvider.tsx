@@ -2,7 +2,8 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { ProductRouteType } from "@/components/ProductCard";
-import { useCart } from "@/components/CartProvider";
+import { buildCartItemKey, useCart } from "@/components/CartProvider";
+import { type WarrantyRawData, type WarrantyOption } from "@/lib/utils/warranty";
 
 const WISHLIST_STORAGE_KEY = "businesslabels-wishlist";
 
@@ -19,6 +20,7 @@ export type WishlistItem = {
   excerpt?: string | null;
   materialTitle?: string | null;
   inStock: boolean;
+  warranty?: WarrantyRawData | null;
 };
 
 export type WishlistInput = Omit<WishlistItem, "key">;
@@ -29,7 +31,7 @@ type WishlistContextValue = {
   addItem: (item: WishlistInput) => void;
   removeItem: (key: string) => void;
   clearWishlist: () => void;
-  moveToCart: (key: string) => void;
+  moveToCart: (key: string, warrantyOption?: WarrantyOption) => void;
   hasItem: (item: Pick<WishlistInput, "id" | "slug" | "type">) => boolean;
 };
 
@@ -99,13 +101,13 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
       clearWishlist: () => {
         setItems([]);
       },
-      moveToCart: (key) => {
+      moveToCart: (key, warrantyOption) => {
         const item = items.find((entry) => entry.key === key);
         if (!item || !item.inStock) {
           return;
         }
 
-        cart.addItem({
+        const parentInput = {
           id: item.id,
           slug: item.slug,
           type: item.type,
@@ -113,7 +115,28 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
           sku: item.sku,
           price: item.price ?? null,
           mainImage: item.mainImage ?? null,
-        });
+        };
+
+        cart.addItem(parentInput);
+
+        if (warrantyOption && warrantyOption.price > 0) {
+          const parentKey = buildCartItemKey(parentInput);
+          cart.addItem({
+            id: `warranty-${parentKey}-${warrantyOption.id}`,
+            name: warrantyOption.name,
+            sku: `${item.sku}-WARRANTY`,
+            price: warrantyOption.price,
+            mainImage: item.mainImage ?? null,
+            itemKind: "warranty",
+            linkedToKey: parentKey,
+            warranty: {
+              optionId: warrantyOption.id,
+              durationMonths: warrantyOption.durationMonths,
+              parentSku: item.sku,
+              parentName: item.name,
+            },
+          });
+        }
       },
       hasItem: (item) => {
         const key = wishlistItemKey(item);
