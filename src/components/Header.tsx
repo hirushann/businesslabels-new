@@ -22,8 +22,8 @@ import LanguageSwitcher from '@/components/LanguageSwitcher';
 const navItems = [
   { label: 'Home', href: '/', active: true, dropdownKey: null },
   { label: 'Printers', href: '/printers', dropdown: true, dropdownKey: 'printers' as DropdownKey },
-  { label: 'Labels and tickets', href: '/labels', dropdown: true, dropdownKey: 'labels' as DropdownKey },
-  { label: 'Accessories', href: '/accessories', dropdown: true, dropdownKey: 'accessories' as DropdownKey },
+  { label: 'Labels and tickets', href: '/category/labels-en-tickets', dropdown: true, dropdownKey: 'labels' as DropdownKey },
+  { label: 'Accessories', href: '/category/accessoires', dropdown: true, dropdownKey: 'accessories' as DropdownKey },
   { label: 'Resources', href: '/resources', dropdown: true, dropdownKey: 'resources' as DropdownKey },
   { label: 'Brands', href: '/brands', dropdown: true, dropdownKey: 'brands' as DropdownKey },
   { label: 'Support', href: '/support', dropdownKey: null },

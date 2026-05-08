@@ -46,11 +46,11 @@ const MULTI_VALUE_KEYS = {
   materialIds: ["material_id"],
   materialCategories: ["material_category"],
   materialCategoryIds: ["material_category_id"],
-  materialCodes: ["material_code"],
-  materials: ["material"],
-  finishings: ["finishing"],
-  glues: ["glue", "adhesive"],
-  printMethods: ["print_method", "druktype"],
+  materialCodes: ["material_code", "materiaal_code"],
+  materials: ["material", "materiaal"],
+  finishings: ["finishing", "afwerking"],
+  glues: ["glue", "lijm", "adhesive"],
+  printMethods: ["print_method", "printmethode", "druktype"],
   printerTypes: ["printer_type"],
   detections: ["detectie"],
   marks: ["merken"],
@@ -69,28 +69,18 @@ const OPTION_FILTERS: Array<{
   field: string;
   paramValues: keyof Pick<
     CatalogSearchParams,
-    | "categories"
-    | "brands"
     | "materialCodes"
     | "materials"
     | "finishings"
     | "glues"
     | "printMethods"
-    | "printerTypes"
-    | "detections"
-    | "marks"
   >;
 }> = [
-  { key: "category", title: "Product Type", field: "category_slugs.keyword", paramValues: "categories" },
-  { key: "brand", title: "Brand", field: "brand.keyword", paramValues: "brands" },
-  { key: "material_code", title: "Material Code", field: "material_code.keyword", paramValues: "materialCodes" },
-  { key: "material", title: "Material Type", field: "material_title.keyword", paramValues: "materials" },
-  { key: "finishing", title: "Finishing", field: "finishing.keyword", paramValues: "finishings" },
-  { key: "glue", title: "Glue", field: "glue.keyword", paramValues: "glues" },
-  { key: "print_method", title: "Print Method", field: "druktype.keyword", paramValues: "printMethods" },
-  { key: "printer_type", title: "Printer Type", field: "printer_type.keyword", paramValues: "printerTypes" },
-  { key: "detectie", title: "Detection", field: "detectie.keyword", paramValues: "detections" },
-  { key: "merken", title: "Marks", field: "merken.keyword", paramValues: "marks" },
+  { key: "print_method", title: "Print Method", field: "filters.printmethode.keyword", paramValues: "printMethods" },
+  { key: "material_code", title: "Material Code", field: "filters.materiaal_code.keyword", paramValues: "materialCodes" },
+  { key: "material", title: "Material Type", field: "filters.materiaal.keyword", paramValues: "materials" },
+  { key: "finishing", title: "Finishing", field: "filters.afwerking.keyword", paramValues: "finishings" },
+  { key: "glue", title: "Glue", field: "filters.lijm.keyword", paramValues: "glues" },
 ];
 
 const RANGE_FILTERS: Array<{
@@ -103,13 +93,13 @@ const RANGE_FILTERS: Array<{
   unitSuffix?: string;
 }> = [
   { key: "price", title: "Price Range", field: "price", minParam: "priceMin", maxParam: "priceMax", unitPrefix: "€" },
-  { key: "width", title: "Label Width", field: "meta_width_numeric", minParam: "widthMin", maxParam: "widthMax", unitSuffix: "mm" },
-  { key: "height", title: "Label Height", field: "meta_height_numeric", minParam: "heightMin", maxParam: "heightMax", unitSuffix: "mm" },
+  { key: "width", title: "Label Width", field: "filters.breedte", minParam: "widthMin", maxParam: "widthMax", unitSuffix: "mm" },
+  { key: "height", title: "Label Height", field: "filters.hoogte", minParam: "heightMin", maxParam: "heightMax", unitSuffix: "mm" },
   { key: "core", title: "Core Size", field: "kern_numeric", minParam: "coreMin", maxParam: "coreMax", unitSuffix: "mm" },
   {
     key: "outer_diameter",
     title: "Outer Diameter",
-    field: "buitendia_numeric",
+    field: "filters.buiten_diameter",
     minParam: "outerDiameterMin",
     maxParam: "outerDiameterMax",
     unitSuffix: "mm",
@@ -367,21 +357,21 @@ function buildFilters(params: CatalogSearchParams): estypes.QueryDslQueryContain
     termsFilter("material_id", params.materialIds),
     termsFilter("material_taxon_slugs", params.materialCategories),
     termsFilter("material_taxon_ids", params.materialCategoryIds),
-    termsFilter("material_code.keyword", params.materialCodes),
-    termsFilter("material_title.keyword", params.materials),
-    termsFilter("finishing.keyword", params.finishings),
-    termsFilter("glue.keyword", params.glues),
-    termsFilter("druktype.keyword", params.printMethods),
+    termsFilter("filters.materiaal_code.keyword", params.materialCodes),
+    termsFilter("filters.materiaal.keyword", params.materials),
+    termsFilter("filters.afwerking.keyword", params.finishings),
+    termsFilter("filters.lijm.keyword", params.glues),
+    termsFilter("filters.printmethode.keyword", params.printMethods),
     termsFilter("printer_type.keyword", params.printerTypes),
     termsFilter("detectie.keyword", params.detections),
     termsFilter("merken.keyword", params.marks),
     params.inStock === true ? { range: { stock: { gt: 0 } } } : null,
     params.inStock === false ? { range: { stock: { lte: 0 } } } : null,
     rangeFilter("price", params.priceMin, params.priceMax),
-    rangeFilter("meta_width_numeric", params.widthMin, params.widthMax),
-    rangeFilter("meta_height_numeric", params.heightMin, params.heightMax),
+    rangeFilter("filters.breedte", params.widthMin, params.widthMax),
+    rangeFilter("filters.hoogte", params.heightMin, params.heightMax),
     rangeFilter("kern_numeric", params.coreMin, params.coreMax),
-    rangeFilter("buitendia_numeric", params.outerDiameterMin, params.outerDiameterMax),
+    rangeFilter("filters.buiten_diameter", params.outerDiameterMin, params.outerDiameterMax),
   ];
 
   return filters.filter((filter): filter is estypes.QueryDslQueryContainer => filter !== null);

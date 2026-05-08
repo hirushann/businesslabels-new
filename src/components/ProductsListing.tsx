@@ -9,8 +9,11 @@ import type { ProductCardData } from "@/components/ProductCard";
 import ProductPaginationSwitcher from "@/components/ProductPaginationSwitcher";
 import RangeSlider from "@/components/RangeSlider";
 import type {
+  CatalogOptionFilter,
   CatalogOptionFilterKey,
   CatalogProductResult,
+  CatalogRangeFilter,
+  CatalogRangeKey,
   CatalogSearchResponse,
   CatalogSortValue,
 } from "@/lib/search/types";
@@ -93,15 +96,37 @@ const KNOWN_FILTER_PARAMS = [
   "material_category",
   "material_category_id",
   "material_code",
+  "materiaal_code",
   "material",
+  "materiaal",
   "finishing",
+  "afwerking",
   "glue",
+  "lijm",
   "adhesive",
   "print_method",
+  "printmethode",
   "druktype",
   "printer_type",
   "detectie",
   "merken",
+];
+
+type OrderedFilterEntry =
+  | { kind: "range"; key: CatalogRangeKey }
+  | { kind: "option"; key: CatalogOptionFilterKey };
+
+const FILTER_UI_ORDER: OrderedFilterEntry[] = [
+  { kind: "range", key: "price" },
+  { kind: "option", key: "print_method" },
+  { kind: "range", key: "width" },
+  { kind: "range", key: "height" },
+  { kind: "option", key: "material_code" },
+  { kind: "option", key: "material" },
+  { kind: "option", key: "finishing" },
+  { kind: "option", key: "glue" },
+  { kind: "range", key: "core" },
+  { kind: "range", key: "outer_diameter" },
 ];
 
 function paramsToString(params: URLSearchParams): string {
@@ -304,6 +329,21 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
     return count;
   }, [catalog.filters.options, catalog.filters.ranges, currentParams]);
 
+  const orderedFilters = useMemo(() => {
+    const rangeMap = new Map(catalog.filters.ranges.map((filter) => [filter.key, filter]));
+    const optionMap = new Map(catalog.filters.options.map((filter) => [filter.key, filter]));
+
+    return FILTER_UI_ORDER.flatMap((entry): Array<{ kind: "range"; filter: CatalogRangeFilter } | { kind: "option"; filter: CatalogOptionFilter }> => {
+      if (entry.kind === "range") {
+        const filter = rangeMap.get(entry.key);
+        return filter ? [{ kind: "range" as const, filter }] : [];
+      }
+
+      const filter = optionMap.get(entry.key);
+      return filter ? [{ kind: "option" as const, filter }] : [];
+    });
+  }, [catalog.filters.options, catalog.filters.ranges]);
+
   const clearFilters = () => {
     setParams((params) => {
       KNOWN_FILTER_PARAMS.forEach((key) => params.delete(key));
@@ -451,29 +491,31 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
               </div>
 
               <div className="flex flex-col gap-3">
-                {catalog.filters.ranges.map((filter) => {
-                  const keys = RANGE_PARAM_KEYS[filter.key];
-                  const value: [number, number] = [
-                    Math.min(numberFor(currentParams, keys.min) ?? 0, filter.max),
-                    Math.min(numberFor(currentParams, keys.max) ?? filter.max, filter.max),
-                  ];
+                {orderedFilters.map((entry) => {
+                  if (entry.kind === "range") {
+                    const filter = entry.filter;
+                    const keys = RANGE_PARAM_KEYS[filter.key];
+                    const value: [number, number] = [
+                      Math.min(numberFor(currentParams, keys.min) ?? 0, filter.max),
+                      Math.min(numberFor(currentParams, keys.max) ?? filter.max, filter.max),
+                    ];
 
-                  return (
-                    <Accordion key={filter.key} title={filter.title} defaultOpen={true} size="compact" className="bg-white">
-                      <RangeSlider
-                        min={0}
-                        max={filter.max}
-                        value={value}
-                        onChange={() => {}}
-                        onAfterChange={(range) => setRange(filter.key, range, filter.max)}
-                        formatValue={(rangeValue) => formatRangeValue(rangeValue, filter.unitPrefix, filter.unitSuffix)}
-                        inputPrefix={filter.unitPrefix}
-                      />
-                    </Accordion>
-                  );
-                })}
+                    return (
+                      <Accordion key={filter.key} title={filter.title} defaultOpen={true} size="compact" className="bg-white">
+                        <RangeSlider
+                          min={0}
+                          max={filter.max}
+                          value={value}
+                          onChange={() => {}}
+                          onAfterChange={(range) => setRange(filter.key, range, filter.max)}
+                          formatValue={(rangeValue) => formatRangeValue(rangeValue, filter.unitPrefix, filter.unitSuffix)}
+                          inputPrefix={filter.unitPrefix}
+                        />
+                      </Accordion>
+                    );
+                  }
 
-                {catalog.filters.options.map((filter) => {
+                  const filter = entry.filter;
                   const paramKey = OPTION_PARAM_KEY[filter.key];
                   const selectedValues = new Set(valuesFor(currentParams, paramKey));
 
