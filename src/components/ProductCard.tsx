@@ -236,7 +236,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
         </div>
         <Image
           src={imageSrc}
-          alt={product.name}
+          alt={productName}
           width={600}
           height={400}
           className="h-full w-auto object-contain mx-auto py-5"
