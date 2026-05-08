@@ -319,21 +319,6 @@ function categoryTitleForSlug(slug: string): string {
   return CATEGORY_TITLES[slug] ?? slugToTitle(slug);
 }
 
-function productHref(product: DemoTopProductCard): { pathname: string; query?: { type: "simple" | "variable" } } | null {
-  if (!product.slug) {
-    return null;
-  }
-
-  if (product.type) {
-    return {
-      pathname: `/products/${product.slug}`,
-      query: { type: product.type },
-    };
-  }
-
-  return { pathname: `/products/${product.slug}` };
-}
-
 function categoryHref(slug: string, categoriesPage?: number) {
   const search = categoriesPage && categoriesPage > 1 ? `?categories_page=${categoriesPage}` : "";
   return `/category/${slug}${search}`;
@@ -396,26 +381,6 @@ export default async function CategoryArchivePage({
     safeCategoriesPage * categoryCardsPerPage,
   );
   const categoryProducts = isDemoCategory ? [] : await loadCategoryProducts(baseUrl, slug, locale);
-  const topProducts = await loadTopProducts(baseUrl, locale);
-
-  async function fetchMoreProducts(targetSlug: string, page: number): Promise<ProductCardData[]> {
-    "use server";
-    const url = process.env.BBNL_API_BASE_URL;
-    if (!url) return [];
-    const actionLocale = await getServerLocale();
-    try {
-      const response = await fetch(
-        withLocaleParam(`${url}/api/products?page=${page}`, actionLocale),
-        { cache: "no-store" }
-      );
-      if (!response.ok) return [];
-      const json = await response.json();
-      return (json.data ?? []).map((product: any, index: number) => mapProductToCard(product, index));
-    } catch (error) {
-      console.error("Failed to fetch more products", error);
-      return [];
-    }
-  }
 
   return (
     <div className="bg-white">
