@@ -9,8 +9,10 @@ import type { ProductCardData } from "@/components/ProductCard";
 import ProductPaginationSwitcher from "@/components/ProductPaginationSwitcher";
 import RangeSlider from "@/components/RangeSlider";
 import type {
+  CatalogOptionFilter,
   CatalogOptionFilterKey,
   CatalogProductResult,
+  CatalogRangeFilter,
   CatalogRangeKey,
   CatalogSearchResponse,
   CatalogSortValue,
@@ -330,7 +332,7 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
     const rangeMap = new Map(catalog.filters.ranges.map((filter) => [filter.key, filter]));
     const optionMap = new Map(catalog.filters.options.map((filter) => [filter.key, filter]));
 
-    return FILTER_UI_ORDER.flatMap((entry) => {
+    return FILTER_UI_ORDER.flatMap((entry): Array<{ kind: "range"; filter: CatalogRangeFilter } | { kind: "option"; filter: CatalogOptionFilter }> => {
       if (entry.kind === "range") {
         const filter = rangeMap.get(entry.key);
         return filter ? [{ kind: "range" as const, filter }] : [];
