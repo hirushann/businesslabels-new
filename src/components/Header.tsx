@@ -14,8 +14,9 @@ import PrintersMenu from './nav/PrintersMenu';
 import LabelsMenu from './nav/LabelsMenu';
 import AccessoriesMenu from './nav/AccessoriesMenu';
 import ResourcesMenu from './nav/ResourcesMenu';
+import BrandsMenu from './nav/BrandsMenu';
 
-type DropdownKey = 'printers' | 'labels' | 'accessories' | 'resources' | null;
+type DropdownKey = 'printers' | 'labels' | 'accessories' | 'resources' | 'brands' | null;
 // import { useCart } from '@/context/CartContext';
 import { ROUTES } from '@/config/routes';
 import SearchPopup from '@/components/SearchPopup';
@@ -27,7 +28,7 @@ const navItems = [
   { label: 'Labels and tickets', href: '/labels', dropdown: true, dropdownKey: 'labels' as DropdownKey },
   { label: 'Accessories', href: '/accessories', dropdown: true, dropdownKey: 'accessories' as DropdownKey },
   { label: 'Resources', href: '/resources', dropdown: true, dropdownKey: 'resources' as DropdownKey },
-  { label: 'Brands', href: '/brands', dropdownKey: null },
+  { label: 'Brands', href: '/brands', dropdown: true, dropdownKey: 'brands' as DropdownKey },
   { label: 'Support', href: '/support', dropdownKey: null },
 ];
 
@@ -54,6 +55,7 @@ export default function Header() {
     labels: <LabelsMenu />,
     accessories: <AccessoriesMenu />,
     resources: <ResourcesMenu />,
+    brands: <BrandsMenu />,
   };
 
   return (

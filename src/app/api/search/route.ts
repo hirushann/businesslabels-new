@@ -471,6 +471,22 @@ function withCategoryConstraint(body: ElasticsearchRequestBody, categorySlug: st
   return { ...body, query: newQuery };
 }
 
+function withBrandConstraint(body: ElasticsearchRequestBody, brandSlug: string): ElasticsearchRequestBody {
+  const constraintClause = {
+    term: {
+      [BRAND_FIELD.runtimeField]: {
+        value: brandSlug,
+        case_insensitive: true,
+      },
+    },
+  };
+  const existingQuery = body.query;
+  const newQuery = existingQuery
+    ? { bool: { must: [existingQuery], filter: [constraintClause] } }
+    : { bool: { filter: [constraintClause] } };
+  return { ...body, query: newQuery };
+}
+
 type SearchStats = {
   price: {
     max: number | null;
@@ -557,6 +573,7 @@ async function loadSearchStats(
   index: string,
   connectionHeaders: Record<string, string> | undefined,
   categorySlug?: string,
+  brandSlug?: string,
 ): Promise<SearchStats> {
   const fallbackStats: SearchStats = {
     price: { max: null },
@@ -596,8 +613,22 @@ async function loadSearchStats(
       runtime_mappings: metaRuntimeMappings(),
     };
 
+    const statsFilters: unknown[] = [];
     if (categorySlug) {
-      statsBody.query = { bool: { filter: [{ terms: { category_slugs: [categorySlug] } }] } };
+      statsFilters.push({ terms: { category_slugs: [categorySlug] } });
+    }
+    if (brandSlug) {
+      statsFilters.push({
+        term: {
+          [BRAND_FIELD.runtimeField]: {
+            value: brandSlug,
+            case_insensitive: true,
+          },
+        },
+      });
+    }
+    if (statsFilters.length > 0) {
+      statsBody.query = { bool: { filter: statsFilters } };
     }
 
     const response = await fetch(`${host}/${elasticIndexPath(index)}/_search`, {
@@ -957,9 +988,14 @@ export async function POST(request: NextRequest) {
     return normalizeError('Elasticsearch host is not configured.', 500);
   }
 
-  let body: { state?: RequestState; queryConfig?: QueryConfig; categorySlug?: string };
+  let body: { state?: RequestState; queryConfig?: QueryConfig; categorySlug?: string; brandSlug?: string };
   try {
-    body = (await request.json()) as { state?: RequestState; queryConfig?: QueryConfig; categorySlug?: string };
+    body = (await request.json()) as {
+      state?: RequestState;
+      queryConfig?: QueryConfig;
+      categorySlug?: string;
+      brandSlug?: string;
+    };
   } catch {
     return normalizeError('Invalid search request payload.', 400);
   }
@@ -970,6 +1006,9 @@ export async function POST(request: NextRequest) {
 
   const categorySlug = typeof body.categorySlug === 'string' && body.categorySlug.trim()
     ? body.categorySlug.trim()
+    : undefined;
+  const brandSlug = typeof body.brandSlug === 'string' && body.brandSlug.trim()
+    ? body.brandSlug.trim()
     : undefined;
 
   try {
@@ -984,13 +1023,16 @@ export async function POST(request: NextRequest) {
         if (categorySlug) {
           safeRequestBody = withCategoryConstraint(safeRequestBody, categorySlug);
         }
+        if (brandSlug) {
+          safeRequestBody = withBrandConstraint(safeRequestBody, brandSlug);
+        }
         return next(safeRequestBody as never);
       },
     });
 
     const [response, searchStats] = await Promise.all([
       connector.onSearch(body.state, body.queryConfig),
-      loadSearchStats(host, index, connectionHeaders, categorySlug),
+      loadSearchStats(host, index, connectionHeaders, categorySlug, brandSlug),
     ]);
 
     const responseWithPriceMetadata: ResponseState = {
