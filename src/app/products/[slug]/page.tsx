@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import Accordion from "@/components/Accordion";
 import ProductPurchase from "@/components/ProductPurchase";
-import ProductCompatibilityDialog from "@/components/ProductCompatibilityDialog";
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 import ProductImageGallery from "@/components/ProductImageGallery";
-import { getDemoProductBySlug } from "@/lib/demoCatalog";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 import { notFound } from "next/navigation";
 import {
@@ -26,20 +24,13 @@ export async function generateMetadata({
   const query = await searchParams;
   const baseUrl = process.env.BBNL_API_BASE_URL;
 
-  if (!slug || !baseUrl) {
+  if (!slug) {
     return { title: "Product — BusinessLabels" };
   }
 
   const selectedType = normalizeType(query.type);
-  const tryTypes: Array<"simple" | "variable"> = selectedType
-    ? [selectedType]
-    : ["simple", "variable"];
-
-  let product: ProductDetail | null = null;
-  for (const type of tryTypes) {
-    product = await fetchProductByType(baseUrl, type, slug);
-    if (product) break;
-  }
+  const locale = await getServerLocale();
+  const product = await fetchProductBySlug(baseUrl, slug, selectedType, locale);
 
   if (!product) {
     return { title: "Product Not Found — BusinessLabels" };
@@ -120,7 +111,7 @@ type ProductDetail = {
   jeritech_stock?: number | null;
   delivery_dates_in_stock?: number | null;
   delivery_dates_no_stock?: number | null;
-  packing_group?: number | null;
+  packing_group?: string | number | null;
   discounts?: string | Array<{ discount?: string | number | null; quantity?: string | number | null }> | null;
   dimensions?: {
     weight?: string | number | null;
@@ -162,6 +153,32 @@ function normalizeValue(value: unknown): string | null {
     return Number.isFinite(value) ? String(value) : null;
   }
   return String(value).trim() || null;
+}
+
+function normalizeNumber(value: unknown): number | null {
+  if (value == null) {
+    return null;
+  }
+
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : null;
+  }
+
+  if (typeof value === "string") {
+    const parsed = Number(value.trim());
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
+}
+
+function normalizePackingGroup(value: ProductDetail["packing_group"]): string | null {
+  const numberValue = normalizeNumber(value);
+  if (numberValue == null) {
+    return normalizeValue(value);
+  }
+
+  return numberValue.toFixed(2);
 }
 
 function normalizeDisplayValue(value: unknown): string | null {
@@ -206,6 +223,9 @@ async function fetchProductByType(baseUrl: string, type: "simple" | "variable", 
   try {
     const response = await fetch(withLocaleParam(`${baseUrl}/api/products/${type}/slug/${encodeURIComponent(slug)}`, locale), {
       cache: "no-store",
+      headers: {
+        Accept: "application/json",
+      },
     });
 
     if (!response.ok) {
@@ -220,7 +240,30 @@ async function fetchProductByType(baseUrl: string, type: "simple" | "variable", 
   }
 }
 
+async function fetchProductBySlug(
+  baseUrl: string | undefined,
+  slug: string,
+  selectedType: "simple" | "variable" | null,
+  locale: "en" | "nl",
+): Promise<ProductDetail | null> {
+  if (!baseUrl) {
+    console.error("BBNL_API_BASE_URL is not configured");
+    return null;
+  }
 
+  const tryTypes: Array<"simple" | "variable"> = selectedType
+    ? [selectedType]
+    : ["simple", "variable"];
+
+  for (const type of tryTypes) {
+    const product = await fetchProductByType(baseUrl, type, slug, locale);
+    if (product) {
+      return product;
+    }
+  }
+
+  return null;
+}
 
 function toTitleCaseFromSlug(raw: string): string {
   return raw
@@ -280,32 +323,9 @@ export default async function SingleProductPage({
     notFound();
   }
 
-  let product: ProductDetail | null = null;
   const selectedType = normalizeType(query.type);
-  const demoProduct = getDemoProductBySlug(slug);
-
-  if (demoProduct) {
-    product = demoProduct;
-  }
-
-  if (!product && baseUrl) {
-    const locale = await getServerLocale();
-    const tryTypes: Array<"simple" | "variable"> = selectedType
-      ? [selectedType]
-      : ["simple", "variable"];
-
-    for (const type of tryTypes) {
-      const result = await fetchProductByType(baseUrl, type, slug, locale);
-      if (result) {
-        product = result;
-        console.log(`Fetched product details for slug '${slug}' with type '${type}'`);
-        console.log("Product details:", product);
-        break;
-      }
-    }
-  } else {
-    console.error("BBNL_API_BASE_URL is not configured");
-  }
+  const locale = await getServerLocale();
+  const product = await fetchProductBySlug(baseUrl, slug, selectedType, locale);
 
   if (!product) {
     notFound();
@@ -406,7 +426,9 @@ export default async function SingleProductPage({
                         Use our product finder to check compatibility with your specific printer model.
                       </p>
                     </div>
-                    <ProductCompatibilityDialog productId={product.id} />
+                    <button className="text-amber-500 text-base font-semibold underline text-left">
+                      Check Compatibility
+                    </button>
                   </div>
                 </div>
               </div>
@@ -428,7 +450,7 @@ export default async function SingleProductPage({
               price={product?.price}
               originalPrice={product?.original_price}
               mainImage={product?.main_image}
-              packingGroup={(product?.packing_group?.toFixed(2))}
+              packingGroup={normalizePackingGroup(product?.packing_group)}
               stock={product?.stock}
               deliveryDatesInStock={product?.delivery_dates_in_stock}
               deliveryDatesNoStock={product?.delivery_dates_no_stock}

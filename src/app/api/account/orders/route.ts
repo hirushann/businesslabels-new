@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
   try {
     console.log('Auth token found, fetching orders from backend API...');
     console.log(authToken);
-    const response = await fetch(backendUrl(apiBaseUrl, '/api/account/orders'), {
+    const response = await fetch(backendUrl(apiBaseUrl, '/api/orders'), {
       method: 'GET',
       headers: {
         Accept: 'application/json',

@@ -37,7 +37,6 @@ function toDisplayImageUrl(url: string | null | undefined): string | null {
 }
 
 function PrinterCard({ printer }: { printer: Printer }) {
-  const isEpson = printer.title.toLowerCase().includes("epson");
   const printerImage = toDisplayImageUrl(printer.image) || "https://placehold.co/600x400";
 
   return (
@@ -83,19 +82,11 @@ function PrinterCard({ printer }: { printer: Printer }) {
         <div className="flex flex-col gap-3 mt-auto">
           <div className="h-px bg-slate-100" />
           <Link
-            href={`/finder?printer_id=${printer.id}&product_type=labels`}
+            href={`/finder?printer_id=${printer.id}`}
             className="px-4 py-2.5 bg-amber-500 rounded-full flex items-center justify-center gap-2 text-white text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors"
           >
-            View Labels
+            View Products
           </Link>
-          {isEpson && (
-            <Link
-              href={`/finder?printer_id=${printer.id}&product_type=ink`}
-              className="px-4 py-2.5 bg-white border border-amber-500 rounded-full flex items-center justify-center gap-2 text-amber-500 text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-50 transition-colors"
-            >
-              View Ink
-            </Link>
-          )}
         </div>
       </div>
     </article>

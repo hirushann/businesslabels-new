@@ -11,6 +11,7 @@ type LoginResponseBody = {
   access_token?: unknown;
   plainTextToken?: unknown;
   user?: unknown;
+  errors?: Record<string, string[]>;
   [key: string]: unknown;
 };
 
@@ -49,9 +50,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const body = (await request.json()) as LoginPayload;
-    const email = typeof body.email === 'string' ? body.email.trim() : '';
-    const password = typeof body.password === 'string' ? body.password : '';
+    const body = (await request.json()) as any;
+    const email = (body.email || body.username || '').toString().trim();
+    const password = (body.password || '').toString();
     const remember = Boolean(body.remember);
 
     if (!email || !password) {
@@ -73,11 +74,19 @@ export async function POST(request: NextRequest) {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ email, password, remember }),
+      body: JSON.stringify({ username: email, email, password, remember }),
       cache: 'no-store',
     });
 
     const data = await readResponseBody(response);
+    
+    // Map 'username' errors back to 'email' for the frontend
+    if (response.status === 422 && data.errors && (data.errors.username || data.errors.email)) {
+      if (data.errors.username && !data.errors.email) {
+        data.errors.email = data.errors.username;
+      }
+    }
+
     const nextResponse = NextResponse.json(data, { status: response.status });
 
     const upstreamCookie = response.headers.get('set-cookie');

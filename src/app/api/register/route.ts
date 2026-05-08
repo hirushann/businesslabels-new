@@ -79,11 +79,11 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = (await request.json()) as RegisterPayload;
-    const username = readString(body.username);
+    const email = readString(body.email);
+    const username = readString(body.username) || email;
     const firstName = readString(body.first_name);
     const lastName = readString(body.last_name);
-    const name = readString(body.name) || [firstName, lastName].filter(Boolean).join(' ').trim() || username;
-    const email = readString(body.email);
+    const name = readString(body.name) || [firstName, lastName].filter(Boolean).join(' ').trim() || email;
     const password = typeof body.password === 'string' ? body.password : '';
     const passwordConfirmation = typeof body.password_confirmation === 'string' ? body.password_confirmation : password;
     const company = readString(body.company);

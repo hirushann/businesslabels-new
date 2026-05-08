@@ -2,7 +2,6 @@
 
 import type { LinkProps } from "next/link";
 import type { ProductCardData } from "@/components/ProductCard";
-import type { WarrantyRawData } from "@/lib/utils/warranty";
 
 function getRaw(result: unknown, field: string): unknown {
   const entry = (result as Record<string, { raw?: unknown }>)?.[field];
@@ -132,10 +131,10 @@ function imageForProduct(result: unknown): string | null {
   return null;
 }
 
-function categoriesForProduct(result: unknown): Array<{ id?: number; name?: string | null }> {
+function categoriesForProduct(result: unknown): Array<{ id?: number; name?: string | null; slug?: string | null }> {
   const categories = getRaw(result, "categories");
   if (Array.isArray(categories)) {
-    const normalizedCategories: Array<{ id?: number; name?: string | null }> = [];
+    const normalizedCategories: Array<{ id?: number; name?: string | null; slug?: string | null }> = [];
 
     categories.forEach((category) => {
       if (typeof category === "string") {
@@ -144,10 +143,11 @@ function categoriesForProduct(result: unknown): Array<{ id?: number; name?: stri
       }
 
       if (typeof category === "object" && category !== null) {
-        const record = category as { id?: unknown; term_id?: unknown; name?: unknown };
+        const record = category as { id?: unknown; term_id?: unknown; name?: unknown; slug?: unknown };
         const id = valueAsNumber(record.id) ?? valueAsNumber(record.term_id) ?? undefined;
         const name = valueAsString(record.name);
-        normalizedCategories.push({ id, name });
+        const slug = valueAsString(record.slug);
+        normalizedCategories.push({ id, name, slug });
       }
     });
 
@@ -160,7 +160,7 @@ function categoriesForProduct(result: unknown): Array<{ id?: number; name?: stri
 
   if (!Array.isArray(productCategories)) return [];
 
-  const normalizedCategories: Array<{ id?: number; name?: string | null }> = [];
+  const normalizedCategories: Array<{ id?: number; name?: string | null; slug?: string | null }> = [];
 
   productCategories.forEach((category) => {
     if (typeof category === "string") {
@@ -169,10 +169,11 @@ function categoriesForProduct(result: unknown): Array<{ id?: number; name?: stri
     }
 
     if (typeof category === "object" && category !== null) {
-      const record = category as { id?: unknown; term_id?: unknown; name?: unknown };
+      const record = category as { id?: unknown; term_id?: unknown; name?: unknown; slug?: unknown };
       const id = valueAsNumber(record.id) ?? valueAsNumber(record.term_id) ?? undefined;
       const name = valueAsString(record.name);
-      normalizedCategories.push({ id, name });
+      const slug = valueAsString(record.slug);
+      normalizedCategories.push({ id, name, slug });
     }
   });
 
@@ -195,42 +196,6 @@ function skuForProduct(result: unknown): string | null {
   return valueAsString(getRaw(result, "sku")) ?? valueAsString(getMetaValue(result, "_sku"));
 }
 
-function warrantyForProduct(result: unknown): WarrantyRawData | null | undefined {
-  // ES index stores warranty as flat parallel arrays.
-  // If warranty_available is absent entirely → field not indexed → lazy-fetch needed.
-  const availableEntry = (result as Record<string, { raw?: unknown } | undefined>)?.["warranty_available"];
-  if (availableEntry === undefined) return undefined;
-
-  const isAvailable = valueAsBoolean(getRaw(result, "warranty_available"));
-  if (!isAvailable) return null;
-
-  const ids    = getRaw(result, "warranty_option_ids");
-  const names  = getRaw(result, "warranty_option_names");
-  const months = getRaw(result, "warranty_option_months");
-  const prices = getRaw(result, "warranty_option_prices");
-
-  const idArray    = Array.isArray(ids)    ? ids    : [];
-  const nameArray  = Array.isArray(names)  ? names  : [];
-  const monthArray = Array.isArray(months) ? months : [];
-  const priceArray = Array.isArray(prices) ? prices : [];
-
-  const options = idArray.map((rawId, i) => ({
-    id: Number(rawId),
-    name: nameArray[i] != null ? String(nameArray[i]) : null,
-    duration_months: monthArray[i] != null ? Number(monthArray[i]) : null,
-    price: priceArray[i] != null ? Number(priceArray[i]) : null,
-    description: null,
-    sort_order: i,
-  }));
-
-  return {
-    is_available: true,
-    has_options: options.length > 0,
-    options,
-    default_option: options[0] ?? null,
-  };
-}
-
 function toDisplayImageUrl(url: string | null): string | null {
   if (!url?.trim()) return null;
   if (url.startsWith("/") || url.startsWith("data:") || url.startsWith("blob:")) return url;
@@ -247,8 +212,6 @@ export function mapProductListingResult(
   const slug = valueAsString(getRaw(result, "slug")) ?? valueAsString(getRaw(result, "post_name"));
   const id = valueAsString(getRaw(result, "id")) ?? valueAsString(getRaw(result, "ID")) ?? `result-${resultIndex}`;
 
-  const w = warrantyForProduct(result);
-
   const product: ProductCardData = {
     id,
     sku: skuForProduct(result) || "-",
@@ -263,8 +226,6 @@ export function mapProductListingResult(
     categories: categoriesForProduct(result),
     slug,
     type: normalizedType,
-    // Only include warranty when defined: undefined means "not indexed in ES → lazy-fetch on click"
-    ...(w !== undefined ? { warranty: w } : {}),
   };
 
   const href =

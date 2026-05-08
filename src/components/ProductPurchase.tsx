@@ -1,15 +1,31 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import type { ProductRouteType } from "@/components/ProductCard";
 import { buildCartItemKey, useCart } from "@/components/CartProvider";
 import { useWishlist } from "@/components/WishlistProvider";
 import { getExpectedDeliveryMessage } from "@/lib/utils/delivery";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
-import { type WarrantyOption, normalizeWarrantyOptions } from "@/lib/utils/warranty";
-import WarrantyOptionsContent from "@/components/WarrantyOptionsContent";
+import { Popover, PopoverAnchor, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Field, FieldContent, FieldDescription, FieldLabel, FieldTitle } from "@/components/ui/field";
+
+type BulkDiscount = {
+  discount: string;
+  quantity: string;
+};
+
+type ProductDiscountInput = string | Array<{ discount?: string | number | null; quantity?: string | number | null }> | null | undefined;
+
+type WarrantyOption = {
+  id: number;
+  name: string;
+  durationMonths: number;
+  price: number;
+  description: string;
+  sortOrder: number;
+};
 
 type ProductPurchaseProps = {
   id?: string | number | null;
@@ -51,19 +67,7 @@ type ProductPurchaseProps = {
   } | null;
 };
 
-type ProductDiscountInput =
-  | string
-  | Array<{
-      discount?: string | number | null;
-      quantity?: string | number | null;
-    }>
-  | null
-  | undefined;
 
-type BulkDiscount = {
-  discount: string;
-  quantity: string;
-};
 
 function formatEuro(value: number): string {
   return new Intl.NumberFormat("nl-NL", {
@@ -92,7 +96,7 @@ function normalizeDiscountNumber(value: string | number | null | undefined): str
   return Number.isInteger(numericValue) ? String(numericValue) : String(numericValue);
 }
 
-function normalizeBulkDiscounts(discounts: ProductDiscountInput): BulkDiscount[] {
+function normalizeBulkDiscounts(discounts: ProductDiscountInput | undefined): BulkDiscount[] {
   const parsedDiscounts = typeof discounts === "string"
     ? (() => {
         try {
@@ -131,6 +135,22 @@ function normalizeBulkDiscounts(discounts: ProductDiscountInput): BulkDiscount[]
     .sort((a, b) => Number(a.quantity) - Number(b.quantity));
 }
 
+function normalizeWarrantyOptions(warranty: ProductPurchaseProps["warranty"]) {
+  const options: WarrantyOption[] = (warranty?.options || []).map((opt) => ({
+    id: opt.id,
+    name: opt.name || "Warranty",
+    durationMonths: opt.duration_months || 0,
+    price: opt.price || 0,
+    description: opt.description || "",
+    sortOrder: opt.sort_order || 0,
+  })).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+
+  return {
+    options,
+    defaultOptionId: warranty?.default_option?.id || (options.length > 0 ? options[0].id : null),
+  };
+}
+
 export default function ProductPurchase({
   id,
   slug,
@@ -159,6 +179,13 @@ export default function ProductPurchase({
   const [isWarrantyPopoverOpen, setIsWarrantyPopoverOpen] = useState(false);
   const [selectedWarrantyId, setSelectedWarrantyId] = useState<number | null>(null);
   const [pendingQuantity, setPendingQuantity] = useState<number | null>(null);
+  const [shareUrl, setShareUrl] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setShareUrl(window.location.href);
+    }
+  }, []);
 
   // Update countdown every minute
   useEffect(() => {
@@ -215,17 +242,6 @@ export default function ProductPurchase({
   const selectedWarrantyOption = normalizedWarranty.options.find(
     (option) => option.id === selectedWarrantyId,
   ) ?? defaultWarrantyOption;
-
-  useEffect(() => {
-    if (!hasWarrantyOptions) {
-      setSelectedWarrantyId(null);
-      return;
-    }
-
-    if (!selectedWarrantyId || !normalizedWarranty.options.some((option) => option.id === selectedWarrantyId)) {
-      setSelectedWarrantyId(normalizedWarranty.defaultOptionId);
-    }
-  }, [hasWarrantyOptions, normalizedWarranty, selectedWarrantyId]);
 
   // Calculate delivery message
   const deliveryInfo = useMemo(() => {
@@ -347,14 +363,16 @@ export default function ProductPurchase({
       excerpt,
       materialTitle,
       inStock: Boolean(inStock),
-      warranty: warranty ?? null,
     });
   };
   
   const [isSharing, setIsSharing] = useState(false);
+  const isSharingRef = useRef(false);
   
+  /* 
   const handleShare = async () => {
-    if (isSharing) return;
+    if (isSharingRef.current) return;
+    isSharingRef.current = true;
     setIsSharing(true);
 
     const shareData = {
@@ -381,7 +399,18 @@ export default function ProductPurchase({
         }
       }
     } finally {
-      setIsSharing(false);
+      setTimeout(() => {
+        isSharingRef.current = false;
+        setIsSharing(false);
+      }, 500);
+    }
+  };
+  */
+
+  const handleCopyLink = () => {
+    if (typeof window !== 'undefined') {
+      navigator.clipboard.writeText(window.location.href);
+      toast.success("Link copied to clipboard!");
     }
   };
 
@@ -457,33 +486,10 @@ export default function ProductPurchase({
           <PopoverAnchor asChild>
             <div className="flex flex-col gap-3">
               <span className="text-neutral-800 text-lg font-bold leading-5">Select Quantity</span>
-              <div className="h-12 px-1 rounded-[50px] outline outline-offset-[-1px] outline-black/10 flex justify-between items-center bg-white">
-                <button
-                  type="button"
-                  onClick={decrement}
-                  className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
-                >
-                  <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
-                    <path strokeLinecap="round" d="M2 6h8" />
-                  </svg>
-                </button>
-                <div className="flex-1 self-stretch flex justify-center items-center overflow-hidden">
-                  <span className="text-neutral-800 text-sm font-semibold leading-5 px-2">{quantity}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={increment}
-                  className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
-                >
-                  <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
-                    <path strokeLinecap="round" d="M6 2v8M2 6h8" />
-                  </svg>
-                </button>
-              </div>
               <div className="flex items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => handleAddToCart(quantity)}
+                  onClick={() => handleAddToCart(1)}
                   className="flex-1 h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm flex"
                 >
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -551,18 +557,73 @@ export default function ProductPurchase({
 
         {hasWarrantyOptions ? (
           <PopoverContent align="end" className="w-[420px] p-4">
-            <WarrantyOptionsContent
-              options={normalizedWarranty.options}
-              defaultOptionId={normalizedWarranty.defaultOptionId}
-              selectedId={selectedWarrantyId}
-              instanceId={id ?? slug ?? "purchase"}
-              onSelect={setSelectedWarrantyId}
-              onCancel={() => {
-                setIsWarrantyPopoverOpen(false);
-                setPendingQuantity(null);
+            <PopoverHeader>
+              <PopoverTitle className="text-base">Choose Warranty</PopoverTitle>
+              <PopoverDescription>
+                Select a warranty option before adding this item to your cart.
+              </PopoverDescription>
+            </PopoverHeader>
+
+            <RadioGroup
+              value={selectedWarrantyOption ? String(selectedWarrantyOption.id) : undefined}
+              onValueChange={(value) => {
+                const parsed = Number.parseInt(value, 10);
+                if (Number.isFinite(parsed)) {
+                  setSelectedWarrantyId(parsed);
+                }
               }}
-              onConfirm={handleConfirmWarrantyAdd}
-            />
+              className="gap-2"
+            >
+              {normalizedWarranty.options.map((option) => {
+                const optionId = `warranty-option-${option.id}`;
+                const isDefaultOption = option.id === normalizedWarranty.defaultOptionId;
+                const hasExtraPrice = option.price > 0;
+
+                return (
+                  <FieldLabel key={option.id} htmlFor={optionId} className="cursor-pointer rounded-xl border border-slate-200 p-0">
+                    <Field orientation="horizontal" className="items-start rounded-xl border-none p-3">
+                      <RadioGroupItem id={optionId} value={String(option.id)} className="mt-1" />
+                      <FieldContent>
+                        <div className="flex items-start justify-between gap-3">
+                          <FieldTitle className="text-sm font-semibold text-neutral-800">{option.name}</FieldTitle>
+                          <span className={`text-sm font-semibold ${hasExtraPrice ? "text-amber-600" : "text-emerald-600"}`}>
+                            {hasExtraPrice ? `+${formatEuro(option.price)}` : "No extra cost"}
+                          </span>
+                        </div>
+                        <FieldDescription className="text-xs">
+                          {option.description || (option.durationMonths ? `${option.durationMonths} months coverage` : "Extended coverage")}
+                        </FieldDescription>
+                        {isDefaultOption ? (
+                          <span className="mt-1 inline-flex w-fit rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                            Default Option
+                          </span>
+                        ) : null}
+                      </FieldContent>
+                    </Field>
+                  </FieldLabel>
+                );
+              })}
+            </RadioGroup>
+
+            <div className="mt-2 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsWarrantyPopoverOpen(false);
+                  setPendingQuantity(null);
+                }}
+                className="h-9 rounded-full border border-slate-200 px-4 text-sm font-semibold text-neutral-700 transition-colors hover:bg-slate-100"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmWarrantyAdd}
+                className="h-9 rounded-full bg-amber-500 px-4 text-sm font-semibold text-white transition-colors hover:bg-amber-600"
+              >
+                Add to Cart
+              </button>
+            </div>
           </PopoverContent>
         ) : null}
       </Popover>
@@ -591,16 +652,68 @@ export default function ProductPurchase({
           </svg>
           <span className="text-base font-semibold">{isWishlisted ? "Saved to Wishlist" : "Add to Wishlist"}</span>
         </button>
-        <button
-          type="button"
-          onClick={handleShare}
-          className="w-12 h-12 p-3 bg-slate-100 rounded-2xl flex items-center justify-center hover:bg-slate-200 transition-colors"
-          aria-label="Share product"
-        >
-          <svg className="w-5 h-5 text-neutral-700" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
-          </svg>
-        </button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="w-12 h-12 p-3 bg-slate-100 rounded-2xl flex items-center justify-center hover:bg-slate-200 transition-colors"
+              aria-label="Share options"
+            >
+              <svg className="w-5 h-5 text-neutral-700" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
+              </svg>
+            </button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-56 p-2 bg-white border border-slate-200 shadow-xl rounded-2xl">
+            <div className="flex flex-col gap-1">
+              <button
+                onClick={handleCopyLink}
+                className="flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-neutral-700 hover:bg-slate-50 rounded-xl transition-colors"
+              >
+                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                </svg>
+                Copy Link
+              </button>
+              
+              <div className="h-px bg-slate-100 my-1 mx-2" />
+              
+              <Link
+                href={`https://www.facebook.com/sharer.php?u=${encodeURIComponent(shareUrl)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-neutral-700 hover:bg-slate-50 rounded-xl transition-colors"
+              >
+                <svg className="w-4 h-4 text-[#1877F2]" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                </svg>
+                Facebook
+              </Link>
+              
+              <Link
+                href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(displayName)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-neutral-700 hover:bg-slate-50 rounded-xl transition-colors"
+              >
+                <svg className="w-4 h-4 text-neutral-900" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+                X (Twitter)
+              </Link>
+
+              <button
+                onClick={handleCopyLink}
+                className="flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-neutral-700 hover:bg-slate-50 rounded-xl transition-colors"
+              >
+                <svg className="w-4 h-4 text-[#E4405F]" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.012 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126s1.384 1.078 2.126 1.384c.765.297 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.012 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384s1.078-1.384 1.384-2.126c.297-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126s-1.384-1.078-2.126-1.384c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.584-.071 4.85c-.055 1.17-.249 1.805-.415 2.227-.217.562-.477.96-.896 1.382-.42.419-.819.679-1.381.896-.422.164-1.057.36-2.227.413-1.266.057-1.646.07-4.85.07s-3.584-.015-4.85-.071c-1.17-.055-1.805-.249-2.227-.415-.562-.217-.96-.477-1.382-.896-.419-.42-.679-.819-.896-1.381-.164-.422-.36-1.057-.413-2.227-.057-1.266-.07-1.646-.07-4.85s.016-3.584.071-4.85c.055-1.17.249-1.805.415-2.227.217-.562.477-.96.896-1.382.42-.419.819-.679 1.381-.896.422-.164 1.057-.36 2.227-.413 1.266-.057 1.646-.07 4.85-.07zM12 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm7.846-10.405a1.441 1.441 0 11-2.882 0 1.441 1.441 0 012.882 0z" />
+                </svg>
+                Instagram (Copy Link)
+              </button>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
 
       {/* Delivery Estimate */}
@@ -641,7 +754,7 @@ export default function ProductPurchase({
             },
             {
               label: "Email",
-              href: "mailto:verkoop@businesslabels.nl?&subject=Business%20Labels&body=" + (id ?? ''),
+              href: "mailto:verkoop@businesslabels.nl?&subject=Business%20Labels&body=" + (sku ?? ''),
               icon: (
                 <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -650,7 +763,7 @@ export default function ProductPurchase({
             },
             {
               label: "WhatsApp",
-              href: "https://wa.me/31318590212?text=" + (id ?? ''),
+              href: "https://wa.me/31318590212?text=" + (sku ?? ''),
               icon: (
                 <svg className="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .018 5.396.015 12.03c0 2.12.554 4.189 1.602 6.06L0 24l6.105-1.602a11.832 11.832 0 005.937 1.578h.005c6.637 0 12.032-5.396 12.035-12.03a11.85 11.85 0 00-3.529-8.511z" />

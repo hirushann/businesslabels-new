@@ -71,6 +71,7 @@ const PRINTERS_SEARCH_QUERY = {
     categories: { raw: {} },
     material: { raw: {} },
     material_title: { raw: {} },
+    category_slugs: { raw: {} },
   },
 };
 

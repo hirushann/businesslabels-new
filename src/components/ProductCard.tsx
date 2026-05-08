@@ -1,15 +1,35 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { LinkProps } from "next/link";
 import { buildCartItemKey, useCart } from "@/components/CartProvider";
-import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
-import { type WarrantyRawData, normalizeWarrantyOptions } from "@/lib/utils/warranty";
-import WarrantyOptionsContent from "@/components/WarrantyOptionsContent";
+import { Popover, PopoverAnchor, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle } from "@/components/ui/popover";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 export type ProductRouteType = "simple" | "variable";
+
+export type ProductWarrantyData = {
+  is_available?: boolean | null;
+  has_options?: boolean | null;
+  options?: Array<{
+    id: number;
+    name?: string | null;
+    duration_months?: number | null;
+    price?: number | null;
+    description?: string | null;
+    sort_order?: number | null;
+  }> | null;
+  default_option?: {
+    id: number;
+    name?: string | null;
+    duration_months?: number | null;
+    price?: number | null;
+    description?: string | null;
+    sort_order?: number | null;
+  } | null;
+};
 
 export type ProductCardData = {
   id: string | number;
@@ -22,16 +42,11 @@ export type ProductCardData = {
   originalPrice?: number | null;
   inStock: boolean;
   mainImage?: string | null;
-  categories?: Array<{ id?: number; name?: string | null }>;
+  categories?: Array<{ id?: number; name?: string | null; slug?: string | null }>;
   slug?: string | null;
   type?: ProductRouteType | null;
   packing_group?: number | null;
-  /**
-   * warranty: undefined  → not fetched yet (lazy-fetch on first "Add" click)
-   * warranty: null       → product has no warranty
-   * warranty: object     → warranty data available
-   */
-  warranty?: WarrantyRawData | null;
+  warranty?: ProductWarrantyData | null;
 };
 
 type ProductCardProps = {
@@ -53,6 +68,50 @@ function featureLines(product: ProductCardData): string[] {
     .slice(0, 3);
 }
 
+function formatEuro(value: number): string {
+  return new Intl.NumberFormat("nl-NL", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+function normalizeWarrantyOptions(warranty: ProductWarrantyData | null | undefined) {
+  const options = (warranty?.options || [])
+    .map((option) => {
+      if (typeof option?.id !== "number" || !Number.isFinite(option.id)) {
+        return null;
+      }
+
+      return {
+        id: option.id,
+        name: option.name?.trim() || "Warranty",
+        durationMonths:
+          typeof option.duration_months === "number" && Number.isFinite(option.duration_months)
+            ? option.duration_months
+            : null,
+        price: typeof option.price === "number" && Number.isFinite(option.price) ? option.price : 0,
+        description: option.description?.trim() || null,
+        sortOrder:
+          typeof option.sort_order === "number" && Number.isFinite(option.sort_order)
+            ? option.sort_order
+            : 0,
+      };
+    })
+    .filter((option): option is NonNullable<typeof option> => Boolean(option))
+    .sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id);
+
+  return {
+    options,
+    defaultOptionId:
+      options.find((option) => option.id === warranty?.default_option?.id)?.id ??
+      options.find((option) => option.price <= 0)?.id ??
+      options[0]?.id ??
+      null,
+  };
+}
+
 export function lastCategoryLabel(categories: ProductCardData["categories"]): string {
   const label = categories?.[categories.length - 1]?.name?.trim();
   return label || "N/A";
@@ -60,7 +119,6 @@ export function lastCategoryLabel(categories: ProductCardData["categories"]): st
 
 export default function ProductCard({ product, href, onClick }: ProductCardProps) {
   const { addItem, openCart } = useCart();
-  console.log("Rendering ProductCard for product:", product);
   const productName = product.name ?? "";
   const categoryBadge = lastCategoryLabel(product.categories);
   const features = featureLines(product);
@@ -70,102 +128,81 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
     Number.isFinite(product.originalPrice) &&
     (!hasPrice || (hasPrice && (product.price !== undefined && product.price !== null) && product.originalPrice > product.price));
   const imageSrc = normalizeText(product.mainImage) || "https://placehold.co/600x400";
-
-  const [isWarrantyOpen, setIsWarrantyOpen] = useState(false);
-  const [selectedWarrantyId, setSelectedWarrantyId] = useState<number | null>(null);
-  // undefined = not fetched, null = no warranty, object = warranty data
-  const [fetchedWarranty, setFetchedWarranty] = useState<WarrantyRawData | null | undefined>(
-    product.warranty !== undefined ? product.warranty : undefined,
+  const normalizedWarranty = useMemo(() => normalizeWarrantyOptions(product.warranty), [product.warranty]);
+  const defaultWarrantyOption = normalizedWarranty.options.find(
+    (option) => option.id === normalizedWarranty.defaultOptionId,
+  ) ?? null;
+  const [selectedWarrantyId, setSelectedWarrantyId] = useState<number | null>(
+    normalizedWarranty.defaultOptionId,
   );
-  const [warrantyFetching, setWarrantyFetching] = useState(false);
-
-  // If product.warranty prop changes (e.g. parent re-renders with data), sync it
-  const effectiveWarranty = product.warranty !== undefined ? product.warranty : fetchedWarranty;
-
-  const normalizedWarranty = useMemo(() => normalizeWarrantyOptions(effectiveWarranty), [effectiveWarranty]);
+  const [isWarrantyPopoverOpen, setIsWarrantyPopoverOpen] = useState(false);
+  const selectedWarrantyOption =
+    normalizedWarranty.options.find((option) => option.id === selectedWarrantyId) ??
+    defaultWarrantyOption;
   const hasWarrantyOptions = normalizedWarranty.options.length > 0;
 
-  console.log("Href for product:", href);
-  const fetchWarranty = useCallback(async () => {
-    if (!product.slug) return null;
-    setWarrantyFetching(true);
-    try {
-      const params = new URLSearchParams({ slug: product.slug });
-      if (product.type) params.set("type", product.type);
-      const res = await fetch(`/api/products/warranty?${params.toString()}`);
-      const json = (await res.json()) as { warranty: WarrantyRawData | null };
-      const w = json.warranty ?? null;
-      setFetchedWarranty(w);
-      return w;
-    } catch {
-      setFetchedWarranty(null);
-      return null;
-    } finally {
-      setWarrantyFetching(false);
-    }
-  }, [product.slug, product.type]);
+  const addProductWithWarranty = (selectedOption: typeof selectedWarrantyOption) => {
+    addItem({
+      id: product.id,
+      slug: product.slug,
+      type: product.type,
+      name: product.name,
+      sku: product.sku,
+      price: product.price ?? null,
+      mainImage: product.mainImage ?? null,
+    });
 
-  const activeWarrantyId = selectedWarrantyId ?? normalizedWarranty.defaultOptionId;
-  const selectedWarrantyOption = normalizedWarranty.options.find((o) => o.id === activeWarrantyId) ?? null;
+    const warrantyPrice =
+      selectedOption && typeof selectedOption.price === "number" && Number.isFinite(selectedOption.price)
+        ? selectedOption.price
+        : 0;
 
-  const productInput = {
-    id: product.id,
-    slug: product.slug,
-    type: product.type,
-    name: product.name,
-    sku: product.sku,
-    price: product.price ?? null,
-    mainImage: product.mainImage ?? null,
-  };
+    if (selectedOption && warrantyPrice > 0) {
+      const parentKey = buildCartItemKey({ id: product.id, slug: product.slug, type: product.type });
+      const warrantyName = selectedOption.name || `${productName} Extended Warranty`;
 
-  const handleAddToCart = async (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    // If warranty hasn't been fetched yet (undefined = not indexed in ES), fetch it now
-    let resolvedWarranty = effectiveWarranty;
-    if (resolvedWarranty === undefined) {
-      resolvedWarranty = await fetchWarranty();
-    }
-
-    const opts = normalizeWarrantyOptions(resolvedWarranty);
-    if (opts.options.length > 0) {
-      setIsWarrantyOpen(true);
-      return;
-    }
-
-    addItem(productInput);
-    openCart();
-  };
-
-  const handleConfirmWarrantyAdd = () => {
-    addItem(productInput);
-
-    if (selectedWarrantyOption && selectedWarrantyOption.price > 0) {
-      const parentKey = buildCartItemKey(productInput);
       addItem({
-        id: `warranty-${parentKey}-${selectedWarrantyOption.id}`,
-        name: selectedWarrantyOption.name,
+        id: `warranty-${parentKey}-${selectedOption.id}`,
+        name: warrantyName,
         sku: `${product.sku}-WARRANTY`,
-        price: selectedWarrantyOption.price,
+        price: warrantyPrice,
         mainImage: product.mainImage ?? null,
         itemKind: "warranty",
         linkedToKey: parentKey,
         warranty: {
-          optionId: selectedWarrantyOption.id,
-          durationMonths: selectedWarrantyOption.durationMonths,
+          optionId: selectedOption.id,
+          durationMonths: selectedOption.durationMonths,
           parentSku: product.sku,
-          parentName: product.name,
+          parentName: productName,
         },
       });
     }
-
-    setIsWarrantyOpen(false);
-    setSelectedWarrantyId(null);
+    
     openCart();
   };
 
+  const handleAddToCart = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (hasWarrantyOptions) {
+      setSelectedWarrantyId(selectedWarrantyId ?? normalizedWarranty.defaultOptionId);
+      setIsWarrantyPopoverOpen(true);
+      return;
+    }
+
+    addProductWithWarranty(null);
+  };
+
+  const handleConfirmWarrantyAdd = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    addProductWithWarranty(selectedWarrantyOption);
+    setIsWarrantyPopoverOpen(false);
+  };
+
   const cardContent = (
+    // console.log("Rendering ProductCard for:", product)
     <div className="mx-auto h-full w-full max-w-88 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] border border-slate-100 flex flex-col overflow-hidden hover:shadow-lg transition-shadow">
       <div className="relative h-56 bg-slate-100 overflow-hidden">
         <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
@@ -251,23 +288,15 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
               </div>
               <span className="text-zinc-500 text-xs font-normal font-['Segoe_UI'] leading-4">ex. VAT</span>
             </div>
-            <Popover
-              open={isWarrantyOpen}
-              onOpenChange={(open) => {
-                if (!open) {
-                  setIsWarrantyOpen(false);
-                }
-              }}
-            >
+            <Popover open={isWarrantyPopoverOpen} onOpenChange={setIsWarrantyPopoverOpen}>
               <PopoverAnchor asChild>
                 <button
                   type="button"
                   onClick={handleAddToCart}
-                  disabled={warrantyFetching}
-                  className="px-4 py-2.5 bg-amber-500 rounded-full flex items-center gap-2 text-white text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors disabled:opacity-70 disabled:cursor-wait"
+                  className="px-4 py-2.5 bg-amber-500 rounded-full flex items-center gap-2 text-white text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors"
                   aria-label={`Add ${product.name} to cart`}
                 >
-                  {warrantyFetching ? "..." : "Add"}
+                  Add
                   <svg width="22" height="16" viewBox="0 0 22 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M7.33268 14.6663C7.83894 14.6663 8.24935 14.3679 8.24935 13.9997C8.24935 13.6315 7.83894 13.333 7.33268 13.333C6.82642 13.333 6.41602 13.6315 6.41602 13.9997C6.41602 14.3679 6.82642 14.6663 7.33268 14.6663Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                     <path d="M17.4167 14.6663C17.9229 14.6663 18.3333 14.3679 18.3333 13.9997C18.3333 13.6315 17.9229 13.333 17.4167 13.333C16.9104 13.333 16.5 13.6315 16.5 13.9997C16.5 14.3679 16.9104 14.6663 17.4167 14.6663Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -276,16 +305,71 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
                 </button>
               </PopoverAnchor>
               {hasWarrantyOptions ? (
-                <PopoverContent side="top" align="end" className="w-[420px] p-4" onClick={(e) => e.stopPropagation()}>
-                  <WarrantyOptionsContent
-                    options={normalizedWarranty.options}
-                    defaultOptionId={normalizedWarranty.defaultOptionId}
-                    selectedId={selectedWarrantyId}
-                    instanceId={product.id}
-                    onSelect={setSelectedWarrantyId}
-                    onCancel={() => setIsWarrantyOpen(false)}
-                    onConfirm={handleConfirmWarrantyAdd}
-                  />
+                <PopoverContent
+                  align="end"
+                  className="w-80 p-4"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }}
+                >
+                  <PopoverHeader>
+                    <PopoverTitle className="text-base">Choose Warranty</PopoverTitle>
+                    <PopoverDescription>Select a warranty option before adding this item.</PopoverDescription>
+                  </PopoverHeader>
+                  <RadioGroup
+                    value={selectedWarrantyOption ? String(selectedWarrantyOption.id) : undefined}
+                    onValueChange={(value) => {
+                      const parsed = Number.parseInt(value, 10);
+                      if (Number.isFinite(parsed)) {
+                        setSelectedWarrantyId(parsed);
+                      }
+                    }}
+                    className="gap-2"
+                  >
+                    {normalizedWarranty.options.map((option) => {
+                      const hasExtraPrice = option.price > 0;
+                      return (
+                        <label
+                          key={option.id}
+                          className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 p-3 text-sm"
+                        >
+                          <RadioGroupItem value={String(option.id)} className="mt-1" />
+                          <span className="flex min-w-0 flex-1 flex-col gap-1">
+                            <span className="flex items-start justify-between gap-2 font-semibold text-neutral-800">
+                              <span>{option.name}</span>
+                              <span className={hasExtraPrice ? "text-amber-600" : "text-emerald-600"}>
+                                {hasExtraPrice ? `+${formatEuro(option.price)}` : "No extra cost"}
+                              </span>
+                            </span>
+                            <span className="text-xs text-neutral-500">
+                              {option.description || (option.durationMonths ? `${option.durationMonths} months coverage` : "Extended coverage")}
+                            </span>
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </RadioGroup>
+                  <div className="mt-3 flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        setIsWarrantyPopoverOpen(false);
+                      }}
+                      className="h-9 rounded-full border border-slate-200 px-4 text-sm font-semibold text-neutral-700 transition-colors hover:bg-slate-100"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleConfirmWarrantyAdd}
+                      className="h-9 rounded-full bg-amber-500 px-4 text-sm font-semibold text-white transition-colors hover:bg-amber-600"
+                    >
+                      Add to Cart
+                    </button>
+                  </div>
                 </PopoverContent>
               ) : null}
             </Popover>
