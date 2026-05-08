@@ -97,7 +97,7 @@ type ProductDetail = {
   original_price?: number | null;
   in_stock?: boolean | null;
   main_image?: string | null;
-  categories?: Array<{ id?: number; name?: string | null }>;
+  categories?: Array<{ id?: number; name?: string | null; slug?: string | null }>;
   material?: {
     title?: string | null;
   } | null;

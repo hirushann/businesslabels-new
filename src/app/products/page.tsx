@@ -28,6 +28,7 @@ type Product = {
   categories?: Array<{
     id?: number;
     name?: string | null;
+    slug?: string | null;
   }>;
 };
 

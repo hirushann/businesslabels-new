@@ -143,10 +143,11 @@ function categoriesForProduct(result: unknown): Array<{ id?: number; name?: stri
       }
 
       if (typeof category === "object" && category !== null) {
-        const record = category as { id?: unknown; term_id?: unknown; name?: unknown };
+        const record = category as { id?: unknown; term_id?: unknown; name?: unknown; slug?: unknown };
         const id = valueAsNumber(record.id) ?? valueAsNumber(record.term_id) ?? undefined;
         const name = valueAsString(record.name);
-        normalizedCategories.push({ id, name });
+        const slug = valueAsString(record.slug);
+        normalizedCategories.push({ id, name, slug });
       }
     });
 
@@ -168,10 +169,11 @@ function categoriesForProduct(result: unknown): Array<{ id?: number; name?: stri
     }
 
     if (typeof category === "object" && category !== null) {
-      const record = category as { id?: unknown; term_id?: unknown; name?: unknown };
+      const record = category as { id?: unknown; term_id?: unknown; name?: unknown; slug?: unknown };
       const id = valueAsNumber(record.id) ?? valueAsNumber(record.term_id) ?? undefined;
       const name = valueAsString(record.name);
-      normalizedCategories.push({ id, name });
+      const slug = valueAsString(record.slug);
+      normalizedCategories.push({ id, name, slug });
     }
   });
 
@@ -226,11 +228,21 @@ export function mapProductListingResult(
     type: normalizedType,
   };
 
+  const categorySlugs = (valueAsString(getRaw(result, "category_slugs")) ?? "")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  
+  const isPrinter = categorySlugs.includes("labelprinters") || 
+                    product.categories.some(c => c.name?.toLowerCase().includes("printer") || c.slug?.toLowerCase() === "labelprinters");
+
+  const prefix = isPrinter ? "printers" : "products";
+
   const href =
     slug && normalizedType
-      ? { pathname: `/products/${slug}`, query: { type: normalizedType } }
+      ? { pathname: `/${prefix}/${slug}`, query: { type: normalizedType } }
       : slug
-        ? `/products/${slug}`
+        ? `/${prefix}/${slug}`
         : undefined;
 
   return { id, product, href };

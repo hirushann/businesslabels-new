@@ -96,6 +96,7 @@ const PRODUCT_LISTING_SEARCH_QUERY = {
     meta: { raw: {} },
     material: { raw: {} },
     material_title: { raw: {} },
+    category_slugs: { raw: {} },
   },
 };
 
