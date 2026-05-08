@@ -17,9 +17,7 @@ type CheckoutFormState = {
   city: string;
   state: string;
   postcode: string;
-  cardNumber: string;
-  expiryDate: string;
-  cvv: string;
+  paymentMethod: "ideal" | "creditcard" | "bancontact" | "";
 };
 
 type CheckoutMode = "live" | "demo";
@@ -41,9 +39,7 @@ const initialFormState: CheckoutFormState = {
   city: "",
   state: "",
   postcode: "",
-  cardNumber: "",
-  expiryDate: "",
-  cvv: "",
+  paymentMethod: "",
 };
 
 const demoFormState: CheckoutFormState = {
@@ -56,9 +52,7 @@ const demoFormState: CheckoutFormState = {
   city: "Amsterdam",
   state: "North Holland",
   postcode: "1016 DW",
-  cardNumber: "4242 4242 4242 4242",
-  expiryDate: "08/28",
-  cvv: "428",
+  paymentMethod: "ideal",
 };
 
 function formatEuro(value: number): string {
@@ -109,8 +103,9 @@ function CheckoutShell({
   isPending: boolean;
 }) {
   const shippingAmount = useMemo(() => (items.length > 0 ? DELIVERY_FEE : 0), [items.length]);
-  const taxAmount = useMemo(() => (totalAmount + shippingAmount) * 0.21, [totalAmount, shippingAmount]);
-  const finalTotal = useMemo(() => totalAmount + shippingAmount + taxAmount, [totalAmount, shippingAmount, taxAmount]);
+  const paymentFee = useMemo(() => (form.paymentMethod === "creditcard" ? totalAmount * 0.025 : 0), [totalAmount, form.paymentMethod]);
+  const taxAmount = useMemo(() => (totalAmount + shippingAmount + paymentFee) * 0.21, [totalAmount, shippingAmount, paymentFee]);
+  const finalTotal = useMemo(() => totalAmount + shippingAmount + paymentFee + taxAmount, [totalAmount, shippingAmount, paymentFee, taxAmount]);
 
 
   return (
@@ -220,33 +215,74 @@ function CheckoutShell({
                     </div>
                   </div>
 
-                  {/* <div className="flex flex-col gap-5">
+                  <div className="flex flex-col gap-5">
                     <div className="flex flex-col gap-1">
-                      <h2 className="text-neutral-800 text-2xl font-bold leading-8">Payment Information</h2>
+                      <h2 className="text-neutral-800 text-2xl font-bold leading-8">Payment Method</h2>
                       <p className="text-neutral-600 text-sm leading-5">
-                        Payment details are for UI demo purposes only and are never submitted.
+                        Select your preferred payment method.
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-[1.8fr_1fr_0.7fr]">
-                      <label className="flex flex-col gap-2">
-                        <span className="text-sm font-semibold text-neutral-700">Card Number</span>
-                        <input className={inputClasses(Boolean(errors.cardNumber))} value={form.cardNumber} onChange={(e) => handleChange("cardNumber", e.target.value)} placeholder="XXXX XXXX XXXX XXXX" />
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <label 
+                        className={`flex cursor-pointer items-center gap-4 rounded-xl border p-4 transition-all ${
+                          form.paymentMethod === "ideal" ? "border-amber-400 bg-amber-50" : "border-slate-200 hover:border-amber-200"
+                        }`}
+                      >
+                        <input 
+                          type="radio" 
+                          name="paymentMethod" 
+                          className="sr-only" 
+                          checked={form.paymentMethod === "ideal"} 
+                          onChange={() => handleChange("paymentMethod", "ideal")} 
+                        />
+                        <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${form.paymentMethod === "ideal" ? "border-amber-500 bg-amber-500" : "border-slate-300"}`}>
+                          {form.paymentMethod === "ideal" && <div className="h-2 w-2 rounded-full bg-white" />}
+                        </div>
+                        <span className="text-base font-semibold text-neutral-800">iDEAL</span>
                       </label>
-                      <label className="flex flex-col gap-2">
-                        <span className="text-sm font-semibold text-neutral-700">Expiry Date</span>
-                        <input className={inputClasses(Boolean(errors.expiryDate))} value={form.expiryDate} onChange={(e) => handleChange("expiryDate", e.target.value)} placeholder="MM/YY" />
-                      </label>
-                      <label className="flex flex-col gap-2">
-                        <span className="text-sm font-semibold text-neutral-700">CVV</span>
-                        <input className={inputClasses(Boolean(errors.cvv))} value={form.cvv} onChange={(e) => handleChange("cvv", e.target.value)} placeholder="XXX" />
-                      </label>
-                    </div>
 
-                    <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-neutral-700">
-                      Payment details are secure and encrypted in a real checkout. This demo only simulates the experience.
+                      <label 
+                        className={`flex cursor-pointer items-center gap-4 rounded-xl border p-4 transition-all ${
+                          form.paymentMethod === "creditcard" ? "border-amber-400 bg-amber-50" : "border-slate-200 hover:border-amber-200"
+                        }`}
+                      >
+                        <input 
+                          type="radio" 
+                          name="paymentMethod" 
+                          className="sr-only" 
+                          checked={form.paymentMethod === "creditcard"} 
+                          onChange={() => handleChange("paymentMethod", "creditcard")} 
+                        />
+                        <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${form.paymentMethod === "creditcard" ? "border-amber-500 bg-amber-500" : "border-slate-300"}`}>
+                          {form.paymentMethod === "creditcard" && <div className="h-2 w-2 rounded-full bg-white" />}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-base font-semibold text-neutral-800">Card</span>
+                          <span className="text-xs text-amber-600 font-medium">+2.5% fee</span>
+                        </div>
+                      </label>
+
+                      <label 
+                        className={`flex cursor-pointer items-center gap-4 rounded-xl border p-4 transition-all ${
+                          form.paymentMethod === "bancontact" ? "border-amber-400 bg-amber-50" : "border-slate-200 hover:border-amber-200"
+                        }`}
+                      >
+                        <input 
+                          type="radio" 
+                          name="paymentMethod" 
+                          className="sr-only" 
+                          checked={form.paymentMethod === "bancontact"} 
+                          onChange={() => handleChange("paymentMethod", "bancontact")} 
+                        />
+                        <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${form.paymentMethod === "bancontact" ? "border-amber-500 bg-amber-500" : "border-slate-300"}`}>
+                          {form.paymentMethod === "bancontact" && <div className="h-2 w-2 rounded-full bg-white" />}
+                        </div>
+                        <span className="text-base font-semibold text-neutral-800">Bancontact</span>
+                      </label>
                     </div>
-                  </div> */}
+                    {errors.paymentMethod && <p className="text-sm text-red-500">{errors.paymentMethod}</p>}
+                  </div>
                 </div>
               </form>
 
@@ -266,6 +302,12 @@ function CheckoutShell({
                       <span>Delivery</span>
                       <span className="font-semibold">{formatEuro(shippingAmount)}</span>
                     </div>
+                    {paymentFee > 0 && (
+                      <div className="flex items-center justify-between text-neutral-700">
+                        <span>Payment Fee (2.5%)</span>
+                        <span className="font-semibold">{formatEuro(paymentFee)}</span>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between text-neutral-700">
                       <span>Tax (21% VAT)</span>
                       <span className="font-semibold">{formatEuro(taxAmount)}</span>
@@ -507,6 +549,7 @@ export default function CheckoutPageClient({
       "city",
       "state",
       "postcode",
+      "paymentMethod",
     ];
 
     for (const field of requiredFields) {
@@ -571,8 +614,9 @@ export default function CheckoutPageClient({
     setIsPending(true);
 
     const shippingAmount = items.length > 0 ? DELIVERY_FEE : 0;
-    const taxAmount = (totalAmount + shippingAmount) * 0.21;
-    const finalTotal = totalAmount + shippingAmount + taxAmount;
+    const paymentFee = form.paymentMethod === "creditcard" ? totalAmount * 0.025 : 0;
+    const taxAmount = (totalAmount + shippingAmount + paymentFee) * 0.21;
+    const finalTotal = totalAmount + shippingAmount + paymentFee + taxAmount;
 
     const orderData = {
       status: "pending",
@@ -587,6 +631,8 @@ export default function CheckoutPageClient({
       billing_country_id: form.country === "Netherlands" ? "NL" : form.country === "Belgium" ? "BE" : "DE",
       shipping_amount: shippingAmount,
       tax_amount: taxAmount,
+      payment_fee: paymentFee,
+      payment_method: form.paymentMethod,
       total: finalTotal,
       order_items: items.map(item => ({
         product_id: item.id,
