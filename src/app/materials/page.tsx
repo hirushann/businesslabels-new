@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import ReviewsSection from "@/components/ReviewsSection";
+import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 
 export const metadata: Metadata = {
   title: "Material Overview — BusinessLabels",
@@ -102,6 +103,7 @@ export default async function MaterialPage({
     throw new Error("BBNL_API_BASE_URL is not configured");
   }
 
+  const locale = await getServerLocale();
   const requestedPage = Array.isArray(query.page) ? query.page[0] : query.page;
   const normalizedPage = Number.parseInt(requestedPage ?? "1", 10);
   const page = Number.isFinite(normalizedPage) && normalizedPage > 0 ? normalizedPage : 1;
@@ -111,7 +113,7 @@ export default async function MaterialPage({
   let lastPage = 1;
 
   try {
-    const response = await fetch(`${baseUrl}/api/materials?page=${page}`, {
+    const response = await fetch(withLocaleParam(`${baseUrl}/api/materials?page=${page}`, locale), {
       cache: "no-store",
     });
 

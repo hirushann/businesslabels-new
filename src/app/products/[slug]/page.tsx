@@ -4,6 +4,7 @@ import ProductPurchase from "@/components/ProductPurchase";
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 import ProductImageGallery from "@/components/ProductImageGallery";
 import { getDemoProductBySlug } from "@/lib/demoCatalog";
+import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 import { notFound } from "next/navigation";
 import {
   Carousel,
@@ -200,9 +201,9 @@ function specsFromProduct(product: ProductDetail | null): Array<{ label: string;
   return [...specRows, ...metaRows];
 }
 
-async function fetchProductByType(baseUrl: string, type: "simple" | "variable", slug: string): Promise<ProductDetail | null> {
+async function fetchProductByType(baseUrl: string, type: "simple" | "variable", slug: string, locale: "en" | "nl"): Promise<ProductDetail | null> {
   try {
-    const response = await fetch(`${baseUrl}/api/products/${type}/slug/${encodeURIComponent(slug)}`, {
+    const response = await fetch(withLocaleParam(`${baseUrl}/api/products/${type}/slug/${encodeURIComponent(slug)}`, locale), {
       cache: "no-store",
     });
 
@@ -287,12 +288,13 @@ export default async function SingleProductPage({
   }
 
   if (!product && baseUrl) {
+    const locale = await getServerLocale();
     const tryTypes: Array<"simple" | "variable"> = selectedType
       ? [selectedType]
       : ["simple", "variable"];
 
     for (const type of tryTypes) {
-      const result = await fetchProductByType(baseUrl, type, slug);
+      const result = await fetchProductByType(baseUrl, type, slug, locale);
       if (result) {
         product = result;
         console.log(`Fetched product details for slug '${slug}' with type '${type}'`);
