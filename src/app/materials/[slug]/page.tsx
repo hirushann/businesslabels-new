@@ -261,7 +261,7 @@ function SpecsTable({ material }: { material: Material }) {
   );
 }
 
-function productHref(product: ProductCardData): { pathname: string; query?: { type: "simple" | "variable" } } | undefined {
+function productHref(product: ProductCardData): { pathname: string; query?: { type: "simple" | "variable" | "group_product" } } | undefined {
   if (!product.slug) {
     return undefined;
   }
