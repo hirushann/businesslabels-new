@@ -111,7 +111,7 @@ type ProductDetail = {
   jeritech_stock?: number | null;
   delivery_dates_in_stock?: number | null;
   delivery_dates_no_stock?: number | null;
-  packing_group?: number | null;
+  packing_group?: string | number | null;
   discounts?: string | Array<{ discount?: string | number | null; quantity?: string | number | null }> | null;
   dimensions?: {
     weight?: string | number | null;
@@ -153,6 +153,32 @@ function normalizeValue(value: unknown): string | null {
     return Number.isFinite(value) ? String(value) : null;
   }
   return String(value).trim() || null;
+}
+
+function normalizeNumber(value: unknown): number | null {
+  if (value == null) {
+    return null;
+  }
+
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : null;
+  }
+
+  if (typeof value === "string") {
+    const parsed = Number(value.trim());
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
+}
+
+function normalizePackingGroup(value: ProductDetail["packing_group"]): string | null {
+  const numberValue = normalizeNumber(value);
+  if (numberValue == null) {
+    return normalizeValue(value);
+  }
+
+  return numberValue.toFixed(2);
 }
 
 function normalizeDisplayValue(value: unknown): string | null {
@@ -424,7 +450,7 @@ export default async function SingleProductPage({
               price={product?.price}
               originalPrice={product?.original_price}
               mainImage={product?.main_image}
-              packingGroup={(product?.packing_group?.toFixed(2))}
+              packingGroup={normalizePackingGroup(product?.packing_group)}
               stock={product?.stock}
               deliveryDatesInStock={product?.delivery_dates_in_stock}
               deliveryDatesNoStock={product?.delivery_dates_no_stock}

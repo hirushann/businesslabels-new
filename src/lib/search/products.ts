@@ -627,20 +627,11 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number): Ca
     ...(warranty !== undefined ? { warranty } : {}),
   };
 
-  const categorySlugs = Array.isArray(source.category_slugs)
-    ? source.category_slugs.map((s) => stringValue(s)?.toLowerCase()).filter(Boolean)
-    : [];
-  
-  const isPrinter = categorySlugs.includes("labelprinters") || 
-                    product.categories?.some(c => c.name?.toLowerCase().includes("printer") || c.slug?.toLowerCase() === "labelprinters");
-
-  const prefix = isPrinter ? "printers" : "products";
-
   const href: LinkProps["href"] | undefined =
     slug && type
-      ? { pathname: `/${prefix}/${slug}`, query: { type } }
+      ? { pathname: `/products/${slug}`, query: { type } }
       : slug
-        ? `/${prefix}/${slug}`
+        ? `/products/${slug}`
         : undefined;
 
   return { id, product, href };
