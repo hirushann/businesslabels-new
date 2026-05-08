@@ -234,3 +234,69 @@ body {
   pointer-events: auto;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 }
+
+/* CMS Content Fallback Styles */
+.cms-content h1 {
+  font-size: 2.25rem;
+  font-weight: 900;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  color: #171717;
+}
+
+.cms-content h2 {
+  font-size: 1.875rem;
+  font-weight: 800;
+  margin-top: 1.75rem;
+  margin-bottom: 0.75rem;
+  color: #262626;
+}
+
+.cms-content h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: #404040;
+}
+
+.cms-content p {
+  margin-bottom: 1.5rem;
+  line-height: 1.75;
+  color: #404040;
+}
+
+.cms-content ul {
+  list-style-type: disc;
+  margin-left: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.cms-content ol {
+  list-style-type: decimal;
+  margin-left: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.cms-content li {
+  margin-bottom: 0.5rem;
+}
+
+.cms-content a {
+  color: #f59e0b;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.cms-content a:hover {
+  color: #d97706;
+}
+
+.cms-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 1rem;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}

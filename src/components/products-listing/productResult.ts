@@ -131,10 +131,10 @@ function imageForProduct(result: unknown): string | null {
   return null;
 }
 
-function categoriesForProduct(result: unknown): Array<{ id?: number; name?: string | null }> {
+function categoriesForProduct(result: unknown): Array<{ id?: number; name?: string | null; slug?: string | null }> {
   const categories = getRaw(result, "categories");
   if (Array.isArray(categories)) {
-    const normalizedCategories: Array<{ id?: number; name?: string | null }> = [];
+    const normalizedCategories: Array<{ id?: number; name?: string | null; slug?: string | null }> = [];
 
     categories.forEach((category) => {
       if (typeof category === "string") {
@@ -160,7 +160,7 @@ function categoriesForProduct(result: unknown): Array<{ id?: number; name?: stri
 
   if (!Array.isArray(productCategories)) return [];
 
-  const normalizedCategories: Array<{ id?: number; name?: string | null }> = [];
+  const normalizedCategories: Array<{ id?: number; name?: string | null; slug?: string | null }> = [];
 
   productCategories.forEach((category) => {
     if (typeof category === "string") {
@@ -228,21 +228,11 @@ export function mapProductListingResult(
     type: normalizedType,
   };
 
-  const categorySlugs = (valueAsString(getRaw(result, "category_slugs")) ?? "")
-    .split(",")
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean);
-  
-  const isPrinter = categorySlugs.includes("labelprinters") || 
-                    product.categories.some(c => c.name?.toLowerCase().includes("printer") || c.slug?.toLowerCase() === "labelprinters");
-
-  const prefix = isPrinter ? "printers" : "products";
-
   const href =
     slug && normalizedType
-      ? { pathname: `/${prefix}/${slug}`, query: { type: normalizedType } }
+      ? { pathname: `/products/${slug}`, query: { type: normalizedType } }
       : slug
-        ? `/${prefix}/${slug}`
+        ? `/products/${slug}`
         : undefined;
 
   return { id, product, href };

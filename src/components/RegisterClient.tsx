@@ -158,7 +158,6 @@ export default function RegisterClient() {
 function RegisterContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [username, setUsername] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [company, setCompany] = useState('');
@@ -303,8 +302,7 @@ function RegisterContent() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username,
-          name: fullName || username,
+          name: fullName || email,
           first_name: firstName,
           last_name: lastName,
           company,
@@ -334,7 +332,7 @@ function RegisterContent() {
         return;
       }
 
-      const user = extractUser(data, email, fullName || username);
+      const user = extractUser(data, email, fullName || email);
       localStorage.setItem('auth_user', JSON.stringify(user));
       window.dispatchEvent(new Event('auth-user-updated'));
 
@@ -368,18 +366,6 @@ function RegisterContent() {
               ) : null}
 
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                <TextInput
-                  id="username"
-                  label="Gebruikersnaam"
-                  value={username}
-                  onChange={setUsername}
-                  autoComplete="username"
-                  placeholder="Gebruikersnaam"
-                  disabled={isSubmitting}
-                  error={errors.username?.[0]}
-                  icon={<User className="pointer-events-none absolute left-5 top-1/2 size-5 -translate-y-1/2 text-neutral-500" />}
-                />
-
                 <TextInput
                   id="email"
                   label="E-mail"
