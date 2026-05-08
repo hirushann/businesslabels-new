@@ -341,7 +341,7 @@ function productHref(product: ProductCardData): { pathname: string; query?: { ty
     return null;
   }
 
-  if (product.type) {
+  if (product.type === "simple" || product.type === "variable") {
     return {
       pathname: `/products/${product.slug}`,
       query: { type: product.type },
