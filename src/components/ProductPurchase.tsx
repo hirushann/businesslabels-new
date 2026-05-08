@@ -11,6 +11,22 @@ import { Popover, PopoverAnchor, PopoverContent, PopoverDescription, PopoverHead
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Field, FieldContent, FieldDescription, FieldLabel, FieldTitle } from "@/components/ui/field";
 
+type BulkDiscount = {
+  discount: string;
+  quantity: string;
+};
+
+type ProductDiscountInput = string | Array<{ discount?: string | number | null; quantity?: string | number | null }> | null;
+
+type WarrantyOption = {
+  id: number;
+  name: string;
+  durationMonths: number;
+  price: number;
+  description: string;
+  sortOrder: number;
+};
+
 type ProductPurchaseProps = {
   id?: string | number | null;
   slug?: string | null;
@@ -28,6 +44,7 @@ type ProductPurchaseProps = {
   stock?: number | null;
   deliveryDatesInStock?: number | null;
   deliveryDatesNoStock?: number | null;
+  discounts?: ProductDiscountInput;
   warranty?: {
     is_available?: boolean | null;
     has_options?: boolean | null;
@@ -50,60 +67,7 @@ type ProductPurchaseProps = {
   } | null;
 };
 
-type WarrantyOption = {
-  id: number;
-  name: string;
-  durationMonths: number | null;
-  price: number;
-  description: string | null;
-  sortOrder: number;
-};
 
-function normalizeWarrantyOptions(
-  warranty: ProductPurchaseProps["warranty"],
-): { options: WarrantyOption[]; defaultOptionId: number | null } {
-  if (!warranty?.is_available || !warranty?.has_options || !Array.isArray(warranty.options)) {
-    return { options: [], defaultOptionId: null };
-  }
-
-  const options = warranty.options
-    .map((option) => {
-      if (typeof option?.id !== "number" || !Number.isFinite(option.id)) {
-        return null;
-      }
-
-      const normalizedPrice =
-        typeof option.price === "number" && Number.isFinite(option.price) ? option.price : 0;
-
-      return {
-        id: option.id,
-        name: option.name?.trim() || "Warranty option",
-        durationMonths:
-          typeof option.duration_months === "number" && Number.isFinite(option.duration_months)
-            ? option.duration_months
-            : null,
-        price: normalizedPrice,
-        description: option.description?.trim() || null,
-        sortOrder:
-          typeof option.sort_order === "number" && Number.isFinite(option.sort_order)
-            ? option.sort_order
-            : 0,
-      } satisfies WarrantyOption;
-    })
-    .filter((option): option is WarrantyOption => Boolean(option))
-    .sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id);
-
-  if (!options.length) {
-    return { options: [], defaultOptionId: null };
-  }
-
-  const defaultOptionId =
-    options.find((option) => option.id === warranty.default_option?.id)?.id ??
-    options.find((option) => option.price <= 0)?.id ??
-    options[0].id;
-
-  return { options, defaultOptionId };
-}
 
 function formatEuro(value: number): string {
   return new Intl.NumberFormat("nl-NL", {
@@ -112,6 +76,79 @@ function formatEuro(value: number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value);
+}
+
+function normalizeDiscountNumber(value: string | number | null | undefined): string | null {
+  if (value == null) {
+    return null;
+  }
+
+  const normalizedValue = typeof value === "number" ? String(value) : value.trim();
+  if (!normalizedValue) {
+    return null;
+  }
+
+  const numericValue = Number(normalizedValue);
+  if (!Number.isFinite(numericValue) || numericValue <= 0) {
+    return null;
+  }
+
+  return Number.isInteger(numericValue) ? String(numericValue) : String(numericValue);
+}
+
+function normalizeBulkDiscounts(discounts: ProductDiscountInput): BulkDiscount[] {
+  const parsedDiscounts = typeof discounts === "string"
+    ? (() => {
+        try {
+          return JSON.parse(discounts) as unknown;
+        } catch (error) {
+          console.error("Failed to parse product discounts:", error);
+          return null;
+        }
+      })()
+    : discounts;
+
+  if (!Array.isArray(parsedDiscounts)) {
+    return [];
+  }
+
+  return parsedDiscounts
+    .map((discount) => {
+      if (!discount || typeof discount !== "object") {
+        return null;
+      }
+
+      const tier = discount as { discount?: string | number | null; quantity?: string | number | null };
+      const normalizedDiscount = normalizeDiscountNumber(tier.discount);
+      const normalizedQuantity = normalizeDiscountNumber(tier.quantity);
+
+      if (!normalizedDiscount || !normalizedQuantity) {
+        return null;
+      }
+
+      return {
+        discount: `${normalizedDiscount}%`,
+        quantity: normalizedQuantity,
+      };
+    })
+    .filter((discount): discount is BulkDiscount => Boolean(discount))
+    .sort((a, b) => Number(a.quantity) - Number(b.quantity));
+}
+
+function normalizeWarrantyOptions(warranty: ProductPurchaseProps["warranty"]) {
+  const options: WarrantyOption[] = (warranty?.options || []).map((opt) => ({
+    id: opt.id,
+    name: opt.name || "Warranty",
+    durationMonths: opt.duration_months || 0,
+    price: opt.price || 0,
+    description: opt.description || "",
+    sortOrder: opt.sort_order || 0,
+  })).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+
+  return {
+    options,
+    defaultOptionId: warranty?.default_option?.id || (options.length > 0 ? options[0].id : null),
+  };
 }
 
 export default function ProductPurchase({
@@ -131,6 +168,7 @@ export default function ProductPurchase({
   stock,
   deliveryDatesInStock,
   deliveryDatesNoStock,
+  discounts,
   warranty,
 }: ProductPurchaseProps) {
   const { addItem } = useCart();
@@ -188,6 +226,8 @@ export default function ProductPurchase({
     Number.isFinite(normalizedPackingGroup) &&
     normalizedPackingGroup > 0;
   const normalizedWarranty = useMemo(() => normalizeWarrantyOptions(warranty), [warranty]);
+  const bulkDiscounts = useMemo(() => normalizeBulkDiscounts(discounts), [discounts]);
+  const hasBulkDiscounts = bulkDiscounts.length > 0;
   const hasWarrantyOptions = normalizedWarranty.options.length > 0;
   const defaultWarrantyOption = normalizedWarranty.options.find(
     (option) => option.id === normalizedWarranty.defaultOptionId,
@@ -400,29 +440,32 @@ export default function ProductPurchase({
         <span className="text-zinc-500 text-base font-normal leading-5 text-left">ex. VAT</span>
       </div>
 
-      {/* Bulk Discounts */}
-      <div className="p-4 bg-slate-100 rounded-[10px]">
-        <div className="flex flex-col gap-3">
-          <span className="text-neutral-800 text-base font-bold leading-5">Bulk Discounts</span>
-          <div className="flex-1 flex justify-between">
-            <div className="flex flex-col gap-2">
-              <span className="text-neutral-700 text-base font-semibold leading-5">Quantity</span>
-              {["10", "50", "100"].map((qty) => (
-                <div key={qty} className="flex items-center gap-1.5">
-                  <div className="w-3.5 h-3.5 bg-white rounded-[3px] border border-zinc-500/20" />
-                  <span className="text-neutral-700 text-base font-normal leading-5">{qty}</span>
-                </div>
-              ))}
-            </div>
-            <div className="flex flex-col gap-2">
-              <span className="text-neutral-700 text-base font-semibold leading-5">Discount</span>
-              {["5%", "10%", "15%"].map((d) => (
-                <span key={d} className="text-green-600 text-base font-normal leading-5">{d}</span>
-              ))}
+      {hasBulkDiscounts ? (
+        <div className="p-4 bg-slate-100 rounded-[10px]">
+          <div className="flex flex-col gap-3">
+            <span className="text-neutral-800 text-base font-bold leading-5">Bulk Discounts</span>
+            <div className="flex-1 flex justify-between">
+              <div className="flex flex-col gap-2">
+                <span className="text-neutral-700 text-base font-semibold leading-5">Quantity</span>
+                {bulkDiscounts.map((tier) => (
+                  <div key={`${tier.quantity}-${tier.discount}`} className="flex items-center gap-1.5">
+                    <div className="w-3.5 h-3.5 bg-white rounded-[3px] border border-zinc-500/20" />
+                    <span className="text-neutral-700 text-base font-normal leading-5">{tier.quantity}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-col gap-2">
+                <span className="text-neutral-700 text-base font-semibold leading-5">Discount</span>
+                {bulkDiscounts.map((tier) => (
+                  <span key={`${tier.discount}-${tier.quantity}`} className="text-green-600 text-base font-normal leading-5">
+                    {tier.discount}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      ) : null}
 
       {/* Quantity + Add to Cart */}
       <Popover
