@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Accordion from "@/components/Accordion";
 import ProductPurchase from "@/components/ProductPurchase";
-import ProductCard, { type ProductCardData } from "@/components/ProductCard";
+import ProductCard, { type ProductCardData, type ProductRouteType } from "@/components/ProductCard";
 import ProductImageGallery from "@/components/ProductImageGallery";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 import { notFound } from "next/navigation";
@@ -336,7 +336,7 @@ function mapUpsellToProductCard(upsell: UpsellProduct): ProductCardData {
   };
 }
 
-function productHref(product: ProductCardData): { pathname: string; query?: { type: "simple" | "variable" } } | null {
+function productHref(product: ProductCardData): { pathname: string; query?: { type: ProductRouteType } } | null {
   if (!product.slug) {
     return null;
   }
