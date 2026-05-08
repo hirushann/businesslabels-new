@@ -423,6 +423,8 @@ export default function CheckoutPageClient({
   const [isPending, setIsPending] = useState(false);
   const [localDemoItems, setLocalDemoItems] = useState<CartItem[]>(demoItems);
   const [isAutofilled, setIsAutofilled] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [orderNumber, setOrderNumber] = useState<string | null>(null);
 
   useEffect(() => {
     if (isDemoMode || isAutofilled) return;
@@ -628,6 +630,48 @@ export default function CheckoutPageClient({
       setIsPending(false);
     }
   };
+
+  if (isSubmitted) {
+    return (
+      <div className="bg-slate-50 px-5 py-24 min-h-[70vh] flex items-center justify-center">
+        <div className="max-w-xl w-full bg-white rounded-3xl border border-slate-200 p-12 shadow-[2px_8px_40px_0px_rgba(109,109,120,0.10)] flex flex-col items-center text-center gap-6">
+          <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 mb-2">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <div className="flex flex-col gap-2">
+            <h1 className="text-3xl font-bold text-neutral-800">Order Placed!</h1>
+            <p className="text-neutral-600 text-lg">
+              Thank you for your order. We&apos;ve sent a confirmation email to <span className="font-semibold text-neutral-800">{form.email}</span>.
+            </p>
+          </div>
+          
+          {orderNumber && (
+            <div className="bg-slate-50 rounded-xl px-6 py-4 border border-slate-100">
+              <p className="text-sm text-neutral-500 font-medium uppercase tracking-wider">Order Number</p>
+              <p className="text-2xl font-bold text-amber-500">{orderNumber}</p>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-4 w-full pt-4">
+            <Link 
+              href="/my-account" 
+              className="h-12 w-full rounded-full bg-amber-500 px-6 text-base font-semibold text-white transition-colors hover:bg-amber-600 flex items-center justify-center"
+            >
+              View My Orders
+            </Link>
+            <Link 
+              href="/products" 
+              className="h-12 w-full rounded-full border border-slate-200 px-6 text-base font-semibold text-neutral-700 transition-colors hover:bg-slate-50 flex items-center justify-center"
+            >
+              Continue Shopping
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <CheckoutShell

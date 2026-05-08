@@ -248,7 +248,7 @@ function extractOrderList(payload: unknown): unknown[] {
 function normalizeOrders(payload: unknown): AccountOrder[] {
   return extractOrderList(payload)
     .filter(isPlainObject)
-    .map((order, index) => {
+    .map((order: any, index) => {
       const itemsRaw = (order.items ?? order.line_items ?? order.order_items) as any[];
       const billingRaw = (order.billing_address ?? order.billpayer?.address) as Record<string, unknown>;
       const shippingRaw = (order.shipping_address ?? order.shipping_address) as Record<string, unknown>;

@@ -1,7 +1,6 @@
 import type { estypes } from "@elastic/elasticsearch";
 import type { LinkProps } from "next/link";
 import type { ProductCardData, ProductRouteType } from "@/components/ProductCard";
-import type { WarrantyRawData } from "@/lib/utils/warranty";
 import { catalogIndexForType, elasticClient } from "@/lib/search/client";
 import {
   CATALOG_SORT_VALUES,
@@ -14,6 +13,27 @@ import {
   type CatalogSearchResponse,
   type CatalogSortValue,
 } from "@/lib/search/types";
+
+export type WarrantyRawData = {
+  is_available: boolean;
+  has_options: boolean;
+  options: Array<{
+    id: number;
+    name: string | null;
+    duration_months: number | null;
+    price: number | null;
+    description: string | null;
+    sort_order: number;
+  }>;
+  default_option: {
+    id: number;
+    name: string | null;
+    duration_months: number | null;
+    price: number | null;
+    description: string | null;
+    sort_order: number;
+  } | null;
+};
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_PER_PAGE = 24;

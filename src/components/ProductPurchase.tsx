@@ -96,7 +96,7 @@ function normalizeDiscountNumber(value: string | number | null | undefined): str
   return Number.isInteger(numericValue) ? String(numericValue) : String(numericValue);
 }
 
-function normalizeBulkDiscounts(discounts: ProductDiscountInput): BulkDiscount[] {
+function normalizeBulkDiscounts(discounts: ProductDiscountInput | undefined): BulkDiscount[] {
   const parsedDiscounts = typeof discounts === "string"
     ? (() => {
         try {

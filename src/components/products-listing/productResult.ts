@@ -131,10 +131,25 @@ function imageForProduct(result: unknown): string | null {
   return null;
 }
 
-function categoriesForProduct(result: unknown): Array<{ id?: number; name?: string | null }> {
+function labelFromCode(value: string): string {
+  return value
+    .trim()
+    .replace(/^\[\s*/, "")
+    .replace(/\s*\]$/, "")
+    .replace(/^["']|["']$/g, "")
+    .split(/[_\-\s]+/)
+    .filter(Boolean)
+    .map((part) => {
+      const upper = part.toUpperCase();
+      return upper.length <= 3 ? upper : `${upper.charAt(0)}${upper.slice(1).toLowerCase()}`;
+    })
+    .join(" ");
+}
+
+function categoriesForProduct(result: unknown): Array<{ id?: number; name?: string | null; slug?: string | null }> {
   const categories = getRaw(result, "categories");
   if (Array.isArray(categories)) {
-    const normalizedCategories: Array<{ id?: number; name?: string | null }> = [];
+    const normalizedCategories: Array<{ id?: number; name?: string | null; slug?: string | null }> = [];
 
     categories.forEach((category) => {
       if (typeof category === "string") {
@@ -160,7 +175,7 @@ function categoriesForProduct(result: unknown): Array<{ id?: number; name?: stri
 
   if (!Array.isArray(productCategories)) return [];
 
-  const normalizedCategories: Array<{ id?: number; name?: string | null }> = [];
+  const normalizedCategories: Array<{ id?: number; name?: string | null; slug?: string | null }> = [];
 
   productCategories.forEach((category) => {
     if (typeof category === "string") {
@@ -230,11 +245,11 @@ export function mapProductListingResult(
 
   const categorySlugs = (valueAsString(getRaw(result, "category_slugs")) ?? "")
     .split(",")
-    .map((s) => s.trim().toLowerCase())
+    .map((slug) => ({ name: labelFromCode(slug), slug: slug }))
     .filter(Boolean);
   
-  const isPrinter = categorySlugs.includes("labelprinters") || 
-                    product.categories.some(c => c.name?.toLowerCase().includes("printer") || c.slug?.toLowerCase() === "labelprinters");
+  const isPrinter = categorySlugs.some(s => s.slug === "labelprinters") || 
+                    product.categories?.some(c => c.name?.toLowerCase().includes("printer") || c.slug?.toLowerCase() === "labelprinters");
 
   const prefix = isPrinter ? "printers" : "products";
 
