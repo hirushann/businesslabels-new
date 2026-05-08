@@ -1,11 +1,35 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { LinkProps } from "next/link";
-import { useCart } from "@/components/CartProvider";
+import { buildCartItemKey, useCart } from "@/components/CartProvider";
+import { Popover, PopoverAnchor, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle } from "@/components/ui/popover";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 export type ProductRouteType = "simple" | "variable";
+
+export type ProductWarrantyData = {
+  is_available?: boolean | null;
+  has_options?: boolean | null;
+  options?: Array<{
+    id: number;
+    name?: string | null;
+    duration_months?: number | null;
+    price?: number | null;
+    description?: string | null;
+    sort_order?: number | null;
+  }> | null;
+  default_option?: {
+    id: number;
+    name?: string | null;
+    duration_months?: number | null;
+    price?: number | null;
+    description?: string | null;
+    sort_order?: number | null;
+  } | null;
+};
 
 export type ProductCardData = {
   id: string | number;
@@ -22,6 +46,7 @@ export type ProductCardData = {
   slug?: string | null;
   type?: ProductRouteType | null;
   packing_group?: number | null;
+  warranty?: ProductWarrantyData | null;
 };
 
 type ProductCardProps = {
@@ -43,6 +68,50 @@ function featureLines(product: ProductCardData): string[] {
     .slice(0, 3);
 }
 
+function formatEuro(value: number): string {
+  return new Intl.NumberFormat("nl-NL", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+function normalizeWarrantyOptions(warranty: ProductWarrantyData | null | undefined) {
+  const options = (warranty?.options || [])
+    .map((option) => {
+      if (typeof option?.id !== "number" || !Number.isFinite(option.id)) {
+        return null;
+      }
+
+      return {
+        id: option.id,
+        name: option.name?.trim() || "Warranty",
+        durationMonths:
+          typeof option.duration_months === "number" && Number.isFinite(option.duration_months)
+            ? option.duration_months
+            : null,
+        price: typeof option.price === "number" && Number.isFinite(option.price) ? option.price : 0,
+        description: option.description?.trim() || null,
+        sortOrder:
+          typeof option.sort_order === "number" && Number.isFinite(option.sort_order)
+            ? option.sort_order
+            : 0,
+      };
+    })
+    .filter((option): option is NonNullable<typeof option> => Boolean(option))
+    .sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id);
+
+  return {
+    options,
+    defaultOptionId:
+      options.find((option) => option.id === warranty?.default_option?.id)?.id ??
+      options.find((option) => option.price <= 0)?.id ??
+      options[0]?.id ??
+      null,
+  };
+}
+
 export function lastCategoryLabel(categories: ProductCardData["categories"]): string {
   const label = categories?.[categories.length - 1]?.name?.trim();
   return label || "N/A";
@@ -59,11 +128,20 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
     Number.isFinite(product.originalPrice) &&
     (!hasPrice || (hasPrice && (product.price !== undefined && product.price !== null) && product.originalPrice > product.price));
   const imageSrc = normalizeText(product.mainImage) || "https://placehold.co/600x400";
+  const normalizedWarranty = useMemo(() => normalizeWarrantyOptions(product.warranty), [product.warranty]);
+  const defaultWarrantyOption = normalizedWarranty.options.find(
+    (option) => option.id === normalizedWarranty.defaultOptionId,
+  ) ?? null;
+  const [selectedWarrantyId, setSelectedWarrantyId] = useState<number | null>(
+    normalizedWarranty.defaultOptionId,
+  );
+  const [isWarrantyPopoverOpen, setIsWarrantyPopoverOpen] = useState(false);
+  const selectedWarrantyOption =
+    normalizedWarranty.options.find((option) => option.id === selectedWarrantyId) ??
+    defaultWarrantyOption;
+  const hasWarrantyOptions = normalizedWarranty.options.length > 0;
 
-  const handleAddToCart = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-
+  const addProductWithWarranty = (selectedOption: typeof selectedWarrantyOption) => {
     addItem({
       id: product.id,
       slug: product.slug,
@@ -73,8 +151,54 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
       price: product.price ?? null,
       mainImage: product.mainImage ?? null,
     });
+
+    const warrantyPrice =
+      selectedOption && typeof selectedOption.price === "number" && Number.isFinite(selectedOption.price)
+        ? selectedOption.price
+        : 0;
+
+    if (selectedOption && warrantyPrice > 0) {
+      const parentKey = buildCartItemKey({ id: product.id, slug: product.slug, type: product.type });
+      const warrantyName = selectedOption.name || `${productName} Extended Warranty`;
+
+      addItem({
+        id: `warranty-${parentKey}-${selectedOption.id}`,
+        name: warrantyName,
+        sku: `${product.sku}-WARRANTY`,
+        price: warrantyPrice,
+        mainImage: product.mainImage ?? null,
+        itemKind: "warranty",
+        linkedToKey: parentKey,
+        warranty: {
+          optionId: selectedOption.id,
+          durationMonths: selectedOption.durationMonths,
+          parentSku: product.sku,
+          parentName: productName,
+        },
+      });
+    }
     
     openCart();
+  };
+
+  const handleAddToCart = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (hasWarrantyOptions) {
+      setSelectedWarrantyId(selectedWarrantyId ?? normalizedWarranty.defaultOptionId);
+      setIsWarrantyPopoverOpen(true);
+      return;
+    }
+
+    addProductWithWarranty(null);
+  };
+
+  const handleConfirmWarrantyAdd = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    addProductWithWarranty(selectedWarrantyOption);
+    setIsWarrantyPopoverOpen(false);
   };
 
   const cardContent = (
@@ -164,19 +288,91 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
               </div>
               <span className="text-zinc-500 text-xs font-normal font-['Segoe_UI'] leading-4">ex. VAT</span>
             </div>
-            <button
-              type="button"
-              onClick={handleAddToCart}
-              className="px-4 py-2.5 bg-amber-500 rounded-full flex items-center gap-2 text-white text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors"
-              aria-label={`Add ${product.name} to cart`}
-            >
-              Add
-              <svg width="22" height="16" viewBox="0 0 22 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M7.33268 14.6663C7.83894 14.6663 8.24935 14.3679 8.24935 13.9997C8.24935 13.6315 7.83894 13.333 7.33268 13.333C6.82642 13.333 6.41602 13.6315 6.41602 13.9997C6.41602 14.3679 6.82642 14.6663 7.33268 14.6663Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M17.4167 14.6663C17.9229 14.6663 18.3333 14.3679 18.3333 13.9997C18.3333 13.6315 17.9229 13.333 17.4167 13.333C16.9104 13.333 16.5 13.6315 16.5 13.9997C16.5 14.3679 16.9104 14.6663 17.4167 14.6663Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M1.87891 1.36621H3.71224L6.15057 9.64621C6.24002 9.94945 6.47202 10.2205 6.80664 10.4128C7.14126 10.605 7.55757 10.7064 7.9839 10.6995H16.9489C17.3661 10.6991 17.7707 10.5951 18.0957 10.4048C18.4207 10.2145 18.6467 9.94923 18.7364 9.65288L20.2489 4.69954H4.69307" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
+            <Popover open={isWarrantyPopoverOpen} onOpenChange={setIsWarrantyPopoverOpen}>
+              <PopoverAnchor asChild>
+                <button
+                  type="button"
+                  onClick={handleAddToCart}
+                  className="px-4 py-2.5 bg-amber-500 rounded-full flex items-center gap-2 text-white text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors"
+                  aria-label={`Add ${product.name} to cart`}
+                >
+                  Add
+                  <svg width="22" height="16" viewBox="0 0 22 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7.33268 14.6663C7.83894 14.6663 8.24935 14.3679 8.24935 13.9997C8.24935 13.6315 7.83894 13.333 7.33268 13.333C6.82642 13.333 6.41602 13.6315 6.41602 13.9997C6.41602 14.3679 6.82642 14.6663 7.33268 14.6663Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M17.4167 14.6663C17.9229 14.6663 18.3333 14.3679 18.3333 13.9997C18.3333 13.6315 17.9229 13.333 17.4167 13.333C16.9104 13.333 16.5 13.6315 16.5 13.9997C16.5 14.3679 16.9104 14.6663 17.4167 14.6663Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M1.87891 1.36621H3.71224L6.15057 9.64621C6.24002 9.94945 6.47202 10.2205 6.80664 10.4128C7.14126 10.605 7.55757 10.7064 7.9839 10.6995H16.9489C17.3661 10.6991 17.7707 10.5951 18.0957 10.4048C18.4207 10.2145 18.6467 9.94923 18.7364 9.65288L20.2489 4.69954H4.69307" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              </PopoverAnchor>
+              {hasWarrantyOptions ? (
+                <PopoverContent
+                  align="end"
+                  className="w-80 p-4"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }}
+                >
+                  <PopoverHeader>
+                    <PopoverTitle className="text-base">Choose Warranty</PopoverTitle>
+                    <PopoverDescription>Select a warranty option before adding this item.</PopoverDescription>
+                  </PopoverHeader>
+                  <RadioGroup
+                    value={selectedWarrantyOption ? String(selectedWarrantyOption.id) : undefined}
+                    onValueChange={(value) => {
+                      const parsed = Number.parseInt(value, 10);
+                      if (Number.isFinite(parsed)) {
+                        setSelectedWarrantyId(parsed);
+                      }
+                    }}
+                    className="gap-2"
+                  >
+                    {normalizedWarranty.options.map((option) => {
+                      const hasExtraPrice = option.price > 0;
+                      return (
+                        <label
+                          key={option.id}
+                          className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 p-3 text-sm"
+                        >
+                          <RadioGroupItem value={String(option.id)} className="mt-1" />
+                          <span className="flex min-w-0 flex-1 flex-col gap-1">
+                            <span className="flex items-start justify-between gap-2 font-semibold text-neutral-800">
+                              <span>{option.name}</span>
+                              <span className={hasExtraPrice ? "text-amber-600" : "text-emerald-600"}>
+                                {hasExtraPrice ? `+${formatEuro(option.price)}` : "No extra cost"}
+                              </span>
+                            </span>
+                            <span className="text-xs text-neutral-500">
+                              {option.description || (option.durationMonths ? `${option.durationMonths} months coverage` : "Extended coverage")}
+                            </span>
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </RadioGroup>
+                  <div className="mt-3 flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        setIsWarrantyPopoverOpen(false);
+                      }}
+                      className="h-9 rounded-full border border-slate-200 px-4 text-sm font-semibold text-neutral-700 transition-colors hover:bg-slate-100"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleConfirmWarrantyAdd}
+                      className="h-9 rounded-full bg-amber-500 px-4 text-sm font-semibold text-white transition-colors hover:bg-amber-600"
+                    >
+                      Add to Cart
+                    </button>
+                  </div>
+                </PopoverContent>
+              ) : null}
+            </Popover>
           </div>
         </div>
       </div>
