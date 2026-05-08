@@ -71,6 +71,7 @@ const PRINTERS_SEARCH_QUERY = {
     categories: { raw: {} },
     material: { raw: {} },
     material_title: { raw: {} },
+    category_slugs: { raw: {} },
   },
 };
 
@@ -248,9 +249,9 @@ function PrintersListingContent({ printers }: { printers: PrinterCardData[] }) {
                         product={product}
                         href={
                           product.slug && product.type
-                            ? { pathname: `/products/${product.slug}`, query: { type: product.type } }
+                            ? { pathname: `/printers/${product.slug}`, query: { type: product.type } }
                             : product.slug
-                              ? `/products/${product.slug}`
+                              ? `/printers/${product.slug}`
                               : undefined
                         }
                       />

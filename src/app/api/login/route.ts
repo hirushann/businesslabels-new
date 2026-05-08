@@ -11,6 +11,7 @@ type LoginResponseBody = {
   access_token?: unknown;
   plainTextToken?: unknown;
   user?: unknown;
+  errors?: Record<string, string[]>;
   [key: string]: unknown;
 };
 

@@ -70,6 +70,7 @@ const CATEGORY_SEARCH_QUERY = {
     categories: { raw: {} },
     material: { raw: {} },
     material_title: { raw: {} },
+    category_slugs: { raw: {} },
   },
 };
 
@@ -300,13 +301,15 @@ function CategoryListingContent({ products }: { products: CategoryCardData[] }) 
                       <ProductCard
                         key={`fallback-${product.id}-${index}`}
                         product={product}
-                        href={
-                          product.slug && product.type
-                            ? { pathname: `/products/${product.slug}`, query: { type: product.type } }
-                            : product.slug
-                              ? `/products/${product.slug}`
-                              : undefined
-                        }
+                        href={(() => {
+                          if (!product.slug) return undefined;
+                          const isPrinter = product.categories?.some(c => c.slug === "labelprinters" || c.name?.toLowerCase().includes("printer"));
+                          const prefix = isPrinter ? "printers" : "products";
+                          
+                          return product.type
+                            ? { pathname: `/${prefix}/${product.slug}`, query: { type: product.type } }
+                            : `/${prefix}/${product.slug}`;
+                        })()}
                       />
                     ))}
 
