@@ -65,142 +65,142 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
   });
 
   return (
-    <div className="relative overflow-hidden bg-white">
-      {/* Ambient glow blobs */}
-      <div className="pointer-events-none absolute left-0 top-[454px] h-48 w-48 rounded-full bg-amber-500/30 blur-[132px]" />
-      <div className="pointer-events-none absolute left-[1312px] top-[858px] h-48 w-48 rounded-full bg-amber-500/30 blur-[132px]" />
+    <>
+      <div className="relative overflow-hidden bg-white">
+        {/* Ambient glow blobs */}
+        <div className="pointer-events-none absolute left-0 top-[454px] h-48 w-48 rounded-full bg-amber-500/30 blur-[132px]" />
+        <div className="pointer-events-none absolute left-[1312px] top-[858px] h-48 w-48 rounded-full bg-amber-500/30 blur-[132px]" />
 
-      <div className="mx-auto flex max-w-360 flex-col gap-24 pt-10 pb-24 px-4 sm:px-6 lg:px-0">
-        {/* Main Content Area */}
-        <div className="flex flex-col items-start gap-10">
-          {/* Header Section */}
-          <div className="flex w-full flex-col items-start gap-6">
-            <div className="flex flex-col items-start gap-4">
-              <div className="inline-flex items-center gap-2 h-4 text-zinc-500">
-                <Link href="/" className="hover:text-amber-500 transition-colors">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                  </svg>
-                </Link>
-                <span className="text-sm">/</span>
-                <Link href="/blogs" className="text-sm hover:text-amber-500 transition-colors">Blogs</Link>
-                <span className="text-sm">/</span>
-                <span className="text-sm font-semibold text-neutral-700">Details</span>
+        <div className="mx-auto flex max-w-[1440px] flex-col gap-24 pt-10 pb-24 px-4 sm:px-6 lg:px-0">
+          {/* Main Content Area */}
+          <div className="flex flex-col items-start gap-10">
+            {/* Header Section */}
+            <div className="flex w-full flex-col items-start gap-6">
+              <div className="flex flex-col items-start gap-4">
+                <div className="inline-flex items-center gap-2 h-4 text-zinc-500">
+                  <Link href="/" className="hover:text-amber-500 transition-colors">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                  </Link>
+                  <span className="text-sm">/</span>
+                  <Link href="/blogs" className="text-sm hover:text-amber-500 transition-colors">Blogs</Link>
+                  <span className="text-sm">/</span>
+                  <span className="text-sm font-semibold text-neutral-700">Details</span>
+                </div>
+                <h1 className="text-4xl font-bold leading-[48px] text-neutral-800">
+                  {post.title}
+                </h1>
               </div>
-              <h1 className="text-4xl font-bold leading-[48px] text-neutral-800">
-                {post.title}
-              </h1>
-            </div>
 
-            <div className="relative h-[580px] w-full overflow-hidden rounded-xl bg-slate-100">
-              {post.image ? (
-                <Image
-                  src={post.image}
-                  alt={post.title}
-                  fill
-                  className="object-cover"
-                  priority
-                />
-              ) : (
-                <div className="flex items-center justify-center h-full bg-slate-200 text-slate-400">
-                  <svg className="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-              )}
-              {post.excerpt && (
-                <div className="absolute left-[24px] bottom-[24px] right-[24px] inline-flex flex-col items-start gap-4 rounded-lg bg-white/90 p-6 backdrop-blur-[2px] shadow-sm">
-                  <p className="text-lg font-semibold leading-7 text-neutral-700">
-                    {post.excerpt}
-                  </p>
-                  <div className="inline-flex items-start gap-6">
-                    <div className="inline-flex flex-col items-start gap-1.5">
-                      <span className="text-sm font-normal leading-5 text-neutral-700">Author:</span>
-                      <div className="inline-flex items-center gap-1.5">
-                        <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center text-[10px] font-bold text-amber-600">BL</div>
-                        <span className="text-base font-semibold leading-6 text-neutral-800">BusinessLabels</span>
-                      </div>
-                    </div>
-                    <div className="h-12 w-px bg-gray-200"></div>
-                    <div className="inline-flex flex-col items-start gap-1.5">
-                      <span className="text-sm font-normal leading-5 text-neutral-700">Published on:</span>
-                      <div className="inline-flex items-center gap-1.5">
-                        <span className="text-base font-semibold leading-6 text-neutral-800">{formattedDate}</span>
-                      </div>
-                    </div>
+              <div className="relative h-[580px] w-full overflow-hidden rounded-xl bg-slate-100">
+                {post.image ? (
+                  <Image
+                    src={post.image}
+                    alt={post.title}
+                    fill
+                    className="object-cover"
+                    priority
+                    unoptimized
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full bg-slate-200 text-slate-400">
+                    <svg className="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
                   </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="inline-flex w-full items-start gap-10">
-            {/* Article Content */}
-            <article className="flex flex-1 flex-col items-start gap-8">
-              <div 
-                className="cms-content w-full prose prose-neutral max-w-none prose-headings:text-neutral-800 prose-p:text-neutral-700 prose-a:text-amber-600 hover:prose-a:text-amber-700"
-                dangerouslySetInnerHTML={{ __html: unescapeHtml(post.content) }}
-              />
-
-              {/* Author Bio Box - Default for now as API doesn't provide author yet */}
-              <div className="flex w-full flex-col items-start gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-sm mt-8">
-                <h3 className="text-2xl font-semibold leading-7 text-neutral-800">About BusinessLabels</h3>
-                <div className="w-full border-t border-gray-100"></div>
-                <div className="inline-flex w-full items-center gap-4">
-                  <div className="w-20 h-20 rounded-lg bg-amber-500 flex items-center justify-center text-white text-2xl font-bold">BL</div>
-                  <div className="flex flex-1 flex-col items-start gap-2.5">
-                    <h4 className="text-2xl font-bold text-neutral-800">The BusinessLabels Team</h4>
-                    <p className="text-base font-medium text-neutral-700">
-                      Your trusted partner for high-quality labels and printing solutions. We share insights on label design, material selection, and industry standards to help your business grow.
+                )}
+                {post.excerpt && (
+                  <div className="absolute left-[24px] bottom-[24px] right-[24px] inline-flex flex-col items-start gap-4 rounded-lg bg-white/90 p-6 backdrop-blur-[2px] shadow-sm">
+                    <p className="text-lg font-semibold leading-7 text-neutral-700">
+                      {post.excerpt}
                     </p>
+                    <div className="inline-flex items-start gap-6">
+                      <div className="inline-flex flex-col items-start gap-1.5">
+                        <span className="text-sm font-normal leading-5 text-neutral-700">Author:</span>
+                        <div className="inline-flex items-center gap-1.5">
+                          <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center text-[10px] font-bold text-amber-600">BL</div>
+                          <span className="text-base font-semibold leading-6 text-neutral-800">BusinessLabels</span>
+                        </div>
+                      </div>
+                      <div className="h-12 w-px bg-gray-200"></div>
+                      <div className="inline-flex flex-col items-start gap-1.5">
+                        <span className="text-sm font-normal leading-5 text-neutral-700">Published on:</span>
+                        <div className="inline-flex items-center gap-1.5">
+                          <span className="text-base font-semibold leading-6 text-neutral-800">{formattedDate}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="inline-flex w-full items-start gap-10">
+              {/* Article Content */}
+              <article className="flex flex-1 flex-col items-start gap-8">
+                <div 
+                  className="cms-content w-full prose prose-neutral max-w-none prose-headings:text-neutral-800 prose-p:text-neutral-700 prose-a:text-amber-600 hover:prose-a:text-amber-700"
+                  dangerouslySetInnerHTML={{ __html: unescapeHtml(post.content) }}
+                />
+
+                {/* Author Bio Box - Default for now as API doesn't provide author yet */}
+                <div className="flex w-full flex-col items-start gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-sm mt-8">
+                  <h3 className="text-2xl font-semibold leading-7 text-neutral-800">About BusinessLabels</h3>
+                  <div className="w-full border-t border-gray-100"></div>
+                  <div className="inline-flex w-full items-center gap-4">
+                    <div className="w-20 h-20 rounded-lg bg-amber-500 flex items-center justify-center text-white text-2xl font-bold">BL</div>
+                    <div className="flex flex-1 flex-col items-start gap-2.5">
+                      <h4 className="text-2xl font-bold text-neutral-800">The BusinessLabels Team</h4>
+                      <p className="text-base font-medium text-neutral-700">
+                        Your trusted partner for high-quality labels and printing solutions. We share insights on label design, material selection, and industry standards to help your business grow.
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </article>
+              </article>
 
-            {/* Sidebar Area */}
-            <aside className="inline-flex w-80 flex-col items-start gap-7 shrink-0">
-              {/* Share Box */}
-              <div className="relative flex w-full flex-col items-start gap-8 overflow-hidden rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-                <div className="absolute left-0 top-0 h-14 w-80 bg-slate-50"></div>
-                <h3 className="relative z-10 text-xl font-semibold leading-6 text-neutral-800">Share this post</h3>
-                <div className="relative z-10 flex w-full flex-col items-start gap-5">
-                   <div className="inline-flex items-center gap-3 w-full">
-                    <button className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors">
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" /></svg>
-                    </button>
-                    <button className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-900 hover:text-white transition-colors">
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
-                    </button>
-                    <button className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-amber-50 hover:text-amber-600 transition-colors">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
-                    </button>
+              {/* Sidebar Area */}
+              <aside className="inline-flex w-80 flex-col items-start gap-7 shrink-0">
+                {/* Share Box */}
+                <div className="relative flex w-full flex-col items-start gap-8 overflow-hidden rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+                  <div className="absolute left-0 top-0 h-14 w-80 bg-slate-50"></div>
+                  <h3 className="relative z-10 text-xl font-semibold leading-6 text-neutral-800">Share this post</h3>
+                  <div className="relative z-10 flex w-full flex-col items-start gap-5">
+                    <div className="inline-flex items-center gap-3 w-full">
+                      <button className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" /></svg>
+                      </button>
+                      <button className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-900 hover:text-white transition-colors">
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
+                      </button>
+                      <button className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-amber-50 hover:text-amber-600 transition-colors">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Categories Box */}
-              <div className="relative flex w-full flex-col items-start gap-8 overflow-hidden rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-                <div className="absolute left-0 top-0 h-14 w-80 bg-slate-50"></div>
-                <h3 className="relative z-10 text-xl font-semibold leading-6 text-neutral-800">Categories</h3>
-                <div className="relative z-10 flex w-full flex-col items-start gap-4">
-                  <Link href="/blogs" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500 transition-colors">All Posts</Link>
-                  <div className="w-full border-t border-gray-100"></div>
-                  <Link href="#" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500 transition-colors">Label Design</Link>
-                  <div className="w-full border-t border-gray-100"></div>
-                  <Link href="#" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500 transition-colors">Materials</Link>
-                  <div className="w-full border-t border-gray-100"></div>
-                  <Link href="#" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500 transition-colors">Technology</Link>
+                {/* Categories Box */}
+                <div className="relative flex w-full flex-col items-start gap-8 overflow-hidden rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+                  <div className="absolute left-0 top-0 h-14 w-80 bg-slate-50"></div>
+                  <h3 className="relative z-10 text-xl font-semibold leading-6 text-neutral-800">Categories</h3>
+                  <div className="relative z-10 flex w-full flex-col items-start gap-4">
+                    <Link href="/blogs" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500 transition-colors">All Posts</Link>
+                    <div className="w-full border-t border-gray-100"></div>
+                    <Link href="#" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500 transition-colors">Label Design</Link>
+                    <div className="w-full border-t border-gray-100"></div>
+                    <Link href="#" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500 transition-colors">Materials</Link>
+                    <div className="w-full border-t border-gray-100"></div>
+                    <Link href="#" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500 transition-colors">Technology</Link>
+                  </div>
                 </div>
-              </div>
-            </aside>
+              </aside>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-}
-      
+
       {/* Recommended Products */}
       <div className="flex w-full flex-col items-start gap-12 bg-gray-50 px-4 py-24 sm:px-6 lg:px-40">
         <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between">
@@ -382,7 +382,6 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
           </div>
         </div>
       </div>
-
-    </div>
+    </>
   );
 }
