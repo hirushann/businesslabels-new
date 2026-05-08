@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import ElasticsearchAPIConnector from '@elastic/search-ui-elasticsearch-connector';
 import type { QueryConfig, RequestState, ResponseState } from '@elastic/search-ui';
+import type { DynamicFilterOption, DynamicProductFilter } from '@/lib/search/dynamicFilters';
 
 function elasticHost(): string {
   const url = process.env.ELASTICSEARCH_URL;
@@ -539,6 +540,107 @@ type SearchStats = {
   };
 };
 
+function isUsableMax(value: number | null): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0;
+}
+
+function optionFilter(
+  key: string,
+  field: string,
+  label: string,
+  options: DynamicFilterOption[],
+): DynamicProductFilter | null {
+  return options.length > 0
+    ? {
+        type: 'option',
+        key,
+        field,
+        label,
+        options,
+      }
+    : null;
+}
+
+function rangeFilter({
+  key,
+  field,
+  label,
+  name,
+  max,
+  unitPrefix,
+  unitSuffix,
+}: {
+  key: string;
+  field: string;
+  label: string;
+  name: string;
+  max: number | null;
+  unitPrefix?: string;
+  unitSuffix?: string;
+}): DynamicProductFilter | null {
+  return isUsableMax(max)
+    ? {
+        type: 'range',
+        key,
+        field,
+        label,
+        name,
+        min: 0,
+        max: Math.ceil(max),
+        unitPrefix,
+        unitSuffix,
+      }
+    : null;
+}
+
+function buildDynamicFilters(searchStats: SearchStats): DynamicProductFilter[] {
+  return [
+    rangeFilter({
+      key: 'price',
+      field: 'price',
+      label: 'Price Range',
+      name: 'price',
+      max: searchStats.price.max,
+      unitPrefix: '€',
+    }),
+    rangeFilter({
+      key: 'width',
+      field: DIMENSION_FIELDS.width.runtimeField,
+      label: 'Label Width',
+      name: 'width',
+      max: searchStats.dimensions.width.max,
+      unitSuffix: 'mm',
+    }),
+    rangeFilter({
+      key: 'height',
+      field: DIMENSION_FIELDS.height.runtimeField,
+      label: 'Label Height',
+      name: 'height',
+      max: searchStats.dimensions.height.max,
+      unitSuffix: 'mm',
+    }),
+    rangeFilter({
+      key: 'kern',
+      field: DIMENSION_FIELDS.kern.runtimeField,
+      label: 'Core Size',
+      name: 'kern',
+      max: searchStats.dimensions.kern.max,
+      unitSuffix: 'mm',
+    }),
+    optionFilter('category', CATEGORY_FIELD.runtimeField, 'Product Type', searchStats.pillFilters.category.options),
+    optionFilter('brand', BRAND_FIELD.runtimeField, 'Brand', searchStats.pillFilters.brand.options),
+    optionFilter(
+      'materialCode',
+      MATERIAL_CODE_FIELD.runtimeField,
+      'Material Code',
+      searchStats.pillFilters.materialCode.options,
+    ),
+    optionFilter('material', MATERIAL_FIELD.runtimeField, 'Material Type', searchStats.pillFilters.material.options),
+    optionFilter('finishing', FINISHING_FIELD.runtimeField, 'Finishing', searchStats.pillFilters.finishing.options),
+    optionFilter('glue', GLUE_FIELD.runtimeField, 'Glue', searchStats.pillFilters.glue.options),
+  ].filter((filter): filter is DynamicProductFilter => filter !== null);
+}
+
 function labelFromCode(value: string): string {
   const normalized = value.trim().replace(/^\[\s*/, '').replace(/\s*\]$/, '').replace(/^["']|["']$/g, '');
 
@@ -1002,6 +1104,7 @@ export async function POST(request: NextRequest) {
         },
         dimensionStats: searchStats.dimensions,
         pillFilters: searchStats.pillFilters,
+        filters: buildDynamicFilters(searchStats),
       },
     };
 

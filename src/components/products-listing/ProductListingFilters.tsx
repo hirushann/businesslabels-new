@@ -4,6 +4,7 @@ import { useSearch } from "@elastic/react-search-ui";
 import type { Filter, FilterValueRange } from "@elastic/search-ui";
 import Accordion from "@/components/Accordion";
 import RangeSlider from "@/components/RangeSlider";
+import type { DynamicOptionFilter, DynamicProductFilter, DynamicRangeFilter } from "@/lib/search/dynamicFilters";
 
 const INITIAL_MIN = 0;
 const FALLBACK_MAX_BY_FIELD: Record<RangeFilterField, number> = {
@@ -16,39 +17,46 @@ const FALLBACK_MAX_BY_FIELD: Record<RangeFilterField, number> = {
 type RangeFilterField = "price" | "meta_width_mm" | "meta_height_mm" | "meta_kern_mm";
 
 type RangeFilterConfig = {
-  title: string;
   field: RangeFilterField;
   name: string;
   unitPrefix?: string;
   unitSuffix?: string;
 };
 
-type OptionFilterConfig = {
+type LegacyOptionResponseKey = "category" | "brand" | "materialCode" | "material" | "finishing" | "glue";
+
+type LegacyRangeFilterConfig = RangeFilterConfig & {
+  key: string;
+  title: string;
+};
+
+type LegacyOptionFilterConfig = {
+  key: string;
   title: string;
   field: string;
-  responseKey: "category" | "brand" | "materialCode" | "material" | "finishing" | "glue";
+  responseKey: LegacyOptionResponseKey;
 };
 
 type FilterOption = {
   value: string;
   label: string;
-  count?: number;
+  count: number;
 };
 
-const RANGE_FILTERS: RangeFilterConfig[] = [
-  { title: "Price Range", field: "price", name: "price", unitPrefix: "€" },
-  { title: "Label Width", field: "meta_width_mm", name: "width", unitSuffix: "mm" },
-  { title: "Label Height", field: "meta_height_mm", name: "height", unitSuffix: "mm" },
-  { title: "Core Size", field: "meta_kern_mm", name: "kern", unitSuffix: "mm" },
+const RANGE_FILTERS: LegacyRangeFilterConfig[] = [
+  { key: "price", title: "Price Range", field: "price", name: "price", unitPrefix: "€" },
+  { key: "width", title: "Label Width", field: "meta_width_mm", name: "width", unitSuffix: "mm" },
+  { key: "height", title: "Label Height", field: "meta_height_mm", name: "height", unitSuffix: "mm" },
+  { key: "kern", title: "Core Size", field: "meta_kern_mm", name: "kern", unitSuffix: "mm" },
 ];
 
-const OPTION_FILTERS: OptionFilterConfig[] = [
-  { title: "Product Type", field: "search_category_slug", responseKey: "category" },
-  { title: "Brand", field: "search_brand_slug", responseKey: "brand" },
-  { title: "Material Code", field: "meta_material_code", responseKey: "materialCode" },
-  { title: "Material Type", field: "meta_material", responseKey: "material" },
-  { title: "Finishing", field: "meta_finishing", responseKey: "finishing" },
-  { title: "Glue", field: "meta_glue", responseKey: "glue" },
+const OPTION_FILTERS: LegacyOptionFilterConfig[] = [
+  { key: "category", title: "Product Type", field: "search_category_slug", responseKey: "category" },
+  { key: "brand", title: "Brand", field: "search_brand_slug", responseKey: "brand" },
+  { key: "materialCode", title: "Material Code", field: "meta_material_code", responseKey: "materialCode" },
+  { key: "material", title: "Material Type", field: "meta_material", responseKey: "material" },
+  { key: "finishing", title: "Finishing", field: "meta_finishing", responseKey: "finishing" },
+  { key: "glue", title: "Glue", field: "meta_glue", responseKey: "glue" },
 ];
 
 function isRangeFilter(value: unknown): value is FilterValueRange {
@@ -87,15 +95,15 @@ function sliderMax(rawResponse: unknown, field: RangeFilterField): number {
   return Math.ceil(rawMaxValue(rawResponse, field) ?? FALLBACK_MAX_BY_FIELD[field]);
 }
 
-function formatRangeValue(value: number, config: RangeFilterConfig): string {
+function formatRangeValue(value: number, config: DynamicRangeFilter): string {
   return `${config.unitPrefix ?? ""}${value}${config.unitSuffix ? ` ${config.unitSuffix}` : ""}`;
 }
 
-function optionsFor(rawResponse: unknown, responseKey: OptionFilterConfig["responseKey"]): FilterOption[] {
+function optionsFor(rawResponse: unknown, responseKey: LegacyOptionResponseKey): FilterOption[] {
   if (!rawResponse || typeof rawResponse !== "object") return [];
 
   const options = (rawResponse as {
-    pillFilters?: Record<OptionFilterConfig["responseKey"], { options?: unknown } | undefined>;
+    pillFilters?: Record<LegacyOptionResponseKey, { options?: unknown } | undefined>;
   }).pillFilters?.[responseKey]?.options;
 
   if (!Array.isArray(options)) return [];
@@ -110,10 +118,78 @@ function optionsFor(rawResponse: unknown, responseKey: OptionFilterConfig["respo
       return {
         value: item.value,
         label: typeof item.label === "string" && item.label.trim() !== "" ? item.label : item.value,
-        count: typeof item.count === "number" ? item.count : undefined,
+        count: typeof item.count === "number" ? item.count : 0,
       };
     })
     .filter((option): option is FilterOption => option !== null);
+}
+
+function isDynamicFilter(value: unknown): value is DynamicProductFilter {
+  if (!value || typeof value !== "object") return false;
+
+  const filter = value as Partial<DynamicProductFilter>;
+  if (filter.type === "range") {
+    const rangeFilter = filter as Partial<DynamicRangeFilter>;
+    return (
+      typeof rangeFilter.key === "string" &&
+      typeof rangeFilter.field === "string" &&
+      typeof rangeFilter.label === "string" &&
+      typeof rangeFilter.name === "string" &&
+      typeof rangeFilter.min === "number" &&
+      Number.isFinite(rangeFilter.min) &&
+      typeof rangeFilter.max === "number" &&
+      Number.isFinite(rangeFilter.max) &&
+      rangeFilter.max > rangeFilter.min
+    );
+  }
+
+  if (filter.type === "option") {
+    const optionFilter = filter as Partial<DynamicOptionFilter>;
+    return (
+      typeof optionFilter.key === "string" &&
+      typeof optionFilter.field === "string" &&
+      typeof optionFilter.label === "string" &&
+      Array.isArray(optionFilter.options)
+    );
+  }
+
+  return false;
+}
+
+function dynamicFiltersFor(rawResponse: unknown): DynamicProductFilter[] | null {
+  if (!rawResponse || typeof rawResponse !== "object") return null;
+
+  const filters = (rawResponse as { filters?: unknown }).filters;
+  if (!Array.isArray(filters)) return null;
+
+  return filters.filter(isDynamicFilter);
+}
+
+function legacyFiltersFor(rawResponse: unknown): DynamicProductFilter[] {
+  return [
+    ...RANGE_FILTERS.map(
+      (config): DynamicRangeFilter => ({
+        type: "range",
+        key: config.key,
+        field: config.field,
+        label: config.title,
+        name: config.name,
+        min: INITIAL_MIN,
+        max: sliderMax(rawResponse, config.field),
+        unitPrefix: config.unitPrefix,
+        unitSuffix: config.unitSuffix,
+      }),
+    ),
+    ...OPTION_FILTERS.map(
+      (config): DynamicOptionFilter => ({
+        type: "option",
+        key: config.key,
+        field: config.field,
+        label: config.title,
+        options: optionsFor(rawResponse, config.responseKey),
+      }),
+    ),
+  ];
 }
 
 function isSelectedValue(value: unknown): value is string {
@@ -123,26 +199,25 @@ function isSelectedValue(value: unknown): value is string {
 function ProductRangeFilter({
   config,
   activeFilters,
-  rawResponse,
   removeFilter,
   setFilter,
 }: {
-  config: RangeFilterConfig;
+  config: DynamicRangeFilter;
   activeFilters: Filter[];
-  rawResponse: unknown;
   removeFilter: (name: string) => void;
   setFilter: (name: string, value: FilterValueRange) => void;
 }) {
-  const max = sliderMax(rawResponse, config.field);
+  const min = Math.floor(config.min);
+  const max = Math.ceil(config.max);
   const filter = activeFilters.find((activeFilter) => activeFilter.field === config.field);
   const filterRange = filter?.values.find(isRangeFilter);
   const range: [number, number] = [
-    Math.min(numericValue(filterRange?.from) ?? INITIAL_MIN, max),
+    Math.max(min, Math.min(numericValue(filterRange?.from) ?? min, max)),
     Math.min(numericValue(filterRange?.to) ?? max, max),
   ];
 
   const handleAfterChange = (newRange: [number, number]) => {
-    if (newRange[0] === INITIAL_MIN && newRange[1] === max) {
+    if (newRange[0] === min && newRange[1] === max) {
       removeFilter(config.field);
       return;
     }
@@ -151,9 +226,9 @@ function ProductRangeFilter({
   };
 
   return (
-    <Accordion title={config.title} defaultOpen={true} size="compact" className="bg-white">
+    <Accordion title={config.label} defaultOpen={true} size="compact" className="bg-white">
       <RangeSlider
-        min={INITIAL_MIN}
+        min={min}
         max={max}
         value={range}
         onChange={() => {}}
@@ -168,17 +243,14 @@ function ProductRangeFilter({
 function ProductOptionFilter({
   config,
   activeFilters,
-  rawResponse,
   addFilter,
   removeFilter,
 }: {
-  config: OptionFilterConfig;
+  config: DynamicOptionFilter;
   activeFilters: Filter[];
-  rawResponse: unknown;
   addFilter: (name: string, value: string, type?: "any") => void;
   removeFilter: (name: string, value?: string, type?: "any") => void;
 }) {
-  const options = optionsFor(rawResponse, config.responseKey);
   const selectedValues = new Set(
     activeFilters
       .find((activeFilter) => activeFilter.field === config.field && activeFilter.type === "any")
@@ -186,12 +258,12 @@ function ProductOptionFilter({
   );
 
   return (
-    <Accordion title={config.title} defaultOpen={true} size="compact" className="bg-white">
-      {options.length === 0 ? (
+    <Accordion title={config.label} defaultOpen={true} size="compact" className="bg-white">
+      {config.options.length === 0 ? (
         <p className="text-sm text-slate-400">No options available</p>
       ) : (
         <div className="flex flex-wrap gap-2">
-          {options.map((option) => {
+          {config.options.map((option) => {
             const selected = selectedValues.has(option.value);
 
             return (
@@ -239,28 +311,29 @@ export function ProductListingFiltersView({
   removeFilter: (name: string, value?: string, type?: "any") => void;
   setFilter: (name: string, value: FilterValueRange) => void;
 }) {
+  const filters = dynamicFiltersFor(rawResponse) ?? legacyFiltersFor(rawResponse);
+
   return (
     <div className="flex flex-col gap-3">
-      {RANGE_FILTERS.map((config) => (
-        <ProductRangeFilter
-          key={config.field}
-          config={config}
-          activeFilters={activeFilters}
-          rawResponse={rawResponse}
-          removeFilter={removeFilter}
-          setFilter={setFilter}
-        />
-      ))}
-      {OPTION_FILTERS.map((config) => (
-        <ProductOptionFilter
-          key={config.field}
-          config={config}
-          activeFilters={activeFilters}
-          rawResponse={rawResponse}
-          addFilter={addFilter}
-          removeFilter={removeFilter}
-        />
-      ))}
+      {filters.map((config) =>
+        config.type === "range" ? (
+          <ProductRangeFilter
+            key={`${config.type}-${config.key}-${config.field}`}
+            config={config}
+            activeFilters={activeFilters}
+            removeFilter={removeFilter}
+            setFilter={setFilter}
+          />
+        ) : (
+          <ProductOptionFilter
+            key={`${config.type}-${config.key}-${config.field}`}
+            config={config}
+            activeFilters={activeFilters}
+            addFilter={addFilter}
+            removeFilter={removeFilter}
+          />
+        ),
+      )}
     </div>
   );
 }
