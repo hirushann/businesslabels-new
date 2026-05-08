@@ -94,6 +94,7 @@ type ProductDetail = {
   id?: number;
   type?: string;
   is_group_product?: boolean | null;
+  is_label_product?: boolean | null;
   api_path_by_slug?: string | null;
   title?: string | null;
   name?: string | null;
@@ -385,6 +386,8 @@ export default async function SingleProductPage({
     .filter((url): url is string => Boolean(url));
   const specs = specsFromProduct(product);
   const relatedProducts = (product.up_sells ?? []).map(mapUpsellToProductCard);
+  const showCompatibilityCta = product.is_label_product == false;
+  console.log(product)
 
   return (
     <div className="bg-white">
@@ -457,25 +460,26 @@ export default async function SingleProductPage({
                 </div>
               </Accordion>
 
-              {/* Compatibility CTA */}
-              <div className="p-6 bg-gradient-to-br from-orange-50 to-white rounded-xl outline outline-2 outline-offset-[-2px] outline-orange-100">
-                <div className="flex gap-3 items-start">
-                  <div className="w-8 h-8 p-2 bg-white rounded-lg shadow-sm flex-shrink-0 flex items-center justify-center">
-                    <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0H3" />
-                    </svg>
-                  </div>
-                  <div className="flex-1 flex flex-col gap-4">
-                    <div className="flex flex-col gap-2">
-                      <h3 className="text-neutral-700 text-2xl font-bold leading-7">Does this fit my printer?</h3>
-                      <p className="text-neutral-700 text-base font-normal leading-6">
-                        Use our product finder to check compatibility with your specific printer model.
-                      </p>
+              {showCompatibilityCta ? (
+                <div className="p-6 bg-gradient-to-br from-orange-50 to-white rounded-xl outline outline-2 outline-offset-[-2px] outline-orange-100">
+                  <div className="flex gap-3 items-start">
+                    <div className="w-8 h-8 p-2 bg-white rounded-lg shadow-sm flex-shrink-0 flex items-center justify-center">
+                      <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0H3" />
+                      </svg>
                     </div>
-                    <ProductCompatibilityDialog productId={product.id} />
+                    <div className="flex-1 flex flex-col gap-4">
+                      <div className="flex flex-col gap-2">
+                        <h3 className="text-neutral-700 text-2xl font-bold leading-7">Does this fit my printer?</h3>
+                        <p className="text-neutral-700 text-base font-normal leading-6">
+                          Use our product finder to check compatibility with your specific printer model.
+                        </p>
+                      </div>
+                      <ProductCompatibilityDialog productId={product.id} />
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : null}
             </div>
           </div>
 
