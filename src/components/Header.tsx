@@ -7,7 +7,6 @@ import { useCart } from './CartProvider';
 import CartDrawer from './CartDrawer';
 import WishlistDrawer from './WishlistDrawer';
 import { useWishlist } from './WishlistProvider';
-import SearchOverlay from './search/SearchOverlay';
 import HelpDrawer from './HelpDrawer';
 import { useHelp } from './HelpProvider';
 import PrintersMenu from './nav/PrintersMenu';
@@ -17,8 +16,6 @@ import ResourcesMenu from './nav/ResourcesMenu';
 
 type DropdownKey = 'printers' | 'labels' | 'accessories' | 'resources' | null;
 // import { useCart } from '@/context/CartContext';
-import { ROUTES } from '@/config/routes';
-import SearchPopup from '@/components/SearchPopup';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 const navItems = [
@@ -32,7 +29,6 @@ const navItems = [
 ];
 
 export default function Header() {
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { isHelpOpen, openHelp, closeHelp } = useHelp();
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<DropdownKey>(null);
@@ -126,18 +122,17 @@ export default function Header() {
           </Link>
 
           {/* Search */}
-          <button
-            type="button"
-            onClick={() => setIsSearchOpen(true)}
-            className="w-96 px-4 py-3 rounded-full border border-slate-100 flex items-center gap-2 overflow-hidden text-left cursor-text"
-            aria-label="Open product search"
+          <Link
+            href="/products"
+            className="w-96 px-4 py-3 rounded-full border border-slate-100 flex items-center gap-2 overflow-hidden text-left cursor-pointer"
+            aria-label="Go to products search"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <circle cx="6.75" cy="6.75" r="5.25" stroke="#9CA3AF" strokeWidth="1.5" />
               <path d="M11.5 11.5L14.5 14.5" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
             <span className="text-zinc-500 text-sm font-normal leading-5">Search...</span>
-          </button>
+          </Link>
 
           {/* Right controls */}
           <div className="flex items-center gap-5">
@@ -272,7 +267,6 @@ export default function Header() {
         </div>
       </div>
 
-      {isSearchOpen && <SearchOverlay onClose={() => setIsSearchOpen(false)} />}
       {isHelpOpen && <HelpDrawer onClose={closeHelp} />}
       {isWishlistOpen && <WishlistDrawer onClose={() => setIsWishlistOpen(false)} />}
       {isCartOpen && <CartDrawer onClose={closeCart} />}
