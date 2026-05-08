@@ -541,14 +541,14 @@ function warrantyFromSource(source: ProductSource): WarrantyRawData | null | und
   };
 }
 
-function categoriesFromSource(source: ProductSource): Array<{ id?: number; name?: string | null }> {
+function categoriesFromSource(source: ProductSource): Array<{ id?: number; name?: string | null; slug?: string | null }> {
   const categories = source.categories;
   if (Array.isArray(categories)) {
-    const normalized: Array<{ id?: number; name?: string | null }> = [];
+    const normalized: Array<{ id?: number; name?: string | null; slug?: string | null }> = [];
 
     categories.forEach((category) => {
       if (typeof category === "string") {
-        normalized.push({ name: category });
+        normalized.push({ name: category, slug: category });
         return;
       }
 
@@ -557,6 +557,7 @@ function categoriesFromSource(source: ProductSource): Array<{ id?: number; name?
         normalized.push({
           id: numberValue(record.id) ?? numberValue(record.term_id) ?? undefined,
           name: stringValue(record.name),
+          slug: stringValue(record.slug) ?? stringValue(record.post_name) ?? undefined,
         });
       }
     });
@@ -568,7 +569,7 @@ function categoriesFromSource(source: ProductSource): Array<{ id?: number; name?
     return source.category_slugs
       .map((category) => stringValue(category))
       .filter((category): category is string => Boolean(category?.trim()))
-      .map((category) => ({ name: labelFromCode(category) }));
+      .map((category) => ({ name: labelFromCode(category), slug: category }));
   }
 
   return [];
@@ -599,11 +600,20 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number): Ca
     ...(warranty !== undefined ? { warranty } : {}),
   };
 
+  const categorySlugs = Array.isArray(source.category_slugs)
+    ? source.category_slugs.map((s) => stringValue(s)?.toLowerCase()).filter(Boolean)
+    : [];
+  
+  const isPrinter = categorySlugs.includes("labelprinters") || 
+                    product.categories?.some(c => c.name?.toLowerCase().includes("printer") || c.slug?.toLowerCase() === "labelprinters");
+
+  const prefix = isPrinter ? "printers" : "products";
+
   const href: LinkProps["href"] | undefined =
     slug && type
-      ? { pathname: `/products/${slug}`, query: { type } }
+      ? { pathname: `/${prefix}/${slug}`, query: { type } }
       : slug
-        ? `/products/${slug}`
+        ? `/${prefix}/${slug}`
         : undefined;
 
   return { id, product, href };

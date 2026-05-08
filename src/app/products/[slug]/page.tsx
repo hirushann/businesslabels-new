@@ -34,9 +34,10 @@ export async function generateMetadata({
     ? [selectedType]
     : ["simple", "variable"];
 
+  const locale = await getServerLocale();
   let product: ProductDetail | null = null;
   for (const type of tryTypes) {
-    product = await fetchProductByType(baseUrl, type, slug);
+    product = await fetchProductByType(baseUrl, type, slug, locale);
     if (product) break;
   }
 
