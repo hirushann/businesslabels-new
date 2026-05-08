@@ -175,7 +175,7 @@ export default function ProductPurchase({
   const wishlist = useWishlist();
   const [quantity, setQuantity] = useState(1);
   const [quantityError, setQuantityError] = useState<string | null>(null);
-  const [currentTime, setCurrentTime] = useState(() => new Date());
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [isWarrantyPopoverOpen, setIsWarrantyPopoverOpen] = useState(false);
   const [selectedWarrantyId, setSelectedWarrantyId] = useState<number | null>(null);
   const [pendingQuantity, setPendingQuantity] = useState<number | null>(null);
@@ -189,6 +189,8 @@ export default function ProductPurchase({
 
   // Update countdown every minute
   useEffect(() => {
+    setCurrentTime(new Date());
+
     const interval = setInterval(() => {
       setCurrentTime(new Date());
     }, 60000); // Update every 60 seconds
@@ -198,11 +200,46 @@ export default function ProductPurchase({
 
   const increment = () => {
     setQuantityError(null);
-    setQuantity((prev) => prev + 1);
+    setQuantity((prev) => {
+      if (!hasPackingGroup || !normalizedPackingGroup) {
+        return prev + 1;
+      }
+
+      if (prev < normalizedPackingGroup) {
+        return normalizedPackingGroup;
+      }
+
+      return Math.ceil((prev + 1) / normalizedPackingGroup) * normalizedPackingGroup;
+    });
   };
   const decrement = () => {
     setQuantityError(null);
-    setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
+    setQuantity((prev) => {
+      if (!hasPackingGroup || !normalizedPackingGroup) {
+        return prev > 1 ? prev - 1 : 1;
+      }
+
+      if (prev <= 1) {
+        return 1;
+      }
+
+      if (prev <= normalizedPackingGroup) {
+        return 1;
+      }
+
+      return Math.max(1, Math.floor((prev - 1) / normalizedPackingGroup) * normalizedPackingGroup);
+    });
+  };
+  const handleQuantityChange = (value: string) => {
+    setQuantityError(null);
+
+    const nextQuantity = Number.parseInt(value, 10);
+    if (!Number.isFinite(nextQuantity)) {
+      setQuantity(1);
+      return;
+    }
+
+    setQuantity(Math.max(1, nextQuantity));
   };
 
   const displaySku = sku?.trim() ? sku : "-";
@@ -250,7 +287,8 @@ export default function ProductPurchase({
       typeof deliveryDatesInStock !== "number" ||
       typeof deliveryDatesNoStock !== "number" ||
       deliveryDatesInStock === 0 ||
-      deliveryDatesNoStock === 0
+      deliveryDatesNoStock === 0 ||
+      !currentTime
     ) {
       return null;
     }
@@ -274,13 +312,23 @@ export default function ProductPurchase({
     if (!hasPrice) return null;
     
     const qtyToAdd = customQuantity ?? quantity;
+    const normalizedQuantity = Number.isFinite(qtyToAdd) ? Math.floor(qtyToAdd) : 0;
+
+    if (normalizedQuantity < 1) {
+      setQuantityError("Quantity must be at least 1.");
+      return null;
+    }
     
-    if (hasPackingGroup && !customQuantity && quantity % normalizedPackingGroup !== 0) {
-      setQuantityError(`Quantity must be divisible by the packing group (${normalizedPackingGroup}).`);
+    if (
+      hasPackingGroup &&
+      normalizedQuantity !== 1 &&
+      normalizedQuantity % normalizedPackingGroup !== 0
+    ) {
+      setQuantityError(`Only 1 or multiples of ${normalizedPackingGroup} can be added.`);
       return null;
     }
 
-    return qtyToAdd;
+    return normalizedQuantity;
   };
 
   const addProductWithWarranty = (qtyToAdd: number, selectedOption: WarrantyOption | null) => {
@@ -486,10 +534,53 @@ export default function ProductPurchase({
           <PopoverAnchor asChild>
             <div className="flex flex-col gap-3">
               <span className="text-neutral-800 text-lg font-bold leading-5">Select Quantity</span>
+              <div className="relative">
+                <div className="h-12 px-1 rounded-[50px] outline outline-1 outline-offset-[-1px] outline-black/10 flex justify-between items-center bg-white">
+                  <button
+                    type="button"
+                    onClick={decrement}
+                    className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
+                    aria-label="Decrease quantity"
+                  >
+                    <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
+                      <path strokeLinecap="round" d="M2 6h8" />
+                    </svg>
+                  </button>
+                  <input
+                    type="number"
+                    min={1}
+                    step={hasPackingGroup ? normalizedPackingGroup ?? 1 : 1}
+                    value={quantity}
+                    onChange={(event) => handleQuantityChange(event.target.value)}
+                    aria-describedby={quantityError ? "quantity-error" : undefined}
+                    className="h-full min-w-0 flex-1 bg-transparent px-2 text-center text-sm font-semibold leading-5 text-neutral-800 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={increment}
+                    className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
+                    aria-label="Increase quantity"
+                  >
+                    <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
+                      <path strokeLinecap="round" d="M6 2v8M2 6h8" />
+                    </svg>
+                  </button>
+                </div>
+                {quantityError ? (
+                  <div
+                    id="quantity-error"
+                    role="alert"
+                    className="absolute left-4 top-full z-20 mt-2 max-w-72 rounded-xl border border-red-100 bg-white px-3 py-2 text-xs font-semibold leading-5 text-red-600 shadow-lg"
+                  >
+                    {quantityError}
+                  </div>
+                ) : null}
+              </div>
               <div className="flex items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => handleAddToCart(1)}
+                  onClick={() => handleAddToCart(quantity)}
+                  aria-describedby={quantityError ? "quantity-error" : undefined}
                   className="flex-1 h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm flex"
                 >
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -629,7 +720,7 @@ export default function ProductPurchase({
       </Popover>
 
       <div>
-        {quantityError ? (
+        {!hasPackingGroup && quantityError ? (
           <p id="quantity-error" className="px-2 text-sm font-medium leading-5 text-red-600">
             {quantityError}
           </p>

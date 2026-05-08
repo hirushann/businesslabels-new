@@ -248,6 +248,7 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
         if (!response.ok) {
           throw new Error("Catalog search is temporarily unavailable.");
         }
+        console.log(response);
         return response.json() as Promise<CatalogSearchResponse>;
       })
       .then((nextCatalog) => {
