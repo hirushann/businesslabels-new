@@ -49,13 +49,13 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/60 z-[999]" onClick={onClose} aria-hidden="true" />
+      <div className="fixed inset-0 bg-black/60 z-[10000]" onClick={onClose} aria-hidden="true" />
 
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Your cart"
-        className="fixed top-0 right-0 h-full w-[480px] bg-white z-[1000] shadow-2xl flex flex-col overflow-hidden"
+        className="fixed top-0 right-0 h-full w-[480px] bg-white z-[10001] shadow-2xl flex flex-col overflow-hidden"
         style={{ animation: 'slideInRight 0.28s cubic-bezier(0.16,1,0.3,1) both' }}
       >
         <div className="shrink-0 p-6 bg-slate-100 border-b border-slate-200 flex flex-col gap-5">
