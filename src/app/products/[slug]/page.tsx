@@ -94,6 +94,7 @@ type ProductDetail = {
   id?: number;
   type?: string;
   is_group_product?: boolean | null;
+  is_label_product?: boolean | null;
   api_path_by_slug?: string | null;
   title?: string | null;
   name?: string | null;
@@ -385,7 +386,7 @@ export default async function SingleProductPage({
     .filter((url): url is string => Boolean(url));
   const specs = specsFromProduct(product);
   const relatedProducts = (product.up_sells ?? []).map(mapUpsellToProductCard);
-  const showCompatibilityCta = product.is_group_product == false;
+  const showCompatibilityCta = product.is_label_product == false;
   console.log(product)
 
   return (
