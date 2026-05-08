@@ -8,7 +8,7 @@ import { buildCartItemKey, useCart } from "@/components/CartProvider";
 import { Popover, PopoverAnchor, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle } from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-export type ProductRouteType = "simple" | "variable";
+export type ProductRouteType = "simple" | "variable" | "group_product";
 
 export type ProductWarrantyData = {
   is_available?: boolean | null;
