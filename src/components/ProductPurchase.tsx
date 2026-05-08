@@ -16,7 +16,7 @@ type BulkDiscount = {
   quantity: string;
 };
 
-type ProductDiscountInput = string | Array<{ discount?: string | number | null; quantity?: string | number | null }> | null;
+type ProductDiscountInput = string | Array<{ discount?: string | number | null; quantity?: string | number | null }> | null | undefined;
 
 type WarrantyOption = {
   id: number;
@@ -242,17 +242,6 @@ export default function ProductPurchase({
   const selectedWarrantyOption = normalizedWarranty.options.find(
     (option) => option.id === selectedWarrantyId,
   ) ?? defaultWarrantyOption;
-
-  useEffect(() => {
-    if (!hasWarrantyOptions) {
-      setSelectedWarrantyId(null);
-      return;
-    }
-
-    if (!selectedWarrantyId || !normalizedWarranty.options.some((option) => option.id === selectedWarrantyId)) {
-      setSelectedWarrantyId(normalizedWarranty.defaultOptionId);
-    }
-  }, [hasWarrantyOptions, normalizedWarranty, selectedWarrantyId]);
 
   // Calculate delivery message
   const deliveryInfo = useMemo(() => {

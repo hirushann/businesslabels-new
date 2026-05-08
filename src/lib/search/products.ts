@@ -1,6 +1,6 @@
 import type { estypes } from "@elastic/elasticsearch";
 import type { LinkProps } from "next/link";
-import type { ProductCardData, ProductRouteType } from "@/components/ProductCard";
+import type { ProductCardData, ProductRouteType, ProductWarrantyData } from "@/components/ProductCard";
 import { catalogIndexForType, elasticClient } from "@/lib/search/client";
 import {
   CATALOG_SORT_VALUES,
@@ -535,7 +535,7 @@ function imageUrl(url: string | null): string | null {
   return `/api/media-proxy?url=${encodeURIComponent(url)}`;
 }
 
-function warrantyFromSource(source: ProductSource): WarrantyRawData | null | undefined {
+function warrantyFromSource(source: ProductSource): ProductWarrantyData | null | undefined {
   if (!("warranty_available" in source)) return undefined;
   if (!booleanValue(source.warranty_available)) return null;
 
@@ -544,14 +544,21 @@ function warrantyFromSource(source: ProductSource): WarrantyRawData | null | und
   const months = Array.isArray(source.warranty_option_months) ? source.warranty_option_months : [];
   const prices = Array.isArray(source.warranty_option_prices) ? source.warranty_option_prices : [];
 
-  const options = ids.map((id, index) => ({
-    id: Number(id),
-    name: names[index] != null ? String(names[index]) : null,
-    duration_months: months[index] != null ? Number(months[index]) : null,
-    price: prices[index] != null ? Number(prices[index]) : null,
-    description: null,
-    sort_order: index,
-  }));
+  const options = ids
+    .map((id, index) => {
+      const optionId = Number(id);
+      if (!Number.isFinite(optionId)) return null;
+
+      return {
+        id: optionId,
+        name: names[index] != null ? String(names[index]) : null,
+        duration_months: months[index] != null ? Number(months[index]) : null,
+        price: prices[index] != null ? Number(prices[index]) : null,
+        description: null,
+        sort_order: index,
+      };
+    })
+    .filter((option): option is NonNullable<typeof option> => Boolean(option));
 
   return {
     is_available: true,
