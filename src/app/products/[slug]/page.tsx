@@ -77,9 +77,23 @@ type ProductWarrantyOption = {
   sort_order?: number | null;
 };
 
+type ComponentProduct = {
+  id?: number;
+  name?: string | null;
+  slug?: string | null;
+  sku?: string | null;
+  price?: number | null;
+  stock?: number | null;
+  quantity?: number | null;
+  available_sets?: number | null;
+  main_image?: string | null;
+};
+
 type ProductDetail = {
   id?: number;
   type?: string;
+  is_group_product?: boolean | null;
+  api_path_by_slug?: string | null;
   title?: string | null;
   name?: string | null;
   subtitle?: string | null;
@@ -95,6 +109,8 @@ type ProductDetail = {
   main_image?: string | null;
   gallery_images?: Array<{ id?: number; url?: string | null; name?: string | null }>;
   product_information?: Record<string, unknown> | string | null;
+  content?: string | null;
+  product_template?: string | null;
   material?: {
     id?: number;
     title?: string | null;
@@ -120,6 +136,7 @@ type ProductDetail = {
     length?: string | number | null;
   } | null;
   categories?: Array<{ id?: number; name?: string | null }>;
+  component_products?: ComponentProduct[] | null;
   up_sells?: UpsellProduct[];
   cross_sells?: UpsellProduct[];
   warranty?: {
@@ -130,9 +147,9 @@ type ProductDetail = {
   } | null;
 };
 
-function normalizeType(raw: string | string[] | undefined): "simple" | "variable" | null {
+function normalizeType(raw: string | string[] | undefined): "simple" | "variable" | "group_product" | null {
   const value = Array.isArray(raw) ? raw[0] : raw;
-  if (value === "simple" || value === "variable") {
+  if (value === "simple" || value === "variable" || value === "group_product") {
     return value;
   }
   return null;
@@ -240,15 +257,40 @@ async function fetchProductByType(baseUrl: string, type: "simple" | "variable", 
   }
 }
 
+async function fetchGroupProductBySlug(baseUrl: string, slug: string, locale: "en" | "nl"): Promise<ProductDetail | null> {
+  try {
+    const response = await fetch(withLocaleParam(`${baseUrl}/api/group-products/slug/${encodeURIComponent(slug)}`, locale), {
+      cache: "no-store",
+      headers: {
+        Accept: "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const json = (await response.json()) as { data?: ProductDetail };
+    return json.data ?? null;
+  } catch (error) {
+    console.error(`Failed to fetch group product details for slug '${slug}'`, error);
+    return null;
+  }
+}
+
 async function fetchProductBySlug(
   baseUrl: string | undefined,
   slug: string,
-  selectedType: "simple" | "variable" | null,
+  selectedType: "simple" | "variable" | "group_product" | null,
   locale: "en" | "nl",
 ): Promise<ProductDetail | null> {
   if (!baseUrl) {
     console.error("BBNL_API_BASE_URL is not configured");
     return null;
+  }
+
+  if (selectedType === "group_product") {
+    return fetchGroupProductBySlug(baseUrl, slug, locale);
   }
 
   const tryTypes: Array<"simple" | "variable"> = selectedType
@@ -262,7 +304,8 @@ async function fetchProductBySlug(
     }
   }
 
-  return null;
+  // Fallback: try group product endpoint
+  return fetchGroupProductBySlug(baseUrl, slug, locale);
 }
 
 function toTitleCaseFromSlug(raw: string): string {
@@ -330,6 +373,8 @@ export default async function SingleProductPage({
   if (!product) {
     notFound();
   }
+
+  console.log("[SingleProductPage] Full product details:", JSON.stringify(product, null, 2));
 
   const productName = product.title || product.name || "";
   const productDescription = product.description || product.excerpt || "";

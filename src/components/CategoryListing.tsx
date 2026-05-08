@@ -15,7 +15,8 @@ export type CategoryCardData = ProductCardData;
 
 type CategoryListingProps = {
   products: CategoryCardData[];
-  categorySlug: string;
+  categorySlug?: string;
+  brandSlug?: string;
 };
 
 const PAGE_SIZE = 24;
@@ -340,10 +341,10 @@ function CategoryListingContent({ products }: { products: CategoryCardData[] }) 
   );
 }
 
-export default function CategoryListing({ products, categorySlug }: CategoryListingProps) {
+export default function CategoryListing({ products, categorySlug, brandSlug }: CategoryListingProps) {
   const connector = useMemo(
-    () => new CategoryScopedProxyConnector({ basePath: "/api", categorySlug }),
-    [categorySlug],
+    () => new CategoryScopedProxyConnector({ basePath: "/api", categorySlug, brandSlug }),
+    [categorySlug, brandSlug],
   );
 
   const config = useMemo<SearchDriverOptions>(
