@@ -1,5 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import type { PrinterSelectResponse } from '@/lib/types/printer';
+import { LOCALE_COOKIE, normalizeLocale } from '@/lib/i18n/config';
+import { withLocaleParam } from '@/lib/i18n/server';
 
 const API_BASE_URL = process.env.BBNL_API_BASE_URL;
 
@@ -8,7 +10,7 @@ const API_BASE_URL = process.env.BBNL_API_BASE_URL;
  * Proxy endpoint that fetches printer options from Laravel backend
  * Returns only id, name, and slug - optimized for select/combobox fields
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   if (!API_BASE_URL) {
     return NextResponse.json(
       { data: [], error: 'Backend API URL is not configured.' },
@@ -17,7 +19,8 @@ export async function GET() {
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/api/printers/select`, {
+    const locale = normalizeLocale(request.cookies.get(LOCALE_COOKIE)?.value);
+    const response = await fetch(withLocaleParam(`${API_BASE_URL}/api/printers/select`, locale), {
       headers: { 'Accept': 'application/json' },
       next: { revalidate: 600 }, // Cache for 10 minutes
     });

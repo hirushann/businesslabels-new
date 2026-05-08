@@ -3,6 +3,7 @@ import Image from "next/image";
 import { materialReviews } from "@/lib/materialCatalog";
 import PrintersListing from "@/components/PrintersListing";
 import type { PrinterCardData } from "@/components/PrintersListing";
+import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 
 export const metadata: Metadata = {
   title: "Printer Products — BusinessLabels",

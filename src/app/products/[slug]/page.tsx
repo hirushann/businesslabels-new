@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Accordion from "@/components/Accordion";
 import ProductPurchase from "@/components/ProductPurchase";
-import ProductCompatibilityDialog from "@/components/ProductCompatibilityDialog";
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 import ProductImageGallery from "@/components/ProductImageGallery";
 import { getDemoProductBySlug } from "@/lib/demoCatalog";
+import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 import { notFound } from "next/navigation";
 import {
   Carousel,
@@ -120,6 +120,7 @@ type ProductDetail = {
   delivery_dates_in_stock?: number | null;
   delivery_dates_no_stock?: number | null;
   packing_group?: number | null;
+  discounts?: string | Array<{ discount?: string | number | null; quantity?: string | number | null }> | null;
   dimensions?: {
     weight?: string | number | null;
     width?: string | number | null;
@@ -200,9 +201,9 @@ function specsFromProduct(product: ProductDetail | null): Array<{ label: string;
   return [...specRows, ...metaRows];
 }
 
-async function fetchProductByType(baseUrl: string, type: "simple" | "variable", slug: string): Promise<ProductDetail | null> {
+async function fetchProductByType(baseUrl: string, type: "simple" | "variable", slug: string, locale: "en" | "nl"): Promise<ProductDetail | null> {
   try {
-    const response = await fetch(`${baseUrl}/api/products/${type}/slug/${encodeURIComponent(slug)}`, {
+    const response = await fetch(withLocaleParam(`${baseUrl}/api/products/${type}/slug/${encodeURIComponent(slug)}`, locale), {
       cache: "no-store",
     });
 
@@ -287,12 +288,13 @@ export default async function SingleProductPage({
   }
 
   if (!product && baseUrl) {
+    const locale = await getServerLocale();
     const tryTypes: Array<"simple" | "variable"> = selectedType
       ? [selectedType]
       : ["simple", "variable"];
 
     for (const type of tryTypes) {
-      const result = await fetchProductByType(baseUrl, type, slug);
+      const result = await fetchProductByType(baseUrl, type, slug, locale);
       if (result) {
         product = result;
         console.log(`Fetched product details for slug '${slug}' with type '${type}'`);
@@ -403,7 +405,9 @@ export default async function SingleProductPage({
                         Use our product finder to check compatibility with your specific printer model.
                       </p>
                     </div>
-                    <ProductCompatibilityDialog productId={product.id} />
+                    <button className="text-amber-500 text-base font-semibold underline text-left">
+                      Check Compatibility
+                    </button>
                   </div>
                 </div>
               </div>
@@ -429,6 +433,7 @@ export default async function SingleProductPage({
               stock={product?.stock}
               deliveryDatesInStock={product?.delivery_dates_in_stock}
               deliveryDatesNoStock={product?.delivery_dates_no_stock}
+              discounts={product?.discounts}
               warranty={product?.warranty}
             />
 

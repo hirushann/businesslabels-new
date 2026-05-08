@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const response = await fetch(backendUrl(apiBaseUrl, '/api/account/addresses'), {
+    const response = await fetch(backendUrl(apiBaseUrl, '/api/user/addresses'), {
       method: 'GET',
       headers: {
         Accept: 'application/json',
@@ -56,5 +56,36 @@ export async function GET(request: NextRequest) {
       { message: 'Unable to load addresses right now.' },
       { status: 500 }
     );
+  }
+}
+export async function POST(request: NextRequest) {
+  const apiBaseUrl = process.env.BBNL_API_BASE_URL;
+  const authToken = request.cookies.get('auth_token')?.value;
+  const body = await request.json();
+
+  if (!apiBaseUrl) {
+    return NextResponse.json({ message: 'Backend API URL is not configured.' }, { status: 500 });
+  }
+
+  if (!authToken) {
+    return NextResponse.json({ message: 'Please login.' }, { status: 401 });
+  }
+
+  try {
+    const response = await fetch(backendUrl(apiBaseUrl, '/api/user/addresses'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = await readResponseBody(response);
+    return NextResponse.json(data, { status: response.status });
+  } catch (error) {
+    console.error('Error saving account address:', error);
+    return NextResponse.json({ message: 'Unable to save address right now.' }, { status: 500 });
   }
 }
