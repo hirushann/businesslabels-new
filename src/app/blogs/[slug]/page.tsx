@@ -1,7 +1,69 @@
 import Image from "next/image";
 import Link from "next/link";
+import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+import { unescapeHtml } from "@/lib/utils";
 
-export default function SingleBlogPage() {
+type PostData = {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  status: string;
+  meta?: {
+    meta_title?: string;
+    meta_description?: string;
+  };
+  image?: string;
+  created_at: string;
+  updated_at: string;
+};
+
+async function getPost(slug: string): Promise<PostData | null> {
+  try {
+    const apiBaseUrl = process.env.BBNL_API_BASE_URL;
+    if (!apiBaseUrl) return null;
+
+    const res = await fetch(`${apiBaseUrl.replace(/\/$/, "")}/api/posts/slug/${slug}`, {
+      next: { revalidate: 60 },
+    });
+
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.data;
+  } catch (error) {
+    console.error("Error fetching post:", error);
+    return null;
+  }
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const post = await getPost(slug);
+
+  if (!post) return { title: "Post Not Found" };
+
+  return {
+    title: post.meta?.meta_title || post.title,
+    description: post.meta?.meta_description || post.excerpt,
+  };
+}
+
+export default async function SingleBlogPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const post = await getPost(slug);
+
+  if (!post) {
+    notFound();
+  }
+
+  const formattedDate = new Date(post.created_at).toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+
   return (
     <div className="relative overflow-hidden bg-white">
       {/* Ambient glow blobs */}
@@ -9,206 +71,87 @@ export default function SingleBlogPage() {
       <div className="pointer-events-none absolute left-[1312px] top-[858px] h-48 w-48 rounded-full bg-amber-500/30 blur-[132px]" />
 
       <div className="mx-auto flex max-w-360 flex-col gap-24 pt-10 pb-24 px-4 sm:px-6 lg:px-0">
-        
         {/* Main Content Area */}
         <div className="flex flex-col items-start gap-10">
-          
           {/* Header Section */}
           <div className="flex w-full flex-col items-start gap-6">
             <div className="flex flex-col items-start gap-4">
-              <div className="inline-flex items-center gap-2 h-4">
-                <div className="h-4 w-4 bg-zinc-300"></div>
-                <div className="h-2.5 w-2.5 bg-zinc-500"></div>
-                <span className="text-sm font-normal leading-5 text-zinc-500">/</span>
-                <Link href="/blogs" className="text-sm font-normal leading-5 text-zinc-500 hover:text-amber-500">Blogs</Link>
-                <span className="text-sm font-normal leading-5 text-zinc-500">/</span>
-                <span className="text-sm font-semibold leading-5 text-neutral-700">Details</span>
+              <div className="inline-flex items-center gap-2 h-4 text-zinc-500">
+                <Link href="/" className="hover:text-amber-500 transition-colors">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                  </svg>
+                </Link>
+                <span className="text-sm">/</span>
+                <Link href="/blogs" className="text-sm hover:text-amber-500 transition-colors">Blogs</Link>
+                <span className="text-sm">/</span>
+                <span className="text-sm font-semibold text-neutral-700">Details</span>
               </div>
               <h1 className="text-4xl font-bold leading-[48px] text-neutral-800">
-                Label design: which design software to use?
+                {post.title}
               </h1>
             </div>
-            
-            <div className="relative h-[580px] w-full overflow-hidden rounded-xl">
-              <Image 
-                src="https://placehold.co/1200x850" 
-                alt="Label design software"
-                fill
-                className="object-cover bg-black/30"
-                unoptimized
-              />
-              <div className="absolute left-[24px] top-[387px] inline-flex w-[1152px] flex-col items-start gap-4 rounded-lg bg-white/90 p-6 backdrop-blur-[2px]">
-                <p className="text-lg font-semibold leading-7 text-neutral-700">
-                  Explore and compare the top label design software options tailored to your specific needs. Whether you're looking for free tools or advanced professional solutions, discover the perfect match to enhance and streamline your workflow efficiently.
-                </p>
-                <div className="inline-flex items-start gap-6">
-                  <div className="inline-flex flex-col items-start gap-1.5">
-                    <span className="text-sm font-normal leading-5 text-neutral-700">Author:</span>
-                    <div className="inline-flex items-center gap-1.5">
-                      <Image src="https://placehold.co/24x24" alt="Author" width={24} height={24} className="rounded-full" unoptimized />
-                      <span className="text-base font-semibold leading-6 text-neutral-800">Kathryn Murphy</span>
+
+            <div className="relative h-[580px] w-full overflow-hidden rounded-xl bg-slate-100">
+              {post.image ? (
+                <Image
+                  src={post.image}
+                  alt={post.title}
+                  fill
+                  className="object-cover"
+                  priority
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full bg-slate-200 text-slate-400">
+                  <svg className="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+              )}
+              {post.excerpt && (
+                <div className="absolute left-[24px] bottom-[24px] right-[24px] inline-flex flex-col items-start gap-4 rounded-lg bg-white/90 p-6 backdrop-blur-[2px] shadow-sm">
+                  <p className="text-lg font-semibold leading-7 text-neutral-700">
+                    {post.excerpt}
+                  </p>
+                  <div className="inline-flex items-start gap-6">
+                    <div className="inline-flex flex-col items-start gap-1.5">
+                      <span className="text-sm font-normal leading-5 text-neutral-700">Author:</span>
+                      <div className="inline-flex items-center gap-1.5">
+                        <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center text-[10px] font-bold text-amber-600">BL</div>
+                        <span className="text-base font-semibold leading-6 text-neutral-800">BusinessLabels</span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="h-12 w-px bg-gray-100"></div>
-                  <div className="inline-flex flex-col items-start gap-1.5">
-                    <span className="text-sm font-normal leading-5 text-neutral-700">Published on:</span>
-                    <div className="inline-flex items-center gap-1.5">
-                      <div className="h-6 w-6 bg-zinc-300"></div>
-                      <div className="h-5 w-4 bg-neutral-800"></div>
-                      <span className="text-base font-semibold leading-6 text-neutral-800">26 Dec 2025</span>
-                    </div>
-                  </div>
-                  <div className="h-12 w-px bg-gray-100"></div>
-                  <div className="inline-flex flex-col items-start gap-1.5">
-                    <span className="text-sm font-normal leading-5 text-neutral-700">Category:</span>
-                    <div className="inline-flex items-start justify-center gap-2.5 rounded-[100px] bg-neutral-800/10 px-3 h-6 border border-neutral-800/10">
-                      <span className="text-base font-semibold leading-5 text-neutral-800">Technology</span>
+                    <div className="h-12 w-px bg-gray-200"></div>
+                    <div className="inline-flex flex-col items-start gap-1.5">
+                      <span className="text-sm font-normal leading-5 text-neutral-700">Published on:</span>
+                      <div className="inline-flex items-center gap-1.5">
+                        <span className="text-base font-semibold leading-6 text-neutral-800">{formattedDate}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
           <div className="inline-flex w-full items-start gap-10">
             {/* Article Content */}
             <article className="flex flex-1 flex-col items-start gap-8">
-              <div className="flex w-full flex-col items-start gap-4">
-                <h2 className="text-3xl font-bold leading-10 text-neutral-800">Design labels for your inkjet label printer</h2>
-                <p className="text-base font-normal leading-6 text-neutral-700">
-                  If you have a color label printer, you can print striking and eye-catching labels. Consequently, we regularly receive questions about which design software we would recommend for easily designing beautiful labels yourself. We work with Adobe Creative Cloud applications ourselves and primarily use Illustrator. This software is likely too complex and too expensive for some small to medium-sized businesses for the application we have in mind. Adobe Creative Cloud is the number one in various industries and offers virtually all the tools you need as a designer, but learning all the apps is difficult and unnecessary for the application we have in mind. So, we went looking for a program with a reasonable learning curve and sufficient tools to design a beautiful label.
-                </p>
-              </div>
+              <div 
+                className="cms-content w-full prose prose-neutral max-w-none prose-headings:text-neutral-800 prose-p:text-neutral-700 prose-a:text-amber-600 hover:prose-a:text-amber-700"
+                dangerouslySetInnerHTML={{ __html: unescapeHtml(post.content) }}
+              />
 
-              <div className="flex w-full flex-col items-start gap-4">
-                <h2 className="text-3xl font-bold leading-10 text-neutral-800">The search for the right label design software</h2>
-                <div className="inline-flex w-full items-start gap-4">
-                  <p className="flex-1 text-base font-normal leading-6 text-neutral-700">
-                    To provide sound advice, we delved into the various solutions the market offers. To our surprise, there were more options than expected across different segments… from free design software to subscriptions of +/- €60 per month.<br /><br />
-                    To ensure everyone receives suitable advice, we have compared software across multiple price ranges. Please bear in mind that I, Levi van der Molen, have been working with Illustrator since Adobe CS4 (around 2008) and will be looking at various alternatives from this perspective.
-                  </p>
-                  <Image src="https://placehold.co/412x288" alt="Software search" width={412} height={288} className="flex-1 rounded-xl object-cover" unoptimized />
-                </div>
-                <p className="text-base font-normal leading-6 text-neutral-700">
-                  This post is not written for professionals who want to know which package handles ICC profiles, color management, teamwork, etc., best, but rather for users of a color label printer who, with little or no experience, want to create beautiful labels to print with, for example, their Epson ColorWorks printer.
-                </p>
-              </div>
-
-              <div className="flex w-full flex-col items-start gap-4">
-                <div className="flex w-full flex-col items-start gap-4">
-                  <h2 className="text-3xl font-bold leading-10 text-neutral-800">Testimonial: AmSpec [ GHS BS6509 TM-C3500 ]</h2>
-                  <p className="text-base font-normal leading-6 text-neutral-700">
-                    Our customer AmSpec shares their experience with the Epson ColorWorks TM-C3500 for printing chemical-resistant labels.
-                  </p>
-                  <p className="text-base font-normal leading-6 text-neutral-700">
-                    Amspec is a global organization that provides independent inspections for the Petroleum, Gas, and Chemical industries. The Epson ColorWorks offer the ideal solution for printing GHS symbols according to the correct guidelines, ensuring that the labels and print are resistant to the chemical agents they use. They also comply with the BS5609 standard when required for sea transport.
-                  </p>
-                </div>
-                <Image src="https://placehold.co/840x473" alt="Testimonial" width={840} height={473} className="h-[472.50px] w-full rounded-xl object-cover" unoptimized />
-              </div>
-
-              <div className="flex w-full flex-col items-start gap-4">
-                <h2 className="text-3xl font-bold leading-10 text-neutral-800">On which aspects do we compare the “label design software”?</h2>
-                <p className="text-base font-normal leading-6 text-neutral-700">
-                  In my opinion, label design varies as far as your own creativity, but a label generally consists of mainly 3 elements.
-                </p>
-              </div>
-
-              {/* Photos Section */}
-              <div className="flex w-full flex-col items-start gap-4">
-                <h3 className="text-3xl font-bold leading-10 text-neutral-800">Photos (pixels)</h3>
-                <div className="inline-flex w-full items-start gap-4">
-                  <p className="flex-1 text-base font-normal leading-6 text-neutral-700">
-                    Photos are often seen on labels, especially on retail packaging labels where the product is depicted on the packaging. (expectation) Photos on the product label are used to evoke an emotion and/or atmosphere in a product. (product experience)<br />
-                    Please note that you cannot enlarge photos/pixels beyond the original without loss. Photos are made up of pixels (small blocks of color) that we need to be able to edit with the software.<br /><br />
-                    - adjusting colors<br />
-                    - cut out from background<br />
-                    - can produce certain effects and transparency
-                  </p>
-                  <Image src="https://placehold.co/220x220" alt="Photos" width={220} height={220} className="h-56 w-56 rounded-2xl border border-gray-100 shadow-sm" unoptimized />
-                </div>
-              </div>
-
-              {/* Illustrations Section */}
-              <div className="flex w-full flex-col items-start gap-4">
-                <h3 className="text-3xl font-bold leading-10 text-neutral-800">Illustrations (vectors)</h3>
-                <div className="inline-flex w-full items-start gap-4">
-                  <p className="flex-1 text-base font-normal leading-6 text-neutral-700">
-                    Logos, illustrations, shapes, etc. that we use in designing a label are created as vector files.<br />
-                    Unlike the pixels of a photo, vector files are composed of lines with mathematical calculations that form an image or illustration. This means that vectors can be enlarged infinitely without loss of quality, and it also ensures that the files can remain very small while still remaining editable.<br />
-                    When you have the choice to create a file as pixels or as a vector, I would always advise working with vectors due to their editability and quality compared to pixels. Exceptions prove the rule, such as color gradients.<br /><br />
-                    - Pen tool For freehand drawing of paths, shapes, and illustrations and the tools to manipulate paths<br />
-                    - Standard shapes Star, square, polygon etc.<br />
-                    - Vector Brush
-                  </p>
-                  <Image src="https://placehold.co/220x220" alt="Vectors" width={220} height={220} className="h-56 w-56 rounded-2xl border border-gray-100 shadow-sm" unoptimized />
-                </div>
-              </div>
-
-              {/* Text Section */}
-              <div className="flex w-full flex-col items-start gap-4">
-                <h3 className="text-3xl font-bold leading-10 text-neutral-800">Text</h3>
-                <div className="inline-flex w-full items-start gap-4">
-                  <div className="flex flex-1 flex-col justify-center items-start gap-4">
-                    <p className="text-base font-normal leading-6 text-neutral-700">
-                      A very undervalued element of a label is the way text is placed and how it remains consistent across all labels. Often, novice designers are more focused on all the other components of a label, and text is simply crammed in as a necessary extra. However, text is particularly important for labels, especially for uniformity across your entire label line.<br />
-                      Personally, I start a design specifically with the text so that I can accurately estimate how much space I need for it, and how and where best to allocate it. This begins with the fonts we use in our corporate identity and carrying them through to the labels, before determining the font size, weights, and paragraph styles.<br /><br />
-                      - drawing styles<br />
-                      - paragraph styles<br />
-                      - convert text to outlines (vector paths)<br />
-                      - font options
-                    </p>
-                    <div className="flex w-full flex-col items-start gap-1.5">
-                      <h4 className="text-2xl font-semibold leading-7 text-neutral-800">What is a corporate identity?</h4>
-                      <p className="text-base font-normal leading-6 text-neutral-700">
-                        Elements through which a company presents itself in the market. A corporate identity is determined, among other things, by establishing: the logo, the colors, the typeface, and specific layouts and methods of their use.
-                      </p>
-                    </div>
-                  </div>
-                  <Image src="https://placehold.co/220x220" alt="Text" width={220} height={220} className="h-56 w-56 rounded-2xl border border-gray-100 shadow-sm" unoptimized />
-                </div>
-              </div>
-
-              {/* Conclusion Section */}
-              <div className="flex w-full flex-col items-start gap-4">
-                <h2 className="text-3xl font-bold leading-10 text-neutral-800">Conclusion: who is the best designer?</h2>
-                <p className="text-base font-normal leading-6 text-neutral-700">
-                  It surprised me that so much is happening in the field of graphic software (design software). I myself have extensive experience with Adobe Creative Cloud products and was under the impression that this is by far the best choice. I will not switch to other software myself because I am used to Illustrator and can no longer do without certain features, and because it is the standard in the industry we operate in. Nevertheless, I am pleasantly surprised by the alternatives, especially those in the lower segment, which nowadays do not fall too far short of the major players.<br />
-                  Initially, I was going to include Inkscape as the free option, but I was greatly surprised to learn about Gravit Designer and ultimately decided to include it in the comparison. Gravit Designer is a very clear and modern application for creating vector files; the in-browser editor also pleasantly surprised me as an extra option.<br />
-                  To be able to provide good advice, I have divided this into 2 segments.
-                </p>
-              </div>
-
-              <div className="flex w-full flex-col items-start gap-4">
-                <h2 className="text-3xl font-bold leading-10 text-neutral-800">The professional market:</h2>
-                <div className="inline-flex w-full items-start gap-4">
-                  <p className="flex-1 text-base font-normal leading-6 text-neutral-700">
-                    Here, I will end up with my trusted Adobe Creative Cloud apps. Probably because this is the “standard” and, with many specially developed apps, you really have all the tools at your disposal. The file formats are almost always accepted in the industry, so you can easily collaborate or have adjustments made. On the other hand, I find CorelDRAW has changed enormously since my last experience with it. They have developed several tools that Illustrator does not have, which pleasantly speed up and simplify your workflow—such as straightening a photo or adjusting perspective in just a few clicks—and you have various basic functions and tools at your disposal for pixel and vector editing.
-                  </p>
-                  <Image src="https://placehold.co/412x336" alt="Professional market" width={412} height={336} className="flex-1 rounded-xl object-cover" unoptimized />
-                </div>
-                <p className="text-base font-normal leading-6 text-neutral-700">
-                  If you do want to scale up to the professional segment, I would say go for the Adobe Creative Cloud apps. However, it is nice to see a company like CorolDRAW in the market to put some pressure on innovations at Adobe.
-                </p>
-              </div>
-
-              <p className="text-base font-normal leading-6 text-neutral-700">
-                To create a beautiful label, you need less than 5% of the tools offered by the Adobe Creative Cloud apps. Of course, you do want to be able to use the basics of the various apps to creatively combine pixels, vectors, and text into a beautiful label and adjust them when necessary.<br />
-                Personally, I think Gravit will suffice in many cases, but it falls short when it comes to pixel editing. Because Gravit Designer is free, you can also use it within the company for many other applications, such as social media, presentations, illustrations, etc.<br />
-                However, I think that for just €55, Affinity Designer offers added value, especially due to the pixel tools that Gravit lacks. Furthermore, it is a very complete package in every respect, especially for that price, and works very well in conjunction with Gravit Designer for other applications. If you have created all graphic elements in Affinity Designer, they can still be used in Gravit Designer. This way, you can use the free Gravit Designer alongside Affinity Designer for social media, presentations, illustrations, etc. With Affinity Designer, you have a complete designer package in your hands.<br />
-                Of course, there is always only one way to find out which software suits you best… working with it! Fortunately, all the options above are free to try out and, in the case of Gravit Designer, free to use.
-              </p>
-
-              {/* Author Bio Box */}
-              <div className="flex w-full flex-col items-start gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-                <h3 className="text-2xl font-semibold leading-7 text-neutral-800">About the Author</h3>
+              {/* Author Bio Box - Default for now as API doesn't provide author yet */}
+              <div className="flex w-full flex-col items-start gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-sm mt-8">
+                <h3 className="text-2xl font-semibold leading-7 text-neutral-800">About BusinessLabels</h3>
                 <div className="w-full border-t border-gray-100"></div>
                 <div className="inline-flex w-full items-center gap-4">
-                  <Image src="https://placehold.co/156x156" alt="Author" width={156} height={156} className="rounded-lg object-cover" unoptimized />
+                  <div className="w-20 h-20 rounded-lg bg-amber-500 flex items-center justify-center text-white text-2xl font-bold">BL</div>
                   <div className="flex flex-1 flex-col items-start gap-2.5">
-                    <h4 className="text-3xl font-bold leading-10 text-neutral-800 line-clamp-1">Levi van der Molen</h4>
-                    <p className="text-lg font-semibold leading-7 text-neutral-700">
-                      Support and production specialist at Smart2b. With a passion for design and experience in the technical aspects of production & support, I would be happy to advise and assist you with great enthusiasm. Furthermore, I am a big fan of Epson products for the graphics market.
+                    <h4 className="text-2xl font-bold text-neutral-800">The BusinessLabels Team</h4>
+                    <p className="text-base font-medium text-neutral-700">
+                      Your trusted partner for high-quality labels and printing solutions. We share insights on label design, material selection, and industry standards to help your business grow.
                     </p>
                   </div>
                 </div>
@@ -219,91 +162,44 @@ export default function SingleBlogPage() {
             <aside className="inline-flex w-80 flex-col items-start gap-7 shrink-0">
               {/* Share Box */}
               <div className="relative flex w-full flex-col items-start gap-8 overflow-hidden rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-                <div className="absolute left-0 top-0 h-14 w-80 bg-gray-100"></div>
-                <h3 className="relative z-10 text-xl font-semibold leading-6 text-neutral-800">Share this page</h3>
+                <div className="absolute left-0 top-0 h-14 w-80 bg-slate-50"></div>
+                <h3 className="relative z-10 text-xl font-semibold leading-6 text-neutral-800">Share this post</h3>
                 <div className="relative z-10 flex w-full flex-col items-start gap-5">
-                  <div className="inline-flex items-center gap-5">
-                    {/* Social icons placeholder */}
-                    <div className="h-8 w-8 bg-amber-500/20 rounded"></div>
-                    <div className="h-8 w-8 bg-amber-500/20 rounded"></div>
-                    <div className="h-8 w-8 bg-amber-500/20 rounded"></div>
-                    <div className="h-8 w-8 bg-amber-500/20 rounded"></div>
-                  </div>
-                  <div className="relative h-11 w-full">
-                    <div className="absolute left-0 top-0 h-11 w-full rounded-md border border-gray-100 bg-white"></div>
-                    <p className="absolute left-[14px] top-[12px] w-56 truncate text-sm font-normal leading-5 text-neutral-700">
-                      https://businesslabel.com/blog/label-design
-                    </p>
-                    <div className="absolute right-4 top-3.5 h-4 w-4 cursor-pointer">
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12.6667 4.66667H6V11.3333H12.6667V4.66667Z" stroke="#71717A" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M3.33333 11.3333V4C3.33333 3.63333 3.63333 3.33333 4 3.33333H10" stroke="#71717A" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
+                   <div className="inline-flex items-center gap-3 w-full">
+                    <button className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" /></svg>
+                    </button>
+                    <button className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-900 hover:text-white transition-colors">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
+                    </button>
+                    <button className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-amber-50 hover:text-amber-600 transition-colors">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+                    </button>
                   </div>
                 </div>
               </div>
 
               {/* Categories Box */}
               <div className="relative flex w-full flex-col items-start gap-8 overflow-hidden rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-                <div className="absolute left-0 top-0 h-14 w-80 bg-gray-100"></div>
+                <div className="absolute left-0 top-0 h-14 w-80 bg-slate-50"></div>
                 <h3 className="relative z-10 text-xl font-semibold leading-6 text-neutral-800">Categories</h3>
                 <div className="relative z-10 flex w-full flex-col items-start gap-4">
-                  <Link href="#" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500">Recommendations</Link>
+                  <Link href="/blogs" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500 transition-colors">All Posts</Link>
                   <div className="w-full border-t border-gray-100"></div>
-                  <Link href="#" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500">Comparisons</Link>
+                  <Link href="#" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500 transition-colors">Label Design</Link>
                   <div className="w-full border-t border-gray-100"></div>
-                  <Link href="#" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500">Product News</Link>
+                  <Link href="#" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500 transition-colors">Materials</Link>
                   <div className="w-full border-t border-gray-100"></div>
-                  <Link href="#" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500">Tips & Tricks</Link>
-                  <div className="w-full border-t border-gray-100"></div>
-                  <Link href="#" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500">Technology</Link>
-                  <div className="w-full border-t border-gray-100"></div>
-                  <Link href="#" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500">Use Case</Link>
-                  <div className="w-full border-t border-gray-100"></div>
-                  <Link href="#" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500">Tutorial</Link>
-                </div>
-              </div>
-
-              {/* Recommended Post Box */}
-              <div className="relative flex w-full flex-col items-start gap-8 overflow-hidden rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-                <div className="absolute left-0 top-0 h-14 w-80 bg-gray-100"></div>
-                <h3 className="relative z-10 text-xl font-semibold leading-6 text-neutral-800">Recommended Post</h3>
-                <div className="relative z-10 flex w-full flex-col items-start gap-4">
-                  {[
-                    "Epson ColorWorks C7500: Complete FAQ Guide",
-                    "Label Design Software: Which Tool Should You Use?",
-                    "GHS Chemical Labeling: Complete Compliance Guide",
-                    "New: Epson ColorWorks C4000 Series Launched",
-                    "Freezer Labels: Material Selection for Cold Storage"
-                  ].map((post, idx) => (
-                    <div key={idx} className="flex w-full flex-col gap-4">
-                      <Link href="#" className="group inline-flex w-full items-center gap-2.5">
-                        <Image src={`https://placehold.co/52x62?text=${idx+1}`} alt="Post thumbnail" width={52} height={62} className="rounded object-cover" unoptimized />
-                        <div className="flex flex-1 flex-col items-start gap-1">
-                          <p className="text-base font-semibold leading-5 text-neutral-700 line-clamp-2 group-hover:text-amber-500">
-                            {post}
-                          </p>
-                          <div className="inline-flex items-center gap-1">
-                            <div className="h-4 w-4 bg-zinc-300"></div>
-                            <div className="h-3 w-3 bg-zinc-500"></div>
-                            <span className="text-sm font-normal leading-5 text-zinc-500">26 Dec 2025</span>
-                          </div>
-                        </div>
-                      </Link>
-                      {idx < 4 && <div className="w-full border-t border-gray-100"></div>}
-                    </div>
-                  ))}
-                  <div className="w-full border-t border-gray-100"></div>
-                  <Link href="/blogs" className="w-full text-center text-base font-semibold text-amber-500 hover:text-amber-600">
-                    View More
-                  </Link>
+                  <Link href="#" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500 transition-colors">Technology</Link>
                 </div>
               </div>
             </aside>
           </div>
         </div>
       </div>
+    </div>
+  );
+}
       
       {/* Recommended Products */}
       <div className="flex w-full flex-col items-start gap-12 bg-gray-50 px-4 py-24 sm:px-6 lg:px-40">
