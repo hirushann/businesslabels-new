@@ -42,7 +42,7 @@ export type ProductCardData = {
   originalPrice?: number | null;
   inStock: boolean;
   mainImage?: string | null;
-  categories?: Array<{ id?: number; name?: string | null }>;
+  categories?: Array<{ id?: number; name?: string | null; slug?: string | null }>;
   slug?: string | null;
   type?: ProductRouteType | null;
   packing_group?: number | null;

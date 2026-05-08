@@ -10,20 +10,15 @@ export const metadata: Metadata = {
 
 type ProductsPageSearchParams = Record<string, string | string[] | undefined>;
 
-function toUrlSearchParams(searchParams: ProductsPageSearchParams): URLSearchParams {
+function toUrlSearchParams(query: ProductsPageSearchParams): URLSearchParams {
   const params = new URLSearchParams();
-
-  Object.entries(searchParams).forEach(([key, value]) => {
+  Object.entries(query).forEach(([key, value]) => {
     if (Array.isArray(value)) {
-      value.forEach((item) => params.append(key, item));
-      return;
-    }
-
-    if (value !== undefined) {
-      params.set(key, value);
+      value.forEach((v) => params.append(key, v));
+    } else if (value !== undefined) {
+      params.append(key, value);
     }
   });
-
   return params;
 }
 
@@ -41,7 +36,8 @@ export default async function ProductsPage({
 }: {
   searchParams: Promise<ProductsPageSearchParams>;
 }) {
-  const query = toUrlSearchParams(await searchParams);
+  const rawParams = await searchParams;
+  const query = toUrlSearchParams(rawParams);
   let initialCatalog = emptyCatalogResponse;
 
   try {

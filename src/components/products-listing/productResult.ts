@@ -131,10 +131,25 @@ function imageForProduct(result: unknown): string | null {
   return null;
 }
 
-function categoriesForProduct(result: unknown): Array<{ id?: number; name?: string | null }> {
+function labelFromCode(value: string): string {
+  return value
+    .trim()
+    .replace(/^\[\s*/, "")
+    .replace(/\s*\]$/, "")
+    .replace(/^["']|["']$/g, "")
+    .split(/[_\-\s]+/)
+    .filter(Boolean)
+    .map((part) => {
+      const upper = part.toUpperCase();
+      return upper.length <= 3 ? upper : `${upper.charAt(0)}${upper.slice(1).toLowerCase()}`;
+    })
+    .join(" ");
+}
+
+function categoriesForProduct(result: unknown): Array<{ id?: number; name?: string | null; slug?: string | null }> {
   const categories = getRaw(result, "categories");
   if (Array.isArray(categories)) {
-    const normalizedCategories: Array<{ id?: number; name?: string | null }> = [];
+    const normalizedCategories: Array<{ id?: number; name?: string | null; slug?: string | null }> = [];
 
     categories.forEach((category) => {
       if (typeof category === "string") {
@@ -143,10 +158,11 @@ function categoriesForProduct(result: unknown): Array<{ id?: number; name?: stri
       }
 
       if (typeof category === "object" && category !== null) {
-        const record = category as { id?: unknown; term_id?: unknown; name?: unknown };
+        const record = category as { id?: unknown; term_id?: unknown; name?: unknown; slug?: unknown };
         const id = valueAsNumber(record.id) ?? valueAsNumber(record.term_id) ?? undefined;
         const name = valueAsString(record.name);
-        normalizedCategories.push({ id, name });
+        const slug = valueAsString(record.slug);
+        normalizedCategories.push({ id, name, slug });
       }
     });
 
@@ -159,7 +175,7 @@ function categoriesForProduct(result: unknown): Array<{ id?: number; name?: stri
 
   if (!Array.isArray(productCategories)) return [];
 
-  const normalizedCategories: Array<{ id?: number; name?: string | null }> = [];
+  const normalizedCategories: Array<{ id?: number; name?: string | null; slug?: string | null }> = [];
 
   productCategories.forEach((category) => {
     if (typeof category === "string") {
@@ -168,10 +184,11 @@ function categoriesForProduct(result: unknown): Array<{ id?: number; name?: stri
     }
 
     if (typeof category === "object" && category !== null) {
-      const record = category as { id?: unknown; term_id?: unknown; name?: unknown };
+      const record = category as { id?: unknown; term_id?: unknown; name?: unknown; slug?: unknown };
       const id = valueAsNumber(record.id) ?? valueAsNumber(record.term_id) ?? undefined;
       const name = valueAsString(record.name);
-      normalizedCategories.push({ id, name });
+      const slug = valueAsString(record.slug);
+      normalizedCategories.push({ id, name, slug });
     }
   });
 
@@ -226,11 +243,21 @@ export function mapProductListingResult(
     type: normalizedType,
   };
 
+  const categorySlugs = (valueAsString(getRaw(result, "category_slugs")) ?? "")
+    .split(",")
+    .map((slug) => ({ name: labelFromCode(slug), slug: slug }))
+    .filter(Boolean);
+  
+  const isPrinter = categorySlugs.some(s => s.slug === "labelprinters") || 
+                    product.categories?.some(c => c.name?.toLowerCase().includes("printer") || c.slug?.toLowerCase() === "labelprinters");
+
+  const prefix = isPrinter ? "printers" : "products";
+
   const href =
     slug && normalizedType
-      ? { pathname: `/products/${slug}`, query: { type: normalizedType } }
+      ? { pathname: `/${prefix}/${slug}`, query: { type: normalizedType } }
       : slug
-        ? `/products/${slug}`
+        ? `/${prefix}/${slug}`
         : undefined;
 
   return { id, product, href };
