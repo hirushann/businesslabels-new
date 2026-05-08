@@ -288,6 +288,7 @@ function ProductsListingContent({ products }: { products: ListingProductCardData
                       return <ProductCard key={id} product={product} href={href} />;
                     })
                   : fallbackProducts.map((product) => {
+                    console.log("Rendering fallback product:", cardHref(product));
                       return <ProductCard key={product.id} product={product} href={cardHref(product)} />;
                     })}
               </div>

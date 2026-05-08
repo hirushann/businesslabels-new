@@ -85,6 +85,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
   const normalizedWarranty = useMemo(() => normalizeWarrantyOptions(effectiveWarranty), [effectiveWarranty]);
   const hasWarrantyOptions = normalizedWarranty.options.length > 0;
 
+  console.log("Href for product:", href);
   const fetchWarranty = useCallback(async () => {
     if (!product.slug) return null;
     setWarrantyFetching(true);
