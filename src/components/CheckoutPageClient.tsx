@@ -611,6 +611,13 @@ export default function CheckoutPageClient({
       return;
     }
 
+    // Ensure there's at least one real product (not just warranty addons)
+    const productItems = items.filter(item => item.itemKind !== "warranty" && typeof item.id === "number");
+    if (productItems.length === 0) {
+      toast.error("Your cart doesn't contain any valid products.");
+      return;
+    }
+
     setIsPending(true);
 
     const shippingAmount = items.length > 0 ? DELIVERY_FEE : 0;
@@ -634,12 +641,15 @@ export default function CheckoutPageClient({
       payment_fee: paymentFee,
       payment_method: form.paymentMethod,
       total: finalTotal,
-      order_items: items.map(item => ({
-        product_id: item.id,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity
-      }))
+      order_items: items
+        // Warranty items are addons and don't have numeric product IDs — exclude them
+        .filter(item => item.itemKind !== "warranty" && typeof item.id === "number")
+        .map(item => ({
+          product_id: item.id as number,
+          name: item.name?.trim() || item.sku || "Product",
+          price: typeof item.price === "number" && Number.isFinite(item.price) ? item.price : 0,
+          quantity: item.quantity
+        }))
     };
 
     try {

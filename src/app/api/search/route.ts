@@ -469,7 +469,16 @@ function withSafeSort(body: ElasticsearchRequestBody): ElasticsearchRequestBody 
 }
 
 function withCategoryConstraint(body: ElasticsearchRequestBody, categorySlug: string): ElasticsearchRequestBody {
-  const constraintClause = { terms: { category_slugs: [categorySlug] } };
+  // Use the runtime field `search_category_slug` (populated by categoryRuntimeScript)
+  // rather than the raw `category_slugs` field, which may not exist on all documents.
+  const constraintClause = {
+    term: {
+      [CATEGORY_FIELD.runtimeField]: {
+        value: categorySlug,
+        case_insensitive: true,
+      },
+    },
+  };
   const existingQuery = body.query;
   const newQuery = existingQuery
     ? { bool: { must: [existingQuery], filter: [constraintClause] } }
@@ -621,7 +630,14 @@ async function loadSearchStats(
 
     const statsFilters: unknown[] = [];
     if (categorySlug) {
-      statsFilters.push({ terms: { category_slugs: [categorySlug] } });
+      statsFilters.push({
+        term: {
+          [CATEGORY_FIELD.runtimeField]: {
+            value: categorySlug,
+            case_insensitive: true,
+          },
+        },
+      });
     }
     if (brandSlug) {
       statsFilters.push({
