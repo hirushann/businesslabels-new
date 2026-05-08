@@ -315,6 +315,12 @@ if (params._source.containsKey('brand')) {
     emit(brand.toString());
   }
 }
+if (params._source.containsKey('make')) {
+  def make = params._source['make'];
+  if (make != null && make.toString().length() > 0) {
+    emit(make.toString());
+  }
+}
 if (params._source.containsKey('merken')) {
   def merken = params._source['merken'];
   if (merken instanceof List) {
