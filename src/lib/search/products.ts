@@ -76,11 +76,11 @@ const OPTION_FILTERS: Array<{
     | "printMethods"
   >;
 }> = [
-  { key: "print_method", title: "Print Method", field: "filters.printmethode", paramValues: "printMethods" },
-  { key: "material_code", title: "Material Code", field: "filters.materiaal_code", paramValues: "materialCodes" },
-  { key: "material", title: "Material Type", field: "filters.materiaal", paramValues: "materials" },
-  { key: "finishing", title: "Finishing", field: "filters.afwerking", paramValues: "finishings" },
-  { key: "glue", title: "Glue", field: "filters.lijm", paramValues: "glues" },
+  { key: "print_method", title: "Print Method", field: "filters.printmethode.keyword", paramValues: "printMethods" },
+  { key: "material_code", title: "Material Code", field: "filters.materiaal_code.keyword", paramValues: "materialCodes" },
+  { key: "material", title: "Material Type", field: "filters.materiaal.keyword", paramValues: "materials" },
+  { key: "finishing", title: "Finishing", field: "filters.afwerking.keyword", paramValues: "finishings" },
+  { key: "glue", title: "Glue", field: "filters.lijm.keyword", paramValues: "glues" },
 ];
 
 const RANGE_FILTERS: Array<{
@@ -357,11 +357,11 @@ function buildFilters(params: CatalogSearchParams): estypes.QueryDslQueryContain
     termsFilter("material_id", params.materialIds),
     termsFilter("material_taxon_slugs", params.materialCategories),
     termsFilter("material_taxon_ids", params.materialCategoryIds),
-    termsFilter("filters.materiaal_code", params.materialCodes),
-    termsFilter("filters.materiaal", params.materials),
-    termsFilter("filters.afwerking", params.finishings),
-    termsFilter("filters.lijm", params.glues),
-    termsFilter("filters.printmethode", params.printMethods),
+    termsFilter("filters.materiaal_code.keyword", params.materialCodes),
+    termsFilter("filters.materiaal.keyword", params.materials),
+    termsFilter("filters.afwerking.keyword", params.finishings),
+    termsFilter("filters.lijm.keyword", params.glues),
+    termsFilter("filters.printmethode.keyword", params.printMethods),
     termsFilter("printer_type.keyword", params.printerTypes),
     termsFilter("detectie.keyword", params.detections),
     termsFilter("merken.keyword", params.marks),
