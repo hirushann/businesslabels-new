@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import ProductsListing, { type ListingProductCardData } from "@/components/ProductsListing";
 import type { WarrantyRawData } from "@/lib/utils/warranty";
+import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 
 export const metadata: Metadata = {
   title: "All Printers — BusinessLabels",
@@ -70,6 +71,7 @@ export default async function ProductsPage({
     throw new Error("BBNL_API_BASE_URL is not configured");
   }
 
+  const locale = await getServerLocale();
   const requestedPage = Array.isArray(query.page) ? query.page[0] : query.page;
   const normalizedPage = Number.parseInt(requestedPage ?? "1", 10);
   const page = Number.isFinite(normalizedPage) && normalizedPage > 0 ? normalizedPage : 1;
@@ -79,7 +81,7 @@ export default async function ProductsPage({
   let lastPage = 1;
 
   try {
-    const response = await fetch(`${baseUrl}/api/products?page=${page}`, {
+    const response = await fetch(withLocaleParam(`${baseUrl}/api/products?page=${page}`, locale), {
       cache: "no-store",
     });
 
