@@ -1,115 +1,53 @@
 import type { Metadata } from "next";
-import ProductsListing, { type ListingProductCardData } from "@/components/ProductsListing";
-import type { WarrantyRawData } from "@/lib/utils/warranty";
+import ProductsListing from "@/components/ProductsListing";
+import { parseCatalogSearchParams, searchCatalogProducts } from "@/lib/search/products";
+import type { CatalogSearchResponse } from "@/lib/search/types";
 
 export const metadata: Metadata = {
-  title: "All Printers — BusinessLabels",
-  description: "Browse our full product range with sorting and pagination.",
+  title: "All Products — BusinessLabels",
+  description: "Browse our full product range with search, filters, sorting, and pagination.",
 };
 
-type Product = {
-  id: number;
-  type: "simple" | "variable" | string;
-  slug?: string | null;
-  title?: string | null;
-  name: string;
-  sku: string;
-  subtitle?: string | null;
-  excerpt?: string | null;
-  article_number?: string | null;
-  price: number;
-  original_price?: number | null;
-  in_stock: boolean;
-  main_image?: string | null;
-  created_at?: string | null;
-  material?: {
-    title?: string | null;
-  } | null;
-  categories?: Array<{
-    id?: number;
-    name?: string | null;
-  }>;
-  warranty?: WarrantyRawData | null;
-};
+type ProductsPageSearchParams = Record<string, string | string[] | undefined>;
 
-type ProductsResponse = {
-  data: Product[];
-  meta?: {
-    current_page?: number;
-    last_page?: number;
-    total?: number;
-    per_page?: number;
-  };
-};
+function toUrlSearchParams(searchParams: ProductsPageSearchParams): URLSearchParams {
+  const params = new URLSearchParams();
 
-function normalizeType(raw: string | undefined): "simple" | "variable" | null {
-  if (raw === "simple" || raw === "variable") {
-    return raw;
-  }
-  return null;
+  Object.entries(searchParams).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      value.forEach((item) => params.append(key, item));
+      return;
+    }
+
+    if (value !== undefined) {
+      params.set(key, value);
+    }
+  });
+
+  return params;
 }
 
-function createdAtTimestamp(value: string | null | undefined, fallback: number): number {
-  if (!value) {
-    return fallback;
-  }
-
-  const timestamp = Date.parse(value);
-  return Number.isFinite(timestamp) ? timestamp : fallback;
-}
+const emptyCatalogResponse: CatalogSearchResponse = {
+  products: [],
+  total: 0,
+  currentPage: 1,
+  lastPage: 1,
+  perPage: 24,
+  filters: { ranges: [], options: [] },
+};
 
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string | string[] }>;
+  searchParams: Promise<ProductsPageSearchParams>;
 }) {
-  const baseUrl = process.env.BBNL_API_BASE_URL;
-  const query = await searchParams;
-
-  if (!baseUrl) {
-    throw new Error("BBNL_API_BASE_URL is not configured");
-  }
-
-  const requestedPage = Array.isArray(query.page) ? query.page[0] : query.page;
-  const normalizedPage = Number.parseInt(requestedPage ?? "1", 10);
-  const page = Number.isFinite(normalizedPage) && normalizedPage > 0 ? normalizedPage : 1;
-
-  let products: ListingProductCardData[] = [];
-  let currentPage = 1;
-  let lastPage = 1;
+  const query = toUrlSearchParams(await searchParams);
+  let initialCatalog = emptyCatalogResponse;
 
   try {
-    const response = await fetch(`${baseUrl}/api/products?page=${page}`, {
-      cache: "no-store",
-    });
-
-    if (response.ok) {
-      const json = (await response.json()) as ProductsResponse;
-      currentPage = json.meta?.current_page ?? page;
-      lastPage = json.meta?.last_page ?? 1;
-      products = json.data.map((product, index) => ({
-        id: product.id,
-        sku: product.sku,
-        name: product.title?.trim() || product.name,
-        subtitle: product.subtitle ?? null,
-        excerpt: product.excerpt ?? null,
-        materialTitle: product.material?.title ?? null,
-        price: product.price,
-        originalPrice: product.original_price ?? null,
-        inStock: product.in_stock,
-        mainImage: product.main_image ?? null,
-        categories: product.categories ?? [],
-        slug: product.slug ?? null,
-        type: normalizeType(product.type),
-        warranty: product.warranty ?? null,
-        createdAt: createdAtTimestamp(product.created_at, json.data.length - index),
-      }));
-      console.log("Fetched products test:", products);
-    } else {
-      console.error(`Failed to fetch products: ${response.status}`);
-    }
+    initialCatalog = await searchCatalogProducts(parseCatalogSearchParams(query));
   } catch (error) {
-    console.error("Error fetching products:", error);
+    console.error("Failed to load product catalog.", error);
   }
 
   return (
@@ -127,7 +65,7 @@ export default async function ProductsPage({
             <h1 className="text-3xl font-bold font-['Segoe_UI'] leading-8 text-neutral-800">
               All Products
             </h1>
-            <ProductsListing products={products} currentPage={currentPage} lastPage={lastPage} />
+            <ProductsListing initialCatalog={initialCatalog} initialQueryString={query.toString()} />
           </div>
         </div>
       </div>
