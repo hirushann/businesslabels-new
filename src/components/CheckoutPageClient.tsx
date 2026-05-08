@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import EmptyState from "@/components/EmptyState";
 import { type CartItem, useCart } from "@/components/CartProvider";
+import { toast } from "sonner";
 
 type CheckoutFormState = {
   firstName: string;
@@ -84,7 +85,6 @@ function linePrice(item: CartItem): number {
 
 function CheckoutShell({
   items,
-  isSubmitted,
   totalAmount,
   removeItem,
   incrementItemQuantity,
@@ -94,10 +94,9 @@ function CheckoutShell({
   errors,
   handleChange,
   browseHref,
-  successDescription,
+  isPending,
 }: {
   items: CartItem[];
-  isSubmitted: boolean;
   totalAmount: number;
   removeItem: (key: string) => void;
   incrementItemQuantity: (key: string) => void;
@@ -107,32 +106,12 @@ function CheckoutShell({
   errors: Partial<Record<keyof CheckoutFormState, string>>;
   handleChange: (field: keyof CheckoutFormState, value: string) => void;
   browseHref: string;
-  successDescription: string;
+  isPending: boolean;
 }) {
-  const finalTotal = useMemo(
-    () => totalAmount + (items.length > 0 ? DELIVERY_FEE : 0),
-    [items.length, totalAmount],
-  );
+  const shippingAmount = useMemo(() => (items.length > 0 ? DELIVERY_FEE : 0), [items.length]);
+  const taxAmount = useMemo(() => (totalAmount + shippingAmount) * 0.21, [totalAmount, shippingAmount]);
+  const finalTotal = useMemo(() => totalAmount + shippingAmount + taxAmount, [totalAmount, shippingAmount, taxAmount]);
 
-  if (isSubmitted) {
-    return (
-      <div className="bg-slate-50 px-5 py-15">
-        <div className="mx-auto max-w-[80%]">
-          <div className="rounded-3xl border border-slate-200 bg-white px-8 py-16 shadow-[2px_8px_40px_0px_rgba(109,109,120,0.10)]">
-            <EmptyState title="Order placed successfully" description={successDescription} />
-            <div className="mt-8 flex justify-center">
-              <Link
-                href={browseHref}
-                className="inline-flex h-12 items-center justify-center rounded-full bg-amber-500 px-6 text-base font-semibold text-white transition-colors hover:bg-amber-600"
-              >
-                Continue Shopping
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="bg-slate-50 px-5 py-15">
@@ -241,7 +220,7 @@ function CheckoutShell({
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-5">
+                  {/* <div className="flex flex-col gap-5">
                     <div className="flex flex-col gap-1">
                       <h2 className="text-neutral-800 text-2xl font-bold leading-8">Payment Information</h2>
                       <p className="text-neutral-600 text-sm leading-5">
@@ -267,7 +246,7 @@ function CheckoutShell({
                     <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-neutral-700">
                       Payment details are secure and encrypted in a real checkout. This demo only simulates the experience.
                     </div>
-                  </div>
+                  </div> */}
                 </div>
               </form>
 
@@ -285,7 +264,11 @@ function CheckoutShell({
                     </div>
                     <div className="flex items-center justify-between text-neutral-700">
                       <span>Delivery</span>
-                      <span className="font-semibold">{formatEuro(DELIVERY_FEE)}</span>
+                      <span className="font-semibold">{formatEuro(shippingAmount)}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-neutral-700">
+                      <span>Tax (21% VAT)</span>
+                      <span className="font-semibold">{formatEuro(taxAmount)}</span>
                     </div>
                     <div className="h-px bg-slate-100" />
                     <div className="flex items-center justify-between text-neutral-800">
@@ -402,9 +385,20 @@ function CheckoutShell({
                   <button
                     type="submit"
                     form="checkout-form"
-                    className="h-12 w-full rounded-full bg-amber-500 px-4 text-base font-semibold text-white transition-colors hover:bg-amber-600"
+                    disabled={isPending}
+                    className="h-12 w-full rounded-full bg-amber-500 px-4 text-base font-semibold text-white transition-colors hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    Make Payment - {formatEuro(finalTotal)}
+                    {isPending ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processing...
+                      </>
+                    ) : (
+                      `Make Payment - ${formatEuro(finalTotal)}`
+                    )}
                   </button>
                 </div>
               </aside>
@@ -426,8 +420,74 @@ export default function CheckoutPageClient({
     isDemoMode ? demoFormState : initialFormState,
   );
   const [errors, setErrors] = useState<Partial<Record<keyof CheckoutFormState, string>>>({});
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isPending, setIsPending] = useState(false);
   const [localDemoItems, setLocalDemoItems] = useState<CartItem[]>(demoItems);
+  const [isAutofilled, setIsAutofilled] = useState(false);
+
+  useEffect(() => {
+    if (isDemoMode || isAutofilled) return;
+
+    const storedUser = localStorage.getItem('auth_user');
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        
+        // Split name if first/last are missing
+        let firstName = user.firstName || user.firstname || user.first_name || '';
+        let lastName = user.lastName || user.lastname || user.last_name || '';
+        
+        if (!firstName && user.name) {
+          const parts = user.name.trim().split(/\s+/);
+          firstName = parts[0] || '';
+          lastName = parts.slice(1).join(' ') || '';
+        }
+
+        // Initial pre-fill from user object
+        setForm(prev => ({
+          ...prev,
+          firstName: firstName || prev.firstName,
+          lastName: lastName || prev.lastName,
+          email: user.email || prev.email,
+          mobileNumber: user.phone || user.mobile || user.mobile_number || user.mobileNumber || prev.mobileNumber,
+        }));
+
+        // Fetch addresses for more complete pre-fill
+        fetch('/api/account/addresses')
+          .then(res => res.json())
+          .then(data => {
+            const addresses = data.data || data.addresses || (Array.isArray(data) ? data : []);
+            if (addresses.length > 0) {
+              // Prefer shipping, then billing, then first available
+              const addr = addresses.find((a: any) => a.type === 'shipping') || 
+                           addresses.find((a: any) => a.type === 'billing') || 
+                           addresses[0];
+              
+              setForm(prev => ({
+                ...prev,
+                firstName: addr.firstname || firstName || prev.firstName,
+                lastName: addr.lastname || lastName || prev.lastName,
+                streetAddress: addr.address || addr.street || addr.address_1 || addr.street_address || prev.streetAddress,
+                city: addr.city || prev.city,
+                state: addr.state || addr.province || addr.region || addr.province_id || prev.state,
+                postcode: addr.postalcode || addr.postcode || addr.zip || addr.postal_code || prev.postcode,
+                country: addr.country_id === 'NL' ? 'Netherlands' : 
+                         addr.country_id === 'BE' ? 'Belgium' : 
+                         addr.country_id === 'DE' ? 'Germany' : 
+                         (addr.country_name || addr.country || prev.country),
+              }));
+            }
+            setIsAutofilled(true);
+          })
+          .catch(err => {
+            console.error('Failed to fetch addresses for autofill:', err);
+            setIsAutofilled(true); // Don't keep trying if it fails
+          });
+      } catch (e) {
+        console.error('Failed to parse auth_user for autofill:', e);
+      }
+    }
+  }, [isDemoMode, isAutofilled]);
+
 
   const handleChange = (field: keyof CheckoutFormState, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -445,9 +505,6 @@ export default function CheckoutPageClient({
       "city",
       "state",
       "postcode",
-      "cardNumber",
-      "expiryDate",
-      "cvv",
     ];
 
     for (const field of requiredFields) {
@@ -502,24 +559,79 @@ export default function CheckoutPageClient({
     cart.decrementItemQuantity(key);
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (items.length === 0 || !validate()) {
       return;
     }
 
-    if (!isDemoMode) {
-      cart.clearCart();
-    }
+    setIsPending(true);
 
-    setIsSubmitted(true);
+    const shippingAmount = items.length > 0 ? DELIVERY_FEE : 0;
+    const taxAmount = (totalAmount + shippingAmount) * 0.21;
+    const finalTotal = totalAmount + shippingAmount + taxAmount;
+
+    const orderData = {
+      status: "pending",
+      notes: "Customer order via checkout",
+      billing_firstname: form.firstName,
+      billing_lastname: form.lastName,
+      billing_email: form.email,
+      billing_phone: form.mobileNumber,
+      billing_address: form.streetAddress,
+      billing_city: form.city,
+      billing_postalcode: form.postcode,
+      billing_country_id: form.country === "Netherlands" ? "NL" : form.country === "Belgium" ? "BE" : "DE",
+      shipping_amount: shippingAmount,
+      tax_amount: taxAmount,
+      total: finalTotal,
+      order_items: items.map(item => ({
+        product_id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity
+      }))
+    };
+
+    try {
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      const json = await response.json();
+
+      if (!response.ok) {
+        throw new Error(json.message || json.error || "Failed to create order");
+      }
+
+      if (!isDemoMode) {
+        cart.clearCart();
+      }
+      
+      if (!isDemoMode && json.payment_url) {
+        window.location.href = json.payment_url;
+        return;
+      }
+      
+      setOrderNumber(json.data?.number || null);
+      setIsSubmitted(true);
+      toast.success("Order placed successfully!");
+    } catch (error) {
+      console.error("Checkout error:", error);
+      toast.error("Failed to place order. Please check your details and try again.");
+    } finally {
+      setIsPending(false);
+    }
   };
 
   return (
     <CheckoutShell
       items={items}
-      isSubmitted={isSubmitted}
       totalAmount={totalAmount}
       removeItem={removeItem}
       incrementItemQuantity={incrementItemQuantity}
@@ -529,11 +641,7 @@ export default function CheckoutPageClient({
       errors={errors}
       handleChange={handleChange}
       browseHref={isDemoMode ? "/category/demo" : "/products"}
-      successDescription={
-        isDemoMode
-          ? "This demo checkout completed successfully. The live cart was left unchanged."
-          : "This is a demo checkout flow. Your cart has been cleared and no payment was processed."
-      }
+      isPending={isPending}
     />
   );
 }

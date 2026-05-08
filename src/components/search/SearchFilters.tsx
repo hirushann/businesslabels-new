@@ -179,9 +179,6 @@ function pillOptions(rawResponse: unknown, responseKey: PillFilterConfig["respon
       glue?: {
         options?: unknown;
       };
-      kern?: {
-        options?: unknown;
-      };
     };
   }).pillFilters?.[responseKey]?.options;
 

@@ -1,13 +1,9 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { LinkProps } from "next/link";
-import { buildCartItemKey, useCart } from "@/components/CartProvider";
-import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
-import { type WarrantyRawData, normalizeWarrantyOptions } from "@/lib/utils/warranty";
-import WarrantyOptionsContent from "@/components/WarrantyOptionsContent";
+import { useCart } from "@/components/CartProvider";
 
 export type ProductRouteType = "simple" | "variable";
 
@@ -26,12 +22,6 @@ export type ProductCardData = {
   slug?: string | null;
   type?: ProductRouteType | null;
   packing_group?: number | null;
-  /**
-   * warranty: undefined  → not fetched yet (lazy-fetch on first "Add" click)
-   * warranty: null       → product has no warranty
-   * warranty: object     → warranty data available
-   */
-  warranty?: WarrantyRawData | null;
 };
 
 type ProductCardProps = {
@@ -60,7 +50,6 @@ export function lastCategoryLabel(categories: ProductCardData["categories"]): st
 
 export default function ProductCard({ product, href, onClick }: ProductCardProps) {
   const { addItem, openCart } = useCart();
-  console.log("Rendering ProductCard for product:", product);
   const productName = product.name ?? "";
   const categoryBadge = lastCategoryLabel(product.categories);
   const features = featureLines(product);
@@ -71,100 +60,25 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
     (!hasPrice || (hasPrice && (product.price !== undefined && product.price !== null) && product.originalPrice > product.price));
   const imageSrc = normalizeText(product.mainImage) || "https://placehold.co/600x400";
 
-  const [isWarrantyOpen, setIsWarrantyOpen] = useState(false);
-  const [selectedWarrantyId, setSelectedWarrantyId] = useState<number | null>(null);
-  // undefined = not fetched, null = no warranty, object = warranty data
-  const [fetchedWarranty, setFetchedWarranty] = useState<WarrantyRawData | null | undefined>(
-    product.warranty !== undefined ? product.warranty : undefined,
-  );
-  const [warrantyFetching, setWarrantyFetching] = useState(false);
-
-  // If product.warranty prop changes (e.g. parent re-renders with data), sync it
-  const effectiveWarranty = product.warranty !== undefined ? product.warranty : fetchedWarranty;
-
-  const normalizedWarranty = useMemo(() => normalizeWarrantyOptions(effectiveWarranty), [effectiveWarranty]);
-  const hasWarrantyOptions = normalizedWarranty.options.length > 0;
-
-  const fetchWarranty = useCallback(async () => {
-    if (!product.slug) return null;
-    setWarrantyFetching(true);
-    try {
-      const params = new URLSearchParams({ slug: product.slug });
-      if (product.type) params.set("type", product.type);
-      const res = await fetch(`/api/products/warranty?${params.toString()}`);
-      const json = (await res.json()) as { warranty: WarrantyRawData | null };
-      const w = json.warranty ?? null;
-      setFetchedWarranty(w);
-      return w;
-    } catch {
-      setFetchedWarranty(null);
-      return null;
-    } finally {
-      setWarrantyFetching(false);
-    }
-  }, [product.slug, product.type]);
-
-  const activeWarrantyId = selectedWarrantyId ?? normalizedWarranty.defaultOptionId;
-  const selectedWarrantyOption = normalizedWarranty.options.find((o) => o.id === activeWarrantyId) ?? null;
-
-  const productInput = {
-    id: product.id,
-    slug: product.slug,
-    type: product.type,
-    name: product.name,
-    sku: product.sku,
-    price: product.price ?? null,
-    mainImage: product.mainImage ?? null,
-  };
-
-  const handleAddToCart = async (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleAddToCart = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
 
-    // If warranty hasn't been fetched yet (undefined = not indexed in ES), fetch it now
-    let resolvedWarranty = effectiveWarranty;
-    if (resolvedWarranty === undefined) {
-      resolvedWarranty = await fetchWarranty();
-    }
-
-    const opts = normalizeWarrantyOptions(resolvedWarranty);
-    if (opts.options.length > 0) {
-      setIsWarrantyOpen(true);
-      return;
-    }
-
-    addItem(productInput);
-    openCart();
-  };
-
-  const handleConfirmWarrantyAdd = () => {
-    addItem(productInput);
-
-    if (selectedWarrantyOption && selectedWarrantyOption.price > 0) {
-      const parentKey = buildCartItemKey(productInput);
-      addItem({
-        id: `warranty-${parentKey}-${selectedWarrantyOption.id}`,
-        name: selectedWarrantyOption.name,
-        sku: `${product.sku}-WARRANTY`,
-        price: selectedWarrantyOption.price,
-        mainImage: product.mainImage ?? null,
-        itemKind: "warranty",
-        linkedToKey: parentKey,
-        warranty: {
-          optionId: selectedWarrantyOption.id,
-          durationMonths: selectedWarrantyOption.durationMonths,
-          parentSku: product.sku,
-          parentName: product.name,
-        },
-      });
-    }
-
-    setIsWarrantyOpen(false);
-    setSelectedWarrantyId(null);
+    addItem({
+      id: product.id,
+      slug: product.slug,
+      type: product.type,
+      name: product.name,
+      sku: product.sku,
+      price: product.price ?? null,
+      mainImage: product.mainImage ?? null,
+    });
+    
     openCart();
   };
 
   const cardContent = (
+    // console.log("Rendering ProductCard for:", product)
     <div className="mx-auto h-full w-full max-w-88 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] border border-slate-100 flex flex-col overflow-hidden hover:shadow-lg transition-shadow">
       <div className="relative h-56 bg-slate-100 overflow-hidden">
         <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
@@ -250,44 +164,19 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
               </div>
               <span className="text-zinc-500 text-xs font-normal font-['Segoe_UI'] leading-4">ex. VAT</span>
             </div>
-            <Popover
-              open={isWarrantyOpen}
-              onOpenChange={(open) => {
-                if (!open) {
-                  setIsWarrantyOpen(false);
-                }
-              }}
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              className="px-4 py-2.5 bg-amber-500 rounded-full flex items-center gap-2 text-white text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors"
+              aria-label={`Add ${product.name} to cart`}
             >
-              <PopoverAnchor asChild>
-                <button
-                  type="button"
-                  onClick={handleAddToCart}
-                  disabled={warrantyFetching}
-                  className="px-4 py-2.5 bg-amber-500 rounded-full flex items-center gap-2 text-white text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors disabled:opacity-70 disabled:cursor-wait"
-                  aria-label={`Add ${product.name} to cart`}
-                >
-                  {warrantyFetching ? "..." : "Add"}
-                  <svg width="22" height="16" viewBox="0 0 22 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M7.33268 14.6663C7.83894 14.6663 8.24935 14.3679 8.24935 13.9997C8.24935 13.6315 7.83894 13.333 7.33268 13.333C6.82642 13.333 6.41602 13.6315 6.41602 13.9997C6.41602 14.3679 6.82642 14.6663 7.33268 14.6663Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M17.4167 14.6663C17.9229 14.6663 18.3333 14.3679 18.3333 13.9997C18.3333 13.6315 17.9229 13.333 17.4167 13.333C16.9104 13.333 16.5 13.6315 16.5 13.9997C16.5 14.3679 16.9104 14.6663 17.4167 14.6663Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M1.87891 1.36621H3.71224L6.15057 9.64621C6.24002 9.94945 6.47202 10.2205 6.80664 10.4128C7.14126 10.605 7.55757 10.7064 7.9839 10.6995H16.9489C17.3661 10.6991 17.7707 10.5951 18.0957 10.4048C18.4207 10.2145 18.6467 9.94923 18.7364 9.65288L20.2489 4.69954H4.69307" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-              </PopoverAnchor>
-              {hasWarrantyOptions ? (
-                <PopoverContent side="top" align="end" className="w-[420px] p-4" onClick={(e) => e.stopPropagation()}>
-                  <WarrantyOptionsContent
-                    options={normalizedWarranty.options}
-                    defaultOptionId={normalizedWarranty.defaultOptionId}
-                    selectedId={selectedWarrantyId}
-                    instanceId={product.id}
-                    onSelect={setSelectedWarrantyId}
-                    onCancel={() => setIsWarrantyOpen(false)}
-                    onConfirm={handleConfirmWarrantyAdd}
-                  />
-                </PopoverContent>
-              ) : null}
-            </Popover>
+              Add
+              <svg width="22" height="16" viewBox="0 0 22 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7.33268 14.6663C7.83894 14.6663 8.24935 14.3679 8.24935 13.9997C8.24935 13.6315 7.83894 13.333 7.33268 13.333C6.82642 13.333 6.41602 13.6315 6.41602 13.9997C6.41602 14.3679 6.82642 14.6663 7.33268 14.6663Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M17.4167 14.6663C17.9229 14.6663 18.3333 14.3679 18.3333 13.9997C18.3333 13.6315 17.9229 13.333 17.4167 13.333C16.9104 13.333 16.5 13.6315 16.5 13.9997C16.5 14.3679 16.9104 14.6663 17.4167 14.6663Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M1.87891 1.36621H3.71224L6.15057 9.64621C6.24002 9.94945 6.47202 10.2205 6.80664 10.4128C7.14126 10.605 7.55757 10.7064 7.9839 10.6995H16.9489C17.3661 10.6991 17.7707 10.5951 18.0957 10.4048C18.4207 10.2145 18.6467 9.94923 18.7364 9.65288L20.2489 4.69954H4.69307" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
           </div>
         </div>
       </div>

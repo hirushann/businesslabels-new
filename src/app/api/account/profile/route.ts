@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+const API_BASE_URL = process.env.BBNL_API_BASE_URL;
+
 function backendUrl(baseUrl: string, path: string) {
   return `${baseUrl.replace(/\/$/, '')}${path}`;
 }
 
 async function readResponseBody(response: Response) {
   const text = await response.text();
-
-  if (!text) {
-    return {};
-  }
-
+  if (!text) return {};
   try {
     return JSON.parse(text);
   } catch {
@@ -19,25 +17,18 @@ async function readResponseBody(response: Response) {
 }
 
 export async function GET(request: NextRequest) {
-  const apiBaseUrl = process.env.BBNL_API_BASE_URL;
   const authToken = request.cookies.get('auth_token')?.value;
 
-  if (!apiBaseUrl) {
-    return NextResponse.json(
-      { message: 'Backend API URL is not configured.' },
-      { status: 500 }
-    );
+  if (!API_BASE_URL) {
+    return NextResponse.json({ message: 'Backend API URL is not configured.' }, { status: 500 });
   }
 
   if (!authToken) {
-    return NextResponse.json(
-      { message: 'Please login to view your addresses.' },
-      { status: 401 }
-    );
+    return NextResponse.json({ message: 'Please login.' }, { status: 401 });
   }
 
   try {
-    const response = await fetch(backendUrl(apiBaseUrl, '/api/user/addresses'), {
+    const response = await fetch(backendUrl(API_BASE_URL, '/api/profile'), {
       method: 'GET',
       headers: {
         Accept: 'application/json',
@@ -47,23 +38,18 @@ export async function GET(request: NextRequest) {
     });
 
     const data = await readResponseBody(response);
-
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Error fetching account addresses:', error);
-
-    return NextResponse.json(
-      { message: 'Unable to load addresses right now.' },
-      { status: 500 }
-    );
+    console.error('Error fetching profile:', error);
+    return NextResponse.json({ message: 'Unable to load profile.' }, { status: 500 });
   }
 }
-export async function POST(request: NextRequest) {
-  const apiBaseUrl = process.env.BBNL_API_BASE_URL;
+
+export async function PUT(request: NextRequest) {
   const authToken = request.cookies.get('auth_token')?.value;
   const body = await request.json();
 
-  if (!apiBaseUrl) {
+  if (!API_BASE_URL) {
     return NextResponse.json({ message: 'Backend API URL is not configured.' }, { status: 500 });
   }
 
@@ -72,8 +58,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const response = await fetch(backendUrl(apiBaseUrl, '/api/user/addresses'), {
-      method: 'POST',
+    const response = await fetch(backendUrl(API_BASE_URL, '/api/user/profile'), {
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
@@ -85,7 +71,7 @@ export async function POST(request: NextRequest) {
     const data = await readResponseBody(response);
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Error saving account address:', error);
-    return NextResponse.json({ message: 'Unable to save address right now.' }, { status: 500 });
+    console.error('Error updating profile:', error);
+    return NextResponse.json({ message: 'Unable to update profile.' }, { status: 500 });
   }
 }

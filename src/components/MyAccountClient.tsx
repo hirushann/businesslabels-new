@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 
-type Tab = 'dashboard' | 'orders' | 'downloads' | 'addresses' | 'details' | 'printers' | 'favourites';
+type Tab = 'dashboard' | 'orders' | 'addresses' | 'details' | 'printers' | 'favourites';
 
 type StoredUser = Record<string, unknown>;
 type OrderStatus = 'completed' | 'processing' | 'pending' | 'cancelled' | 'failed' | string;
@@ -16,19 +16,37 @@ type AccountOrder = {
   status: OrderStatus;
   total: string;
   items: number | null;
+  subtotal?: string;
+  shipping_amount?: string;
+  tax_amount?: string;
+  items_list?: Array<{
+    id: number;
+    name: string;
+    quantity: number;
+    price: number;
+    total: number;
+  }>;
+  billing_address?: AccountAddress;
+  shipping_address?: AccountAddress;
 };
 type AddressType = 'billing' | 'shipping' | string;
 type AccountAddress = {
   id: string;
   type: AddressType;
   name: string;
+  firstname?: string;
+  lastname?: string;
   company: string;
-  lines: string[];
+  address1: string;
+  address2: string;
+  postcode?: string;
+  city?: string;
+  phone?: string;
   country: string;
 };
 
 const emptyUser: StoredUser = {};
-const validTabs: Tab[] = ['dashboard', 'orders', 'downloads', 'addresses', 'details', 'printers', 'favourites'];
+const validTabs: Tab[] = ['dashboard', 'orders', 'addresses', 'details', 'printers', 'favourites'];
 
 function getValidTab(value: string | null): Tab | null {
   return validTabs.includes(value as Tab) ? (value as Tab) : null;
@@ -230,13 +248,41 @@ function extractOrderList(payload: unknown): unknown[] {
 function normalizeOrders(payload: unknown): AccountOrder[] {
   return extractOrderList(payload)
     .filter(isPlainObject)
-    .map((order) => ({
-      id: formatOrderId(order),
-      date: formatOrderDate(order),
-      status: readStringValue(order, ['status', 'order_status', 'fulfillment_status']) || 'Pending',
-      total: formatOrderTotal(order),
-      items: readOrderItemCount(order),
-    }));
+    .map((order, index) => {
+      const itemsRaw = (order.items ?? order.line_items ?? order.order_items) as any[];
+      const billingRaw = (order.billing_address ?? order.billpayer?.address) as Record<string, unknown>;
+      const shippingRaw = (order.shipping_address ?? order.shipping_address) as Record<string, unknown>;
+
+      return {
+        id: formatOrderId(order),
+        date: formatOrderDate(order),
+        status: readStringValue(order, ['status', 'order_status', 'fulfillment_status']) || 'Pending',
+        total: formatOrderTotal(order),
+        items: readOrderItemCount(order),
+        subtotal: formatEuro(readNumberValue(order, ['subtotal']) || 0),
+        shipping_amount: formatEuro(readNumberValue(order, ['shipping_amount']) || 0),
+        tax_amount: formatEuro(readNumberValue(order, ['tax_amount']) || 0),
+        items_list: Array.isArray(itemsRaw) ? itemsRaw.map(item => ({
+          id: item.id,
+          name: item.name || item.product?.name || 'Product',
+          quantity: item.quantity,
+          price: item.price,
+          total: item.total || (item.price * item.quantity),
+        })) : [],
+        billing_address: billingRaw ? normalizeAddress(billingRaw, index) : undefined,
+        shipping_address: shippingRaw ? normalizeAddress(shippingRaw, index) : undefined,
+      };
+    });
+}
+
+function OrderSkeleton() {
+  return (
+    <div className="flex flex-col gap-6 w-full animate-pulse">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="h-24 w-full bg-slate-100 rounded-[24px] border border-slate-200" />
+      ))}
+    </div>
+  );
 }
 
 async function requestAccountOrders() {
@@ -246,6 +292,7 @@ async function requestAccountOrders() {
     },
   });
   const data = await response.json().catch(() => ({}));
+  console.log('Orders API Response:', data);
 
   if (!response.ok) {
     throw new Error(
@@ -282,19 +329,25 @@ function formatAddressName(address: Record<string, unknown>) {
 
 function normalizeAddress(address: Record<string, unknown>, index: number): AccountAddress {
   const street = readStringValue(address, ['street', 'address', 'address_1', 'line1', 'street_address']);
-  const street2 = readStringValue(address, ['street2', 'address_2', 'line2', 'apartment', 'suite']);
-  const postcode = readStringValue(address, ['postcode', 'postal_code', 'zip', 'zip_code']);
+  const street2 = readStringValue(address, ['street2', 'address2', 'address_2', 'line2', 'apartment', 'suite']);
+  const postcode = readStringValue(address, ['postcode', 'postalcode', 'postal_code', 'zip', 'zip_code']);
   const city = readStringValue(address, ['city', 'town']);
   const state = readStringValue(address, ['state', 'province', 'region']);
-  const country = readStringValue(address, ['country', 'country_name']) || 'Netherlands';
+  const country = readStringValue(address, ['country', 'country_name', 'country_id']) || 'Netherlands';
   const cityLine = [postcode, city, state].filter(Boolean).join(' ');
 
   return {
     id: formatAddressId(address, index),
     type: readAddressType(address) || 'shipping',
     name: formatAddressName(address),
+    firstname: readStringValue(address, ['firstname', 'first_name', 'billing_first_name', 'shipping_first_name']),
+    lastname: readStringValue(address, ['lastname', 'last_name', 'billing_last_name', 'shipping_last_name']),
     company: readStringValue(address, ['company', 'company_name', 'business_name']),
-    lines: [street, street2, cityLine].filter(Boolean),
+    address1: street,
+    address2: street2,
+    postcode,
+    city,
+    phone: readStringValue(address, ['phone', 'telephone', 'mobile']),
     country,
   };
 }
@@ -343,6 +396,7 @@ async function requestAccountAddresses() {
     },
   });
   const data = await response.json().catch(() => ({}));
+  console.log('Addresses API Response:', data);
 
   if (!response.ok) {
     throw new Error(
@@ -437,11 +491,6 @@ function MyAccountContent() {
         <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
       </svg>
     )},
-    { id: 'downloads', label: 'Downloads', icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>
-      </svg>
-    )},
     { id: 'addresses', label: 'Addresses', icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
@@ -516,7 +565,6 @@ function MyAccountContent() {
                 {activeTab === 'orders' && <OrdersView />}
                 {activeTab === 'printers' && <PrintersView />}
                 {activeTab === 'favourites' && <FavouriteProductsView />}
-                {activeTab === 'downloads' && <DownloadsView />}
                 {activeTab === 'addresses' && <AddressesView />}
                 {activeTab === 'details' && <AccountDetailsView user={user} />}
              </div>
@@ -531,6 +579,28 @@ function DashboardView({ setActiveTab, user }: { setActiveTab: (tab: Tab) => voi
   const displayName = userDisplayName(user);
   const email = userString(user, ['email']);
   const avatarUrl = userString(user, ['avatar', 'avatar_url', 'profile_photo_url', 'image']);
+  const [orders, setOrders] = useState<AccountOrder[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadDashboardData() {
+      try {
+        const nextOrders = await requestAccountOrders();
+        setOrders(nextOrders);
+      } catch (error) {
+        console.error('Failed to load dashboard orders:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    void loadDashboardData();
+  }, []);
+
+  const stats = [
+    { label: 'Recent Orders', value: isLoading ? '...' : String(orders.length), sub: 'Lifetime total' },
+    { label: 'Active Printers', value: '3', sub: 'Status: Online' },
+    { label: 'Rewards Balance', value: '€ 45.00', sub: '450 pts' },
+  ];
 
   return (
     <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -552,11 +622,7 @@ function DashboardView({ setActiveTab, user }: { setActiveTab: (tab: Tab) => voi
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {[
-          { label: 'Recent Orders', value: '12', sub: 'Last 30 days' },
-          { label: 'Active Printers', value: '3', sub: 'Status: Online' },
-          { label: 'Rewards Balance', value: '€ 45.00', sub: '450 pts' },
-        ].map((stat) => (
+        {stats.map((stat) => (
           <div key={stat.label} className="p-8 rounded-3xl bg-slate-50 border border-slate-100 flex flex-col gap-3 group hover:border-amber-200 transition-all cursor-default">
             <span className="text-neutral-500 text-sm font-bold uppercase tracking-widest">{stat.label}</span>
             <div className="flex flex-col">
@@ -565,6 +631,67 @@ function DashboardView({ setActiveTab, user }: { setActiveTab: (tab: Tab) => voi
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Recent Orders List Widget */}
+      <div className="flex flex-col gap-6">
+        <div className="flex items-center justify-between px-1">
+          <h3 className="text-xl font-black text-neutral-800 tracking-tight">Recent Orders</h3>
+          <button 
+            onClick={() => setActiveTab('orders')}
+            className="text-amber-500 font-black text-xs uppercase tracking-widest hover:underline"
+          >
+            View All Orders
+          </button>
+        </div>
+        
+        {isLoading ? (
+          <div className="flex flex-col gap-4">
+            {[1, 2].map(i => <div key={i} className="h-20 w-full bg-slate-50 rounded-2xl animate-pulse border border-slate-100" />)}
+          </div>
+        ) : orders.length === 0 ? (
+          <div className="p-10 rounded-[32px] bg-slate-50 border border-dashed border-slate-200 text-center">
+            <p className="text-neutral-400 font-bold">No orders found yet</p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {orders.slice(0, 3).map((order) => (
+              <div key={order.id} className="group p-5 rounded-[24px] bg-white border border-slate-100 hover:border-amber-200 hover:shadow-lg hover:shadow-amber-500/5 transition-all flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="size-12 rounded-2xl bg-slate-50 flex items-center justify-center text-neutral-400 group-hover:bg-amber-50 group-hover:text-amber-500 transition-colors">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/>
+                    </svg>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-bold text-neutral-800">{order.id}</span>
+                    <span className="text-xs font-medium text-neutral-400">{order.date}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-6">
+                  <div className="hidden sm:flex flex-col items-end">
+                    <span className="text-sm font-black text-neutral-800">{order.total}</span>
+                    <span className={`text-[10px] font-black uppercase tracking-tight ${orderStatusClass(order.status)} px-2 py-0.5 rounded-full`}>
+                      {order.status}
+                    </span>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      // We need to set active tab to orders AND set selected order
+                      // But for simplicity, we just link to orders tab
+                      setActiveTab('orders');
+                    }}
+                    className="p-2.5 rounded-full bg-slate-50 text-neutral-400 hover:bg-amber-500 hover:text-white transition-all"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="m9 18 6-6-6-6"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="mt-4 p-10 rounded-[40px] bg-sky-950 text-white relative overflow-hidden group">
@@ -596,6 +723,7 @@ function OrdersView() {
   const [orders, setOrders] = useState<AccountOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
+  const [selectedOrder, setSelectedOrder] = useState<AccountOrder | null>(null);
 
   const fetchOrders = async () => {
     setIsLoading(true);
@@ -648,12 +776,7 @@ function OrdersView() {
       </div>
 
       {isLoading ? (
-        <div className="flex min-h-64 items-center justify-center rounded-3xl border border-slate-100 bg-slate-50">
-          <div className="flex flex-col items-center gap-3 text-neutral-500">
-            <div className="size-10 animate-spin rounded-full border-4 border-slate-200 border-t-amber-500" />
-            <p className="font-bold">Loading orders...</p>
-          </div>
-        </div>
+        <OrderSkeleton />
       ) : errorMessage ? (
         <div className="rounded-3xl border border-red-100 bg-red-50 p-8">
           <h3 className="text-lg font-black text-red-700">Orders could not be loaded</h3>
@@ -667,14 +790,19 @@ function OrdersView() {
           </button>
         </div>
       ) : orders.length === 0 ? (
-        <div className="rounded-3xl border border-slate-100 bg-slate-50 p-10 text-center">
-          <h3 className="text-xl font-black text-neutral-800">No orders yet</h3>
-          <p className="mt-2 font-medium text-neutral-500">Your order history will appear here after your first purchase.</p>
+        <div className="rounded-[40px] border-2 border-dashed border-slate-200 bg-slate-50/50 p-12 text-center flex flex-col items-center">
+          <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mb-6 text-slate-300">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><line x1="3" x2="21" y1="6" y2="6"/><path d="m16 10-4 4-4-4"/>
+            </svg>
+          </div>
+          <h3 className="text-2xl font-black text-neutral-800">No orders found</h3>
+          <p className="mt-2 font-medium text-neutral-400 max-w-sm mx-auto">Your order history is currently empty. Start shopping to see your orders here.</p>
           <Link
             href="/products"
-            className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-amber-500 px-7 text-sm font-black text-white transition-colors hover:bg-amber-600"
+            className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-sky-950 px-10 text-sm font-black text-white transition-all hover:bg-amber-500 hover:shadow-xl hover:shadow-amber-500/20"
           >
-            Browse products
+            Continue Shopping
           </Link>
         </div>
       ) : (
@@ -704,7 +832,10 @@ function OrdersView() {
                      <span className="text-neutral-400 text-xs font-medium">{order.items === null ? 'Items unavailable' : `${order.items} ${order.items === 1 ? 'item' : 'items'}`}</span>
                   </td>
                   <td className="py-6 text-right pr-2">
-                    <button className="text-neutral-400 font-bold text-sm bg-white border border-slate-200 px-5 py-2.5 rounded-full group-hover:bg-amber-500 group-hover:text-white group-hover:border-amber-500 transition-all shadow-sm">
+                    <button 
+                      onClick={() => setSelectedOrder(order)}
+                      className="text-neutral-400 font-bold text-sm bg-white border border-slate-200 px-5 py-2.5 rounded-full group-hover:bg-amber-500 group-hover:text-white group-hover:border-amber-500 transition-all shadow-sm"
+                    >
                       Details
                     </button>
                   </td>
@@ -712,6 +843,115 @@ function OrdersView() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Order Details Modal */}
+      {selectedOrder && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+          <div 
+            className="absolute inset-0 bg-sky-950/40 backdrop-blur-sm animate-in fade-in duration-300" 
+            onClick={() => setSelectedOrder(null)}
+          />
+          <div className="relative w-full max-w-2xl bg-white rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <div className="flex flex-col gap-1">
+                <h3 className="text-2xl font-black text-neutral-800 tracking-tight">Order {selectedOrder.id}</h3>
+                <p className="text-sm font-medium text-neutral-500">Placed on {selectedOrder.date}</p>
+              </div>
+              <button 
+                onClick={() => setSelectedOrder(null)}
+                className="size-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-neutral-400 hover:text-neutral-800 hover:border-neutral-300 transition-all shadow-sm"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 6 6 18M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-8 flex flex-col gap-8 custom-scrollbar">
+              {/* Status Banner */}
+              <div className={`p-4 rounded-2xl flex items-center justify-between ${orderStatusClass(selectedOrder.status)}`}>
+                <span className="font-bold text-sm uppercase tracking-widest">Current Status</span>
+                <span className="font-black text-sm uppercase tracking-widest">{selectedOrder.status}</span>
+              </div>
+
+              {/* Items List */}
+              <div className="flex flex-col gap-4">
+                <h4 className="text-xs font-black text-neutral-400 uppercase tracking-widest px-1">Order Items</h4>
+                <div className="flex flex-col gap-3">
+                  {selectedOrder.items_list?.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-bold text-neutral-800">{item.name}</span>
+                        <span className="text-xs font-medium text-neutral-400">Quantity: {item.quantity}</span>
+                      </div>
+                      <span className="font-black text-neutral-800">{formatEuro(item.total)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Addresses */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex flex-col gap-4">
+                  <h4 className="text-xs font-black text-neutral-400 uppercase tracking-widest px-1">Billing Address</h4>
+                  <div className="p-5 rounded-2xl border border-slate-100 bg-white shadow-sm flex flex-col gap-1 text-sm font-medium text-neutral-600">
+                    <span className="font-bold text-neutral-800 mb-1 text-base">{selectedOrder.billing_address?.name}</span>
+                    {selectedOrder.billing_address?.company && <span>{selectedOrder.billing_address.company}</span>}
+                    {selectedOrder.billing_address?.address1 && <span>{selectedOrder.billing_address.address1}</span>}
+                    {selectedOrder.billing_address?.address2 && <span>{selectedOrder.billing_address.address2}</span>}
+                    <span>{selectedOrder.billing_address?.postcode} {selectedOrder.billing_address?.city}</span>
+                    <span>{selectedOrder.billing_address?.country}</span>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-4">
+                  <h4 className="text-xs font-black text-neutral-400 uppercase tracking-widest px-1">Shipping Address</h4>
+                  <div className="p-5 rounded-2xl border border-slate-100 bg-white shadow-sm flex flex-col gap-1 text-sm font-medium text-neutral-600">
+                    <span className="font-bold text-neutral-800 mb-1 text-base">{selectedOrder.shipping_address?.name}</span>
+                    {selectedOrder.shipping_address?.company && <span>{selectedOrder.shipping_address.company}</span>}
+                    {selectedOrder.shipping_address?.address1 && <span>{selectedOrder.shipping_address.address1}</span>}
+                    {selectedOrder.shipping_address?.address2 && <span>{selectedOrder.shipping_address.address2}</span>}
+                    <span>{selectedOrder.shipping_address?.postcode} {selectedOrder.shipping_address?.city}</span>
+                    <span>{selectedOrder.shipping_address?.country}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Summary */}
+              <div className="flex flex-col gap-3 p-6 rounded-3xl bg-neutral-900 text-white mt-4">
+                <div className="flex justify-between text-sm text-neutral-400 font-bold">
+                  <span>Subtotal</span>
+                  <span>{selectedOrder.subtotal}</span>
+                </div>
+                <div className="flex justify-between text-sm text-neutral-400 font-bold">
+                  <span>Shipping</span>
+                  <span>{selectedOrder.shipping_amount}</span>
+                </div>
+                <div className="flex justify-between text-sm text-neutral-400 font-bold">
+                  <span>Tax</span>
+                  <span>{selectedOrder.tax_amount}</span>
+                </div>
+                <div className="h-px bg-white/10 my-1" />
+                <div className="flex justify-between text-xl font-black">
+                  <span>Total</span>
+                  <span className="text-amber-400">{selectedOrder.total}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-8 py-6 border-t border-slate-100 bg-slate-50/50">
+              <button 
+                onClick={() => setSelectedOrder(null)}
+                className="w-full h-12 bg-white border border-slate-200 text-neutral-800 font-black text-sm rounded-full hover:bg-slate-50 transition-all shadow-sm"
+              >
+                Close Order Details
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -855,28 +1095,6 @@ function FavouriteProductsView() {
   );
 }
 
-function DownloadsView() {
-  return (
-    <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-       <div className="flex flex-col gap-2">
-         <h2 className="text-3xl font-black text-neutral-800 tracking-tight">Downloads</h2>
-         <p className="text-neutral-500 font-medium">Access your digital manuals, drivers, and technical guides.</p>
-       </div>
-       <div className="flex flex-col items-center justify-center py-20 px-6 rounded-[40px] border-2 border-dashed border-slate-200 bg-slate-50/50">
-          <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mb-6 shadow-sm">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>
-            </svg>
-          </div>
-          <p className="text-neutral-400 font-bold text-center">Your digital library is currently empty</p>
-          <p className="text-neutral-400 text-sm mt-1 mb-8 text-center max-w-xs">Buy digital manuals or drivers to see them here.</p>
-          <Link href="/products" className="h-12 inline-flex items-center justify-center rounded-full bg-sky-950 px-10 text-sm font-black text-white hover:bg-amber-500 transition-all shadow-xl shadow-sky-950/20">
-            Browse Technical Assets
-          </Link>
-       </div>
-    </div>
-  );
-}
 
 function AddressesView() {
   const [editingAddress, setEditingAddress] = useState<'billing' | 'shipping' | null>(null);
@@ -927,90 +1145,9 @@ function AddressesView() {
     };
   }, []);
 
-  const billingAddress = addresses.find((address) => address.type.toLowerCase().includes('billing'));
-  const shippingAddress = addresses.find((address) => address.type.toLowerCase().includes('shipping'));
+  const billingAddress = addresses.find((address) => address.type?.toLowerCase() === 'billing' || address.type?.toLowerCase().includes('billing'));
+  const shippingAddress = addresses.find((address) => address.type?.toLowerCase() === 'shipping' || address.type?.toLowerCase().includes('shipping'));
 
-  if (editingAddress) {
-    const isBilling = editingAddress === 'billing';
-    const inputClasses = "w-full h-14 px-6 rounded-2xl border border-slate-200 focus:border-amber-400 outline-none transition-all text-neutral-800 text-base bg-white focus:ring-[6px] focus:ring-amber-500/5 font-medium";
-    const labelClasses = "text-xs font-black text-neutral-500 uppercase tracking-widest mb-2.5 block ml-1";
-
-    return (
-      <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-right-4 duration-500">
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={() => setEditingAddress(null)}
-            className="w-10 h-10 rounded-full flex items-center justify-center border border-slate-200 text-neutral-400 hover:text-amber-500 hover:border-amber-500 transition-all"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="m15 18-6-6 6-6"/>
-            </svg>
-          </button>
-          <div className="flex flex-col gap-1">
-            <h2 className="text-3xl font-black text-neutral-800 tracking-tight">
-              Edit {isBilling ? 'Billing' : 'Shipping'} Address
-            </h2>
-            <p className="text-neutral-500 font-medium">Please provide your {isBilling ? 'invoice' : 'delivery'} details below.</p>
-          </div>
-        </div>
-
-        <form className="flex flex-col gap-8 max-w-2xl" onSubmit={(e) => { e.preventDefault(); setEditingAddress(null); }}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className={labelClasses}>First name</label>
-              <input type="text" defaultValue="John" className={inputClasses} />
-            </div>
-            <div>
-              <label className={labelClasses}>Last name</label>
-              <input type="text" defaultValue="Doe" className={inputClasses} />
-            </div>
-          </div>
-
-          <div>
-            <label className={labelClasses}>Company Name (Optional)</label>
-            <input type="text" defaultValue="BusinessLabels Inc." className={inputClasses} />
-          </div>
-
-          <div>
-            <label className={labelClasses}>Street address</label>
-            <div className="flex flex-col gap-3">
-              <input type="text" placeholder="House number and street name" defaultValue="123 Business Parkway" className={inputClasses} />
-              <input type="text" placeholder="Apartment, suite, unit, etc. (optional)" defaultValue="Suite 101" className={inputClasses} />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-1">
-              <label className={labelClasses}>Postcode</label>
-              <input type="text" defaultValue="6741 GK" className={inputClasses} />
-            </div>
-            <div className="md:col-span-2">
-              <label className={labelClasses}>Town / City</label>
-              <input type="text" defaultValue="Ede" className={inputClasses} />
-            </div>
-          </div>
-
-          <div>
-            <label className={labelClasses}>Phone</label>
-            <input type="tel" defaultValue="+31 123 456 789" className={inputClasses} />
-          </div>
-
-          <div className="flex items-center gap-4 pt-4">
-            <button type="submit" className="h-14 rounded-full bg-amber-500 px-12 text-base font-black text-white hover:bg-amber-600 transition-all shadow-xl shadow-amber-500/30 uppercase tracking-widest">
-              Save Address
-            </button>
-            <button 
-              type="button" 
-              onClick={() => setEditingAddress(null)}
-              className="h-14 rounded-full bg-slate-100 px-12 text-base font-black text-neutral-600 hover:bg-slate-200 transition-all uppercase tracking-widest"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -1059,6 +1196,180 @@ function AddressesView() {
           />
         </div>
       )}
+
+      {editingAddress && (
+        <AddressEditModal 
+          type={editingAddress} 
+          onClose={() => setEditingAddress(null)} 
+          onSave={() => {
+            setEditingAddress(null);
+            void fetchAddresses();
+          }}
+          address={editingAddress === 'billing' ? billingAddress : shippingAddress}
+        />
+      )}
+    </div>
+  );
+}
+
+function AddressEditModal({ 
+  type, 
+  onClose, 
+  onSave, 
+  address 
+}: { 
+  type: 'billing' | 'shipping'; 
+  onClose: () => void; 
+  onSave: () => void;
+  address?: AccountAddress;
+}) {
+  const isBilling = type === 'billing';
+  const inputClasses = "w-full h-14 px-6 rounded-2xl border border-slate-200 focus:border-amber-400 outline-none transition-all text-neutral-800 text-base bg-white focus:ring-[6px] focus:ring-amber-500/5 font-medium";
+  const labelClasses = "text-xs font-black text-neutral-500 uppercase tracking-widest mb-2.5 block ml-1";
+
+  const [firstName, setFirstName] = useState(address?.firstname || '');
+  const [lastName, setLastName] = useState(address?.lastname || '');
+  const [company, setCompany] = useState(address?.company || '');
+  const [street, setStreet] = useState(address?.address1 || '');
+  const [street2, setStreet2] = useState(address?.address2 || '');
+  const [postcode, setPostcode] = useState(address?.postcode || '');
+  const [city, setCity] = useState(address?.city || '');
+  const [phone, setPhone] = useState(address?.phone || '');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+
+    try {
+      const payload = {
+        type,
+        name: `${firstName} ${lastName}`,
+        firstname: firstName,
+        lastname: lastName,
+        company_name: company,
+        address: street,
+        address2: street2,
+        postalcode: postcode,
+        city: city,
+        phone: phone,
+        country_id: 'NL',
+      };
+
+
+      const response = await fetch('/api/account/addresses', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const responseData = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(responseData.message || 'Failed to save address');
+      }
+
+      toast.success(`${isBilling ? 'Billing' : 'Shipping'} address saved`);
+      onSave();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to save address');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+      <div 
+        className="absolute inset-0 bg-sky-950/40 backdrop-blur-sm animate-in fade-in duration-300" 
+        onClick={onClose}
+      />
+      <div className="relative w-full max-w-2xl bg-white rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 max-h-[90vh] flex flex-col">
+        {/* Header */}
+        <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <div className="flex flex-col gap-1">
+            <h3 className="text-2xl font-black text-neutral-800 tracking-tight">
+              Edit {isBilling ? 'Billing' : 'Shipping'} Address
+            </h3>
+            <p className="text-sm font-medium text-neutral-500">Please provide your {isBilling ? 'invoice' : 'delivery'} details below.</p>
+          </div>
+          <button 
+            onClick={onClose}
+            className="size-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-neutral-400 hover:text-neutral-800 hover:border-neutral-300 transition-all shadow-sm"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 6 6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        {/* Form Content */}
+        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+          <form id="address-form-modal" className="flex flex-col gap-6" onSubmit={handleSubmit}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className={labelClasses}>First name</label>
+                <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputClasses} required />
+              </div>
+              <div>
+                <label className={labelClasses}>Last name</label>
+                <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputClasses} required />
+              </div>
+            </div>
+
+            <div>
+              <label className={labelClasses}>Company Name (Optional)</label>
+              <input type="text" value={company} onChange={(e) => setCompany(e.target.value)} className={inputClasses} />
+            </div>
+
+            <div>
+              <label className={labelClasses}>Street address</label>
+              <div className="flex flex-col gap-3">
+                <input type="text" placeholder="House number and street name" value={street} onChange={(e) => setStreet(e.target.value)} className={inputClasses} required />
+                <input type="text" placeholder="Apartment, suite, unit, etc. (optional)" value={street2} onChange={(e) => setStreet2(e.target.value)} className={inputClasses} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="md:col-span-1">
+                <label className={labelClasses}>Postcode</label>
+                <input type="text" value={postcode} onChange={(e) => setPostcode(e.target.value)} className={inputClasses} required />
+              </div>
+              <div className="md:col-span-2">
+                <label className={labelClasses}>Town / City</label>
+                <input type="text" value={city} onChange={(e) => setCity(e.target.value)} className={inputClasses} required />
+              </div>
+            </div>
+
+            <div>
+              <label className={labelClasses}>Phone</label>
+              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClasses} />
+            </div>
+          </form>
+        </div>
+
+        {/* Footer */}
+        <div className="px-8 py-6 border-t border-slate-100 bg-slate-50/50 flex items-center gap-4">
+          <button 
+            form="address-form-modal"
+            type="submit" 
+            disabled={isSaving} 
+            className="flex-1 h-14 rounded-full bg-amber-500 px-8 text-base font-black text-white hover:bg-amber-600 transition-all shadow-xl shadow-amber-500/30 uppercase tracking-widest disabled:opacity-50"
+          >
+            {isSaving ? 'Saving...' : 'Save Address'}
+          </button>
+          <button 
+            type="button" 
+            onClick={onClose}
+            className="h-14 rounded-full bg-white border border-slate-200 px-8 text-base font-black text-neutral-600 hover:bg-slate-50 transition-all uppercase tracking-widest"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1102,9 +1413,9 @@ function AddressProfile({
           <div className="relative z-10 flex flex-col gap-2">
             <p className="text-xl font-black text-neutral-800 mb-1">{address.name}</p>
             {address.company ? <p className="font-medium">{address.company}</p> : null}
-            {address.lines.map((line) => (
-              <p key={line} className="font-medium">{line}</p>
-            ))}
+            <p className="font-medium">{address.address1}</p>
+            {address.address2 ? <p className="font-medium">{address.address2}</p> : null}
+            <p className="font-medium">{address.postcode} {address.city}</p>
             <p className="font-bold text-amber-600">{address.country}</p>
           </div>
         </div>
@@ -1122,40 +1433,85 @@ function AddressProfile({
 function AccountDetailsView({ user }: { user: StoredUser }) {
   const inputClasses = "w-full h-14 px-6 rounded-2xl border border-slate-200 focus:border-amber-400 outline-none transition-all text-neutral-800 text-base bg-white focus:ring-[6px] focus:ring-amber-500/5 font-medium";
   const labelClasses = "text-xs font-black text-neutral-500 uppercase tracking-widest mb-2.5 block ml-1";
+  
   const displayName = userDisplayName(user);
-  const splitName = splitDisplayName(displayName);
-  const firstName = userString(user, ['first_name', 'firstname'], splitName.firstName);
-  const lastName = userString(user, ['last_name', 'lastname'], splitName.lastName);
-  const email = userString(user, ['email']);
+  const [name, setName] = useState(displayName);
+  const [email, setEmail] = useState(userString(user, ['email']));
+  const [phone, setPhone] = useState(userString(user, ['phone', 'mobile']));
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+
+    try {
+      const response = await fetch('/api/account/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({ name, email, phone }),
+      });
+
+      const data = await response.json();
+      console.log('Profile API Response:', data);
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to update profile');
+      }
+
+      localStorage.setItem('auth_user', JSON.stringify(data.data || data));
+      window.dispatchEvent(new Event('auth-user-updated'));
+      toast.success('Profile updated successfully');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to update profile');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col gap-2">
         <h2 className="text-3xl font-black text-neutral-800 tracking-tight">Account Details</h2>
-        <p className="text-neutral-500 font-medium">Update your identity and password settings.</p>
+        <p className="text-neutral-500 font-medium">Update your identity and contact information.</p>
       </div>
       
-      <form className="flex flex-col gap-8 max-w-2xl" onSubmit={(e) => e.preventDefault()}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className={labelClasses}>First name</label>
-            <input type="text" defaultValue={firstName} className={inputClasses} />
-          </div>
-          <div>
-            <label className={labelClasses}>Last name</label>
-            <input type="text" defaultValue={lastName} className={inputClasses} />
-          </div>
-        </div>
-
+      <form className="flex flex-col gap-8 max-w-2xl" onSubmit={handleSaveProfile}>
         <div>
-          <label className={labelClasses}>Display name</label>
-          <input type="text" defaultValue={displayName} className={inputClasses} />
+          <label className={labelClasses}>Full name</label>
+          <input 
+            type="text" 
+            value={name} 
+            onChange={(e) => setName(e.target.value)}
+            className={inputClasses} 
+            required
+          />
           <p className="text-xs font-bold text-neutral-400 mt-3 ml-1 italic opacity-60">* This is how your name will appear in reviews and forum posts.</p>
         </div>
 
-        <div>
-          <label className={labelClasses}>Email address</label>
-          <input type="email" defaultValue={email} className={inputClasses} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className={labelClasses}>Email address</label>
+            <input 
+              type="email" 
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)}
+              className={inputClasses} 
+              required
+            />
+          </div>
+          <div>
+            <label className={labelClasses}>Phone number</label>
+            <input 
+              type="tel" 
+              value={phone} 
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+31 6 12345678"
+              className={inputClasses} 
+            />
+          </div>
         </div>
 
         <div className="relative pt-6">
@@ -1165,26 +1521,15 @@ function AccountDetailsView({ user }: { user: StoredUser }) {
              <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
           </h3>
           
-          <div className="flex flex-col gap-6">
-            <div>
-              <label className={labelClasses}>Current password</label>
-              <input type="password" placeholder="••••••••••••" className={inputClasses} />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-               <div>
-                  <label className={labelClasses}>New password</label>
-                  <input type="password" className={inputClasses} />
-               </div>
-               <div>
-                  <label className={labelClasses}>Confirm password</label>
-                  <input type="password" className={inputClasses} />
-               </div>
-            </div>
-          </div>
+          <p className="text-neutral-500 text-sm mb-6">If you want to change your password, please use the password reset flow or contact support.</p>
         </div>
 
-        <button type="submit" className="h-14 rounded-full bg-amber-500 px-12 text-base font-black text-white hover:bg-amber-600 transition-all shadow-xl shadow-amber-500/30 w-fit uppercase tracking-widest mt-4">
-          Save Profile
+        <button 
+          type="submit" 
+          disabled={isSaving}
+          className="h-14 rounded-full bg-amber-500 px-12 text-base font-black text-white hover:bg-amber-600 transition-all shadow-xl shadow-amber-500/30 w-fit uppercase tracking-widest mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSaving ? 'Saving...' : 'Save Profile'}
         </button>
       </form>
     </div>
