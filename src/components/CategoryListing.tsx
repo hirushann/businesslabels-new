@@ -303,7 +303,7 @@ function CategoryListingContent({ products }: { products: CategoryCardData[] }) 
                         product={product}
                         href={(() => {
                           if (!product.slug) return undefined;
-                          const isPrinter = product.categories.some(c => c.slug === "labelprinters" || c.name?.toLowerCase().includes("printer"));
+                          const isPrinter = product.categories?.some(c => c.slug === "labelprinters" || c.name?.toLowerCase().includes("printer"));
                           const prefix = isPrinter ? "printers" : "products";
                           
                           return product.type
