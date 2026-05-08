@@ -7,46 +7,37 @@
 
 @font-face {
   font-family: 'Segoe UI';
-  src: url('/fonts/segoeuithis.ttf') format('truetype');
-  font-weight: 400;
+  src: local('Segoe UI'),
+    url('https://fonts.cdnfonts.com/s/14107/SegoeUI.woff') format('woff');
+  font-weight: normal;
   font-style: normal;
 }
 
 @font-face {
   font-family: 'Segoe UI';
-  src: url('/fonts/segoeuithibd.ttf') format('truetype');
-  font-weight: 700;
+  src: local('Segoe UI Bold'),
+    url('https://fonts.cdnfonts.com/s/14107/SegoeUIBold.woff') format('woff');
+  font-weight: bold;
   font-style: normal;
 }
 
 @font-face {
   font-family: 'Segoe UI';
-  src: url('/fonts/segoeuithisi.ttf') format('truetype');
-  font-weight: 400;
+  src: local('Segoe UI Italic'),
+    url('https://fonts.cdnfonts.com/s/14107/SegoeUIItalic.woff') format('woff');
+  font-weight: normal;
   font-style: italic;
 }
 
 @font-face {
   font-family: 'Segoe UI';
-  src: url('/fonts/segoeuithisz.ttf') format('truetype');
-  font-weight: 700;
+  src: local('Segoe UI Bold Italic'),
+    url('https://fonts.cdnfonts.com/s/14107/SegoeUIBoldItalic.woff') format('woff');
+  font-weight: bold;
   font-style: italic;
 }
 
-*, *::before, *::after {
-  box-sizing: border-box;
-}
-
-html,
-body {
-  margin: 0;
-  padding: 0;
-  font-family: 'Segoe UI', 'Segoe UI Variable', Inter, system-ui, -apple-system,
-    BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
-}
-
-/* Tailwind v4 theme override */
-@theme {
+:root {
   --font-sans: 'Segoe UI', 'Segoe UI Variable', Inter, system-ui, -apple-system,
     BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
 }
@@ -168,7 +159,7 @@ body {
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
   }
   button:not(:disabled), [role="button"]:not(:disabled) {
     cursor: pointer;
@@ -187,52 +178,6 @@ body {
   .scrollbar-none::-webkit-scrollbar {
     display: none;
   }
-}
-
-/* Skeleton shimmer */
-@keyframes shimmer {
-  0% { opacity: 0.4; }
-  50% { opacity: 1; }
-  100% { opacity: 0.4; }
-}
-
-/* Dual range slider */
-.range-slider-thumb::-webkit-slider-runnable-track {
-  -webkit-appearance: none;
-  appearance: none;
-  height: 4px;
-  background: transparent;
-}
-
-.range-slider-thumb::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: white;
-  border: 3px solid #f59e0b;
-  cursor: pointer;
-  pointer-events: auto;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
-  margin-top: -9px;
-}
-
-.range-slider-thumb::-moz-range-track {
-  height: 4px;
-  background: transparent;
-  border: none;
-}
-
-.range-slider-thumb::-moz-range-thumb {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: white;
-  border: 3px solid #f59e0b;
-  cursor: pointer;
-  pointer-events: auto;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 }
 
 /* CMS Content Fallback Styles */

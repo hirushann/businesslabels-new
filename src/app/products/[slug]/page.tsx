@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Accordion from "@/components/Accordion";
 import ProductPurchase from "@/components/ProductPurchase";
-import ProductCard, { type ProductCardData } from "@/components/ProductCard";
+import ProductCard, { type ProductCardData, type ProductRouteType } from "@/components/ProductCard";
+import ProductCompatibilityDialog from "@/components/ProductCompatibilityDialog";
 import ProductImageGallery from "@/components/ProductImageGallery";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 import { notFound } from "next/navigation";
@@ -77,9 +78,24 @@ type ProductWarrantyOption = {
   sort_order?: number | null;
 };
 
+type ComponentProduct = {
+  id?: number;
+  name?: string | null;
+  slug?: string | null;
+  sku?: string | null;
+  price?: number | null;
+  stock?: number | null;
+  quantity?: number | null;
+  available_sets?: number | null;
+  main_image?: string | null;
+};
+
 type ProductDetail = {
   id?: number;
   type?: string;
+  is_group_product?: boolean | null;
+  is_label_product?: boolean | null;
+  api_path_by_slug?: string | null;
   title?: string | null;
   name?: string | null;
   subtitle?: string | null;
@@ -95,6 +111,8 @@ type ProductDetail = {
   main_image?: string | null;
   gallery_images?: Array<{ id?: number; url?: string | null; name?: string | null }>;
   product_information?: Record<string, unknown> | string | null;
+  content?: string | null;
+  product_template?: string | null;
   material?: {
     id?: number;
     title?: string | null;
@@ -120,6 +138,7 @@ type ProductDetail = {
     length?: string | number | null;
   } | null;
   categories?: Array<{ id?: number; name?: string | null }>;
+  component_products?: ComponentProduct[] | null;
   up_sells?: UpsellProduct[];
   cross_sells?: UpsellProduct[];
   warranty?: {
@@ -130,9 +149,9 @@ type ProductDetail = {
   } | null;
 };
 
-function normalizeType(raw: string | string[] | undefined): "simple" | "variable" | null {
+function normalizeType(raw: string | string[] | undefined): "simple" | "variable" | "group_product" | null {
   const value = Array.isArray(raw) ? raw[0] : raw;
-  if (value === "simple" || value === "variable") {
+  if (value === "simple" || value === "variable" || value === "group_product") {
     return value;
   }
   return null;
@@ -240,15 +259,40 @@ async function fetchProductByType(baseUrl: string, type: "simple" | "variable", 
   }
 }
 
+async function fetchGroupProductBySlug(baseUrl: string, slug: string, locale: "en" | "nl"): Promise<ProductDetail | null> {
+  try {
+    const response = await fetch(withLocaleParam(`${baseUrl}/api/group-products/slug/${encodeURIComponent(slug)}`, locale), {
+      cache: "no-store",
+      headers: {
+        Accept: "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const json = (await response.json()) as { data?: ProductDetail };
+    return json.data ?? null;
+  } catch (error) {
+    console.error(`Failed to fetch group product details for slug '${slug}'`, error);
+    return null;
+  }
+}
+
 async function fetchProductBySlug(
   baseUrl: string | undefined,
   slug: string,
-  selectedType: "simple" | "variable" | null,
+  selectedType: "simple" | "variable" | "group_product" | null,
   locale: "en" | "nl",
 ): Promise<ProductDetail | null> {
   if (!baseUrl) {
     console.error("BBNL_API_BASE_URL is not configured");
     return null;
+  }
+
+  if (selectedType === "group_product") {
+    return fetchGroupProductBySlug(baseUrl, slug, locale);
   }
 
   const tryTypes: Array<"simple" | "variable"> = selectedType
@@ -262,7 +306,8 @@ async function fetchProductBySlug(
     }
   }
 
-  return null;
+  // Fallback: try group product endpoint
+  return fetchGroupProductBySlug(baseUrl, slug, locale);
 }
 
 function toTitleCaseFromSlug(raw: string): string {
@@ -293,12 +338,12 @@ function mapUpsellToProductCard(upsell: UpsellProduct): ProductCardData {
   };
 }
 
-function productHref(product: ProductCardData): { pathname: string; query?: { type: "simple" | "variable" } } | null {
+function productHref(product: ProductCardData): { pathname: string; query?: { type: ProductRouteType } } | null {
   if (!product.slug) {
     return null;
   }
 
-  if (product.type) {
+  if (product.type === "simple" || product.type === "variable") {
     return {
       pathname: `/products/${product.slug}`,
       query: { type: product.type },
@@ -331,6 +376,8 @@ export default async function SingleProductPage({
     notFound();
   }
 
+  console.log("[SingleProductPage] Full product details:", JSON.stringify(product, null, 2));
+
   const productName = product.title || product.name || "";
   const productDescription = product.description || product.excerpt || "";
   const mainImage = product.main_image || "";
@@ -339,6 +386,8 @@ export default async function SingleProductPage({
     .filter((url): url is string => Boolean(url));
   const specs = specsFromProduct(product);
   const relatedProducts = (product.up_sells ?? []).map(mapUpsellToProductCard);
+  const showCompatibilityCta = product.is_label_product == false;
+  console.log(product)
 
   return (
     <div className="bg-white">
@@ -411,27 +460,26 @@ export default async function SingleProductPage({
                 </div>
               </Accordion>
 
-              {/* Compatibility CTA */}
-              <div className="p-6 bg-gradient-to-br from-orange-50 to-white rounded-xl outline outline-2 outline-offset-[-2px] outline-orange-100">
-                <div className="flex gap-3 items-start">
-                  <div className="w-8 h-8 p-2 bg-white rounded-lg shadow-sm flex-shrink-0 flex items-center justify-center">
-                    <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0H3" />
-                    </svg>
-                  </div>
-                  <div className="flex-1 flex flex-col gap-4">
-                    <div className="flex flex-col gap-2">
-                      <h3 className="text-neutral-700 text-2xl font-bold leading-7">Does this fit my printer?</h3>
-                      <p className="text-neutral-700 text-base font-normal leading-6">
-                        Use our product finder to check compatibility with your specific printer model.
-                      </p>
+              {showCompatibilityCta ? (
+                <div className="p-6 bg-gradient-to-br from-orange-50 to-white rounded-xl outline outline-2 outline-offset-[-2px] outline-orange-100">
+                  <div className="flex gap-3 items-start">
+                    <div className="w-8 h-8 p-2 bg-white rounded-lg shadow-sm flex-shrink-0 flex items-center justify-center">
+                      <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0H3" />
+                      </svg>
                     </div>
-                    <button className="text-amber-500 text-base font-semibold underline text-left">
-                      Check Compatibility
-                    </button>
+                    <div className="flex-1 flex flex-col gap-4">
+                      <div className="flex flex-col gap-2">
+                        <h3 className="text-neutral-700 text-2xl font-bold leading-7">Does this fit my printer?</h3>
+                        <p className="text-neutral-700 text-base font-normal leading-6">
+                          Use our product finder to check compatibility with your specific printer model.
+                        </p>
+                      </div>
+                      <ProductCompatibilityDialog productId={product.id} />
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : null}
             </div>
           </div>
 

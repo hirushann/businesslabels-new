@@ -8,7 +8,7 @@ import { buildCartItemKey, useCart } from "@/components/CartProvider";
 import { Popover, PopoverAnchor, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle } from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-export type ProductRouteType = "simple" | "variable";
+export type ProductRouteType = "simple" | "variable" | "group_product";
 
 export type ProductWarrantyData = {
   is_available?: boolean | null;
@@ -236,7 +236,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
         </div>
         <Image
           src={imageSrc}
-          alt={product.name}
+          alt={productName}
           width={600}
           height={400}
           className="h-full w-auto object-contain mx-auto py-5"

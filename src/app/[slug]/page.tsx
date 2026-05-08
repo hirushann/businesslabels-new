@@ -64,7 +64,7 @@ export default async function DynamicCMSPage({ params }: { params: Promise<{ slu
       <div className="pointer-events-none absolute left-0 top-[10%] h-64 w-64 rounded-full bg-amber-500/10 blur-[120px]" />
       <div className="pointer-events-none absolute right-0 top-[40%] h-64 w-64 rounded-full bg-blue-500/10 blur-[120px]" />
 
-      <div className="mx-auto max-w-360 px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1440px] px-4 py-12 sm:px-6 lg:px-8">
         {/* Breadcrumbs */}
         <nav className="mb-8 flex items-center gap-2 text-sm text-zinc-500">
           <Link href="/" className="hover:text-amber-500 transition-colors">Home</Link>
