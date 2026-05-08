@@ -131,21 +131,6 @@ function imageForProduct(result: unknown): string | null {
   return null;
 }
 
-function labelFromCode(value: string): string {
-  return value
-    .trim()
-    .replace(/^\[\s*/, "")
-    .replace(/\s*\]$/, "")
-    .replace(/^["']|["']$/g, "")
-    .split(/[_\-\s]+/)
-    .filter(Boolean)
-    .map((part) => {
-      const upper = part.toUpperCase();
-      return upper.length <= 3 ? upper : `${upper.charAt(0)}${upper.slice(1).toLowerCase()}`;
-    })
-    .join(" ");
-}
-
 function categoriesForProduct(result: unknown): Array<{ id?: number; name?: string | null; slug?: string | null }> {
   const categories = getRaw(result, "categories");
   if (Array.isArray(categories)) {
@@ -243,21 +228,11 @@ export function mapProductListingResult(
     type: normalizedType,
   };
 
-  const categorySlugs = (valueAsString(getRaw(result, "category_slugs")) ?? "")
-    .split(",")
-    .map((slug) => ({ name: labelFromCode(slug), slug: slug }))
-    .filter(Boolean);
-  
-  const isPrinter = categorySlugs.some(s => s.slug === "labelprinters") || 
-                    product.categories?.some(c => c.name?.toLowerCase().includes("printer") || c.slug?.toLowerCase() === "labelprinters");
-
-  const prefix = isPrinter ? "printers" : "products";
-
   const href =
     slug && normalizedType
-      ? { pathname: `/${prefix}/${slug}`, query: { type: normalizedType } }
+      ? { pathname: `/products/${slug}`, query: { type: normalizedType } }
       : slug
-        ? `/${prefix}/${slug}`
+        ? `/products/${slug}`
         : undefined;
 
   return { id, product, href };
