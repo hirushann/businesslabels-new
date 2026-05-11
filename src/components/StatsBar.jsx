@@ -1,3 +1,7 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
+
 const stats = [
   {
     value: '12k+',
@@ -39,10 +43,35 @@ const stats = [
 ];
 
 export default function StatsBar() {
+  const t = useTranslations();
+  
+  const translatedStats = [
+    {
+      value: '12k+',
+      label: t('stats.activeUsers'),
+      icon: stats[0].icon,
+    },
+    {
+      value: t('stats.freeSupport'),
+      label: t('stats.expertSupport'),
+      icon: stats[1].icon,
+    },
+    {
+      value: '2k+',
+      label: t('stats.productsInStock'),
+      icon: stats[2].icon,
+    },
+    {
+      value: t('stats.oneRoll'),
+      label: t('stats.minimumOrder'),
+      icon: stats[3].icon,
+    },
+  ];
+  
   return (
     <div className="w-full px-10 py-8 bg-slate-50 border-b border-slate-100">
       <div className="max-w-360 mx-auto w-full grid grid-cols-4 gap-4">
-        {stats.map((stat) => (
+        {translatedStats.map((stat) => (
           <div key={stat.label} className="flex-1 rounded-[10px] flex justify-center items-center gap-4">
             {/* Icon box */}
             <div className="p-4 bg-white rounded-lg shadow border border-gray-100 flex items-center justify-center shrink-0">

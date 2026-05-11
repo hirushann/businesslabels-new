@@ -7,6 +7,7 @@ import { FormEvent, Suspense, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { ArrowRight, Building2, ChevronDown, KeyRound, Loader2, Mail, MapPin, Phone, User } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -156,6 +157,7 @@ export default function RegisterClient() {
 }
 
 function RegisterContent() {
+  const t = useTranslations();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [firstName, setFirstName] = useState('');
@@ -328,7 +330,7 @@ function RegisterContent() {
 
       if (!response.ok) {
         setErrors(data.errors ?? {});
-        setFormMessage(data.message || 'Please check your registration details.');
+        setFormMessage(data.message || t('register.formError'));
         return;
       }
 
@@ -336,11 +338,11 @@ function RegisterContent() {
       localStorage.setItem('auth_user', JSON.stringify(user));
       window.dispatchEvent(new Event('auth-user-updated'));
 
-      toast.success('Account created successfully');
+      toast.success(t('register.accountCreated'));
       router.push(redirectTo);
       router.refresh();
     } catch {
-      setFormMessage('Unable to register right now. Please try again.');
+      setFormMessage(t('register.registerError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -355,7 +357,7 @@ function RegisterContent() {
 
         <div className="rounded-[28px] border border-slate-200 bg-white px-5 py-9 shadow-[2px_12px_44px_0px_rgba(109,109,120,0.08)] sm:px-8 lg:px-12">
           <div className="mb-10 text-center">
-            <h1 className="text-4xl font-black uppercase tracking-tight text-neutral-800 sm:text-5xl">Registreren</h1>
+            <h1 className="text-4xl font-black uppercase tracking-tight text-neutral-800 sm:text-5xl">{t('register.title')}</h1>
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-6" noValidate>
@@ -368,12 +370,12 @@ function RegisterContent() {
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <TextInput
                   id="email"
-                  label="E-mail"
+                  label={t('register.email')}
                   value={email}
                   onChange={setEmail}
                   type="email"
                   autoComplete="email"
-                  placeholder="E-mail"
+                  placeholder={t('register.emailPlaceholder')}
                   disabled={isSubmitting}
                   error={errors.email?.[0]}
                   icon={<Mail className="pointer-events-none absolute left-5 top-1/2 size-5 -translate-y-1/2 text-neutral-500" />}
@@ -381,34 +383,34 @@ function RegisterContent() {
 
                 <TextInput
                   id="first-name"
-                  label="Voornaam"
+                  label={t('register.firstName')}
                   value={firstName}
                   onChange={setFirstName}
                   autoComplete="given-name"
-                  placeholder="Voornaam"
+                  placeholder={t('register.firstNamePlaceholder')}
                   disabled={isSubmitting}
                   error={errors.first_name?.[0] ?? errors.name?.[0]}
                 />
 
                 <TextInput
                   id="last-name"
-                  label="Achternaam"
+                  label={t('register.lastName')}
                   value={lastName}
                   onChange={setLastName}
                   autoComplete="family-name"
-                  placeholder="Achternaam"
+                  placeholder={t('register.lastNamePlaceholder')}
                   disabled={isSubmitting}
                   error={errors.last_name?.[0]}
                 />
 
                 <TextInput
                   id="password"
-                  label="Wachtwoord"
+                  label={t('register.password')}
                   value={password}
                   onChange={setPassword}
                   type="password"
                   autoComplete="new-password"
-                  placeholder="Wachtwoord"
+                  placeholder={t('register.passwordPlaceholder')}
                   disabled={isSubmitting}
                   error={errors.password?.[0] ?? errors.password_confirmation?.[0]}
                   icon={<KeyRound className="pointer-events-none absolute left-5 top-1/2 size-5 -translate-y-1/2 text-neutral-500" />}
@@ -417,16 +419,16 @@ function RegisterContent() {
               </div>
 
               <div className="flex flex-col gap-5">
-                <h2 className="text-xl font-black uppercase tracking-tight text-neutral-800">Factuuradres</h2>
+                <h2 className="text-xl font-black uppercase tracking-tight text-neutral-800">{t('register.billingAddress')}</h2>
 
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                   <TextInput
                     id="company"
-                    label="Bedrijfsnaam"
+                    label={t('register.company')}
                     value={company}
                     onChange={setCompany}
                     autoComplete="organization"
-                    placeholder="Bedrijfsnaam"
+                    placeholder={t('register.companyPlaceholder')}
                     disabled={isSubmitting}
                     error={errors.company?.[0]}
                     icon={<Building2 className="pointer-events-none absolute left-5 top-1/2 size-5 -translate-y-1/2 text-neutral-500" />}
@@ -434,12 +436,12 @@ function RegisterContent() {
 
                   <TextInput
                     id="phone"
-                    label="Telefoon"
+                    label={t('register.phone')}
                     value={phone}
                     onChange={setPhone}
                     type="tel"
                     autoComplete="tel"
-                    placeholder="Telefoon"
+                    placeholder={t('register.phonePlaceholder')}
                     disabled={isSubmitting}
                     error={errors.phone?.[0]}
                     icon={<Phone className="pointer-events-none absolute left-5 top-1/2 size-5 -translate-y-1/2 text-neutral-500" />}
@@ -447,12 +449,12 @@ function RegisterContent() {
 
                   <TextInput
                     id="billing-email"
-                    label="Mailadres voor facturen"
+                    label={t('register.billingEmail')}
                     value={billingEmail}
                     onChange={setBillingEmail}
                     type="email"
                     autoComplete="email"
-                    placeholder="Mailadres voor facturen"
+                    placeholder={t('register.billingEmailPlaceholder')}
                     disabled={isSubmitting}
                     error={errors.billing_email?.[0]}
                     icon={<Mail className="pointer-events-none absolute left-5 top-1/2 size-5 -translate-y-1/2 text-neutral-500" />}
@@ -460,22 +462,22 @@ function RegisterContent() {
 
                   <SelectInput
                     id="country"
-                    label="Land"
+                    label={t('register.country')}
                     value={countryId}
                     onChange={handleCountryChange}
                     disabled={isSubmitting || isLoadingRegisterData}
                     error={errors.country_id?.[0] ?? errors.country?.[0]}
                     options={countries}
-                    placeholder={isLoadingRegisterData ? 'Landen laden...' : 'Land'}
+                    placeholder={isLoadingRegisterData ? t('register.loadingCountries') : t('register.countryPlaceholder')}
                   />
 
                   <TextInput
                     id="street-address"
-                    label="Straat en huisnummer"
+                    label={t('register.streetAddress')}
                     value={streetAddress}
                     onChange={setStreetAddress}
                     autoComplete="street-address"
-                    placeholder="Straat en huisnummer"
+                    placeholder={t('register.streetAddressPlaceholder')}
                     disabled={isSubmitting}
                     error={errors.street_address?.[0]}
                     icon={<MapPin className="pointer-events-none absolute left-5 top-1/2 size-5 -translate-y-1/2 text-neutral-500" />}
@@ -483,29 +485,29 @@ function RegisterContent() {
 
                   <TextInput
                     id="postcode"
-                    label="Postcode"
+                    label={t('register.postcode')}
                     value={postcode}
                     onChange={setPostcode}
                     autoComplete="postal-code"
-                    placeholder="Postcode"
+                    placeholder={t('register.postcodePlaceholder')}
                     disabled={isSubmitting}
                     error={errors.postcode?.[0]}
                   />
 
                   <TextInput
                     id="city"
-                    label="Plaats"
+                    label={t('register.city')}
                     value={city}
                     onChange={setCity}
                     autoComplete="address-level2"
-                    placeholder="Plaats"
+                    placeholder={t('register.cityPlaceholder')}
                     disabled={isSubmitting}
                     error={errors.city?.[0]}
                   />
 
                   <SelectInput
                     id="state"
-                    label="State (optioneel)"
+                    label={t('register.state')}
                     value={stateId}
                     onChange={setStateId}
                     disabled={isSubmitting || !countryId || isLoadingProvinces || !provinces.length}
@@ -513,33 +515,33 @@ function RegisterContent() {
                     options={provinces}
                     placeholder={
                       !countryId
-                        ? 'Selecteer eerst een land'
+                        ? t('register.selectCountryFirst')
                         : isLoadingProvinces
-                          ? 'Provincies laden...'
+                          ? t('register.loadingProvinces')
                           : provinces.length
-                            ? 'State (optioneel)'
-                            : 'Geen provincies beschikbaar'
+                            ? t('register.statePlaceholder')
+                            : t('register.noProvincesAvailable')
                     }
                   />
 
                   <TextInput
                     id="vat-number"
-                    label="BTW-nummer"
+                    label={t('register.vatNumber')}
                     value={vatNumber}
                     onChange={setVatNumber}
                     autoComplete="off"
-                    placeholder="BTW-nummer"
+                    placeholder={t('register.vatNumberPlaceholder')}
                     disabled={isSubmitting}
                     error={errors.vat_number?.[0]}
                   />
 
                   <TextInput
                     id="kvk-number"
-                    label="KVK nummer (optioneel)"
+                    label={t('register.kvkOptional')}
                     value={kvkNumber}
                     onChange={setKvkNumber}
                     autoComplete="off"
-                    placeholder="KVK nummer (optioneel)"
+                    placeholder={t('register.kvkOptionalPlaceholder')}
                     disabled={isSubmitting}
                     error={errors.kvk_number?.[0]}
                   />
@@ -547,10 +549,9 @@ function RegisterContent() {
               </div>
 
               <p className="text-base font-medium leading-8 text-neutral-700 sm:text-lg">
-                Je persoonlijke gegevens worden gebruikt om je ervaring op deze site te ondersteunen, om toegang tot je
-                account te beheren en voor andere doeleinden zoals omschreven in onze{' '}
+                {t('register.privacyText')}{' '}
                 <Link href="/privacy-policy" className="font-semibold text-sky-500 transition-colors hover:text-sky-600">
-                  privacybeleid
+                  {t('register.privacyPolicy')}
                 </Link>
                 .
               </p>
@@ -563,11 +564,11 @@ function RegisterContent() {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="size-5 animate-spin" />
-                    Account aanmaken
+                    {t('register.registeringText')}
                   </>
                 ) : (
                   <>
-                    Account aanmaken
+                    {t('register.registerButtonText')}
                     <ArrowRight className="size-5" />
                   </>
                 )}
@@ -575,9 +576,9 @@ function RegisterContent() {
             </form>
 
             <p className="mt-7 text-center text-sm font-semibold text-neutral-500">
-              Already have an account?{' '}
+              {t('register.alreadyHaveAccount')}{' '}
               <Link href="/login" className="font-black text-amber-600 transition-colors hover:text-amber-700">
-                Login
+                {t('register.loginLink')}
               </Link>
             </p>
         </div>

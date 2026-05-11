@@ -1,26 +1,30 @@
 import React from 'react';
+import { getTranslations } from 'next-intl/server';
 import ReviewsSlider from './ReviewsSlider';
 
-const FALLBACK_REVIEWS = [
-  {
-    text: '"Excellent fast delivery and great support. Highly recommend their label printers and accessories!"',
-    author_name: 'David Tui',
-    relative_time_description: 'a month ago',
-    rating: 5,
-  },
-  {
-    text: '"Quality of the products is super. Happy with the custom form submission procedure as well."',
-    author_name: 'Sarah Mitchell',
-    relative_time_description: '2 months ago',
-    rating: 5,
-  },
-  {
-    text: '"Great team to work with. They helped me find the perfect Epson printer for my business."',
-    author_name: 'Priya Sharma',
-    relative_time_description: '3 months ago',
-    rating: 5,
-  },
-];
+async function getFallbackReviews() {
+  const t = await getTranslations();
+  return [
+    {
+      text: t('reviews.fallback1Text'),
+      author_name: t('reviews.fallback1Author'),
+      relative_time_description: t('reviews.fallback1Time'),
+      rating: 5,
+    },
+    {
+      text: t('reviews.fallback2Text'),
+      author_name: t('reviews.fallback2Author'),
+      relative_time_description: t('reviews.fallback2Time'),
+      rating: 5,
+    },
+    {
+      text: t('reviews.fallback3Text'),
+      author_name: t('reviews.fallback3Author'),
+      relative_time_description: t('reviews.fallback3Time'),
+      rating: 5,
+    },
+  ];
+}
 
 async function getGoogleReviews() {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
@@ -48,7 +52,8 @@ async function getGoogleReviews() {
 
 export default async function ReviewsSection() {
   const googleData = await getGoogleReviews();
-  const reviews = googleData?.reviews?.length ? googleData.reviews : FALLBACK_REVIEWS;
+  const fallbackReviews = await getFallbackReviews();
+  const reviews = googleData?.reviews?.length ? googleData.reviews : fallbackReviews;
   const totalRatings = googleData?.user_ratings_total || "1000";
 
   return (

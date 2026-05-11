@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import ProductsListing from "@/components/ProductsListing";
 import { parseCatalogSearchParams, searchCatalogProducts } from "@/lib/search/products";
 import type { CatalogSearchResponse } from "@/lib/search/types";
+import { getTranslations } from 'next-intl/server';
 
 export const metadata: Metadata = {
   title: "All Products — BusinessLabels",
@@ -36,6 +37,7 @@ export default async function ProductsPage({
 }: {
   searchParams: Promise<ProductsPageSearchParams>;
 }) {
+  const t = await getTranslations();
   const rawParams = await searchParams;
   const query = toUrlSearchParams(rawParams);
   let initialCatalog = emptyCatalogResponse;
@@ -51,15 +53,15 @@ export default async function ProductsPage({
       <div className="mx-auto flex max-w-360 flex-col gap-10">
         <div className="border-b border-slate-200 pb-5">
           <div className="mb-4 flex items-center gap-2 text-sm text-zinc-500">
-            <span>Home</span>
+            <span>{t('common.home')}</span>
             <span>/</span>
-            <span>Products</span>
+            <span>{t('common.products')}</span>
             <span>/</span>
-            <span>All Products</span>
+            <span>{t('common.allProducts')}</span>
           </div>
           <div className="flex flex-col gap-5">
             <h1 className="text-3xl font-bold font-['Segoe_UI'] leading-8 text-neutral-800">
-              All Products
+              {t('common.allProducts')}
             </h1>
             <ProductsListing initialCatalog={initialCatalog} initialQueryString={query.toString()} />
           </div>

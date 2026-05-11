@@ -6,6 +6,7 @@ import { useMemo, useState, useEffect } from "react";
 import EmptyState from "@/components/EmptyState";
 import { type CartItem, useCart } from "@/components/CartProvider";
 import { toast } from "sonner";
+import { useTranslations } from 'next-intl';
 
 type CheckoutFormState = {
   firstName: string;
@@ -102,6 +103,7 @@ function CheckoutShell({
   browseHref: string;
   isPending: boolean;
 }) {
+  const t = useTranslations();
   const shippingAmount = useMemo(() => (items.length > 0 ? DELIVERY_FEE : 0), [items.length]);
   const paymentFee = useMemo(() => (form.paymentMethod === "creditcard" ? totalAmount * 0.025 : 0), [totalAmount, form.paymentMethod]);
   const taxAmount = useMemo(() => (totalAmount + shippingAmount + paymentFee) * 0.21, [totalAmount, shippingAmount, paymentFee]);
@@ -115,15 +117,15 @@ function CheckoutShell({
           {items.length === 0 ? (
             <div className="px-8 py-16">
               <EmptyState
-                title="Your cart is empty"
-                description="Add products to your cart before moving to checkout."
+                title={t('checkout.emptyCart')}
+                description={t('checkout.emptyCartDescription')}
               />
               <div className="mt-8 flex justify-center">
                 <Link
                   href="/products"
                   className="inline-flex h-12 items-center justify-center rounded-full bg-amber-500 px-6 text-base font-semibold text-white transition-colors hover:bg-amber-600"
                 >
-                  Browse Products
+                  {t('common.browseProducts')}
                 </Link>
               </div>
             </div>
@@ -143,39 +145,39 @@ function CheckoutShell({
                       <path d="M11.25 4.5L6.75 9L11.25 13.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                       <path d="M6.75 9H16.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                     </svg>
-                    Go Back to Cart
+                    {t('checkout.goBackToCart')}
                   </Link>
 
                   <div className="flex flex-col gap-2">
-                    <h1 className="text-neutral-800 text-4xl font-bold leading-[48px]">Checkout</h1>
+                    <h1 className="text-neutral-800 text-4xl font-bold leading-[48px]">{t('checkout.title')}</h1>
                     <p className="text-neutral-600 text-base leading-6">
-                      Fill out your delivery and payment details to complete this demo checkout flow.
+                      {t('checkout.checkoutDescription')}
                     </p>
                   </div>
 
                   <div className="flex flex-col gap-5">
                     <div className="flex flex-col gap-1">
-                      <h2 className="text-neutral-800 text-2xl font-bold leading-8">Delivery Information</h2>
+                      <h2 className="text-neutral-800 text-2xl font-bold leading-8">{t('checkout.deliveryInfo')}</h2>
                       <p className="text-neutral-600 text-sm leading-5">
-                        We&apos;ll use these details for shipping and order confirmation.
+                        {t('checkout.deliveryInfoDesc')}
                       </p>
                     </div>
 
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <label className="flex flex-col gap-2">
-                        <span className="text-sm font-semibold text-neutral-700">First Name</span>
+                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.firstName')}</span>
                         <input className={inputClasses(Boolean(errors.firstName))} value={form.firstName} onChange={(e) => handleChange("firstName", e.target.value)} />
                       </label>
                       <label className="flex flex-col gap-2">
-                        <span className="text-sm font-semibold text-neutral-700">Last Name</span>
+                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.lastName')}</span>
                         <input className={inputClasses(Boolean(errors.lastName))} value={form.lastName} onChange={(e) => handleChange("lastName", e.target.value)} />
                       </label>
                       <label className="flex flex-col gap-2">
-                        <span className="text-sm font-semibold text-neutral-700">Email</span>
+                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.email')}</span>
                         <input className={inputClasses(Boolean(errors.email))} value={form.email} onChange={(e) => handleChange("email", e.target.value)} />
                       </label>
                       <label className="flex flex-col gap-2">
-                        <span className="text-sm font-semibold text-neutral-700">Mobile Number</span>
+                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.mobileNumber')}</span>
                         <input className={inputClasses(Boolean(errors.mobileNumber))} value={form.mobileNumber} onChange={(e) => handleChange("mobileNumber", e.target.value)} />
                       </label>
                     </div>
@@ -183,17 +185,17 @@ function CheckoutShell({
 
                   <div className="flex flex-col gap-5">
                     <div className="flex flex-col gap-1">
-                      <h2 className="text-neutral-800 text-2xl font-bold leading-8">Address</h2>
+                      <h2 className="text-neutral-800 text-2xl font-bold leading-8">{t('checkout.address')}</h2>
                     </div>
 
                     <label className="flex flex-col gap-2">
-                      <span className="text-sm font-semibold text-neutral-700">Street Address</span>
+                      <span className="text-sm font-semibold text-neutral-700">{t('checkout.streetAddress')}</span>
                       <input className={inputClasses(Boolean(errors.streetAddress))} value={form.streetAddress} onChange={(e) => handleChange("streetAddress", e.target.value)} />
                     </label>
 
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
                       <label className="flex flex-col gap-2 md:col-span-1">
-                        <span className="text-sm font-semibold text-neutral-700">Country</span>
+                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.country')}</span>
                         <select className={inputClasses()} value={form.country} onChange={(e) => handleChange("country", e.target.value)}>
                           <option>Netherlands</option>
                           <option>Belgium</option>
@@ -201,15 +203,15 @@ function CheckoutShell({
                         </select>
                       </label>
                       <label className="flex flex-col gap-2 md:col-span-1">
-                        <span className="text-sm font-semibold text-neutral-700">Town/City</span>
+                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.city')}</span>
                         <input className={inputClasses(Boolean(errors.city))} value={form.city} onChange={(e) => handleChange("city", e.target.value)} />
                       </label>
                       <label className="flex flex-col gap-2 md:col-span-1">
-                        <span className="text-sm font-semibold text-neutral-700">State</span>
+                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.state')}</span>
                         <input className={inputClasses(Boolean(errors.state))} value={form.state} onChange={(e) => handleChange("state", e.target.value)} />
                       </label>
                       <label className="flex flex-col gap-2 md:col-span-1">
-                        <span className="text-sm font-semibold text-neutral-700">Postcode</span>
+                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.postcode')}</span>
                         <input className={inputClasses(Boolean(errors.postcode))} value={form.postcode} onChange={(e) => handleChange("postcode", e.target.value)} />
                       </label>
                     </div>
@@ -217,9 +219,9 @@ function CheckoutShell({
 
                   <div className="flex flex-col gap-5">
                     <div className="flex flex-col gap-1">
-                      <h2 className="text-neutral-800 text-2xl font-bold leading-8">Payment Method</h2>
+                      <h2 className="text-neutral-800 text-2xl font-bold leading-8">{t('checkout.paymentMethod')}</h2>
                       <p className="text-neutral-600 text-sm leading-5">
-                        Select your preferred payment method.
+                        {t('checkout.paymentMethodDesc')}
                       </p>
                     </div>
 
@@ -239,10 +241,11 @@ function CheckoutShell({
                         <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${form.paymentMethod === "ideal" ? "border-amber-500 bg-amber-500" : "border-slate-300"}`}>
                           {form.paymentMethod === "ideal" && <div className="h-2 w-2 rounded-full bg-white" />}
                         </div>
-                        <span className="text-base font-semibold text-neutral-800">iDEAL</span>
+                        <span className="text-base font-semibold text-neutral-800">{t('checkout.ideal')}</span>
                       </label>
 
                       <label 
+
                         className={`flex cursor-pointer items-center gap-4 rounded-xl border p-4 transition-all ${
                           form.paymentMethod === "creditcard" ? "border-amber-400 bg-amber-50" : "border-slate-200 hover:border-amber-200"
                         }`}
@@ -258,7 +261,7 @@ function CheckoutShell({
                           {form.paymentMethod === "creditcard" && <div className="h-2 w-2 rounded-full bg-white" />}
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-base font-semibold text-neutral-800">Card</span>
+                          <span className="text-base font-semibold text-neutral-800">{t('checkout.creditCard')}</span>
                           <span className="text-xs text-amber-600 font-medium">+2.5% fee</span>
                         </div>
                       </label>

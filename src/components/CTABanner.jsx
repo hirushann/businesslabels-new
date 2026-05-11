@@ -3,8 +3,10 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useHelp } from './HelpProvider';
+import { useTranslations } from 'next-intl';
 
 export default function CTABanner() {
+  const t = useTranslations();
   const { openHelp } = useHelp();
   return (
     <section className="relative h-120 w-full py-12 overflow-hidden">
@@ -24,10 +26,10 @@ export default function CTABanner() {
         <div className="max-w-360 w-full flex flex-col items-center gap-10">
           <div className="flex flex-col items-center gap-4">
             <h2 className="text-center text-white text-4xl font-bold font-['Segoe_UI'] leading-[48px]">
-              Ready to find the perfect labels?
+              {t('cta.title')}
             </h2>
             <p className="text-center text-slate-100 text-lg font-normal font-['Segoe_UI'] leading-7">
-              Join over 12,000 businesses who trust us for expert advice and high-quality products
+              {t('cta.subtitle')}
             </p>
           </div>
           <div className="flex items-center gap-4">
@@ -35,14 +37,14 @@ export default function CTABanner() {
               href="/products"
               className="px-7 py-4 bg-amber-500 rounded-full flex items-center gap-2.5 text-white text-lg font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors"
             >
-              Browse Products
+              {t('cta.browseProducts')}
             </Link>
             <button
               type="button"
               onClick={openHelp}
               className="px-7 py-4 bg-white/10 rounded-full border border-white/20 backdrop-blur-sm flex items-center gap-2.5 text-white text-lg font-semibold font-['Segoe_UI'] leading-6 hover:bg-white/20 transition-colors"
             >
-              Talk to an Expert
+              {t('cta.talkToExpert')}
             </button>
           </div>
         </div>

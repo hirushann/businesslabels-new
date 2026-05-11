@@ -2,6 +2,7 @@ import Link from 'next/link';
 import EmptyState from "@/components/EmptyState";
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
+import { getTranslations } from 'next-intl/server';
 
 type Product = {
   id: number;
@@ -37,6 +38,7 @@ function normalizeType(raw: string | undefined): "simple" | "variable" | null {
 
 export default async function PopularProducts() {
   const baseUrl = process.env.BBNL_API_BASE_URL;
+  const t = await getTranslations();
 
   if (!baseUrl) {
     throw new Error('BBNL_API_BASE_URL is not configured');
@@ -69,13 +71,13 @@ export default async function PopularProducts() {
         {/* Header row */}
         <div className="flex justify-between items-center">
           <h2 className="text-neutral-800 text-4xl font-bold font-['Segoe_UI'] leading-[48px]">
-            Popular Products
+            {t('popularProducts.title')}
           </h2>
           <Link
             href="/products"
             className="px-6 py-4 rounded-full border border-amber-500 flex items-center gap-2.5 text-amber-500 text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-50 transition-colors"
           >
-            View All Products
+            {t('popularProducts.viewAll')}
           </Link>
         </div>
 
@@ -84,8 +86,8 @@ export default async function PopularProducts() {
           {products.length === 0 ? (
             <EmptyState
               className="col-span-3"
-              title="No products found"
-              description="There are currently no popular products available."
+              title={t('common.noProductsFound')}
+              description={t('common.noProductsDescription')}
             />
           ) : (
             products.map((product) => {

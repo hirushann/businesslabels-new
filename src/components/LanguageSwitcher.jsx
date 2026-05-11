@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { LOCALES, LOCALE_LABELS } from '@/lib/i18n/config';
-import { useLocale } from '@/lib/i18n/LocaleProvider';
+import { useRouter } from 'next/navigation';
+import { useLocale as useIntlLocale, useTranslations } from 'next-intl';
+import { LOCALES, LOCALE_LABELS, normalizeLocale } from '@/lib/i18n/config';
+import { writeLocaleCookieClient } from '@/lib/i18n/utils';
 
 function FlagEN({ className }) {
   return (
@@ -32,9 +34,18 @@ const FLAG_BY_LOCALE = {
 };
 
 export default function LanguageSwitcher() {
-  const { locale, setLocale } = useLocale();
+  const locale = useIntlLocale();
+  const t = useTranslations();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const containerRef = useRef(null);
+
+  const setLocale = (nextLocale) => {
+    const normalized = normalizeLocale(nextLocale);
+    if (normalized === locale) return;
+    writeLocaleCookieClient(normalized);
+    router.refresh();
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -65,7 +76,7 @@ export default function LanguageSwitcher() {
         className="flex items-center gap-1 cursor-pointer"
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-label={`Change language, current language ${activeLabel}`}
+        aria-label={t('common.languageChangeLabel', { language: activeLabel })}
       >
         <ActiveFlag className="w-6 h-4 rounded-sm overflow-hidden" />
         <svg
@@ -79,7 +90,7 @@ export default function LanguageSwitcher() {
       {open && (
         <ul
           role="listbox"
-          aria-label="Select language"
+          aria-label={t('common.localeSelect')}
           className="absolute right-0 top-full mt-2 min-w-40 bg-white rounded-md shadow-lg border border-slate-100 py-1 z-50"
         >
           {LOCALES.map((code) => {

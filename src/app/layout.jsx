@@ -7,8 +7,9 @@ import Footer from "@/components/Footer";
 import { Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
-import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
 import { getServerLocale } from "@/lib/i18n/server";
+import { NextIntlClientProvider } from 'next-intl';
+import { getMessages } from '@/lib/i18n/getMessages';
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
@@ -20,11 +21,12 @@ export const metadata = {
 
 export default async function RootLayout({ children }) {
   const locale = await getServerLocale();
+  const messages = await getMessages(locale);
 
   return (
     <html lang={locale} className={cn("font-sans", inter.variable)} suppressHydrationWarning>
       <body className="bg-white min-h-screen flex flex-col" suppressHydrationWarning>
-        <LocaleProvider initialLocale={locale}>
+        <NextIntlClientProvider locale={locale} messages={messages}>
           <CartProvider>
             <WishlistProvider>
               <HelpProvider>
@@ -34,7 +36,7 @@ export default async function RootLayout({ children }) {
               </HelpProvider>
             </WishlistProvider>
           </CartProvider>
-        </LocaleProvider>
+        </NextIntlClientProvider>
         <Toaster />
       </body>
     </html>
