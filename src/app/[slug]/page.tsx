@@ -77,11 +77,11 @@ export default async function DynamicCMSPage({ params }: { params: Promise<{ slu
           <h1 className="text-4xl font-black uppercase tracking-tight text-neutral-800 sm:text-5xl lg:text-6xl">
             {page.title}
           </h1>
-          {page.excerpt && (
+          {/* {page.excerpt && (
             <p className="mt-6 max-w-3xl text-xl font-medium text-neutral-600 leading-relaxed">
               {page.excerpt}
             </p>
-          )}
+          )} */}
         </header>
 
         {/* Page Content */}
