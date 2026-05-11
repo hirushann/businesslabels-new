@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import AddressAutocomplete from '@/components/AddressAutocomplete';
 
 type RegisterErrors = {
   username?: string[];
@@ -288,6 +289,35 @@ function RegisterContent() {
     };
   }, [countryId]);
 
+  const onAddressSelect = (address: {
+    street: string;
+    city: string;
+    state: string;
+    postcode: string;
+    country: string;
+  }) => {
+    if (address.street) setStreetAddress(address.street);
+    if (address.city) setCity(address.city);
+    if (address.postcode) setPostcode(address.postcode);
+    
+    // Country normalization for registration (uses ISO codes)
+    const countryMap: Record<string, string> = {
+      'Netherlands': 'NL',
+      'Belgium': 'BE',
+      'Germany': 'DE',
+      'Nederland': 'NL',
+      'België': 'BE',
+      'Belgique': 'BE',
+      'Duitsland': 'DE',
+      'Deutschland': 'DE'
+    };
+    
+    const mappedCountryId = countryMap[address.country];
+    if (mappedCountryId) {
+      setCountryId(mappedCountryId);
+    }
+  };
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitting(true);
@@ -469,17 +499,17 @@ function RegisterContent() {
                     placeholder={isLoadingRegisterData ? 'Landen laden...' : 'Land'}
                   />
 
-                  <TextInput
-                    id="street-address"
-                    label="Straat en huisnummer"
-                    value={streetAddress}
-                    onChange={setStreetAddress}
-                    autoComplete="street-address"
-                    placeholder="Straat en huisnummer"
-                    disabled={isSubmitting}
-                    error={errors.street_address?.[0]}
-                    icon={<MapPin className="pointer-events-none absolute left-5 top-1/2 size-5 -translate-y-1/2 text-neutral-500" />}
-                  />
+                  <div className="md:col-span-1">
+                    <Label className="text-sm font-semibold text-neutral-700 mb-2 block ml-4">Straat en huisnummer</Label>
+                    <AddressAutocomplete
+                      value={streetAddress}
+                      onChange={setStreetAddress}
+                      onAddressSelect={onAddressSelect}
+                      className={`h-14 rounded-full border-0 bg-slate-50 pr-5 text-base font-semibold text-neutral-800 placeholder:text-neutral-400 placeholder:font-medium focus-visible:border-sky-400 focus-visible:ring-sky-400/20 sm:text-lg pl-14`}
+                      hasError={Boolean(errors.street_address)}
+                    />
+                    {errors.street_address?.[0] && <p className="text-sm font-semibold text-red-600 ml-4 mt-1">{errors.street_address[0]}</p>}
+                  </div>
 
                   <TextInput
                     id="postcode"

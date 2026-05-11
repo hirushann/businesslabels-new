@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
+import AddressAutocomplete from '@/components/AddressAutocomplete';
 
 type Tab = 'dashboard' | 'orders' | 'addresses' | 'details' | 'printers' | 'favourites';
 
@@ -1325,13 +1326,22 @@ function AddressEditModal({
               <input type="text" value={company} onChange={(e) => setCompany(e.target.value)} className={inputClasses} />
             </div>
 
-            <div>
-              <label className={labelClasses}>Street address</label>
-              <div className="flex flex-col gap-3">
-                <input type="text" placeholder="House number and street name" value={street} onChange={(e) => setStreet(e.target.value)} className={inputClasses} required />
-                <input type="text" placeholder="Apartment, suite, unit, etc. (optional)" value={street2} onChange={(e) => setStreet2(e.target.value)} className={inputClasses} />
+              <div>
+                <label className={labelClasses}>Street address</label>
+                <div className="flex flex-col gap-3">
+                  <AddressAutocomplete
+                    value={street}
+                    onChange={setStreet}
+                    onAddressSelect={(addr) => {
+                      if (addr.street) setStreet(addr.street);
+                      if (addr.city) setCity(addr.city);
+                      if (addr.postcode) setPostcode(addr.postcode);
+                    }}
+                    className={inputClasses}
+                  />
+                  <input type="text" placeholder="Apartment, suite, unit, etc. (optional)" value={street2} onChange={(e) => setStreet2(e.target.value)} className={inputClasses} />
+                </div>
               </div>
-            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="md:col-span-1">
