@@ -27,7 +27,7 @@ type RangeFilterConfig = {
 type OptionFilterConfig = {
   title: string;
   field: string;
-  responseKey: "category" | "brand" | "materialCode" | "material" | "finishing" | "glue";
+  responseKey: "category" | "brand" | "materialCode" | "material" | "finishing" | "glue" | "kernString" | "outerDiameterString";
 };
 
 type FilterOption = {
@@ -50,6 +50,8 @@ const OPTION_FILTERS: OptionFilterConfig[] = [
   { title: "Material Type", field: "meta_material", responseKey: "material" },
   { title: "Finishing", field: "meta_finishing", responseKey: "finishing" },
   { title: "Glue", field: "meta_glue", responseKey: "glue" },
+  { title: "Core Type", field: "property_filters.kern.keyword", responseKey: "kernString" },
+  { title: "Outer Diameter Type", field: "property_filters.buiten-diameter.keyword", responseKey: "outerDiameterString" },
 ];
 
 function isRangeFilter(value: unknown): value is FilterValueRange {
@@ -181,13 +183,20 @@ function ProductOptionFilter({
 }) {
   const [showAll, setShowAll] = useState(false);
   const options = optionsFor(rawResponse, config.responseKey);
+  if (
+    (config.responseKey === "kernString" || config.responseKey === "outerDiameterString") &&
+    !options.some((option) => option.value.toLowerCase() === "fan-fold")
+  ) {
+    options.unshift({ value: "Fan-fold", label: "Fan-fold", count: 0 });
+  }
+
   const selectedValues = new Set(
     activeFilters
       .find((activeFilter) => activeFilter.field === config.field && activeFilter.type === "any")
       ?.values.filter(isSelectedValue) ?? [],
   );
 
-  const DISPLAY_LIMIT = 5;
+  const DISPLAY_LIMIT = 10;
   const displayedOptions = showAll ? options : options.slice(0, DISPLAY_LIMIT);
   const hasMore = options.length > DISPLAY_LIMIT;
 

@@ -54,6 +54,8 @@ const MULTI_VALUE_KEYS = {
   printerTypes: ["printer_type"],
   detections: ["detectie"],
   marks: ["merken"],
+  kernStrings: ["kern_string", "kern_type"],
+  outerDiameterStrings: ["outer_diameter_string", "buiten_diameter_type"],
 } as const;
 
 const EXACT_VALUE_KEYS = {
@@ -74,6 +76,8 @@ const OPTION_FILTERS: Array<{
     | "finishings"
     | "glues"
     | "printMethods"
+    | "kernStrings"
+    | "outerDiameterStrings"
   >;
 }> = [
   { key: "print_method", title: "Print Method", field: "filters.printmethode.keyword", paramValues: "printMethods" },
@@ -81,6 +85,8 @@ const OPTION_FILTERS: Array<{
   { key: "material", title: "Material Type", field: "filters.materiaal.keyword", paramValues: "materials" },
   { key: "finishing", title: "Finishing", field: "filters.afwerking.keyword", paramValues: "finishings" },
   { key: "glue", title: "Glue", field: "filters.lijm.keyword", paramValues: "glues" },
+  { key: "kern_string", title: "Core Type", field: "property_filters.kern.keyword", paramValues: "kernStrings" },
+  { key: "outer_diameter_string", title: "Outer Diameter Type", field: "property_filters.buiten-diameter.keyword", paramValues: "outerDiameterStrings" },
 ];
 
 const RANGE_FILTERS: Array<{
@@ -230,6 +236,8 @@ export function parseCatalogSearchParams(params: URLSearchParams): CatalogSearch
     coreMax: numberParam(params, "core_max"),
     outerDiameterMin: numberParam(params, "outer_diameter_min"),
     outerDiameterMax: numberParam(params, "outer_diameter_max"),
+    kernStrings: valuesParam(params, MULTI_VALUE_KEYS.kernStrings),
+    outerDiameterStrings: valuesParam(params, MULTI_VALUE_KEYS.outerDiameterStrings),
     inStock: booleanParam(params, "in_stock"),
     ids: integerValues(valuesParam(params, EXACT_VALUE_KEYS.ids)),
     slugs: valuesParam(params, EXACT_VALUE_KEYS.slugs),
@@ -343,6 +351,64 @@ function rangeFilter(
   return Object.keys(range).length ? { range: { [field]: range } } : null;
 }
 
+function rangeOrStringFilter(
+  rangeField: string,
+  rangeMin: unknown,
+  rangeMax: unknown,
+  stringField: string,
+  stringValues: string[],
+): estypes.QueryDslQueryContainer | null {
+  const rangeClause = rangeFilter(rangeField, rangeMin, rangeMax);
+  const hasStringValues = stringValues.length > 0;
+
+  if (!rangeClause && !hasStringValues) {
+    return null;
+  }
+
+  if (rangeClause && !hasStringValues) {
+    return rangeClause;
+  }
+
+  if (!rangeClause && hasStringValues) {
+    return {
+      bool: {
+        minimum_should_match: 1,
+        should: stringValues.map((value) => ({
+          term: {
+            [stringField]: {
+              value,
+              case_insensitive: true,
+            },
+          },
+        })),
+      },
+    };
+  }
+
+  // Both range and string values present - use OR logic
+  return {
+    bool: {
+      should: [
+        rangeClause as estypes.QueryDslQueryContainer,
+        {
+          bool: {
+            minimum_should_match: 1,
+            should: stringValues.map((value) => ({
+              term: {
+                [stringField]: {
+                  value,
+                  case_insensitive: true,
+                },
+              },
+            })),
+          },
+        },
+      ],
+      minimum_should_match: 1,
+    },
+  };
+}
+
 function buildFilters(params: CatalogSearchParams): estypes.QueryDslQueryContainer[] {
   const filters: Array<estypes.QueryDslQueryContainer | null> = [
     { term: { state: "active" } },
@@ -370,8 +436,8 @@ function buildFilters(params: CatalogSearchParams): estypes.QueryDslQueryContain
     rangeFilter("price", params.priceMin, params.priceMax),
     rangeFilter("filters.breedte", params.widthMin, params.widthMax),
     rangeFilter("filters.hoogte", params.heightMin, params.heightMax),
-    rangeFilter("kern_numeric", params.coreMin, params.coreMax),
-    rangeFilter("filters.buiten_diameter", params.outerDiameterMin, params.outerDiameterMax),
+    rangeOrStringFilter("kern_numeric", params.coreMin, params.coreMax, "property_filters.kern.keyword", params.kernStrings),
+    rangeOrStringFilter("filters.buiten_diameter", params.outerDiameterMin, params.outerDiameterMax, "property_filters.buiten-diameter.keyword", params.outerDiameterStrings),
   ];
 
   return filters.filter((filter): filter is estypes.QueryDslQueryContainer => filter !== null);
@@ -463,10 +529,8 @@ function buildCatalogFilters(aggregationsResult: Record<string, unknown> | undef
       unitPrefix: filter.unitPrefix,
       unitSuffix: filter.unitSuffix,
     })).filter((filter) => filter.max > 0),
-    options: OPTION_FILTERS.map((filter) => ({
-      key: filter.key,
-      title: filter.title,
-      options: aggregationBuckets(aggregationsResult, filter.key)
+    options: OPTION_FILTERS.map((filter) => {
+      const aggregatedOptions = aggregationBuckets(aggregationsResult, filter.key)
         .map((bucket) => {
           const value = typeof bucket.key === "string" ? bucket.key : String(bucket.key ?? "");
           return {
@@ -475,8 +539,26 @@ function buildCatalogFilters(aggregationsResult: Record<string, unknown> | undef
             count: typeof bucket.doc_count === "number" ? bucket.doc_count : 0,
           };
         })
-        .filter((option) => option.value.trim() !== ""),
-    })).filter((filter) => filter.options.length > 0),
+        .filter((option) => option.value.trim() !== "");
+
+      // Add static "Fan-fold" option for kern and outer diameter string filters
+      if (filter.key === "kern_string" || filter.key === "outer_diameter_string") {
+        const fanFoldExists = aggregatedOptions.some((opt) => opt.value.toLowerCase() === "fan-fold");
+        if (!fanFoldExists) {
+          aggregatedOptions.unshift({
+            value: "Fan-fold",
+            label: "Fan-fold",
+            count: 0,
+          });
+        }
+      }
+
+      return {
+        key: filter.key,
+        title: filter.title,
+        options: aggregatedOptions,
+      };
+    }).filter((filter) => filter.options.length > 0),
   };
 }
 

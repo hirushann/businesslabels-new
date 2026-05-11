@@ -31,7 +31,9 @@ export type CatalogOptionFilterKey =
   | "print_method"
   | "printer_type"
   | "detectie"
-  | "merken";
+  | "merken"
+  | "kern_string"
+  | "outer_diameter_string";
 
 export type CatalogFilterOption = {
   value: string;
@@ -75,6 +77,8 @@ export type CatalogSearchParams = {
   coreMax?: number;
   outerDiameterMin?: number;
   outerDiameterMax?: number;
+  kernStrings: string[];
+  outerDiameterStrings: string[];
   inStock?: boolean;
   ids: number[];
   slugs: string[];

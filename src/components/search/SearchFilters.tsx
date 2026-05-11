@@ -329,7 +329,7 @@ function PillSelectFilter({
       ?.values.filter(isSelectedValue) ?? [],
   );
 
-  const DISPLAY_LIMIT = 5;
+  const DISPLAY_LIMIT = 10;
   const displayedOptions = showAll ? options : options.slice(0, DISPLAY_LIMIT);
   const hasMore = options.length > DISPLAY_LIMIT;
 
