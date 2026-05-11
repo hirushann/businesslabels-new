@@ -6,6 +6,7 @@ import { useMemo, useState, useEffect } from "react";
 import EmptyState from "@/components/EmptyState";
 import { type CartItem, useCart } from "@/components/CartProvider";
 import { toast } from "sonner";
+import AddressAutocomplete from "@/components/AddressAutocomplete";
 
 type CheckoutFormState = {
   firstName: string;
@@ -89,6 +90,7 @@ function CheckoutShell({
   handleChange,
   browseHref,
   isPending,
+  onAddressSelect,
 }: {
   items: CartItem[];
   totalAmount: number;
@@ -101,6 +103,13 @@ function CheckoutShell({
   handleChange: (field: keyof CheckoutFormState, value: string) => void;
   browseHref: string;
   isPending: boolean;
+  onAddressSelect: (address: {
+    street: string;
+    city: string;
+    state: string;
+    postcode: string;
+    country: string;
+  }) => void;
 }) {
   const shippingAmount = useMemo(() => (items.length > 0 ? DELIVERY_FEE : 0), [items.length]);
   const paymentFee = useMemo(() => (form.paymentMethod === "creditcard" ? totalAmount * 0.025 : 0), [totalAmount, form.paymentMethod]);
@@ -187,8 +196,14 @@ function CheckoutShell({
                     </div>
 
                     <label className="flex flex-col gap-2">
-                      <span className="text-sm font-semibold text-neutral-700">Street Address</span>
-                      <input className={inputClasses(Boolean(errors.streetAddress))} value={form.streetAddress} onChange={(e) => handleChange("streetAddress", e.target.value)} />
+                      <span className="text-sm font-semibold text-neutral-700">Snel adres zoeken (Google)</span>
+                      <AddressAutocomplete
+                        value={form.streetAddress}
+                        onChange={(val) => handleChange("streetAddress", val)}
+                        onAddressSelect={onAddressSelect}
+                        className={inputClasses(Boolean(errors.streetAddress))}
+                        hasError={Boolean(errors.streetAddress)}
+                      />
                     </label>
 
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
@@ -742,6 +757,38 @@ export default function CheckoutPageClient({
       handleChange={handleChange}
       browseHref={isDemoMode ? "/category/demo" : "/products"}
       isPending={isPending}
+      onAddressSelect={(address) => {
+        setForm((prev) => {
+          // Map Google Maps country names to our select options
+          let normalizedCountry = address.country;
+          if (address.country === "Nederland") normalizedCountry = "Netherlands";
+          if (address.country === "België" || address.country === "Belgique") normalizedCountry = "Belgium";
+          if (address.country === "Deutschland") normalizedCountry = "Germany";
+          
+          // Only update if it's one of our supported countries
+          const supportedCountries = ["Netherlands", "Belgium", "Germany"];
+          const finalCountry = supportedCountries.includes(normalizedCountry) ? normalizedCountry : prev.country;
+
+          return {
+            ...prev,
+            streetAddress: address.street,
+            city: address.city || prev.city,
+            state: address.state || prev.state,
+            postcode: address.postcode || prev.postcode,
+            country: finalCountry,
+          };
+        });
+        
+        // Clear errors for auto-filled fields
+        setErrors((prev) => {
+          const next = { ...prev };
+          if (address.street) delete next.streetAddress;
+          if (address.city) delete next.city;
+          if (address.state) delete next.state;
+          if (address.postcode) delete next.postcode;
+          return next;
+        });
+      }}
     />
   );
 }
