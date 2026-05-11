@@ -1,11 +1,16 @@
 import RegisterClient from '@/components/RegisterClient';
 import { Metadata } from 'next';
 import Script from 'next/script';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = {
-  title: 'Register | BusinessLabels',
-  description: 'Create your BusinessLabels account.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations();
+
+  return {
+    title: t('pages.registerMetadataTitle'),
+    description: t('pages.registerMetadataDescription'),
+  };
+}
 
 export default function RegisterPage() {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;

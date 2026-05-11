@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import EmptyState from '@/components/EmptyState';
 import { useCart } from '@/components/CartProvider';
 import DrawerProductCard from '@/components/DrawerProductCard';
+import { useTranslations } from 'next-intl';
 
 type CartDrawerProps = {
   onClose: () => void;
@@ -20,6 +21,7 @@ function formatEuro(value: number): string {
 }
 
 export default function CartDrawer({ onClose }: CartDrawerProps) {
+  const t = useTranslations();
   const {
     items,
     uniqueItemCount,
@@ -54,7 +56,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Your cart"
+        aria-label={t('cart.dialogLabel')}
         className="fixed top-0 right-0 h-full w-[480px] bg-white z-[10001] shadow-2xl flex flex-col overflow-hidden"
         style={{ animation: 'slideInRight 0.28s cubic-bezier(0.16,1,0.3,1) both' }}
       >
@@ -62,17 +64,17 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
           <div className="flex items-start justify-between">
             <div className="flex flex-col gap-1">
               <h2 className="text-neutral-800 text-2xl font-semibold font-['Segoe_UI'] leading-7">
-                Your Cart
+                {t('cart.title')}
               </h2>
               <span className="text-neutral-600 text-sm font-normal font-['Segoe_UI'] leading-5">
-                {uniqueItemCount} {uniqueItemCount === 1 ? 'item' : 'items'}
+                {uniqueItemCount} {uniqueItemCount === 1 ? t('cart.item') : t('cart.items')}
               </span>
             </div>
 
             <button
               type="button"
               onClick={onClose}
-              aria-label="Close cart"
+              aria-label={t('cart.close')}
               className="w-6 h-6 flex items-center justify-center text-zinc-500 hover:text-zinc-800 transition-colors"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -85,8 +87,8 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
         <div className="flex-1 overflow-y-auto px-6 py-6">
           {items.length === 0 ? (
             <EmptyState
-              title="Your cart is empty"
-              description="Add products to your cart to review them here before checkout."
+              title={t('cart.emptyTitle')}
+              description={t('cart.emptyDescription')}
               className="px-6 py-14"
             />
           ) : (
@@ -111,11 +113,11 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                     imageSrc={imageSrc}
                     href={isWarrantyItem ? undefined : href}
                     onCardClick={onClose}
-                    removeLabel={`Remove ${item.name} from cart`}
+                    removeLabel={t('cart.removeFromCart', { name: item.name })}
                     onRemove={() => removeItem(item.key)}
                     descriptionNode={
                       isWarrantyItem ? (
-                        <p className="text-xs leading-4 text-neutral-500">Linked warranty</p>
+                        <p className="text-xs leading-4 text-neutral-500">{t('cart.linkedWarranty')}</p>
                       ) : undefined
                     }
                     priceNode={
@@ -126,7 +128,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                     actionNode={
                       isWarrantyItem ? (
                         <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-neutral-600">
-                          Qty {item.quantity}
+                          {t('cart.qty', { count: item.quantity })}
                         </div>
                       ) : (
                         <div className="flex h-10 items-center rounded-full border border-slate-200 bg-white px-1">
@@ -138,7 +140,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                               decrementItemQuantity(item.key);
                             }}
                             className="flex h-8 w-8 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-slate-100"
-                            aria-label={`Decrease quantity for ${item.name}`}
+                            aria-label={t('cart.decreaseQuantity', { name: item.name })}
                           >
                             -
                           </button>
@@ -153,7 +155,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                               incrementItemQuantity(item.key);
                             }}
                             className="flex h-8 w-8 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-slate-100"
-                            aria-label={`Increase quantity for ${item.name}`}
+                            aria-label={t('cart.increaseQuantity', { name: item.name })}
                           >
                             +
                           </button>
@@ -171,14 +173,14 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
           <div className="flex items-end justify-between gap-4">
             <div className="flex flex-col gap-1">
               <span className="text-neutral-600 text-sm font-normal font-['Segoe_UI'] leading-5">
-                Total
+                {t('cart.total')}
               </span>
               <span className="text-neutral-800 text-3xl font-bold font-['Segoe_UI'] leading-9">
                 {formatEuro(totalAmount)}
               </span>
             </div>
             <span className="text-zinc-500 text-xs font-normal font-['Segoe_UI'] leading-4">
-              incl. selected quantities
+              {t('cart.selectedQuantities')}
             </span>
           </div>
 
@@ -192,7 +194,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                 : 'bg-amber-500 hover:bg-amber-600'
             }`}
           >
-            Checkout
+            {t('cart.checkout')}
           </Link>
         </div>
       </div>

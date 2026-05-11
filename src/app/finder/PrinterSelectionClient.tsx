@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useTranslations } from 'next-intl';
 import EmptyState from "@/components/EmptyState";
 
 type Printer = {
@@ -37,6 +38,7 @@ function toDisplayImageUrl(url: string | null | undefined): string | null {
 }
 
 function PrinterCard({ printer }: { printer: Printer }) {
+  const t = useTranslations();
   const printerImage = toDisplayImageUrl(printer.image) || "https://placehold.co/600x400";
 
   return (
@@ -56,7 +58,7 @@ function PrinterCard({ printer }: { printer: Printer }) {
                 </clipPath>
               </defs>
             </svg>
-            <span className="text-neutral-700 text-xs font-normal font-['Segoe_UI'] leading-4">Printer</span>
+            <span className="text-neutral-700 text-xs font-normal font-['Segoe_UI'] leading-4">{t('finder.printer')}</span>
           </div>
         </div>
         <Image
@@ -85,7 +87,7 @@ function PrinterCard({ printer }: { printer: Printer }) {
             href={`/finder?printer_id=${printer.id}`}
             className="px-4 py-2.5 bg-amber-500 rounded-full flex items-center justify-center gap-2 text-white text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors"
           >
-            View Products
+            {t('finder.viewProducts')}
           </Link>
         </div>
       </div>
@@ -94,6 +96,7 @@ function PrinterCard({ printer }: { printer: Printer }) {
 }
 
 export default function PrinterSelectionClient() {
+  const t = useTranslations();
   const [printers, setPrinters] = useState<Printer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -107,14 +110,14 @@ export default function PrinterSelectionClient() {
         const response = await fetch('/api/printers?per_page=1000');
         
         if (!response.ok) {
-          throw new Error("Failed to fetch printers");
+          throw new Error(t('finder.failedToFetchPrinters'));
         }
 
         const json: PrintersResponse = await response.json();
         setPrinters(json.data);
       } catch (err) {
         console.error("Error loading printers:", err);
-        setError(err instanceof Error ? err.message : "Failed to load printers");
+        setError(err instanceof Error ? err.message : t('finder.failedToLoadPrinters'));
       } finally {
         setIsLoading(false);
       }
@@ -139,14 +142,14 @@ export default function PrinterSelectionClient() {
           <div className="flex max-w-3xl flex-col gap-4">
             <nav className="flex items-center gap-2 text-sm leading-5 text-white/70" aria-label="Breadcrumb">
               <Link href="/" className="hover:text-white">
-                Home
+                {t('common.home')}
               </Link>
               <span>/</span>
-              <span className="font-semibold text-white">Product Finder</span>
+              <span className="font-semibold text-white">{t('finder.productFinder')}</span>
             </nav>
-            <h1 className="text-4xl font-bold leading-12 text-white">Find Compatible Products</h1>
+            <h1 className="text-4xl font-bold leading-12 text-white">{t('finder.findCompatibleProducts')}</h1>
             <p className="text-lg leading-6 text-white/90">
-              Select your printer model to discover compatible labels and ink cartridges designed for optimal performance.
+              {t('finder.printerSelectionSubtitle')}
             </p>
           </div>
         </div>
@@ -156,9 +159,9 @@ export default function PrinterSelectionClient() {
       <section className="px-10 py-12">
         <div className="mx-auto max-w-360">
           <div className="mb-8 flex flex-col gap-2">
-            <h2 className="text-4xl font-bold leading-12 text-neutral-800">Select Your Printer</h2>
+            <h2 className="text-4xl font-bold leading-12 text-neutral-800">{t('finder.selectYourPrinter')}</h2>
             <p className="text-lg text-neutral-600">
-              Choose your printer model to view compatible products
+              {t('finder.chooseYourPrinter')}
             </p>
           </div>
 
@@ -174,8 +177,8 @@ export default function PrinterSelectionClient() {
             </div>
           ) : printers.length === 0 ? (
             <EmptyState
-              title="No printers found"
-              description="We couldn't find any printers at the moment. Please try again later."
+              title={t('finder.noPrintersFound')}
+              description={t('finder.noPrintersDescription')}
             />
           ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">

@@ -1,3 +1,6 @@
-export default function CartPage() {
-  return <h1>Cart</h1>;
+import { getTranslations } from 'next-intl/server';
+
+export default async function CartPage() {
+  const t = await getTranslations();
+  return <h1>{t('pages.cart')}</h1>;
 }

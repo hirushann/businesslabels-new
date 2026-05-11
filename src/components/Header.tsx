@@ -14,22 +14,24 @@ import LabelsMenu from './nav/LabelsMenu';
 import AccessoriesMenu from './nav/AccessoriesMenu';
 import ResourcesMenu from './nav/ResourcesMenu';
 import BrandsMenu from './nav/BrandsMenu';
+import { useTranslations } from 'next-intl';
 
 type DropdownKey = 'printers' | 'labels' | 'accessories' | 'resources' | 'brands' | null;
 // import { useCart } from '@/context/CartContext';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 const navItems = [
-  { label: 'Home', href: '/', active: true, dropdownKey: null },
-  { label: 'Printers', href: '/printers', dropdown: true, dropdownKey: 'printers' as DropdownKey },
-  { label: 'Labels and tickets', href: '/category/labels-en-tickets', dropdown: true, dropdownKey: 'labels' as DropdownKey },
-  { label: 'Accessories', href: '/category/accessoires', dropdown: true, dropdownKey: 'accessories' as DropdownKey },
-  { label: 'Resources', href: '/resources', dropdown: true, dropdownKey: 'resources' as DropdownKey },
-  { label: 'Brands', href: '/brands', dropdown: true, dropdownKey: 'brands' as DropdownKey },
-  { label: 'Support', href: '/support', dropdownKey: null },
+  { labelKey: 'header.nav.home', fallbackLabel: 'Home', href: '/', active: true, dropdownKey: null },
+  { labelKey: 'header.nav.printers', fallbackLabel: 'Printers', href: '/printers', dropdown: true, dropdownKey: 'printers' as DropdownKey },
+  { labelKey: 'header.nav.labels', fallbackLabel: 'Labels and tickets', href: '/category/labels-en-tickets', dropdown: true, dropdownKey: 'labels' as DropdownKey },
+  { labelKey: 'header.nav.accessories', fallbackLabel: 'Accessories', href: '/category/accessoires', dropdown: true, dropdownKey: 'accessories' as DropdownKey },
+  { labelKey: 'header.nav.resources', fallbackLabel: 'Resources', href: '/resources', dropdown: true, dropdownKey: 'resources' as DropdownKey },
+  { labelKey: 'header.nav.brands', fallbackLabel: 'Brands', href: '/brands', dropdown: true, dropdownKey: 'brands' as DropdownKey },
+  { labelKey: 'header.nav.support', fallbackLabel: 'Support', href: '/support', dropdownKey: null },
 ];
 
 export default function Header() {
+  const t = useTranslations();
   const { isHelpOpen, openHelp, closeHelp } = useHelp();
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<DropdownKey>(null);
@@ -69,7 +71,7 @@ export default function Header() {
                 <path d="M4.66732 13.3337C5.4037 13.3337 6.00065 12.7367 6.00065 12.0003C6.00065 11.2639 5.4037 10.667 4.66732 10.667C3.93094 10.667 3.33398 11.2639 3.33398 12.0003C3.33398 12.7367 3.93094 13.3337 4.66732 13.3337Z" stroke="#F1F4F8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               <span className="text-white text-sm font-normal leading-5">
-                Free shipping BeNeLux &amp; Germany from €500
+                {t('header.shippingBanner')}
               </span>
             </div>
             <div className="flex items-end gap-2">
@@ -77,7 +79,7 @@ export default function Header() {
                 <path d="M1.16894 8.50174C1.04278 8.50217 0.919094 8.46679 0.812242 8.39972C0.705391 8.33265 0.619763 8.23664 0.565307 8.12284C0.510851 8.00904 0.489802 7.88213 0.504606 7.75684C0.519411 7.63156 0.56946 7.51304 0.64894 7.41507L7.24894 0.615071C7.29845 0.557925 7.36591 0.519308 7.44026 0.505559C7.51461 0.49181 7.59142 0.503746 7.65809 0.539407C7.72476 0.575068 7.77733 0.632335 7.80716 0.701809C7.837 0.771283 7.84233 0.848836 7.82227 0.921737L6.54227 4.93507C6.50453 5.03609 6.49185 5.14475 6.50533 5.25174C6.51881 5.35873 6.55805 5.46086 6.61967 5.54936C6.68129 5.63785 6.76346 5.71008 6.85912 5.75984C6.95479 5.80961 7.0611 5.83542 7.16894 5.83507H11.8356C11.9618 5.83464 12.0855 5.87002 12.1923 5.93709C12.2992 6.00416 12.3848 6.10017 12.4392 6.21397C12.4937 6.32777 12.5147 6.45468 12.4999 6.57997C12.4851 6.70525 12.4351 6.82376 12.3556 6.92174L5.75561 13.7217C5.7061 13.7789 5.63863 13.8175 5.56429 13.8312C5.48994 13.845 5.41312 13.8331 5.34645 13.7974C5.27978 13.7617 5.22722 13.7045 5.19738 13.635C5.16755 13.5655 5.16222 13.488 5.18227 13.4151L6.46227 9.40174C6.50002 9.30072 6.51269 9.19206 6.49921 9.08507C6.48573 8.97808 6.4465 8.87595 6.38488 8.78745C6.32326 8.69896 6.24109 8.62673 6.14542 8.57696C6.04976 8.5272 5.94344 8.50139 5.83561 8.50174H1.16894Z" stroke="#F1F4F8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               <span className="text-white text-sm font-normal leading-5">
-                Fast delivery from stock
+                {t('header.fastDelivery')}
               </span>
             </div>
           </div>
@@ -127,13 +129,13 @@ export default function Header() {
           <Link
             href="/products"
             className="w-96 px-4 py-3 rounded-full border border-slate-100 flex items-center gap-2 overflow-hidden text-left cursor-pointer"
-            aria-label="Go to products search"
+            aria-label={t('header.productsSearchLink')}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <circle cx="6.75" cy="6.75" r="5.25" stroke="#9CA3AF" strokeWidth="1.5" />
               <path d="M11.5 11.5L14.5 14.5" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
-            <span className="text-zinc-500 text-sm font-normal leading-5">Search...</span>
+            <span className="text-zinc-500 text-sm font-normal leading-5">{t('common.search')}</span>
           </Link>
 
           {/* Right controls */}
@@ -144,7 +146,7 @@ export default function Header() {
               id="need-help-btn"
               onClick={openHelp}
               className="pl-1.5 pr-8 py-2.5 bg-white rounded-full shadow border border-slate-100 flex items-center gap-2 hover:shadow-md hover:border-sky-200 transition-all cursor-pointer"
-              aria-label="Open help drawer"
+              aria-label={t('header.openHelpDrawer')}
             >
               <div className="flex items-center -space-x-2">
                 {[1, 2, 3].map((i) => (
@@ -156,12 +158,12 @@ export default function Header() {
                   </div>
                 ))}
               </div>
-              <span className="text-neutral-800 text-sm font-semibold leading-5">Need help?</span>
+              <span className="text-neutral-800 text-sm font-semibold leading-5">{t('header.needHelp')}</span>
             </button>
             {/* Language */}
             <LanguageSwitcher />
             {/* User */}
-            <Link href="/my-account" aria-label="Go to My Account">
+            <Link href="/my-account" aria-label={t('header.accountLink')}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="cursor-pointer">
                 <circle cx="12" cy="8" r="4" stroke="#404040" strokeWidth="1.5" />
                 <path d="M4 20c0-4.42 3.58-8 8-8s8 3.58 8 8" stroke="#404040" strokeWidth="1.5" strokeLinecap="round" />
@@ -172,7 +174,7 @@ export default function Header() {
               type="button"
               onClick={() => setIsWishlistOpen(true)}
               className="relative cursor-pointer"
-              aria-label="Open wishlist drawer"
+              aria-label={t('header.wishlistOpen')}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                 <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" stroke="#404040" strokeWidth="1.5" />
@@ -188,7 +190,7 @@ export default function Header() {
               type="button"
               onClick={openCart}
               className="relative cursor-pointer"
-              aria-label="Open cart drawer"
+              aria-label={t('header.cartOpen')}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M8 22C8.55228 22 9 21.5523 9 21C9 20.4477 8.55228 20 8 20C7.44772 20 7 20.4477 7 21C7 21.5523 7.44772 22 8 22Z" stroke="#444444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -224,7 +226,7 @@ export default function Header() {
                       : 'text-stone-500 font-normal hover:text-sky-950 transition-colors'
                   } text-base font-['Segoe_UI'] leading-5`}
                 >
-                  {item.label}
+                  {t.has(item.labelKey) ? t(item.labelKey) : item.fallbackLabel}
                   {item.dropdown && (
                     <svg
                       width="16" height="16" viewBox="0 0 16 16" fill="none"
@@ -257,13 +259,13 @@ export default function Header() {
           </nav>
           <div className="flex items-center gap-4">
             <Link href="/custom" className="text-amber-500 text-base font-semibold leading-6">
-              Custom-made Form
+              {t('header.customMadeForm')}
             </Link>
             <Link
               href="/finder"
               className="px-4 py-2 bg-amber-500 rounded-full flex items-center gap-2 text-white text-base font-semibold hover:bg-amber-600 transition-colors"
             >
-              Product Finder
+              {t('header.productFinder')}
             </Link>
           </div>
         </div>

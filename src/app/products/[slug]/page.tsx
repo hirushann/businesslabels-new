@@ -6,6 +6,7 @@ import ProductCompatibilityDialog from "@/components/ProductCompatibilityDialog"
 import ProductImageGallery from "@/components/ProductImageGallery";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 import { notFound } from "next/navigation";
+import { getTranslations } from 'next-intl/server';
 import {
   Carousel,
   CarouselContent,
@@ -360,6 +361,7 @@ export default async function SingleProductPage({
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ type?: string | string[] }>;
 }) {
+  const t = await getTranslations();
   const { slug } = await params;
   const query = await searchParams;
   const baseUrl = process.env.BBNL_API_BASE_URL;
@@ -398,9 +400,9 @@ export default async function SingleProductPage({
         {/* Breadcrumb */}
         <div className="pb-8">
           <div className="max-w-360 mx-auto flex items-center gap-2 text-sm text-zinc-500">
-            <span>Home</span>
+            <span>{t('common.home')}</span>
             <span>/</span>
-            <span>Products</span>
+            <span>{t('common.products')}</span>
             <span>/</span>
             <span className="text-neutral-700 font-semibold">{productName}</span>
           </div>
@@ -430,7 +432,7 @@ export default async function SingleProductPage({
 
             <div className="flex flex-col gap-6">
               <Accordion
-                title="Product Description"
+                title={t('product.productDescription')}
               >
                 {productDescription ? (
                   <div
@@ -439,13 +441,13 @@ export default async function SingleProductPage({
                   />
                 ) : (
                   <div className="text-neutral-500 text-base font-normal leading-6">
-                    No product description available.
+                    {t('product.noDescriptionAvailable')}
                   </div>
                 )}
               </Accordion>
 
               <Accordion
-                title="Product specifications"
+                title={t('product.productSpecifications')}
               >
                 <div className="rounded-lg overflow-hidden flex flex-col gap-2">
                   {specs.map((spec, i) => (
@@ -470,9 +472,9 @@ export default async function SingleProductPage({
                     </div>
                     <div className="flex-1 flex flex-col gap-4">
                       <div className="flex flex-col gap-2">
-                        <h3 className="text-neutral-700 text-2xl font-bold leading-7">Does this fit my printer?</h3>
+                        <h3 className="text-neutral-700 text-2xl font-bold leading-7">{t('product.doesThisFitMyPrinter')}</h3>
                         <p className="text-neutral-700 text-base font-normal leading-6">
-                          Use our product finder to check compatibility with your specific printer model.
+                          {t('product.compatibilityDescription')}
                         </p>
                       </div>
                       <ProductCompatibilityDialog productId={product.id} />
@@ -509,10 +511,10 @@ export default async function SingleProductPage({
             {/* Consumable Items */}
             <div className="flex flex-col gap-3">
               <h3 className="text-gray-800 text-2xl font-semibold" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-                Consumable Items:
+                {t('product.consumableItems')}
               </h3>
               <div className="grid grid-cols-2 gap-3">
-                {["Hardwares", "Ink & Maintenance", "Badges / Media"].map((item) => (
+                {[t('product.hardwares'), t('product.inkMaintenance'), t('product.badgesMedia')].map((item) => (
                   <button
                     key={item}
                     className="px-4 py-2.5 bg-blue-400/10 rounded-[5px] outline outline-1 outline-offset-[-1px] outline-blue-400/50 text-blue-400 text-base font-bold text-left hover:bg-blue-400/20 transition-colors"
@@ -539,7 +541,7 @@ export default async function SingleProductPage({
               className="w-full"
             >
               <div className="flex justify-between items-center px-20">
-                <h2 className="text-neutral-800 text-4xl font-bold leading-[48px]">Related Products</h2>
+                <h2 className="text-neutral-800 text-4xl font-bold leading-[48px]">{t('product.relatedProducts')}</h2>
                 <div className="flex items-center gap-6">
                   <CarouselPrevious className="static translate-y-0 w-12 h-12 p-3 bg-gray-50 rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-gray-200 hover:bg-white transition-colors" />
                   <CarouselNext className="static translate-y-0 w-12 h-12 p-3 bg-white rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-amber-500 hover:bg-amber-50 transition-colors" />

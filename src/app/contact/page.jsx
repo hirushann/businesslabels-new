@@ -1,3 +1,6 @@
-export default function ContactPage() {
-  return <h1>Contact</h1>;
+import { getTranslations } from 'next-intl/server';
+
+export default async function ContactPage() {
+  const t = await getTranslations();
+  return <h1>{t('pages.contact')}</h1>;
 }

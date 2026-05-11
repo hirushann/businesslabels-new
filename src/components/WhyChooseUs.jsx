@@ -1,4 +1,7 @@
+'use client';
+
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 
 const features = [
   {
@@ -40,16 +43,41 @@ const features = [
 ];
 
 export default function WhyChooseUs() {
+  const t = useTranslations();
+  
+  const translatedFeatures = [
+    {
+      title: t('whyChoose.feature1Title'),
+      desc: t('whyChoose.feature1Desc'),
+      icon: features[0].icon,
+    },
+    {
+      title: t('whyChoose.feature2Title'),
+      desc: t('whyChoose.feature2Desc'),
+      icon: features[1].icon,
+    },
+    {
+      title: t('whyChoose.feature3Title'),
+      desc: t('whyChoose.feature3Desc'),
+      icon: features[2].icon,
+    },
+    {
+      title: t('whyChoose.feature4Title'),
+      desc: t('whyChoose.feature4Desc'),
+      icon: features[3].icon,
+    },
+  ];
+  
   return (
     <section className="w-full px-10 py-24 bg-slate-50">
       <div className="max-w-360 mx-auto w-full flex flex-col gap-12">
         {/* Header */}
         <div className="flex flex-col items-center gap-4">
           <h2 className="text-center text-neutral-800 text-4xl font-bold font-['Segoe_UI'] leading-[48px]">
-            Why Choose BusinessLabels
+            {t('whyChoose.title')}
           </h2>
           <p className="text-center text-neutral-700 text-lg font-normal font-['Segoe_UI'] leading-7">
-            We believe in people-first communication. Our small team provides expert knowledge, quick support, and honest advice.
+            {t('whyChoose.subtitle')}
           </p>
         </div>
 
@@ -59,7 +87,7 @@ export default function WhyChooseUs() {
           <div className="flex-1 relative h-[500px] rounded-xl overflow-hidden">
             <Image
               src="/whychoose.png"
-              alt="Why choose BusinessLabels"
+              alt={t('whyChoose.altImage')}
               fill
               sizes="(max-width: 768px) 100vw, 50vw"
               className="object-cover object-center"
@@ -68,7 +96,7 @@ export default function WhyChooseUs() {
 
           {/* Right feature cards */}
           <div className="flex-1 flex flex-col gap-6">
-            {features.map((f) => (
+            {translatedFeatures.map((f) => (
               <div
                 key={f.title}
                 className="p-6 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] border border-neutral-100 flex items-center gap-4"

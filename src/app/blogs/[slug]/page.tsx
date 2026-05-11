@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { unescapeHtml } from "@/lib/utils";
 
 type PostData = {
@@ -42,7 +43,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const post = await getPost(slug);
 
-  if (!post) return { title: "Post Not Found" };
+  if (!post) {
+    const t = await getTranslations();
+    return { title: t("blogDetail.notFoundTitle") };
+  }
 
   return {
     title: post.meta?.meta_title || post.title,
@@ -52,6 +56,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function SingleBlogPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  const t = await getTranslations();
   const post = await getPost(slug);
 
   if (!post) {
@@ -84,9 +89,9 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
                     </svg>
                   </Link>
                   <span className="text-sm">/</span>
-                  <Link href="/blogs" className="text-sm hover:text-amber-500 transition-colors">Blogs</Link>
+                  <Link href="/blogs" className="text-sm hover:text-amber-500 transition-colors">{t("common.blogs")}</Link>
                   <span className="text-sm">/</span>
-                  <span className="text-sm font-semibold text-neutral-700">Details</span>
+                  <span className="text-sm font-semibold text-neutral-700">{t("common.details")}</span>
                 </div>
                 <h1 className="text-4xl font-bold leading-[48px] text-neutral-800">
                   {post.title}
@@ -117,7 +122,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
                     </p>
                     <div className="inline-flex items-start gap-6">
                       <div className="inline-flex flex-col items-start gap-1.5">
-                        <span className="text-sm font-normal leading-5 text-neutral-700">Author:</span>
+                        <span className="text-sm font-normal leading-5 text-neutral-700">{t("blogDetail.author")}</span>
                         <div className="inline-flex items-center gap-1.5">
                           <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center text-[10px] font-bold text-amber-600">BL</div>
                           <span className="text-base font-semibold leading-6 text-neutral-800">BusinessLabels</span>
@@ -125,7 +130,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
                       </div>
                       <div className="h-12 w-px bg-gray-200"></div>
                       <div className="inline-flex flex-col items-start gap-1.5">
-                        <span className="text-sm font-normal leading-5 text-neutral-700">Published on:</span>
+                        <span className="text-sm font-normal leading-5 text-neutral-700">{t("blogDetail.publishedOn")}</span>
                         <div className="inline-flex items-center gap-1.5">
                           <span className="text-base font-semibold leading-6 text-neutral-800">{formattedDate}</span>
                         </div>
@@ -146,14 +151,14 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
 
                 {/* Author Bio Box - Default for now as API doesn't provide author yet */}
                 <div className="flex w-full flex-col items-start gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-sm mt-8">
-                  <h3 className="text-2xl font-semibold leading-7 text-neutral-800">About BusinessLabels</h3>
+                  <h3 className="text-2xl font-semibold leading-7 text-neutral-800">{t("blogDetail.aboutTitle")}</h3>
                   <div className="w-full border-t border-gray-100"></div>
                   <div className="inline-flex w-full items-center gap-4">
                     <div className="w-20 h-20 rounded-lg bg-amber-500 flex items-center justify-center text-white text-2xl font-bold">BL</div>
                     <div className="flex flex-1 flex-col items-start gap-2.5">
-                      <h4 className="text-2xl font-bold text-neutral-800">The BusinessLabels Team</h4>
+                      <h4 className="text-2xl font-bold text-neutral-800">{t("blogDetail.teamName")}</h4>
                       <p className="text-base font-medium text-neutral-700">
-                        Your trusted partner for high-quality labels and printing solutions. We share insights on label design, material selection, and industry standards to help your business grow.
+                        {t("blogDetail.teamDescription")}
                       </p>
                     </div>
                   </div>
@@ -165,7 +170,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
                 {/* Share Box */}
                 <div className="relative flex w-full flex-col items-start gap-8 overflow-hidden rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
                   <div className="absolute left-0 top-0 h-14 w-80 bg-slate-50"></div>
-                  <h3 className="relative z-10 text-xl font-semibold leading-6 text-neutral-800">Share this post</h3>
+                  <h3 className="relative z-10 text-xl font-semibold leading-6 text-neutral-800">{t("blogDetail.sharePost")}</h3>
                   <div className="relative z-10 flex w-full flex-col items-start gap-5">
                     <div className="inline-flex items-center gap-3 w-full">
                       <button className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors">
@@ -184,15 +189,15 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
                 {/* Categories Box */}
                 <div className="relative flex w-full flex-col items-start gap-8 overflow-hidden rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
                   <div className="absolute left-0 top-0 h-14 w-80 bg-slate-50"></div>
-                  <h3 className="relative z-10 text-xl font-semibold leading-6 text-neutral-800">Categories</h3>
+                  <h3 className="relative z-10 text-xl font-semibold leading-6 text-neutral-800">{t("common.categories")}</h3>
                   <div className="relative z-10 flex w-full flex-col items-start gap-4">
-                    <Link href="/blogs" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500 transition-colors">All Posts</Link>
+                    <Link href="/blogs" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500 transition-colors">{t("blogDetail.allPosts")}</Link>
                     <div className="w-full border-t border-gray-100"></div>
-                    <Link href="#" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500 transition-colors">Label Design</Link>
+                    <Link href="#" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500 transition-colors">{t("blogDetail.labelDesign")}</Link>
                     <div className="w-full border-t border-gray-100"></div>
-                    <Link href="#" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500 transition-colors">Materials</Link>
+                    <Link href="#" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500 transition-colors">{t("common.materials")}</Link>
                     <div className="w-full border-t border-gray-100"></div>
-                    <Link href="#" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500 transition-colors">Technology</Link>
+                    <Link href="#" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500 transition-colors">{t("blogDetail.technology")}</Link>
                   </div>
                 </div>
               </aside>
@@ -204,7 +209,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
       {/* Recommended Products */}
       <div className="flex w-full flex-col items-start gap-12 bg-gray-50 px-4 py-24 sm:px-6 lg:px-40">
         <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between">
-          <h2 className="text-4xl font-bold leading-[48px] text-neutral-800">Recommended Products</h2>
+          <h2 className="text-4xl font-bold leading-[48px] text-neutral-800">{t("blogDetail.recommendedProducts")}</h2>
           <div className="flex items-center gap-6">
             <button className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-50 border border-gray-200 text-neutral-800 shadow-sm transition-colors hover:bg-gray-100">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -223,19 +228,19 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
           {[1, 2, 3].map((item) => (
             <div key={item} className="flex w-[384px] shrink-0 flex-col items-start overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
               <div className="relative h-60 w-full overflow-hidden bg-slate-100 flex items-center justify-center">
-                <Image src="https://placehold.co/222x180" alt="Product" width={222} height={180} unoptimized />
+                <Image src="https://placehold.co/222x180" alt={t("common.products")} width={222} height={180} unoptimized />
                 <div className="absolute left-4 top-4 flex w-[calc(100%-32px)] items-center justify-between">
                   <div className="flex items-center gap-1.5 rounded-3xl bg-white px-2.5 py-1">
                     <div className="h-3 w-3 rounded-full bg-neutral-700/20 flex items-center justify-center">
                       <div className="h-1.5 w-1.5 rounded-full bg-neutral-700"></div>
                     </div>
-                    <span className="text-xs font-normal leading-4 text-neutral-700">Inkjet</span>
+                    <span className="text-xs font-normal leading-4 text-neutral-700">{t("blogDetail.inkjet")}</span>
                   </div>
                   <div className="flex items-center gap-1.5 rounded-full bg-green-600 px-2.5 py-[5px]">
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M10 3L4.5 8.5L2 6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
-                    <span className="text-xs font-normal leading-4 text-white">In Stock</span>
+                    <span className="text-xs font-normal leading-4 text-white">{t("common.inStock")}</span>
                   </div>
                 </div>
               </div>
@@ -252,13 +257,13 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
                       <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M10 3L4.5 8.5L2 6" stroke="#22C55E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
-                      <span className="text-base font-normal leading-5 text-neutral-700">Ink content: 50 ml</span>
+                      <span className="text-base font-normal leading-5 text-neutral-700">{t("blogDetail.inkContent")}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M10 3L4.5 8.5L2 6" stroke="#22C55E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
-                      <span className="text-base font-normal leading-5 text-neutral-700">Color system: CMYK</span>
+                      <span className="text-base font-normal leading-5 text-neutral-700">{t("blogDetail.colorSystem")}</span>
                     </div>
                   </div>
                 </div>
@@ -267,10 +272,10 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
                   <div className="flex w-full items-center justify-between">
                     <div className="flex flex-col items-start gap-1">
                       <span className="text-2xl font-bold leading-7 text-neutral-800">€9,34</span>
-                      <span className="text-xs font-normal leading-4 text-zinc-500">ex. VAT</span>
+                      <span className="text-xs font-normal leading-4 text-zinc-500">{t("blogDetail.exVat")}</span>
                     </div>
                     <button className="flex h-9 items-center justify-center gap-2 rounded-full bg-amber-500 px-4 py-2.5 transition-colors hover:bg-amber-600">
-                      <span className="text-base font-semibold leading-6 text-white">Add</span>
+                      <span className="text-base font-semibold leading-6 text-white">{t("blogDetail.add")}</span>
                       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M10 4.16667V15.8333" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                         <path d="M4.16669 10H15.8334" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -287,7 +292,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
       {/* Recommended Materials */}
       <div className="flex w-full flex-col items-start gap-12 bg-white px-4 py-24 sm:px-6 lg:px-40">
         <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between">
-          <h2 className="text-4xl font-bold leading-[48px] text-neutral-800">Recommended Materials</h2>
+          <h2 className="text-4xl font-bold leading-[48px] text-neutral-800">{t("blogDetail.recommendedMaterials")}</h2>
           <div className="flex items-center gap-6">
             <button className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-50 border border-gray-200 text-neutral-800 shadow-sm transition-colors hover:bg-gray-100">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -306,12 +311,12 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
           {[1, 2, 3].map((item) => (
             <div key={item} className="flex w-[384px] shrink-0 flex-col items-start overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
               <div className="relative h-56 w-full overflow-hidden bg-gray-100">
-                <Image src="https://placehold.co/384x220" alt="Material" width={384} height={220} className="w-full object-cover" unoptimized />
+                <Image src="https://placehold.co/384x220" alt={t("common.materials")} width={384} height={220} className="w-full object-cover" unoptimized />
                 <div className="absolute left-4 top-4 flex items-center gap-1.5 rounded-3xl bg-white px-2.5 py-1">
                   <div className="h-3 w-3 rounded-full bg-neutral-700/20 flex items-center justify-center">
                     <div className="h-1.5 w-1.5 rounded-full bg-neutral-700"></div>
                   </div>
-                  <span className="text-xs font-normal leading-4 text-neutral-700">Inkjet</span>
+                  <span className="text-xs font-normal leading-4 text-neutral-700">{t("blogDetail.inkjet")}</span>
                 </div>
               </div>
               <div className="flex w-full flex-col items-start gap-4 p-4">
@@ -328,29 +333,29 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="flex h-6 items-center justify-center rounded-xl bg-orange-100 px-3">
-                    <span className="text-sm font-normal leading-4 text-amber-500">Paper</span>
+                    <span className="text-sm font-normal leading-4 text-amber-500">{t("blogDetail.paper")}</span>
                   </div>
                   <div className="flex h-6 items-center justify-center rounded-xl bg-purple-100 px-3">
-                    <span className="text-sm font-normal leading-4 text-purple-600">Glossy</span>
+                    <span className="text-sm font-normal leading-4 text-purple-600">{t("blogDetail.glossy")}</span>
                   </div>
                   <div className="flex h-6 items-center justify-center rounded-xl bg-green-100 px-3">
-                    <span className="text-sm font-normal leading-4 text-green-600">Permanent</span>
+                    <span className="text-sm font-normal leading-4 text-green-600">{t("blogDetail.permanent")}</span>
                   </div>
                 </div>
                 <div className="flex w-full flex-col items-start gap-4">
                   <div className="w-full border-t border-gray-100"></div>
                   <div className="flex w-full items-start gap-2">
                     <div className="flex-1">
-                      <span className="text-base font-normal leading-5 text-neutral-700">Weight: </span>
+                      <span className="text-base font-normal leading-5 text-neutral-700">{t("blogDetail.weight")} </span>
                       <span className="text-base font-semibold leading-5 text-neutral-700">165 g/m²</span>
                     </div>
                     <div className="flex-1">
-                      <span className="text-base font-normal leading-5 text-neutral-700">Thickness: </span>
+                      <span className="text-base font-normal leading-5 text-neutral-700">{t("blogDetail.thickness")} </span>
                       <span className="text-base font-semibold leading-5 text-neutral-700">169 μm</span>
                     </div>
                   </div>
                   <button className="flex h-9 w-full items-center justify-center gap-2 rounded-full bg-amber-500 px-4 py-2.5 transition-colors hover:bg-amber-600">
-                    <span className="text-base font-semibold leading-6 text-white">View Details</span>
+                    <span className="text-base font-semibold leading-6 text-white">{t("common.viewDetails")}</span>
                   </button>
                 </div>
               </div>
@@ -366,18 +371,18 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
         <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-10">
           <div className="flex flex-col items-center gap-4">
             <h2 className="text-center text-4xl font-bold leading-[48px] text-white">
-              Ready to find the perfect labels?
+              {t("cta.title")}
             </h2>
             <p className="text-center text-lg font-normal leading-7 text-gray-100">
-              Join over 12,000 businesses who trust us for expert advice and high-quality products
+              {t("cta.subtitle")}
             </p>
           </div>
           <div className="inline-flex items-center gap-4">
             <Link href="/finder" className="flex h-12 items-center justify-center gap-2.5 rounded-[50px] bg-amber-500 px-7 py-4 transition-colors hover:bg-amber-600">
-              <span className="text-center text-lg font-semibold leading-6 text-white">Product Finder</span>
+              <span className="text-center text-lg font-semibold leading-6 text-white">{t("header.productFinder")}</span>
             </Link>
             <Link href="/custom" className="flex h-12 items-center justify-center gap-2.5 rounded-[50px] bg-white/10 px-7 py-4 border border-white/20 backdrop-blur-[5px] transition-colors hover:bg-white/20">
-              <span className="text-center text-lg font-semibold leading-6 text-white">Custom-made Labels</span>
+              <span className="text-center text-lg font-semibold leading-6 text-white">{t("blogDetail.customMadeLabels")}</span>
             </Link>
           </div>
         </div>

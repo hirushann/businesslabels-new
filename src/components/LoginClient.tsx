@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { FormEvent, Suspense, useState } from 'react';
 import { ArrowRight, Eye, EyeOff, Loader2, LockKeyhole, Mail } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -78,6 +79,7 @@ export default function LoginClient() {
 }
 
 function LoginContent() {
+  const t = useTranslations();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
@@ -116,7 +118,7 @@ function LoginContent() {
 
       if (!response.ok) {
         setErrors(data.errors ?? {});
-        setFormMessage(data.message || 'Please check your email and password.');
+        setFormMessage(data.message || t('login.loginError'));
         return;
       }
 
@@ -124,11 +126,11 @@ function LoginContent() {
       localStorage.setItem('auth_user', JSON.stringify(user));
       window.dispatchEvent(new Event('auth-user-updated'));
 
-      toast.success('Logged in successfully');
+      toast.success(t('login.loginSuccess'));
       router.push(redirectTo);
       router.refresh();
     } catch {
-      setFormMessage('Unable to login right now. Please try again.');
+      setFormMessage(t('login.loginError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -160,16 +162,16 @@ function LoginContent() {
     const normalizedResetEmail = resetEmail.trim();
 
     if (!normalizedResetEmail) {
-      setResetErrors({ email: ['The email field is required.'] });
-      setResetMessage('The email field is required.');
+      setResetErrors({ email: [t('login.emailRequired')] });
+      setResetMessage(t('login.emailRequired'));
       setResetMessageTone('error');
       setIsResetSubmitting(false);
       return;
     }
 
     if (!isValidEmail(normalizedResetEmail)) {
-      setResetErrors({ email: ['Please enter a valid email address.'] });
-      setResetMessage('Please enter a valid email address.');
+      setResetErrors({ email: [t('login.invalidEmail')] });
+      setResetMessage(t('login.invalidEmail'));
       setResetMessageTone('error');
       setIsResetSubmitting(false);
       return;
@@ -189,16 +191,16 @@ function LoginContent() {
 
       if (!response.ok) {
         setResetErrors(data.errors ?? {});
-        setResetMessage(data.message || 'Please enter a valid email address.');
+        setResetMessage(data.message || t('login.invalidEmail'));
         setResetMessageTone('error');
         return;
       }
 
-      setResetMessage(data.message || data.status || 'Password reset instructions have been sent to your email address.');
+      setResetMessage(data.message || data.status || t('login.resetEmailSent'));
       setResetMessageTone('success');
-      toast.success('Password reset email sent');
+      toast.success(t('login.resetSuccess'));
     } catch {
-      setResetMessage('Unable to request a password reset right now. Please try again.');
+      setResetMessage(t('login.resetError'));
       setResetMessageTone('error');
     } finally {
       setIsResetSubmitting(false);
@@ -222,21 +224,21 @@ function LoginContent() {
 
           <div className="relative z-10 flex max-w-md flex-col gap-6">
             <span className="w-fit rounded-full bg-amber-500 px-4 py-1.5 text-xs font-black uppercase tracking-widest text-sky-950">
-              Account access
+              {t('login.accountAccess')}
             </span>
             <h1 className="text-5xl font-black leading-[1.02] tracking-tight">
-              Label ordering, saved printers, and support in one account.
+              {t('login.heroTitle')}
             </h1>
             <p className="text-lg leading-8 text-sky-100/75">
-              Sign in to manage repeat orders, favourite products, saved addresses, and Epson ColorWorks supplies.
+              {t('login.heroSubtitle')}
             </p>
           </div>
 
           <div className="grid grid-cols-3 gap-4 text-sm">
             {[
-              ['Fast', 'repeat orders'],
-              ['Saved', 'printer profiles'],
-              ['Free', 'expert support'],
+              [t('login.fastOrders'), t('login.fastOrdersDesc')],
+              [t('login.savedProfiles'), t('login.savedProfilesDesc')],
+              [t('login.freeSupport'), t('login.freeSupportDesc')],
             ].map(([title, copy]) => (
               <div key={title} className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <div className="text-2xl font-black text-amber-400">{title}</div>
@@ -254,12 +256,12 @@ function LoginContent() {
               </Link>
               <div>
                 <h2 className="text-4xl font-black tracking-tight text-neutral-800">
-                  {isResetMode ? 'Reset password' : 'Login'}
+                  {isResetMode ? t('login.resetPassword') : t('login.title')}
                 </h2>
                 <p className="mt-2 text-base font-medium leading-7 text-neutral-500">
                   {isResetMode
-                    ? 'Enter your email address to receive a password reset link.'
-                    : 'Access your BusinessLabels account.'}
+                    ? t('login.resetPasswordDesc')
+                    : t('login.subtitle')}
                 </p>
               </div>
             </div>
@@ -278,7 +280,7 @@ function LoginContent() {
 
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="reset-email" className="font-bold text-neutral-700">
-                    Email address
+                    {t('login.resetEmailLabel')}
                   </Label>
                   <div className="relative">
                     <Mail className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-neutral-400" />
@@ -290,7 +292,7 @@ function LoginContent() {
                       autoComplete="email"
                       aria-invalid={Boolean(resetErrors.email)}
                       className="h-13 rounded-2xl border-slate-200 bg-slate-50 pl-12 pr-4 text-base font-semibold text-neutral-800 placeholder:font-medium focus-visible:border-amber-500 focus-visible:ring-amber-500/20"
-                      placeholder="you@example.com"
+                      placeholder={t('login.resetEmailPlaceholder')}
                       disabled={isResetSubmitting}
                     />
                   </div>
@@ -305,11 +307,11 @@ function LoginContent() {
                   {isResetSubmitting ? (
                     <>
                       <Loader2 className="size-5 animate-spin" />
-                      Sending link
+                      {t('login.sending')}
                     </>
                   ) : (
                     <>
-                      Send reset link
+                      {t('login.sendResetLink')}
                       <ArrowRight className="size-5" />
                     </>
                   )}
@@ -321,7 +323,7 @@ function LoginContent() {
                   className="text-center text-sm font-black text-amber-600 transition-colors hover:text-amber-700"
                   disabled={isResetSubmitting}
                 >
-                  Back to login
+                  {t('login.backToLogin')}
                 </button>
               </form>
             ) : (
@@ -334,7 +336,7 @@ function LoginContent() {
 
               <div className="flex flex-col gap-2">
                 <Label htmlFor="email" className="font-bold text-neutral-700">
-                  Email address
+                  {t('login.emailLabel')}
                 </Label>
                 <div className="relative">
                   <Mail className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-neutral-400" />
@@ -346,7 +348,7 @@ function LoginContent() {
                     autoComplete="email"
                     aria-invalid={Boolean(errors.email)}
                     className="h-13 rounded-2xl border-slate-200 bg-slate-50 pl-12 pr-4 text-base font-semibold text-neutral-800 placeholder:font-medium focus-visible:border-amber-500 focus-visible:ring-amber-500/20"
-                    placeholder="you@example.com"
+                    placeholder={t('login.emailPlaceholder')}
                     disabled={isSubmitting}
                   />
                 </div>
@@ -355,7 +357,7 @@ function LoginContent() {
 
               <div className="flex flex-col gap-2">
                 <Label htmlFor="password" className="font-bold text-neutral-700">
-                  Password
+                  {t('login.passwordLabel')}
                 </Label>
                 <div className="relative">
                   <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-neutral-400" />
@@ -367,14 +369,14 @@ function LoginContent() {
                     autoComplete="current-password"
                     aria-invalid={Boolean(errors.password)}
                     className="h-13 rounded-2xl border-slate-200 bg-slate-50 pl-12 pr-13 text-base font-semibold text-neutral-800 placeholder:font-medium focus-visible:border-amber-500 focus-visible:ring-amber-500/20"
-                    placeholder="Enter your password"
+                    placeholder={t('login.passwordPlaceholder')}
                     disabled={isSubmitting}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((value) => !value)}
                     className="absolute right-3 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full text-neutral-400 transition-colors hover:bg-white hover:text-neutral-700"
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    aria-label={showPassword ? t('login.hidePassword') : t('login.showPassword')}
                     disabled={isSubmitting}
                   >
                     {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
@@ -392,7 +394,7 @@ function LoginContent() {
                     className="size-4 rounded border-slate-300 accent-amber-500"
                     disabled={isSubmitting}
                   />
-                  Remember me
+                  {t('login.rememberMe')}
                 </label>
                 <button
                   type="button"
@@ -400,7 +402,7 @@ function LoginContent() {
                   className="text-sm font-black text-amber-600 transition-colors hover:text-amber-700"
                   disabled={isSubmitting}
                 >
-                  Forgot password?
+                  {t('login.forgotPassword')}
                 </button>
               </div>
 
@@ -412,11 +414,11 @@ function LoginContent() {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="size-5 animate-spin" />
-                    Logging in
+                    {t('login.loggingIn')}
                   </>
                 ) : (
                   <>
-                    Login
+                    {t('login.loginButton')}
                     <ArrowRight className="size-5" />
                   </>
                 )}
@@ -425,9 +427,9 @@ function LoginContent() {
             )}
 
             <p className="mt-7 text-center text-sm font-semibold text-neutral-500">
-              New to BusinessLabels?{' '}
+              {t('login.noAccount')}{' '}
               <Link href="/register" className="font-black text-amber-600 transition-colors hover:text-amber-700">
-                Create an account
+                {t('login.register')}
               </Link>
             </p>
           </div>

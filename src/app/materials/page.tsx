@@ -1,14 +1,18 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import ReviewsSection from "@/components/ReviewsSection";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 
-export const metadata: Metadata = {
-  title: "Material Overview — BusinessLabels",
-  description:
-    "Discover printer media materials selected for precision, durability, color accuracy, and reliable professional output.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations();
+
+  return {
+    title: t("materialsPage.metadataTitle"),
+    description: t("materialsPage.metadataDescription"),
+  };
+}
 
 type Material = {
   id: number;
@@ -43,14 +47,22 @@ function CheckIcon() {
   );
 }
 
-function MaterialCard({ material }: { material: Material }) {
+function MaterialCard({
+  material,
+  viewDetailsLabel,
+  previewAlt,
+}: {
+  material: Material;
+  viewDetailsLabel: string;
+  previewAlt: string;
+}) {
   const listingImage = `https://placehold.co/600x400?text=${encodeURIComponent(material.code)}`;
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)]">
       <div className="relative h-56 bg-gray-100">
         <Image
           src={listingImage}
-          alt={`${material.code} material preview`}
+          alt={previewAlt}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 384px"
           className="object-cover"
@@ -83,7 +95,7 @@ function MaterialCard({ material }: { material: Material }) {
             href={`/materials/${material.slug}`}
             className="flex h-9 items-center justify-center rounded-full bg-amber-500 px-4 text-base font-semibold leading-6 text-white transition-colors hover:bg-amber-600"
           >
-            View Details
+            {viewDetailsLabel}
           </Link>
         </div>
       </div>
@@ -98,6 +110,7 @@ export default async function MaterialPage({
 }) {
   const baseUrl = process.env.BBNL_API_BASE_URL;
   const query = await searchParams;
+  const t = await getTranslations();
 
   if (!baseUrl) {
     throw new Error("BBNL_API_BASE_URL is not configured");
@@ -152,19 +165,17 @@ export default async function MaterialPage({
               <div className="relative z-10 flex min-h-56 flex-col gap-4 p-6">
                 <nav className="flex items-center gap-2 text-sm leading-5 text-white/70" aria-label="Breadcrumb">
                   <Link href="/" className="hover:text-white">
-                    Home
+                    {t("common.home")}
                   </Link>
                   <span>/</span>
-                  <span className="font-semibold text-white/70">Categories</span>
+                  <span className="font-semibold text-white/70">{t("common.categories")}</span>
                   <span>/</span>
-                  <span className="font-semibold text-white">Materials</span>
+                  <span className="font-semibold text-white">{t("common.materials")}</span>
                 </nav>
                 <div className="mt-auto flex max-w-193.5 flex-col gap-4">
-                  <h1 className="text-4xl font-bold leading-12 text-white">Material Overview</h1>
+                  <h1 className="text-4xl font-bold leading-12 text-white">{t("materialsPage.title")}</h1>
                   <p className="text-lg leading-6 text-white">
-                    Explore our printer media materials, engineered for precision, durability, and high-quality
-                    output. From standard to specialty stocks, each is chosen to boost performance, color accuracy,
-                    and reliability—ensuring professional results without compromise.
+                    {t("materialsPage.subtitle")}
                   </p>
                 </div>
               </div>
@@ -174,7 +185,7 @@ export default async function MaterialPage({
             <div className="flex flex-col gap-6">
               {/* Section header */}
               <div className="flex flex-col gap-4 border-b border-gray-100 pb-4">
-                <h2 className="text-4xl font-bold leading-12 text-neutral-800">All Materials</h2>
+                <h2 className="text-4xl font-bold leading-12 text-neutral-800">{t("materialsPage.allMaterials")}</h2>
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <button
                     type="button"
@@ -185,16 +196,16 @@ export default async function MaterialPage({
                       <path d="M5.5 10H14.5" stroke="#52525B" strokeWidth="1.5" strokeLinecap="round" />
                       <path d="M8 15H12" stroke="#52525B" strokeWidth="1.5" strokeLinecap="round" />
                     </svg>
-                    <span className="text-xl font-semibold leading-6">Filters</span>
+                    <span className="text-xl font-semibold leading-6">{t("common.filters")}</span>
                   </button>
                   <label className="flex h-10 w-fit items-center gap-3 rounded-[42px] border border-slate-200 px-5 text-neutral-800">
-                    <span className="sr-only">Sort materials</span>
+                    <span className="sr-only">{t("materialsPage.sortMaterials")}</span>
                     <select
                       defaultValue="name_asc"
                       disabled
                       className="bg-transparent text-base leading-5 outline-none disabled:opacity-100"
                     >
-                      <option value="name_asc">Name: A to Z</option>
+                      <option value="name_asc">{t("materialsPage.nameAsc")}</option>
                     </select>
                   </label>
                 </div>
@@ -203,7 +214,12 @@ export default async function MaterialPage({
               {/* Grid */}
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
                 {materials.map((material) => (
-                  <MaterialCard key={material.id} material={material} />
+                  <MaterialCard
+                    key={material.id}
+                    material={material}
+                    viewDetailsLabel={t("common.viewDetails")}
+                    previewAlt={t("materialsPage.materialPreviewAlt", { code: material.code })}
+                  />
                 ))}
               </div>
 
@@ -215,7 +231,7 @@ export default async function MaterialPage({
                       href={`/materials?page=${currentPage - 1}`}
                       className="rounded-[50px] border border-slate-100 px-6 py-2.5 text-base font-medium text-neutral-800"
                     >
-                      Previous
+                      {t("common.previous")}
                     </Link>
                   )}
                   {Array.from({ length: Math.min(5, lastPage) }, (_, i) => {
@@ -238,7 +254,7 @@ export default async function MaterialPage({
                       href={`/materials?page=${currentPage + 1}`}
                       className="rounded-[50px] border border-slate-100 px-6 py-2.5 text-base font-semibold text-neutral-800"
                     >
-                      Next
+                      {t("common.next")}
                     </Link>
                   )}
                 </div>

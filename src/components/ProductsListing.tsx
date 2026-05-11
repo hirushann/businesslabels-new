@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from 'next-intl';
 import Accordion from "@/components/Accordion";
 import EmptyState from "@/components/EmptyState";
 import ProductCard from "@/components/ProductCard";
@@ -33,16 +34,6 @@ type LegacyProductsListingProps = {
 };
 
 type ProductsListingUnionProps = ProductsListingProps | LegacyProductsListingProps;
-
-const SORT_OPTIONS: Array<{ value: CatalogSortValue; label: string }> = [
-  { value: "relevance", label: "Most Relevant" },
-  { value: "latest", label: "Latest" },
-  { value: "oldest", label: "Oldest" },
-  { value: "title_asc", label: "Name: A - Z" },
-  { value: "title_desc", label: "Name: Z - A" },
-  { value: "price_asc", label: "Price: Low to High" },
-  { value: "price_desc", label: "Price: High to Low" },
-];
 
 const OPTION_PARAM_KEY: Record<CatalogOptionFilterKey, string> = {
   category: "category",
@@ -157,8 +148,8 @@ function formatRangeValue(value: number, unitPrefix?: string, unitSuffix?: strin
   return `${unitPrefix ?? ""}${value}${unitSuffix ? ` ${unitSuffix}` : ""}`;
 }
 
-function normalizeSortValue(value: string | null, hasSearch: boolean): CatalogSortValue {
-  const allowed = new Set(SORT_OPTIONS.map((option) => option.value));
+function normalizeSortValue(value: string | null, hasSearch: boolean, sortOptions: Array<{ value: CatalogSortValue; label: string }>): CatalogSortValue {
+  const allowed = new Set(sortOptions.map((option) => option.value));
   return allowed.has(value as CatalogSortValue) ? (value as CatalogSortValue) : hasSearch ? "relevance" : "latest";
 }
 
@@ -173,6 +164,8 @@ function ProductSkeletonGrid({ isSidebarOpen }: { isSidebarOpen: boolean }) {
 }
 
 function LegacyProductsListing({ products, currentPage = 1, lastPage = 1, basePath }: LegacyProductsListingProps) {
+  const t = useTranslations();
+
   const setPage = (page: number) => {
     if (!basePath) return;
     const [path, query = ""] = basePath.split("?");
@@ -190,7 +183,7 @@ function LegacyProductsListing({ products, currentPage = 1, lastPage = 1, basePa
   return (
     <div className="flex flex-col gap-8">
       {products.length === 0 ? (
-        <EmptyState title="No products found" description="Try adjusting the filters to see more products." />
+        <EmptyState title={t('common.noProductsFound')} description={t('search.tryAdjustingFilters')} />
       ) : (
         <>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
@@ -215,6 +208,7 @@ function LegacyProductsListing({ products, currentPage = 1, lastPage = 1, basePa
 }
 
 function CatalogProductsListing({ initialCatalog, initialQueryString }: ProductsListingProps) {
+  const t = useTranslations();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -225,6 +219,31 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
   const [showAllFilters, setShowAllFilters] = useState<Record<string, boolean>>({});
   const [isPending, startTransition] = useTransition();
 
+  const SORT_OPTIONS: Array<{ value: CatalogSortValue; label: string }> = [
+    { value: "relevance", label: t('sort.relevance') },
+    { value: "latest", label: t('sort.latest') },
+    { value: "oldest", label: t('sort.oldest') },
+    { value: "title_asc", label: t('sort.nameAsc') },
+    { value: "title_desc", label: t('sort.nameDesc') },
+    { value: "price_asc", label: t('sort.priceAsc') },
+    { value: "price_desc", label: t('sort.priceDesc') },
+  ];
+
+  const getFilterTitle = (key: string, fallbackTitle?: string): string => {
+    const filterKey = `filters.${key}` as const;
+    // Try to get translation, if it exists
+    try {
+      const translated = t(filterKey);
+      if (translated && translated !== filterKey) {
+        return translated;
+      }
+    } catch {
+      // Translation not found
+    }
+    // Fallback to the original title from API or capitalize key
+    return fallbackTitle || key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ');
+  };
+
   const currentParams = useMemo(() => new URLSearchParams(searchParams.toString()), [searchParams]);
   const currentQueryString = useMemo(() => paramsToString(new URLSearchParams(searchParams.toString())), [searchParams]);
   const initialSortedQueryString = useMemo(
@@ -233,7 +252,7 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
   );
   const searchValue = searchParams.get("search") ?? searchParams.get("q") ?? "";
   const [searchInput, setSearchInput] = useState(searchValue);
-  const selectedSort = normalizeSortValue(searchParams.get("sort"), Boolean(searchValue));
+  const selectedSort = normalizeSortValue(searchParams.get("sort"), Boolean(searchValue), SORT_OPTIONS);
   const hasInitialCatalog = currentQueryString === initialSortedQueryString;
 
   const setParams = (updater: (params: URLSearchParams) => void) => {
@@ -425,7 +444,7 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
           <input
             value={searchInput}
             onChange={(event) => setSearchInput(event.target.value)}
-            placeholder="Search products..."
+            placeholder={t('search.searchProducts')}
             className="h-11 w-full bg-transparent text-base text-neutral-800 outline-none"
           />
         </div>
@@ -445,7 +464,7 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
                 <path d="M5.5 10H14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                 <path d="M8 15H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
-              <span className="text-lg font-semibold font-['Segoe_UI'] leading-6">Filters</span>
+              <span className="text-lg font-semibold font-['Segoe_UI'] leading-6">{t('search.filters')}</span>
               {activeFilterCount > 0 ? (
                 <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-100 px-1.5 text-xs font-semibold text-amber-600">
                   {activeFilterCount}
@@ -526,7 +545,7 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
                       : 0;
 
                     return (
-                      <Accordion key={filter.key} title={filter.title} defaultOpen={true} size="compact" className="bg-white">
+                      <Accordion key={filter.key} title={getFilterTitle(filter.key, filter.title)} defaultOpen={true} size="compact" className="bg-white">
                         <div className="flex flex-col gap-3">
                           <RangeSlider
                             min={0}
@@ -568,7 +587,7 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
                   const hasMore = filter.options.length > DISPLAY_LIMIT;
 
                   return (
-                    <Accordion key={filter.key} title={filter.title} defaultOpen={true} size="compact" className="bg-white">
+                    <Accordion key={filter.key} title={getFilterTitle(filter.key, filter.title)} defaultOpen={true} size="compact" className="bg-white">
                       <div className="flex flex-col gap-3">
                         <div className="flex flex-wrap gap-2">
                           {displayedOptions.map((option) => {
@@ -618,7 +637,7 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
 
         <div className="min-w-0 flex-1">
           <div className="mb-4 text-sm text-neutral-600">
-            {loading ? "Loading products..." : `${catalog.total} results`}
+            {loading ? t('search.loadingProducts') : t('search.results', { count: catalog.total })}
           </div>
 
           {error ? (
@@ -626,7 +645,7 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
           ) : loading && products.length === 0 ? (
             <ProductSkeletonGrid isSidebarOpen={isSidebarOpen} />
           ) : products.length === 0 ? (
-            <EmptyState title="No products found" description="Try adjusting the filters to see more products." />
+            <EmptyState title={t('common.noProductsFound')} description={t('search.tryAdjustingFilters')} />
           ) : (
             <>
               <div

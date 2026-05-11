@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import EmptyState from '@/components/EmptyState';
 import DrawerProductCard from '@/components/DrawerProductCard';
 import { useWishlist } from '@/components/WishlistProvider';
@@ -19,6 +20,7 @@ function formatEuro(value: number): string {
 }
 
 export default function WishlistDrawer({ onClose }: WishlistDrawerProps) {
+  const t = useTranslations();
   const { items, uniqueItemCount, removeItem, moveToCart } = useWishlist();
 
   useEffect(() => {
@@ -54,17 +56,17 @@ export default function WishlistDrawer({ onClose }: WishlistDrawerProps) {
           <div className="flex items-start justify-between">
             <div className="flex flex-col gap-1">
               <h2 className="text-neutral-800 text-2xl font-semibold font-['Segoe_UI'] leading-7">
-                Your Wishlist
+                {t('wishlist.title')}
               </h2>
               <span className="text-neutral-600 text-sm font-normal font-['Segoe_UI'] leading-5">
-                {uniqueItemCount} {uniqueItemCount === 1 ? 'item' : 'items'}
+                {t('wishlist.items', { count: uniqueItemCount })}
               </span>
             </div>
 
             <button
               type="button"
               onClick={onClose}
-              aria-label="Close wishlist"
+              aria-label={t('common.close')}
               className="w-6 h-6 flex items-center justify-center text-zinc-500 hover:text-zinc-800 transition-colors"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -77,8 +79,8 @@ export default function WishlistDrawer({ onClose }: WishlistDrawerProps) {
         <div className="flex-1 overflow-y-auto px-6 py-6">
           {items.length === 0 ? (
             <EmptyState
-              title="Your wishlist is empty"
-              description="Save products to your wishlist so you can review them and add them to cart later."
+              title={t('wishlist.empty')}
+              description={t('wishlist.emptyDescription')}
               className="px-6 py-14"
             />
           ) : (
@@ -98,7 +100,7 @@ export default function WishlistDrawer({ onClose }: WishlistDrawerProps) {
                     name={item.name}
                     sku={item.sku}
                     imageSrc={imageSrc}
-                    removeLabel={`Remove ${item.name} from wishlist`}
+                    removeLabel={t('wishlist.remove', { name: item.name })}
                     onRemove={() => removeItem(item.key)}
                     href={href}
                     onCardClick={onClose}
@@ -122,7 +124,7 @@ export default function WishlistDrawer({ onClose }: WishlistDrawerProps) {
                             : 'bg-slate-200 text-slate-500 cursor-not-allowed'
                         }`}
                       >
-                        Add to Cart
+                        {item.inStock ? t('wishlist.moveToCart') : t('wishlist.outOfStock')}
                       </button>
                     }
                   />

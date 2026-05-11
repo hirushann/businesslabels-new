@@ -1,10 +1,13 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 const trustItems = [
   {
-    title: 'Epson Gold Partner',
-    sub: 'Certified compatibility',
+    titleKey: 'footer.trust.epsonTitle',
+    subKey: 'footer.trust.epsonSub',
     icon: (
       <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M25.795 21.4834L28.32 35.6934C28.3483 35.8607 28.3248 36.0327 28.2527 36.1863C28.1806 36.3399 28.0633 36.4679 27.9165 36.5531C27.7698 36.6382 27.6005 36.6766 27.4313 36.6629C27.2622 36.6493 27.1012 36.5843 26.97 36.4767L21.0033 31.9984C20.7153 31.7832 20.3654 31.6669 20.0058 31.6669C19.6463 31.6669 19.2964 31.7832 19.0083 31.9984L13.0317 36.4751C12.9005 36.5825 12.7398 36.6473 12.5708 36.661C12.4019 36.6746 12.2328 36.6364 12.0861 36.5515C11.9394 36.4666 11.8221 36.3389 11.7499 36.1856C11.6776 36.0323 11.6538 35.8606 11.6817 35.6934L14.205 21.4834" stroke="#F18800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M20 23.3335C25.5228 23.3335 30 18.8563 30 13.3335C30 7.81065 25.5228 3.3335 20 3.3335C14.4772 3.3335 10 7.81065 10 13.3335C10 18.8563 14.4772 23.3335 20 23.3335Z" stroke="#F18800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -12,8 +15,8 @@ const trustItems = [
     ),
   },
   {
-    title: '12,000+ Customers',
-    sub: 'Trusted worldwide',
+    titleKey: 'footer.trust.customersTitle',
+    subKey: 'footer.trust.customersSub',
     icon: (
       <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M26.6667 35V31.6667C26.6667 29.8986 25.9643 28.2029 24.7141 26.9526C23.4638 25.7024 21.7681 25 20 25H10C8.2319 25 6.53621 25.7024 5.28597 26.9526C4.03572 28.2029 3.33334 29.8986 3.33334 31.6667V35" stroke="#F18800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M15 18.3333C18.6819 18.3333 21.6667 15.3486 21.6667 11.6667C21.6667 7.98477 18.6819 5 15 5C11.3181 5 8.33334 7.98477 8.33334 11.6667C8.33334 15.3486 11.3181 18.3333 15 18.3333Z" stroke="#F18800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M36.6667 35.0001V31.6668C36.6656 30.1897 36.1739 28.7548 35.269 27.5873C34.364 26.4199 33.0969 25.5861 31.6667 25.2168" stroke="#F18800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M26.6667 5.2168C28.1007 5.58397 29.3717 6.41797 30.2794 7.58731C31.1871 8.75666 31.6798 10.1948 31.6798 11.6751C31.6798 13.1554 31.1871 14.5936 30.2794 15.7629C29.3717 16.9323 28.1007 17.7663 26.6667 18.1335" stroke="#F18800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -21,8 +24,8 @@ const trustItems = [
     ),
   },
   {
-    title: 'Secure Payments',
-    sub: 'Safe & encrypted',
+    titleKey: 'footer.trust.secureTitle',
+    subKey: 'footer.trust.secureSub',
     icon: (
       <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M33.3334 21.6666C33.3334 29.9999 27.5 34.1666 20.5667 36.5833C20.2036 36.7063 19.8093 36.7004 19.45 36.5666C12.5 34.1666 6.66669 29.9999 6.66669 21.6666V9.99994C6.66669 9.55791 6.84228 9.13399 7.15484 8.82142C7.4674 8.50886 7.89133 8.33327 8.33335 8.33327C11.6667 8.33327 15.8334 6.33327 18.7334 3.79994C19.0864 3.49827 19.5356 3.33252 20 3.33252C20.4644 3.33252 20.9136 3.49827 21.2667 3.79994C24.1834 6.34994 28.3334 8.33327 31.6667 8.33327C32.1087 8.33327 32.5326 8.50886 32.8452 8.82142C33.1578 9.13399 33.3334 9.55791 33.3334 9.99994V21.6666Z" stroke="#F18800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M15 19.9998L18.3333 23.3332L25 16.6665" stroke="#F18800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -30,8 +33,8 @@ const trustItems = [
     ),
   },
   {
-    title: 'Fast Shipping',
-    sub: 'Next day available',
+    titleKey: 'footer.trust.shippingTitle',
+    subKey: 'footer.trust.shippingSub',
     icon: (
       <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M23.3334 29.9998V9.99984C23.3334 9.11578 22.9822 8.26794 22.3571 7.64281C21.7319 7.01769 20.8841 6.6665 20 6.6665H6.66671C5.78265 6.6665 4.93481 7.01769 4.30968 7.64281C3.68456 8.26794 3.33337 9.11578 3.33337 9.99984V28.3332C3.33337 28.7752 3.50897 29.1991 3.82153 29.5117C4.13409 29.8242 4.55801 29.9998 5.00004 29.9998H8.33337" stroke="#F18800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M25 30H15" stroke="#F18800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M31.6667 30.0002H35C35.4421 30.0002 35.866 29.8246 36.1786 29.512C36.4911 29.1994 36.6667 28.7755 36.6667 28.3335V22.2502C36.666 21.8719 36.5367 21.5052 36.3 21.2102L30.5 13.9602C30.3442 13.765 30.1464 13.6073 29.9214 13.4988C29.6964 13.3904 29.4498 13.3339 29.2 13.3335H23.3334" stroke="#F18800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M28.3333 33.3332C30.1743 33.3332 31.6667 31.8408 31.6667 29.9998C31.6667 28.1589 30.1743 26.6665 28.3333 26.6665C26.4924 26.6665 25 28.1589 25 29.9998C25 31.8408 26.4924 33.3332 28.3333 33.3332Z" stroke="#F18800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M11.6667 33.3332C13.5077 33.3332 15 31.8408 15 29.9998C15 28.1589 13.5077 26.6665 11.6667 26.6665C9.82576 26.6665 8.33337 28.1589 8.33337 29.9998C8.33337 31.8408 9.82576 33.3332 11.6667 33.3332Z" stroke="#F18800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -41,28 +44,29 @@ const trustItems = [
 ];
 
 const footerLinks = {
-  Products: [
-    { name: 'Label Printers', href: '/category/labelprinters' },
-    { name: 'Label Rolls', href: '/category/labels-en-tickets' },
-    { name: 'Ink & Supplies', href: '/category/inkt-cartridges-nl' },
-    { name: 'Special Labels', href: '/category/specials' },
+  products: [
+    { nameKey: 'footer.links.labelPrinters', href: '/category/labelprinters' },
+    { nameKey: 'footer.links.labelRolls', href: '/category/labels-en-tickets' },
+    { nameKey: 'footer.links.inkSupplies', href: '/category/inkt-cartridges-nl' },
+    { nameKey: 'footer.links.specialLabels', href: '/category/specials' },
   ],
-  'Popular Printers': [
+  printers: [
     { name: 'ZX1600i', href: '/products/zx1600i?type=simple' },
     { name: 'EZ6350i', href: '/products/ez6350i?type=simple' },
     { name: 'HD830i', href: '/products/hd830i?type=simple' },
-    { name: 'Compare Models', href: '#' },
+    { nameKey: 'footer.links.compareModels', href: '#' },
   ],
-  'Support & Services': [
-    { name: 'Expert Advice', href: '/support/expert' },
-    { name: 'Test Printer Loan', href: '/support/loan' },
-    { name: 'Sample Prints', href: '/support/samples' },
-    { name: 'Ink Calculator', href: '/resources/ink-calculator' },
-    { name: 'Help Center', href: '/support' },
+  support: [
+    { nameKey: 'footer.links.expertAdvice', href: '/support/expert' },
+    { nameKey: 'footer.links.testLoan', href: '/support/loan' },
+    { nameKey: 'footer.links.samplePrints', href: '/support/samples' },
+    { nameKey: 'footer.links.inkCalculator', href: '/resources/ink-calculator' },
+    { nameKey: 'footer.links.helpCenter', href: '/support' },
   ],
 };
 
 export default function Footer() {
+  const t = useTranslations();
   return (
     <footer className="w-full flex flex-col">
       {/* Trust bar */}
@@ -75,13 +79,13 @@ export default function Footer() {
       >
         <div className="max-w-[1512px] mx-auto w-full grid grid-cols-4 gap-4">
           {trustItems.map((item) => (
-            <div key={item.title} className="flex justify-center items-center gap-3">
+            <div key={item.titleKey} className="flex justify-center items-center gap-3">
               <div className="w-10 flex items-center justify-center shrink-0">
                 {item.icon}
               </div>
               <div className="flex flex-col gap-1">
-                <span className="text-slate-100 text-xl font-bold font-['Segoe_UI']">{item.title}</span>
-                <span className="text-white/80 text-base font-normal font-['Segoe_UI'] leading-6">{item.sub}</span>
+                <span className="text-slate-100 text-xl font-bold font-['Segoe_UI']">{t(item.titleKey)}</span>
+                <span className="text-white/80 text-base font-normal font-['Segoe_UI'] leading-6">{t(item.subKey)}</span>
               </div>
             </div>
           ))}
@@ -107,7 +111,7 @@ export default function Footer() {
 
               <div>
                 <p className="text-white/80 text-base font-normal font-['Segoe_UI'] leading-5">
-                  BusinessLabels is onderdeel van Smart2B BV
+                  {t('footer.companyText')}
                 </p>
               </div>
             </div>
@@ -132,22 +136,22 @@ export default function Footer() {
           </div>
 
           {/* Link columns */}
-          {Object.entries(footerLinks).map(([title, links]) => (
-            <div key={title} className="w-56 flex flex-col gap-5">
+          {Object.entries(footerLinks).map(([section, links]) => (
+            <div key={section} className="w-56 flex flex-col gap-5">
               <Link 
-                href={title === 'Products' ? '/products' : '#'} 
-                className={`text-white text-lg font-semibold font-['Segoe_UI'] leading-6 ${title === 'Products' ? 'hover:text-amber-500 transition-colors' : 'pointer-events-none'}`}
+                href={section === 'products' ? '/products' : '#'} 
+                className={`text-white text-lg font-semibold font-['Segoe_UI'] leading-6 ${section === 'products' ? 'hover:text-amber-500 transition-colors' : 'pointer-events-none'}`}
               >
-                {title}
+                {t(`footer.columns.${section}`)}
               </Link>
               <div className="flex flex-col gap-4">
                 {links.map((item) => (
                   <Link
-                    key={item.name}
+                    key={item.href + (item.nameKey || item.name)}
                     href={item.href}
                     className="text-white/80 text-base font-normal font-['Segoe_UI'] leading-5 hover:text-white transition-colors"
                   >
-                    {item.name}
+                    {item.nameKey ? t(item.nameKey) : item.name}
                   </Link>
                 ))}
               </div>
@@ -158,16 +162,20 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="max-w-[1512px] mx-auto w-full px-10 pt-6 pb-10 border-t border-slate-800 flex justify-between items-center">
           <span className="text-white/60 text-sm font-normal font-['Segoe_UI'] leading-5">
-            © 2026 BusinessLabels. All rights reserved.
+            {t('footer.legal.copyright')}
           </span>
           <div className="flex gap-5">
-            {['Privacy Policy', 'Terms & Conditions', 'Cookie Policy'].map((item) => (
+            {[
+              { key: 'footer.legal.privacy', href: '#' },
+              { key: 'footer.legal.terms', href: '#' },
+              { key: 'footer.legal.cookies', href: '#' },
+            ].map((item) => (
               <Link
-                key={item}
-                href="#"
+                key={item.key}
+                href={item.href}
                 className="text-white/60 text-sm font-normal font-['Segoe_UI'] leading-5 hover:text-white/80 transition-colors"
               >
-                {item}
+                {t(item.key)}
               </Link>
             ))}
           </div>

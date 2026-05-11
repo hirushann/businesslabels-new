@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import { useTranslations } from 'next-intl';
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 import EmptyState from "@/components/EmptyState";
 import Accordion from "@/components/Accordion";
@@ -68,15 +69,6 @@ type SearchResponse = {
 
 type SortOption = "latest" | "oldest" | "name_asc" | "name_desc" | "price_asc" | "price_desc";
 
-const SORT_LABELS: Record<SortOption, string> = {
-  latest: "Latest",
-  oldest: "Oldest",
-  name_asc: "Name: A to Z",
-  name_desc: "Name: Z to A",
-  price_asc: "Price: Low to High",
-  price_desc: "Price: High to Low",
-};
-
 function normalizeType(raw: string | undefined): "simple" | "variable" | null {
   if (raw === "simple" || raw === "variable") return raw;
   return null;
@@ -103,9 +95,19 @@ function uniqueSorted(values: Array<string | null | undefined>): string[] {
 }
 
 export default function FinderPageClient() {
+  const t = useTranslations();
   const searchParams = useSearchParams();
   const printerId = searchParams.get("printer_id");
   const productType = searchParams.get("product_type");
+
+  const SORT_LABELS: Record<SortOption, string> = {
+    latest: t('sort.latest'),
+    oldest: t('sort.oldest'),
+    name_asc: t('sort.nameAsc'),
+    name_desc: t('sort.nameDesc'),
+    price_asc: t('sort.priceAsc'),
+    price_desc: t('sort.priceDesc'),
+  };
 
   const [printer, setPrinter] = useState<PrinterDetails | null>(null);
   const [allProducts, setAllProducts] = useState<FinderProduct[]>([]);
@@ -137,7 +139,7 @@ export default function FinderPageClient() {
 
       try {
         if (!printerId) {
-          setError("Printer ID is required");
+          setError(t('finder.printerIdRequired'));
           return;
         }
 
@@ -162,7 +164,7 @@ export default function FinderPageClient() {
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.message || "Failed to fetch products");
+          throw new Error(errorData.message || t('finder.failedToFetchProducts'));
         }
 
         const json: SearchResponse = await response.json();
@@ -189,7 +191,7 @@ export default function FinderPageClient() {
         );
       } catch (err) {
         console.error("Error loading products:", err);
-        setError(err instanceof Error ? err.message : "Failed to load products");
+        setError(err instanceof Error ? err.message : t('finder.failedToLoadProducts'));
       } finally {
         setIsLoading(false);
       }
@@ -324,13 +326,13 @@ export default function FinderPageClient() {
                   {printer.meta && (
                     <div>
                       <h2 className="text-lg font-semibold text-neutral-800 mb-4">
-                        MEDIA SPECIFICATIES
+                        {t('finder.mediaSpecifications')}
                       </h2>
                       <div className="space-y-3">
                         {printer.meta.druktype && printer.meta.druktype.length > 0 && (
                           <div className="flex gap-2">
                             <span className="text-neutral-600 font-medium">
-                              Afdruktechniek:
+                              {t('finder.printTechnology')}
                             </span>
                             <span className="text-neutral-800">
                               {printer.meta.druktype.includes("TD") && printer.meta.druktype.includes("TT")
@@ -341,17 +343,17 @@ export default function FinderPageClient() {
                         )}
                         {printer.meta.kern && (
                           <div className="flex gap-2">
-                            <span className="text-neutral-600 font-medium">Kern:</span>
+                            <span className="text-neutral-600 font-medium">{t('finder.core')}</span>
                             <span className="text-neutral-800">{printer.meta.kern}</span>
                           </div>
                         )}
                         {printer.meta.width && printer.meta.width.length > 0 && (
                           <div className="flex gap-2">
                             <span className="text-neutral-600 font-medium">
-                              Media breedte:
+                              {t('finder.mediaWidth')}
                             </span>
                             <span className="text-neutral-800">
-                              Min {Math.min(...printer.meta.width.map(Number))} mm, Max{" "}
+                              {t('finder.min')} {Math.min(...printer.meta.width.map(Number))} mm, {t('finder.max')}{" "}
                               {Math.max(...printer.meta.width.map(Number))} mm
                             </span>
                           </div>
@@ -359,7 +361,7 @@ export default function FinderPageClient() {
                         {printer.meta.max_buiten_diameter && (
                           <div className="flex gap-2">
                             <span className="text-neutral-600 font-medium">
-                              Max buiten diameter:
+                              {t('finder.maxOuterDiameter')}
                             </span>
                             <span className="text-neutral-800">
                               {printer.meta.max_buiten_diameter}
@@ -391,10 +393,14 @@ export default function FinderPageClient() {
 
         <div className="mb-8 flex flex-col gap-4">
           <h2 className="text-4xl font-bold text-neutral-800">
-            Compatible {productTypeLabel}
+            {t('finder.compatibleProductsTitle', { type: productTypeLabel })}
           </h2>
           <p className="text-lg text-neutral-600">
-            {printer && !isLoading && `Showing ${filteredProducts.length} of ${allProducts.length} compatible products for ${printer.title}`}
+            {printer && !isLoading && t('finder.showingCompatibleProducts', {
+              filtered: filteredProducts.length,
+              total: allProducts.length,
+              printer: printer.title,
+            })}
           </p>
         </div>
 
@@ -410,27 +416,27 @@ export default function FinderPageClient() {
           </div>
         ) : allProducts.length === 0 ? (
           <EmptyState
-            title="No compatible products found"
-            description="Try adjusting your selection or browse all products."
+            title={t('common.noProductsFound')}
+            description={t('finder.noProductsDescription')}
           />
         ) : (
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
             <aside className={`${filtersOpen ? "block" : "hidden"} w-full shrink-0 lg:block lg:w-72`}>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xl font-bold text-neutral-800">Filters</h3>
+                <h3 className="text-xl font-bold text-neutral-800">{t('finder.filters')}</h3>
                 {activeFilterCount > 0 && (
                   <button
                     type="button"
                     onClick={clearAllFilters}
                     className="text-sm font-medium text-amber-600 hover:text-amber-700"
                   >
-                    Clear all
+                    {t('finder.clearFilters')}
                   </button>
                 )}
               </div>
 
               <div className="flex flex-col gap-3">
-                <Accordion title="Availability" defaultOpen size="compact">
+                <Accordion title={t('common.availability')} defaultOpen size="compact">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
@@ -438,12 +444,12 @@ export default function FinderPageClient() {
                       onChange={(event) => setInStockOnly(event.target.checked)}
                       className="h-4 w-4 rounded border-slate-300 text-amber-500 focus:ring-amber-400"
                     />
-                    <span className="text-sm text-neutral-700">In stock only</span>
+                    <span className="text-sm text-neutral-700">{t('finder.inStockOnly')}</span>
                   </label>
                 </Accordion>
 
                 {priceBounds[1] > priceBounds[0] && (
-                  <Accordion title="Price" defaultOpen size="compact">
+                  <Accordion title={t('finder.priceRange')} defaultOpen size="compact">
                     <RangeSlider
                       min={priceBounds[0]}
                       max={priceBounds[1]}
@@ -463,7 +469,7 @@ export default function FinderPageClient() {
                 )}
 
                 {materialOptions.length > 0 && (
-                  <Accordion title="Material" defaultOpen size="compact">
+                  <Accordion title={t('finder.material')} defaultOpen size="compact">
                     <div className="flex flex-wrap gap-2">
                       {materialOptions.map((option) => {
                         const selected = selectedMaterials.has(option);
@@ -489,7 +495,7 @@ export default function FinderPageClient() {
                 )}
 
                 {categoryOptions.length > 0 && (
-                  <Accordion title="Category" defaultOpen size="compact">
+                  <Accordion title={t('finder.category')} defaultOpen size="compact">
                     <div className="flex flex-wrap gap-2">
                       {categoryOptions.map((option) => {
                         const selected = selectedCategories.has(option);
@@ -529,12 +535,12 @@ export default function FinderPageClient() {
                     <path d="M8 15H12" stroke="#52525B" strokeWidth="1.5" strokeLinecap="round" />
                   </svg>
                   <span className="text-base font-semibold leading-6">
-                    Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
+                    {t('finder.filters')}{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
                   </span>
                 </button>
 
                 <label className="flex h-10 w-fit items-center gap-3 rounded-[42px] border border-slate-200 px-5 text-neutral-800 md:ml-auto">
-                  <span className="sr-only">Sort products</span>
+                  <span className="sr-only">{t('sort.sortBy')}</span>
                   <select
                     value={sort}
                     onChange={(event) => setSort(event.target.value as SortOption)}
@@ -551,8 +557,8 @@ export default function FinderPageClient() {
 
               {filteredProducts.length === 0 ? (
                 <EmptyState
-                  title="No products match your filters"
-                  description="Try removing some filters to see more results."
+                  title={t('finder.noProductsMatchFilters')}
+                  description={t('finder.removeFiltersDescription')}
                 />
               ) : (
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">

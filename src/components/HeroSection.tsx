@@ -9,8 +9,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { toast } from "sonner";
 import { useHelp } from "./HelpProvider";
+import { useTranslations } from 'next-intl';
 
 export default function HeroSection() {
+  const t = useTranslations();
   const router = useRouter();
   const { openHelp } = useHelp();
   const [selectedPrinter, setSelectedPrinter] = useState<number | null>(null);
@@ -40,7 +42,7 @@ export default function HeroSection() {
           // If switching to non-Epson printer and ink is selected, clear the selection
           if (!printer.name.toLowerCase().includes("epson") && productType === "ink") {
             setProductType("");
-            toast.info("Ink cartridges are only available for Epson printers");
+            toast.info(t('hero.inkOnlyEpson'));
           }
         }
       } catch (error) {
@@ -53,11 +55,11 @@ export default function HeroSection() {
 
   const handleShowProducts = () => {
     if (!selectedPrinter) {
-      toast.error("Please select a printer model");
+      toast.error(t('hero.selectPrinterError'));
       return;
     }
     if (!productType) {
-      toast.error("Please select a product type");
+      toast.error(t('hero.selectTypeError'));
       return;
     }
 
@@ -116,16 +118,16 @@ export default function HeroSection() {
                   />
                 </svg>
                 <span className="text-amber-500 text-lg font-semibold font-['Segoe_UI'] uppercase leading-5">
-                  Epson ColorWorks Gold Partner
+                  {t('hero.badge')}
                 </span>
               </div>
               {/* Headline */}
               <div className="flex flex-col gap-4">
                 <h1 className="text-white text-7xl font-bold font-['Segoe_UI'] leading-[86.4px]">
-                  Find the right label in seconds
+                  {t('hero.title')}
                 </h1>
                 <p className="text-white text-xl font-normal font-['Segoe_UI'] leading-8">
-                  Compatible labels for Epson ColorWorks printers.
+                  {t('hero.subtitle')}
                 </p>
               </div>
             </div>
@@ -135,14 +137,14 @@ export default function HeroSection() {
                 href="/products"
                 className="px-7 py-4 bg-amber-500 rounded-full flex items-center gap-2.5 text-white text-lg font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors"
               >
-                Browse Products
+                {t('common.browseProducts')}
               </Link>
               <button
                 type="button"
                 onClick={openHelp}
                 className="px-7 py-4 bg-white/10 rounded-full border border-white/20 backdrop-blur-sm flex items-center gap-2.5 text-white text-lg font-semibold font-['Segoe_UI'] leading-6 hover:bg-white/20 transition-colors"
               >
-                Talk to an Expert
+                {t('hero.talkToExpert')}
               </button>
             </div>
           </div>
@@ -195,24 +197,24 @@ export default function HeroSection() {
                 />
               </svg>
               <span className="text-neutral-800 text-2xl font-semibold font-['Segoe_UI'] leading-7">
-                Smart Product Finder
+                {t('hero.finderTitle')}
               </span>
             </div>
             {/* Printer select */}
             <div className="px-6 flex flex-col gap-4">
               <span className="text-neutral-800 text-lg font-semibold font-['Segoe_UI'] leading-5">
-                Select your printer model
+                {t('hero.selectPrinter')}
               </span>
               <PrinterSelect
                 value={selectedPrinter}
                 onValueChange={setSelectedPrinter}
-                placeholder="Search printers"
+                placeholder={t('hero.searchPrinters')}
               />
             </div>
             {/* Product type */}
             <div className="px-6 flex flex-col gap-4">
               <span className="text-neutral-800 text-lg font-semibold font-['Segoe_UI'] leading-5">
-                What are you looking for?
+                {t('hero.whatLookingFor')}
               </span>
               <RadioGroup value={productType} onValueChange={setProductType}>
                 <div className="flex gap-4">
@@ -264,10 +266,10 @@ export default function HeroSection() {
                       </svg>
                       <div className="flex flex-col gap-0.5">
                         <span className="text-neutral-700 text-base font-semibold font-['Segoe_UI'] leading-5">
-                          Label Rolls
+                          {t('hero.labelRolls')}
                         </span>
                         <span className="text-zinc-500 text-sm font-normal font-['Segoe_UI'] leading-5">
-                          Paper, BOPP, etc.
+                          {t('hero.labelRollsDesc')}
                         </span>
                       </div>
                     </FieldLabel>
@@ -321,12 +323,12 @@ export default function HeroSection() {
                         <span className={`text-base font-semibold font-['Segoe_UI'] leading-5 ${
                           !isEpsonPrinter ? "text-gray-400" : "text-neutral-700"
                         }`}>
-                          Ink
+                          {t('hero.ink')}
                         </span>
                         <span className={`text-sm font-normal font-['Segoe_UI'] leading-5 ${
                           !isEpsonPrinter ? "text-gray-400" : "text-zinc-500"
                         }`}>
-                          {!isEpsonPrinter ? "Epson only" : "Cartridges"}
+                          {!isEpsonPrinter ? t('hero.epsonOnly') : t('hero.inkDesc')}
                         </span>
                       </div>
                     </FieldLabel>
@@ -364,7 +366,7 @@ export default function HeroSection() {
                       ></path>
                     </svg>
                     <span className="text-white text-base font-semibold font-['Segoe_UI'] leading-6">
-                      Loading...
+                      {t('hero.loading')}
                     </span>
                   </>
                 ) : (
@@ -385,7 +387,7 @@ export default function HeroSection() {
                       />
                     </svg>
                     <span className="text-white text-base font-semibold font-['Segoe_UI'] leading-6">
-                      Show Compatible Products
+                      {t('hero.showProducts')}
                     </span>
                   </>
                 )}
