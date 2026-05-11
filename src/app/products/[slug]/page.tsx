@@ -131,6 +131,7 @@ type ProductDetail = {
   delivery_dates_in_stock?: number | null;
   delivery_dates_no_stock?: number | null;
   packing_group?: string | number | null;
+  allow_singulars?: string | number | boolean | null;
   discounts?: string | Array<{ discount?: string | number | null; quantity?: string | number | null }> | null;
   dimensions?: {
     weight?: string | number | null;
@@ -190,6 +191,23 @@ function normalizeNumber(value: unknown): number | null {
   }
 
   return null;
+}
+
+function normalizeBoolean(value: unknown): boolean {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value === "number") {
+    return value === 1;
+  }
+
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    return normalized === "true" || normalized === "1" || normalized === "yes";
+  }
+
+  return false;
 }
 
 function normalizePackingGroup(value: ProductDetail["packing_group"]): string | null {
@@ -501,6 +519,7 @@ export default async function SingleProductPage({
               originalPrice={product?.original_price}
               mainImage={product?.main_image}
               packingGroup={normalizePackingGroup(product?.packing_group)}
+              allowSingulars={normalizeBoolean(product?.allow_singulars)}
               stock={product?.stock}
               deliveryDatesInStock={product?.delivery_dates_in_stock}
               deliveryDatesNoStock={product?.delivery_dates_no_stock}
