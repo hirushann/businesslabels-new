@@ -388,7 +388,7 @@ export default async function SingleProductPage({
     .filter((url): url is string => Boolean(url));
   const specs = specsFromProduct(product);
   const relatedProducts = (product.up_sells ?? []).map(mapUpsellToProductCard);
-  const showCompatibilityCta = product.is_label_product == false;
+  const showCompatibilityCta = product.is_label_product == true || product.meta?.is_label_product === true;
   console.log(product)
 
   return (
