@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useSearch } from "@elastic/react-search-ui";
 import type { Filter, FilterValueRange } from "@elastic/search-ui";
 import Accordion from "@/components/Accordion";
@@ -320,6 +321,7 @@ function PillSelectFilter({
   addFilter: (name: string, value: string, type?: "any") => void;
   removeFilter: (name: string, value?: string, type?: "any") => void;
 }) {
+  const [showAll, setShowAll] = useState(false);
   const options = pillOptions(rawResponse, config.responseKey);
   const selectedValues = new Set(
     activeFilters
@@ -327,41 +329,56 @@ function PillSelectFilter({
       ?.values.filter(isSelectedValue) ?? [],
   );
 
+  const DISPLAY_LIMIT = 10;
+  const displayedOptions = showAll ? options : options.slice(0, DISPLAY_LIMIT);
+  const hasMore = options.length > DISPLAY_LIMIT;
+
   return (
     <Accordion title={config.title} defaultOpen={true} size="compact">
       {options.length === 0 ? (
         <p className="text-sm text-slate-400">No options available</p>
       ) : (
-        <div className="flex flex-wrap gap-2">
-          {options.map((option) => {
-            const selected = selectedValues.has(option.value);
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap gap-2">
+            {displayedOptions.map((option) => {
+              const selected = selectedValues.has(option.value);
 
-            return (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => {
-                  if (selected) {
-                    removeFilter(config.field, option.value, "any");
-                  } else {
-                    addFilter(config.field, option.value, "any");
-                  }
-                }}
-                className={`inline-flex min-h-9 items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-                  selected
-                    ? "bg-amber-500 text-white shadow-sm hover:bg-amber-600"
-                    : "bg-slate-100 text-neutral-700 hover:bg-amber-50 hover:text-amber-600"
-                }`}
-                aria-pressed={selected}
-              >
-                <span>{option.label}</span>
-                {typeof option.count === "number" ? (
-                  <span className={selected ? "text-white/75" : "text-slate-400"}>{option.count}</span>
-                ) : null}
-                {selected ? <span className="text-base leading-none text-white/80">×</span> : null}
-              </button>
-            );
-          })}
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => {
+                    if (selected) {
+                      removeFilter(config.field, option.value, "any");
+                    } else {
+                      addFilter(config.field, option.value, "any");
+                    }
+                  }}
+                  className={`inline-flex min-h-9 items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                    selected
+                      ? "bg-amber-500 text-white shadow-sm hover:bg-amber-600"
+                      : "bg-slate-100 text-neutral-700 hover:bg-amber-50 hover:text-amber-600"
+                  }`}
+                  aria-pressed={selected}
+                >
+                  <span>{option.label}</span>
+                  {typeof option.count === "number" ? (
+                    <span className={selected ? "text-white/75" : "text-slate-400"}>{option.count}</span>
+                  ) : null}
+                  {selected ? <span className="text-base leading-none text-white/80">×</span> : null}
+                </button>
+              );
+            })}
+          </div>
+          {hasMore && (
+            <button
+              type="button"
+              onClick={() => setShowAll(!showAll)}
+              className="text-sm font-medium text-amber-600 hover:text-amber-700 transition-colors"
+            >
+              {showAll ? "Show less" : `Show more (${options.length - DISPLAY_LIMIT} more)`}
+            </button>
+          )}
         </div>
       )}
     </Accordion>

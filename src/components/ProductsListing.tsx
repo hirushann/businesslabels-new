@@ -55,6 +55,8 @@ const OPTION_PARAM_KEY: Record<CatalogOptionFilterKey, string> = {
   printer_type: "printer_type",
   detectie: "detectie",
   merken: "merken",
+  kern_string: "kern_string",
+  outer_diameter_string: "outer_diameter_string",
 };
 
 const RANGE_PARAM_KEYS = {
@@ -110,6 +112,8 @@ const KNOWN_FILTER_PARAMS = [
   "printer_type",
   "detectie",
   "merken",
+  "kern_string",
+  "outer_diameter_string",
 ];
 
 type OrderedFilterEntry =
@@ -218,6 +222,7 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showAllFilters, setShowAllFilters] = useState<Record<string, boolean>>({});
   const [isPending, startTransition] = useTransition();
 
   const currentParams = useMemo(() => new URLSearchParams(searchParams.toString()), [searchParams]);
@@ -500,17 +505,56 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
                       Math.min(numberFor(currentParams, keys.max) ?? filter.max, filter.max),
                     ];
 
+                    const fanFoldFilterKey: CatalogOptionFilterKey | null =
+                      filter.key === "core"
+                        ? "kern_string"
+                        : filter.key === "outer_diameter"
+                          ? "outer_diameter_string"
+                          : null;
+
+                    const fanFoldSelected = fanFoldFilterKey
+                      ? valuesFor(currentParams, OPTION_PARAM_KEY[fanFoldFilterKey]).some(
+                          (selectedValue) => selectedValue.toLowerCase() === "fan-fold",
+                        )
+                      : false;
+
+                    const fanFoldCount = fanFoldFilterKey
+                      ? catalog.filters.options
+                          .find((optionFilter) => optionFilter.key === fanFoldFilterKey)
+                          ?.options.find((option) => option.value.toLowerCase() === "fan-fold")
+                          ?.count ?? 0
+                      : 0;
+
                     return (
                       <Accordion key={filter.key} title={filter.title} defaultOpen={true} size="compact" className="bg-white">
-                        <RangeSlider
-                          min={0}
-                          max={filter.max}
-                          value={value}
-                          onChange={() => {}}
-                          onAfterChange={(range) => setRange(filter.key, range, filter.max)}
-                          formatValue={(rangeValue) => formatRangeValue(rangeValue, filter.unitPrefix, filter.unitSuffix)}
-                          inputPrefix={filter.unitPrefix}
-                        />
+                        <div className="flex flex-col gap-3">
+                          <RangeSlider
+                            min={0}
+                            max={filter.max}
+                            value={value}
+                            onChange={() => {}}
+                            onAfterChange={(range) => setRange(filter.key, range, filter.max)}
+                            formatValue={(rangeValue) => formatRangeValue(rangeValue, filter.unitPrefix, filter.unitSuffix)}
+                            inputPrefix={filter.unitPrefix}
+                          />
+
+                          {fanFoldFilterKey ? (
+                            <button
+                              type="button"
+                              onClick={() => toggleOption(fanFoldFilterKey, "Fan-fold")}
+                              className={`inline-flex min-h-9 w-fit items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                                fanFoldSelected
+                                  ? "bg-amber-500 text-white shadow-sm hover:bg-amber-600"
+                                  : "bg-slate-100 text-neutral-700 hover:bg-amber-50 hover:text-amber-600"
+                              }`}
+                              aria-pressed={fanFoldSelected}
+                            >
+                              <span>Fan-fold</span>
+                              <span className={fanFoldSelected ? "text-white/75" : "text-slate-400"}>{fanFoldCount}</span>
+                              {fanFoldSelected ? <span className="text-base leading-none text-white/80">×</span> : null}
+                            </button>
+                          ) : null}
+                        </div>
                       </Accordion>
                     );
                   }
@@ -518,31 +562,51 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
                   const filter = entry.filter;
                   const paramKey = OPTION_PARAM_KEY[filter.key];
                   const selectedValues = new Set(valuesFor(currentParams, paramKey));
+                  const showAll = showAllFilters[filter.key] ?? false;
+                  const DISPLAY_LIMIT = 10;
+                  const displayedOptions = showAll ? filter.options : filter.options.slice(0, DISPLAY_LIMIT);
+                  const hasMore = filter.options.length > DISPLAY_LIMIT;
 
                   return (
                     <Accordion key={filter.key} title={filter.title} defaultOpen={true} size="compact" className="bg-white">
-                      <div className="flex flex-wrap gap-2">
-                        {filter.options.map((option) => {
-                          const selected = selectedValues.has(option.value);
+                      <div className="flex flex-col gap-3">
+                        <div className="flex flex-wrap gap-2">
+                          {displayedOptions.map((option) => {
+                            const selected = selectedValues.has(option.value);
 
-                          return (
-                            <button
-                              key={option.value}
-                              type="button"
-                              onClick={() => toggleOption(filter.key, option.value)}
-                              className={`inline-flex min-h-9 items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-                                selected
-                                  ? "bg-amber-500 text-white shadow-sm hover:bg-amber-600"
-                                  : "bg-slate-100 text-neutral-700 hover:bg-amber-50 hover:text-amber-600"
-                              }`}
-                              aria-pressed={selected}
-                            >
-                              <span>{option.label}</span>
-                              <span className={selected ? "text-white/75" : "text-slate-400"}>{option.count}</span>
-                              {selected ? <span className="text-base leading-none text-white/80">×</span> : null}
-                            </button>
-                          );
-                        })}
+                            return (
+                              <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => toggleOption(filter.key, option.value)}
+                                className={`inline-flex min-h-9 items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                                  selected
+                                    ? "bg-amber-500 text-white shadow-sm hover:bg-amber-600"
+                                    : "bg-slate-100 text-neutral-700 hover:bg-amber-50 hover:text-amber-600"
+                                }`}
+                                aria-pressed={selected}
+                              >
+                                <span>{option.label}</span>
+                                <span className={selected ? "text-white/75" : "text-slate-400"}>{option.count}</span>
+                                {selected ? <span className="text-base leading-none text-white/80">×</span> : null}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {hasMore && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowAllFilters((prev) => ({
+                                ...prev,
+                                [filter.key]: !prev[filter.key],
+                              }))
+                            }
+                            className="text-sm font-medium text-amber-600 hover:text-amber-700 transition-colors"
+                          >
+                            {showAll ? "Show less" : `Show more (${filter.options.length - DISPLAY_LIMIT} more)`}
+                          </button>
+                        )}
                       </div>
                     </Accordion>
                   );
