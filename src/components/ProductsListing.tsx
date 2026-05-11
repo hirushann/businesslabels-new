@@ -218,6 +218,7 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showAllFilters, setShowAllFilters] = useState<Record<string, boolean>>({});
   const [isPending, startTransition] = useTransition();
 
   const currentParams = useMemo(() => new URLSearchParams(searchParams.toString()), [searchParams]);
@@ -518,31 +519,51 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
                   const filter = entry.filter;
                   const paramKey = OPTION_PARAM_KEY[filter.key];
                   const selectedValues = new Set(valuesFor(currentParams, paramKey));
+                  const showAll = showAllFilters[filter.key] ?? false;
+                  const DISPLAY_LIMIT = 5;
+                  const displayedOptions = showAll ? filter.options : filter.options.slice(0, DISPLAY_LIMIT);
+                  const hasMore = filter.options.length > DISPLAY_LIMIT;
 
                   return (
                     <Accordion key={filter.key} title={filter.title} defaultOpen={true} size="compact" className="bg-white">
-                      <div className="flex flex-wrap gap-2">
-                        {filter.options.map((option) => {
-                          const selected = selectedValues.has(option.value);
+                      <div className="flex flex-col gap-3">
+                        <div className="flex flex-wrap gap-2">
+                          {displayedOptions.map((option) => {
+                            const selected = selectedValues.has(option.value);
 
-                          return (
-                            <button
-                              key={option.value}
-                              type="button"
-                              onClick={() => toggleOption(filter.key, option.value)}
-                              className={`inline-flex min-h-9 items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-                                selected
-                                  ? "bg-amber-500 text-white shadow-sm hover:bg-amber-600"
-                                  : "bg-slate-100 text-neutral-700 hover:bg-amber-50 hover:text-amber-600"
-                              }`}
-                              aria-pressed={selected}
-                            >
-                              <span>{option.label}</span>
-                              <span className={selected ? "text-white/75" : "text-slate-400"}>{option.count}</span>
-                              {selected ? <span className="text-base leading-none text-white/80">×</span> : null}
-                            </button>
-                          );
-                        })}
+                            return (
+                              <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => toggleOption(filter.key, option.value)}
+                                className={`inline-flex min-h-9 items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                                  selected
+                                    ? "bg-amber-500 text-white shadow-sm hover:bg-amber-600"
+                                    : "bg-slate-100 text-neutral-700 hover:bg-amber-50 hover:text-amber-600"
+                                }`}
+                                aria-pressed={selected}
+                              >
+                                <span>{option.label}</span>
+                                <span className={selected ? "text-white/75" : "text-slate-400"}>{option.count}</span>
+                                {selected ? <span className="text-base leading-none text-white/80">×</span> : null}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {hasMore && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowAllFilters((prev) => ({
+                                ...prev,
+                                [filter.key]: !prev[filter.key],
+                              }))
+                            }
+                            className="text-sm font-medium text-amber-600 hover:text-amber-700 transition-colors"
+                          >
+                            {showAll ? "Show less" : `Show more (${filter.options.length - DISPLAY_LIMIT} more)`}
+                          </button>
+                        )}
                       </div>
                     </Accordion>
                   );
