@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import Accordion from "@/components/Accordion";
 import CTABanner from "@/components/CTABanner";
 import EmptyState from "@/components/EmptyState";
@@ -183,17 +184,28 @@ function ContactIcon({ type }: { type: "call" | "email" | "whatsapp" }) {
   );
 }
 
-function HelpPanel() {
+function HelpPanel({
+  labels,
+}: {
+  labels: {
+    title: string;
+    callUs: string;
+    email: string;
+    whatsapp: string;
+    availableProduct: string;
+    customMade: string;
+  };
+}) {
   const actions = [
-    { label: "Call Us", type: "call" as const },
-    { label: "Email", type: "email" as const },
-    { label: "WhatsApp", type: "whatsapp" as const },
+    { label: labels.callUs, type: "call" as const },
+    { label: labels.email, type: "email" as const },
+    { label: labels.whatsapp, type: "whatsapp" as const },
   ];
 
   return (
     <aside className="flex w-full flex-col gap-6 lg:sticky lg:top-24 lg:w-96">
       <div className="flex flex-col gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)]">
-        <h2 className="text-lg font-bold leading-5 text-neutral-700">Need help or advice?</h2>
+        <h2 className="text-lg font-bold leading-5 text-neutral-700">{labels.title}</h2>
         <div className="grid grid-cols-3 gap-4">
           {actions.map((action) => (
             <button
@@ -215,29 +227,35 @@ function HelpPanel() {
           href="/products"
           className="flex h-12 items-center justify-center rounded-full bg-amber-500 px-4 text-lg font-semibold leading-6 text-white transition-colors hover:bg-amber-600"
         >
-          Available Product
+          {labels.availableProduct}
         </Link>
         <Link
           href="/custom"
           className="flex h-12 items-center justify-center rounded-full border border-amber-500 bg-amber-500/20 px-4 text-lg font-semibold leading-6 text-amber-500 transition-colors hover:bg-amber-500/30"
         >
-          Custom Made
+          {labels.customMade}
         </Link>
       </div>
     </aside>
   );
 }
 
-function SpecsTable({ material }: { material: Material }) {
+function SpecsTable({
+  material,
+  labels,
+}: {
+  material: Material;
+  labels: Record<string, string>;
+}) {
   const specs = [
-    { label: "Brand", value: material.brand },
-    { label: "Code", value: material.code },
-    { label: "Print Method", value: material.print_method },
-    { label: "Base Material", value: material.base_material },
-    { label: "Finish", value: material.finish },
-    { label: "Adhesive", value: material.adhesive },
-    { label: "Price per m²", value: material.price_per_sq_meter != null ? `€${material.price_per_sq_meter}` : null },
-    { label: "Certificate", value: material.certificate },
+    { label: labels.brand, value: material.brand },
+    { label: labels.code, value: material.code },
+    { label: labels.printMethod, value: material.print_method },
+    { label: labels.baseMaterial, value: material.base_material },
+    { label: labels.finish, value: material.finish },
+    { label: labels.adhesive, value: material.adhesive },
+    { label: labels.pricePerSquareMeter, value: material.price_per_sq_meter != null ? `€${material.price_per_sq_meter}` : null },
+    { label: labels.certificate, value: material.certificate },
     ...Object.entries(material.specifications || {}).map(([label, value]) => ({
       label,
       value: typeof value === "string" ? value : String(value),
@@ -282,12 +300,19 @@ function MaterialProductsSection({
   currentPage,
   lastPage,
   materialSlug,
+  labels,
 }: {
   title: string;
   products: ProductCardData[];
   currentPage: number;
   lastPage: number;
   materialSlug: string;
+  labels: {
+    noProductsTitle: string;
+    noProductsDescription: string;
+    previous: string;
+    next: string;
+  };
 }) {
   const visiblePages = buildVisiblePages(currentPage, lastPage);
 
@@ -300,8 +325,8 @@ function MaterialProductsSection({
 
         {products.length === 0 ? (
           <EmptyState 
-            title="No products found" 
-            description="We couldn't find any products associated with this material at the moment." 
+            title={labels.noProductsTitle}
+            description={labels.noProductsDescription}
           />
         ) : (
           <>
@@ -319,7 +344,7 @@ function MaterialProductsSection({
                     currentPage <= 1 ? "pointer-events-none opacity-50" : ""
                   }`}
                 >
-                  Previous
+                  {labels.previous}
                 </Link>
 
                 {visiblePages.map((item, index) =>
@@ -349,7 +374,7 @@ function MaterialProductsSection({
                     currentPage >= lastPage ? "pointer-events-none opacity-50" : ""
                   }`}
                 >
-                  Next
+                  {labels.next}
                 </Link>
               </div>
             )}
@@ -363,6 +388,7 @@ function MaterialProductsSection({
 export default async function SingleMaterialPage({ params, searchParams }: MaterialPageProps) {
   const { slug } = await params;
   const query = await searchParams;
+  const t = await getTranslations();
   const material = await getMaterial(slug);
 
   if (!material) {
@@ -406,13 +432,13 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
         <div className="mx-auto flex max-w-300 flex-col gap-4">
           <nav className="flex flex-wrap items-center gap-2 text-sm leading-5 text-zinc-500" aria-label="Breadcrumb">
             <Link href="/" className="hover:text-neutral-800">
-              Home
+              {t("common.home")}
             </Link>
             <span>/</span>
-            <span>Category</span>
+            <span>{t("common.category")}</span>
             <span>/</span>
             <Link href="/materials" className="hover:text-neutral-800">
-              Materials
+              {t("common.materials")}
             </Link>
             <span>/</span>
             <span className="font-semibold text-neutral-700">{material.title}</span>
@@ -426,7 +452,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
                 <div className="relative min-h-80 overflow-hidden rounded-xl bg-gray-100 sm:min-h-127.25">
                   <Image
                     src={materialImage}
-                    alt={`${material.title} material`}
+                    alt={t("materialsPage.materialAlt", { title: material.title })}
                     fill
                     priority
                     sizes="(max-width: 1024px) 100vw, 732px"
@@ -437,30 +463,57 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
               </div>
 
               <div className="flex flex-col gap-6">
-                <Accordion title="Product Description">
+                <Accordion title={t("product.productDescription")}>
                   <div 
                     className="text-base leading-6 text-neutral-700"
                     dangerouslySetInnerHTML={{ __html: material.description }}
                   />
                 </Accordion>
 
-                <Accordion title="Product specifications">
-                  <SpecsTable material={material} />
+                <Accordion title={t("product.productSpecifications")}>
+                  <SpecsTable
+                    material={material}
+                    labels={{
+                      brand: t("materialSpecs.brand"),
+                      code: t("materialSpecs.code"),
+                      printMethod: t("materialSpecs.printMethod"),
+                      baseMaterial: t("materialSpecs.baseMaterial"),
+                      finish: t("materialSpecs.finish"),
+                      adhesive: t("materialSpecs.adhesive"),
+                      pricePerSquareMeter: t("materialSpecs.pricePerSquareMeter"),
+                      certificate: t("materialSpecs.certificate"),
+                    }}
+                  />
                 </Accordion>
               </div>
             </div>
 
-            <HelpPanel />
+            <HelpPanel
+              labels={{
+                title: t("supportPanel.title"),
+                callUs: t("supportPanel.callUs"),
+                email: t("supportPanel.email"),
+                whatsapp: t("supportPanel.whatsapp"),
+                availableProduct: t("supportPanel.availableProduct"),
+                customMade: t("supportPanel.customMade"),
+              }}
+            />
           </div>
         </div>
       </section>
 
       <MaterialProductsSection 
-        title="Products from This Material" 
+        title={t("materialsPage.productsFromThisMaterial")}
         products={paginatedProducts} 
         currentPage={currentPage}
         lastPage={lastPage}
         materialSlug={slug}
+        labels={{
+          noProductsTitle: t("common.noProductsFound"),
+          noProductsDescription: t("materialsPage.noProductsForMaterial"),
+          previous: t("common.previous"),
+          next: t("common.next"),
+        }}
       />
 
       <CTABanner />

@@ -164,6 +164,8 @@ function ProductSkeletonGrid({ isSidebarOpen }: { isSidebarOpen: boolean }) {
 }
 
 function LegacyProductsListing({ products, currentPage = 1, lastPage = 1, basePath }: LegacyProductsListingProps) {
+  const t = useTranslations();
+
   const setPage = (page: number) => {
     if (!basePath) return;
     const [path, query = ""] = basePath.split("?");

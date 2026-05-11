@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import { getTranslations } from "next-intl/server";
 import { materialReviews } from "@/lib/materialCatalog";
 import PrintersListing from "@/components/PrintersListing";
 import type { PrinterCardData } from "@/components/PrintersListing";
-import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 
-export const metadata: Metadata = {
-  title: "Printer Products — BusinessLabels",
-  description:
-    "Discover printer media materials selected for precision, durability, color accuracy, and reliable professional output.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations();
+
+  return {
+    title: t("pages.printersMetadataTitle"),
+    description: t("pages.printersMetadataDescription"),
+  };
+}
 
 // ---------------------------------------------------------------------------
 // SSR seed: fetch first page directly from Elasticsearch so the page renders
@@ -108,6 +111,7 @@ async function fetchPrintersSeed(): Promise<PrinterCardData[]> {
 }
 
 export default async function PrinterPage() {
+  const t = await getTranslations();
   const printers = await fetchPrintersSeed();
 
   return (
@@ -124,12 +128,12 @@ export default async function PrinterPage() {
       <section className="bg-gray-50 px-4 py-24 sm:px-6 lg:px-10">
         <div className="mx-auto flex max-w-360 flex-col gap-12">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-            <h2 className="text-4xl font-bold leading-[48px] text-neutral-800">Over 1000 Positive Reviews</h2>
+            <h2 className="text-4xl font-bold leading-[48px] text-neutral-800">{t("reviewsSection.title")}</h2>
             <div className="flex items-center gap-6">
               <button
                 type="button"
                 className="flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-white text-neutral-700 shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)]"
-                aria-label="Previous review"
+                aria-label={t("reviewsSection.previous")}
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -138,7 +142,7 @@ export default async function PrinterPage() {
               <button
                 type="button"
                 className="flex h-12 w-12 items-center justify-center rounded-full border border-amber-500 bg-white text-amber-500 shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)]"
-                aria-label="Next review"
+                aria-label={t("reviewsSection.next")}
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -172,8 +176,8 @@ export default async function PrinterPage() {
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <span className="text-sm leading-5 text-zinc-500">Posted on</span>
-                  <span className="text-sm font-semibold leading-5 text-neutral-800">Google</span>
+                  <span className="text-sm leading-5 text-zinc-500">{t("reviewsSection.postedOn")}</span>
+                  <span className="text-sm font-semibold leading-5 text-neutral-800">{t("reviewsSection.google")}</span>
                 </div>
               </article>
             ))}

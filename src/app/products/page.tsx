@@ -4,10 +4,14 @@ import { parseCatalogSearchParams, searchCatalogProducts } from "@/lib/search/pr
 import type { CatalogSearchResponse } from "@/lib/search/types";
 import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = {
-  title: "All Products — BusinessLabels",
-  description: "Browse our full product range with search, filters, sorting, and pagination.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations();
+
+  return {
+    title: t('pages.productsMetadataTitle'),
+    description: t('pages.productsMetadataDescription'),
+  };
+}
 
 type ProductsPageSearchParams = Record<string, string | string[] | undefined>;
 

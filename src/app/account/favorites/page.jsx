@@ -1,3 +1,6 @@
-export default function FavoritesPage() {
-  return <h1>My Favorites</h1>;
+import { getTranslations } from 'next-intl/server';
+
+export default async function FavoritesPage() {
+  const t = await getTranslations();
+  return <h1>{t('pages.myFavorites')}</h1>;
 }

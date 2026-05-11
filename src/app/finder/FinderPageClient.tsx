@@ -326,13 +326,13 @@ export default function FinderPageClient() {
                   {printer.meta && (
                     <div>
                       <h2 className="text-lg font-semibold text-neutral-800 mb-4">
-                        MEDIA SPECIFICATIES
+                        {t('finder.mediaSpecifications')}
                       </h2>
                       <div className="space-y-3">
                         {printer.meta.druktype && printer.meta.druktype.length > 0 && (
                           <div className="flex gap-2">
                             <span className="text-neutral-600 font-medium">
-                              Afdruktechniek:
+                              {t('finder.printTechnology')}
                             </span>
                             <span className="text-neutral-800">
                               {printer.meta.druktype.includes("TD") && printer.meta.druktype.includes("TT")
@@ -343,17 +343,17 @@ export default function FinderPageClient() {
                         )}
                         {printer.meta.kern && (
                           <div className="flex gap-2">
-                            <span className="text-neutral-600 font-medium">Kern:</span>
+                            <span className="text-neutral-600 font-medium">{t('finder.core')}</span>
                             <span className="text-neutral-800">{printer.meta.kern}</span>
                           </div>
                         )}
                         {printer.meta.width && printer.meta.width.length > 0 && (
                           <div className="flex gap-2">
                             <span className="text-neutral-600 font-medium">
-                              Media breedte:
+                              {t('finder.mediaWidth')}
                             </span>
                             <span className="text-neutral-800">
-                              Min {Math.min(...printer.meta.width.map(Number))} mm, Max{" "}
+                              {t('finder.min')} {Math.min(...printer.meta.width.map(Number))} mm, {t('finder.max')}{" "}
                               {Math.max(...printer.meta.width.map(Number))} mm
                             </span>
                           </div>
@@ -361,7 +361,7 @@ export default function FinderPageClient() {
                         {printer.meta.max_buiten_diameter && (
                           <div className="flex gap-2">
                             <span className="text-neutral-600 font-medium">
-                              Max buiten diameter:
+                              {t('finder.maxOuterDiameter')}
                             </span>
                             <span className="text-neutral-800">
                               {printer.meta.max_buiten_diameter}
@@ -393,10 +393,14 @@ export default function FinderPageClient() {
 
         <div className="mb-8 flex flex-col gap-4">
           <h2 className="text-4xl font-bold text-neutral-800">
-            Compatible {productTypeLabel}
+            {t('finder.compatibleProductsTitle', { type: productTypeLabel })}
           </h2>
           <p className="text-lg text-neutral-600">
-            {printer && !isLoading && `Showing ${filteredProducts.length} of ${allProducts.length} compatible products for ${printer.title}`}
+            {printer && !isLoading && t('finder.showingCompatibleProducts', {
+              filtered: filteredProducts.length,
+              total: allProducts.length,
+              printer: printer.title,
+            })}
           </p>
         </div>
 
@@ -553,8 +557,8 @@ export default function FinderPageClient() {
 
               {filteredProducts.length === 0 ? (
                 <EmptyState
-                  title="No products match your filters"
-                  description="Try removing some filters to see more results."
+                  title={t('finder.noProductsMatchFilters')}
+                  description={t('finder.removeFiltersDescription')}
                 />
               ) : (
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">

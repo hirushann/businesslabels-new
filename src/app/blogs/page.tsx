@@ -1,11 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
-export const metadata: Metadata = {
-  title: "Blogs | BusinessLabels",
-  description: "Stay updated with the latest tips, guides, and news about labeling and printing solutions.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations();
+
+  return {
+    title: t("blogsPage.metadataTitle"),
+    description: t("blogsPage.metadataDescription"),
+  };
+}
 
 type Post = {
   id: number;
@@ -35,6 +40,7 @@ async function getPosts(): Promise<Post[]> {
 }
 
 export default async function BlogsPage() {
+  const t = await getTranslations();
   const posts = await getPosts();
 
   return (
@@ -45,10 +51,10 @@ export default async function BlogsPage() {
         <div className="mx-auto max-w-360 px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
             <h1 className="text-5xl font-black uppercase tracking-tight sm:text-6xl lg:text-7xl">
-              Our <span className="text-amber-500">Blogs</span>
+              {t("blogsPage.titlePrefix")} <span className="text-amber-500">{t("blogsPage.titleHighlight")}</span>
             </h1>
             <p className="mt-6 text-xl text-sky-100/80 leading-relaxed font-medium">
-              Explore expert insights, technical guides, and the latest trends in the world of professional labeling and printing.
+              {t("blogsPage.subtitle")}
             </p>
           </div>
         </div>
@@ -83,7 +89,7 @@ export default async function BlogsPage() {
                 <div className="flex flex-1 flex-col p-8">
                   <div className="mb-4 flex items-center gap-3">
                     <span className="rounded-full bg-amber-500/10 px-4 py-1 text-xs font-black uppercase tracking-widest text-amber-600">
-                      Insight
+                      {t("blogsPage.insight")}
                     </span>
                     <span className="text-sm font-semibold text-neutral-400">
                       {new Date(post.created_at).toLocaleDateString("en-GB", {
@@ -100,7 +106,7 @@ export default async function BlogsPage() {
                     {post.excerpt}
                   </p>
                   <div className="mt-auto flex items-center gap-2 font-black uppercase tracking-widest text-xs text-amber-500 group-hover:gap-4 transition-all">
-                    Read Article
+                    {t("blogsPage.readArticle")}
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                     </svg>
@@ -116,8 +122,8 @@ export default async function BlogsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l4 4v10a2 2 0 01-2 2zM14 4v4h4" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-neutral-800">No blog posts found</h2>
-            <p className="mt-2 text-neutral-500 font-medium">We're currently working on new content. Please check back later!</p>
+            <h2 className="text-2xl font-bold text-neutral-800">{t("blogsPage.noPostsTitle")}</h2>
+            <p className="mt-2 text-neutral-500 font-medium">{t("blogsPage.noPostsDescription")}</p>
           </div>
         )}
       </section>
