@@ -41,6 +41,7 @@ type ProductPurchaseProps = {
   originalPrice?: number | null;
   mainImage?: string | null;
   packingGroup?: string | null;
+  allowSingulars?: boolean | null;
   stock?: number | null;
   deliveryDatesInStock?: number | null;
   deliveryDatesNoStock?: number | null;
@@ -165,6 +166,7 @@ export default function ProductPurchase({
   originalPrice,
   mainImage,
   packingGroup,
+  allowSingulars,
   stock,
   deliveryDatesInStock,
   deliveryDatesNoStock,
@@ -173,7 +175,13 @@ export default function ProductPurchase({
 }: ProductPurchaseProps) {
   const { addItem } = useCart();
   const wishlist = useWishlist();
-  const [quantity, setQuantity] = useState(1);
+  const normalizedPackingGroup = packingGroup ? Number.parseInt(packingGroup, 10) : null;
+  const hasPackingGroup =
+    typeof normalizedPackingGroup === "number" &&
+    Number.isFinite(normalizedPackingGroup) &&
+    normalizedPackingGroup > 0;
+  const initialQuantity = !allowSingulars && hasPackingGroup ? normalizedPackingGroup : 1;
+  const [quantity, setQuantity] = useState(initialQuantity);
   const [quantityError, setQuantityError] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [isWarrantyPopoverOpen, setIsWarrantyPopoverOpen] = useState(false);
@@ -205,6 +213,10 @@ export default function ProductPurchase({
         return prev + 1;
       }
 
+      if (allowSingulars && prev < normalizedPackingGroup) {
+        return prev + 1;
+      }
+
       if (prev < normalizedPackingGroup) {
         return normalizedPackingGroup;
       }
@@ -221,6 +233,10 @@ export default function ProductPurchase({
 
       if (prev <= 1) {
         return 1;
+      }
+
+      if (allowSingulars && prev <= normalizedPackingGroup) {
+        return prev - 1;
       }
 
       if (prev <= normalizedPackingGroup) {
@@ -264,11 +280,14 @@ export default function ProductPurchase({
     type,
   };
   const isWishlisted = wishlist.hasItem(itemIdentity);
-  const normalizedPackingGroup = packingGroup ? Number.parseInt(packingGroup, 10) : null;
-  const hasPackingGroup =
-    typeof normalizedPackingGroup === "number" &&
-    Number.isFinite(normalizedPackingGroup) &&
-    normalizedPackingGroup > 0;
+  const quantityStep =
+    allowSingulars && hasPackingGroup && normalizedPackingGroup
+      ? quantity < normalizedPackingGroup
+        ? 1
+        : normalizedPackingGroup
+      : hasPackingGroup
+        ? normalizedPackingGroup
+        : 1;
   const normalizedWarranty = useMemo(() => normalizeWarrantyOptions(warranty), [warranty]);
   const bulkDiscounts = useMemo(() => normalizeBulkDiscounts(discounts), [discounts]);
   const hasBulkDiscounts = bulkDiscounts.length > 0;
@@ -319,13 +338,21 @@ export default function ProductPurchase({
       return null;
     }
     
-    if (
-      hasPackingGroup &&
-      normalizedQuantity !== 1 &&
-      normalizedQuantity % normalizedPackingGroup !== 0
-    ) {
-      setQuantityError(`Only 1 or multiples of ${normalizedPackingGroup} can be added.`);
-      return null;
+    if (hasPackingGroup) {
+      const singularQuantityAllowed = Boolean(allowSingulars && normalizedQuantity <= normalizedPackingGroup);
+
+      if (
+        !singularQuantityAllowed &&
+        normalizedQuantity !== 1 &&
+        normalizedQuantity % normalizedPackingGroup !== 0
+      ) {
+        setQuantityError(
+          allowSingulars
+            ? `Only quantities up to ${normalizedPackingGroup} or multiples of ${normalizedPackingGroup} can be added.`
+            : `Only 1 or multiples of ${normalizedPackingGroup} can be added.`,
+        );
+        return null;
+      }
     }
 
     return normalizedQuantity;
@@ -548,10 +575,21 @@ export default function ProductPurchase({
                   </button>
                   <input
                     type="number"
-                    min={1}
-                    step={hasPackingGroup ? normalizedPackingGroup ?? 1 : 1}
+                    min={allowSingulars ? 1 : (hasPackingGroup ? normalizedPackingGroup : 1)}
+                    step={quantityStep}
                     value={quantity}
                     onChange={(event) => handleQuantityChange(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "ArrowUp") {
+                        event.preventDefault();
+                        increment();
+                      }
+
+                      if (event.key === "ArrowDown") {
+                        event.preventDefault();
+                        decrement();
+                      }
+                    }}
                     aria-describedby={quantityError ? "quantity-error" : undefined}
                     className="h-full min-w-0 flex-1 bg-transparent px-2 text-center text-sm font-semibold leading-5 text-neutral-800 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   />
