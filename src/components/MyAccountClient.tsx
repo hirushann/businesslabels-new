@@ -134,6 +134,8 @@ function formatEuro(value: number) {
   return new Intl.NumberFormat('nl-NL', {
     style: 'currency',
     currency: 'EUR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(value);
 }
 
@@ -203,13 +205,14 @@ function formatOrderDate(order: Record<string, unknown>) {
 }
 
 function formatOrderTotal(order: Record<string, unknown>) {
-  const formattedTotal = readStringValue(order, ['formatted_total', 'total_formatted', 'display_total']);
-  if (formattedTotal) {
-    return formattedTotal;
+  const total = readNumberValue(order, ['total', 'grand_total', 'order_total', 'total_price', 'amount']);
+  
+  if (total !== null) {
+    return formatEuro(total);
   }
 
-  const total = readNumberValue(order, ['total', 'grand_total', 'order_total', 'total_price', 'amount']);
-  return total === null ? '-' : formatEuro(total);
+  const formattedTotal = readStringValue(order, ['formatted_total', 'total_formatted', 'display_total']);
+  return formattedTotal || '-';
 }
 
 function readOrderItemCount(order: Record<string, unknown>) {
@@ -263,13 +266,17 @@ function normalizeOrders(payload: unknown): AccountOrder[] {
         subtotal: formatEuro(readNumberValue(order, ['subtotal']) || 0),
         shipping_amount: formatEuro(readNumberValue(order, ['shipping_amount']) || 0),
         tax_amount: formatEuro(readNumberValue(order, ['tax_amount']) || 0),
-        items_list: Array.isArray(itemsRaw) ? itemsRaw.map(item => ({
-          id: item.id,
-          name: item.name || item.product?.name || 'Product',
-          quantity: item.quantity,
-          price: item.price,
-          total: item.total || (item.price * item.quantity),
-        })) : [],
+        items_list: Array.isArray(itemsRaw) ? itemsRaw.map(item => {
+          const price = readNumberValue(item, ['price', 'unit_price']) || 0;
+          const total = readNumberValue(item, ['total', 'line_total']) || (price * (item.quantity || 1));
+          return {
+            id: item.id,
+            name: item.name || item.product?.name || 'Product',
+            quantity: item.quantity,
+            price: price,
+            total: total,
+          };
+        }) : [],
         billing_address: billingRaw ? normalizeAddress(billingRaw, index) : undefined,
         shipping_address: shippingRaw ? normalizeAddress(shippingRaw, index) : undefined,
       };

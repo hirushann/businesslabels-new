@@ -5,8 +5,18 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Skeleton } from 'boneyard-js/react';
 import { getFilters, listProducts } from '@/lib/api';
-import { formatPrice } from '@/lib/formatPrice';
+import { useTranslations } from 'next-intl';
 import { ROUTES } from '@/config/routes';
+
+const formatPrice = (value) => {
+  if (value == null) return '-';
+  return new Intl.NumberFormat('nl-NL', {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+};
 
 export default function SearchPopup({ open, onClose }) {
   const [query, setQuery] = useState('');

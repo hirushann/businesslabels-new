@@ -278,11 +278,11 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
             <div className="flex flex-col gap-2">
               <div className="flex items-end gap-2">
                 <span className="text-neutral-800 text-2xl font-bold font-['Segoe_UI'] leading-7">
-                  {hasPrice ? `€${product.price?.toFixed(2)}` : "-"}
+                  {hasPrice ? formatEuro(product.price!) : "-"}
                 </span>
                 {hasOriginalPrice ? (
                   <span className="text-zinc-400 text-sm font-normal font-['Segoe_UI'] leading-5 line-through">
-                    €{product.originalPrice?.toFixed(2)}
+                    {formatEuro(product.originalPrice!)}
                   </span>
                 ) : null}
               </div>
