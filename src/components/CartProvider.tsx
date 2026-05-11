@@ -17,6 +17,7 @@ export type CartItem = {
   quantity: number;
   itemKind?: "product" | "warranty";
   linkedToKey?: string | null;
+  componentCount?: number | null;
   warranty?: {
     optionId: number;
     durationMonths?: number | null;
@@ -30,6 +31,7 @@ type CartInput = Omit<CartItem, "key" | "quantity">;
 type CartContextValue = {
   items: CartItem[];
   uniqueItemCount: number;
+  totalItemCount: number;
   totalAmount: number;
   addItem: (item: CartInput, quantity?: number) => void;
   removeItem: (key: string) => void;
@@ -89,6 +91,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     () => ({
       items,
       uniqueItemCount: items.length,
+      totalItemCount: items.reduce((sum, item) => {
+        // For group products, each unit added counts as 'componentCount' items.
+        // For other products, each unit counts as 1.
+        const countPerUnit = item.type === 'group_product' && item.componentCount ? item.componentCount : 1;
+        
+        // Warranties shouldn't count towards the physical product count usually
+        if (item.itemKind === 'warranty') return sum;
+        
+        return sum + (countPerUnit * item.quantity);
+      }, 0),
       totalAmount: items.reduce((sum, item) => {
         const price = typeof item.price === "number" && Number.isFinite(item.price) ? item.price : 0;
         return sum + price * item.quantity;

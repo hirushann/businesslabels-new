@@ -65,6 +65,7 @@ type ProductPurchaseProps = {
       sort_order?: number | null;
     } | null;
   } | null;
+  componentCount?: number | null;
 };
 
 
@@ -170,6 +171,7 @@ export default function ProductPurchase({
   deliveryDatesNoStock,
   discounts,
   warranty,
+  componentCount,
 }: ProductPurchaseProps) {
   const { addItem } = useCart();
   const wishlist = useWishlist();
@@ -341,6 +343,7 @@ export default function ProductPurchase({
         sku: displaySku,
         price,
         mainImage,
+        componentCount,
       },
       qtyToAdd,
     );

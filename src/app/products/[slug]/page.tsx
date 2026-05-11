@@ -506,6 +506,7 @@ export default async function SingleProductPage({
               deliveryDatesNoStock={product?.delivery_dates_no_stock}
               discounts={product?.discounts}
               warranty={product?.warranty}
+              componentCount={product?.component_products?.length || null}
             />
 
             {/* Consumable Items */}

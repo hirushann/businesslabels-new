@@ -24,7 +24,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
   const t = useTranslations();
   const {
     items,
-    uniqueItemCount,
+    totalItemCount,
     totalAmount,
     removeItem,
     incrementItemQuantity,
@@ -67,7 +67,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                 {t('cart.title')}
               </h2>
               <span className="text-neutral-600 text-sm font-normal font-['Segoe_UI'] leading-5">
-                {uniqueItemCount} {uniqueItemCount === 1 ? t('cart.item') : t('cart.items')}
+                {totalItemCount} {totalItemCount === 1 ? t('cart.item') : t('cart.items')}
               </span>
             </div>
 

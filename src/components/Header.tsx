@@ -36,7 +36,7 @@ export default function Header() {
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<DropdownKey>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { uniqueItemCount, isCartOpen, openCart, closeCart } = useCart();
+  const { totalItemCount, isCartOpen, openCart, closeCart } = useCart();
   const { uniqueItemCount: uniqueWishlistCount } = useWishlist();
 
   const handleMouseEnter = (key: DropdownKey) => {
@@ -197,9 +197,9 @@ export default function Header() {
                 <path d="M19 22C19.5523 22 20 21.5523 20 21C20 20.4477 19.5523 20 19 20C18.4477 20 18 20.4477 18 21C18 21.5523 18.4477 22 19 22Z" stroke="#444444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M2.05078 2.04999H4.05078L6.71078 14.47C6.80836 14.9248 7.06145 15.3315 7.42649 15.6198C7.79153 15.9082 8.24569 16.0603 8.71078 16.05H18.4908C18.946 16.0493 19.3873 15.8933 19.7418 15.6078C20.0963 15.3224 20.3429 14.9245 20.4408 14.48L22.0908 7.04999H5.12078" stroke="#444444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              {uniqueItemCount > 0 ? (
+              {totalItemCount > 0 ? (
                 <span className="absolute -right-2 -top-2 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white">
-                  {uniqueItemCount}
+                  {totalItemCount}
                 </span>
               ) : null}
             </button>
