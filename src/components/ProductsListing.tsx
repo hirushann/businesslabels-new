@@ -219,6 +219,13 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
   const [showAllFilters, setShowAllFilters] = useState<Record<string, boolean>>({});
   const [isPending, startTransition] = useTransition();
   const searchInputRef = useRef<HTMLInputElement>(null);
+  
+  // Store absolute max values from initial catalog (when no filters applied)
+  const absoluteRangeMaxes = useRef<Record<CatalogRangeKey, number>>(
+    Object.fromEntries(
+      initialCatalog.filters.ranges.map((filter) => [filter.key, filter.max])
+    ) as Record<CatalogRangeKey, number>
+  );
 
   useEffect(() => {
     if (searchParams.get("focus") === "true") {
@@ -527,9 +534,11 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
                   if (entry.kind === "range") {
                     const filter = entry.filter;
                     const keys = RANGE_PARAM_KEYS[filter.key];
+                    // Use absolute max from initial catalog for consistent UI bounds
+                    const absoluteMax = absoluteRangeMaxes.current[filter.key] ?? filter.max;
                     const value: [number, number] = [
-                      Math.min(numberFor(currentParams, keys.min) ?? 0, filter.max),
-                      Math.min(numberFor(currentParams, keys.max) ?? filter.max, filter.max),
+                      Math.min(numberFor(currentParams, keys.min) ?? 0, absoluteMax),
+                      Math.min(numberFor(currentParams, keys.max) ?? absoluteMax, absoluteMax),
                     ];
 
                     const fanFoldFilterKey: CatalogOptionFilterKey | null =
@@ -557,10 +566,10 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
                         <div className="flex flex-col gap-3">
                           <RangeSlider
                             min={0}
-                            max={filter.max}
+                            max={absoluteMax}
                             value={value}
                             onChange={() => {}}
-                            onAfterChange={(range) => setRange(filter.key, range, filter.max)}
+                            onAfterChange={(range) => setRange(filter.key, range, absoluteMax)}
                             formatValue={(rangeValue) => formatRangeValue(rangeValue, filter.unitPrefix, filter.unitSuffix)}
                             inputPrefix={filter.unitPrefix}
                           />
