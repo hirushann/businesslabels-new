@@ -14,16 +14,16 @@ export default function ThankYouPage() {
   const t = useTranslations();
   const searchParams = useSearchParams();
   const orderNumber = searchParams.get("order_number");
-  const cart = useCart();
+  const { clearCart } = useCart();
   const [order, setOrder] = useState<OrderDetails | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Clear the cart as soon as we reach the thank you page with an order number
     if (orderNumber) {
-      cart.clearCart();
+      clearCart();
     }
-  }, [cart, orderNumber]); // Only run when orderNumber is present
+  }, [clearCart, orderNumber]); // Only run when orderNumber is present
 
   useEffect(() => {
     async function fetchOrder() {

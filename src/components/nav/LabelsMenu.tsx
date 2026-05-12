@@ -43,11 +43,11 @@ export default function LabelsMenu() {
   const t = useTranslations();
 
   return (
-    <div className="w-[832px] inline-flex flex-col justify-start items-start">
+    <div className="w-[90vw] max-w-[832px] inline-flex flex-col justify-start items-start">
       <div className="self-stretch p-6 bg-white rounded-tl-xl rounded-tr-xl shadow-[0px_10px_20px_0px_rgba(80,100,121,0.15)] flex flex-col justify-start items-center gap-10">
-        <div className="inline-flex justify-start items-start gap-6">
+        <div className="w-full flex flex-col lg:flex-row justify-start items-start gap-6">
           {/* Left column: menu items */}
-          <div className="w-[480px] inline-flex flex-col justify-start items-start gap-6">
+          <div className="flex-1 w-full inline-flex flex-col justify-start items-start gap-6">
             {menuItems.map((item, i) => (
               <div key={item.titleKey}>
                 <Link
@@ -81,7 +81,7 @@ export default function LabelsMenu() {
           </div>
 
           {/* Right column: featured card */}
-          <div className="w-72 self-stretch p-4 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-gray-100 inline-flex flex-col justify-start items-start gap-5 overflow-hidden">
+          <div className="w-full lg:w-72 self-stretch p-4 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-gray-100 inline-flex flex-col justify-start items-start gap-5 overflow-hidden">
             <div className="self-stretch h-40 relative rounded-lg overflow-hidden bg-gray-100">
               <Image
                 src="https://placehold.co/246x153"
