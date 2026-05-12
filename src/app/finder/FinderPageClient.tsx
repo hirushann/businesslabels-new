@@ -8,6 +8,7 @@ import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 import EmptyState from "@/components/EmptyState";
 import Accordion from "@/components/Accordion";
 import RangeSlider from "@/components/RangeSlider";
+import { Alert } from "@/components/ui/alert";
 
 type PrinterProperties = {
   printmethode?: string[]; // New: TD, TT
@@ -581,6 +582,64 @@ export default function FinderPageClient() {
             })}
           </p>
         </div>
+
+        {printer && !isLoading && printer.properties && (
+          <Alert className="mb-6 bg-blue-50 border-blue-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Print Method */}
+              {(printer.properties.printmethode || printer.properties.druktype) && (
+                <div className="space-y-1">
+                  <div className="text-sm font-medium text-neutral-500">
+                    {t('printer.printMethod')}
+                  </div>
+                  <div className="text-base font-semibold text-blue-600">
+                    {(printer.properties.printmethode || printer.properties.druktype)?.join(', ')}
+                  </div>
+                </div>
+              )}
+
+              {/* Core */}
+              {printer.properties.kern && printer.properties.kern.length > 0 && (
+                <div className="space-y-1">
+                  <div className="text-sm font-medium text-neutral-500">
+                    {t('printer.core')}
+                  </div>
+                  <div className="text-base font-semibold text-blue-600">
+                    {printer.properties.kern.join(', ')}
+                  </div>
+                </div>
+              )}
+
+              {/* Width */}
+              {(printer.properties['label-breedte-min'] || printer.properties.breedte || printer.properties.width) && (
+                <div className="space-y-1">
+                  <div className="text-sm font-medium text-neutral-500">
+                    {t('printer.width')}
+                  </div>
+                  <div className="text-base font-semibold text-blue-600">
+                    {printer.properties['label-breedte-min'] && printer.properties['label-breedte-max']
+                      ? `${printer.properties['label-breedte-min'][0]} - ${printer.properties['label-breedte-max'][0]}`
+                      : printer.properties.width
+                        ? printer.properties.width.join(', ')
+                        : printer.properties.breedte?.slice(0, 3).join(', ')}
+                  </div>
+                </div>
+              )}
+
+              {/* Max Outer Diameter */}
+              {(printer.properties['max-buiten-diameter'] || printer.properties.max_buiten_diameter) && (
+                <div className="space-y-1">
+                  <div className="text-sm font-medium text-neutral-500">
+                    {t('printer.maxOuterDiameter')}
+                  </div>
+                  <div className="text-base font-semibold text-blue-600">
+                    {(printer.properties['max-buiten-diameter']?.[0] || printer.properties.max_buiten_diameter)} mm.
+                  </div>
+                </div>
+              )}
+            </div>
+          </Alert>
+        )}
 
         {isLoading ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
