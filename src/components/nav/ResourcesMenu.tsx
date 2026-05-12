@@ -106,9 +106,9 @@ export default function ResourcesMenu() {
   const t = useTranslations();
 
   return (
-    <div className="w-[832px] inline-flex flex-col justify-start items-start">
+    <div className="w-[90vw] max-w-[832px] inline-flex flex-col justify-start items-start">
       <div className="self-stretch p-6 bg-white rounded-xl shadow-[0px_10px_20px_0px_rgba(80,100,121,0.15)] flex flex-col justify-start items-center gap-10">
-        <div className="w-[784px] inline-flex justify-start items-start gap-6">
+        <div className="w-full flex flex-col lg:flex-row justify-start items-start gap-6">
           <MenuColumn items={columnOne} t={t} />
           <MenuColumn items={columnTwo} t={t} />
         </div>

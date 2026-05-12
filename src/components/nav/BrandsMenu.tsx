@@ -33,9 +33,9 @@ const brands = [
 
 export default function BrandsMenu() {
   return (
-    <div className="w-[832px] inline-flex flex-col justify-start items-start">
+    <div className="w-[90vw] max-w-[832px] inline-flex flex-col justify-start items-start">
       <div className="self-stretch p-8 bg-white rounded-xl shadow-[0px_10px_20px_0px_rgba(80,100,121,0.15)] flex flex-col justify-start items-center">
-        <div className="w-full flex flex-row items-center justify-between gap-8">
+        <div className="w-full flex flex-wrap items-center justify-center lg:justify-between gap-8">
           {brands.map((brand) => (
             <Link
               key={brand.name}

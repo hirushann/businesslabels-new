@@ -213,7 +213,7 @@ export default function Header() {
       <div className="w-full px-10 py-2 relative bg-gray-50 border-t border-violet-50">
         <div className="max-w-360 mx-auto w-full flex justify-between items-center">
           <nav className="flex items-center gap-6">
-            {navItems.map((item) => (
+            {navItems.map((item, index) => (
               <div
                 key={item.href}
                 className="relative"
@@ -247,7 +247,11 @@ export default function Header() {
                 {/* Dropdown panel */}
                 {item.dropdownKey && activeDropdown === item.dropdownKey && (
                   <div
-                    className="absolute top-full left-1/2 -translate-x-1/4 pt-3 z-50"
+                    className={`absolute top-full pt-3 z-50 ${
+                      index <= 2 ? 'left-0' : 
+                      index >= 5 ? 'right-0' : 
+                      'left-1/2 -translate-x-1/2'
+                    }`}
                     onMouseEnter={() => handleMouseEnter(item.dropdownKey ?? null)}
                     onMouseLeave={handleMouseLeave}
                   >
