@@ -45,9 +45,13 @@ export default async function ProductsPage({
   const rawParams = await searchParams;
   const query = toUrlSearchParams(rawParams);
   let initialCatalog = emptyCatalogResponse;
+  let baselineCatalog = emptyCatalogResponse;
 
   try {
-    initialCatalog = await searchCatalogProducts(parseCatalogSearchParams(query));
+    [initialCatalog, baselineCatalog] = await Promise.all([
+      searchCatalogProducts(parseCatalogSearchParams(query)),
+      searchCatalogProducts(parseCatalogSearchParams(new URLSearchParams())),
+    ]);
   } catch (error) {
     console.error("Failed to load product catalog.", error);
   }
@@ -67,7 +71,11 @@ export default async function ProductsPage({
             <h1 className="text-3xl font-bold font-['Segoe_UI'] leading-8 text-neutral-800">
               {t('common.allProducts')}
             </h1>
-            <ProductsListing initialCatalog={initialCatalog} initialQueryString={query.toString()} />
+            <ProductsListing
+              initialCatalog={initialCatalog}
+              initialQueryString={query.toString()}
+              baselineRangeFilters={baselineCatalog.filters.ranges}
+            />
           </div>
         </div>
       </div>

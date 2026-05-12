@@ -480,6 +480,34 @@ function exactKeywordFilter(field: string, values: string[]): estypes.QueryDslQu
   };
 }
 
+function categorySlugFilter(values: string[]): estypes.QueryDslQueryContainer | null {
+  if (values.length === 0) return null;
+
+  return {
+    bool: {
+      minimum_should_match: 1,
+      should: [
+        { terms: { "category_slugs.keyword": values } },
+        {
+          nested: {
+            path: "categories",
+            ignore_unmapped: true,
+            query: {
+              bool: {
+                minimum_should_match: 1,
+                should: [
+                  { terms: { "categories.slug.keyword": values } },
+                  { terms: { "categories.breadcrumb_slugs": values } },
+                ],
+              },
+            },
+          },
+        },
+      ],
+    },
+  };
+}
+
 function rangeFilter(
   field: string,
   min: unknown,
@@ -741,7 +769,7 @@ function buildFilters(params: CatalogSearchParams): estypes.QueryDslQueryContain
     exactKeywordFilter("slug.keyword", params.slugs),
     exactKeywordFilter("sku.keyword", params.skus),
     exactKeywordFilter("article_number.keyword", params.articleNumbers),
-    termsFilter("category_slugs.keyword", params.categories),
+    categorySlugFilter(params.categories),
     termsFilter("category_ids", params.categoryIds),
     termsFilter("brand.keyword", params.brands),
     termsFilter("material_id", params.materialIds),
