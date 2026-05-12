@@ -2,7 +2,6 @@
 
 import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 
 interface HelpDrawerProps {
   onClose: () => void;
@@ -286,9 +285,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                 <div className="flex flex-col gap-0.5">
                   <span className="text-neutral-800 text-base font-semibold font-['Segoe_UI'] leading-5">Call</span>
                   <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI'] leading-5">
-                    <Link href="tel:+31318590465" className="text-slate-100 text-sm font-semibold leading-5 hover:text-white transition-colors">
-                      +31 (0)318 590 465
-                    </Link>
+                    +31 (0)318 590 465
                   </span>
                 </div>
               </a>

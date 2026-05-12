@@ -95,18 +95,18 @@ export default function Header() {
                   </clipPath>
                 </defs>
               </svg>
-              <Link href="tel:+31318590465" className="text-slate-100 text-sm font-semibold leading-5 hover:text-white transition-colors">
+              <a href="tel:+31318590465" className="text-slate-100 text-sm font-semibold leading-5 hover:text-white transition-colors">
                   +31 (0)318 590 465
-              </Link>
+              </a>
             </div>
             <div className="flex items-end gap-2">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M11.334 13.6663H4.66732C2.66732 13.6663 1.33398 12.6663 1.33398 10.333V5.66634C1.33398 3.33301 2.66732 2.33301 4.66732 2.33301H11.334C13.334 2.33301 14.6673 3.33301 14.6673 5.66634V10.333C14.6673 12.6663 13.334 13.6663 11.334 13.6663Z" stroke="white" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M11.3327 6L9.24601 7.66667C8.55935 8.21333 7.43268 8.21333 6.74601 7.66667L4.66602 6" stroke="white" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <Link href="mailto:verkoop@businesslabels.nl" className="text-slate-100 text-sm font-semibold lowercase leading-5 hover:text-white transition-colors">
+              <a href="mailto:verkoop@businesslabels.nl" className="text-slate-100 text-sm font-semibold lowercase leading-5 hover:text-white transition-colors">
                 verkoop@businesslabels.nl
-              </Link>
+              </a>
             </div>
           </div>
         </div>
