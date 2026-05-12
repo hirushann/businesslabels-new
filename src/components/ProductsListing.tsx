@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from 'next-intl';
 import Accordion from "@/components/Accordion";
@@ -218,6 +218,13 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showAllFilters, setShowAllFilters] = useState<Record<string, boolean>>({});
   const [isPending, startTransition] = useTransition();
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (searchParams.get("focus") === "true") {
+      searchInputRef.current?.focus();
+    }
+  }, [searchParams]);
 
   const SORT_OPTIONS: Array<{ value: CatalogSortValue; label: string }> = [
     { value: "relevance", label: t('sort.relevance') },
@@ -442,6 +449,7 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
             <path d="M11.5 11.5L14.5 14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
           <input
+            ref={searchInputRef}
             value={searchInput}
             onChange={(event) => setSearchInput(event.target.value)}
             placeholder={t('search.searchProducts')}
