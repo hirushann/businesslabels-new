@@ -115,7 +115,12 @@ type OrderedFilterEntry =
 
 const FILTER_UI_ORDER: OrderedFilterEntry[] = [
   { kind: "range", key: "price" },
+  { kind: "option", key: "category" },
+  { kind: "option", key: "brand" },
   { kind: "option", key: "print_method" },
+  { kind: "option", key: "printer_type" },
+  { kind: "option", key: "detectie" },
+  { kind: "option", key: "merken" },
   { kind: "range", key: "width" },
   { kind: "range", key: "height" },
   { kind: "option", key: "material_code" },

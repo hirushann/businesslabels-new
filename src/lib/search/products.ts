@@ -71,16 +71,26 @@ const OPTION_FILTERS: Array<{
   field: string;
   paramValues: keyof Pick<
     CatalogSearchParams,
+    | "categories"
     | "materialCodes"
     | "materials"
     | "finishings"
     | "glues"
     | "printMethods"
+    | "printerTypes"
+    | "detections"
+    | "brands"
+    | "marks"
     | "kernStrings"
     | "outerDiameterStrings"
   >;
 }> = [
+  { key: "category", title: "Product Type", field: "category_slugs.keyword", paramValues: "categories" },
+  { key: "brand", title: "Brand", field: "catalog_brand", paramValues: "brands" },
   { key: "print_method", title: "Print Method", field: "catalog_print_method", paramValues: "printMethods" },
+  { key: "printer_type", title: "Printer Type", field: "catalog_printer_type", paramValues: "printerTypes" },
+  { key: "detectie", title: "Detection", field: "catalog_detection", paramValues: "detections" },
+  { key: "merken", title: "Make", field: "catalog_marks", paramValues: "marks" },
   { key: "material_code", title: "Material Code", field: "catalog_material_code", paramValues: "materialCodes" },
   { key: "material", title: "Material Type", field: "catalog_material", paramValues: "materials" },
   { key: "finishing", title: "Finishing", field: "catalog_finishing", paramValues: "finishings" },
@@ -714,9 +724,25 @@ if (value instanceof List) {
 
 function catalogRuntimeMappings(): Record<string, unknown> {
   return {
+    catalog_brand: {
+      type: "keyword",
+      script: { source: keywordRuntimeScript(["brand", "merken", "make"]) },
+    },
     catalog_print_method: {
       type: "keyword",
       script: { source: keywordRuntimeScript(["printmethode", "print_method", "druktype"]) },
+    },
+    catalog_printer_type: {
+      type: "keyword",
+      script: { source: keywordRuntimeScript(["printer_type", "printer-type"]) },
+    },
+    catalog_detection: {
+      type: "keyword",
+      script: { source: keywordRuntimeScript(["detectie", "detection"]) },
+    },
+    catalog_marks: {
+      type: "keyword",
+      script: { source: keywordRuntimeScript(["merken", "brand", "make"]) },
     },
     catalog_material_code: {
       type: "keyword",
@@ -771,7 +797,7 @@ function buildFilters(params: CatalogSearchParams): estypes.QueryDslQueryContain
     exactKeywordFilter("article_number.keyword", params.articleNumbers),
     categorySlugFilter(params.categories),
     termsFilter("category_ids", params.categoryIds),
-    termsFilter("brand.keyword", params.brands),
+    termsFilter("catalog_brand", params.brands),
     termsFilter("material_id", params.materialIds),
     termsFilter("material_taxon_slugs", params.materialCategories),
     termsFilter("material_taxon_ids", params.materialCategoryIds),
@@ -780,9 +806,9 @@ function buildFilters(params: CatalogSearchParams): estypes.QueryDslQueryContain
     termsFilter("catalog_finishing", params.finishings),
     termsFilter("catalog_glue", params.glues),
     termsFilter("catalog_print_method", params.printMethods),
-    termsFilter("printer_type.keyword", params.printerTypes),
-    termsFilter("detectie.keyword", params.detections),
-    termsFilter("merken.keyword", params.marks),
+    termsFilter("catalog_printer_type", params.printerTypes),
+    termsFilter("catalog_detection", params.detections),
+    termsFilter("catalog_marks", params.marks),
     params.inStock === true ? { range: { stock: { gt: 0 } } } : null,
     params.inStock === false ? { range: { stock: { lte: 0 } } } : null,
     rangeFilter("price", params.priceMin, params.priceMax),
