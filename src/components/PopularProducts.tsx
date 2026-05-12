@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import EmptyState from "@/components/EmptyState";
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
-import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 import { getTranslations } from 'next-intl/server';
 
 type Product = {
@@ -37,28 +36,22 @@ function normalizeType(raw: string | undefined): "simple" | "variable" | null {
 }
 
 export default async function PopularProducts() {
-  const baseUrl = process.env.BBNL_API_BASE_URL;
   const t = await getTranslations();
 
-  if (!baseUrl) {
-    throw new Error('BBNL_API_BASE_URL is not configured');
-  }
-
-  const locale = await getServerLocale();
   let products: Product[] = [];
   try {
-    const response = await fetch(withLocaleParam(`${baseUrl}/api/products`, locale), {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/products`, {
       next: { revalidate: 3600 },
+      cache: 'force-cache',
     });
 
-    if (response.ok) {
-      const json = (await response.json()) as ProductsResponse;
+    const json = (await response.json()) as ProductsResponse;
+    if (json.data && Array.isArray(json.data)) {
       products = json.data.slice(0, 6);
-    } else {
-      console.error(`Failed to fetch products: ${response.status}`);
     }
   } catch (error) {
     console.error('Error fetching products:', error);
+    // Gracefully continue with empty products array
   }
 
   return (

@@ -142,6 +142,7 @@ export const MESSAGES = {
     },
     finder: {
       productFinder: 'Product Finder',
+      printerFinder: 'Printer Finder',
       findCompatibleProducts: 'Find Compatible Products',
       printerSelectionSubtitle: 'Select your printer model to discover compatible labels and ink cartridges designed for optimal performance.',
       selectYourPrinter: 'Select Your Printer',
@@ -630,6 +631,22 @@ export const MESSAGES = {
       badgesMedia: 'Badges / Media',
       relatedProducts: 'Related Products',
     },
+    printer: {
+      compatibilityTitle: 'Compatibility Properties',
+      printMethod: 'Print Method',
+      core: 'Core Diameter',
+      width: 'Label Width',
+      outerDiameter: 'Outer Diameter',
+      maxOuterDiameter: 'Max Outer Diameter',
+      detection: 'Detection Method',
+      labelType: 'Label Type',
+      thermalDirect: 'Thermal Direct',
+      thermalTransfer: 'Thermal Transfer',
+      compatibleProducts: 'Compatible Products',
+    },
+    printersPage: {
+      printerAlt: 'Image of {title}',
+    },
     account: {
       myAccount: 'My Account',
       welcome: 'Welcome back',
@@ -798,6 +815,7 @@ export const MESSAGES = {
     },
     finder: {
       productFinder: 'Product Finder',
+      printerFinder: 'Printer Finder',
       findCompatibleProducts: 'Vind compatibele producten',
       printerSelectionSubtitle: 'Selecteer uw printermodel om compatibele labels en inktcartridges te ontdekken die zijn ontworpen voor optimale prestaties.',
       selectYourPrinter: 'Selecteer je printer',
@@ -1285,6 +1303,22 @@ export const MESSAGES = {
       inkMaintenance: 'Inkt & Onderhoud',
       badgesMedia: 'Badges / Media',
       relatedProducts: 'Gerelateerde producten',
+    },
+    printer: {
+      compatibilityTitle: 'Compatibiliteitseigenschappen',
+      printMethod: 'Drukmethode',
+      core: 'Kerndiameter',
+      width: 'Labelbreedte',
+      outerDiameter: 'Buitendiameter',
+      maxOuterDiameter: 'Max Buitendiameter',
+      detection: 'Detectiemethode',
+      labelType: 'Labeltype',
+      thermalDirect: 'Thermal Direct',
+      thermalTransfer: 'Thermal Transfer',
+      compatibleProducts: 'Compatibele Producten',
+    },
+    printersPage: {
+      printerAlt: 'Afbeelding van {title}',
     },
     account: {
       myAccount: 'Mijn account',

@@ -21,3 +21,10 @@ export {
 } from './favorites';
 export { validateCoupon } from './coupons';
 export { listReviews, createReview } from './reviews';
+export { 
+  getPrinterProducts, 
+  getProductPrinters, 
+  getMaterialProducts, 
+  checkCompatibility 
+} from './compatibility';
+export { fetchPrinterOptions } from './printers';

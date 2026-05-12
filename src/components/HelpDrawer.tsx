@@ -284,7 +284,9 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <span className="text-neutral-800 text-base font-semibold font-['Segoe_UI'] leading-5">Call</span>
-                  <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI'] leading-5">+31 (0)318 590 465</span>
+                  <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI'] leading-5">
+                    +31 (0)318 590 465
+                  </span>
                 </div>
               </a>
 

@@ -10,9 +10,10 @@ const API_BASE_URL = process.env.BBNL_API_BASE_URL;
  */
 export async function GET(request: NextRequest) {
   if (!API_BASE_URL) {
+    console.warn('BBNL_API_BASE_URL is not configured');
     return NextResponse.json(
       { data: [], error: 'Backend API URL is not configured.' },
-      { status: 500 }
+      { status: 200 }
     );
   }
 
@@ -33,7 +34,17 @@ export async function GET(request: NextRequest) {
       console.error(`Backend API error: ${response.status}`);
       return NextResponse.json(
         { data: [], error: 'Failed to fetch products' },
-        { status: response.status }
+        { status: 200 }
+      );
+    }
+
+    // Check if response is JSON
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.error('Backend returned non-JSON response');
+      return NextResponse.json(
+        { data: [], error: 'Backend service unavailable' },
+        { status: 200 }
       );
     }
 
@@ -43,7 +54,7 @@ export async function GET(request: NextRequest) {
     console.error('Error fetching products:', error);
     return NextResponse.json(
       { data: [], error: 'Failed to fetch products' },
-      { status: 500 }
+      { status: 200 }
     );
   }
 }

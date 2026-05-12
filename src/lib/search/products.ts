@@ -80,13 +80,13 @@ const OPTION_FILTERS: Array<{
     | "outerDiameterStrings"
   >;
 }> = [
-  { key: "print_method", title: "Print Method", field: "filters.printmethode.keyword", paramValues: "printMethods" },
-  { key: "material_code", title: "Material Code", field: "filters.materiaal_code.keyword", paramValues: "materialCodes" },
-  { key: "material", title: "Material Type", field: "filters.materiaal.keyword", paramValues: "materials" },
-  { key: "finishing", title: "Finishing", field: "filters.afwerking.keyword", paramValues: "finishings" },
-  { key: "glue", title: "Glue", field: "filters.lijm.keyword", paramValues: "glues" },
-  { key: "kern_string", title: "Core Type", field: "property_filters.kern.keyword", paramValues: "kernStrings" },
-  { key: "outer_diameter_string", title: "Outer Diameter Type", field: "property_filters.buiten-diameter.keyword", paramValues: "outerDiameterStrings" },
+  { key: "print_method", title: "Print Method", field: "catalog_print_method", paramValues: "printMethods" },
+  { key: "material_code", title: "Material Code", field: "catalog_material_code", paramValues: "materialCodes" },
+  { key: "material", title: "Material Type", field: "catalog_material", paramValues: "materials" },
+  { key: "finishing", title: "Finishing", field: "catalog_finishing", paramValues: "finishings" },
+  { key: "glue", title: "Glue", field: "catalog_glue", paramValues: "glues" },
+  { key: "kern_string", title: "Core Type", field: "catalog_core_string", paramValues: "kernStrings" },
+  { key: "outer_diameter_string", title: "Outer Diameter Type", field: "catalog_outer_diameter_string", paramValues: "outerDiameterStrings" },
 ];
 
 const RANGE_FILTERS: Array<{
@@ -99,13 +99,13 @@ const RANGE_FILTERS: Array<{
   unitSuffix?: string;
 }> = [
   { key: "price", title: "Price Range", field: "price", minParam: "priceMin", maxParam: "priceMax", unitPrefix: "€" },
-  { key: "width", title: "Label Width", field: "filters.breedte", minParam: "widthMin", maxParam: "widthMax", unitSuffix: "mm" },
-  { key: "height", title: "Label Height", field: "filters.hoogte", minParam: "heightMin", maxParam: "heightMax", unitSuffix: "mm" },
-  { key: "core", title: "Core Size", field: "kern_numeric", minParam: "coreMin", maxParam: "coreMax", unitSuffix: "mm" },
+  { key: "width", title: "Label Width", field: "catalog_width_mm", minParam: "widthMin", maxParam: "widthMax", unitSuffix: "mm" },
+  { key: "height", title: "Label Height", field: "catalog_height_mm", minParam: "heightMin", maxParam: "heightMax", unitSuffix: "mm" },
+  { key: "core", title: "Core Size", field: "catalog_core_mm", minParam: "coreMin", maxParam: "coreMax", unitSuffix: "mm" },
   {
     key: "outer_diameter",
     title: "Outer Diameter",
-    field: "filters.buiten_diameter",
+    field: "catalog_outer_diameter_mm",
     minParam: "outerDiameterMin",
     maxParam: "outerDiameterMax",
     unitSuffix: "mm",
@@ -145,6 +145,7 @@ const RESULT_SOURCE_FIELDS = [
   "warranty_option_names",
   "warranty_option_months",
   "warranty_option_prices",
+  "properties",
 ] as const;
 
 type ProductSource = Record<string, unknown>;
@@ -264,55 +265,194 @@ function textQuery(search: string): estypes.QueryDslQueryContainer {
   const query = search.trim();
   if (!query) return { match_all: {} };
 
-  const primary = ["article_number^10", "sku^10", "variant_skus^8", "title^8", "name^7", "slug^2"];
+  // Check if query looks like a SKU/article number (alphanumeric with optional hyphens/underscores)
+  const looksLikeSKU = /^[A-Z0-9][-_A-Z0-9]*$/i.test(query);
+  
+  // Count terms in query
+  const terms = query.split(/\s+/);
+  const termCount = terms.length;
+  const isMultiTerm = termCount > 1;
+
+  // Primary fields: SKU for exact lookups, name for product titles
+  const primary = [
+    "sku^100",              // Highest priority - exact product codes
+    "article_number^100",   // Alternative product codes
+    "variant_skus^80",      // Variant product codes
+    "name^80",              // Main product name (removed title - duplicate)
+  ];
+  
+  // Secondary fields: material, brand, and product attributes
+  const secondary = [
+    "brand^15",             // Brand searches (Epson, etc.)
+    "material_title^12",    // Material searches (polyester, paper)
+    "druktype^8",           // Print method (TD/TT)
+    "finishing^5",          // Surface finish (glossy, matte)
+    "merken^5",             // Dutch brand field
+    "excerpt^3",            // Short descriptions
+    "slug^2",               // URL slugs (low priority)
+  ];
+  
+  // Fallback: only keep description, remove redundant fields
   const fallback = [
-    "material_title^1.2",
-    "material_slug",
-    "brand",
-    "merken",
-    "druktype",
-    "finishing",
-    "excerpt^1.5",
-    "description^0.4",
-    "content^0.3",
-    "product_information^0.3",
+    "description^0.5",      // Full description only
   ];
 
+  // If it looks like a SKU, prioritize exact matches heavily
+  if (looksLikeSKU) {
+    return {
+      bool: {
+        should: [
+          // Exact SKU match - if this matches, it will dominate
+          {
+            term: {
+              "sku.keyword": {
+                value: query,
+                boost: 10000,
+                case_insensitive: true,
+              },
+            },
+          },
+          // Exact article number match
+          {
+            term: {
+              "article_number.keyword": {
+                value: query,
+                boost: 10000,
+                case_insensitive: true,
+              },
+            },
+          },
+          // Exact variant SKU match
+          {
+            term: {
+              "variant_skus.keyword": {
+                value: query,
+                boost: 9000,
+                case_insensitive: true,
+              },
+            },
+          },
+          // Partial SKU/article matches (much lower priority)
+          { multi_match: { query, fields: ["sku^10", "article_number^10", "variant_skus^8"], type: "phrase_prefix", boost: 1 } },
+          // Name matches (minimal priority for SKU searches)
+          { multi_match: { query, fields: ["name^2"], type: "phrase_prefix", boost: 0.1 } },
+        ],
+        minimum_should_match: 1,
+      },
+    };
+  }
+
+  // Multi-term search (e.g., "d6000 geel" or "ColorWorks 8000")
+  if (isMultiTerm) {
+    // For 2 terms: require both (100%)
+    // For 3+ terms: require at least 75%
+    const minMatch = termCount === 2 ? "100%" : "75%";
+    
+    // Build wildcard queries for each individual term (e.g., "8000" → "*8000*")
+    // This allows "ColorWorks 8000" to match "ColorWorks C8000e BK"
+    const termWildcards: estypes.QueryDslQueryContainer[] = [];
+    for (const term of terms) {
+      const wildcardValue = `*${term.toLowerCase()}*`;
+      termWildcards.push(
+        { bool: {
+          should: [
+            { wildcard: { name: { value: wildcardValue, boost: 1, case_insensitive: true } } },
+            { wildcard: { brand: { value: wildcardValue, boost: 1, case_insensitive: true } } },
+            { wildcard: { sku: { value: wildcardValue, boost: 1, case_insensitive: true } } },
+            { wildcard: { article_number: { value: wildcardValue, boost: 1, case_insensitive: true } } },
+          ],
+          minimum_should_match: 1,
+        }}
+      );
+    }
+    
+    // Build "both terms in name" clause (highest relevance for focused matches)
+    // e.g., "D6000 geel" → both must be in the name field
+    const nameWildcards: estypes.QueryDslQueryContainer[] = terms.map(term => ({
+      wildcard: { name: { value: `*${term.toLowerCase()}*`, boost: 1, case_insensitive: true } }
+    }));
+    
+    return {
+      bool: {
+        should: [
+          // HIGHEST: Both terms in the name field (e.g., "CW-D6000 series Inktcartridges Geel")
+          { bool: { must: nameWildcards, boost: 200 } },
+          // Exact phrase in primary fields
+          { multi_match: { query, fields: primary, type: "phrase", boost: 100 } },
+          // All individual terms match via wildcards in any primary field
+          { bool: { must: termWildcards, boost: 50 } },
+          // All terms must match in primary fields
+          { multi_match: { query, fields: primary, type: "best_fields", operator: "and", boost: 40 } },
+          // Cross-field matching (terms can be in different fields)
+          { multi_match: { query, fields: primary, type: "cross_fields", operator: "and", boost: 30 } },
+          // Phrase prefix for partial matches
+          { multi_match: { query, fields: primary, type: "phrase_prefix", boost: 20 } },
+          // Most terms match in primary fields
+          { multi_match: { query, fields: primary, type: "best_fields", minimum_should_match: minMatch, boost: 10 } },
+          // Secondary fields (brand, material, attributes) - flexible OR matching
+          { multi_match: { query, fields: secondary, operator: "or", boost: 8 } },
+          // Individual wildcard matches in secondary fields
+          ...terms.map(term => ({
+            wildcard: { material_title: { value: `*${term.toLowerCase()}*`, boost: 3, case_insensitive: true } }
+          })),
+          // Fallback to description with flexible matching
+          { multi_match: { query, fields: fallback, operator: "or", boost: 1 } },
+        ],
+        minimum_should_match: 1,
+      },
+    };
+  }
+
+  // Single-term text search (for product names, descriptions, etc.)
   return {
     bool: {
       minimum_should_match: 1,
       should: [
+        // Exact SKU match still gets high priority
         {
           term: {
             "sku.keyword": {
               value: query,
-              boost: 100,
+              boost: 1000,
               case_insensitive: true,
             },
           },
         },
+        // Exact article number match
         {
           term: {
             "article_number.keyword": {
               value: query,
-              boost: 100,
+              boost: 1000,
               case_insensitive: true,
             },
           },
         },
+        // Exact variant SKU match
         {
           term: {
             "variant_skus.keyword": {
               value: query,
-              boost: 80,
+              boost: 900,
               case_insensitive: true,
             },
           },
         },
-        { multi_match: { query, fields: primary, type: "best_fields", operator: "and", boost: 6 } },
-        { multi_match: { query, fields: primary, type: "phrase_prefix", boost: 5 } },
-        { multi_match: { query, fields: primary, fuzziness: "AUTO", prefix_length: 1, boost: 3 } },
-        { multi_match: { query, fields: fallback, operator: "or", boost: 0.8 } },
+        // Wildcard matching - HIGH PRIORITY for partial matches (e.g., "colorwork" → "ColorWorks")
+        { wildcard: { name: { value: `*${query.toLowerCase()}*`, boost: 50, case_insensitive: true } } },
+        { wildcard: { brand: { value: `*${query.toLowerCase()}*`, boost: 40, case_insensitive: true } } },
+        { wildcard: { sku: { value: `*${query.toLowerCase()}*`, boost: 30, case_insensitive: true } } },
+        { wildcard: { article_number: { value: `*${query.toLowerCase()}*`, boost: 30, case_insensitive: true } } },
+        // Exact term match in primary fields (e.g., "polyester" exact match)
+        { multi_match: { query, fields: primary, type: "best_fields", operator: "or", boost: 20 } },
+        // Phrase prefix for partial matches at word boundaries
+        { multi_match: { query, fields: primary, type: "phrase_prefix", boost: 15 } },
+        // Secondary fields with OR operator (flexible matching)
+        { multi_match: { query, fields: secondary, operator: "or", boost: 10 } },
+        // Fuzzy matching with no prefix requirement (handles typos)
+        { multi_match: { query, fields: [...primary, ...secondary], fuzziness: "AUTO", prefix_length: 0, boost: 5 } },
+        // Fallback to description with low priority
+        { multi_match: { query, fields: fallback, operator: "or", boost: 1 } },
       ],
     },
   };
@@ -409,6 +549,190 @@ function rangeOrStringFilter(
   };
 }
 
+function painlessList(values: readonly string[]): string {
+  return `[${values.map((value) => `'${value.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'`).join(", ")}]`;
+}
+
+function sourceValueRuntimeScript(keys: readonly string[], emitExpression: string): string {
+  return `
+def keys = ${painlessList(keys)};
+def value = null;
+
+for (def key : keys) {
+  if (params._source.containsKey(key)) {
+    value = params._source[key];
+    break;
+  }
+}
+
+if (value == null) {
+  if (params._source.containsKey('properties')) {
+    def properties = params._source['properties'];
+    if (properties instanceof Map) {
+      for (def key : keys) {
+        if (properties.containsKey(key)) {
+          value = properties[key];
+          break;
+        }
+      }
+    }
+  }
+}
+
+if (value == null) {
+  return;
+}
+
+${emitExpression}
+`;
+}
+
+function keywordRuntimeScript(keys: readonly string[]): string {
+  return sourceValueRuntimeScript(keys, `
+if (value instanceof List) {
+  for (def item : value) {
+    if (item == null) {
+      continue;
+    }
+    def itemValue = item;
+    if (item instanceof Map && item.containsKey('value')) {
+      itemValue = item['value'];
+    }
+    def text = itemValue.toString();
+    if (text.length() > 0) {
+      emit(text);
+    }
+  }
+} else {
+  def text = value.toString();
+  if (text.length() > 0) {
+    emit(text);
+  }
+}
+`);
+}
+
+function numberRuntimeScript(keys: readonly string[]): string {
+  return sourceValueRuntimeScript(keys, `
+if (value instanceof List) {
+  for (def item : value) {
+    if (item == null) {
+      continue;
+    }
+    def matcher = /[-+]?[0-9]*\\.?[0-9]+/.matcher(item.toString());
+    if (matcher.find()) {
+      emit(Double.parseDouble(matcher.group()));
+    }
+  }
+} else {
+  def matcher = /[-+]?[0-9]*\\.?[0-9]+/.matcher(value.toString());
+  if (matcher.find()) {
+    emit(Double.parseDouble(matcher.group()));
+  }
+}
+`);
+}
+
+function materialRuntimeScript(): string {
+  return `
+def value = null;
+if (params._source.containsKey('material_title')) {
+  value = params._source['material_title'];
+}
+if (value == null && params._source.containsKey('materiaal')) {
+  value = params._source['materiaal'];
+}
+if (value == null && params._source.containsKey('material')) {
+  def material = params._source['material'];
+  if (material instanceof Map) {
+    if (material.containsKey('title')) {
+      value = material['title'];
+    } else if (material.containsKey('name')) {
+      value = material['name'];
+    } else if (material.containsKey('slug')) {
+      value = material['slug'];
+    }
+  } else if (material != null) {
+    value = material;
+  }
+}
+if (value == null && params._source.containsKey('properties')) {
+  def properties = params._source['properties'];
+  if (properties instanceof Map && properties.containsKey('materiaal')) {
+    value = properties['materiaal'];
+  }
+}
+if (value == null) {
+  return;
+}
+if (value instanceof List) {
+  for (def item : value) {
+    if (item == null) {
+      continue;
+    }
+    def text = item.toString();
+    if (text.length() > 0) {
+      emit(text);
+    }
+  }
+} else {
+  def text = value.toString();
+  if (text.length() > 0) {
+    emit(text);
+  }
+}
+`;
+}
+
+function catalogRuntimeMappings(): Record<string, unknown> {
+  return {
+    catalog_print_method: {
+      type: "keyword",
+      script: { source: keywordRuntimeScript(["printmethode", "print_method", "druktype"]) },
+    },
+    catalog_material_code: {
+      type: "keyword",
+      script: { source: keywordRuntimeScript(["materiaal-code", "materiaal_code", "material_code"]) },
+    },
+    catalog_material: {
+      type: "keyword",
+      script: { source: materialRuntimeScript() },
+    },
+    catalog_finishing: {
+      type: "keyword",
+      script: { source: keywordRuntimeScript(["afwerking", "finishing"]) },
+    },
+    catalog_glue: {
+      type: "keyword",
+      script: { source: keywordRuntimeScript(["lijm", "glue", "adhesive"]) },
+    },
+    catalog_core_string: {
+      type: "keyword",
+      script: { source: keywordRuntimeScript(["kern", "kern_numeric", "meta_kern"]) },
+    },
+    catalog_outer_diameter_string: {
+      type: "keyword",
+      script: { source: keywordRuntimeScript(["buiten-diameter", "buiten_diameter", "outer_diameter"]) },
+    },
+    catalog_width_mm: {
+      type: "double",
+      script: { source: numberRuntimeScript(["breedte", "meta_width", "width"]) },
+    },
+    catalog_height_mm: {
+      type: "double",
+      script: { source: numberRuntimeScript(["hoogte", "meta_height", "height"]) },
+    },
+    catalog_core_mm: {
+      type: "double",
+      script: { source: numberRuntimeScript(["kern", "kern_numeric", "meta_kern"]) },
+    },
+    catalog_outer_diameter_mm: {
+      type: "double",
+      script: { source: numberRuntimeScript(["buiten-diameter", "buiten_diameter", "outer_diameter"]) },
+    },
+  };
+}
+
 function buildFilters(params: CatalogSearchParams): estypes.QueryDslQueryContainer[] {
   const filters: Array<estypes.QueryDslQueryContainer | null> = [
     { term: { state: "active" } },
@@ -423,21 +747,21 @@ function buildFilters(params: CatalogSearchParams): estypes.QueryDslQueryContain
     termsFilter("material_id", params.materialIds),
     termsFilter("material_taxon_slugs", params.materialCategories),
     termsFilter("material_taxon_ids", params.materialCategoryIds),
-    termsFilter("filters.materiaal_code.keyword", params.materialCodes),
-    termsFilter("filters.materiaal.keyword", params.materials),
-    termsFilter("filters.afwerking.keyword", params.finishings),
-    termsFilter("filters.lijm.keyword", params.glues),
-    termsFilter("filters.printmethode.keyword", params.printMethods),
+    termsFilter("catalog_material_code", params.materialCodes),
+    termsFilter("catalog_material", params.materials),
+    termsFilter("catalog_finishing", params.finishings),
+    termsFilter("catalog_glue", params.glues),
+    termsFilter("catalog_print_method", params.printMethods),
     termsFilter("printer_type.keyword", params.printerTypes),
     termsFilter("detectie.keyword", params.detections),
     termsFilter("merken.keyword", params.marks),
     params.inStock === true ? { range: { stock: { gt: 0 } } } : null,
     params.inStock === false ? { range: { stock: { lte: 0 } } } : null,
     rangeFilter("price", params.priceMin, params.priceMax),
-    rangeFilter("filters.breedte", params.widthMin, params.widthMax),
-    rangeFilter("filters.hoogte", params.heightMin, params.heightMax),
-    rangeOrStringFilter("kern_numeric", params.coreMin, params.coreMax, "property_filters.kern.keyword", params.kernStrings),
-    rangeOrStringFilter("filters.buiten_diameter", params.outerDiameterMin, params.outerDiameterMax, "property_filters.buiten-diameter.keyword", params.outerDiameterStrings),
+    rangeFilter("catalog_width_mm", params.widthMin, params.widthMax),
+    rangeFilter("catalog_height_mm", params.heightMin, params.heightMax),
+    rangeOrStringFilter("catalog_core_mm", params.coreMin, params.coreMax, "catalog_core_string", params.kernStrings),
+    rangeOrStringFilter("catalog_outer_diameter_mm", params.outerDiameterMin, params.outerDiameterMax, "catalog_outer_diameter_string", params.outerDiameterStrings),
   ];
 
   return filters.filter((filter): filter is estypes.QueryDslQueryContainer => filter !== null);
@@ -578,6 +902,19 @@ function stringValue(value: unknown): string | null {
   return scalar === null ? null : String(scalar);
 }
 
+function propertyStringValue(source: ProductSource, keys: readonly string[]): string | null {
+  const properties = source.properties;
+  if (!properties || typeof properties !== "object" || Array.isArray(properties)) return null;
+
+  for (const key of keys) {
+    const value = (properties as Record<string, unknown>)[key];
+    const text = stringValue(value);
+    if (text?.trim()) return text;
+  }
+
+  return null;
+}
+
 function numberValue(value: unknown): number | null {
   const scalar = firstScalar(value);
   if (typeof scalar === "number") return scalar;
@@ -688,7 +1025,7 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number): Ca
     name: title,
     subtitle: stringValue(source.subtitle),
     excerpt: stringValue(source.excerpt),
-    materialTitle: stringValue(source.material_title),
+    materialTitle: stringValue(source.material_title) ?? propertyStringValue(source, ["materiaal"]),
     price: numberValue(source.price),
     originalPrice: numberValue(source.original_price),
     inStock: booleanValue(source.in_stock) || Boolean((numberValue(source.stock) ?? 0) > 0),
@@ -724,6 +1061,7 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
     from,
     size: params.perPage,
     track_total_hits: true,
+    runtime_mappings: catalogRuntimeMappings() as estypes.MappingRuntimeFields,
     _source: RESULT_SOURCE_FIELDS as unknown as string[],
     query: {
       bool: {
@@ -731,12 +1069,61 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
         filter: filters,
       },
     },
+    // Apply min_score for multi-term searches to filter weak matches
+    // 2 terms: stricter threshold (5.0) to prevent broad matches (e.g., "D6000 geel")
+    // 3+ terms: more lenient (1.5) to allow partial matches
+    ...(params.search && params.search.trim().split(/\s+/).length >= 2 
+      ? { min_score: params.search.trim().split(/\s+/).length === 2 ? 5.0 : 1.5 } 
+      : {}),
     ...(sortClauses(params.sort) ? { sort: sortClauses(params.sort) } : {}),
     aggs: aggregations(),
   });
 
   const total = totalHitsValue(response.hits.total);
   const lastPage = Math.max(1, Math.ceil(total / params.perPage));
+
+  // Extract "Did you mean" suggestion
+  let suggestion: string | undefined;
+  if (params.search && total === 0) {
+    // Try fuzzy search to find similar terms when exact search returns nothing
+    try {
+      const fuzzyResponse = await client.search<ProductSource>({
+        index: catalogIndexForType(params.type),
+        size: 1,
+        runtime_mappings: catalogRuntimeMappings() as estypes.MappingRuntimeFields,
+        _source: ["name", "brand", "sku"] as unknown as string[],
+        query: {
+          bool: {
+            should: [
+              {
+                multi_match: {
+                  query: params.search,
+                  fields: ["name^3", "brand^2", "sku"],
+                  fuzziness: "AUTO",
+                  prefix_length: 0,
+                },
+              },
+            ],
+            filter: filters,
+          },
+        },
+      });
+
+      if (fuzzyResponse.hits.hits.length > 0) {
+        const hit = fuzzyResponse.hits.hits[0];
+        const source = hit._source as ProductSource;
+        // Return the name or brand from the closest match as suggestion
+        suggestion = stringValue(source.name) || stringValue(source.brand) || params.search;
+        
+        // Only suggest if it's different from the original search
+        if (suggestion.toLowerCase() === params.search.toLowerCase()) {
+          suggestion = undefined;
+        }
+      }
+    } catch (fuzzyError) {
+      console.error("Failed to generate search suggestion:", fuzzyError);
+    }
+  }
 
   return {
     products: response.hits.hits.map(mapProductHit),
@@ -745,5 +1132,6 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
     lastPage,
     perPage: params.perPage,
     filters: buildCatalogFilters(response.aggregations as Record<string, unknown> | undefined),
+    ...(suggestion ? { suggestion } : {}),
   };
 }
