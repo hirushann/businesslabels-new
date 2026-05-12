@@ -60,6 +60,7 @@ const MULTI_VALUE_KEYS = {
 
 const EXACT_VALUE_KEYS = {
   ids: ["id"],
+  printerIds: ["printer_id", "printer_ids"],
   slugs: ["slug"],
   skus: ["sku"],
   articleNumbers: ["article_number"],
@@ -227,6 +228,7 @@ export function parseCatalogSearchParams(params: URLSearchParams): CatalogSearch
   const categoryIdValues = valuesParam(params, MULTI_VALUE_KEYS.categoryIds);
   const materialIdValues = valuesParam(params, MULTI_VALUE_KEYS.materialIds);
   const materialCategoryIdValues = valuesParam(params, MULTI_VALUE_KEYS.materialCategoryIds);
+  const printerIdValues = valuesParam(params, EXACT_VALUE_KEYS.printerIds);
 
   const search = firstParam(params, ["search", "q"]) ?? "";
   const explicitSort = params.get("sort");
@@ -254,6 +256,7 @@ export function parseCatalogSearchParams(params: URLSearchParams): CatalogSearch
     slugs: valuesParam(params, EXACT_VALUE_KEYS.slugs),
     skus: valuesParam(params, EXACT_VALUE_KEYS.skus),
     articleNumbers: valuesParam(params, EXACT_VALUE_KEYS.articleNumbers),
+    printerIds: integerValues(printerIdValues),
     categories: categoryValues,
     categoryIds: integerValues(categoryIdValues),
     brands: valuesParam(params, MULTI_VALUE_KEYS.brands),
@@ -792,6 +795,7 @@ function buildFilters(params: CatalogSearchParams): estypes.QueryDslQueryContain
     { term: { state: "active" } },
     params.type ? { term: { product_type: params.type } } : null,
     termsFilter("id", params.ids),
+    termsFilter("printer_ids", params.printerIds),
     exactKeywordFilter("slug.keyword", params.slugs),
     exactKeywordFilter("sku.keyword", params.skus),
     exactKeywordFilter("article_number.keyword", params.articleNumbers),
