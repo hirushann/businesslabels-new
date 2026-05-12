@@ -20,6 +20,8 @@ import type {
   PrinterCardData,
   PrinterSortValue,
   PrinterOptionFilterKey,
+  PrinterFilterOption,
+  PrinterFilters,
   PrinterSearchParams,
   PrinterSearchResponse,
 } from "./printerTypes";
