@@ -80,13 +80,13 @@ const OPTION_FILTERS: Array<{
     | "outerDiameterStrings"
   >;
 }> = [
-  { key: "print_method", title: "Print Method", field: "filters.printmethode.keyword", paramValues: "printMethods" },
-  { key: "material_code", title: "Material Code", field: "filters.materiaal_code.keyword", paramValues: "materialCodes" },
-  { key: "material", title: "Material Type", field: "filters.materiaal.keyword", paramValues: "materials" },
-  { key: "finishing", title: "Finishing", field: "filters.afwerking.keyword", paramValues: "finishings" },
-  { key: "glue", title: "Glue", field: "filters.lijm.keyword", paramValues: "glues" },
-  { key: "kern_string", title: "Core Type", field: "property_filters.kern.keyword", paramValues: "kernStrings" },
-  { key: "outer_diameter_string", title: "Outer Diameter Type", field: "property_filters.buiten-diameter.keyword", paramValues: "outerDiameterStrings" },
+  { key: "print_method", title: "Print Method", field: "catalog_print_method", paramValues: "printMethods" },
+  { key: "material_code", title: "Material Code", field: "catalog_material_code", paramValues: "materialCodes" },
+  { key: "material", title: "Material Type", field: "catalog_material", paramValues: "materials" },
+  { key: "finishing", title: "Finishing", field: "catalog_finishing", paramValues: "finishings" },
+  { key: "glue", title: "Glue", field: "catalog_glue", paramValues: "glues" },
+  { key: "kern_string", title: "Core Type", field: "catalog_core_string", paramValues: "kernStrings" },
+  { key: "outer_diameter_string", title: "Outer Diameter Type", field: "catalog_outer_diameter_string", paramValues: "outerDiameterStrings" },
 ];
 
 const RANGE_FILTERS: Array<{
@@ -99,13 +99,13 @@ const RANGE_FILTERS: Array<{
   unitSuffix?: string;
 }> = [
   { key: "price", title: "Price Range", field: "price", minParam: "priceMin", maxParam: "priceMax", unitPrefix: "€" },
-  { key: "width", title: "Label Width", field: "filters.breedte", minParam: "widthMin", maxParam: "widthMax", unitSuffix: "mm" },
-  { key: "height", title: "Label Height", field: "filters.hoogte", minParam: "heightMin", maxParam: "heightMax", unitSuffix: "mm" },
-  { key: "core", title: "Core Size", field: "kern_numeric", minParam: "coreMin", maxParam: "coreMax", unitSuffix: "mm" },
+  { key: "width", title: "Label Width", field: "catalog_width_mm", minParam: "widthMin", maxParam: "widthMax", unitSuffix: "mm" },
+  { key: "height", title: "Label Height", field: "catalog_height_mm", minParam: "heightMin", maxParam: "heightMax", unitSuffix: "mm" },
+  { key: "core", title: "Core Size", field: "catalog_core_mm", minParam: "coreMin", maxParam: "coreMax", unitSuffix: "mm" },
   {
     key: "outer_diameter",
     title: "Outer Diameter",
-    field: "filters.buiten_diameter",
+    field: "catalog_outer_diameter_mm",
     minParam: "outerDiameterMin",
     maxParam: "outerDiameterMax",
     unitSuffix: "mm",
@@ -145,6 +145,7 @@ const RESULT_SOURCE_FIELDS = [
   "warranty_option_names",
   "warranty_option_months",
   "warranty_option_prices",
+  "properties",
 ] as const;
 
 type ProductSource = Record<string, unknown>;
@@ -548,6 +549,190 @@ function rangeOrStringFilter(
   };
 }
 
+function painlessList(values: readonly string[]): string {
+  return `[${values.map((value) => `'${value.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'`).join(", ")}]`;
+}
+
+function sourceValueRuntimeScript(keys: readonly string[], emitExpression: string): string {
+  return `
+def keys = ${painlessList(keys)};
+def value = null;
+
+for (def key : keys) {
+  if (params._source.containsKey(key)) {
+    value = params._source[key];
+    break;
+  }
+}
+
+if (value == null) {
+  if (params._source.containsKey('properties')) {
+    def properties = params._source['properties'];
+    if (properties instanceof Map) {
+      for (def key : keys) {
+        if (properties.containsKey(key)) {
+          value = properties[key];
+          break;
+        }
+      }
+    }
+  }
+}
+
+if (value == null) {
+  return;
+}
+
+${emitExpression}
+`;
+}
+
+function keywordRuntimeScript(keys: readonly string[]): string {
+  return sourceValueRuntimeScript(keys, `
+if (value instanceof List) {
+  for (def item : value) {
+    if (item == null) {
+      continue;
+    }
+    def itemValue = item;
+    if (item instanceof Map && item.containsKey('value')) {
+      itemValue = item['value'];
+    }
+    def text = itemValue.toString();
+    if (text.length() > 0) {
+      emit(text);
+    }
+  }
+} else {
+  def text = value.toString();
+  if (text.length() > 0) {
+    emit(text);
+  }
+}
+`);
+}
+
+function numberRuntimeScript(keys: readonly string[]): string {
+  return sourceValueRuntimeScript(keys, `
+if (value instanceof List) {
+  for (def item : value) {
+    if (item == null) {
+      continue;
+    }
+    def matcher = /[-+]?[0-9]*\\.?[0-9]+/.matcher(item.toString());
+    if (matcher.find()) {
+      emit(Double.parseDouble(matcher.group()));
+    }
+  }
+} else {
+  def matcher = /[-+]?[0-9]*\\.?[0-9]+/.matcher(value.toString());
+  if (matcher.find()) {
+    emit(Double.parseDouble(matcher.group()));
+  }
+}
+`);
+}
+
+function materialRuntimeScript(): string {
+  return `
+def value = null;
+if (params._source.containsKey('material_title')) {
+  value = params._source['material_title'];
+}
+if (value == null && params._source.containsKey('materiaal')) {
+  value = params._source['materiaal'];
+}
+if (value == null && params._source.containsKey('material')) {
+  def material = params._source['material'];
+  if (material instanceof Map) {
+    if (material.containsKey('title')) {
+      value = material['title'];
+    } else if (material.containsKey('name')) {
+      value = material['name'];
+    } else if (material.containsKey('slug')) {
+      value = material['slug'];
+    }
+  } else if (material != null) {
+    value = material;
+  }
+}
+if (value == null && params._source.containsKey('properties')) {
+  def properties = params._source['properties'];
+  if (properties instanceof Map && properties.containsKey('materiaal')) {
+    value = properties['materiaal'];
+  }
+}
+if (value == null) {
+  return;
+}
+if (value instanceof List) {
+  for (def item : value) {
+    if (item == null) {
+      continue;
+    }
+    def text = item.toString();
+    if (text.length() > 0) {
+      emit(text);
+    }
+  }
+} else {
+  def text = value.toString();
+  if (text.length() > 0) {
+    emit(text);
+  }
+}
+`;
+}
+
+function catalogRuntimeMappings(): Record<string, unknown> {
+  return {
+    catalog_print_method: {
+      type: "keyword",
+      script: { source: keywordRuntimeScript(["printmethode", "print_method", "druktype"]) },
+    },
+    catalog_material_code: {
+      type: "keyword",
+      script: { source: keywordRuntimeScript(["materiaal-code", "materiaal_code", "material_code"]) },
+    },
+    catalog_material: {
+      type: "keyword",
+      script: { source: materialRuntimeScript() },
+    },
+    catalog_finishing: {
+      type: "keyword",
+      script: { source: keywordRuntimeScript(["afwerking", "finishing"]) },
+    },
+    catalog_glue: {
+      type: "keyword",
+      script: { source: keywordRuntimeScript(["lijm", "glue", "adhesive"]) },
+    },
+    catalog_core_string: {
+      type: "keyword",
+      script: { source: keywordRuntimeScript(["kern", "kern_numeric", "meta_kern"]) },
+    },
+    catalog_outer_diameter_string: {
+      type: "keyword",
+      script: { source: keywordRuntimeScript(["buiten-diameter", "buiten_diameter", "outer_diameter"]) },
+    },
+    catalog_width_mm: {
+      type: "double",
+      script: { source: numberRuntimeScript(["breedte", "meta_width", "width"]) },
+    },
+    catalog_height_mm: {
+      type: "double",
+      script: { source: numberRuntimeScript(["hoogte", "meta_height", "height"]) },
+    },
+    catalog_core_mm: {
+      type: "double",
+      script: { source: numberRuntimeScript(["kern", "kern_numeric", "meta_kern"]) },
+    },
+    catalog_outer_diameter_mm: {
+      type: "double",
+      script: { source: numberRuntimeScript(["buiten-diameter", "buiten_diameter", "outer_diameter"]) },
+    },
+  };
+}
+
 function buildFilters(params: CatalogSearchParams): estypes.QueryDslQueryContainer[] {
   const filters: Array<estypes.QueryDslQueryContainer | null> = [
     { term: { state: "active" } },
@@ -562,21 +747,21 @@ function buildFilters(params: CatalogSearchParams): estypes.QueryDslQueryContain
     termsFilter("material_id", params.materialIds),
     termsFilter("material_taxon_slugs", params.materialCategories),
     termsFilter("material_taxon_ids", params.materialCategoryIds),
-    termsFilter("filters.materiaal_code.keyword", params.materialCodes),
-    termsFilter("filters.materiaal.keyword", params.materials),
-    termsFilter("filters.afwerking.keyword", params.finishings),
-    termsFilter("filters.lijm.keyword", params.glues),
-    termsFilter("filters.printmethode.keyword", params.printMethods),
+    termsFilter("catalog_material_code", params.materialCodes),
+    termsFilter("catalog_material", params.materials),
+    termsFilter("catalog_finishing", params.finishings),
+    termsFilter("catalog_glue", params.glues),
+    termsFilter("catalog_print_method", params.printMethods),
     termsFilter("printer_type.keyword", params.printerTypes),
     termsFilter("detectie.keyword", params.detections),
     termsFilter("merken.keyword", params.marks),
     params.inStock === true ? { range: { stock: { gt: 0 } } } : null,
     params.inStock === false ? { range: { stock: { lte: 0 } } } : null,
     rangeFilter("price", params.priceMin, params.priceMax),
-    rangeFilter("filters.breedte", params.widthMin, params.widthMax),
-    rangeFilter("filters.hoogte", params.heightMin, params.heightMax),
-    rangeOrStringFilter("kern_numeric", params.coreMin, params.coreMax, "property_filters.kern.keyword", params.kernStrings),
-    rangeOrStringFilter("filters.buiten_diameter", params.outerDiameterMin, params.outerDiameterMax, "property_filters.buiten-diameter.keyword", params.outerDiameterStrings),
+    rangeFilter("catalog_width_mm", params.widthMin, params.widthMax),
+    rangeFilter("catalog_height_mm", params.heightMin, params.heightMax),
+    rangeOrStringFilter("catalog_core_mm", params.coreMin, params.coreMax, "catalog_core_string", params.kernStrings),
+    rangeOrStringFilter("catalog_outer_diameter_mm", params.outerDiameterMin, params.outerDiameterMax, "catalog_outer_diameter_string", params.outerDiameterStrings),
   ];
 
   return filters.filter((filter): filter is estypes.QueryDslQueryContainer => filter !== null);
@@ -717,6 +902,19 @@ function stringValue(value: unknown): string | null {
   return scalar === null ? null : String(scalar);
 }
 
+function propertyStringValue(source: ProductSource, keys: readonly string[]): string | null {
+  const properties = source.properties;
+  if (!properties || typeof properties !== "object" || Array.isArray(properties)) return null;
+
+  for (const key of keys) {
+    const value = (properties as Record<string, unknown>)[key];
+    const text = stringValue(value);
+    if (text?.trim()) return text;
+  }
+
+  return null;
+}
+
 function numberValue(value: unknown): number | null {
   const scalar = firstScalar(value);
   if (typeof scalar === "number") return scalar;
@@ -827,7 +1025,7 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number): Ca
     name: title,
     subtitle: stringValue(source.subtitle),
     excerpt: stringValue(source.excerpt),
-    materialTitle: stringValue(source.material_title),
+    materialTitle: stringValue(source.material_title) ?? propertyStringValue(source, ["materiaal"]),
     price: numberValue(source.price),
     originalPrice: numberValue(source.original_price),
     inStock: booleanValue(source.in_stock) || Boolean((numberValue(source.stock) ?? 0) > 0),
@@ -863,6 +1061,7 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
     from,
     size: params.perPage,
     track_total_hits: true,
+    runtime_mappings: catalogRuntimeMappings() as estypes.MappingRuntimeFields,
     _source: RESULT_SOURCE_FIELDS as unknown as string[],
     query: {
       bool: {
@@ -891,6 +1090,7 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
       const fuzzyResponse = await client.search<ProductSource>({
         index: catalogIndexForType(params.type),
         size: 1,
+        runtime_mappings: catalogRuntimeMappings() as estypes.MappingRuntimeFields,
         _source: ["name", "brand", "sku"] as unknown as string[],
         query: {
           bool: {
