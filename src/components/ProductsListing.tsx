@@ -640,6 +640,23 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
             {loading ? t('search.loadingProducts') : t('search.results', { count: catalog.total })}
           </div>
 
+          {/* Display "Did you mean" suggestion when no results found */}
+          {!loading && catalog.total === 0 && catalog.suggestion && searchValue ? (
+            <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+              <p className="text-sm text-blue-800">
+                Did you mean:{' '}
+                <button
+                  type="button"
+                  onClick={() => setSearchInput(catalog.suggestion!)}
+                  className="font-semibold text-blue-600 underline hover:text-blue-700"
+                >
+                  {catalog.suggestion}
+                </button>
+                ?
+              </p>
+            </div>
+          ) : null}
+
           {error ? (
             <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>
           ) : loading && products.length === 0 ? (

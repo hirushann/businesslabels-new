@@ -9,11 +9,16 @@ import EmptyState from "@/components/EmptyState";
 import Accordion from "@/components/Accordion";
 import RangeSlider from "@/components/RangeSlider";
 
-type PrinterMeta = {
-  druktype?: string[];
-  kern?: string;
-  width?: string[];
-  max_buiten_diameter?: string;
+type PrinterProperties = {
+  printmethode?: string[]; // New: TD, TT
+  druktype?: string[]; // Legacy fallback
+  kern?: string[];
+  breedte?: string[];
+  'label-breedte-min'?: string[];
+  'label-breedte-max'?: string[];
+  'max-buiten-diameter'?: string[];
+  max_buiten_diameter?: string; // Legacy fallback
+  width?: string[]; // Legacy fallback
 };
 
 type PrinterDetails = {
@@ -22,7 +27,7 @@ type PrinterDetails = {
   subtitle?: string | null;
   slug: string;
   image?: string | null;
-  meta?: PrinterMeta;
+  properties?: PrinterProperties;
   created_at: string;
   updated_at: string;
 };
@@ -323,51 +328,77 @@ export default function FinderPageClient() {
                     )}
                   </div>
 
-                  {printer.meta && (
+                  {printer.properties && (
                     <div>
                       <h2 className="text-lg font-semibold text-neutral-800 mb-4">
                         {t('finder.mediaSpecifications')}
                       </h2>
                       <div className="space-y-3">
-                        {printer.meta.druktype && printer.meta.druktype.length > 0 && (
-                          <div className="flex gap-2">
-                            <span className="text-neutral-600 font-medium">
-                              {t('finder.printTechnology')}
-                            </span>
-                            <span className="text-neutral-800">
-                              {printer.meta.druktype.includes("TD") && printer.meta.druktype.includes("TT")
-                                ? "Thermal Direct & Thermal Transfer"
-                                : printer.meta.druktype.join(", ")}
-                            </span>
-                          </div>
-                        )}
-                        {printer.meta.kern && (
+                        {(() => {
+                          const printMethods = printer.properties.printmethode || printer.properties.druktype;
+                          return printMethods && printMethods.length > 0 && (
+                            <div className="flex gap-2">
+                              <span className="text-neutral-600 font-medium">
+                                {t('finder.printTechnology')}
+                              </span>
+                              <span className="text-neutral-800">
+                                {printMethods.includes("TD") && printMethods.includes("TT")
+                                  ? "Thermal Direct & Thermal Transfer"
+                                  : printMethods.join(", ")}
+                              </span>
+                            </div>
+                          );
+                        })()}
+                        {printer.properties.kern && printer.properties.kern.length > 0 && (
                           <div className="flex gap-2">
                             <span className="text-neutral-600 font-medium">{t('finder.core')}</span>
-                            <span className="text-neutral-800">{printer.meta.kern}</span>
+                            <span className="text-neutral-800">{printer.properties.kern.join(", ")} mm</span>
                           </div>
                         )}
-                        {printer.meta.width && printer.meta.width.length > 0 && (
-                          <div className="flex gap-2">
-                            <span className="text-neutral-600 font-medium">
-                              {t('finder.mediaWidth')}
-                            </span>
-                            <span className="text-neutral-800">
-                              {t('finder.min')} {Math.min(...printer.meta.width.map(Number))} mm, {t('finder.max')}{" "}
-                              {Math.max(...printer.meta.width.map(Number))} mm
-                            </span>
-                          </div>
-                        )}
-                        {printer.meta.max_buiten_diameter && (
-                          <div className="flex gap-2">
-                            <span className="text-neutral-600 font-medium">
-                              {t('finder.maxOuterDiameter')}
-                            </span>
-                            <span className="text-neutral-800">
-                              {printer.meta.max_buiten_diameter}
-                            </span>
-                          </div>
-                        )}
+                        {(() => {
+                          const minWidth = printer.properties['label-breedte-min']?.[0];
+                          const maxWidth = printer.properties['label-breedte-max']?.[0];
+                          const widths = printer.properties.breedte || printer.properties.width;
+                          
+                          if (minWidth && maxWidth) {
+                            return (
+                              <div className="flex gap-2">
+                                <span className="text-neutral-600 font-medium">
+                                  {t('finder.mediaWidth')}
+                                </span>
+                                <span className="text-neutral-800">
+                                  {t('finder.min')} {minWidth} mm, {t('finder.max')} {maxWidth} mm
+                                </span>
+                              </div>
+                            );
+                          } else if (widths && widths.length > 0) {
+                            return (
+                              <div className="flex gap-2">
+                                <span className="text-neutral-600 font-medium">
+                                  {t('finder.mediaWidth')}
+                                </span>
+                                <span className="text-neutral-800">
+                                  {t('finder.min')} {Math.min(...widths.map(Number))} mm, {t('finder.max')}{" "}
+                                  {Math.max(...widths.map(Number))} mm
+                                </span>
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
+                        {(() => {
+                          const maxOD = printer.properties['max-buiten-diameter']?.[0] || printer.properties.max_buiten_diameter;
+                          return maxOD && (
+                            <div className="flex gap-2">
+                              <span className="text-neutral-600 font-medium">
+                                {t('finder.maxOuterDiameter')}
+                              </span>
+                              <span className="text-neutral-800">
+                                {maxOD} mm
+                              </span>
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                   )}

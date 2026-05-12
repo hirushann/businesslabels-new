@@ -113,4 +113,5 @@ export type CatalogSearchResponse = {
   lastPage: number;
   perPage: number;
   filters: CatalogFilters;
+  suggestion?: string; // "Did you mean" suggestion for typos/misspellings
 };
