@@ -2,6 +2,7 @@ import Link from 'next/link';
 import EmptyState from "@/components/EmptyState";
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 import { getTranslations } from 'next-intl/server';
+import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 
 type Product = {
   id: number;
@@ -94,7 +95,7 @@ export default async function PopularProducts() {
                 price: product.price,
                 originalPrice: product.original_price,
                 inStock: product.in_stock,
-                mainImage: product.main_image,
+                mainImage: toDisplayImageUrl(product.main_image),
                 categories: product.categories,
                 slug: product.slug,
                 type: normalizeType(product.type),

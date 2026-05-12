@@ -1,4 +1,5 @@
 import type { ProductCardData } from "@/components/ProductCard";
+import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 
 type LocalizedString = {
   en?: string | null;
@@ -60,7 +61,7 @@ export function mapLaravelProductToCardData(product: LaravelProduct, locale: str
     price: product.price,
     originalPrice: product.original_price,
     inStock: product.in_stock ?? (product.stock ?? 0) > 0,
-    mainImage: product.main_image,
+    mainImage: toDisplayImageUrl(product.main_image),
     categories,
     slug,
     type: (product.type === "simple" || product.type === "variable") ? product.type : null,

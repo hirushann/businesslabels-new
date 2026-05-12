@@ -1,5 +1,6 @@
 import type { ProductCardData } from "@/components/ProductCard";
 import type { CartItem } from "@/components/CartProvider";
+import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 
 export type DemoProductDetail = {
   id: number;
@@ -128,7 +129,7 @@ export const demoCheckoutItems: CartItem[] = demoProducts.slice(0, 5).map((produ
   name: product.title,
   sku: product.sku,
   price: product.price,
-  mainImage: product.main_image,
+  mainImage: toDisplayImageUrl(product.main_image),
   quantity: index % 2 === 0 ? 1 : 2,
 }));
 
@@ -147,7 +148,7 @@ export function mapDemoProductToCard(product: DemoProductDetail): ProductCardDat
     price: product.price,
     originalPrice: product.original_price,
     inStock: product.in_stock,
-    mainImage: product.main_image,
+    mainImage: toDisplayImageUrl(product.main_image),
     categories: product.categories,
     slug: product.slug,
     type: product.type,

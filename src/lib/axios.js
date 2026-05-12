@@ -2,7 +2,7 @@ import axios from 'axios';
 import { readLocaleCookieClient } from '@/lib/i18n/utils';
 
 const api = axios.create({
-  baseURL: `${process.env.NEXT_PUBLIC_API_URL}/api`,
+  baseURL: `${process.env.BBNL_API_BASE_URL}/api`,
   headers: {
     'Content-Type': 'application/json',
   },
