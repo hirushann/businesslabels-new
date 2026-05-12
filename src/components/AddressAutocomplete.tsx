@@ -2,6 +2,13 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 
+// Extend Window interface for Google Maps
+declare global {
+  interface Window {
+    google?: any;
+  }
+}
+
 type AddressAutocompleteProps = {
   value: string;
   onChange: (value: string) => void;

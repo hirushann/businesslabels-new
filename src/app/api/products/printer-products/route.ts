@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { LOCALE_COOKIE, normalizeLocale } from '@/lib/i18n/config';
-import { withLocaleParam } from '@/lib/i18n/server';
 
 const API_BASE_URL = process.env.BBNL_API_BASE_URL;
 
@@ -38,9 +36,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Forward request to backend API with the active locale
-    const locale = normalizeLocale(request.cookies.get(LOCALE_COOKIE)?.value);
-    const response = await fetch(withLocaleParam(`${API_BASE_URL}/api/products/printer-products`, locale), {
+    // Forward request to backend API
+    const response = await fetch(`${API_BASE_URL}/api/products/printer-products`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
@@ -78,3 +75,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+

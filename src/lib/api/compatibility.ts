@@ -94,7 +94,7 @@ export async function getPrinterProducts(
   printerId: number,
   options?: PrinterProductsOptions
 ): Promise<PrinterProductsResponse> {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.BBNL_API_BASE_URL;
+  const baseUrl = process.env.BBNL_API_BASE_URL;
   
   const response = await fetch(`${baseUrl}/api/products/printer-products`, {
     method: 'POST',
@@ -134,7 +134,7 @@ export async function getProductPrinters(
   productId: number,
   options?: ProductPrintersOptions
 ): Promise<ProductPrintersResponse> {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.BBNL_API_BASE_URL;
+  const baseUrl = process.env.BBNL_API_BASE_URL;
   
   const response = await fetch(`${baseUrl}/api/products/product-printers`, {
     method: 'POST',
@@ -174,7 +174,7 @@ export async function getMaterialProducts(
   materialId: number,
   options?: MaterialProductsOptions
 ): Promise<MaterialProductsResponse> {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.BBNL_API_BASE_URL;
+  const baseUrl = process.env.BBNL_API_BASE_URL;
   
   const response = await fetch(`${baseUrl}/api/products/material-products`, {
     method: 'POST',
@@ -214,7 +214,7 @@ export async function checkCompatibility(
   productId: number,
   printerId: number
 ): Promise<boolean> {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.BBNL_API_BASE_URL;
+  const baseUrl = process.env.BBNL_API_BASE_URL;
   
   const response = await fetch(`${baseUrl}/api/products/compatibility`, {
     method: 'POST',

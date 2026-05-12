@@ -8,6 +8,7 @@ import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 import EmptyState from "@/components/EmptyState";
 import Accordion from "@/components/Accordion";
 import RangeSlider from "@/components/RangeSlider";
+import { Alert } from "@/components/ui/alert";
 
 type PrinterProperties = {
   printmethode?: string[]; // New: TD, TT
@@ -20,6 +21,20 @@ type PrinterProperties = {
   max_buiten_diameter?: string; // Legacy fallback
   width?: string[]; // Legacy fallback
 };
+
+type ProductProperties = {
+  printmethode?: string[];
+  breedte?: string[];
+  hoogte?: string[];
+  kern?: string[];
+  'buiten-diameter'?: string[];
+  materiaal?: string[];
+  afwerking?: string[];
+  lijm?: string[];
+  [key: string]: string[] | undefined;
+};
+
+type ProductPropertyKey = keyof ProductProperties;
 
 type PrinterDetails = {
   id: number;
@@ -34,6 +49,7 @@ type PrinterDetails = {
 
 type FinderProduct = ProductCardData & {
   createdAt: string | null;
+  properties?: ProductProperties | null;
 };
 
 type SearchResponse = {
@@ -56,6 +72,8 @@ type SearchResponse = {
       material?: {
         title?: string | null;
       } | null;
+      properties?: unknown;
+      [key: string]: unknown;
       categories?: Array<{
         id?: number;
         name?: string | null;
@@ -99,6 +117,68 @@ function uniqueSorted(values: Array<string | null | undefined>): string[] {
   return [...set].sort((a, b) => a.localeCompare(b));
 }
 
+function stringValuesFromUnknown(value: unknown): string[] {
+  if (value == null) return [];
+
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    const text = String(value).trim();
+    return text ? [text] : [];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => stringValuesFromUnknown(item));
+  }
+
+  if (typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    return stringValuesFromUnknown(record.value ?? record.values ?? record.name ?? record.label ?? record.title);
+  }
+
+  return [];
+}
+
+function propertyValueFromRawProduct(product: Record<string, unknown>, key: ProductPropertyKey): string[] {
+  const properties = product.properties;
+
+  if (properties && typeof properties === "object") {
+    if (Array.isArray(properties)) {
+      const values = properties.flatMap((item) => {
+        if (!item || typeof item !== "object") return [];
+        const record = item as Record<string, unknown>;
+        return record.key === key || record.name === key || record.code === key
+          ? stringValuesFromUnknown(record.value ?? record.values)
+          : [];
+      });
+      if (values.length > 0) return values;
+    } else {
+      const value = (properties as Record<string, unknown>)[key];
+      const values = stringValuesFromUnknown(value);
+      if (values.length > 0) return values;
+    }
+  }
+
+  return stringValuesFromUnknown(product[key]);
+}
+
+function normalizeProductProperties(product: Record<string, unknown>): ProductProperties {
+  const keys: ProductPropertyKey[] = [
+    "printmethode",
+    "breedte",
+    "hoogte",
+    "kern",
+    "buiten-diameter",
+    "materiaal",
+    "afwerking",
+    "lijm",
+  ];
+
+  return Object.fromEntries(
+    keys
+      .map((key) => [key, uniqueSorted(propertyValueFromRawProduct(product, key))] as const)
+      .filter(([, values]) => values.length > 0),
+  ) as ProductProperties;
+}
+
 export default function FinderPageClient() {
   const t = useTranslations();
   const searchParams = useSearchParams();
@@ -121,6 +201,10 @@ export default function FinderPageClient() {
 
   const [selectedMaterials, setSelectedMaterials] = useState<Set<string>>(new Set());
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
+  const [selectedPrintMethods, setSelectedPrintMethods] = useState<Set<string>>(new Set());
+  const [selectedWidths, setSelectedWidths] = useState<Set<string>>(new Set());
+  const [selectedCores, setSelectedCores] = useState<Set<string>>(new Set());
+  const [selectedOuterDiameters, setSelectedOuterDiameters] = useState<Set<string>>(new Set());
   const [inStockOnly, setInStockOnly] = useState(false);
   const [priceRange, setPriceRange] = useState<[number, number] | null>(null);
   const [sort, setSort] = useState<SortOption>("latest");
@@ -132,6 +216,10 @@ export default function FinderPageClient() {
     setPreviousScopeKey(filterScopeKey);
     setSelectedMaterials(new Set());
     setSelectedCategories(new Set());
+    setSelectedPrintMethods(new Set());
+    setSelectedWidths(new Set());
+    setSelectedCores(new Set());
+    setSelectedOuterDiameters(new Set());
     setInStockOnly(false);
     setPriceRange(null);
     setSort("latest");
@@ -192,6 +280,7 @@ export default function FinderPageClient() {
             slug: product.slug ?? null,
             type: normalizeType(product.type),
             createdAt: product.created_at ?? null,
+            properties: normalizeProductProperties(product),
           }))
         );
       } catch (err) {
@@ -203,7 +292,7 @@ export default function FinderPageClient() {
     }
 
     loadProducts();
-  }, [printerId, productType]);
+  }, [printerId, productType, t]);
 
   const materialOptions = useMemo(
     () => uniqueSorted(allProducts.map((p) => p.materialTitle)),
@@ -219,6 +308,26 @@ export default function FinderPageClient() {
     }
     return uniqueSorted(labels);
   }, [allProducts]);
+
+  const printMethodOptions = useMemo(
+    () => uniqueSorted(allProducts.flatMap((product) => product.properties?.printmethode ?? [])),
+    [allProducts],
+  );
+
+  const widthOptions = useMemo(
+    () => uniqueSorted(allProducts.flatMap((product) => product.properties?.breedte ?? [])),
+    [allProducts],
+  );
+
+  const coreOptions = useMemo(
+    () => uniqueSorted(allProducts.flatMap((product) => product.properties?.kern ?? [])),
+    [allProducts],
+  );
+
+  const outerDiameterOptions = useMemo(
+    () => uniqueSorted(allProducts.flatMap((product) => product.properties?.["buiten-diameter"] ?? [])),
+    [allProducts],
+  );
 
   const priceBounds = useMemo<[number, number]>(() => {
     if (allProducts.length === 0) return [0, 0];
@@ -251,6 +360,26 @@ export default function FinderPageClient() {
         if (!matches) return false;
       }
 
+      if (selectedPrintMethods.size > 0) {
+        const methods = product.properties?.printmethode ?? [];
+        if (!methods.some((method) => selectedPrintMethods.has(method))) return false;
+      }
+
+      if (selectedWidths.size > 0) {
+        const widths = product.properties?.breedte ?? [];
+        if (!widths.some((width) => selectedWidths.has(width))) return false;
+      }
+
+      if (selectedCores.size > 0) {
+        const cores = product.properties?.kern ?? [];
+        if (!cores.some((core) => selectedCores.has(core))) return false;
+      }
+
+      if (selectedOuterDiameters.size > 0) {
+        const outerDiameters = product.properties?.["buiten-diameter"] ?? [];
+        if (!outerDiameters.some((outerDiameter) => selectedOuterDiameters.has(outerDiameter))) return false;
+      }
+
       if (priceRange) {
         const price = typeof product.price === "number" ? product.price : null;
         if (price === null) return false;
@@ -280,7 +409,18 @@ export default function FinderPageClient() {
     });
 
     return sorted;
-  }, [allProducts, inStockOnly, selectedMaterials, selectedCategories, priceRange, sort]);
+  }, [
+    allProducts,
+    inStockOnly,
+    selectedMaterials,
+    selectedCategories,
+    selectedPrintMethods,
+    selectedWidths,
+    selectedCores,
+    selectedOuterDiameters,
+    priceRange,
+    sort,
+  ]);
 
   const productTypeLabel = productType === "labels" ? "Labels" : productType === "ink" ? "Ink" : "Products";
 
@@ -299,12 +439,20 @@ export default function FinderPageClient() {
   const activeFilterCount =
     selectedMaterials.size +
     selectedCategories.size +
+    selectedPrintMethods.size +
+    selectedWidths.size +
+    selectedCores.size +
+    selectedOuterDiameters.size +
     (inStockOnly ? 1 : 0) +
     (priceRange ? 1 : 0);
 
   const clearAllFilters = () => {
     setSelectedMaterials(new Set());
     setSelectedCategories(new Set());
+    setSelectedPrintMethods(new Set());
+    setSelectedWidths(new Set());
+    setSelectedCores(new Set());
+    setSelectedOuterDiameters(new Set());
     setInStockOnly(false);
     setPriceRange(null);
   };
@@ -435,6 +583,64 @@ export default function FinderPageClient() {
           </p>
         </div>
 
+        {printer && !isLoading && printer.properties && (
+          <Alert className="mb-6 bg-blue-50 border-blue-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Print Method */}
+              {(printer.properties.printmethode || printer.properties.druktype) && (
+                <div className="space-y-1">
+                  <div className="text-sm font-medium text-neutral-500">
+                    {t('printer.printMethod')}
+                  </div>
+                  <div className="text-base font-semibold text-blue-600">
+                    {(printer.properties.printmethode || printer.properties.druktype)?.join(', ')}
+                  </div>
+                </div>
+              )}
+
+              {/* Core */}
+              {printer.properties.kern && printer.properties.kern.length > 0 && (
+                <div className="space-y-1">
+                  <div className="text-sm font-medium text-neutral-500">
+                    {t('printer.core')}
+                  </div>
+                  <div className="text-base font-semibold text-blue-600">
+                    {printer.properties.kern.join(', ')}
+                  </div>
+                </div>
+              )}
+
+              {/* Width */}
+              {(printer.properties['label-breedte-min'] || printer.properties.breedte || printer.properties.width) && (
+                <div className="space-y-1">
+                  <div className="text-sm font-medium text-neutral-500">
+                    {t('printer.width')}
+                  </div>
+                  <div className="text-base font-semibold text-blue-600">
+                    {printer.properties['label-breedte-min'] && printer.properties['label-breedte-max']
+                      ? `${printer.properties['label-breedte-min'][0]} - ${printer.properties['label-breedte-max'][0]}`
+                      : printer.properties.width
+                        ? printer.properties.width.join(', ')
+                        : printer.properties.breedte?.slice(0, 3).join(', ')}
+                  </div>
+                </div>
+              )}
+
+              {/* Max Outer Diameter */}
+              {(printer.properties['max-buiten-diameter'] || printer.properties.max_buiten_diameter) && (
+                <div className="space-y-1">
+                  <div className="text-sm font-medium text-neutral-500">
+                    {t('printer.maxOuterDiameter')}
+                  </div>
+                  <div className="text-base font-semibold text-blue-600">
+                    {(printer.properties['max-buiten-diameter']?.[0] || printer.properties.max_buiten_diameter)} mm.
+                  </div>
+                </div>
+              )}
+            </div>
+          </Alert>
+        )}
+
         {isLoading ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
             {Array.from({ length: 8 }, (_, i) => (
@@ -496,6 +702,110 @@ export default function FinderPageClient() {
                       formatValue={(value) => `€${value}`}
                       inputPrefix="€"
                     />
+                  </Accordion>
+                )}
+
+                {printMethodOptions.length > 0 && (
+                  <Accordion title={t('filters.print_method')} defaultOpen size="compact">
+                    <div className="flex flex-wrap gap-2">
+                      {printMethodOptions.map((option) => {
+                        const selected = selectedPrintMethods.has(option);
+                        return (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => togglePill(option, setSelectedPrintMethods)}
+                            className={`inline-flex min-h-9 items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                              selected
+                                ? "bg-amber-500 text-white shadow-sm hover:bg-amber-600"
+                                : "bg-slate-100 text-neutral-700 hover:bg-amber-50 hover:text-amber-600"
+                            }`}
+                            aria-pressed={selected}
+                          >
+                            <span>{option}</span>
+                            {selected && <span className="text-base leading-none text-white/80">×</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </Accordion>
+                )}
+
+                {widthOptions.length > 0 && (
+                  <Accordion title={t('filters.width')} defaultOpen size="compact">
+                    <div className="flex flex-wrap gap-2">
+                      {widthOptions.map((option) => {
+                        const selected = selectedWidths.has(option);
+                        return (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => togglePill(option, setSelectedWidths)}
+                            className={`inline-flex min-h-9 items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                              selected
+                                ? "bg-amber-500 text-white shadow-sm hover:bg-amber-600"
+                                : "bg-slate-100 text-neutral-700 hover:bg-amber-50 hover:text-amber-600"
+                            }`}
+                            aria-pressed={selected}
+                          >
+                            <span>{option} mm</span>
+                            {selected && <span className="text-base leading-none text-white/80">×</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </Accordion>
+                )}
+
+                {coreOptions.length > 0 && (
+                  <Accordion title={t('filters.core')} defaultOpen size="compact">
+                    <div className="flex flex-wrap gap-2">
+                      {coreOptions.map((option) => {
+                        const selected = selectedCores.has(option);
+                        return (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => togglePill(option, setSelectedCores)}
+                            className={`inline-flex min-h-9 items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                              selected
+                                ? "bg-amber-500 text-white shadow-sm hover:bg-amber-600"
+                                : "bg-slate-100 text-neutral-700 hover:bg-amber-50 hover:text-amber-600"
+                            }`}
+                            aria-pressed={selected}
+                          >
+                            <span>{option} mm</span>
+                            {selected && <span className="text-base leading-none text-white/80">×</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </Accordion>
+                )}
+
+                {outerDiameterOptions.length > 0 && (
+                  <Accordion title={t('filters.outer_diameter')} defaultOpen size="compact">
+                    <div className="flex flex-wrap gap-2">
+                      {outerDiameterOptions.map((option) => {
+                        const selected = selectedOuterDiameters.has(option);
+                        return (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => togglePill(option, setSelectedOuterDiameters)}
+                            className={`inline-flex min-h-9 items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                              selected
+                                ? "bg-amber-500 text-white shadow-sm hover:bg-amber-600"
+                                : "bg-slate-100 text-neutral-700 hover:bg-amber-50 hover:text-amber-600"
+                            }`}
+                            aria-pressed={selected}
+                          >
+                            <span>{option} mm</span>
+                            {selected && <span className="text-base leading-none text-white/80">×</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </Accordion>
                 )}
 

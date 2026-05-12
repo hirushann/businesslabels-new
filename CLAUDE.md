@@ -33,7 +33,7 @@ All components flat in `src/components/`. Server components by default; `'use cl
 
 ## API Client
 
-Base URL via `NEXT_PUBLIC_API_URL`. Auth: `Authorization: Bearer <token>` (Laravel Passport).
+Base URL via `BBNL_API_BASE_URL`. Auth: `Authorization: Bearer <token>` (Laravel Passport).
 
 All API calls go through the typed client layer in `src/lib/api/`:
 

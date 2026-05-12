@@ -142,6 +142,7 @@ export const MESSAGES = {
     },
     finder: {
       productFinder: 'Product Finder',
+      printerFinder: 'Printer Finder',
       findCompatibleProducts: 'Find Compatible Products',
       printerSelectionSubtitle: 'Select your printer model to discover compatible labels and ink cartridges designed for optimal performance.',
       selectYourPrinter: 'Select Your Printer',
@@ -814,6 +815,7 @@ export const MESSAGES = {
     },
     finder: {
       productFinder: 'Product Finder',
+      printerFinder: 'Printer Finder',
       findCompatibleProducts: 'Vind compatibele producten',
       printerSelectionSubtitle: 'Selecteer uw printermodel om compatibele labels en inktcartridges te ontdekken die zijn ontworpen voor optimale prestaties.',
       selectYourPrinter: 'Selecteer je printer',
