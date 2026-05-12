@@ -109,7 +109,7 @@ export default async function PopularProducts() {
 
               const href = product.slug
                 ? normalizeType(product.type)
-                  ? { pathname: `/products/${product.slug}`, query: { type: normalizeType(product.type) } }
+                  ? { pathname: `/products/${product.slug}` }
                   : { pathname: `/products/${product.slug}` }
                 : undefined;
 

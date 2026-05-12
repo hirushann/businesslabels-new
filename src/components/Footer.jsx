@@ -51,9 +51,9 @@ const footerLinks = {
     { nameKey: 'footer.links.specialLabels', href: '/category/specials' },
   ],
   printers: [
-    { name: 'ZX1600i', href: '/products/zx1600i?type=simple' },
-    { name: 'EZ6350i', href: '/products/ez6350i?type=simple' },
-    { name: 'HD830i', href: '/products/hd830i?type=simple' },
+    { name: 'ZX1600i', href: '/products/zx1600i' },
+    { name: 'EZ6350i', href: '/products/ez6350i' },
+    { name: 'HD830i', href: '/products/hd830i' },
     { nameKey: 'footer.links.compareModels', href: '#' },
   ],
   support: [
