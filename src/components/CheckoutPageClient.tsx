@@ -19,7 +19,7 @@ type CheckoutFormState = {
   city: string;
   state: string;
   postcode: string;
-  paymentMethod: "ideal" | "creditcard" | "bancontact" | "";
+  paymentMethod: "ideal" | "creditcard" | "bancontact" | "banktransfer" | "";
 };
 
 type CheckoutMode = "live" | "demo";
@@ -91,6 +91,7 @@ function CheckoutShell({
   handleChange,
   browseHref,
   isPending,
+  isLoggedIn,
   onAddressSelect,
 }: {
   items: CartItem[];
@@ -104,6 +105,7 @@ function CheckoutShell({
   handleChange: (field: keyof CheckoutFormState, value: string) => void;
   browseHref: string;
   isPending: boolean;
+  isLoggedIn: boolean;
   onAddressSelect: (address: {
     street: string;
     city: string;
@@ -300,6 +302,26 @@ function CheckoutShell({
                         </div>
                         <span className="text-base font-semibold text-neutral-800">Bancontact</span>
                       </label>
+
+                      {isLoggedIn && (
+                        <label 
+                          className={`flex cursor-pointer items-center gap-4 rounded-xl border p-4 transition-all ${
+                            form.paymentMethod === "banktransfer" ? "border-amber-400 bg-amber-50" : "border-slate-200 hover:border-amber-200"
+                          }`}
+                        >
+                          <input 
+                            type="radio" 
+                            name="paymentMethod" 
+                            className="sr-only" 
+                            checked={form.paymentMethod === "banktransfer"} 
+                            onChange={() => handleChange("paymentMethod", "banktransfer")} 
+                          />
+                          <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${form.paymentMethod === "banktransfer" ? "border-amber-500 bg-amber-500" : "border-slate-300"}`}>
+                            {form.paymentMethod === "banktransfer" && <div className="h-2 w-2 rounded-full bg-white" />}
+                          </div>
+                          <span className="text-base font-semibold text-neutral-800">Bank Transfer</span>
+                        </label>
+                      )}
                     </div>
                     {errors.paymentMethod && <p className="text-sm text-red-500">{errors.paymentMethod}</p>}
                   </div>
@@ -487,6 +509,11 @@ export default function CheckoutPageClient({
   const [isAutofilled, setIsAutofilled] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setIsLoggedIn(!!localStorage.getItem('auth_user'));
+  }, []);
 
   useEffect(() => {
     if (isDemoMode || isAutofilled) return;
@@ -794,6 +821,7 @@ export default function CheckoutPageClient({
           return next;
         });
       }}
+      isLoggedIn={isLoggedIn}
     />
   );
 }
