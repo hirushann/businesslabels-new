@@ -5,7 +5,7 @@ import Link from "next/link";
 import { materialReviews } from "@/lib/materialCatalog";
 
 export const metadata: Metadata = {
-  title: "Material Overview — BusinessLabels",
+  title: "Material Overview — Businesslabels",
   description:
     "Discover printer media materials selected for precision, durability, color accuracy, and reliable professional output.",
 };

@@ -2,7 +2,7 @@
 
 ## Project
 
-BusinessLabels — Next.js e-commerce frontend for Epson ColorWorks label printers, accessories, and label rolls. Consumes a Laravel API backend. Multi-locale (en, nl), currency EUR.
+Businesslabels — Next.js e-commerce frontend for Epson ColorWorks label printers, accessories, and label rolls. Consumes a Laravel API backend. Multi-locale (en, nl), currency EUR.
 
 ## Commands
 

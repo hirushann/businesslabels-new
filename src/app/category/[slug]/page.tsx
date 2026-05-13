@@ -31,7 +31,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const title = `${categoryTitleForSlug(slug)} - BusinessLabels`;
+  const title = `${categoryTitleForSlug(slug)} - Businesslabels`;
 
   return {
     title,

@@ -37,7 +37,7 @@ export async function generateMetadata({
   const t = await getTranslations();
 
   return {
-    title: `${brandTitle} — BusinessLabels`,
+    title: `${brandTitle} — Businesslabels`,
     description: t("pages.brandDescription", { brand: brandTitle }),
   };
 }

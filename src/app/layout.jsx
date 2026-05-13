@@ -10,7 +10,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from '@/lib/i18n/getMessages';
 
 export const metadata = {
-  title: "BusinessLabels — Labels for Epson ColorWorks Printers",
+  title: "Businesslabels — Labels for Epson ColorWorks Printers",
   description:
     "Expert-selected labels, accessories and printers. Epson ColorWorks Gold Partner. Order from 1 roll with free support.",
 };

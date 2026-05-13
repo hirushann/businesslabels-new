@@ -382,7 +382,7 @@ function RegisterContent() {
     <section className="bg-slate-50 px-5 py-10 sm:px-8 sm:py-14 lg:py-16">
       <div className="mx-auto w-full max-w-350">
         <Link href="/" className="mb-10 inline-flex">
-          <Image src="/logo.png" alt="BusinessLabels" width={205} height={40} priority className="h-auto w-52" />
+          <Image src="/logo.png" alt="Businesslabels" width={205} height={40} priority className="h-auto w-52" />
         </Link>
 
         <div className="rounded-[28px] border border-slate-200 bg-white px-5 py-9 shadow-[2px_12px_44px_0px_rgba(109,109,120,0.08)] sm:px-8 lg:px-12">

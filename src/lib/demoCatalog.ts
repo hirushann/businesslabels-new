@@ -61,7 +61,7 @@ function createDemoProduct(index: number): DemoProductDetail {
     title: `Demo Product ${index} Thermal Labels`,
     name: `Demo Product ${index} Thermal Labels`,
     subtitle: `Designed for barcode, warehouse and shipping workflows`,
-    description: `<p>Demo product ${index} is a fully populated placeholder product used to preview the BusinessLabels product detail experience. It includes realistic product text, specification data, pricing, and image galleries.</p><p>Use it for visual QA, content layout checks, and interaction testing across the catalog, cart, and checkout flows.</p>`,
+    description: `<p>Demo product ${index} is a fully populated placeholder product used to preview the Businesslabels product detail experience. It includes realistic product text, specification data, pricing, and image galleries.</p><p>Use it for visual QA, content layout checks, and interaction testing across the catalog, cart, and checkout flows.</p>`,
     excerpt: `Reliable matte label rolls for high-volume business printing and logistics operations.`,
     slug,
     sku: `DEMO-${String(index).padStart(3, "0")}`,

@@ -4,8 +4,9 @@ import ProductPurchase from "@/components/ProductPurchase";
 import ProductCard, { type ProductCardData, type ProductRouteType } from "@/components/ProductCard";
 import ProductCompatibilityDialog from "@/components/ProductCompatibilityDialog";
 import ProductImageGallery from "@/components/ProductImageGallery";
+import ProductLocaleSlugSync from "@/components/ProductLocaleSlugSync";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getTranslations } from 'next-intl/server';
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 import {
@@ -15,6 +16,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import Link from "next/link";
 
 export async function generateMetadata({
   params,
@@ -28,7 +30,7 @@ export async function generateMetadata({
   const baseUrl = process.env.BBNL_API_BASE_URL;
 
   if (!slug) {
-    return { title: "Product — BusinessLabels" };
+    return { title: "Product — Businesslabels" };
   }
 
   const selectedType = normalizeType(query.type);
@@ -36,11 +38,11 @@ export async function generateMetadata({
   const product = await fetchProductBySlug(baseUrl, slug, selectedType, locale);
 
   if (!product) {
-    return { title: "Product Not Found — BusinessLabels" };
+    return { title: "Product Not Found — Businesslabels" };
   }
 
-  const title = product.meta_title || `${product.title || product.name} — BusinessLabels`;
-  const description = product.meta_description || product.description || product.excerpt || "Premium product from BusinessLabels";
+  const title = product.meta_title || `${product.title || product.name} — Businesslabels`;
+  const description = product.meta_description || product.description || product.excerpt || "Premium product from Businesslabels";
   const mainImage = product.main_image || "";
 
   return {
@@ -150,7 +152,41 @@ type ProductDetail = {
     options?: ProductWarrantyOption[] | null;
     default_option?: ProductWarrantyOption | null;
   } | null;
+  translations?: ProductTranslationEntry[] | null;
+  locale_slugs?: Partial<Record<"en" | "nl", string>>;
 };
+
+type ProductTranslation = {
+  language?: string | null;
+  name?: string | null;
+  title?: string | null;
+  subtitle?: string | null;
+  slug?: string | null;
+  excerpt?: string | null;
+  description?: string | null;
+  content?: string | null;
+  meta_title?: string | null;
+  meta_description?: string | null;
+  product_information?: Record<string, unknown> | string | null;
+};
+
+type ProductTranslationEntry =
+  | ProductTranslation
+  | Partial<Record<"en" | "nl", ProductTranslation | null>>;
+
+type TranslatedProductField =
+  | "name"
+  | "title"
+  | "subtitle"
+  | "slug"
+  | "excerpt"
+  | "description"
+  | "content"
+  | "meta_title"
+  | "meta_description"
+  | "product_information";
+
+const PRODUCT_LOCALES = ["en", "nl"] as const;
 
 function normalizeType(raw: string | string[] | undefined): "simple" | "variable" | "group_product" | null {
   const value = Array.isArray(raw) ? raw[0] : raw;
@@ -258,6 +294,81 @@ function specsFromProduct(product: ProductDetail | null): Array<{ label: string;
   return [...specRows, ...metaRows];
 }
 
+function getProductTranslation(product: ProductDetail, locale: "en" | "nl"): ProductTranslation | null {
+  for (const entry of product.translations ?? []) {
+    if (!entry || typeof entry !== "object") continue;
+    const keyed = (entry as Partial<Record<"en" | "nl", ProductTranslation | null>>)[locale];
+    if (keyed) return keyed;
+    const direct = entry as ProductTranslation;
+    if (direct.language === locale) return direct;
+  }
+  return null;
+}
+
+function slugFromApiPath(apiPath: string | null | undefined): string | null {
+  if (!apiPath) return null;
+  const match = apiPath.match(/\/slug\/([^/?]+)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+function getProductLocaleSlugs(product: ProductDetail): Partial<Record<"en" | "nl", string>> {
+  const localeSlugs: Partial<Record<"en" | "nl", string>> = { ...(product.locale_slugs ?? {}) };
+
+  for (const locale of PRODUCT_LOCALES) {
+    if (!localeSlugs[locale]) {
+      const translation = getProductTranslation(product, locale);
+      if (translation?.slug) localeSlugs[locale] = translation.slug;
+    }
+  }
+
+  if (product.slug && !PRODUCT_LOCALES.some((l) => localeSlugs[l] === product.slug)) {
+    const missing = PRODUCT_LOCALES.find((l) => !localeSlugs[l]);
+    if (missing) localeSlugs[missing] = product.slug;
+  }
+
+  // Last resort: api_path_by_slug holds the model's canonical (often NL) slug.
+  const stillMissing = PRODUCT_LOCALES.find((l) => !localeSlugs[l]);
+  if (stillMissing) {
+    const apiSlug = slugFromApiPath(product.api_path_by_slug);
+    if (apiSlug && !Object.values(localeSlugs).includes(apiSlug)) {
+      localeSlugs[stillMissing] = apiSlug;
+    }
+  }
+
+  return localeSlugs;
+}
+
+function applyProductTranslation(product: ProductDetail, locale: "en" | "nl"): ProductDetail {
+  const translation = getProductTranslation(product, locale);
+  const localeSlugs = getProductLocaleSlugs(product);
+
+  if (!translation) return { ...product, locale_slugs: localeSlugs };
+
+  const has = (field: TranslatedProductField) =>
+    Object.prototype.hasOwnProperty.call(translation, field);
+  const out: ProductDetail = { ...product, locale_slugs: localeSlugs };
+
+  if (has("name")) out.name = translation.name ?? null;
+  if (has("title")) out.title = translation.title ?? null;
+  if (has("subtitle")) out.subtitle = translation.subtitle ?? null;
+  if (has("slug")) out.slug = translation.slug ?? null;
+  if (has("excerpt")) out.excerpt = translation.excerpt ?? null;
+  if (has("description")) out.description = translation.description ?? null;
+  if (has("content")) out.content = translation.content ?? null;
+  if (has("meta_title")) out.meta_title = translation.meta_title ?? null;
+  if (has("meta_description")) out.meta_description = translation.meta_description ?? null;
+  if (has("product_information")) out.product_information = translation.product_information ?? null;
+
+  return out;
+}
+
+function productPathForSlug(slug: string, selectedType: "simple" | "variable" | "group_product" | null): string {
+  const params = new URLSearchParams();
+  if (selectedType) params.set("type", selectedType);
+  const qs = params.toString();
+  return `/products/${encodeURIComponent(slug)}${qs ? `?${qs}` : ""}`;
+}
+
 async function fetchProductByType(baseUrl: string, type: "simple" | "variable", slug: string, locale: "en" | "nl"): Promise<ProductDetail | null> {
   try {
     const response = await fetch(withLocaleParam(`${baseUrl}/api/products/${type}/slug/${encodeURIComponent(slug)}`, locale), {
@@ -272,7 +383,7 @@ async function fetchProductByType(baseUrl: string, type: "simple" | "variable", 
     }
 
     const json = (await response.json()) as { data?: ProductDetail };
-    return json.data ?? null;
+    return json.data ? applyProductTranslation(json.data, locale) : null;
   } catch (error) {
     console.error(`Failed to fetch product details for type '${type}' and slug '${slug}'`, error);
     return null;
@@ -293,11 +404,55 @@ async function fetchGroupProductBySlug(baseUrl: string, slug: string, locale: "e
     }
 
     const json = (await response.json()) as { data?: ProductDetail };
-    return json.data ?? null;
+    return json.data ? applyProductTranslation(json.data, locale) : null;
   } catch (error) {
     console.error(`Failed to fetch group product details for slug '${slug}'`, error);
     return null;
   }
+}
+
+async function fetchProductByTypeWithSlugFallback(
+  baseUrl: string,
+  type: "simple" | "variable",
+  slug: string,
+  targetLocale: "en" | "nl",
+): Promise<ProductDetail | null> {
+  const direct = await fetchProductByType(baseUrl, type, slug, targetLocale);
+  if (direct) return direct;
+
+  for (const fallbackLocale of PRODUCT_LOCALES) {
+    if (fallbackLocale === targetLocale) continue;
+    const fallback = await fetchProductByType(baseUrl, type, slug, fallbackLocale);
+    if (!fallback) continue;
+
+    // If the fallback product knows the target-locale slug, try fetching that directly.
+    const targetSlug = getProductLocaleSlugs(fallback)[targetLocale];
+    if (targetSlug && targetSlug !== slug) {
+      const byTargetSlug = await fetchProductByType(baseUrl, type, targetSlug, targetLocale);
+      if (byTargetSlug) return byTargetSlug;
+    }
+
+    return applyProductTranslation(fallback, targetLocale);
+  }
+
+  return null;
+}
+
+async function fetchGroupProductBySlugWithFallback(
+  baseUrl: string,
+  slug: string,
+  targetLocale: "en" | "nl",
+): Promise<ProductDetail | null> {
+  const direct = await fetchGroupProductBySlug(baseUrl, slug, targetLocale);
+  if (direct) return direct;
+
+  for (const fallbackLocale of PRODUCT_LOCALES) {
+    if (fallbackLocale === targetLocale) continue;
+    const fallback = await fetchGroupProductBySlug(baseUrl, slug, fallbackLocale);
+    if (fallback) return applyProductTranslation(fallback, targetLocale);
+  }
+
+  return null;
 }
 
 async function fetchProductBySlug(
@@ -312,7 +467,7 @@ async function fetchProductBySlug(
   }
 
   if (selectedType === "group_product") {
-    return fetchGroupProductBySlug(baseUrl, slug, locale);
+    return fetchGroupProductBySlugWithFallback(baseUrl, slug, locale);
   }
 
   const tryTypes: Array<"simple" | "variable"> = selectedType
@@ -320,14 +475,11 @@ async function fetchProductBySlug(
     : ["simple", "variable"];
 
   for (const type of tryTypes) {
-    const product = await fetchProductByType(baseUrl, type, slug, locale);
-    if (product) {
-      return product;
-    }
+    const product = await fetchProductByTypeWithSlugFallback(baseUrl, type, slug, locale);
+    if (product) return product;
   }
 
-  // Fallback: try group product endpoint
-  return fetchGroupProductBySlug(baseUrl, slug, locale);
+  return fetchGroupProductBySlugWithFallback(baseUrl, slug, locale);
 }
 
 function toTitleCaseFromSlug(raw: string): string {
@@ -400,12 +552,16 @@ export default async function SingleProductPage({
   console.log("[SingleProductPage] Full product details:", JSON.stringify(product, null, 2));
 
   const productName = product.title || product.name || "";
-  const productDescription = product.description || product.excerpt || "";
+  const shortDescription = product.description || product.excerpt || "";
+  const productDescription = product.content || "";
+  const componentProducts = product.component_products ?? [];
   const mainImage = toDisplayImageUrl(product.main_image) || "";
   const galleryImages = (product.gallery_images ?? [])
     .map((item) => toDisplayImageUrl(item.url))
     .filter((url): url is string => Boolean(url));
   const specs = specsFromProduct(product);
+
+  console.log("Specs derived from product:", specs);
   const relatedProducts = (product.up_sells ?? []).map(mapUpsellToProductCard);
   const showCompatibilityCta = product.is_label_product == true || product.meta?.is_label_product === true;
   console.log(product)
@@ -436,8 +592,8 @@ export default async function SingleProductPage({
                   {productName}
                 </h1>
               ) : null}
-              {productDescription ? (
-                <div className="text-neutral-700 text-lg font-normal leading-7" dangerouslySetInnerHTML={{ __html: productDescription }}>
+              {shortDescription ? (
+                <div className="text-neutral-700 text-lg font-normal leading-7" dangerouslySetInnerHTML={{ __html: shortDescription }}>
                 </div>
               ) : null}
             </div>
@@ -450,12 +606,36 @@ export default async function SingleProductPage({
             />
 
             <div className="flex flex-col gap-6">
+
+{componentProducts ? (
+                <Accordion
+                title={t('product.componentProduct')}
+              >
+                <div className="flex flex-wrap flex-col gap-2">
+                  {componentProducts.map((item) => (
+                    <div key={item.id}>
+                      <Link href={item.slug ? productPathForSlug(item.slug, null) : "#"} className="text-start flex items-center gap-3">
+                        <img src={item.main_image} alt={item.name} className=" w-16 h-auto rounded-lg" />
+                        <h5 className="text-neutral-700 text-sm font-semibold">{item.name}</h5>
+
+                          {item.quantity && (
+                            <span className="text-neutral-700 text-sm font-normal">
+                              x {item.quantity}
+                            </span>
+                          )}
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+                </Accordion>
+            ) : null}
+
               <Accordion
                 title={t('product.productDescription')}
               >
                 {productDescription ? (
                   <div
-                    className="text-neutral-700 text-base font-normal leading-6"
+                    className="text-neutral-700 text-base font-normal leading-6 cms-content"
                     dangerouslySetInnerHTML={{ __html: productDescription }}
                   />
                 ) : (

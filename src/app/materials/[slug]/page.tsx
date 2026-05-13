@@ -119,12 +119,12 @@ export async function generateMetadata({ params }: MaterialPageProps): Promise<M
 
   if (!material) {
     return {
-      title: "Material — BusinessLabels",
+      title: "Material — Businesslabels",
     };
   }
 
   return {
-    title: `${material.title} — BusinessLabels`,
+    title: `${material.title} — Businesslabels`,
     description: material.subtitle,
   };
 }

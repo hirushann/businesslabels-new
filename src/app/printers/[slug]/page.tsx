@@ -44,12 +44,12 @@ export async function generateMetadata({ params }: PrinterPageProps): Promise<Me
 
   if (!printer) {
     return {
-      title: "Printer — BusinessLabels",
+      title: "Printer — Businesslabels",
     };
   }
 
   return {
-    title: `${printer.title} — BusinessLabels`,
+    title: `${printer.title} — Businesslabels`,
     description: printer.subtitle || undefined,
   };
 }

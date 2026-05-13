@@ -102,7 +102,7 @@ export default function Footer() {
               <div>
                 <Image
                   src="/footerlogo.png"
-                  alt="BusinessLabels"
+                  alt="Businesslabels"
                   width={205}
                   height={40}
                   className="w-auto"

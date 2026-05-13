@@ -214,7 +214,7 @@ function LoginContent() {
           <div>
             <Image
               src="/logo.png"
-              alt="BusinessLabels"
+              alt="Businesslabels"
               width={205}
               height={40}
               priority
@@ -252,7 +252,7 @@ function LoginContent() {
           <div className="w-full max-w-md">
             <div className="mb-9 flex flex-col gap-3">
               <Link href="/" className="mb-5 inline-flex lg:hidden">
-                <Image src="/logo.png" alt="BusinessLabels" width={205} height={40} priority className="h-auto w-52" />
+                <Image src="/logo.png" alt="Businesslabels" width={205} height={40} priority className="h-auto w-52" />
               </Link>
               <div>
                 <h2 className="text-4xl font-black tracking-tight text-neutral-800">

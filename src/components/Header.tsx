@@ -119,7 +119,7 @@ export default function Header() {
           <Link href="/" className="flex items-center">
             <Image
               src="/logo.png"
-              alt="BusinessLabels"
+              alt="Businesslabels"
               width={205}
               height={40}
               priority

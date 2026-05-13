@@ -125,7 +125,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
                         <span className="text-sm font-normal leading-5 text-neutral-700">{t("blogDetail.author")}</span>
                         <div className="inline-flex items-center gap-1.5">
                           <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center text-[10px] font-bold text-amber-600">BL</div>
-                          <span className="text-base font-semibold leading-6 text-neutral-800">BusinessLabels</span>
+                          <span className="text-base font-semibold leading-6 text-neutral-800">Businesslabels</span>
                         </div>
                       </div>
                       <div className="h-12 w-px bg-gray-200"></div>
