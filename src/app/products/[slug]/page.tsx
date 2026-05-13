@@ -615,7 +615,7 @@ export default async function SingleProductPage({
                   {componentProducts.map((item) => (
                     <div key={item.id}>
                       <Link href={item.slug ? productPathForSlug(item.slug, null) : "#"} className="text-start flex items-center gap-3">
-                        {item.main_image && <img src={item.main_image} alt={item.name} className=" w-16 h-auto rounded-lg" />}
+                        {item.main_image && <Image src={item.main_image!} alt={item.name!} width={64} height={64} className="rounded-lg" />}
                         <h5 className="text-neutral-700 text-sm font-semibold">{item.name}</h5>
 
                           {item.quantity && (
