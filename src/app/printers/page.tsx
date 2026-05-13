@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { getTranslations } from "next-intl/server";
-import { materialReviews } from "@/lib/materialCatalog";
+import ReviewsSection from "@/components/ReviewsSection";
 import ProductsListing from "@/components/ProductsListing";
 import { parseCatalogSearchParams, searchCatalogProducts } from "@/lib/search/products";
 import type { CatalogSearchResponse } from "@/lib/search/types";
@@ -95,65 +94,7 @@ export default async function PrinterPage({
         </div>
       </section>
 
-      <section className="bg-gray-50 px-4 py-24 sm:px-6 lg:px-10">
-        <div className="mx-auto flex max-w-360 flex-col gap-12">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-            <h2 className="text-4xl font-bold leading-[48px] text-neutral-800">{t("reviewsSection.title")}</h2>
-            <div className="flex items-center gap-6">
-              <button
-                type="button"
-                className="flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-white text-neutral-700 shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)]"
-                aria-label={t("reviewsSection.previous")}
-              >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <button
-                type="button"
-                className="flex h-12 w-12 items-center justify-center rounded-full border border-amber-500 bg-white text-amber-500 shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)]"
-                aria-label={t("reviewsSection.next")}
-              >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {materialReviews.map((review) => (
-              <article
-                key={review.name}
-                className="flex min-h-72 flex-col justify-between gap-8 rounded-xl border border-gray-100 bg-white p-5 shadow-[0px_2px_4px_0px_rgba(0,0,0,0.10)]"
-              >
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-center gap-4">
-                    <Image
-                      src={`https://placehold.co/96x96?text=${encodeURIComponent(review.name.charAt(0))}`}
-                      alt=""
-                      width={48}
-                      height={48}
-                      className="rounded-full"
-                      unoptimized
-                    />
-                    <div className="flex flex-col gap-2">
-                      <h3 className="text-lg font-bold leading-5 text-neutral-800">{review.name}</h3>
-                      <p className="text-sm leading-5 text-zinc-500">{review.time}</p>
-                    </div>
-                  </div>
-                  <p className="text-base leading-6 text-neutral-700">{review.text}</p>
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <span className="text-sm leading-5 text-zinc-500">{t("reviewsSection.postedOn")}</span>
-                  <span className="text-sm font-semibold leading-5 text-neutral-800">{t("reviewsSection.google")}</span>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
+      <ReviewsSection />
     </div>
   );
 }
