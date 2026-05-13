@@ -60,6 +60,7 @@ const MULTI_VALUE_KEYS = {
 
 const EXACT_VALUE_KEYS = {
   ids: ["id"],
+  printerIds: ["printer_id", "printer_ids"],
   slugs: ["slug"],
   skus: ["sku"],
   articleNumbers: ["article_number"],
@@ -71,16 +72,26 @@ const OPTION_FILTERS: Array<{
   field: string;
   paramValues: keyof Pick<
     CatalogSearchParams,
+    | "categories"
     | "materialCodes"
     | "materials"
     | "finishings"
     | "glues"
     | "printMethods"
+    | "printerTypes"
+    | "detections"
+    | "brands"
+    | "marks"
     | "kernStrings"
     | "outerDiameterStrings"
   >;
 }> = [
+  { key: "category", title: "Product Type", field: "category_slugs.keyword", paramValues: "categories" },
+  { key: "brand", title: "Brand", field: "catalog_brand", paramValues: "brands" },
   { key: "print_method", title: "Print Method", field: "catalog_print_method", paramValues: "printMethods" },
+  { key: "printer_type", title: "Printer Type", field: "catalog_printer_type", paramValues: "printerTypes" },
+  { key: "detectie", title: "Detection", field: "catalog_detection", paramValues: "detections" },
+  { key: "merken", title: "Make", field: "catalog_marks", paramValues: "marks" },
   { key: "material_code", title: "Material Code", field: "catalog_material_code", paramValues: "materialCodes" },
   { key: "material", title: "Material Type", field: "catalog_material", paramValues: "materials" },
   { key: "finishing", title: "Finishing", field: "catalog_finishing", paramValues: "finishings" },
@@ -217,6 +228,7 @@ export function parseCatalogSearchParams(params: URLSearchParams): CatalogSearch
   const categoryIdValues = valuesParam(params, MULTI_VALUE_KEYS.categoryIds);
   const materialIdValues = valuesParam(params, MULTI_VALUE_KEYS.materialIds);
   const materialCategoryIdValues = valuesParam(params, MULTI_VALUE_KEYS.materialCategoryIds);
+  const printerIdValues = valuesParam(params, EXACT_VALUE_KEYS.printerIds);
 
   const search = firstParam(params, ["search", "q"]) ?? "";
   const explicitSort = params.get("sort");
@@ -244,6 +256,7 @@ export function parseCatalogSearchParams(params: URLSearchParams): CatalogSearch
     slugs: valuesParam(params, EXACT_VALUE_KEYS.slugs),
     skus: valuesParam(params, EXACT_VALUE_KEYS.skus),
     articleNumbers: valuesParam(params, EXACT_VALUE_KEYS.articleNumbers),
+    printerIds: integerValues(printerIdValues),
     categories: categoryValues,
     categoryIds: integerValues(categoryIdValues),
     brands: valuesParam(params, MULTI_VALUE_KEYS.brands),
@@ -480,6 +493,34 @@ function exactKeywordFilter(field: string, values: string[]): estypes.QueryDslQu
   };
 }
 
+function categorySlugFilter(values: string[]): estypes.QueryDslQueryContainer | null {
+  if (values.length === 0) return null;
+
+  return {
+    bool: {
+      minimum_should_match: 1,
+      should: [
+        { terms: { "category_slugs.keyword": values } },
+        {
+          nested: {
+            path: "categories",
+            ignore_unmapped: true,
+            query: {
+              bool: {
+                minimum_should_match: 1,
+                should: [
+                  { terms: { "categories.slug.keyword": values } },
+                  { terms: { "categories.breadcrumb_slugs": values } },
+                ],
+              },
+            },
+          },
+        },
+      ],
+    },
+  };
+}
+
 function rangeFilter(
   field: string,
   min: unknown,
@@ -686,9 +727,25 @@ if (value instanceof List) {
 
 function catalogRuntimeMappings(): Record<string, unknown> {
   return {
+    catalog_brand: {
+      type: "keyword",
+      script: { source: keywordRuntimeScript(["brand", "merken", "make"]) },
+    },
     catalog_print_method: {
       type: "keyword",
       script: { source: keywordRuntimeScript(["printmethode", "print_method", "druktype"]) },
+    },
+    catalog_printer_type: {
+      type: "keyword",
+      script: { source: keywordRuntimeScript(["printer_type", "printer-type"]) },
+    },
+    catalog_detection: {
+      type: "keyword",
+      script: { source: keywordRuntimeScript(["detectie", "detection"]) },
+    },
+    catalog_marks: {
+      type: "keyword",
+      script: { source: keywordRuntimeScript(["merken", "brand", "make"]) },
     },
     catalog_material_code: {
       type: "keyword",
@@ -738,12 +795,13 @@ function buildFilters(params: CatalogSearchParams): estypes.QueryDslQueryContain
     { term: { state: "active" } },
     params.type ? { term: { product_type: params.type } } : null,
     termsFilter("id", params.ids),
+    termsFilter("printer_ids", params.printerIds),
     exactKeywordFilter("slug.keyword", params.slugs),
     exactKeywordFilter("sku.keyword", params.skus),
     exactKeywordFilter("article_number.keyword", params.articleNumbers),
-    termsFilter("category_slugs.keyword", params.categories),
+    categorySlugFilter(params.categories),
     termsFilter("category_ids", params.categoryIds),
-    termsFilter("brand.keyword", params.brands),
+    termsFilter("catalog_brand", params.brands),
     termsFilter("material_id", params.materialIds),
     termsFilter("material_taxon_slugs", params.materialCategories),
     termsFilter("material_taxon_ids", params.materialCategoryIds),
@@ -752,9 +810,9 @@ function buildFilters(params: CatalogSearchParams): estypes.QueryDslQueryContain
     termsFilter("catalog_finishing", params.finishings),
     termsFilter("catalog_glue", params.glues),
     termsFilter("catalog_print_method", params.printMethods),
-    termsFilter("printer_type.keyword", params.printerTypes),
-    termsFilter("detectie.keyword", params.detections),
-    termsFilter("merken.keyword", params.marks),
+    termsFilter("catalog_printer_type", params.printerTypes),
+    termsFilter("catalog_detection", params.detections),
+    termsFilter("catalog_marks", params.marks),
     params.inStock === true ? { range: { stock: { gt: 0 } } } : null,
     params.inStock === false ? { range: { stock: { lte: 0 } } } : null,
     rangeFilter("price", params.priceMin, params.priceMax),

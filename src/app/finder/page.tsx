@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import FinderListing from "@/components/FinderListing";
-import FinderPageClient from "./FinderPageClient";
-import { parsePrinterSearchParams, searchPrinters } from "@/lib/search/printers";
+import ProductsListing from "@/components/ProductsListing";
+import { parseCatalogSearchParams, searchCatalogProducts } from "@/lib/search/products";
+import { getPrinterById, parsePrinterSearchParams, searchPrinters, type FinderPrinterDetails } from "@/lib/search/printers";
+import type { CatalogSearchResponse } from "@/lib/search/types";
 import type { PrinterSearchResponse } from "@/lib/search/printerTypes";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -37,6 +40,122 @@ const emptyPrinterCatalog: PrinterSearchResponse = {
   filters: { options: [] },
 };
 
+const emptyProductCatalog: CatalogSearchResponse = {
+  products: [],
+  total: 0,
+  currentPage: 1,
+  lastPage: 1,
+  perPage: 24,
+  filters: { ranges: [], options: [] },
+};
+
+type TranslationFn = Awaited<ReturnType<typeof getTranslations>>;
+
+function firstQueryValue(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function toDisplayImageUrl(url: string | null | undefined): string | null {
+  if (!url?.trim()) return null;
+  const trimmed = url.trim();
+  if (trimmed.startsWith("/") || trimmed.startsWith("data:") || trimmed.startsWith("blob:")) return trimmed;
+  return `/api/media-proxy?url=${encodeURIComponent(trimmed)}`;
+}
+
+function firstProperty(properties: Record<string, string[]> | undefined, keys: string[]): string[] {
+  if (!properties) return [];
+
+  for (const key of keys) {
+    const value = properties[key];
+    if (value?.length) return value;
+  }
+
+  return [];
+}
+
+function numberRangeLabel(values: string[], t: TranslationFn): string | null {
+  const numbers = values
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value));
+
+  if (numbers.length === 0) return null;
+
+  return `${t("finder.min")} ${Math.min(...numbers)} mm, ${t("finder.max")} ${Math.max(...numbers)} mm`;
+}
+
+function withMillimeterUnit(value: string): string {
+  return /\bmm\b/i.test(value) ? value : `${value} mm`;
+}
+
+function PrinterSummary({
+  printer,
+  t,
+}: {
+  printer: FinderPrinterDetails;
+  t: TranslationFn;
+}) {
+  const imageUrl = toDisplayImageUrl(printer.image);
+  const properties = printer.properties;
+  const printMethods = firstProperty(properties, ["printmethode", "druktype"]);
+  const cores = firstProperty(properties, ["kern"]);
+  const minWidths = firstProperty(properties, ["label-breedte-min", "label_breedte_min"]);
+  const maxWidths = firstProperty(properties, ["label-breedte-max", "label_breedte_max"]);
+  const widths = firstProperty(properties, ["breedte", "width"]);
+  const maxOuterDiameter = firstProperty(properties, ["max-buiten-diameter", "max_buiten_diameter"]);
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-3xl font-bold font-['Segoe_UI'] leading-9 text-neutral-800">{printer.title}</h1>
+          {printer.subtitle ? <p className="mt-2 text-lg text-sky-600">{printer.subtitle}</p> : null}
+
+          {properties ? (
+            <div className="mt-6 grid grid-cols-1 gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
+              {printMethods.length > 0 ? (
+                <SpecItem
+                  label={t("finder.printTechnology")}
+                  value={
+                    printMethods.includes("TD") && printMethods.includes("TT")
+                      ? "Thermal Direct & Thermal Transfer"
+                      : printMethods.join(", ")
+                  }
+                />
+              ) : null}
+              {cores.length > 0 ? (
+                <SpecItem label={t("finder.core")} value={cores.map(withMillimeterUnit).join(", ")} />
+              ) : null}
+              {minWidths[0] && maxWidths[0] ? (
+                <SpecItem label={t("finder.mediaWidth")} value={`${minWidths[0]} - ${maxWidths[0]} mm`} />
+              ) : widths.length > 0 ? (
+                <SpecItem label={t("finder.mediaWidth")} value={numberRangeLabel(widths, t) ?? widths.join(", ")} />
+              ) : null}
+              {maxOuterDiameter[0] ? (
+                <SpecItem label={t("finder.maxOuterDiameter")} value={withMillimeterUnit(maxOuterDiameter[0])} />
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+
+        {imageUrl ? (
+          <div className="relative h-56 w-full shrink-0 lg:w-80">
+            <Image src={imageUrl} alt={printer.title} fill className="object-contain" unoptimized />
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function SpecItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg bg-slate-50 p-4">
+      <div className="text-sm font-medium text-neutral-500">{label}</div>
+      <div className="mt-1 font-semibold text-blue-600">{value}</div>
+    </div>
+  );
+}
+
 export default async function FinderPage({
   searchParams,
 }: {
@@ -47,7 +166,69 @@ export default async function FinderPage({
   
   // If printer_id is present, show the products view
   if (rawParams.printer_id) {
-    return <FinderPageClient />;
+    const printerId = Number.parseInt(firstQueryValue(rawParams.printer_id) ?? "", 10);
+    const query = toUrlSearchParams(rawParams);
+    let printer: FinderPrinterDetails | null = null;
+    let initialCatalog = emptyProductCatalog;
+    let baselineCatalog = emptyProductCatalog;
+
+    if (Number.isFinite(printerId)) {
+      const baselineQuery = new URLSearchParams();
+      baselineQuery.set("printer_id", String(printerId));
+
+      try {
+        [printer, initialCatalog, baselineCatalog] = await Promise.all([
+          getPrinterById(printerId),
+          searchCatalogProducts(parseCatalogSearchParams(query)),
+          searchCatalogProducts(parseCatalogSearchParams(baselineQuery)),
+        ]);
+      } catch (error) {
+        console.error("Failed to load finder product catalog.", error);
+      }
+    }
+
+    const productType = firstQueryValue(rawParams.product_type);
+    const productTypeLabel = productType === "labels" ? "Labels" : productType === "ink" ? "Ink" : "Products";
+
+    return (
+      <section className="bg-slate-50 px-4 py-10 sm:px-6 lg:px-10">
+        <div className="mx-auto flex max-w-360 flex-col gap-8">
+          <div className="border-b border-slate-200 pb-5">
+            <div className="mb-4 flex items-center gap-2 text-sm text-zinc-500">
+              <span>{t("common.home")}</span>
+              <span>/</span>
+              <span>{t("finder.printerFinder")}</span>
+              {printer ? (
+                <>
+                  <span>/</span>
+                  <span>{printer.title}</span>
+                </>
+              ) : null}
+            </div>
+            <h1 className="text-3xl font-bold font-['Segoe_UI'] leading-8 text-neutral-800">
+              {t("finder.compatibleProductsTitle", { type: productTypeLabel })}
+            </h1>
+            {printer ? (
+              <p className="mt-3 text-base text-neutral-600">
+                {t("finder.showingCompatibleProducts", {
+                  filtered: initialCatalog.total,
+                  total: baselineCatalog.total,
+                  printer: printer.title,
+                })}
+              </p>
+            ) : null}
+          </div>
+
+          {printer ? <PrinterSummary printer={printer} t={t} /> : null}
+
+          <ProductsListing
+            initialCatalog={initialCatalog}
+            initialQueryString={query.toString()}
+            baselineRangeFilters={baselineCatalog.filters.ranges}
+          />
+        </div>
+      </section>
+    );
   }
   
   // Otherwise show the printer listing

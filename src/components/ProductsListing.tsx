@@ -22,6 +22,8 @@ import type {
 type ProductsListingProps = {
   initialCatalog: CatalogSearchResponse;
   initialQueryString: string;
+  scopeQueryString?: string;
+  baselineRangeFilters?: CatalogRangeFilter[];
 };
 
 export type ListingProductCardData = ProductCardData;
@@ -113,7 +115,12 @@ type OrderedFilterEntry =
 
 const FILTER_UI_ORDER: OrderedFilterEntry[] = [
   { kind: "range", key: "price" },
+  { kind: "option", key: "category" },
+  { kind: "option", key: "brand" },
   { kind: "option", key: "print_method" },
+  { kind: "option", key: "printer_type" },
+  { kind: "option", key: "detectie" },
+  { kind: "option", key: "merken" },
   { kind: "range", key: "width" },
   { kind: "range", key: "height" },
   { kind: "option", key: "material_code" },
@@ -127,6 +134,17 @@ const FILTER_UI_ORDER: OrderedFilterEntry[] = [
 function paramsToString(params: URLSearchParams): string {
   params.sort();
   return params.toString();
+}
+
+function mergeQueryStrings(baseQueryString: string | undefined, queryString: string): string {
+  const params = new URLSearchParams(baseQueryString ?? "");
+  const next = new URLSearchParams(queryString);
+
+  next.forEach((value, key) => {
+    params.append(key, value);
+  });
+
+  return paramsToString(params);
 }
 
 function valuesFor(params: URLSearchParams, key: string): string[] {
@@ -207,7 +225,12 @@ function LegacyProductsListing({ products, currentPage = 1, lastPage = 1, basePa
   );
 }
 
-function CatalogProductsListing({ initialCatalog, initialQueryString }: ProductsListingProps) {
+function CatalogProductsListing({
+  initialCatalog,
+  initialQueryString,
+  scopeQueryString,
+  baselineRangeFilters,
+}: ProductsListingProps) {
   const t = useTranslations();
   const router = useRouter();
   const pathname = usePathname();
@@ -217,14 +240,18 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
   const [error, setError] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showAllFilters, setShowAllFilters] = useState<Record<string, boolean>>({});
+  const [optimisticQueryString, setOptimisticQueryString] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const searchInputRef = useRef<HTMLInputElement>(null);
   
-  // Store absolute max values from initial catalog (when no filters applied)
-  const absoluteRangeMaxes = useRef<Record<CatalogRangeKey, number>>(
-    Object.fromEntries(
-      initialCatalog.filters.ranges.map((filter) => [filter.key, filter.max])
-    ) as Record<CatalogRangeKey, number>
+  const stableRangeFilters = useMemo(
+    () => (baselineRangeFilters?.length ? baselineRangeFilters : initialCatalog.filters.ranges),
+    [baselineRangeFilters, initialCatalog.filters.ranges],
+  );
+
+  const absoluteRangeMaxes = useMemo<Partial<Record<CatalogRangeKey, number>>>(
+    () => Object.fromEntries(stableRangeFilters.map((filter) => [filter.key, filter.max])),
+    [stableRangeFilters],
   );
 
   useEffect(() => {
@@ -258,22 +285,39 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
     return fallbackTitle || key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ');
   };
 
-  const currentParams = useMemo(() => new URLSearchParams(searchParams.toString()), [searchParams]);
   const currentQueryString = useMemo(() => paramsToString(new URLSearchParams(searchParams.toString())), [searchParams]);
+  const displayQueryString = optimisticQueryString ?? currentQueryString;
+  const displayParams = useMemo(() => new URLSearchParams(displayQueryString), [displayQueryString]);
+  const scopedCurrentQueryString = useMemo(
+    () => mergeQueryStrings(scopeQueryString, displayQueryString),
+    [scopeQueryString, displayQueryString],
+  );
   const initialSortedQueryString = useMemo(
-    () => paramsToString(new URLSearchParams(initialQueryString)),
-    [initialQueryString],
+    () => mergeQueryStrings(scopeQueryString, initialQueryString),
+    [scopeQueryString, initialQueryString],
   );
   const searchValue = searchParams.get("search") ?? searchParams.get("q") ?? "";
+  const displaySearchValue = displayParams.get("search") ?? displayParams.get("q") ?? "";
   const [searchInput, setSearchInput] = useState(searchValue);
-  const selectedSort = normalizeSortValue(searchParams.get("sort"), Boolean(searchValue), SORT_OPTIONS);
-  const hasInitialCatalog = currentQueryString === initialSortedQueryString;
+  const selectedSort = normalizeSortValue(displayParams.get("sort"), Boolean(displaySearchValue), SORT_OPTIONS);
+  const hasInitialCatalog = scopedCurrentQueryString === initialSortedQueryString;
+
+  useEffect(() => {
+    if (optimisticQueryString === null || optimisticQueryString === currentQueryString) {
+      const timeoutId = window.setTimeout(() => {
+        setOptimisticQueryString(null);
+      }, 0);
+
+      return () => window.clearTimeout(timeoutId);
+    }
+  }, [currentQueryString, optimisticQueryString]);
 
   const setParams = (updater: (params: URLSearchParams) => void) => {
-    const next = new URLSearchParams(searchParams.toString());
+    const next = new URLSearchParams(displayQueryString);
     updater(next);
     const nextString = paramsToString(next);
     const href = nextString ? `${pathname}?${nextString}` : pathname;
+    setOptimisticQueryString(nextString);
     startTransition(() => {
       router.push(href, { scroll: false });
     });
@@ -304,7 +348,7 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
       setError(null);
     }, 0);
 
-    fetch(`/api/catalog/products?${currentQueryString}`, {
+    fetch(`/api/catalog/products?${scopedCurrentQueryString}`, {
       signal: controller.signal,
     })
       .then(async (response) => {
@@ -327,7 +371,7 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
       });
 
     return () => controller.abort();
-  }, [currentQueryString, hasInitialCatalog, initialCatalog]);
+  }, [scopedCurrentQueryString, hasInitialCatalog, initialCatalog]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -352,35 +396,36 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
   const activeFilterCount = useMemo(() => {
     let count = 0;
     catalog.filters.options.forEach((filter) => {
-      count += valuesFor(currentParams, OPTION_PARAM_KEY[filter.key]).length;
+      count += valuesFor(displayParams, OPTION_PARAM_KEY[filter.key]).length;
     });
 
-    catalog.filters.ranges.forEach((filter) => {
+    stableRangeFilters.forEach((filter) => {
       const rangeKeys = RANGE_PARAM_KEYS[filter.key];
-      if (currentParams.has(rangeKeys.min) || currentParams.has(rangeKeys.max)) {
+      if (displayParams.has(rangeKeys.min) || displayParams.has(rangeKeys.max)) {
         count += 1;
       }
     });
 
-    if (currentParams.has("in_stock")) count += 1;
-    if (currentParams.has("type") || currentParams.has("product_type")) count += 1;
+    if (displayParams.has("in_stock")) count += 1;
+    if (displayParams.has("type") || displayParams.has("product_type")) count += 1;
     return count;
-  }, [catalog.filters.options, catalog.filters.ranges, currentParams]);
+  }, [catalog.filters.options, stableRangeFilters, displayParams]);
 
   const orderedFilters = useMemo(() => {
     const rangeMap = new Map(catalog.filters.ranges.map((filter) => [filter.key, filter]));
+    const stableRangeMap = new Map(stableRangeFilters.map((filter) => [filter.key, filter]));
     const optionMap = new Map(catalog.filters.options.map((filter) => [filter.key, filter]));
 
     return FILTER_UI_ORDER.flatMap((entry): Array<{ kind: "range"; filter: CatalogRangeFilter } | { kind: "option"; filter: CatalogOptionFilter }> => {
       if (entry.kind === "range") {
-        const filter = rangeMap.get(entry.key);
+        const filter = rangeMap.get(entry.key) ?? stableRangeMap.get(entry.key);
         return filter ? [{ kind: "range" as const, filter }] : [];
       }
 
       const filter = optionMap.get(entry.key);
       return filter ? [{ kind: "option" as const, filter }] : [];
     });
-  }, [catalog.filters.options, catalog.filters.ranges]);
+  }, [catalog.filters.options, catalog.filters.ranges, stableRangeFilters]);
 
   const clearFilters = () => {
     setParams((params) => {
@@ -535,10 +580,10 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
                     const filter = entry.filter;
                     const keys = RANGE_PARAM_KEYS[filter.key];
                     // Use absolute max from initial catalog for consistent UI bounds
-                    const absoluteMax = absoluteRangeMaxes.current[filter.key] ?? filter.max;
+                    const absoluteMax = absoluteRangeMaxes[filter.key] ?? filter.max;
                     const value: [number, number] = [
-                      Math.min(numberFor(currentParams, keys.min) ?? 0, absoluteMax),
-                      Math.min(numberFor(currentParams, keys.max) ?? absoluteMax, absoluteMax),
+                      Math.min(numberFor(displayParams, keys.min) ?? 0, absoluteMax),
+                      Math.min(numberFor(displayParams, keys.max) ?? absoluteMax, absoluteMax),
                     ];
 
                     const fanFoldFilterKey: CatalogOptionFilterKey | null =
@@ -549,7 +594,7 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
                           : null;
 
                     const fanFoldSelected = fanFoldFilterKey
-                      ? valuesFor(currentParams, OPTION_PARAM_KEY[fanFoldFilterKey]).some(
+                      ? valuesFor(displayParams, OPTION_PARAM_KEY[fanFoldFilterKey]).some(
                           (selectedValue) => selectedValue.toLowerCase() === "fan-fold",
                         )
                       : false;
@@ -597,7 +642,7 @@ function CatalogProductsListing({ initialCatalog, initialQueryString }: Products
 
                   const filter = entry.filter;
                   const paramKey = OPTION_PARAM_KEY[filter.key];
-                  const selectedValues = new Set(valuesFor(currentParams, paramKey));
+                  const selectedValues = new Set(valuesFor(displayParams, paramKey));
                   const showAll = showAllFilters[filter.key] ?? false;
                   const DISPLAY_LIMIT = 10;
                   const displayedOptions = showAll ? filter.options : filter.options.slice(0, DISPLAY_LIMIT);

@@ -5,14 +5,17 @@ const ALLOWED_HOSTS = new Set(['businesslabels.test', 'localhost', '127.0.0.1', 
 function isAllowedUrl(url: URL): boolean {
   if (!['http:', 'https:'].includes(url.protocol)) return false;
 
-  if (ALLOWED_HOSTS.has(url.hostname)) return true;
+  // Normalize hostname to lowercase for case-insensitive comparison
+  const hostname = url.hostname.toLowerCase();
+
+  if (ALLOWED_HOSTS.has(hostname)) return true;
 
   const backendBase = process.env.BBNL_API_BASE_URL;
   if (!backendBase) return false;
 
   try {
     const backendUrl = new URL(backendBase);
-    return backendUrl.hostname === url.hostname;
+    return backendUrl.hostname.toLowerCase() === hostname;
   } catch {
     return false;
   }

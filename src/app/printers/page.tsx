@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { materialReviews } from "@/lib/materialCatalog";
-import PrintersListing from "@/components/PrintersListing";
-import type { PrinterCardData } from "@/components/PrintersListing";
+import ProductsListing from "@/components/ProductsListing";
+import { parseCatalogSearchParams, searchCatalogProducts } from "@/lib/search/products";
+import type { CatalogSearchResponse } from "@/lib/search/types";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations();
@@ -14,105 +15,57 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-// ---------------------------------------------------------------------------
-// SSR seed: fetch first page directly from Elasticsearch so the page renders
-// with visible products immediately, before the client-side ES query resolves.
-// ---------------------------------------------------------------------------
+type PrintersPageSearchParams = Record<string, string | string[] | undefined>;
 
-type EsHit = {
-  _source: {
-    id?: number;
-    type?: string;
-    title?: string | string[];
-    name?: string | string[];
-    subtitle?: string | string[];
-    excerpt?: string | string[];
-    material_title?: string | string[];
-    price?: number;
-    original_price?: number;
-    in_stock?: boolean;
-    main_image?: string;
-    slug?: string | string[];
-    sku?: string;
-  };
+function toUrlSearchParams(query: PrintersPageSearchParams): URLSearchParams {
+  const params = new URLSearchParams();
+
+  Object.entries(query).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      value.forEach((item) => params.append(key, item));
+    } else if (value !== undefined) {
+      params.append(key, value);
+    }
+  });
+
+  return params;
+}
+
+const emptyCatalogResponse: CatalogSearchResponse = {
+  products: [],
+  total: 0,
+  currentPage: 1,
+  lastPage: 1,
+  perPage: 24,
+  filters: { ranges: [], options: [] },
 };
 
-function scalar(value: string | string[] | undefined | null): string | null {
-  if (!value) return null;
-  return Array.isArray(value) ? (value[0] ?? null) : value;
-}
-
-function normalizeType(raw?: string): "simple" | "variable" | null {
-  return raw === "simple" || raw === "variable" ? raw : null;
-}
-
-function mapHitToCardData(hit: EsHit): PrinterCardData {
-  const src = hit._source;
-  return {
-    id: src.id ?? 0,
-    sku: src.sku ?? "",
-    name: scalar(src.title) ?? scalar(src.name) ?? "Unnamed printer",
-    subtitle: scalar(src.subtitle),
-    excerpt: scalar(src.excerpt),
-    materialTitle: scalar(src.material_title),
-    price: src.price ?? null,
-    originalPrice: src.original_price ?? null,
-    inStock: src.in_stock ?? false,
-    mainImage: src.main_image
-      ? `/api/media-proxy?url=${encodeURIComponent(src.main_image)}`
-      : null,
-    categories: [],
-    slug: scalar(src.slug),
-    type: normalizeType(src.type ?? undefined),
-  };
-}
-
-async function fetchPrintersSeed(): Promise<PrinterCardData[]> {
-  try {
-    const rawHost = process.env.ELASTICSEARCH_URL?.trim()
-      || `${process.env.ELASTIC_SCHEME?.trim() || "http"}://${process.env.ELASTIC_HOST?.trim() || "localhost:9200"}`;
-    const host = rawHost.replace(/\/$/, "");
-    const prefix = process.env.SCOUT_PREFIX?.trim() ?? "";
-    const index = process.env.SEARCH_INDEX?.trim() || `${prefix}catalog_products_simple`;
-
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (process.env.ELASTIC_API_KEY?.trim()) {
-      headers.Authorization = `ApiKey ${process.env.ELASTIC_API_KEY.trim()}`;
-    } else if (process.env.ELASTIC_USERNAME?.trim()) {
-      const encoded = Buffer.from(
-        `${process.env.ELASTIC_USERNAME.trim()}:${process.env.ELASTIC_PASSWORD ?? ""}`,
-      ).toString("base64");
-      headers.Authorization = `Basic ${encoded}`;
-    }
-
-    const response = await fetch(`${host}/${index}/_search`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        from: 0,
-        size: 24,
-        query: { terms: { category_slugs: ["labelprinters"] } },
-        sort: [{ created_at_timestamp: { order: "desc", unmapped_type: "long" } }],
-        _source: [
-          "id", "type", "title", "name", "subtitle", "excerpt",
-          "material_title", "price", "original_price", "in_stock",
-          "main_image", "slug", "sku",
-        ],
-      }),
-      cache: "no-store",
-    });
-
-    if (!response.ok) return [];
-    const json = (await response.json()) as { hits?: { hits?: EsHit[] } };
-    return (json.hits?.hits ?? []).map(mapHitToCardData);
-  } catch {
-    return [];
-  }
-}
-
-export default async function PrinterPage() {
+export default async function PrinterPage({
+  searchParams,
+}: {
+  searchParams: Promise<PrintersPageSearchParams>;
+}) {
   const t = await getTranslations();
-  const printers = await fetchPrintersSeed();
+  const rawParams = await searchParams;
+  const routeQuery = toUrlSearchParams(rawParams);
+  const scopeQuery = new URLSearchParams({ category: "labelprinters" });
+  const initialSearchQuery = new URLSearchParams(scopeQuery);
+
+  routeQuery.forEach((value, key) => {
+    initialSearchQuery.append(key, value);
+  });
+
+  let initialCatalog = emptyCatalogResponse;
+  let baselineCatalog = emptyCatalogResponse;
+
+  try {
+    [initialCatalog, baselineCatalog] = await Promise.all([
+      searchCatalogProducts(parseCatalogSearchParams(initialSearchQuery)),
+      searchCatalogProducts(parseCatalogSearchParams(scopeQuery)),
+    ]);
+  } catch (error) {
+    console.error("Failed to load printer catalog.", error);
+  }
 
   return (
     <div className="relative overflow-hidden bg-white">
@@ -121,7 +74,24 @@ export default async function PrinterPage() {
 
       <section className="px-4 py-10 sm:px-6 lg:px-10">
         <div className="mx-auto flex max-w-360 flex-col gap-12">
-          <PrintersListing printers={printers} />
+          <div className="border-b border-slate-200 pb-5">
+            <div className="mb-4 flex items-center gap-2 text-sm text-zinc-500">
+              <span>{t("common.home")}</span>
+              <span>/</span>
+              <span>{t("common.printers")}</span>
+            </div>
+            <div className="flex flex-col gap-5">
+              <h1 className="text-3xl font-bold font-['Segoe_UI'] leading-8 text-neutral-800">
+                {t("common.printers")}
+              </h1>
+              <ProductsListing
+                initialCatalog={initialCatalog}
+                initialQueryString={routeQuery.toString()}
+                scopeQueryString={scopeQuery.toString()}
+                baselineRangeFilters={baselineCatalog.filters.ranges}
+              />
+            </div>
+          </div>
         </div>
       </section>
 

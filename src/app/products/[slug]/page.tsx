@@ -7,6 +7,7 @@ import ProductImageGallery from "@/components/ProductImageGallery";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 import { notFound } from "next/navigation";
 import { getTranslations } from 'next-intl/server';
+import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 import {
   Carousel,
   CarouselContent,
@@ -400,9 +401,9 @@ export default async function SingleProductPage({
 
   const productName = product.title || product.name || "";
   const productDescription = product.description || product.excerpt || "";
-  const mainImage = product.main_image || "";
+  const mainImage = toDisplayImageUrl(product.main_image) || "";
   const galleryImages = (product.gallery_images ?? [])
-    .map((item) => item.url)
+    .map((item) => toDisplayImageUrl(item.url))
     .filter((url): url is string => Boolean(url));
   const specs = specsFromProduct(product);
   const relatedProducts = (product.up_sells ?? []).map(mapUpsellToProductCard);

@@ -1,6 +1,5 @@
 import type { estypes } from "@elastic/elasticsearch";
 import { elasticClient } from "@/lib/search/client";
-import type { ProductCardData } from "@/components/ProductCard";
 
 // Re-export types from printerTypes for convenience
 export type {
@@ -49,6 +48,80 @@ function printerIndexName(): string {
   return prefix ? `${prefix}catalog_printers` : "catalog_printers";
 }
 
+type PrinterSource = Record<string, unknown>;
+
+export type FinderPrinterDetails = {
+  id: number;
+  title: string;
+  subtitle?: string | null;
+  slug: string;
+  image?: string | null;
+  properties?: Record<string, string[]>;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
+
+function firstScalar(value: unknown): string | number | boolean | null {
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return value;
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const scalar = firstScalar(item);
+      if (scalar !== null) return scalar;
+    }
+  }
+  return null;
+}
+
+function stringValue(value: unknown): string | null {
+  const scalar = firstScalar(value);
+  return scalar === null ? null : String(scalar);
+}
+
+function numberValue(value: unknown): number | null {
+  const scalar = firstScalar(value);
+  if (typeof scalar === "number") return scalar;
+  if (typeof scalar === "string" && scalar.trim()) {
+    const parsed = Number(scalar);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function stringArrayMap(value: unknown): Record<string, string[]> | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+
+  const entries = Object.entries(value as Record<string, unknown>)
+    .map(([key, rawValue]) => {
+      const values = Array.isArray(rawValue) ? rawValue : [rawValue];
+      const strings = values
+        .map((item) => stringValue(item)?.trim())
+        .filter((item): item is string => Boolean(item));
+
+      return [key, strings] as const;
+    })
+    .filter(([, values]) => values.length > 0);
+
+  return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+}
+
+function mapFinderPrinter(source: PrinterSource): FinderPrinterDetails | null {
+  const id = numberValue(source.id);
+  const title = stringValue(source.title);
+
+  if (id === null || !title) return null;
+
+  return {
+    id,
+    title,
+    subtitle: stringValue(source.subtitle),
+    slug: stringValue(source.slug) ?? "",
+    image: stringValue(source.image) ?? stringValue(source.main_image),
+    properties: stringArrayMap(source.properties),
+    created_at: stringValue(source.created_at),
+    updated_at: stringValue(source.updated_at),
+  };
+}
+
 function parseSortValue(value: string | null): PrinterSortValue {
   return PRINTER_SORT_VALUES.includes(value as PrinterSortValue) ? (value as PrinterSortValue) : "latest";
 }
@@ -73,6 +146,38 @@ export function parsePrinterSearchParams(params: URLSearchParams): PrinterSearch
     width: params.getAll("width").flatMap(v => v.split(",")).filter(Boolean),
     buitenDiameter: params.getAll("buiten_diameter").flatMap(v => v.split(",")).filter(Boolean),
   };
+}
+
+export async function getPrinterById(id: number): Promise<FinderPrinterDetails | null> {
+  if (!Number.isFinite(id)) return null;
+
+  const client = elasticClient();
+  const response = await client.search<PrinterSource>({
+    index: printerIndexName(),
+    size: 1,
+    _source: [
+      "id",
+      "title",
+      "subtitle",
+      "slug",
+      "image",
+      "main_image",
+      "properties",
+      "created_at",
+      "updated_at",
+    ],
+    query: {
+      bool: {
+        filter: [
+          { term: { id } },
+          { term: { status: "published" } },
+        ],
+      },
+    },
+  });
+
+  const source = response.hits.hits[0]?._source;
+  return source ? mapFinderPrinter(source) : null;
 }
 
 function buildSortClause(sort: PrinterSortValue): estypes.Sort {
@@ -199,7 +304,7 @@ export async function searchPrinters(params: PrinterSearchParams): Promise<Print
   });
 
   try {
-    const searchBody: any = {
+    const searchBody: Record<string, unknown> = {
       query: {
         bool: {
           must: mustClauses,

@@ -84,6 +84,7 @@ export type CatalogSearchParams = {
   slugs: string[];
   skus: string[];
   articleNumbers: string[];
+  printerIds: number[];
   categories: string[];
   categoryIds: number[];
   brands: string[];
