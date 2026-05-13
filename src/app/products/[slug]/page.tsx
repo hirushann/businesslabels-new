@@ -4,7 +4,6 @@ import ProductPurchase from "@/components/ProductPurchase";
 import ProductCard, { type ProductCardData, type ProductRouteType } from "@/components/ProductCard";
 import ProductCompatibilityDialog from "@/components/ProductCompatibilityDialog";
 import ProductImageGallery from "@/components/ProductImageGallery";
-import ProductLocaleSlugSync from "@/components/ProductLocaleSlugSync";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations } from 'next-intl/server';
