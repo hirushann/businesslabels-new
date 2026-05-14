@@ -9,6 +9,7 @@ import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 import { getPrinterProducts } from "@/lib/api/compatibility";
 import type { Printer } from "@/lib/types/printer";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 type PrinterResponse = {
   data: Printer;
@@ -405,17 +406,13 @@ export default async function PrinterDetailPage({ params }: PrinterPageProps) {
     <div className="bg-white">
       <section className="px-4 py-10 sm:px-6 lg:px-10">
         <div className="mx-auto flex max-w-300 flex-col gap-4">
-          <nav className="flex flex-wrap items-center gap-2 text-sm leading-5 text-zinc-500" aria-label="Breadcrumb">
-            <Link href="/" className="hover:text-neutral-800">
-              {t("common.home")}
-            </Link>
-            <span>/</span>
-            <Link href="/printers" className="hover:text-neutral-800">
-              {t("common.printers")}
-            </Link>
-            <span>/</span>
-            <span className="font-semibold text-neutral-700">{printer.title}</span>
-          </nav>
+          <Breadcrumbs 
+            className="text-neutral-900"
+            items={[
+              { label: t("common.printers"), href: "/printers" },
+              { label: printer.title || 'Printer' }
+            ]} 
+          />
 
           <div className="flex flex-col gap-12 lg:flex-row lg:items-start">
             <div className="flex min-w-0 flex-1 flex-col gap-12">

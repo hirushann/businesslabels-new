@@ -8,6 +8,7 @@ import CTABanner from "@/components/CTABanner";
 import EmptyState from "@/components/EmptyState";
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 type MaterialProduct = {
   id: number;
@@ -430,19 +431,16 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
     <div className="bg-white">
       <section className="px-4 py-10 sm:px-6 lg:px-10">
         <div className="mx-auto flex max-w-300 flex-col gap-4">
-          <nav className="flex flex-wrap items-center gap-2 text-sm leading-5 text-zinc-500" aria-label="Breadcrumb">
-            <Link href="/" className="hover:text-neutral-800">
-              {t("common.home")}
-            </Link>
-            <span>/</span>
-            <span>{t("common.category")}</span>
-            <span>/</span>
-            <Link href="/materials" className="hover:text-neutral-800">
-              {t("common.materials")}
-            </Link>
-            <span>/</span>
-            <span className="font-semibold text-neutral-700">{material.title}</span>
-          </nav>
+          <Breadcrumbs 
+            items={[
+              { label: t("common.materials"), href: "/materials" },
+              ...(material.category ? [{ 
+                label: material.category.name, 
+                href: `/category/${material.category.slug || material.category.id}` 
+              }] : []),
+              { label: material.title }
+            ]} 
+          />
 
           <div className="flex flex-col gap-12 lg:flex-row lg:items-start">
             <div className="flex min-w-0 flex-1 flex-col gap-12">
