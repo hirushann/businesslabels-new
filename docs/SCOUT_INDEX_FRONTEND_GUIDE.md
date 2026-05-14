@@ -49,7 +49,10 @@ type CatalogProductDocument = {
   slug?: string[];
   sku?: string;
   variant_skus?: string[];
-  make?: string;
+  catalog_brand?: string[];
+  catalog_material_code?: string[];
+  catalog_material?: string[];
+  compatible_brands?: string[];
   excerpt?: string[];
   description?: string[];
   content?: string[];
@@ -61,8 +64,6 @@ type CatalogProductDocument = {
   in_stock?: boolean;
   main_image?: string | null;
   material_id?: number;
-  material_title?: string[];
-  material_slug?: string[];
   material_taxon_ids?: number[];
   material_taxon_slugs?: string[];
   category_ids?: number[];
@@ -82,15 +83,6 @@ type CatalogProductDocument = {
   }>;  printer_ids?: number[];
   properties?: Record<string, string[]>;
   property_numbers?: Record<string, number | number[]>;
-  compatibility?: {
-    printmethode?: string;
-    breedte?: number;
-    hoogte?: number;
-    kern?: string;
-    kern_numeric?: number;
-    'buiten-diameter'?: number;
-    detectie?: string;
-  };
   warranty_available?: boolean;
   warranty_option_ids?: number[];
   warranty_option_names?: string[];
@@ -107,6 +99,8 @@ Important differences:
 - `MasterProduct` stores `name` and `title` as strings, but stores other localized fields like `slug` and `description` as arrays.
 - `GroupProduct` stores `name` and `title` as strings, uses `product_type: "group"`, and has `is_group_product: true`.
 - For product detail pages, prefer `api_path_by_id`, `api_path_by_slug`, or `frontend_path` when available instead of reconstructing paths in the frontend.
+- Product facets use canonical fields only: `catalog_brand`, `catalog_material_code`, `catalog_material`, and `compatible_brands`. Use `catalog_brand.keyword` for exact brand filtering and aggregations.
+- Vanilo properties are the source of truth for catalog attributes. Promoted properties are intentionally not duplicated in `properties`.
 
 ## Printer Documents
 
@@ -185,13 +179,13 @@ const payload = {
                   'slug^4',
                   'sku^6',
                   'variant_skus^6',
-                  'material_title^2',
-                  'material_slug^2',
-                  'properties.materiaal-code^2',
+                  'catalog_brand^2',
+                  'catalog_material_code^2',
+                  'catalog_material^2',
+                  'compatible_brands',
                   'properties.printmethode',
                   'properties.afwerking',
                   'properties.lijm',
-                  'properties.materiaal',
                   'properties.detectie',
                   'excerpt^2',
                   'description',
@@ -226,6 +220,10 @@ const filters = [
   { terms: { 'category_slugs.keyword': ['labels'] } },
   { terms: { material_taxon_slugs: ['thermal-labels'] } },
   { terms: { printer_ids: [201] } },
+  { terms: { 'catalog_brand.keyword': ['Diamondlabels'] } },
+  { terms: { catalog_material_code: ['DIA055'] } },
+  { terms: { catalog_material: ['PP matte'] } },
+  { terms: { compatible_brands: ['Epson'] } },
   { terms: { 'properties.printmethode.keyword': ['thermal-transfer'] } },
   { range: { price: { gte: 10, lte: 50 } } },
   { range: { 'property_numbers.breedte': { gte: 50, lte: 100 } } },
@@ -296,16 +294,25 @@ Supported catalog meta filters:
 | --- | --- | --- | --- |
 | `afwerking` | `properties.afwerking.keyword` |  | multi-select |
 | `lijm` | `properties.lijm.keyword` |  | multi-select |
-| `materiaal-code` | `properties.materiaal-code.keyword` |  | multi-select |
+| `brand` | `catalog_brand.keyword` |  | multi-select |
+| `materiaal-code` | `catalog_material_code` |  | multi-select |
+| `materiaal` / `material` | `catalog_material` |  | multi-select |
 | `printmethode` | `properties.printmethode.keyword` |  | multi-select |
 | `breedte` | `properties.breedte.keyword` | `property_numbers.breedte` | range |
 | `hoogte` | `properties.hoogte.keyword` | `property_numbers.hoogte` | range |
 | `kern` | `properties.kern.keyword` | `property_numbers.kern` | range |
 | `buiten-diameter` | `properties.buiten-diameter.keyword` | `property_numbers.buiten-diameter` | range |
 | `detectie` | `properties.detectie.keyword` |  | multi-select |
-| `merken` | `properties.merken.keyword` |  | multi-select |
+| `merken` | `compatible_brands` |  | multi-select |
 
 The Laravel API also accepts aliases like `width`, `height`, `core`, `outer_diameter`, `druktype`, `print_method`, `glue`, and `adhesive`. When calling Elasticsearch directly, prefer the canonical ES field names above.
+
+Removed legacy product-index fields:
+
+- `make` is not indexed for filtering. Product brand comes from the Vanilo `brand` property when present, falls back to the product brand value on the product record, and is indexed as `catalog_brand` with aggregations on `catalog_brand.keyword`.
+- `material_title` and `material_slug` are not indexed. Material type/name is indexed as `catalog_material`; material category filters use `material_taxon_ids` / `material_taxon_slugs`.
+- `properties.brand`, `properties.materiaal-code`, `properties.materiaal`, and `properties.merken` are promoted into canonical fields and intentionally omitted from `properties`.
+- The compact `compatibility` object is not indexed. Use `properties`, `property_numbers`, `compatible_brands`, and `printer_ids`.
 
 ### Product Sorting
 
@@ -479,4 +486,5 @@ When backend indexing changes, update this guide from these source files:
 - `app/Models/GroupProduct.php`
 - `app/Models/Post.php`
 - `app/Services/ProductCatalogService.php`
+- `app/Support/CatalogFacetNormalizer.php`
 - `app/Support/CatalogMetaFilters.php`

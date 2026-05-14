@@ -46,7 +46,7 @@ const MULTI_VALUE_KEYS = {
   materialIds: ["material_id"],
   materialCategories: ["material_category"],
   materialCategoryIds: ["material_category_id"],
-  materialCodes: ["material_code", "materiaal_code"],
+  materialCodes: ["material_code", "materiaal_code", "materiaal-code"],
   materials: ["material", "materiaal"],
   finishings: ["finishing", "afwerking"],
   glues: ["glue", "lijm", "adhesive"],
@@ -54,8 +54,8 @@ const MULTI_VALUE_KEYS = {
   printerTypes: ["printer_type"],
   detections: ["detectie"],
   marks: ["merken"],
-  kernStrings: ["kern_string", "kern_type"],
-  outerDiameterStrings: ["outer_diameter_string", "buiten_diameter_type"],
+  kernStrings: ["kern_string", "kern_type", "kern"],
+  outerDiameterStrings: ["outer_diameter_string", "buiten_diameter_type", "buiten-diameter", "buiten_diameter"],
 } as const;
 
 const EXACT_VALUE_KEYS = {
@@ -70,6 +70,7 @@ const OPTION_FILTERS: Array<{
   key: CatalogOptionFilterKey;
   title: string;
   field: string;
+  nestedPath?: string;
   paramValues: keyof Pick<
     CatalogSearchParams,
     | "categories"
@@ -87,17 +88,17 @@ const OPTION_FILTERS: Array<{
   >;
 }> = [
   { key: "category", title: "Product Type", field: "category_slugs.keyword", paramValues: "categories" },
-  { key: "brand", title: "Brand", field: "catalog_brand", paramValues: "brands" },
-  { key: "print_method", title: "Print Method", field: "catalog_print_method", paramValues: "printMethods" },
-  { key: "printer_type", title: "Printer Type", field: "catalog_printer_type", paramValues: "printerTypes" },
-  { key: "detectie", title: "Detection", field: "catalog_detection", paramValues: "detections" },
-  { key: "merken", title: "Make", field: "catalog_marks", paramValues: "marks" },
-  { key: "material_code", title: "Material Code", field: "catalog_material_code", paramValues: "materialCodes" },
-  { key: "material", title: "Material Type", field: "catalog_material", paramValues: "materials" },
-  { key: "finishing", title: "Finishing", field: "catalog_finishing", paramValues: "finishings" },
-  { key: "glue", title: "Glue", field: "catalog_glue", paramValues: "glues" },
-  { key: "kern_string", title: "Core Type", field: "catalog_core_string", paramValues: "kernStrings" },
-  { key: "outer_diameter_string", title: "Outer Diameter Type", field: "catalog_outer_diameter_string", paramValues: "outerDiameterStrings" },
+  { key: "brand", title: "Brand", field: "catalog_brand.keyword", paramValues: "brands" },
+  { key: "print_method", title: "Print Method", field: "properties.printmethode.keyword", nestedPath: "properties", paramValues: "printMethods" },
+  { key: "printer_type", title: "Printer Type", field: "properties.printer_type.keyword", nestedPath: "properties", paramValues: "printerTypes" },
+  { key: "detectie", title: "Detection", field: "properties.detectie.keyword", nestedPath: "properties", paramValues: "detections" },
+  { key: "merken", title: "Compatible Brand", field: "compatible_brands.keyword", paramValues: "marks" },
+  { key: "material_code", title: "Material Code", field: "catalog_material_code.keyword", paramValues: "materialCodes" },
+  { key: "material", title: "Material Type", field: "catalog_material.keyword", paramValues: "materials" },
+  { key: "finishing", title: "Finishing", field: "properties.afwerking.keyword", nestedPath: "properties", paramValues: "finishings" },
+  { key: "glue", title: "Glue", field: "properties.lijm.keyword", nestedPath: "properties", paramValues: "glues" },
+  { key: "kern_string", title: "Core Type", field: "properties.kern.keyword", nestedPath: "properties", paramValues: "kernStrings" },
+  { key: "outer_diameter_string", title: "Outer Diameter Type", field: "properties.buiten-diameter.keyword", nestedPath: "properties", paramValues: "outerDiameterStrings" },
 ];
 
 const RANGE_FILTERS: Array<{
@@ -110,13 +111,13 @@ const RANGE_FILTERS: Array<{
   unitSuffix?: string;
 }> = [
   { key: "price", title: "Price Range", field: "price", minParam: "priceMin", maxParam: "priceMax", unitPrefix: "€" },
-  { key: "width", title: "Label Width", field: "catalog_width_mm", minParam: "widthMin", maxParam: "widthMax", unitSuffix: "mm" },
-  { key: "height", title: "Label Height", field: "catalog_height_mm", minParam: "heightMin", maxParam: "heightMax", unitSuffix: "mm" },
-  { key: "core", title: "Core Size", field: "catalog_core_mm", minParam: "coreMin", maxParam: "coreMax", unitSuffix: "mm" },
+  { key: "width", title: "Label Width", field: "property_numbers.breedte", minParam: "widthMin", maxParam: "widthMax", unitSuffix: "mm" },
+  { key: "height", title: "Label Height", field: "property_numbers.hoogte", minParam: "heightMin", maxParam: "heightMax", unitSuffix: "mm" },
+  { key: "core", title: "Core Size", field: "property_numbers.kern", minParam: "coreMin", maxParam: "coreMax", unitSuffix: "mm" },
   {
     key: "outer_diameter",
     title: "Outer Diameter",
-    field: "catalog_outer_diameter_mm",
+    field: "property_numbers.buiten-diameter",
     minParam: "outerDiameterMin",
     maxParam: "outerDiameterMax",
     unitSuffix: "mm",
@@ -147,10 +148,14 @@ const RESULT_SOURCE_FIELDS = [
   "images",
   "categories",
   "category_slugs",
+  "frontend_path",
+  "catalog_brand",
+  "catalog_material_code",
+  "catalog_material",
+  "compatible_brands",
   "terms",
   "meta",
   "material",
-  "material_title",
   "warranty_available",
   "warranty_option_ids",
   "warranty_option_names",
@@ -296,11 +301,14 @@ function textQuery(search: string): estypes.QueryDslQueryContainer {
   
   // Secondary fields: material, brand, and product attributes
   const secondary = [
-    "brand^15",             // Brand searches (Epson, etc.)
-    "material_title^12",    // Material searches (polyester, paper)
-    "druktype^8",           // Print method (TD/TT)
-    "finishing^5",          // Surface finish (glossy, matte)
-    "merken^5",             // Dutch brand field
+    "catalog_brand^15",             // Brand searches (Epson, etc.)
+    "catalog_material_code^12",     // Material code searches (DIA055, etc.)
+    "catalog_material^12",          // Material searches (polyester, paper)
+    "compatible_brands^5",          // Compatible printer makes
+    "properties.printmethode^8",    // Print method (TD/TT)
+    "properties.afwerking^5",       // Surface finish (glossy, matte)
+    "properties.lijm^5",            // Adhesive/glue
+    "properties.detectie^5",        // Detection
     "excerpt^3",            // Short descriptions
     "slug^2",               // URL slugs (low priority)
   ];
@@ -370,7 +378,9 @@ function textQuery(search: string): estypes.QueryDslQueryContainer {
         { bool: {
           should: [
             { wildcard: { name: { value: wildcardValue, boost: 1, case_insensitive: true } } },
-            { wildcard: { brand: { value: wildcardValue, boost: 1, case_insensitive: true } } },
+            { wildcard: { catalog_brand: { value: wildcardValue, boost: 1, case_insensitive: true } } },
+            { wildcard: { catalog_material_code: { value: wildcardValue, boost: 1, case_insensitive: true } } },
+            { wildcard: { catalog_material: { value: wildcardValue, boost: 1, case_insensitive: true } } },
             { wildcard: { sku: { value: wildcardValue, boost: 1, case_insensitive: true } } },
             { wildcard: { article_number: { value: wildcardValue, boost: 1, case_insensitive: true } } },
           ],
@@ -405,9 +415,10 @@ function textQuery(search: string): estypes.QueryDslQueryContainer {
           // Secondary fields (brand, material, attributes) - flexible OR matching
           { multi_match: { query, fields: secondary, operator: "or", boost: 8 } },
           // Individual wildcard matches in secondary fields
-          ...terms.map(term => ({
-            wildcard: { material_title: { value: `*${term.toLowerCase()}*`, boost: 3, case_insensitive: true } }
-          })),
+          ...terms.flatMap((term) => [
+            { wildcard: { catalog_material_code: { value: `*${term.toLowerCase()}*`, boost: 3, case_insensitive: true } } },
+            { wildcard: { catalog_material: { value: `*${term.toLowerCase()}*`, boost: 3, case_insensitive: true } } },
+          ]),
           // Fallback to description with flexible matching
           { multi_match: { query, fields: fallback, operator: "or", boost: 1 } },
         ],
@@ -453,7 +464,9 @@ function textQuery(search: string): estypes.QueryDslQueryContainer {
         },
         // Wildcard matching - HIGH PRIORITY for partial matches (e.g., "colorwork" → "ColorWorks")
         { wildcard: { name: { value: `*${query.toLowerCase()}*`, boost: 50, case_insensitive: true } } },
-        { wildcard: { brand: { value: `*${query.toLowerCase()}*`, boost: 40, case_insensitive: true } } },
+        { wildcard: { catalog_brand: { value: `*${query.toLowerCase()}*`, boost: 40, case_insensitive: true } } },
+        { wildcard: { catalog_material_code: { value: `*${query.toLowerCase()}*`, boost: 35, case_insensitive: true } } },
+        { wildcard: { catalog_material: { value: `*${query.toLowerCase()}*`, boost: 35, case_insensitive: true } } },
         { wildcard: { sku: { value: `*${query.toLowerCase()}*`, boost: 30, case_insensitive: true } } },
         { wildcard: { article_number: { value: `*${query.toLowerCase()}*`, boost: 30, case_insensitive: true } } },
         // Exact term match in primary fields (e.g., "polyester" exact match)
@@ -473,6 +486,22 @@ function textQuery(search: string): estypes.QueryDslQueryContainer {
 
 function termsFilter(field: string, values: Array<string | number>): estypes.QueryDslQueryContainer | null {
   return values.length ? { terms: { [field]: values } } : null;
+}
+
+function nestedTermsFilter(
+  path: string,
+  field: string,
+  values: Array<string | number>,
+): estypes.QueryDslQueryContainer | null {
+  const filter = termsFilter(field, values);
+  if (!filter) return null;
+
+  return {
+    nested: {
+      path,
+      query: filter,
+    },
+  };
 }
 
 function exactKeywordFilter(field: string, values: string[]): estypes.QueryDslQueryContainer | null {
@@ -538,9 +567,33 @@ function rangeOrStringFilter(
   rangeMax: unknown,
   stringField: string,
   stringValues: string[],
+  stringNestedPath?: string,
 ): estypes.QueryDslQueryContainer | null {
   const rangeClause = rangeFilter(rangeField, rangeMin, rangeMax);
   const hasStringValues = stringValues.length > 0;
+  const stringClause = hasStringValues
+    ? {
+        bool: {
+          minimum_should_match: 1,
+          should: stringValues.map((value) => ({
+            term: {
+              [stringField]: {
+                value,
+                case_insensitive: true,
+              },
+            },
+          })),
+        },
+      } satisfies estypes.QueryDslQueryContainer
+    : null;
+  const nestedStringClause = stringClause && stringNestedPath
+    ? ({
+        nested: {
+          path: stringNestedPath,
+          query: stringClause,
+        },
+      } satisfies estypes.QueryDslQueryContainer)
+    : stringClause;
 
   if (!rangeClause && !hasStringValues) {
     return null;
@@ -551,19 +604,7 @@ function rangeOrStringFilter(
   }
 
   if (!rangeClause && hasStringValues) {
-    return {
-      bool: {
-        minimum_should_match: 1,
-        should: stringValues.map((value) => ({
-          term: {
-            [stringField]: {
-              value,
-              case_insensitive: true,
-            },
-          },
-        })),
-      },
-    };
+    return nestedStringClause;
   }
 
   // Both range and string values present - use OR logic
@@ -571,228 +612,16 @@ function rangeOrStringFilter(
     bool: {
       should: [
         rangeClause as estypes.QueryDslQueryContainer,
-        {
-          bool: {
-            minimum_should_match: 1,
-            should: stringValues.map((value) => ({
-              term: {
-                [stringField]: {
-                  value,
-                  case_insensitive: true,
-                },
-              },
-            })),
-          },
-        },
+        nestedStringClause as estypes.QueryDslQueryContainer,
       ],
       minimum_should_match: 1,
     },
   };
 }
 
-function painlessList(values: readonly string[]): string {
-  return `[${values.map((value) => `'${value.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'`).join(", ")}]`;
-}
-
-function sourceValueRuntimeScript(keys: readonly string[], emitExpression: string): string {
-  return `
-def keys = ${painlessList(keys)};
-def value = null;
-
-for (def key : keys) {
-  if (params._source.containsKey(key)) {
-    value = params._source[key];
-    break;
-  }
-}
-
-if (value == null) {
-  if (params._source.containsKey('properties')) {
-    def properties = params._source['properties'];
-    if (properties instanceof Map) {
-      for (def key : keys) {
-        if (properties.containsKey(key)) {
-          value = properties[key];
-          break;
-        }
-      }
-    }
-  }
-}
-
-if (value == null) {
-  return;
-}
-
-${emitExpression}
-`;
-}
-
-function keywordRuntimeScript(keys: readonly string[]): string {
-  return sourceValueRuntimeScript(keys, `
-if (value instanceof List) {
-  for (def item : value) {
-    if (item == null) {
-      continue;
-    }
-    def itemValue = item;
-    if (item instanceof Map && item.containsKey('value')) {
-      itemValue = item['value'];
-    }
-    def text = itemValue.toString();
-    if (text.length() > 0) {
-      emit(text);
-    }
-  }
-} else {
-  def text = value.toString();
-  if (text.length() > 0) {
-    emit(text);
-  }
-}
-`);
-}
-
-function numberRuntimeScript(keys: readonly string[]): string {
-  return sourceValueRuntimeScript(keys, `
-if (value instanceof List) {
-  for (def item : value) {
-    if (item == null) {
-      continue;
-    }
-    def matcher = /[-+]?[0-9]*\\.?[0-9]+/.matcher(item.toString());
-    if (matcher.find()) {
-      emit(Double.parseDouble(matcher.group()));
-    }
-  }
-} else {
-  def matcher = /[-+]?[0-9]*\\.?[0-9]+/.matcher(value.toString());
-  if (matcher.find()) {
-    emit(Double.parseDouble(matcher.group()));
-  }
-}
-`);
-}
-
-function materialRuntimeScript(): string {
-  return `
-def value = null;
-if (params._source.containsKey('material_title')) {
-  value = params._source['material_title'];
-}
-if (value == null && params._source.containsKey('materiaal')) {
-  value = params._source['materiaal'];
-}
-if (value == null && params._source.containsKey('material')) {
-  def material = params._source['material'];
-  if (material instanceof Map) {
-    if (material.containsKey('title')) {
-      value = material['title'];
-    } else if (material.containsKey('name')) {
-      value = material['name'];
-    } else if (material.containsKey('slug')) {
-      value = material['slug'];
-    }
-  } else if (material != null) {
-    value = material;
-  }
-}
-if (value == null && params._source.containsKey('properties')) {
-  def properties = params._source['properties'];
-  if (properties instanceof Map && properties.containsKey('materiaal')) {
-    value = properties['materiaal'];
-  }
-}
-if (value == null) {
-  return;
-}
-if (value instanceof List) {
-  for (def item : value) {
-    if (item == null) {
-      continue;
-    }
-    def text = item.toString();
-    if (text.length() > 0) {
-      emit(text);
-    }
-  }
-} else {
-  def text = value.toString();
-  if (text.length() > 0) {
-    emit(text);
-  }
-}
-`;
-}
-
-function catalogRuntimeMappings(): Record<string, unknown> {
-  return {
-    catalog_brand: {
-      type: "keyword",
-      script: { source: keywordRuntimeScript(["brand", "merken", "make"]) },
-    },
-    catalog_print_method: {
-      type: "keyword",
-      script: { source: keywordRuntimeScript(["printmethode", "print_method", "druktype"]) },
-    },
-    catalog_printer_type: {
-      type: "keyword",
-      script: { source: keywordRuntimeScript(["printer_type", "printer-type"]) },
-    },
-    catalog_detection: {
-      type: "keyword",
-      script: { source: keywordRuntimeScript(["detectie", "detection"]) },
-    },
-    catalog_marks: {
-      type: "keyword",
-      script: { source: keywordRuntimeScript(["merken", "brand", "make"]) },
-    },
-    catalog_material_code: {
-      type: "keyword",
-      script: { source: keywordRuntimeScript(["materiaal-code", "materiaal_code", "material_code"]) },
-    },
-    catalog_material: {
-      type: "keyword",
-      script: { source: materialRuntimeScript() },
-    },
-    catalog_finishing: {
-      type: "keyword",
-      script: { source: keywordRuntimeScript(["afwerking", "finishing"]) },
-    },
-    catalog_glue: {
-      type: "keyword",
-      script: { source: keywordRuntimeScript(["lijm", "glue", "adhesive"]) },
-    },
-    catalog_core_string: {
-      type: "keyword",
-      script: { source: keywordRuntimeScript(["kern", "kern_numeric", "meta_kern"]) },
-    },
-    catalog_outer_diameter_string: {
-      type: "keyword",
-      script: { source: keywordRuntimeScript(["buiten-diameter", "buiten_diameter", "outer_diameter"]) },
-    },
-    catalog_width_mm: {
-      type: "double",
-      script: { source: numberRuntimeScript(["breedte", "meta_width", "width"]) },
-    },
-    catalog_height_mm: {
-      type: "double",
-      script: { source: numberRuntimeScript(["hoogte", "meta_height", "height"]) },
-    },
-    catalog_core_mm: {
-      type: "double",
-      script: { source: numberRuntimeScript(["kern", "kern_numeric", "meta_kern"]) },
-    },
-    catalog_outer_diameter_mm: {
-      type: "double",
-      script: { source: numberRuntimeScript(["buiten-diameter", "buiten_diameter", "outer_diameter"]) },
-    },
-  };
-}
-
 function buildFilters(params: CatalogSearchParams): estypes.QueryDslQueryContainer[] {
   const filters: Array<estypes.QueryDslQueryContainer | null> = [
-    { term: { state: "active" } },
+    { term: { "state.keyword": "active" } },
     params.type ? { term: { product_type: params.type } } : null,
     termsFilter("id", params.ids),
     termsFilter("printer_ids", params.printerIds),
@@ -801,25 +630,32 @@ function buildFilters(params: CatalogSearchParams): estypes.QueryDslQueryContain
     exactKeywordFilter("article_number.keyword", params.articleNumbers),
     categorySlugFilter(params.categories),
     termsFilter("category_ids", params.categoryIds),
-    termsFilter("catalog_brand", params.brands),
+    termsFilter("catalog_brand.keyword", params.brands),
     termsFilter("material_id", params.materialIds),
     termsFilter("material_taxon_slugs", params.materialCategories),
     termsFilter("material_taxon_ids", params.materialCategoryIds),
-    termsFilter("catalog_material_code", params.materialCodes),
-    termsFilter("catalog_material", params.materials),
-    termsFilter("catalog_finishing", params.finishings),
-    termsFilter("catalog_glue", params.glues),
-    termsFilter("catalog_print_method", params.printMethods),
-    termsFilter("catalog_printer_type", params.printerTypes),
-    termsFilter("catalog_detection", params.detections),
-    termsFilter("catalog_marks", params.marks),
+    termsFilter("catalog_material_code.keyword", params.materialCodes),
+    termsFilter("catalog_material.keyword", params.materials),
+    nestedTermsFilter("properties", "properties.afwerking.keyword", params.finishings),
+    nestedTermsFilter("properties", "properties.lijm.keyword", params.glues),
+    nestedTermsFilter("properties", "properties.printmethode.keyword", params.printMethods),
+    nestedTermsFilter("properties", "properties.printer_type.keyword", params.printerTypes),
+    nestedTermsFilter("properties", "properties.detectie.keyword", params.detections),
+    termsFilter("compatible_brands.keyword", params.marks),
     params.inStock === true ? { range: { stock: { gt: 0 } } } : null,
     params.inStock === false ? { range: { stock: { lte: 0 } } } : null,
     rangeFilter("price", params.priceMin, params.priceMax),
-    rangeFilter("catalog_width_mm", params.widthMin, params.widthMax),
-    rangeFilter("catalog_height_mm", params.heightMin, params.heightMax),
-    rangeOrStringFilter("catalog_core_mm", params.coreMin, params.coreMax, "catalog_core_string", params.kernStrings),
-    rangeOrStringFilter("catalog_outer_diameter_mm", params.outerDiameterMin, params.outerDiameterMax, "catalog_outer_diameter_string", params.outerDiameterStrings),
+    rangeFilter("property_numbers.breedte", params.widthMin, params.widthMax),
+    rangeFilter("property_numbers.hoogte", params.heightMin, params.heightMax),
+    rangeOrStringFilter("property_numbers.kern", params.coreMin, params.coreMax, "properties.kern.keyword", params.kernStrings, "properties"),
+    rangeOrStringFilter(
+      "property_numbers.buiten-diameter",
+      params.outerDiameterMin,
+      params.outerDiameterMax,
+      "properties.buiten-diameter.keyword",
+      params.outerDiameterStrings,
+      "properties",
+    ),
   ];
 
   return filters.filter((filter): filter is estypes.QueryDslQueryContainer => filter !== null);
@@ -843,13 +679,28 @@ function aggregations(): Record<string, estypes.AggregationsAggregationContainer
   const optionAggs = Object.fromEntries(
     OPTION_FILTERS.map((filter) => [
       `options_${filter.key}`,
-      {
-        terms: {
-          field: filter.field,
-          size: 100,
-          order: { _key: "asc" },
-        },
-      } satisfies estypes.AggregationsAggregationContainer,
+      filter.nestedPath
+        ? ({
+            nested: {
+              path: filter.nestedPath,
+            },
+            aggs: {
+              values: {
+                terms: {
+                  field: filter.field,
+                  size: 100,
+                  order: { _key: "asc" },
+                },
+              },
+            },
+          } satisfies estypes.AggregationsAggregationContainer)
+        : ({
+            terms: {
+              field: filter.field,
+              size: 100,
+              order: { _key: "asc" },
+            },
+          } satisfies estypes.AggregationsAggregationContainer),
     ]),
   );
 
@@ -888,7 +739,8 @@ function aggregationBuckets(
 ): Array<{ key?: string | number; doc_count?: number }> {
   const agg = aggregationsResult?.[`options_${key}`];
   if (!agg || typeof agg !== "object") return [];
-  const buckets = (agg as { buckets?: unknown }).buckets;
+  const buckets = (agg as { buckets?: unknown; values?: { buckets?: unknown } }).buckets
+    ?? (agg as { values?: { buckets?: unknown } }).values?.buckets;
   return Array.isArray(buckets) ? (buckets as Array<{ key?: string | number; doc_count?: number }>) : [];
 }
 
@@ -902,6 +754,25 @@ function maxAggregation(
 }
 
 function buildCatalogFilters(aggregationsResult: Record<string, unknown> | undefined): CatalogFilters {
+  const options = OPTION_FILTERS.map((filter) => {
+    const aggregatedOptions = aggregationBuckets(aggregationsResult, filter.key)
+      .map((bucket) => {
+        const value = typeof bucket.key === "string" ? bucket.key : String(bucket.key ?? "");
+        return {
+          value,
+          label: labelFromCode(value),
+          count: typeof bucket.doc_count === "number" ? bucket.doc_count : 0,
+        };
+      })
+      .filter((option) => option.value.trim() !== "");
+
+    return {
+      key: filter.key,
+      title: filter.title,
+      options: aggregatedOptions,
+    };
+  }).filter((filter) => filter.options.length > 0);
+
   return {
     ranges: RANGE_FILTERS.map((filter) => ({
       key: filter.key,
@@ -911,36 +782,7 @@ function buildCatalogFilters(aggregationsResult: Record<string, unknown> | undef
       unitPrefix: filter.unitPrefix,
       unitSuffix: filter.unitSuffix,
     })).filter((filter) => filter.max > 0),
-    options: OPTION_FILTERS.map((filter) => {
-      const aggregatedOptions = aggregationBuckets(aggregationsResult, filter.key)
-        .map((bucket) => {
-          const value = typeof bucket.key === "string" ? bucket.key : String(bucket.key ?? "");
-          return {
-            value,
-            label: labelFromCode(value),
-            count: typeof bucket.doc_count === "number" ? bucket.doc_count : 0,
-          };
-        })
-        .filter((option) => option.value.trim() !== "");
-
-      // Add static "Fan-fold" option for kern and outer diameter string filters
-      if (filter.key === "kern_string" || filter.key === "outer_diameter_string") {
-        const fanFoldExists = aggregatedOptions.some((opt) => opt.value.toLowerCase() === "fan-fold");
-        if (!fanFoldExists) {
-          aggregatedOptions.unshift({
-            value: "Fan-fold",
-            label: "Fan-fold",
-            count: 0,
-          });
-        }
-      }
-
-      return {
-        key: filter.key,
-        title: filter.title,
-        options: aggregatedOptions,
-      };
-    }).filter((filter) => filter.options.length > 0),
+    options,
   };
 }
 
@@ -958,19 +800,6 @@ function firstScalar(value: unknown): string | number | boolean | null {
 function stringValue(value: unknown): string | null {
   const scalar = firstScalar(value);
   return scalar === null ? null : String(scalar);
-}
-
-function propertyStringValue(source: ProductSource, keys: readonly string[]): string | null {
-  const properties = source.properties;
-  if (!properties || typeof properties !== "object" || Array.isArray(properties)) return null;
-
-  for (const key of keys) {
-    const value = (properties as Record<string, unknown>)[key];
-    const text = stringValue(value);
-    if (text?.trim()) return text;
-  }
-
-  return null;
 }
 
 function numberValue(value: unknown): number | null {
@@ -1074,6 +903,7 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number): Ca
   const id = stringValue(source.id) ?? stringValue(source.ID) ?? hit._id ?? `result-${index}`;
   const type = productType(source.product_type) ?? productType(source.type);
   const slug = stringValue(source.slug) ?? stringValue(source.post_name);
+  const frontendPath = stringValue(source.frontend_path);
   const title = stringValue(source.title) ?? stringValue(source.name) ?? stringValue(source.post_title) ?? "Unnamed product";
   const warranty = warrantyFromSource(source);
 
@@ -1083,7 +913,7 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number): Ca
     name: title,
     subtitle: stringValue(source.subtitle),
     excerpt: stringValue(source.excerpt),
-    materialTitle: stringValue(source.material_title) ?? propertyStringValue(source, ["materiaal"]),
+    materialTitle: stringValue(source.catalog_material) ?? stringValue(source.catalog_material_code),
     price: numberValue(source.price),
     originalPrice: numberValue(source.original_price),
     inStock: booleanValue(source.in_stock) || Boolean((numberValue(source.stock) ?? 0) > 0),
@@ -1094,8 +924,9 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number): Ca
     ...(warranty !== undefined ? { warranty } : {}),
   };
 
-  const href: LinkProps["href"] | undefined =
-    slug && type
+  const href: LinkProps["href"] | undefined = frontendPath
+    ? frontendPath
+    : slug && type
       ? { pathname: `/products/${slug}`, query: { type } }
       : slug
         ? `/products/${slug}`
@@ -1120,7 +951,6 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
     from,
     size: params.perPage,
     track_total_hits: true,
-    runtime_mappings: catalogRuntimeMappings() as estypes.MappingRuntimeFields,
     _source: RESULT_SOURCE_FIELDS as unknown as string[],
     query: {
       bool: {
@@ -1150,15 +980,14 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
         index: catalogIndexForType(params.type),
         ignore_unavailable: true,
         size: 1,
-        runtime_mappings: catalogRuntimeMappings() as estypes.MappingRuntimeFields,
-        _source: ["name", "brand", "sku"] as unknown as string[],
+        _source: ["name", "catalog_brand", "sku"] as unknown as string[],
         query: {
           bool: {
             should: [
               {
                 multi_match: {
                   query: params.search,
-                  fields: ["name^3", "brand^2", "sku"],
+                  fields: ["name^3", "catalog_brand^2", "sku"],
                   fuzziness: "AUTO",
                   prefix_length: 0,
                 },
@@ -1173,7 +1002,7 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
         const hit = fuzzyResponse.hits.hits[0];
         const source = hit._source as ProductSource;
         // Return the name or brand from the closest match as suggestion
-        suggestion = stringValue(source.name) || stringValue(source.brand) || params.search;
+        suggestion = stringValue(source.name) || stringValue(source.catalog_brand) || params.search;
         
         // Only suggest if it's different from the original search
         if (suggestion.toLowerCase() === params.search.toLowerCase()) {
