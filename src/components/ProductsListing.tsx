@@ -6,8 +6,6 @@ import { useTranslations } from 'next-intl';
 import Accordion from "@/components/Accordion";
 import EmptyState from "@/components/EmptyState";
 import ProductCard from "@/components/ProductCard";
-import type { ProductCardData } from "@/components/ProductCard";
-import ProductPaginationSwitcher from "@/components/ProductPaginationSwitcher";
 import RangeSlider from "@/components/RangeSlider";
 import type {
   CatalogOptionFilter,
@@ -25,17 +23,6 @@ type ProductsListingProps = {
   scopeQueryString?: string;
   baselineRangeFilters?: CatalogRangeFilter[];
 };
-
-export type ListingProductCardData = ProductCardData;
-
-type LegacyProductsListingProps = {
-  products: ListingProductCardData[];
-  currentPage?: number;
-  lastPage?: number;
-  basePath?: string;
-};
-
-type ProductsListingUnionProps = ProductsListingProps | LegacyProductsListingProps;
 
 const OPTION_PARAM_KEY: Record<CatalogOptionFilterKey, string> = {
   category: "category",
@@ -177,50 +164,6 @@ function ProductSkeletonGrid({ isSidebarOpen }: { isSidebarOpen: boolean }) {
       {Array.from({ length: 8 }, (_, index) => (
         <div key={index} className="h-[520px] rounded-xl bg-slate-100 animate-pulse" />
       ))}
-    </div>
-  );
-}
-
-function LegacyProductsListing({ products, currentPage = 1, lastPage = 1, basePath }: LegacyProductsListingProps) {
-  const t = useTranslations();
-
-  const setPage = (page: number) => {
-    if (!basePath) return;
-    const [path, query = ""] = basePath.split("?");
-    const params = new URLSearchParams(query);
-    if (page <= 1) {
-      params.delete("page");
-    } else {
-      params.set("page", String(page));
-    }
-
-    const next = params.toString();
-    window.location.href = next ? `${path}?${next}` : path;
-  };
-
-  return (
-    <div className="flex flex-col gap-8">
-      {products.length === 0 ? (
-        <EmptyState title={t('common.noProductsFound')} description={t('search.tryAdjustingFilters')} />
-      ) : (
-        <>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
-            {products.map((product) => {
-              const href = product.slug
-                ? product.type
-                  ? { pathname: `/products/${product.slug}`, query: { type: product.type } }
-                  : { pathname: `/products/${product.slug}` }
-                : undefined;
-
-              return <ProductCard key={String(product.id)} product={product} href={href} />;
-            })}
-          </div>
-
-          {lastPage > 1 && basePath ? (
-            <ProductPaginationSwitcher currentPage={currentPage} pageCount={lastPage} onPageChange={setPage} />
-          ) : null}
-        </>
-      )}
     </div>
   );
 }
@@ -817,10 +760,6 @@ function CatalogProductsListing({
   );
 }
 
-export default function ProductsListing(props: ProductsListingUnionProps) {
-  if ("initialCatalog" in props) {
-    return <CatalogProductsListing {...props} />;
-  }
-
-  return <LegacyProductsListing {...props} />;
+export default function ProductsListing(props: ProductsListingProps) {
+  return <CatalogProductsListing {...props} />;
 }
