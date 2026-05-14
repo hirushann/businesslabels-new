@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { unescapeHtml } from "@/lib/utils";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 type PageData = {
   id: number;
@@ -71,11 +72,13 @@ export default async function DynamicCMSPage({ params }: { params: Promise<{ slu
 
       <div className="mx-auto max-w-[1440px] px-4 py-12 sm:px-6 lg:px-8">
         {/* Breadcrumbs */}
-        <nav className="mb-8 flex items-center gap-2 text-sm text-zinc-500">
-          <Link href="/" className="hover:text-amber-500 transition-colors">{t("common.home")}</Link>
-          <span>/</span>
-          <span className="font-semibold text-neutral-800">{page.title}</span>
-        </nav>
+        <div className="mb-8">
+          <Breadcrumbs 
+            items={[
+              { label: page.title }
+            ]} 
+          />
+        </div>
 
         {/* Page Header */}
         <header className="mb-12">

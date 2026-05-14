@@ -1,4 +1,4 @@
-export const MESSAGES = {
+export const MESSAGES_V3 = {
   en: {
     common: {
       search: 'Search...',
@@ -29,6 +29,10 @@ export const MESSAGES = {
       noProductsFound: 'No products found',
       noProductsDescription: 'There are currently no popular products available.',
       availability: 'Availability',
+    },
+    validation: {
+      required: "{field} is required",
+      invalidEmail: "Enter a valid email"
     },
     hero: {
       badge: 'Epson ColorWorks Gold Partner',
@@ -332,6 +336,10 @@ export const MESSAGES = {
       free: 'Free',
       bankTransferTooltip: "Get the invoice after shipment, payment terms 30 days net.",
       invoice: "Invoice",
+      orderSuccess: "Order placed successfully!",
+      orderError: "Failed to place order. Please check your details and try again.",
+      sessionExpired: "Your session has expired. Please log in again.",
+      noProducts: "Your cart doesn't contain any valid products."
     },
     pages: {
       about: 'About',
@@ -620,6 +628,10 @@ export const MESSAGES = {
       core: 'Core',
       outer_diameter: 'Outer Diameter',
       category: 'Category',
+      brand: 'Brand',
+      merken: 'Brands',
+      printer_type: 'Printer Type',
+      detectie: 'Detection',
     },
     product: {
       productDescription: 'Product Description',
@@ -705,6 +717,10 @@ export const MESSAGES = {
       noProductsFound: 'Geen producten gevonden',
       noProductsDescription: 'Er zijn momenteel geen populaire producten beschikbaar.',
       availability: 'Beschikbaarheid',
+    },
+    validation: {
+      required: "{field} is verplicht",
+      invalidEmail: "Voer een geldig e-mailadres in"
     },
     hero: {
       badge: 'Epson ColorWorks Gold Partner',
@@ -1008,6 +1024,10 @@ export const MESSAGES = {
       free: 'Gratis',
       bankTransferTooltip: "Ontvang de factuur met 30 dagen betaaltermijn na verzending",
       invoice: "Factuur",
+      orderSuccess: "Bestelling succesvol geplaatst!",
+      orderError: "Bestelling plaatsen mislukt. Controleer je gegevens en probeer het opnieuw.",
+      sessionExpired: "Je sessie is verlopen. Log opnieuw in.",
+      noProducts: "Je winkelwagen bevat geen geldige producten."
     },
     pages: {
       about: 'Over ons',
@@ -1296,6 +1316,10 @@ export const MESSAGES = {
       core: 'Kern',
       outer_diameter: 'Buitendiameter',
       category: 'Categorie',
+      brand: 'Merk',
+      merken: 'Merken',
+      printer_type: 'Printer Type',
+      detectie: 'Detectie',
     },
     product: {
       productDescription: 'Productbeschrijving',

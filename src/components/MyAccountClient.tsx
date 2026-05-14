@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import AddressAutocomplete from '@/components/AddressAutocomplete';
+import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 
 type Tab = 'dashboard' | 'orders' | 'addresses' | 'details' | 'printers' | 'favourites';
 
@@ -533,11 +534,12 @@ function MyAccountContent() {
         {/* Header Section */}
         <div className="mb-10">
           <h1 className="text-neutral-800 text-4xl font-bold leading-tight mb-2 uppercase tracking-tight">My Account</h1>
-          <nav className="flex items-center gap-2 text-sm text-neutral-500">
-            <Link href="/" className="hover:text-amber-500 transition-colors uppercase font-semibold text-xs tracking-wider">Home</Link>
-            <span className="opacity-30">/</span>
-            <span className="text-neutral-800 font-bold uppercase text-xs tracking-wider">My Account</span>
-          </nav>
+          <Breadcrumbs 
+            className="text-neutral-900"
+            items={[
+              { label: 'My Account' }
+            ]} 
+          />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-10 items-start">

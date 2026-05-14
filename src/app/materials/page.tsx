@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import ReviewsSection from "@/components/ReviewsSection";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations();
@@ -163,15 +164,13 @@ export default async function MaterialPage({
               />
               <div className="absolute inset-0 bg-black/40" />
               <div className="relative z-10 flex min-h-56 flex-col gap-4 p-6">
-                <nav className="flex items-center gap-2 text-sm leading-5 text-white/70" aria-label="Breadcrumb">
-                  <Link href="/" className="hover:text-white">
-                    {t("common.home")}
-                  </Link>
-                  <span>/</span>
-                  <span className="font-semibold text-white/70">{t("common.categories")}</span>
-                  <span>/</span>
-                  <span className="font-semibold text-white">{t("common.materials")}</span>
-                </nav>
+                <Breadcrumbs 
+                  className="text-white/70"
+                  items={[
+                    { label: t("common.categories"), href: "/categories" },
+                    { label: t("common.materials") }
+                  ]} 
+                />
                 <div className="mt-auto flex max-w-193.5 flex-col gap-4">
                   <h1 className="text-4xl font-bold leading-12 text-white">{t("materialsPage.title")}</h1>
                   <p className="text-lg leading-6 text-white">

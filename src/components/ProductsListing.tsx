@@ -272,15 +272,14 @@ function CatalogProductsListing({
 
   const getFilterTitle = (key: string, fallbackTitle?: string): string => {
     const filterKey = `filters.${key}` as const;
-    // Try to get translation, if it exists
-    try {
+    
+    if (t.has(filterKey)) {
       const translated = t(filterKey);
-      if (translated && translated !== filterKey) {
+      if (typeof translated === 'string' && translated !== filterKey) {
         return translated;
       }
-    } catch {
-      // Translation not found
     }
+
     // Fallback to the original title from API or capitalize key
     return fallbackTitle || key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ');
   };
@@ -552,7 +551,7 @@ function CatalogProductsListing({
 
       <div className={`flex flex-col gap-6 ${isSidebarOpen ? "lg:flex-row lg:items-start" : ""}`}>
         {isSidebarOpen ? (
-          <aside className="w-full shrink-0 rounded-xl border border-slate-100 bg-white p-4 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.08)] md:w-96 lg:w-96">
+          <aside className="w-full shrink-0 rounded-xl border border-slate-100 bg-white p-4 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.08)] md:w-96 lg:w-96 lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto custom-scrollbar">
             <div className="flex flex-col gap-5">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">

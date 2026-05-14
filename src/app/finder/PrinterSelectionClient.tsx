@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useTranslations } from 'next-intl';
 import EmptyState from "@/components/EmptyState";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 type Printer = {
   id: number;
@@ -140,13 +141,12 @@ export default function PrinterSelectionClient() {
         />
         <div className="relative z-10 mx-auto max-w-360 px-10 py-16">
           <div className="flex max-w-3xl flex-col gap-4">
-            <nav className="flex items-center gap-2 text-sm leading-5 text-white/70" aria-label="Breadcrumb">
-              <Link href="/" className="hover:text-white">
-                {t('common.home')}
-              </Link>
-              <span>/</span>
-              <span className="font-semibold text-white">{t('finder.productFinder')}</span>
-            </nav>
+            <Breadcrumbs 
+              className="text-white/70"
+              items={[
+                { label: t('finder.productFinder') }
+              ]} 
+            />
             <h1 className="text-4xl font-bold leading-12 text-white">{t('finder.findCompatibleProducts')}</h1>
             <p className="text-lg leading-6 text-white/90">
               {t('finder.printerSelectionSubtitle')}
