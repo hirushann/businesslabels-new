@@ -15,6 +15,7 @@ import {
 } from "@/lib/search/printers";
 import type { CatalogSearchResponse } from "@/lib/search/types";
 import type { PrinterSearchResponse } from "@/lib/search/printerTypes";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations();
@@ -309,17 +310,13 @@ export default async function FinderPage({
       <section className="bg-slate-50 px-4 py-10 sm:px-6 lg:px-10">
         <div className="mx-auto flex max-w-360 flex-col gap-8">
           <div className="border-b border-slate-200 pb-5">
-            <div className="mb-4 flex items-center gap-2 text-sm text-zinc-500">
-              <span>{t("common.home")}</span>
-              <span>/</span>
-              <span>{t("finder.printerFinder")}</span>
-              {printer ? (
-                <>
-                  <span>/</span>
-                  <span>{printer.title}</span>
-                </>
-              ) : null}
-            </div>
+            <Breadcrumbs 
+              items={[
+                { label: t("finder.printerFinder"), href: "/finder" },
+                { label: printer?.title || "Printer" }
+              ]} 
+              className="mb-4"
+            />
             <h1 className="text-3xl font-bold font-['Segoe_UI'] leading-8 text-neutral-800">
               {t("finder.compatibleProductsTitle", { type: productTypeLabel })}
             </h1>
@@ -360,11 +357,12 @@ export default async function FinderPage({
     <section className="bg-white px-4 py-10 sm:px-6 lg:px-10">
       <div className="mx-auto flex max-w-360 flex-col gap-10">
         <div className="border-b border-slate-200 pb-5">
-          <div className="mb-4 flex items-center gap-2 text-sm text-zinc-500">
-            <span>{t("common.home")}</span>
-            <span>/</span>
-            <span>{t("common.printers") || "Printers"}</span>
-          </div>
+          <Breadcrumbs 
+            items={[
+              { label: t("common.printers") || "Printers" }
+            ]} 
+            className="mb-4"
+          />
           <h1 className="text-3xl font-bold font-['Segoe_UI'] leading-8 text-neutral-800">
             {t("finder.printerFinder")}
           </h1>

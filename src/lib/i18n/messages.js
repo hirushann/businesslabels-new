@@ -1,4 +1,4 @@
-export const MESSAGES_V3 = {
+export const MESSAGES_V4 = {
   en: {
     common: {
       search: 'Search...',
@@ -29,6 +29,9 @@ export const MESSAGES_V3 = {
       noProductsFound: 'No products found',
       noProductsDescription: 'There are currently no popular products available.',
       availability: 'Availability',
+      remove: 'Remove',
+      total: 'Total',
+      continueShopping: 'Continue Shopping',
     },
     validation: {
       required: "{field} is required",
@@ -242,6 +245,11 @@ export const MESSAGES_V3 = {
       total: 'Total',
       selectedQuantities: 'incl. selected quantities',
       checkout: 'Checkout',
+      viewCart: 'View Cart',
+      product: 'Product',
+      price: 'Price',
+      quantity: 'Quantity',
+      summary: 'Cart Summary',
     },
     menus: {
       printers: {
@@ -562,8 +570,12 @@ export const MESSAGES_V3 = {
       subtotal: 'Subtotal',
       total: 'Total',
       selectedQuantities: 'Selected quantities',
-      checkout: 'Go to Checkout',
-      goToCheckout: 'Go to Checkout',
+      checkout: 'Checkout',
+      viewCart: 'View Cart',
+      product: 'Product',
+      price: 'Price',
+      quantity: 'Quantity',
+      summary: 'Cart Summary',
       close: 'Close cart',
       dialogLabel: 'Shopping cart',
     },
@@ -719,6 +731,9 @@ export const MESSAGES_V3 = {
       noProductsFound: 'Geen producten gevonden',
       noProductsDescription: 'Er zijn momenteel geen populaire producten beschikbaar.',
       availability: 'Beschikbaarheid',
+      remove: 'Verwijder',
+      total: 'Totaal',
+      continueShopping: 'Verder winkelen',
     },
     validation: {
       required: "{field} is verplicht",
@@ -932,6 +947,11 @@ export const MESSAGES_V3 = {
       total: 'Totaal',
       selectedQuantities: 'incl. geselecteerde aantallen',
       checkout: 'Afrekenen',
+      viewCart: 'Bekijk winkelwagen',
+      product: 'Product',
+      price: 'Prijs',
+      quantity: 'Aantal',
+      summary: 'Winkelwagenoverzicht',
     },
     menus: {
       printers: {
@@ -1252,8 +1272,12 @@ export const MESSAGES_V3 = {
       subtotal: 'Subtotaal',
       total: 'Totaal',
       selectedQuantities: 'Geselecteerde hoeveelheden',
-      checkout: 'Naar kassa',
-      goToCheckout: 'Naar kassa',
+      checkout: 'Afrekenen',
+      viewCart: 'Bekijk winkelwagen',
+      product: 'Product',
+      price: 'Prijs',
+      quantity: 'Aantal',
+      summary: 'Winkelwagenoverzicht',
       close: 'Winkelwagen sluiten',
       dialogLabel: 'Winkelwagen',
     },
