@@ -1,13 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SearchProvider, useSearch } from "@elastic/react-search-ui";
 import type { SearchDriverOptions } from "@elastic/search-ui";
 import { CategoryScopedProxyConnector } from "@/lib/categoryScopedConnector";
 import EmptyState from "@/components/EmptyState";
 import ProductCard from "@/components/ProductCard";
 import type { ProductCardData } from "@/components/ProductCard";
-import ProductPaginationSwitcher from "@/components/ProductPaginationSwitcher";
 import ProductListingFilters from "@/components/products-listing/ProductListingFilters";
 import { mapProductListingResult } from "@/components/products-listing/productResult";
 
@@ -95,6 +94,9 @@ function PrinterSkeletonGrid({ isSidebarOpen }: { isSidebarOpen: boolean }) {
 
 function PrintersListingContent({ printers }: { printers: PrinterCardData[] }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [accumulatedPrinters, setAccumulatedPrinters] = useState<ReturnType<typeof mapProductListingResult>[]>([]);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const {
     results,
@@ -131,17 +133,72 @@ function PrintersListingContent({ printers }: { printers: PrinterCardData[] }) {
   const selectedSort = sortValueFromState(sortField, sortDirection);
   const searchHasResolved = Array.isArray(results) && (typeof totalResults === "number" || !isLoading);
   const fallbackPrinters = !searchHasResolved && !error ? printers : [];
-  const searchPrinters = searchHasResolved
-    ? (results ?? []).map((result, resultIndex) => mapProductListingResult(result, resultIndex))
-    : [];
+  const searchPrinters = useMemo(() => {
+    return searchHasResolved
+      ? (results ?? []).map((result, resultIndex) => mapProductListingResult(result, resultIndex))
+      : [];
+  }, [results, searchHasResolved]);
   const hasFallbackPrinters = fallbackPrinters.length > 0;
-  const hasSearchPrinters = searchPrinters.length > 0;
+  const hasSearchPrinters = accumulatedPrinters.length > 0;
+  const hasMorePrinters = page < pageCount;
 
   const handleSortChange = (value: PrinterListingSortValue) => {
     const mapped = LISTING_SORT_TO_SEARCH_UI[value];
     (setSort as (field: string, direction: "asc" | "desc") => void)(mapped.field, mapped.direction);
     setCurrent(1);
   };
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    const timeoutId = window.setTimeout(() => {
+      if (page <= 1) {
+        setAccumulatedPrinters(searchPrinters);
+        return;
+      }
+
+      setAccumulatedPrinters((currentPrinters) => {
+        const existingIds = new Set(currentPrinters.map((item) => item.id));
+        const nextPrinters = searchPrinters.filter((item) => !existingIds.has(item.id));
+        return [...currentPrinters, ...nextPrinters];
+      });
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [isLoading, page, searchPrinters]);
+
+  const loadMorePrinters = useCallback(() => {
+    if (isLoading || isFetchingMore || !hasMorePrinters) return;
+    setIsFetchingMore(true);
+    setCurrent(page + 1);
+  }, [hasMorePrinters, isFetchingMore, isLoading, page, setCurrent]);
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setIsFetchingMore(false);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [isLoading]);
+
+  useEffect(() => {
+    const target = loadMoreRef.current;
+    if (!target || !hasMorePrinters) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          loadMorePrinters();
+        }
+      },
+      { rootMargin: "480px 0px", threshold: 0.01 },
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [hasMorePrinters, loadMorePrinters]);
 
   const clearFilters = () => {
     activeFilters.forEach((filter) => removeFilter(filter.field));
@@ -228,7 +285,7 @@ function PrintersListingContent({ printers }: { printers: PrinterCardData[] }) {
 
           {error ? (
             <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">{String(error)}</div>
-          ) : isLoading && !hasFallbackPrinters ? (
+          ) : isLoading && !hasFallbackPrinters && accumulatedPrinters.length === 0 ? (
             <PrinterSkeletonGrid isSidebarOpen={isSidebarOpen} />
           ) : !hasFallbackPrinters && !hasSearchPrinters ? (
             <EmptyState title="No printers found" description="Try adjusting the filters to see more printers." />
@@ -240,7 +297,7 @@ function PrintersListingContent({ printers }: { printers: PrinterCardData[] }) {
                 }`}
               >
                 {hasSearchPrinters
-                  ? searchPrinters.map(({ id, product, href }) => (
+                  ? accumulatedPrinters.map(({ id, product, href }) => (
                       <ProductCard key={id} product={product} href={href} />
                     ))
                   : fallbackPrinters.map((product) => (
@@ -258,8 +315,14 @@ function PrintersListingContent({ printers }: { printers: PrinterCardData[] }) {
                     ))}
               </div>
 
-              {pageCount > 1 && hasSearchPrinters ? (
-                <ProductPaginationSwitcher currentPage={page} pageCount={pageCount} onPageChange={setCurrent} />
+              {isLoading && accumulatedPrinters.length > 0 ? (
+                <PrinterSkeletonGrid isSidebarOpen={isSidebarOpen} />
+              ) : null}
+
+              {hasMorePrinters && hasSearchPrinters ? (
+                <div ref={loadMoreRef} className="flex min-h-20 items-center justify-center pt-4 text-sm text-slate-500">
+                  {isFetchingMore || isLoading ? "Loading more printers..." : "Scroll for more printers"}
+                </div>
               ) : null}
             </>
           )}

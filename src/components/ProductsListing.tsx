@@ -1,13 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from 'next-intl';
 import Accordion from "@/components/Accordion";
 import EmptyState from "@/components/EmptyState";
 import ProductCard from "@/components/ProductCard";
-import type { ProductCardData } from "@/components/ProductCard";
-import ProductPaginationSwitcher from "@/components/ProductPaginationSwitcher";
 import RangeSlider from "@/components/RangeSlider";
 import type {
   CatalogOptionFilter,
@@ -25,17 +23,6 @@ type ProductsListingProps = {
   scopeQueryString?: string;
   baselineRangeFilters?: CatalogRangeFilter[];
 };
-
-export type ListingProductCardData = ProductCardData;
-
-type LegacyProductsListingProps = {
-  products: ListingProductCardData[];
-  currentPage?: number;
-  lastPage?: number;
-  basePath?: string;
-};
-
-type ProductsListingUnionProps = ProductsListingProps | LegacyProductsListingProps;
 
 const OPTION_PARAM_KEY: Record<CatalogOptionFilterKey, string> = {
   category: "category",
@@ -181,50 +168,6 @@ function ProductSkeletonGrid({ isSidebarOpen }: { isSidebarOpen: boolean }) {
   );
 }
 
-function LegacyProductsListing({ products, currentPage = 1, lastPage = 1, basePath }: LegacyProductsListingProps) {
-  const t = useTranslations();
-
-  const setPage = (page: number) => {
-    if (!basePath) return;
-    const [path, query = ""] = basePath.split("?");
-    const params = new URLSearchParams(query);
-    if (page <= 1) {
-      params.delete("page");
-    } else {
-      params.set("page", String(page));
-    }
-
-    const next = params.toString();
-    window.location.href = next ? `${path}?${next}` : path;
-  };
-
-  return (
-    <div className="flex flex-col gap-8">
-      {products.length === 0 ? (
-        <EmptyState title={t('common.noProductsFound')} description={t('search.tryAdjustingFilters')} />
-      ) : (
-        <>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
-            {products.map((product) => {
-              const href = product.slug
-                ? product.type
-                  ? { pathname: `/products/${product.slug}`, query: { type: product.type } }
-                  : { pathname: `/products/${product.slug}` }
-                : undefined;
-
-              return <ProductCard key={String(product.id)} product={product} href={href} />;
-            })}
-          </div>
-
-          {lastPage > 1 && basePath ? (
-            <ProductPaginationSwitcher currentPage={currentPage} pageCount={lastPage} onPageChange={setPage} />
-          ) : null}
-        </>
-      )}
-    </div>
-  );
-}
-
 function CatalogProductsListing({
   initialCatalog,
   initialQueryString,
@@ -241,8 +184,11 @@ function CatalogProductsListing({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showAllFilters, setShowAllFilters] = useState<Record<string, boolean>>({});
   const [optimisticQueryString, setOptimisticQueryString] = useState<string | null>(null);
+  const [visibleProducts, setVisibleProducts] = useState<CatalogProductResult[]>(initialCatalog.products);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [isPending, startTransition] = useTransition();
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
   
   const stableRangeFilters = useMemo(
     () => (baselineRangeFilters?.length ? baselineRangeFilters : initialCatalog.filters.ranges),
@@ -291,6 +237,12 @@ function CatalogProductsListing({
     () => mergeQueryStrings(scopeQueryString, displayQueryString),
     [scopeQueryString, displayQueryString],
   );
+  const listingResetKey = useMemo(() => {
+    const params = new URLSearchParams(scopedCurrentQueryString);
+    params.delete("page");
+    return paramsToString(params);
+  }, [scopedCurrentQueryString]);
+  const listingResetKeyRef = useRef(listingResetKey);
   const initialSortedQueryString = useMemo(
     () => mergeQueryStrings(scopeQueryString, initialQueryString),
     [scopeQueryString, initialQueryString],
@@ -354,7 +306,6 @@ function CatalogProductsListing({
         if (!response.ok) {
           throw new Error("Catalog search is temporarily unavailable.");
         }
-        console.log(response);
         return response.json() as Promise<CatalogSearchResponse>;
       })
       .then((nextCatalog) => {
@@ -371,6 +322,27 @@ function CatalogProductsListing({
 
     return () => controller.abort();
   }, [scopedCurrentQueryString, hasInitialCatalog, initialCatalog]);
+
+  useEffect(() => {
+    if (listingResetKeyRef.current !== listingResetKey) {
+      setVisibleProducts([]);
+    }
+  }, [listingResetKey]);
+
+  useEffect(() => {
+    const shouldReplace = listingResetKeyRef.current !== listingResetKey || catalog.currentPage <= 1;
+    listingResetKeyRef.current = listingResetKey;
+
+    setVisibleProducts((currentProducts) => {
+      if (shouldReplace) {
+        return catalog.products;
+      }
+
+      const existingIds = new Set(currentProducts.map((item) => item.id));
+      const nextProducts = catalog.products.filter((item) => !existingIds.has(item.id));
+      return [...currentProducts, ...nextProducts];
+    });
+  }, [catalog.currentPage, catalog.products, listingResetKey]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -488,8 +460,42 @@ function CatalogProductsListing({
     });
   };
 
-  const products: CatalogProductResult[] = catalog.products;
   const loading = isLoading || isPending;
+  const products = visibleProducts;
+  const hasMoreProducts = catalog.currentPage < catalog.lastPage && products.length < catalog.total;
+
+  const loadMoreProducts = useCallback(() => {
+    if (loading || isFetchingMore || !hasMoreProducts) return;
+    setIsFetchingMore(true);
+    setPage(catalog.currentPage + 1);
+  }, [catalog.currentPage, hasMoreProducts, isFetchingMore, loading]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (loading) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setIsFetchingMore(false);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [loading]);
+
+  useEffect(() => {
+    const target = loadMoreRef.current;
+    if (!target || !hasMoreProducts) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          loadMoreProducts();
+        }
+      },
+      { rootMargin: "480px 0px", threshold: 0.01 },
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [hasMoreProducts, loadMoreProducts]);
 
   return (
     <div className="flex flex-col gap-8">
@@ -736,12 +742,14 @@ function CatalogProductsListing({
                 ))}
               </div>
 
-              {catalog.lastPage > 1 ? (
-                <ProductPaginationSwitcher
-                  currentPage={catalog.currentPage}
-                  pageCount={catalog.lastPage}
-                  onPageChange={setPage}
-                />
+              {loading && products.length > 0 ? (
+                <ProductSkeletonGrid isSidebarOpen={isSidebarOpen} />
+              ) : null}
+
+              {hasMoreProducts ? (
+                <div ref={loadMoreRef} className="flex min-h-20 items-center justify-center pt-4 text-sm text-slate-500">
+                  {isFetchingMore || loading ? t('search.loadingProducts') : "Scroll for more products"}
+                </div>
               ) : null}
             </>
           )}
@@ -751,10 +759,6 @@ function CatalogProductsListing({
   );
 }
 
-export default function ProductsListing(props: ProductsListingUnionProps) {
-  if ("initialCatalog" in props) {
-    return <CatalogProductsListing {...props} />;
-  }
-
-  return <LegacyProductsListing {...props} />;
+export default function ProductsListing(props: ProductsListingProps) {
+  return <CatalogProductsListing {...props} />;
 }

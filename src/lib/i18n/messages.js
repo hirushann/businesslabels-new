@@ -632,6 +632,8 @@ export const MESSAGES_V3 = {
       merken: 'Brands',
       printer_type: 'Printer Type',
       detectie: 'Detection',
+      brand: 'Brand',
+      type: 'Type',
     },
     product: {
       productDescription: 'Product Description',
@@ -1320,6 +1322,8 @@ export const MESSAGES_V3 = {
       merken: 'Merken',
       printer_type: 'Printer Type',
       detectie: 'Detectie',
+      brand: 'Merk',
+      type: 'Type',
     },
     product: {
       productDescription: 'Productbeschrijving',
