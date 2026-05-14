@@ -55,7 +55,7 @@ export default function ThankYouPage() {
     );
   }
 
-  const isSuccess = order?.status === "processing" || order?.status === "completed";
+  const isSuccess = order?.status === "processing" || order?.status === "completed" || order?.status === "pending";
 
   return (
     <div className="bg-slate-50 px-5 py-15 min-h-[70vh] flex items-center">

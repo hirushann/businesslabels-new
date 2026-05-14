@@ -154,6 +154,7 @@ export async function getPrinterById(id: number): Promise<FinderPrinterDetails |
   const client = elasticClient();
   const response = await client.search<PrinterSource>({
     index: printerIndexName(),
+    ignore_unavailable: true,
     size: 1,
     _source: [
       "id",
@@ -354,6 +355,7 @@ export async function searchPrinters(params: PrinterSearchParams): Promise<Print
 
     const response = await client.search({
       index,
+      ignore_unavailable: true,
       body: searchBody,
     });
 

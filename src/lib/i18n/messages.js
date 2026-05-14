@@ -330,6 +330,8 @@ export const MESSAGES = {
       total: 'Total',
       calculating: 'Calculating...',
       free: 'Free',
+      bankTransferTooltip: "Get the invoice after shipment, payment terms 30 days net.",
+      invoice: "Invoice",
     },
     pages: {
       about: 'About',
@@ -1004,6 +1006,8 @@ export const MESSAGES = {
       total: 'Totaal',
       calculating: 'Berekenen...',
       free: 'Gratis',
+      bankTransferTooltip: "Ontvang de factuur met 30 dagen betaaltermijn na verzending",
+      invoice: "Factuur",
     },
     pages: {
       about: 'Over ons',

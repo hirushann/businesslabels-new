@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 import ProductsListing from "@/components/ProductsListing";
 import { parseCatalogSearchParams, searchCatalogProducts } from "@/lib/search/products";
 import type { CatalogSearchResponse } from "@/lib/search/types";
+import ReviewsSection from "@/components/ReviewsSection";
 
 function slugToTitle(slug: string): string {
   return slug
@@ -64,26 +65,7 @@ const emptyCatalogResponse: CatalogSearchResponse = {
   filters: { ranges: [], options: [] },
 };
 
-const reviews = [
-  {
-    text: "\u201cLorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\u2019s standard dummy text ever since the 1500s, when an unknown printer took\u201d",
-    name: "David Tui",
-    role: "Marketing Manager, HubSync",
-    featured: false,
-  },
-  {
-    text: "\u201cLorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\u2019s standard dummy text ever since the 1500s, when an unknown printer took\u201d",
-    name: "Sarah Mitchell",
-    role: "Software Engineer, Anydesk",
-    featured: true,
-  },
-  {
-    text: "\u201cLorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\u2019s standard dummy text ever since the 1500s, when an unknown printer took\u201d",
-    name: "Priya Sharma",
-    role: "Product Designer, Designdot",
-    featured: false,
-  },
-];
+
 
 export default async function CategoryArchivePage({
   params,
@@ -152,50 +134,7 @@ export default async function CategoryArchivePage({
         </div>
       </div>
 
-      <div className="relative overflow-hidden bg-white px-10 py-24">
-        <div className="absolute right-0 top-0 h-48 w-48 -translate-y-1/2 translate-x-1/2 rounded-full bg-amber-500/30 blur-[132px]" />
-        <div className="absolute bottom-0 left-0 h-48 w-48 -translate-x-1/2 translate-y-1/2 rounded-full bg-amber-500/30 blur-[132px]" />
-
-        <div className="mx-auto flex max-w-360 flex-col gap-12">
-          <div className="flex items-start justify-between">
-            <h2 className="text-4xl font-bold leading-[48px] text-neutral-800">{t("reviewsSection.title")}</h2>
-            <div className="flex items-center gap-6">
-              <button className="flex h-12 w-12 items-center justify-center rounded-[100px] bg-white p-3 shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-gray-200 transition-colors hover:bg-gray-50">
-                <svg className="h-4 w-4 text-neutral-700" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <button className="flex h-12 w-12 items-center justify-center rounded-[100px] bg-white p-3 shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-amber-500 transition-colors hover:bg-amber-50">
-                <svg className="h-4 w-4 text-amber-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-6">
-            {reviews.map((review) => (
-              <div
-                key={review.name}
-                className={`flex flex-col gap-8 rounded-xl p-6 ${
-                  review.featured
-                    ? "bg-gradient-to-br from-orange-50 to-white outline outline-2 outline-offset-[-2px] outline-orange-100"
-                    : "bg-white outline outline-1 outline-offset-[-1px] outline-zinc-100"
-                }`}
-              >
-                <p className="text-lg font-normal leading-7 text-neutral-700">{review.text}</p>
-                <div className="flex items-center gap-4">
-                  <div className="w-1 self-stretch rounded-[32px] bg-amber-500" />
-                  <div className="flex flex-col gap-2">
-                    <span className="text-xl font-bold leading-6 text-neutral-800">{review.name}</span>
-                    <span className="text-base font-normal leading-6 text-zinc-500">{review.role}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      <ReviewsSection />
     </div>
   );
 }

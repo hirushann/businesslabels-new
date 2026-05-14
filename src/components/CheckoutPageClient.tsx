@@ -8,6 +8,7 @@ import { type CartItem, useCart } from "@/components/CartProvider";
 import { toast } from "sonner";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
 import { useTranslations } from 'next-intl';
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 type CheckoutFormState = {
   firstName: string;
@@ -304,23 +305,30 @@ function CheckoutShell({
                       </label>
 
                       {isLoggedIn && (
-                        <label 
-                          className={`flex cursor-pointer items-center gap-4 rounded-xl border p-4 transition-all ${
-                            form.paymentMethod === "banktransfer" ? "border-amber-400 bg-amber-50" : "border-slate-200 hover:border-amber-200"
-                          }`}
-                        >
-                          <input 
-                            type="radio" 
-                            name="paymentMethod" 
-                            className="sr-only" 
-                            checked={form.paymentMethod === "banktransfer"} 
-                            onChange={() => handleChange("paymentMethod", "banktransfer")} 
-                          />
-                          <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${form.paymentMethod === "banktransfer" ? "border-amber-500 bg-amber-500" : "border-slate-300"}`}>
-                            {form.paymentMethod === "banktransfer" && <div className="h-2 w-2 rounded-full bg-white" />}
-                          </div>
-                          <span className="text-base font-semibold text-neutral-800">Bank Transfer</span>
-                        </label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <label 
+                              className={`flex cursor-pointer items-center gap-4 rounded-xl border p-4 transition-all ${
+                                form.paymentMethod === "banktransfer" ? "border-amber-400 bg-amber-50" : "border-slate-200 hover:border-amber-200"
+                              }`}
+                            >
+                              <input 
+                                type="radio" 
+                                name="paymentMethod" 
+                                className="sr-only" 
+                                checked={form.paymentMethod === "banktransfer"} 
+                                onChange={() => handleChange("paymentMethod", "banktransfer")} 
+                              />
+                              <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${form.paymentMethod === "banktransfer" ? "border-amber-500 bg-amber-500" : "border-slate-300"}`}>
+                                {form.paymentMethod === "banktransfer" && <div className="h-2 w-2 rounded-full bg-white" />}
+                              </div>
+                              <span className="text-base font-semibold text-neutral-800">{t('checkout.invoice')}</span>
+                            </label>
+                          </TooltipTrigger>
+                          <TooltipContent className="p-4 bg-white border border-slate-200 shadow-xl text-neutral-800 rounded-2xl max-w-[300px]">
+                            <p className="font-medium text-sm">{t('checkout.bankTransferTooltip')}</p>
+                          </TooltipContent>
+                        </Tooltip>
                       )}
                     </div>
                     {errors.paymentMethod && <p className="text-sm text-red-500">{errors.paymentMethod}</p>}
@@ -711,7 +719,15 @@ export default function CheckoutPageClient({
       const json = await response.json();
 
       if (!response.ok) {
-        throw new Error(json.message || json.error || "Failed to create order");
+        if (response.status === 401 || json.message === "Unauthenticated.") {
+          toast.error("Your session has expired. Please log in again.");
+          localStorage.removeItem('auth_user');
+          window.location.href = "/login?redirect=/checkout";
+          return;
+        }
+        
+        toast.error(json.message || json.error || "Failed to create order");
+        return;
       }
 
       if (!isDemoMode) {
@@ -727,7 +743,7 @@ export default function CheckoutPageClient({
       setIsSubmitted(true);
       toast.success("Order placed successfully!");
     } catch (error) {
-      console.error("Checkout error:", error);
+      console.log("Checkout error:", String(error));
       toast.error("Failed to place order. Please check your details and try again.");
     } finally {
       setIsPending(false);

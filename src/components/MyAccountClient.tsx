@@ -303,6 +303,14 @@ async function requestAccountOrders() {
   console.log('Orders API Response:', data);
 
   if (!response.ok) {
+    if (response.status === 401 || data.message === 'Unauthenticated.') {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth_user');
+        window.location.href = '/login?redirect=/account';
+      }
+      return [];
+    }
+    
     throw new Error(
       isPlainObject(data) && typeof data.message === 'string'
         ? data.message
@@ -407,6 +415,14 @@ async function requestAccountAddresses() {
   console.log('Addresses API Response:', data);
 
   if (!response.ok) {
+    if (response.status === 401 || data.message === 'Unauthenticated.') {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth_user');
+        window.location.href = '/login?redirect=/account';
+      }
+      return [];
+    }
+
     throw new Error(
       isPlainObject(data) && typeof data.message === 'string'
         ? data.message

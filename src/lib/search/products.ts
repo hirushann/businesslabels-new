@@ -1116,6 +1116,7 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
 
   const response = await client.search<ProductSource>({
     index: catalogIndexForType(params.type),
+    ignore_unavailable: true,
     from,
     size: params.perPage,
     track_total_hits: true,
@@ -1147,6 +1148,7 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
     try {
       const fuzzyResponse = await client.search<ProductSource>({
         index: catalogIndexForType(params.type),
+        ignore_unavailable: true,
         size: 1,
         runtime_mappings: catalogRuntimeMappings() as estypes.MappingRuntimeFields,
         _source: ["name", "brand", "sku"] as unknown as string[],
