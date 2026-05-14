@@ -6,6 +6,7 @@ import type { SearchDriverOptions } from '@elastic/search-ui';
 import type { LinkProps } from 'next/link';
 import { apiConnector, SORT_TO_SEARCH_UI, type OverlaySortValue } from './api';
 import { useNextRoutingOptions } from './useNextRouting';
+import { useDebouncedSearchParam } from './useDebouncedSearchParam';
 import EmptyState from '@/components/EmptyState';
 import ProductCard, { type ProductCardData } from '@/components/ProductCard';
 import SearchFilters from './SearchFilters';
@@ -322,11 +323,25 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
     filters: state.filters,
     removeFilter: state.removeFilter,
   }));
-  const [inputValue, setInputValue] = useState(searchTerm || '');
   const [manualSort, setManualSort] = useState<OverlaySortValue | null>(null);
   const [accumulatedResults, setAccumulatedResults] = useState<OverlayProductResult[]>([]);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const activeFilters = filters ?? [];
+  const commitSearch = useCallback((nextSearch: string) => {
+    setSearchTerm(nextSearch, {
+      refresh: true,
+      shouldClearFilters: false,
+    });
+    setCurrent(1);
+  }, [setCurrent, setSearchTerm]);
+  const {
+    inputValue,
+    setInputValue,
+  } = useDebouncedSearchParam({
+    value: searchTerm || '',
+    minLength: MIN_QUERY_LENGTH,
+    onCommit: commitSearch,
+  });
   const queryValue = inputValue.trim();
   const queryMode = queryValue.length >= MIN_QUERY_LENGTH;
   const page = current || 1;
@@ -373,35 +388,6 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
       window.removeEventListener('keydown', onKeyDown);
     };
   }, [onClose]);
-
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      const currentSearch = (searchTerm || '').trim();
-
-      if (queryValue.length < MIN_QUERY_LENGTH) {
-        if (currentSearch !== '') {
-          setSearchTerm('', {
-            refresh: true,
-            shouldClearFilters: false,
-          });
-          setCurrent(1);
-        }
-        return;
-      }
-
-      if (queryValue === currentSearch) return;
-
-      setSearchTerm(queryValue, {
-        refresh: true,
-        shouldClearFilters: false,
-      });
-      setCurrent(1);
-    }, 350);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [queryValue, searchTerm, setCurrent, setSearchTerm]);
 
   useEffect(() => {
     if (isLoading) return;

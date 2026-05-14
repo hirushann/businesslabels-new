@@ -7,6 +7,7 @@ import Accordion from "@/components/Accordion";
 import EmptyState from "@/components/EmptyState";
 import ProductCard from "@/components/ProductCard";
 import RangeSlider from "@/components/RangeSlider";
+import { useDebouncedSearchParam } from "@/components/search/useDebouncedSearchParam";
 import type {
   CatalogOptionFilter,
   CatalogOptionFilterKey,
@@ -189,6 +190,7 @@ function CatalogProductsListing({
   const [isPending, startTransition] = useTransition();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  const hasFocusedSearchRef = useRef(false);
   
   const stableRangeFilters = useMemo(
     () => (baselineRangeFilters?.length ? baselineRangeFilters : initialCatalog.filters.ranges),
@@ -201,7 +203,8 @@ function CatalogProductsListing({
   );
 
   useEffect(() => {
-    if (searchParams.get("focus") === "true") {
+    if (!hasFocusedSearchRef.current || searchParams.get("focus") === "true") {
+      hasFocusedSearchRef.current = true;
       searchInputRef.current?.focus();
     }
   }, [searchParams]);
@@ -250,7 +253,6 @@ function CatalogProductsListing({
   );
   const searchValue = searchParams.get("search") ?? searchParams.get("q") ?? "";
   const displaySearchValue = displayParams.get("search") ?? displayParams.get("q") ?? "";
-  const [searchInput, setSearchInput] = useState(searchValue);
   const selectedSort = normalizeSortValue(displayParams.get("sort"), Boolean(displaySearchValue), SORT_OPTIONS);
   const hasInitialCatalog = scopedCurrentQueryString === initialSortedQueryString;
 
@@ -264,7 +266,7 @@ function CatalogProductsListing({
     }
   }, [currentQueryString, optimisticQueryString]);
 
-  const setParams = (updater: (params: URLSearchParams) => void) => {
+  const setParams = useCallback((updater: (params: URLSearchParams) => void) => {
     const next = new URLSearchParams(displayQueryString);
     updater(next);
     const nextString = paramsToString(next);
@@ -273,15 +275,27 @@ function CatalogProductsListing({
     startTransition(() => {
       router.push(href, { scroll: false });
     });
-  };
+  }, [displayQueryString, pathname, router]);
 
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      setSearchInput(searchValue);
-    }, 0);
+  const commitSearch = useCallback((nextSearch: string) => {
+    setParams((params) => {
+      params.delete("q");
+      if (nextSearch) {
+        params.set("search", nextSearch);
+      } else {
+        params.delete("search");
+      }
+      params.set("page", "1");
+    });
+  }, [setParams]);
 
-    return () => window.clearTimeout(timeoutId);
-  }, [searchValue]);
+  const {
+    inputValue: searchInput,
+    setInputValue: setSearchInput,
+  } = useDebouncedSearchParam({
+    value: searchValue,
+    onCommit: commitSearch,
+  });
 
   useEffect(() => {
     if (hasInitialCatalog) {
@@ -295,7 +309,8 @@ function CatalogProductsListing({
     }
 
     const controller = new AbortController();
-    window.setTimeout(() => {
+    let isCurrent = true;
+    const loadingTimeoutId = window.setTimeout(() => {
       setIsLoading(true);
       setError(null);
     }, 0);
@@ -310,18 +325,26 @@ function CatalogProductsListing({
         return response.json() as Promise<CatalogSearchResponse>;
       })
       .then((nextCatalog) => {
-        setCatalog(nextCatalog);
+        if (isCurrent) {
+          setCatalog(nextCatalog);
+        }
       })
       .catch((fetchError) => {
-        if ((fetchError as { name?: string }).name !== "AbortError") {
+        if (isCurrent && (fetchError as { name?: string }).name !== "AbortError") {
           setError(fetchError instanceof Error ? fetchError.message : "Catalog search failed.");
         }
       })
       .finally(() => {
-        setIsLoading(false);
+        if (isCurrent) {
+          setIsLoading(false);
+        }
       });
 
-    return () => controller.abort();
+    return () => {
+      isCurrent = false;
+      window.clearTimeout(loadingTimeoutId);
+      controller.abort();
+    };
   }, [scopedCurrentQueryString, hasInitialCatalog, initialCatalog]);
 
   useEffect(() => {
@@ -344,26 +367,6 @@ function CatalogProductsListing({
       return [...currentProducts, ...nextProducts];
     });
   }, [catalog.currentPage, catalog.products, listingResetKey]);
-
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      const nextSearch = searchInput.trim();
-      const activeSearch = searchValue.trim();
-      if (nextSearch === activeSearch) return;
-
-      setParams((params) => {
-        params.delete("q");
-        if (nextSearch) {
-          params.set("search", nextSearch);
-        } else {
-          params.delete("search");
-        }
-        params.set("page", "1");
-      });
-    }, 350);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [searchInput, searchValue]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const activeFilterCount = useMemo(() => {
     let count = 0;

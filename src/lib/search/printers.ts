@@ -270,20 +270,42 @@ export async function searchPrinters(params: PrinterSearchParams): Promise<Print
   // Add property filters
   const filterClauses: estypes.QueryDslQueryContainer[] = [];
 
+  function nestedPropertyFilter(field: string, values: string[]) {
+    return {
+      bool: {
+        minimum_should_match: 1,
+        should: [
+          { terms: { [field]: values } },
+          {
+            nested: {
+              path: "properties",
+              ignore_unmapped: true,
+              query: {
+                bool: {
+                  filter: [{ terms: { [field]: values } }],
+                },
+              },
+            },
+          },
+        ],
+      },
+    };
+  }
+
   if (params.druktype.length > 0) {
-    filterClauses.push({ terms: { "properties.druktype": params.druktype } });
+    filterClauses.push(nestedPropertyFilter("properties.druktype", params.druktype));
   }
   if (params.kern.length > 0) {
-    filterClauses.push({ terms: { "properties.kern": params.kern } });
+    filterClauses.push(nestedPropertyFilter("properties.kern", params.kern));
   }
   if (params.detectie.length > 0) {
-    filterClauses.push({ terms: { "properties.detectie": params.detectie } });
+    filterClauses.push(nestedPropertyFilter("properties.detectie", params.detectie));
   }
   if (params.width.length > 0) {
-    filterClauses.push({ terms: { "properties.width": params.width } });
+    filterClauses.push(nestedPropertyFilter("properties.width", params.width));
   }
   if (params.buitenDiameter.length > 0) {
-    filterClauses.push({ terms: { "properties.buiten_diameter": params.buitenDiameter } });
+    filterClauses.push(nestedPropertyFilter("properties.buiten_diameter", params.buitenDiameter));
   }
 
   // Build aggregations for filters (properties is a nested field)
