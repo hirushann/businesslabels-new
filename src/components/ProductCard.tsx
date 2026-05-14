@@ -124,11 +124,6 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
   const categoryBadge = lastCategoryLabel(product.categories);
   const features = featureLines(product);
   const hasPrice = typeof product.price === "number" && Number.isFinite(product.price);
-  const discountedPrice = hasPrice
-    ? product.discount
-      ? product.price - (product.price * (product.discount / 100))
-      : product.price
-    : 0;
   const hasOriginalPrice =
     typeof product.originalPrice === "number" &&
     Number.isFinite(product.originalPrice) &&
