@@ -80,6 +80,21 @@ function linePrice(item: CartItem): number {
   return price * item.quantity;
 }
 
+function getProductId(item: CartItem): number | null {
+  if (typeof item.id === "number" && Number.isFinite(item.id)) {
+    return item.id;
+  }
+
+  if (typeof item.id === "string") {
+    const parsedId = Number(item.id);
+    if (Number.isInteger(parsedId) && parsedId > 0) {
+      return parsedId;
+    }
+  }
+
+  return null;
+}
+
 function CheckoutShell({
   items,
   totalAmount,
@@ -688,7 +703,7 @@ export default function CheckoutPageClient({
     }
 
     // Ensure there's at least one real product (not just warranty addons)
-    const productItems = items.filter(item => item.itemKind !== "warranty" && typeof item.id === "number");
+    const productItems = items.filter((item) => item.itemKind !== "warranty" && getProductId(item) !== null);
     if (productItems.length === 0) {
       toast.error(t('checkout.noProducts'));
       return;
@@ -718,14 +733,21 @@ export default function CheckoutPageClient({
       payment_method: form.paymentMethod,
       total: finalTotal,
       order_items: items
-        // Warranty items are addons and don't have numeric product IDs — exclude them
-        .filter(item => item.itemKind !== "warranty" && typeof item.id === "number")
-        .map(item => ({
-          product_id: item.id as number,
-          name: item.name?.trim() || item.sku || "Product",
-          price: typeof item.price === "number" && Number.isFinite(item.price) ? item.price : 0,
-          quantity: item.quantity
-        }))
+        // Warranty items are addons and don't have numeric product IDs, so exclude them.
+        .flatMap((item) => {
+          const productId = item.itemKind === "warranty" ? null : getProductId(item);
+
+          if (productId === null) {
+            return [];
+          }
+
+          return [{
+            product_id: productId,
+            name: item.name?.trim() || item.sku || "Product",
+            price: typeof item.price === "number" && Number.isFinite(item.price) ? item.price : 0,
+            quantity: item.quantity,
+          }];
+        })
     };
 
     try {
