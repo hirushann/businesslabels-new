@@ -7,7 +7,7 @@ import EmptyState from "@/components/EmptyState";
 import { type CartItem, useCart } from "@/components/CartProvider";
 import { toast } from "sonner";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 type CheckoutFormState = {
@@ -516,6 +516,7 @@ export default function CheckoutPageClient({
 }: CheckoutPageClientProps) {
   const t = useTranslations();
   const cart = useCart();
+  const locale = useLocale();
   const isDemoMode = mode === "demo";
   const [form, setForm] = useState<CheckoutFormState>(
     isDemoMode ? demoFormState : initialFormState,
@@ -717,6 +718,7 @@ export default function CheckoutPageClient({
       payment_fee: paymentFee,
       payment_method: form.paymentMethod,
       total: finalTotal,
+      language: locale,
       order_items: items
         // Warranty items are addons and don't have numeric product IDs — exclude them
         .filter(item => item.itemKind !== "warranty" && typeof item.id === "number")
