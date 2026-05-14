@@ -77,6 +77,15 @@ function stringValue(value: unknown): string | null {
   return scalar === null ? null : String(scalar);
 }
 
+function stringValues(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => stringValues(item));
+  }
+
+  const string = stringValue(value)?.trim();
+  return string ? [string] : [];
+}
+
 function numberValue(value: unknown): number | null {
   const scalar = firstScalar(value);
   if (typeof scalar === "number") return scalar;
@@ -92,10 +101,7 @@ function stringArrayMap(value: unknown): Record<string, string[]> | undefined {
 
   const entries = Object.entries(value as Record<string, unknown>)
     .map(([key, rawValue]) => {
-      const values = Array.isArray(rawValue) ? rawValue : [rawValue];
-      const strings = values
-        .map((item) => stringValue(item)?.trim())
-        .filter((item): item is string => Boolean(item));
+      const strings = stringValues(rawValue);
 
       return [key, strings] as const;
     })

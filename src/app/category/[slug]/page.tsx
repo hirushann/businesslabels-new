@@ -3,7 +3,10 @@ import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import ProductsListing from "@/components/ProductsListing";
-import { parseCatalogSearchParams, searchCatalogProducts } from "@/lib/search/products";
+import {
+  parseCatalogSearchParams,
+  searchCatalogProducts,
+} from "@/lib/search/products";
 import type { CatalogSearchResponse } from "@/lib/search/types";
 import ReviewsSection from "@/components/ReviewsSection";
 
@@ -66,8 +69,6 @@ const emptyCatalogResponse: CatalogSearchResponse = {
   filters: { ranges: [], options: [] },
 };
 
-
-
 export default async function CategoryArchivePage({
   params,
   searchParams,
@@ -115,14 +116,16 @@ export default async function CategoryArchivePage({
             />
             <div className="absolute inset-0 bg-black/30 bg-gradient-to-t from-black/40 to-transparent" />
             <div className="absolute left-6 top-6 flex flex-col gap-12">
-              <Breadcrumbs 
+              <Breadcrumbs
                 className="text-white"
                 items={[
                   { label: t("common.products"), href: "/products" },
-                  { label: categoryTitle }
-                ]} 
+                  { label: categoryTitle },
+                ]}
               />
-              <h1 className="text-4xl font-bold leading-[48px] text-white">{categoryTitle}</h1>
+              <h1 className="text-4xl font-bold leading-[48px] text-white">
+                {categoryTitle}
+              </h1>
             </div>
           </div>
 

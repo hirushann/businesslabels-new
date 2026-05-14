@@ -1,8 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useTranslations } from 'next-intl';
+import { useTranslations } from "next-intl";
 import Accordion from "@/components/Accordion";
 import EmptyState from "@/components/EmptyState";
 import ProductCard from "@/components/ProductCard";
@@ -124,7 +131,10 @@ function paramsToString(params: URLSearchParams): string {
   return params.toString();
 }
 
-function mergeQueryStrings(baseQueryString: string | undefined, queryString: string): string {
+function mergeQueryStrings(
+  baseQueryString: string | undefined,
+  queryString: string,
+): string {
   const params = new URLSearchParams(baseQueryString ?? "");
   const next = new URLSearchParams(queryString);
 
@@ -150,20 +160,43 @@ function numberFor(params: URLSearchParams, key: string): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function formatRangeValue(value: number, unitPrefix?: string, unitSuffix?: string): string {
+function formatRangeValue(
+  value: number,
+  unitPrefix?: string,
+  unitSuffix?: string,
+): string {
   return `${unitPrefix ?? ""}${value}${unitSuffix ? ` ${unitSuffix}` : ""}`;
 }
 
-function normalizeSortValue(value: string | null, hasSearch: boolean, sortOptions: Array<{ value: CatalogSortValue; label: string }>): CatalogSortValue {
+function isTruthyParam(value: string | null): boolean {
+  return (
+    value === "1" || value === "true" || value === "yes" || value === "in_stock"
+  );
+}
+
+function normalizeSortValue(
+  value: string | null,
+  hasSearch: boolean,
+  sortOptions: Array<{ value: CatalogSortValue; label: string }>,
+): CatalogSortValue {
   const allowed = new Set(sortOptions.map((option) => option.value));
-  return allowed.has(value as CatalogSortValue) ? (value as CatalogSortValue) : hasSearch ? "relevance" : "latest";
+  return allowed.has(value as CatalogSortValue)
+    ? (value as CatalogSortValue)
+    : hasSearch
+      ? "relevance"
+      : "latest";
 }
 
 function ProductSkeletonGrid({ isSidebarOpen }: { isSidebarOpen: boolean }) {
   return (
-    <div className={`grid grid-cols-1 gap-6 sm:grid-cols-2 ${isSidebarOpen ? "xl:grid-cols-3" : "xl:grid-cols-4"}`}>
+    <div
+      className={`grid grid-cols-1 gap-6 sm:grid-cols-2 ${isSidebarOpen ? "xl:grid-cols-3" : "xl:grid-cols-4"}`}
+    >
       {Array.from({ length: 8 }, (_, index) => (
-        <div key={index} className="h-[520px] rounded-xl bg-slate-100 animate-pulse" />
+        <div
+          key={index}
+          className="h-[520px] rounded-xl bg-slate-100 animate-pulse"
+        />
       ))}
     </div>
   );
@@ -183,22 +216,34 @@ function CatalogProductsListing({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [showAllFilters, setShowAllFilters] = useState<Record<string, boolean>>({});
-  const [optimisticQueryString, setOptimisticQueryString] = useState<string | null>(null);
-  const [visibleProducts, setVisibleProducts] = useState<CatalogProductResult[]>(initialCatalog.products);
+  const [showAllFilters, setShowAllFilters] = useState<Record<string, boolean>>(
+    {},
+  );
+  const [optimisticQueryString, setOptimisticQueryString] = useState<
+    string | null
+  >(null);
+  const [visibleProducts, setVisibleProducts] = useState<
+    CatalogProductResult[]
+  >(initialCatalog.products);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [isPending, startTransition] = useTransition();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const hasFocusedSearchRef = useRef(false);
-  
+
   const stableRangeFilters = useMemo(
-    () => (baselineRangeFilters?.length ? baselineRangeFilters : initialCatalog.filters.ranges),
+    () =>
+      baselineRangeFilters?.length
+        ? baselineRangeFilters
+        : initialCatalog.filters.ranges,
     [baselineRangeFilters, initialCatalog.filters.ranges],
   );
 
   const absoluteRangeMaxes = useMemo<Partial<Record<CatalogRangeKey, number>>>(
-    () => Object.fromEntries(stableRangeFilters.map((filter) => [filter.key, filter.max])),
+    () =>
+      Object.fromEntries(
+        stableRangeFilters.map((filter) => [filter.key, filter.max]),
+      ),
     [stableRangeFilters],
   );
 
@@ -210,32 +255,41 @@ function CatalogProductsListing({
   }, [searchParams]);
 
   const SORT_OPTIONS: Array<{ value: CatalogSortValue; label: string }> = [
-    { value: "relevance", label: t('sort.relevance') },
-    { value: "latest", label: t('sort.latest') },
-    { value: "oldest", label: t('sort.oldest') },
-    { value: "title_asc", label: t('sort.nameAsc') },
-    { value: "title_desc", label: t('sort.nameDesc') },
-    { value: "price_asc", label: t('sort.priceAsc') },
-    { value: "price_desc", label: t('sort.priceDesc') },
+    { value: "relevance", label: t("sort.relevance") },
+    { value: "latest", label: t("sort.latest") },
+    { value: "oldest", label: t("sort.oldest") },
+    { value: "title_asc", label: t("sort.nameAsc") },
+    { value: "title_desc", label: t("sort.nameDesc") },
+    { value: "price_asc", label: t("sort.priceAsc") },
+    { value: "price_desc", label: t("sort.priceDesc") },
   ];
 
   const getFilterTitle = (key: string, fallbackTitle?: string): string => {
     const filterKey = `filters.${key}` as const;
-    
+
     if (t.has(filterKey)) {
       const translated = t(filterKey);
-      if (typeof translated === 'string' && translated !== filterKey) {
+      if (typeof translated === "string" && translated !== filterKey) {
         return translated;
       }
     }
 
     // Fallback to the original title from API or capitalize key
-    return fallbackTitle || key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ');
+    return (
+      fallbackTitle ||
+      key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, " ")
+    );
   };
 
-  const currentQueryString = useMemo(() => paramsToString(new URLSearchParams(searchParams.toString())), [searchParams]);
+  const currentQueryString = useMemo(
+    () => paramsToString(new URLSearchParams(searchParams.toString())),
+    [searchParams],
+  );
   const displayQueryString = optimisticQueryString ?? currentQueryString;
-  const displayParams = useMemo(() => new URLSearchParams(displayQueryString), [displayQueryString]);
+  const displayParams = useMemo(
+    () => new URLSearchParams(displayQueryString),
+    [displayQueryString],
+  );
   const scopedCurrentQueryString = useMemo(
     () => mergeQueryStrings(scopeQueryString, displayQueryString),
     [scopeQueryString, displayQueryString],
@@ -251,12 +305,22 @@ function CatalogProductsListing({
     [scopeQueryString, initialQueryString],
   );
   const searchValue = searchParams.get("search") ?? searchParams.get("q") ?? "";
-  const displaySearchValue = displayParams.get("search") ?? displayParams.get("q") ?? "";
-  const selectedSort = normalizeSortValue(displayParams.get("sort"), Boolean(displaySearchValue), SORT_OPTIONS);
-  const hasInitialCatalog = scopedCurrentQueryString === initialSortedQueryString;
+  const displaySearchValue =
+    displayParams.get("search") ?? displayParams.get("q") ?? "";
+  const selectedSort = normalizeSortValue(
+    displayParams.get("sort"),
+    Boolean(displaySearchValue),
+    SORT_OPTIONS,
+  );
+  const inStockSelected = isTruthyParam(displayParams.get("in_stock"));
+  const hasInitialCatalog =
+    scopedCurrentQueryString === initialSortedQueryString;
 
   useEffect(() => {
-    if (optimisticQueryString === null || optimisticQueryString === currentQueryString) {
+    if (
+      optimisticQueryString === null ||
+      optimisticQueryString === currentQueryString
+    ) {
       const timeoutId = window.setTimeout(() => {
         setOptimisticQueryString(null);
       }, 0);
@@ -265,36 +329,40 @@ function CatalogProductsListing({
     }
   }, [currentQueryString, optimisticQueryString]);
 
-  const setParams = useCallback((updater: (params: URLSearchParams) => void) => {
-    const next = new URLSearchParams(displayQueryString);
-    updater(next);
-    const nextString = paramsToString(next);
-    const href = nextString ? `${pathname}?${nextString}` : pathname;
-    setOptimisticQueryString(nextString);
-    startTransition(() => {
-      router.push(href, { scroll: false });
-    });
-  }, [displayQueryString, pathname, router]);
+  const setParams = useCallback(
+    (updater: (params: URLSearchParams) => void) => {
+      const next = new URLSearchParams(displayQueryString);
+      updater(next);
+      const nextString = paramsToString(next);
+      const href = nextString ? `${pathname}?${nextString}` : pathname;
+      setOptimisticQueryString(nextString);
+      startTransition(() => {
+        router.push(href, { scroll: false });
+      });
+    },
+    [displayQueryString, pathname, router],
+  );
 
-  const commitSearch = useCallback((nextSearch: string) => {
-    setParams((params) => {
-      params.delete("q");
-      if (nextSearch) {
-        params.set("search", nextSearch);
-      } else {
-        params.delete("search");
-      }
-      params.set("page", "1");
-    });
-  }, [setParams]);
+  const commitSearch = useCallback(
+    (nextSearch: string) => {
+      setParams((params) => {
+        params.delete("q");
+        if (nextSearch) {
+          params.set("search", nextSearch);
+        } else {
+          params.delete("search");
+        }
+        params.set("page", "1");
+      });
+    },
+    [setParams],
+  );
 
-  const {
-    inputValue: searchInput,
-    setInputValue: setSearchInput,
-  } = useDebouncedSearchParam({
-    value: searchValue,
-    onCommit: commitSearch,
-  });
+  const { inputValue: searchInput, setInputValue: setSearchInput } =
+    useDebouncedSearchParam({
+      value: searchValue,
+      onCommit: commitSearch,
+    });
 
   useEffect(() => {
     if (hasInitialCatalog) {
@@ -329,8 +397,15 @@ function CatalogProductsListing({
         }
       })
       .catch((fetchError) => {
-        if (isCurrent && (fetchError as { name?: string }).name !== "AbortError") {
-          setError(fetchError instanceof Error ? fetchError.message : "Catalog search failed.");
+        if (
+          isCurrent &&
+          (fetchError as { name?: string }).name !== "AbortError"
+        ) {
+          setError(
+            fetchError instanceof Error
+              ? fetchError.message
+              : "Catalog search failed.",
+          );
         }
       })
       .finally(() => {
@@ -353,7 +428,9 @@ function CatalogProductsListing({
   }, [listingResetKey]);
 
   useEffect(() => {
-    const shouldReplace = listingResetKeyRef.current !== listingResetKey || catalog.currentPage <= 1;
+    const shouldReplace =
+      listingResetKeyRef.current !== listingResetKey ||
+      catalog.currentPage <= 1;
     listingResetKeyRef.current = listingResetKey;
 
     setVisibleProducts((currentProducts) => {
@@ -362,7 +439,9 @@ function CatalogProductsListing({
       }
 
       const existingIds = new Set(currentProducts.map((item) => item.id));
-      const nextProducts = catalog.products.filter((item) => !existingIds.has(item.id));
+      const nextProducts = catalog.products.filter(
+        (item) => !existingIds.has(item.id),
+      );
       return [...currentProducts, ...nextProducts];
     });
   }, [catalog.currentPage, catalog.products, listingResetKey]);
@@ -375,30 +454,48 @@ function CatalogProductsListing({
 
     stableRangeFilters.forEach((filter) => {
       const rangeKeys = RANGE_PARAM_KEYS[filter.key];
-      if (displayParams.has(rangeKeys.min) || displayParams.has(rangeKeys.max)) {
+      if (
+        displayParams.has(rangeKeys.min) ||
+        displayParams.has(rangeKeys.max)
+      ) {
         count += 1;
       }
     });
 
     if (displayParams.has("in_stock")) count += 1;
-    if (displayParams.has("type") || displayParams.has("product_type")) count += 1;
+    if (displayParams.has("type") || displayParams.has("product_type"))
+      count += 1;
     return count;
   }, [catalog.filters.options, stableRangeFilters, displayParams]);
 
   const orderedFilters = useMemo(() => {
-    const rangeMap = new Map(catalog.filters.ranges.map((filter) => [filter.key, filter]));
-    const stableRangeMap = new Map(stableRangeFilters.map((filter) => [filter.key, filter]));
-    const optionMap = new Map(catalog.filters.options.map((filter) => [filter.key, filter]));
+    const rangeMap = new Map(
+      catalog.filters.ranges.map((filter) => [filter.key, filter]),
+    );
+    const stableRangeMap = new Map(
+      stableRangeFilters.map((filter) => [filter.key, filter]),
+    );
+    const optionMap = new Map(
+      catalog.filters.options.map((filter) => [filter.key, filter]),
+    );
 
-    return FILTER_UI_ORDER.flatMap((entry): Array<{ kind: "range"; filter: CatalogRangeFilter } | { kind: "option"; filter: CatalogOptionFilter }> => {
-      if (entry.kind === "range") {
-        const filter = rangeMap.get(entry.key) ?? stableRangeMap.get(entry.key);
-        return filter ? [{ kind: "range" as const, filter }] : [];
-      }
+    return FILTER_UI_ORDER.flatMap(
+      (
+        entry,
+      ): Array<
+        | { kind: "range"; filter: CatalogRangeFilter }
+        | { kind: "option"; filter: CatalogOptionFilter }
+      > => {
+        if (entry.kind === "range") {
+          const filter =
+            rangeMap.get(entry.key) ?? stableRangeMap.get(entry.key);
+          return filter ? [{ kind: "range" as const, filter }] : [];
+        }
 
-      const filter = optionMap.get(entry.key);
-      return filter ? [{ kind: "option" as const, filter }] : [];
-    });
+        const filter = optionMap.get(entry.key);
+        return filter ? [{ kind: "option" as const, filter }] : [];
+      },
+    );
   }, [catalog.filters.options, catalog.filters.ranges, stableRangeFilters]);
 
   const clearFilters = () => {
@@ -410,7 +507,10 @@ function CatalogProductsListing({
 
   const setSort = (value: CatalogSortValue) => {
     setParams((params) => {
-      if ((searchValue && value === "relevance") || (!searchValue && value === "latest")) {
+      if (
+        (searchValue && value === "relevance") ||
+        (!searchValue && value === "latest")
+      ) {
         params.delete("sort");
       } else {
         params.set("sort", value);
@@ -445,7 +545,22 @@ function CatalogProductsListing({
     });
   };
 
-  const setRange = (key: keyof typeof RANGE_PARAM_KEYS, range: [number, number], max: number) => {
+  const toggleInStock = () => {
+    setParams((params) => {
+      if (isTruthyParam(params.get("in_stock"))) {
+        params.delete("in_stock");
+      } else {
+        params.set("in_stock", "true");
+      }
+      params.set("page", "1");
+    });
+  };
+
+  const setRange = (
+    key: keyof typeof RANGE_PARAM_KEYS,
+    range: [number, number],
+    max: number,
+  ) => {
     setParams((params) => {
       const rangeKeys = RANGE_PARAM_KEYS[key];
       if (range[0] <= 0) {
@@ -465,7 +580,8 @@ function CatalogProductsListing({
 
   const loading = isLoading || isPending;
   const products = visibleProducts;
-  const hasMoreProducts = catalog.currentPage < catalog.lastPage && products.length < catalog.total;
+  const hasMoreProducts =
+    catalog.currentPage < catalog.lastPage && products.length < catalog.total;
 
   const loadMoreProducts = useCallback(() => {
     if (loading || isFetchingMore || !hasMoreProducts) return;
@@ -504,15 +620,33 @@ function CatalogProductsListing({
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex min-h-11 w-full items-center gap-3 rounded-lg border border-slate-200 px-3 lg:max-w-xl">
-          <svg width="18" height="18" viewBox="0 0 16 16" fill="none" className="shrink-0" aria-hidden="true">
-            <circle cx="6.75" cy="6.75" r="5.25" stroke="currentColor" strokeWidth="1.5" />
-            <path d="M11.5 11.5L14.5 14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 16 16"
+            fill="none"
+            className="shrink-0"
+            aria-hidden="true"
+          >
+            <circle
+              cx="6.75"
+              cy="6.75"
+              r="5.25"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
+            <path
+              d="M11.5 11.5L14.5 14.5"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
           </svg>
           <input
             ref={searchInputRef}
             value={searchInput}
             onChange={(event) => setSearchInput(event.target.value)}
-            placeholder={t('search.searchProducts')}
+            placeholder={t("search.searchProducts")}
             className="h-11 w-full bg-transparent text-base text-neutral-800 outline-none"
           />
         </div>
@@ -522,17 +656,42 @@ function CatalogProductsListing({
             type="button"
             onClick={() => setIsSidebarOpen((currentValue) => !currentValue)}
             className={`inline-flex h-10 w-fit items-center gap-4 rounded-[42px] border px-5 py-2 text-neutral-800 transition-colors ${
-              isSidebarOpen ? "border-amber-500 bg-amber-50 text-amber-600" : "border-slate-200 hover:border-amber-200"
+              isSidebarOpen
+                ? "border-amber-500 bg-amber-50 text-amber-600"
+                : "border-slate-200 hover:border-amber-200"
             }`}
             aria-expanded={isSidebarOpen}
           >
             <span className="flex items-center gap-2">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                <path d="M3 5H17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                <path d="M5.5 10H14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                <path d="M8 15H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M3 5H17"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M5.5 10H14.5"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M8 15H12"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
               </svg>
-              <span className="text-lg font-semibold font-['Segoe_UI'] leading-6">{t('search.filters')}</span>
+              <span className="text-lg font-semibold font-['Segoe_UI'] leading-6">
+                {t("search.filters")}
+              </span>
               {activeFilterCount > 0 ? (
                 <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-100 px-1.5 text-xs font-semibold text-amber-600">
                   {activeFilterCount}
@@ -545,7 +704,9 @@ function CatalogProductsListing({
             <span className="sr-only">Sort products</span>
             <select
               value={selectedSort}
-              onChange={(event) => setSort(event.target.value as CatalogSortValue)}
+              onChange={(event) =>
+                setSort(event.target.value as CatalogSortValue)
+              }
               className="bg-transparent text-base font-normal font-['Segoe_UI'] leading-5 outline-none"
             >
               {SORT_OPTIONS.map((option) => (
@@ -558,13 +719,17 @@ function CatalogProductsListing({
         </div>
       </div>
 
-      <div className={`flex flex-col gap-6 ${isSidebarOpen ? "lg:flex-row lg:items-start" : ""}`}>
+      <div
+        className={`flex flex-col gap-6 ${isSidebarOpen ? "lg:flex-row lg:items-start" : ""}`}
+      >
         {isSidebarOpen ? (
           <aside className="w-full shrink-0 rounded-xl border border-slate-100 bg-white p-4 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.08)] md:w-96 lg:w-96 lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto custom-scrollbar">
             <div className="flex flex-col gap-5">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-bold text-neutral-800">Filters</h2>
+                  <h2 className="text-xl font-bold text-neutral-800">
+                    Filters
+                  </h2>
                   {activeFilterCount > 0 ? (
                     <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-100 px-1.5 text-xs font-semibold text-amber-600">
                       {activeFilterCount}
@@ -583,15 +748,72 @@ function CatalogProductsListing({
               </div>
 
               <div className="flex flex-col gap-3">
+                <Accordion
+                  title={t("common.availability")}
+                  defaultOpen={true}
+                  size="compact"
+                  className="bg-white"
+                >
+                  <button
+                    type="button"
+                    onClick={toggleInStock}
+                    className={`inline-flex min-h-9 w-fit items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                      inStockSelected
+                        ? "bg-amber-500 text-white shadow-sm hover:bg-amber-600"
+                        : "bg-slate-100 text-neutral-700 hover:bg-amber-50 hover:text-amber-600"
+                    }`}
+                    aria-pressed={inStockSelected}
+                  >
+                    <span
+                      className={`flex h-4 w-4 items-center justify-center rounded border ${
+                        inStockSelected
+                          ? "border-white bg-white text-amber-500"
+                          : "border-slate-300 bg-white"
+                      }`}
+                      aria-hidden="true"
+                    >
+                      {inStockSelected ? (
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 12 12"
+                          fill="none"
+                        >
+                          <path
+                            d="M2.5 6.2L4.8 8.4L9.5 3.6"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      ) : null}
+                    </span>
+                    <span>{t("common.inStock")}</span>
+                    {inStockSelected ? (
+                      <span className="text-base leading-none text-white/80">
+                        ×
+                      </span>
+                    ) : null}
+                  </button>
+                </Accordion>
+
                 {orderedFilters.map((entry) => {
                   if (entry.kind === "range") {
                     const filter = entry.filter;
                     const keys = RANGE_PARAM_KEYS[filter.key];
                     // Use absolute max from initial catalog for consistent UI bounds
-                    const absoluteMax = absoluteRangeMaxes[filter.key] ?? filter.max;
+                    const absoluteMax =
+                      absoluteRangeMaxes[filter.key] ?? filter.max;
                     const value: [number, number] = [
-                      Math.min(numberFor(displayParams, keys.min) ?? 0, absoluteMax),
-                      Math.min(numberFor(displayParams, keys.max) ?? absoluteMax, absoluteMax),
+                      Math.min(
+                        numberFor(displayParams, keys.min) ?? 0,
+                        absoluteMax,
+                      ),
+                      Math.min(
+                        numberFor(displayParams, keys.max) ?? absoluteMax,
+                        absoluteMax,
+                      ),
                     ];
 
                     const fanFoldFilterKey: CatalogOptionFilterKey | null =
@@ -602,35 +824,60 @@ function CatalogProductsListing({
                           : null;
 
                     const fanFoldSelected = fanFoldFilterKey
-                      ? valuesFor(displayParams, OPTION_PARAM_KEY[fanFoldFilterKey]).some(
-                          (selectedValue) => selectedValue.toLowerCase() === "fan-fold",
+                      ? valuesFor(
+                          displayParams,
+                          OPTION_PARAM_KEY[fanFoldFilterKey],
+                        ).some(
+                          (selectedValue) =>
+                            selectedValue.toLowerCase() === "fan-fold",
                         )
                       : false;
 
                     const fanFoldCount = fanFoldFilterKey
-                      ? catalog.filters.options
-                          .find((optionFilter) => optionFilter.key === fanFoldFilterKey)
-                          ?.options.find((option) => option.value.toLowerCase() === "fan-fold")
-                          ?.count ?? 0
+                      ? (catalog.filters.options
+                          .find(
+                            (optionFilter) =>
+                              optionFilter.key === fanFoldFilterKey,
+                          )
+                          ?.options.find(
+                            (option) =>
+                              option.value.toLowerCase() === "fan-fold",
+                          )?.count ?? 0)
                       : 0;
 
                     return (
-                      <Accordion key={filter.key} title={getFilterTitle(filter.key, filter.title)} defaultOpen={true} size="compact" className="bg-white">
+                      <Accordion
+                        key={filter.key}
+                        title={getFilterTitle(filter.key, filter.title)}
+                        defaultOpen={true}
+                        size="compact"
+                        className="bg-white"
+                      >
                         <div className="flex flex-col gap-3">
                           <RangeSlider
                             min={0}
                             max={absoluteMax}
                             value={value}
                             onChange={() => {}}
-                            onAfterChange={(range) => setRange(filter.key, range, absoluteMax)}
-                            formatValue={(rangeValue) => formatRangeValue(rangeValue, filter.unitPrefix, filter.unitSuffix)}
+                            onAfterChange={(range) =>
+                              setRange(filter.key, range, absoluteMax)
+                            }
+                            formatValue={(rangeValue) =>
+                              formatRangeValue(
+                                rangeValue,
+                                filter.unitPrefix,
+                                filter.unitSuffix,
+                              )
+                            }
                             inputPrefix={filter.unitPrefix}
                           />
 
                           {fanFoldFilterKey ? (
                             <button
                               type="button"
-                              onClick={() => toggleOption(fanFoldFilterKey, "Fan-fold")}
+                              onClick={() =>
+                                toggleOption(fanFoldFilterKey, "Fan-fold")
+                              }
                               className={`inline-flex min-h-9 w-fit items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                                 fanFoldSelected
                                   ? "bg-amber-500 text-white shadow-sm hover:bg-amber-600"
@@ -639,8 +886,20 @@ function CatalogProductsListing({
                               aria-pressed={fanFoldSelected}
                             >
                               <span>Fan-fold</span>
-                              <span className={fanFoldSelected ? "text-white/75" : "text-slate-400"}>{fanFoldCount}</span>
-                              {fanFoldSelected ? <span className="text-base leading-none text-white/80">×</span> : null}
+                              <span
+                                className={
+                                  fanFoldSelected
+                                    ? "text-white/75"
+                                    : "text-slate-400"
+                                }
+                              >
+                                {fanFoldCount}
+                              </span>
+                              {fanFoldSelected ? (
+                                <span className="text-base leading-none text-white/80">
+                                  ×
+                                </span>
+                              ) : null}
                             </button>
                           ) : null}
                         </div>
@@ -650,14 +909,24 @@ function CatalogProductsListing({
 
                   const filter = entry.filter;
                   const paramKey = OPTION_PARAM_KEY[filter.key];
-                  const selectedValues = new Set(valuesFor(displayParams, paramKey));
+                  const selectedValues = new Set(
+                    valuesFor(displayParams, paramKey),
+                  );
                   const showAll = showAllFilters[filter.key] ?? false;
                   const DISPLAY_LIMIT = 10;
-                  const displayedOptions = showAll ? filter.options : filter.options.slice(0, DISPLAY_LIMIT);
+                  const displayedOptions = showAll
+                    ? filter.options
+                    : filter.options.slice(0, DISPLAY_LIMIT);
                   const hasMore = filter.options.length > DISPLAY_LIMIT;
 
                   return (
-                    <Accordion key={filter.key} title={getFilterTitle(filter.key, filter.title)} defaultOpen={true} size="compact" className="bg-white">
+                    <Accordion
+                      key={filter.key}
+                      title={getFilterTitle(filter.key, filter.title)}
+                      defaultOpen={true}
+                      size="compact"
+                      className="bg-white"
+                    >
                       <div className="flex flex-col gap-3">
                         <div className="flex flex-wrap gap-2">
                           {displayedOptions.map((option) => {
@@ -667,7 +936,9 @@ function CatalogProductsListing({
                               <button
                                 key={option.value}
                                 type="button"
-                                onClick={() => toggleOption(filter.key, option.value)}
+                                onClick={() =>
+                                  toggleOption(filter.key, option.value)
+                                }
                                 className={`inline-flex min-h-9 items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                                   selected
                                     ? "bg-amber-500 text-white shadow-sm hover:bg-amber-600"
@@ -676,8 +947,20 @@ function CatalogProductsListing({
                                 aria-pressed={selected}
                               >
                                 <span>{option.label}</span>
-                                <span className={selected ? "text-white/75" : "text-slate-400"}>{option.count}</span>
-                                {selected ? <span className="text-base leading-none text-white/80">×</span> : null}
+                                <span
+                                  className={
+                                    selected
+                                      ? "text-white/75"
+                                      : "text-slate-400"
+                                  }
+                                >
+                                  {option.count}
+                                </span>
+                                {selected ? (
+                                  <span className="text-base leading-none text-white/80">
+                                    ×
+                                  </span>
+                                ) : null}
                               </button>
                             );
                           })}
@@ -693,7 +976,9 @@ function CatalogProductsListing({
                             }
                             className="text-sm font-medium text-amber-600 hover:text-amber-700 transition-colors"
                           >
-                            {showAll ? "Show less" : `Show more (${filter.options.length - DISPLAY_LIMIT} more)`}
+                            {showAll
+                              ? "Show less"
+                              : `Show more (${filter.options.length - DISPLAY_LIMIT} more)`}
                           </button>
                         )}
                       </div>
@@ -707,14 +992,19 @@ function CatalogProductsListing({
 
         <div className="min-w-0 flex-1">
           <div className="mb-4 text-sm text-neutral-600">
-            {loading ? t('search.loadingProducts') : t('search.results', { count: catalog.total })}
+            {loading
+              ? t("search.loadingProducts")
+              : t("search.results", { count: catalog.total })}
           </div>
 
           {/* Display "Did you mean" suggestion when no results found */}
-          {!loading && catalog.total === 0 && catalog.suggestion && searchValue ? (
+          {!loading &&
+          catalog.total === 0 &&
+          catalog.suggestion &&
+          searchValue ? (
             <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
               <p className="text-sm text-blue-800">
-                Did you mean:{' '}
+                Did you mean:{" "}
                 <button
                   type="button"
                   onClick={() => setSearchInput(catalog.suggestion!)}
@@ -728,11 +1018,16 @@ function CatalogProductsListing({
           ) : null}
 
           {error ? (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+              {error}
+            </div>
           ) : loading && products.length === 0 ? (
             <ProductSkeletonGrid isSidebarOpen={isSidebarOpen} />
           ) : products.length === 0 ? (
-            <EmptyState title={t('common.noProductsFound')} description={t('search.tryAdjustingFilters')} />
+            <EmptyState
+              title={t("common.noProductsFound")}
+              description={t("search.tryAdjustingFilters")}
+            />
           ) : (
             <>
               <div
@@ -750,8 +1045,13 @@ function CatalogProductsListing({
               ) : null}
 
               {hasMoreProducts ? (
-                <div ref={loadMoreRef} className="flex min-h-20 items-center justify-center pt-4 text-sm text-slate-500">
-                  {isFetchingMore || loading ? t('search.loadingProducts') : "Scroll for more products"}
+                <div
+                  ref={loadMoreRef}
+                  className="flex min-h-20 items-center justify-center pt-4 text-sm text-slate-500"
+                >
+                  {isFetchingMore || loading
+                    ? t("search.loadingProducts")
+                    : "Scroll for more products"}
                 </div>
               ) : null}
             </>
