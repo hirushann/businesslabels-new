@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/carousel";
 import Link from "next/link";
 import { Image } from "lucide-react";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 export async function generateMetadata({
   params,
@@ -143,7 +144,7 @@ type ProductDetail = {
     height?: string | number | null;
     length?: string | number | null;
   } | null;
-  categories?: Array<{ id?: number; name?: string | null }>;
+  categories?: Array<{ id?: number; name?: string | null; slug?: string | null }>;
   component_products?: ComponentProduct[] | null;
   up_sells?: UpsellProduct[];
   cross_sells?: UpsellProduct[];
@@ -576,16 +577,21 @@ export default async function SingleProductPage({
     <div className="bg-white">
 
 
-      {/* Main Product Section */}
       <div className="px-10 py-10">
         {/* Breadcrumb */}
         <div className="pb-8">
-          <div className="max-w-360 mx-auto flex items-center gap-2 text-sm text-zinc-500">
-            <span>{t('common.home')}</span>
-            <span>/</span>
-            <span>{t('common.products')}</span>
-            <span>/</span>
-            <span className="text-neutral-700 font-semibold">{productName}</span>
+          <div className="max-w-360 mx-auto">
+            <Breadcrumbs 
+              className="text-neutral-900"
+              items={[
+                { label: t('common.products'), href: '/products' },
+                ...(product.categories && product.categories.length > 0 ? [{ 
+                  label: product.categories[0].name || "", 
+                  href: `/category/${product.categories[0].slug || product.categories[0].id}` 
+                }] : []),
+                { label: productName }
+              ]} 
+            />
           </div>
         </div>
         <div className="max-w-360 mx-auto flex gap-12 items-start">
@@ -691,7 +697,7 @@ export default async function SingleProductPage({
           </div>
 
           {/* RIGHT: Purchase Card */}
-          <div className="flex flex-col gap-6 w-96 sticky top-24">
+          <div className="flex flex-col gap-6 w-[420px] sticky top-24">
             <ProductPurchase
               id={product?.id}
               slug={product?.slug}

@@ -184,18 +184,28 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
             </span>
           </div>
 
-          <Link
-            href="/checkout"
-            onClick={onClose}
-            aria-disabled={items.length === 0}
-            className={`h-12 px-4 py-2.5 rounded-full text-white text-base font-semibold font-['Segoe_UI'] leading-6 transition-colors flex items-center justify-center ${
-              items.length === 0
-                ? 'bg-slate-200 text-slate-500 pointer-events-none'
-                : 'bg-amber-500 hover:bg-amber-600'
-            }`}
-          >
-            {t('cart.checkout')}
-          </Link>
+          <div className="flex flex-col gap-3">
+            <Link
+              href="/cart"
+              onClick={onClose}
+              className="h-12 px-4 py-2.5 rounded-full border border-amber-500 text-amber-600 text-base font-semibold font-['Segoe_UI'] leading-6 transition-colors flex items-center justify-center hover:bg-amber-50"
+            >
+              {t('cart.viewCart')}
+            </Link>
+
+            <Link
+              href="/checkout"
+              onClick={onClose}
+              aria-disabled={items.length === 0}
+              className={`h-12 px-4 py-2.5 rounded-full text-white text-base font-semibold font-['Segoe_UI'] leading-6 transition-colors flex items-center justify-center ${
+                items.length === 0
+                  ? 'bg-slate-200 text-slate-500 pointer-events-none'
+                  : 'bg-amber-500 hover:bg-amber-600'
+              }`}
+            >
+              {t('cart.checkout')}
+            </Link>
+          </div>
         </div>
       </div>
 

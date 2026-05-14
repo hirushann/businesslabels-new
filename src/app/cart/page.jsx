@@ -1,6 +1,14 @@
-import { getTranslations } from 'next-intl/server';
+import CartPageClient from '@/components/CartPageClient';
 
-export default async function CartPage() {
-  const t = await getTranslations();
-  return <h1>{t('pages.cart')}</h1>;
+export const metadata = {
+  title: 'Your Shopping Cart | Businesslabels',
+  description: 'Review the items in your shopping cart before proceeding to checkout.',
+};
+
+export default function CartPage() {
+  return (
+    <main className="min-h-screen bg-slate-50/50">
+      <CartPageClient />
+    </main>
+  );
 }

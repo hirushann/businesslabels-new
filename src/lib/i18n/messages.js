@@ -1,4 +1,4 @@
-export const MESSAGES = {
+export const MESSAGES_V4 = {
   en: {
     common: {
       search: 'Search...',
@@ -29,6 +29,13 @@ export const MESSAGES = {
       noProductsFound: 'No products found',
       noProductsDescription: 'There are currently no popular products available.',
       availability: 'Availability',
+      remove: 'Remove',
+      total: 'Total',
+      continueShopping: 'Continue Shopping',
+    },
+    validation: {
+      required: "{field} is required",
+      invalidEmail: "Enter a valid email"
     },
     hero: {
       badge: 'Epson ColorWorks Gold Partner',
@@ -238,6 +245,11 @@ export const MESSAGES = {
       total: 'Total',
       selectedQuantities: 'incl. selected quantities',
       checkout: 'Checkout',
+      viewCart: 'View Cart',
+      product: 'Product',
+      price: 'Price',
+      quantity: 'Quantity',
+      summary: 'Cart Summary',
     },
     menus: {
       printers: {
@@ -332,6 +344,10 @@ export const MESSAGES = {
       free: 'Free',
       bankTransferTooltip: "Get the invoice after shipment, payment terms 30 days net.",
       invoice: "Invoice",
+      orderSuccess: "Order placed successfully!",
+      orderError: "Failed to place order. Please check your details and try again.",
+      sessionExpired: "Your session has expired. Please log in again.",
+      noProducts: "Your cart doesn't contain any valid products."
     },
     pages: {
       about: 'About',
@@ -554,8 +570,12 @@ export const MESSAGES = {
       subtotal: 'Subtotal',
       total: 'Total',
       selectedQuantities: 'Selected quantities',
-      checkout: 'Go to Checkout',
-      goToCheckout: 'Go to Checkout',
+      checkout: 'Checkout',
+      viewCart: 'View Cart',
+      product: 'Product',
+      price: 'Price',
+      quantity: 'Quantity',
+      summary: 'Cart Summary',
       close: 'Close cart',
       dialogLabel: 'Shopping cart',
     },
@@ -620,6 +640,12 @@ export const MESSAGES = {
       core: 'Core',
       outer_diameter: 'Outer Diameter',
       category: 'Category',
+      brand: 'Brand',
+      merken: 'Compatible Brands',
+      printer_type: 'Printer Type',
+      detectie: 'Detection',
+      brand: 'Brand',
+      type: 'Type',
     },
     product: {
       productDescription: 'Product Description',
@@ -705,6 +731,13 @@ export const MESSAGES = {
       noProductsFound: 'Geen producten gevonden',
       noProductsDescription: 'Er zijn momenteel geen populaire producten beschikbaar.',
       availability: 'Beschikbaarheid',
+      remove: 'Verwijder',
+      total: 'Totaal',
+      continueShopping: 'Verder winkelen',
+    },
+    validation: {
+      required: "{field} is verplicht",
+      invalidEmail: "Voer een geldig e-mailadres in"
     },
     hero: {
       badge: 'Epson ColorWorks Gold Partner',
@@ -914,6 +947,11 @@ export const MESSAGES = {
       total: 'Totaal',
       selectedQuantities: 'incl. geselecteerde aantallen',
       checkout: 'Afrekenen',
+      viewCart: 'Bekijk winkelwagen',
+      product: 'Product',
+      price: 'Prijs',
+      quantity: 'Aantal',
+      summary: 'Winkelwagenoverzicht',
     },
     menus: {
       printers: {
@@ -1008,6 +1046,10 @@ export const MESSAGES = {
       free: 'Gratis',
       bankTransferTooltip: "Ontvang de factuur met 30 dagen betaaltermijn na verzending",
       invoice: "Factuur",
+      orderSuccess: "Bestelling succesvol geplaatst!",
+      orderError: "Bestelling plaatsen mislukt. Controleer je gegevens en probeer het opnieuw.",
+      sessionExpired: "Je sessie is verlopen. Log opnieuw in.",
+      noProducts: "Je winkelwagen bevat geen geldige producten."
     },
     pages: {
       about: 'Over ons',
@@ -1230,8 +1272,12 @@ export const MESSAGES = {
       subtotal: 'Subtotaal',
       total: 'Totaal',
       selectedQuantities: 'Geselecteerde hoeveelheden',
-      checkout: 'Naar kassa',
-      goToCheckout: 'Naar kassa',
+      checkout: 'Afrekenen',
+      viewCart: 'Bekijk winkelwagen',
+      product: 'Product',
+      price: 'Prijs',
+      quantity: 'Aantal',
+      summary: 'Winkelwagenoverzicht',
       close: 'Winkelwagen sluiten',
       dialogLabel: 'Winkelwagen',
     },
@@ -1296,6 +1342,12 @@ export const MESSAGES = {
       core: 'Kern',
       outer_diameter: 'Buitendiameter',
       category: 'Categorie',
+      brand: 'Merk',
+      merken: 'Compatibele merken',
+      printer_type: 'Printer Type',
+      detectie: 'Detectie',
+      brand: 'Merk',
+      type: 'Type',
     },
     product: {
       productDescription: 'Productbeschrijving',

@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import Accordion from "@/components/Accordion";
 import EmptyState from "@/components/EmptyState";
 import PrinterCard from "@/components/PrinterCard";
 import ProductPaginationSwitcher from "@/components/ProductPaginationSwitcher";
+import { useDebouncedSearchParam } from "@/components/search/useDebouncedSearchParam";
 import type {
   PrinterCardData,
   PrinterOptionFilterKey,
@@ -63,37 +64,70 @@ export default function FinderListing({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const hasFocusedSearchRef = useRef(false);
 
   const [catalog, setCatalog] = useState<PrinterSearchResponse>(initialCatalog);
   const [queryString, setQueryString] = useState(initialQueryString);
+  const [isFetching, setIsFetching] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showAllFilters, setShowAllFilters] = useState<Record<string, boolean>>({});
 
+  const currentQueryString = searchParams.toString();
   const currentPage = catalog.currentPage;
   const lastPage = catalog.lastPage;
   const total = catalog.total;
-  const loading = isPending;
+  const loading = isPending || isFetching;
 
-  // Sync with URL changes
   useEffect(() => {
-    const newQueryString = searchParams.toString();
-    if (newQueryString !== queryString) {
-      setQueryString(newQueryString);
+    if (!hasFocusedSearchRef.current || searchParams.get("focus") === "true") {
+      hasFocusedSearchRef.current = true;
+      searchInputRef.current?.focus();
+    }
+  }, [searchParams]);
 
-      startTransition(async () => {
-        try {
-          const response = await fetch(`/api/printers?${newQueryString}`);
-          if (response.ok) {
-            const data = await response.json();
-            setCatalog(data);
-          }
-        } catch (error) {
+  useEffect(() => {
+    if (currentQueryString === queryString) return;
+
+    const controller = new AbortController();
+    let isCurrent = true;
+    const loadingTimeoutId = window.setTimeout(() => {
+      if (isCurrent) {
+        setIsFetching(true);
+      }
+    }, 0);
+
+    async function fetchPrinters() {
+      try {
+        const endpoint = currentQueryString ? `/api/printers?${currentQueryString}` : "/api/printers";
+        const response = await fetch(endpoint, {
+          signal: controller.signal,
+        });
+        if (response.ok && isCurrent) {
+          const data = await response.json();
+          setCatalog(data);
+        }
+      } catch (error) {
+        if (isCurrent && (error as { name?: string }).name !== "AbortError") {
           console.error("Failed to fetch printers:", error);
         }
-      });
+      } finally {
+        window.clearTimeout(loadingTimeoutId);
+        if (isCurrent) {
+          setQueryString(currentQueryString);
+          setIsFetching(false);
+        }
+      }
     }
-  }, [searchParams, queryString]);
+
+    fetchPrinters();
+
+    return () => {
+      isCurrent = false;
+      window.clearTimeout(loadingTimeoutId);
+      controller.abort();
+    };
+  }, [currentQueryString, queryString]);
 
   // Extract current filter values from URL
   const activeFilters = useMemo(() => {
@@ -110,28 +144,10 @@ export default function FinderListing({
   }, [searchParams]);
 
   const searchValue = searchParams.get("search") || searchParams.get("q") || "";
-  const [searchInput, setSearchInput] = useState(searchValue);
   const currentSort: PrinterSortValue = 
     PRINTER_SORT_VALUES.includes(searchParams.get("sort") as PrinterSortValue)
       ? (searchParams.get("sort") as PrinterSortValue)
       : "latest";
-
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      setSearchInput(searchValue);
-    }, 0);
-    return () => window.clearTimeout(timeoutId);
-  }, [searchValue]);
-
-  // Debounce search execution (300ms delay)
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      if (searchInput !== searchValue) {
-        setSearch(searchInput);
-      }
-    }, 300);
-    return () => window.clearTimeout(timeoutId);
-  }, [searchInput, searchValue]);
 
   const SORT_OPTIONS: Array<{ value: PrinterSortValue; label: string }> = [
     { value: "latest", label: t('sort.latest') },
@@ -141,7 +157,7 @@ export default function FinderListing({
   ];
 
   // Helper to update URL params
-  const setParams = (updater: (params: URLSearchParams) => void) => {
+  const setParams = useCallback((updater: (params: URLSearchParams) => void) => {
     const next = new URLSearchParams(searchParams.toString());
     updater(next);
     const nextString = next.toString();
@@ -149,9 +165,9 @@ export default function FinderListing({
     startTransition(() => {
       router.push(href, { scroll: false });
     });
-  };
+  }, [pathname, router, searchParams]);
 
-  const setSearch = (value: string) => {
+  const setSearch = useCallback((value: string) => {
     setParams((params) => {
       if (value) {
         params.set("search", value);
@@ -161,7 +177,17 @@ export default function FinderListing({
       }
       params.set("page", "1");
     });
-  };
+  }, [setParams]);
+
+  const {
+    inputValue: searchInput,
+    setInputValue: setSearchInput,
+    commitNow: commitSearchNow,
+  } = useDebouncedSearchParam({
+    value: searchValue,
+    onCommit: setSearch,
+    delay: 300,
+  });
 
   const setSort = (value: PrinterSortValue) => {
     setParams((params) => {
@@ -233,7 +259,7 @@ export default function FinderListing({
             }}
             onKeyDown={(event) => {
               if (event.key === "Enter") {
-                setSearch(searchInput);
+                commitSearchNow();
               }
             }}
             placeholder={t('hero.searchPrinters')}

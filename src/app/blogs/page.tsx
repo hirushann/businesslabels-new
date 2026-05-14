@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations();
@@ -49,6 +50,12 @@ export default async function BlogsPage() {
       <section className="relative overflow-hidden bg-sky-950 py-24 text-white">
         <div className="pointer-events-none absolute left-0 top-0 h-full w-full bg-[radial-gradient(circle_at_20%_30%,rgba(241,136,0,0.15),transparent_50%)]" />
         <div className="mx-auto max-w-360 px-4 sm:px-6 lg:px-8">
+          <Breadcrumbs 
+            className="mb-8 text-white/70"
+            items={[
+              { label: t("blogsPage.titlePrefix") }
+            ]} 
+          />
           <div className="max-w-3xl">
             <h1 className="text-5xl font-black uppercase tracking-tight sm:text-6xl lg:text-7xl">
               {t("blogsPage.titlePrefix")} <span className="text-amber-500">{t("blogsPage.titleHighlight")}</span>

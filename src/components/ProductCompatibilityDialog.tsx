@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 
 import {
@@ -149,10 +149,21 @@ export default function ProductCompatibilityDialog({ productId }: ProductCompati
   const [printerError, setPrinterError] = useState('');
   const [checkError, setCheckError] = useState('');
   const [compatibilityResponse, setCompatibilityResponse] = useState<unknown>(null);
+  const printerInputRef = useRef<HTMLInputElement>(null);
 
   const compatibilityValue = getCompatibilityValue(compatibilityResponse);
   const responseMessage = getResponseMessage(compatibilityResponse);
   const responseDetails = formatResponseDetails(compatibilityResponse);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const timeoutId = window.setTimeout(() => {
+      printerInputRef.current?.focus();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -160,6 +171,7 @@ export default function ProductCompatibilityDialog({ productId }: ProductCompati
     }
 
     let isMounted = true;
+    const controller = new AbortController();
     const timeoutId = window.setTimeout(() => {
       async function searchPrinters() {
         setIsLoadingPrinters(true);
@@ -170,6 +182,7 @@ export default function ProductCompatibilityDialog({ productId }: ProductCompati
             headers: {
               Accept: 'application/json',
             },
+            signal: controller.signal,
           });
           const data = await response.json().catch(() => ({}));
 
@@ -185,7 +198,7 @@ export default function ProductCompatibilityDialog({ productId }: ProductCompati
             setPrinters(normalizePrinters(data));
           }
         } catch (error) {
-          if (isMounted) {
+          if (isMounted && (error as { name?: string }).name !== 'AbortError') {
             setPrinters([]);
             setPrinterError(error instanceof Error ? error.message : 'Unable to load printer models.');
           }
@@ -202,6 +215,7 @@ export default function ProductCompatibilityDialog({ productId }: ProductCompati
     return () => {
       isMounted = false;
       window.clearTimeout(timeoutId);
+      controller.abort();
     };
   }, [isOpen, printerQuery]);
 
@@ -266,6 +280,7 @@ export default function ProductCompatibilityDialog({ productId }: ProductCompati
             </label>
             <div className="relative">
               <Input
+                ref={printerInputRef}
                 id="compatibility-printer"
                 value={printerQuery}
                 onChange={(event) => {

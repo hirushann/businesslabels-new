@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { DEFAULT_LOCALE, normalizeLocale } from './config';
-import { MESSAGES } from './messages';
+import { MESSAGES_V4 } from './messages';
 
 /**
  * Resolve serialized messages for NextIntlClientProvider.
@@ -9,5 +9,6 @@ import { MESSAGES } from './messages';
  */
 export async function getMessages(locale) {
   const normalized = normalizeLocale(locale);
-  return MESSAGES[normalized] ?? MESSAGES[DEFAULT_LOCALE];
+  return MESSAGES_V4[normalized] ?? MESSAGES_V4[DEFAULT_LOCALE];
 }
+// Force reload cache 2

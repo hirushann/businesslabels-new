@@ -33,14 +33,14 @@ export default function ProductImageGallery({
 
   return (
     <div className="flex flex-col gap-10">
-      <div className="flex justify-center items-center">
+      <div className="flex justify-start items-center">
         <Image
           src={selectedImage}
           alt={`${productName} main image`}
           width={300}
           height={300}
           unoptimized
-          className="w-auto h-fit object-contain"
+          className="w-auto h-[50vh] object-contain"
         />
       </div>
 

@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import ReviewsSection from "@/components/ReviewsSection";
 import ProductsListing from "@/components/ProductsListing";
-import { parseCatalogSearchParams, searchCatalogProducts } from "@/lib/search/products";
+import {
+  parseCatalogSearchParams,
+  searchCatalogProducts,
+} from "@/lib/search/products";
 import type { CatalogSearchResponse } from "@/lib/search/types";
 
 export async function generateMetadata(): Promise<Metadata> {

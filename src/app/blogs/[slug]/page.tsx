@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { unescapeHtml } from "@/lib/utils";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 type PostData = {
   id: number;
@@ -82,17 +83,13 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
             {/* Header Section */}
             <div className="flex w-full flex-col items-start gap-6">
               <div className="flex flex-col items-start gap-4">
-                <div className="inline-flex items-center gap-2 h-4 text-zinc-500">
-                  <Link href="/" className="hover:text-amber-500 transition-colors">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                    </svg>
-                  </Link>
-                  <span className="text-sm">/</span>
-                  <Link href="/blogs" className="text-sm hover:text-amber-500 transition-colors">{t("common.blogs")}</Link>
-                  <span className="text-sm">/</span>
-                  <span className="text-sm font-semibold text-neutral-700">{t("common.details")}</span>
-                </div>
+                <Breadcrumbs 
+                  className="text-neutral-900"
+                  items={[
+                    { label: t("common.blogs"), href: "/blogs" },
+                    { label: t("common.details") }
+                  ]} 
+                />
                 <h1 className="text-4xl font-bold leading-[48px] text-neutral-800">
                   {post.title}
                 </h1>

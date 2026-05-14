@@ -1,15 +1,19 @@
 import type { Metadata } from "next";
 import ProductsListing from "@/components/ProductsListing";
-import { parseCatalogSearchParams, searchCatalogProducts } from "@/lib/search/products";
+import {
+  parseCatalogSearchParams,
+  searchCatalogProducts,
+} from "@/lib/search/products";
 import type { CatalogSearchResponse } from "@/lib/search/types";
-import { getTranslations } from 'next-intl/server';
+import { getTranslations } from "next-intl/server";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations();
 
   return {
-    title: t('pages.productsMetadataTitle'),
-    description: t('pages.productsMetadataDescription'),
+    title: t("pages.productsMetadataTitle"),
+    description: t("pages.productsMetadataDescription"),
   };
 }
 
@@ -60,16 +64,18 @@ export default async function ProductsPage({
     <section className="bg-white px-4 py-10 sm:px-6 lg:px-10">
       <div className="mx-auto flex max-w-360 flex-col gap-10">
         <div className="border-b border-slate-200 pb-5">
-          <div className="mb-4 flex items-center gap-2 text-sm text-zinc-500">
-            <span>{t('common.home')}</span>
-            <span>/</span>
-            <span>{t('common.products')}</span>
-            <span>/</span>
-            <span>{t('common.allProducts')}</span>
+          <div className="mb-4">
+            <Breadcrumbs
+              className="text-neutral-900"
+              items={[
+                { label: t("common.products"), href: "/products" },
+                { label: t("common.allProducts") },
+              ]}
+            />
           </div>
           <div className="flex flex-col gap-5">
             <h1 className="text-3xl font-bold font-['Segoe_UI'] leading-8 text-neutral-800">
-              {t('common.allProducts')}
+              {t("common.allProducts")}
             </h1>
             <ProductsListing
               initialCatalog={initialCatalog}

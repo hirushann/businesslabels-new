@@ -7,7 +7,7 @@ import EmptyState from "@/components/EmptyState";
 import { type CartItem, useCart } from "@/components/CartProvider";
 import { toast } from "sonner";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 type CheckoutFormState = {
@@ -78,6 +78,21 @@ function inputClasses(hasError = false): string {
 function linePrice(item: CartItem): number {
   const price = typeof item.price === "number" && Number.isFinite(item.price) ? item.price : 0;
   return price * item.quantity;
+}
+
+function getProductId(item: CartItem): number | null {
+  if (typeof item.id === "number" && Number.isFinite(item.id)) {
+    return item.id;
+  }
+
+  if (typeof item.id === "string") {
+    const parsedId = Number(item.id);
+    if (Number.isInteger(parsedId) && parsedId > 0) {
+      return parsedId;
+    }
+  }
+
+  return null;
 }
 
 function CheckoutShell({
@@ -159,14 +174,14 @@ function CheckoutShell({
                     </svg>
                     {t('checkout.goBackToCart')}
                   </Link>
-
+ 
                   <div className="flex flex-col gap-2">
                     <h1 className="text-neutral-800 text-4xl font-bold leading-[48px]">{t('checkout.title')}</h1>
                     <p className="text-neutral-600 text-base leading-6">
                       {t('checkout.checkoutDescription')}
                     </p>
                   </div>
-
+ 
                   <div className="flex flex-col gap-5">
                     <div className="flex flex-col gap-1">
                       <h2 className="text-neutral-800 text-2xl font-bold leading-8">{t('checkout.deliveryInfo')}</h2>
@@ -174,32 +189,36 @@ function CheckoutShell({
                         {t('checkout.deliveryInfoDesc')}
                       </p>
                     </div>
-
+ 
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <label className="flex flex-col gap-2">
                         <span className="text-sm font-semibold text-neutral-700">{t('checkout.firstName')}</span>
                         <input className={inputClasses(Boolean(errors.firstName))} value={form.firstName} onChange={(e) => handleChange("firstName", e.target.value)} />
+                        {errors.firstName && <span className="text-xs text-red-500 font-medium">{errors.firstName}</span>}
                       </label>
                       <label className="flex flex-col gap-2">
                         <span className="text-sm font-semibold text-neutral-700">{t('checkout.lastName')}</span>
                         <input className={inputClasses(Boolean(errors.lastName))} value={form.lastName} onChange={(e) => handleChange("lastName", e.target.value)} />
+                        {errors.lastName && <span className="text-xs text-red-500 font-medium">{errors.lastName}</span>}
                       </label>
                       <label className="flex flex-col gap-2">
                         <span className="text-sm font-semibold text-neutral-700">{t('checkout.email')}</span>
                         <input className={inputClasses(Boolean(errors.email))} value={form.email} onChange={(e) => handleChange("email", e.target.value)} />
+                        {errors.email && <span className="text-xs text-red-500 font-medium">{errors.email}</span>}
                       </label>
                       <label className="flex flex-col gap-2">
                         <span className="text-sm font-semibold text-neutral-700">{t('checkout.mobileNumber')}</span>
                         <input className={inputClasses(Boolean(errors.mobileNumber))} value={form.mobileNumber} onChange={(e) => handleChange("mobileNumber", e.target.value)} />
+                        {errors.mobileNumber && <span className="text-xs text-red-500 font-medium">{errors.mobileNumber}</span>}
                       </label>
                     </div>
                   </div>
-
+ 
                   <div className="flex flex-col gap-5">
                     <div className="flex flex-col gap-1">
                       <h2 className="text-neutral-800 text-2xl font-bold leading-8">{t('checkout.address')}</h2>
                     </div>
-
+ 
                     <label className="flex flex-col gap-2">
                       <span className="text-sm font-semibold text-neutral-700">Snel adres zoeken (Google)</span>
                       <AddressAutocomplete
@@ -211,8 +230,9 @@ function CheckoutShell({
                       />
                       <span className="text-sm font-semibold text-neutral-700">{t('checkout.streetAddress')}</span>
                       <input className={inputClasses(Boolean(errors.streetAddress))} value={form.streetAddress} onChange={(e) => handleChange("streetAddress", e.target.value)} />
+                      {errors.streetAddress && <span className="text-xs text-red-500 font-medium">{errors.streetAddress}</span>}
                     </label>
-
+ 
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
                       <label className="flex flex-col gap-2 md:col-span-1">
                         <span className="text-sm font-semibold text-neutral-700">{t('checkout.country')}</span>
@@ -225,18 +245,21 @@ function CheckoutShell({
                       <label className="flex flex-col gap-2 md:col-span-1">
                         <span className="text-sm font-semibold text-neutral-700">{t('checkout.city')}</span>
                         <input className={inputClasses(Boolean(errors.city))} value={form.city} onChange={(e) => handleChange("city", e.target.value)} />
+                        {errors.city && <span className="text-xs text-red-500 font-medium">{errors.city}</span>}
                       </label>
                       <label className="flex flex-col gap-2 md:col-span-1">
                         <span className="text-sm font-semibold text-neutral-700">{t('checkout.state')}</span>
                         <input className={inputClasses(Boolean(errors.state))} value={form.state} onChange={(e) => handleChange("state", e.target.value)} />
+                        {errors.state && <span className="text-xs text-red-500 font-medium">{errors.state}</span>}
                       </label>
                       <label className="flex flex-col gap-2 md:col-span-1">
                         <span className="text-sm font-semibold text-neutral-700">{t('checkout.postcode')}</span>
                         <input className={inputClasses(Boolean(errors.postcode))} value={form.postcode} onChange={(e) => handleChange("postcode", e.target.value)} />
+                        {errors.postcode && <span className="text-xs text-red-500 font-medium">{errors.postcode}</span>}
                       </label>
                     </div>
                   </div>
-
+ 
                   <div className="flex flex-col gap-5">
                     <div className="flex flex-col gap-1">
                       <h2 className="text-neutral-800 text-2xl font-bold leading-8">{t('checkout.paymentMethod')}</h2>
@@ -244,7 +267,7 @@ function CheckoutShell({
                         {t('checkout.paymentMethodDesc')}
                       </p>
                     </div>
-
+ 
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <label 
                         className={`flex cursor-pointer items-center gap-4 rounded-xl border p-4 transition-all ${
@@ -263,9 +286,9 @@ function CheckoutShell({
                         </div>
                         <span className="text-base font-semibold text-neutral-800">{t('checkout.ideal')}</span>
                       </label>
-
+ 
                       <label 
-
+ 
                         className={`flex cursor-pointer items-center gap-4 rounded-xl border p-4 transition-all ${
                           form.paymentMethod === "creditcard" ? "border-amber-400 bg-amber-50" : "border-slate-200 hover:border-amber-200"
                         }`}
@@ -285,7 +308,7 @@ function CheckoutShell({
                           <span className="text-xs text-amber-600 font-medium">+2.5% fee</span>
                         </div>
                       </label>
-
+ 
                       <label 
                         className={`flex cursor-pointer items-center gap-4 rounded-xl border p-4 transition-all ${
                           form.paymentMethod === "bancontact" ? "border-amber-400 bg-amber-50" : "border-slate-200 hover:border-amber-200"
@@ -303,7 +326,7 @@ function CheckoutShell({
                         </div>
                         <span className="text-base font-semibold text-neutral-800">Bancontact</span>
                       </label>
-
+ 
                       {isLoggedIn && (
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -506,7 +529,9 @@ export default function CheckoutPageClient({
   mode = "live",
   demoItems = [],
 }: CheckoutPageClientProps) {
+  const t = useTranslations();
   const cart = useCart();
+  const locale = useLocale();
   const isDemoMode = mode === "demo";
   const [form, setForm] = useState<CheckoutFormState>(
     isDemoMode ? demoFormState : initialFormState,
@@ -607,14 +632,26 @@ export default function CheckoutPageClient({
       "paymentMethod",
     ];
 
+    const fieldLabels: Record<string, string> = {
+      firstName: t('checkout.firstName'),
+      lastName: t('checkout.lastName'),
+      email: t('checkout.email'),
+      mobileNumber: t('checkout.mobileNumber'),
+      streetAddress: t('checkout.streetAddress'),
+      city: t('checkout.city'),
+      state: t('checkout.state'),
+      postcode: t('checkout.postcode'),
+      paymentMethod: t('checkout.paymentMethod'),
+    };
+
     for (const field of requiredFields) {
-      if (!form[field].trim()) {
-        nextErrors[field] = "Required";
+      if (!form[field]?.trim()) {
+        nextErrors[field] = t('validation.required', { field: fieldLabels[field] || field });
       }
     }
 
     if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      nextErrors.email = "Enter a valid email";
+      nextErrors.email = t('validation.invalidEmail');
     }
 
     setErrors(nextErrors);
@@ -667,9 +704,9 @@ export default function CheckoutPageClient({
     }
 
     // Ensure there's at least one real product (not just warranty addons)
-    const productItems = items.filter(item => item.itemKind !== "warranty" && typeof item.id === "number");
+    const productItems = items.filter((item) => item.itemKind !== "warranty" && getProductId(item) !== null);
     if (productItems.length === 0) {
-      toast.error("Your cart doesn't contain any valid products.");
+      toast.error(t('checkout.noProducts'));
       return;
     }
 
@@ -696,15 +733,23 @@ export default function CheckoutPageClient({
       payment_fee: paymentFee,
       payment_method: form.paymentMethod,
       total: finalTotal,
+      language: locale,
       order_items: items
-        // Warranty items are addons and don't have numeric product IDs — exclude them
-        .filter(item => item.itemKind !== "warranty" && typeof item.id === "number")
-        .map(item => ({
-          product_id: item.id as number,
-          name: item.name?.trim() || item.sku || "Product",
-          price: typeof item.price === "number" && Number.isFinite(item.price) ? item.price : 0,
-          quantity: item.quantity
-        }))
+        // Warranty items are addons and don't have numeric product IDs, so exclude them.
+        .flatMap((item) => {
+          const productId = item.itemKind === "warranty" ? null : getProductId(item);
+
+          if (productId === null) {
+            return [];
+          }
+
+          return [{
+            product_id: productId,
+            name: item.name?.trim() || item.sku || "Product",
+            price: typeof item.price === "number" && Number.isFinite(item.price) ? item.price : 0,
+            quantity: item.quantity,
+          }];
+        })
     };
 
     try {
@@ -720,7 +765,7 @@ export default function CheckoutPageClient({
 
       if (!response.ok) {
         if (response.status === 401 || json.message === "Unauthenticated.") {
-          toast.error("Your session has expired. Please log in again.");
+          toast.error(t('checkout.sessionExpired'));
           localStorage.removeItem('auth_user');
           window.location.href = "/login?redirect=/checkout";
           return;
@@ -741,10 +786,10 @@ export default function CheckoutPageClient({
       
       setOrderNumber(json.data?.number || null);
       setIsSubmitted(true);
-      toast.success("Order placed successfully!");
+      toast.success(t('checkout.orderSuccess'));
     } catch (error) {
       console.log("Checkout error:", String(error));
-      toast.error("Failed to place order. Please check your details and try again.");
+      toast.error(t('checkout.orderError'));
     } finally {
       setIsPending(false);
     }
