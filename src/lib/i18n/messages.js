@@ -620,6 +620,8 @@ export const MESSAGES = {
       core: 'Core',
       outer_diameter: 'Outer Diameter',
       category: 'Category',
+      brand: 'Brand',
+      type: 'Type',
     },
     product: {
       productDescription: 'Product Description',
@@ -1296,6 +1298,8 @@ export const MESSAGES = {
       core: 'Kern',
       outer_diameter: 'Buitendiameter',
       category: 'Categorie',
+      brand: 'Merk',
+      type: 'Type',
     },
     product: {
       productDescription: 'Productbeschrijving',

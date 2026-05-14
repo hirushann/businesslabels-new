@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { SearchProvider, useSearch } from '@elastic/react-search-ui';
 import type { SearchDriverOptions } from '@elastic/search-ui';
+import type { LinkProps } from 'next/link';
 import { apiConnector, SORT_TO_SEARCH_UI, type OverlaySortValue } from './api';
 import { useNextRoutingOptions } from './useNextRouting';
 import EmptyState from '@/components/EmptyState';
 import ProductCard, { type ProductCardData } from '@/components/ProductCard';
-import ProductPaginationSwitcher from '@/components/ProductPaginationSwitcher';
 import SearchFilters from './SearchFilters';
 
 type SearchOverlayProps = {
@@ -247,8 +247,49 @@ function sortValueFromState(sortField?: string, sortDirection?: string, queryMod
   return match?.value ?? (queryMode ? 'relevance' : 'latest');
 }
 
+type OverlayProductResult = {
+  id: string;
+  product: ProductCardData;
+  href?: LinkProps["href"];
+};
+
+function mapOverlayResult(result: unknown, resultIndex: number): OverlayProductResult {
+  const normalizedType = normalizeResultType(getRaw(result, 'product_type')) ?? normalizeResultType(getRaw(result, 'type'));
+  const slug = valueAsString(getRaw(result, 'slug')) ?? valueAsString(getRaw(result, 'post_name'));
+  const image = toDisplayImageUrl(imageForProduct(result));
+  const sku = skuForProduct(result);
+  const id = valueAsString(getRaw(result, 'id')) ?? valueAsString(getRaw(result, 'ID')) ?? `result-${resultIndex}`;
+  const product: ProductCardData = {
+    id,
+    sku: sku || '-',
+    name: titleForProduct(result),
+    subtitle: valueAsString(getRaw(result, 'subtitle')),
+    excerpt: valueAsString(getRaw(result, 'excerpt')),
+    materialTitle: materialTitleForProduct(result),
+    price: valueAsNumber(getRaw(result, 'price')),
+    originalPrice: valueAsNumber(getRaw(result, 'original_price')),
+    inStock: valueAsBoolean(getRaw(result, 'in_stock')),
+    mainImage: image,
+    categories: categoriesForProduct(result),
+    slug,
+    type: normalizedType,
+  };
+  const href =
+    slug && normalizedType
+      ? {
+          pathname: `/products/${slug}`,
+          query: { type: normalizedType },
+        }
+      : slug
+        ? `/products/${slug}`
+        : undefined;
+
+  return { id, product, href };
+}
+
 function OverlayContent({ onClose }: SearchOverlayProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const {
     searchTerm,
@@ -283,11 +324,18 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
   }));
   const [inputValue, setInputValue] = useState(searchTerm || '');
   const [manualSort, setManualSort] = useState<OverlaySortValue | null>(null);
+  const [accumulatedResults, setAccumulatedResults] = useState<OverlayProductResult[]>([]);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
   const activeFilters = filters ?? [];
   const queryValue = inputValue.trim();
   const queryMode = queryValue.length >= MIN_QUERY_LENGTH;
   const page = current || 1;
   const pageCount = totalPages || 1;
+  const searchResults = useMemo(
+    () => (results ?? []).map((result, resultIndex) => mapOverlayResult(result, resultIndex)),
+    [results],
+  );
+  const hasMoreResults = page < pageCount;
 
   const applySort = (sortValue: OverlaySortValue) => {
     const mapped = SORT_TO_SEARCH_UI[sortValue];
@@ -356,6 +404,58 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
   }, [queryValue, searchTerm, setCurrent, setSearchTerm]);
 
   useEffect(() => {
+    if (isLoading) return;
+
+    const timeoutId = window.setTimeout(() => {
+      if (page <= 1) {
+        setAccumulatedResults(searchResults);
+        return;
+      }
+
+      setAccumulatedResults((currentResults) => {
+        const existingIds = new Set(currentResults.map((item) => item.id));
+        const nextResults = searchResults.filter((item) => !existingIds.has(item.id));
+        return [...currentResults, ...nextResults];
+      });
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [isLoading, page, searchResults]);
+
+  const loadMoreResults = useCallback(() => {
+    if (isLoading || isFetchingMore || !hasMoreResults) return;
+    setIsFetchingMore(true);
+    setCurrent(page + 1);
+  }, [hasMoreResults, isFetchingMore, isLoading, page, setCurrent]);
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setIsFetchingMore(false);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [isLoading]);
+
+  useEffect(() => {
+    const target = loadMoreRef.current;
+    if (!target || !hasMoreResults) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          loadMoreResults();
+        }
+      },
+      { rootMargin: '360px 0px', threshold: 0.01 },
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [hasMoreResults, loadMoreResults]);
+
+  useEffect(() => {
     if (manualSort) return;
     applySort(queryMode ? 'relevance' : 'latest');
   }, [manualSort, queryMode]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -398,6 +498,7 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
                   const key = event.target.value as OverlaySortValue;
                   setManualSort(key);
                   applySort(key);
+                  setCurrent(1);
                 }}
                 className="h-10 px-3 border border-slate-300 rounded-md bg-white text-sm text-neutral-700 w-full md:w-[220px]"
               >
@@ -430,6 +531,7 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
                     type="button"
                     onClick={() => {
                       activeFilters.forEach(f => removeFilter(f.field));
+                      setCurrent(1);
                     }}
                     className="text-amber-500 text-sm font-medium hover:underline"
                   >
@@ -450,13 +552,13 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
 
             {error ? (
               <div className="bg-red-50 text-red-700 border border-red-200 rounded-lg p-4">{String(error)}</div>
-            ) : isLoading ? (
+            ) : isLoading && accumulatedResults.length === 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-5">
                 {Array.from({ length: 8 }, (_, i) => (
                   <div key={i} className="h-72 rounded-xl bg-slate-200 animate-pulse" />
                 ))}
               </div>
-            ) : (results?.length || 0) === 0 ? (
+            ) : accumulatedResults.length === 0 ? (
               <EmptyState
                 title="No products found"
                 description="Try a different search term or adjust the filters to see more results."
@@ -464,44 +566,23 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
             ) : (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-5">
-                  {(results || []).map((result, resultIndex) => {
-                    const normalizedType = normalizeResultType(getRaw(result, 'product_type')) ?? normalizeResultType(getRaw(result, 'type'));
-                    const slug = valueAsString(getRaw(result, 'slug')) ?? valueAsString(getRaw(result, 'post_name'));
-                    const image = toDisplayImageUrl(imageForProduct(result));
-                    const sku = skuForProduct(result);
-                    const id = valueAsString(getRaw(result, 'id')) ?? valueAsString(getRaw(result, 'ID')) ?? `result-${resultIndex}`;
-                    const cardProduct: ProductCardData = {
-                      id,
-                      sku: sku || '-',
-                      name: titleForProduct(result),
-                      subtitle: valueAsString(getRaw(result, 'subtitle')),
-                      excerpt: valueAsString(getRaw(result, 'excerpt')),
-                      materialTitle: materialTitleForProduct(result),
-                      price: valueAsNumber(getRaw(result, 'price')),
-                      originalPrice: valueAsNumber(getRaw(result, 'original_price')),
-                      inStock: valueAsBoolean(getRaw(result, 'in_stock')),
-                      mainImage: image,
-                      categories: categoriesForProduct(result),
-                      slug,
-                      type: normalizedType,
-                    };
-
-                    const href =
-                      slug && normalizedType
-                        ? {
-                            pathname: `/products/${slug}`,
-                            query: { type: normalizedType },
-                          }
-                        : slug
-                          ? `/products/${slug}`
-                          : undefined;
-
-                    return <ProductCard key={id} product={cardProduct} href={href} onClick={onClose} />;
+                  {accumulatedResults.map(({ id, product, href }) => {
+                    return <ProductCard key={id} product={product} href={href} onClick={onClose} />;
                   })}
                 </div>
 
-                {pageCount > 1 ? (
-                  <ProductPaginationSwitcher currentPage={page} pageCount={pageCount} onPageChange={setCurrent} />
+                {isLoading ? (
+                  <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-5">
+                    {Array.from({ length: 6 }, (_, i) => (
+                      <div key={i} className="h-72 rounded-xl bg-slate-200 animate-pulse" />
+                    ))}
+                  </div>
+                ) : null}
+
+                {hasMoreResults ? (
+                  <div ref={loadMoreRef} className="flex min-h-16 items-center justify-center pt-4 text-sm text-slate-500">
+                    {isFetchingMore || isLoading ? 'Loading more products...' : 'Scroll for more products'}
+                  </div>
                 ) : null}
               </>
             )}
