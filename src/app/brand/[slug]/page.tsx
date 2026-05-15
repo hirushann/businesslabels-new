@@ -21,6 +21,14 @@ const BRAND_TITLES: Record<string, string> = {
   creative: "Creative",
 };
 
+function fallbackBrandTitle(slug: string): string {
+  return slug
+    .split(/[-_]+/)
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(" ");
+}
+
 function brandTitleForSlug(slug: string): string {
   return BRAND_TITLES[slug.toLowerCase()] ?? fallbackBrandTitle(slug);
 }
