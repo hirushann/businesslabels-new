@@ -1005,6 +1005,16 @@ function buildRelevanceQuery(state: RequestState, _queryConfig: QueryConfig) {
     },
   });
 
+  // 3b. Phrase Prefix for Titles
+  should.push({
+    multi_match: {
+      query: searchTerm,
+      fields: titleFields,
+      type: 'phrase_prefix',
+      boost: BOOST_TITLE_PHRASE * 0.4,
+    },
+  });
+
   if (isMultiTerm) {
     should.push({
       multi_match: {
@@ -1029,6 +1039,22 @@ function buildRelevanceQuery(state: RequestState, _queryConfig: QueryConfig) {
           default_operator: 'AND',
           analyze_wildcard: true,
         },
+      });
+    }
+  } else {
+    // For single words, allow edge n-gram style wildcard matching for brands and titles
+    if (searchTerm.trim().length >= 1) {
+      const wildcardFields = [...titleFields, ...brandFields];
+      wildcardFields.forEach((field) => {
+        should.push({
+          wildcard: {
+            [`${field}.keyword`]: {
+              value: `${searchTerm.trim().toLowerCase()}*`,
+              boost: BOOST_TITLE_PARTIAL * 2,
+              case_insensitive: true,
+            },
+          },
+        });
       });
     }
   }

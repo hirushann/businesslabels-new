@@ -207,50 +207,81 @@ function buildTextQuery(search: string): estypes.QueryDslQueryContainer {
   if (!query) return { match_all: {} };
 
   const lowerQuery = query.toLowerCase();
+  const isMultiTerm = query.split(/\s+/).filter(Boolean).length > 1;
 
   // STRICT matching on title only - prioritize exact phrase matches
   // This ensures "Godex ZX1200i" shows ZX1200i, not all Godex printers
+  const should: estypes.QueryDslQueryContainer[] = [
+    // Exact phrase match - TOP PRIORITY
+    {
+      match_phrase: {
+        title: {
+          query,
+          boost: 10000000,
+        },
+      },
+    },
+    // Exact keyword match
+    {
+      term: {
+        "title_sort.keyword": {
+          value: lowerQuery,
+          boost: 5000000,
+        },
+      },
+    },
+    // Phrase prefix match (Essential for partials like "Eps", "Zeb", "God")
+    {
+      match_phrase_prefix: {
+        title: {
+          query,
+          boost: 2000000,
+          max_expansions: 50,
+        },
+      },
+    },
+    // Match with ALL words required (for multi-word searches)
+    {
+      match: {
+        title: {
+          query,
+          boost: 1000000,
+          operator: "and",
+        },
+      },
+    },
+  ];
+
+  // For single words, allow even more permissive partial matching
+  if (!isMultiTerm) {
+    // Edge N-gram like behavior for short terms via wildcard
+    // Start matching even with a single character for brands
+    if (query.length >= 1) {
+      should.push({
+        wildcard: {
+          "title_sort.keyword": {
+            value: `${lowerQuery}*`,
+            boost: 500000,
+            case_insensitive: true,
+          },
+        },
+      });
+    }
+
+    // Basic match fallback
+    should.push({
+      match: {
+        title: {
+          query,
+          boost: 1000,
+        },
+      },
+    });
+  }
+
   return {
     bool: {
-      should: [
-        // Exact phrase match - TOP PRIORITY
-        {
-          match_phrase: {
-            title: {
-              query,
-              boost: 10000000,
-            },
-          },
-        },
-        // Exact keyword match
-        {
-          term: {
-            "title_sort.keyword": {
-              value: lowerQuery,
-              boost: 5000000,
-            },
-          },
-        },
-        // Match with ALL words required (for multi-word searches)
-        {
-          match: {
-            title: {
-              query,
-              boost: 1000000,
-              operator: "and",
-            },
-          },
-        },
-        // Match any word (for single-word searches only)
-        {
-          match: {
-            title: {
-              query,
-              boost: 1000,
-            },
-          },
-        },
-      ],
+      should,
       minimum_should_match: 1,
     },
   };

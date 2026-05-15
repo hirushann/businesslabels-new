@@ -356,6 +356,16 @@ export function textQuery(search: string): estypes.QueryDslQueryContainer {
     },
   });
 
+  // 3b. Phrase Prefix for Titles (e.g. "Eps" -> "Epson")
+  should.push({
+    multi_match: {
+      query,
+      fields: titleFields,
+      type: "phrase_prefix",
+      boost: BOOST_TITLE_PHRASE * 0.4,
+    },
+  });
+
   if (isMultiTerm) {
     should.push({
       multi_match: {
@@ -380,6 +390,22 @@ export function textQuery(search: string): estypes.QueryDslQueryContainer {
           default_operator: "AND",
           analyze_wildcard: true,
         },
+      });
+    }
+  } else {
+    // For single words, allow edge n-gram style wildcard matching for brands and titles
+    if (query.length >= 1) {
+      const wildcardFields = [...titleFields, ...brandFields];
+      wildcardFields.forEach((field) => {
+        should.push({
+          wildcard: {
+            [`${field}.keyword`]: {
+              value: `${query.toLowerCase()}*`,
+              boost: BOOST_TITLE_PARTIAL * 2,
+              case_insensitive: true,
+            },
+          },
+        });
       });
     }
   }
