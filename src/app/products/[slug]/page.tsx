@@ -701,7 +701,7 @@ export default async function SingleProductPage({
             <ProductPurchase
               id={product?.id}
               slug={product?.slug}
-              type={normalizeType(product?.type)}
+              type={normalizeType(product?.type) || (product?.is_group_product || (product?.component_products?.length ?? 0) > 0 ? "group_product" : null)}
               name={productName}
               sku={product?.sku}
               subtitle={normalizeValue(product?.subtitle)}

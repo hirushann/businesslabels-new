@@ -822,7 +822,7 @@ function booleanValue(value: unknown): boolean {
 
 function productType(value: unknown): ProductRouteType | null {
   const type = stringValue(value);
-  return type === "simple" || type === "variable" ? type : null;
+  return type === "simple" || type === "variable" || type === "group_product" ? type : null;
 }
 
 function imageUrl(url: string | null): string | null {
