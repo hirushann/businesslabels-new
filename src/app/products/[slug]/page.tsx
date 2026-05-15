@@ -346,20 +346,33 @@ function applyProductTranslation(product: ProductDetail, locale: "en" | "nl"): P
 
   if (!translation) return { ...product, locale_slugs: localeSlugs };
 
-  const has = (field: TranslatedProductField) =>
-    Object.prototype.hasOwnProperty.call(translation, field);
   const out: ProductDetail = { ...product, locale_slugs: localeSlugs };
 
-  if (has("name")) out.name = translation.name ?? null;
-  if (has("title")) out.title = translation.title ?? null;
-  if (has("subtitle")) out.subtitle = translation.subtitle ?? null;
-  if (has("slug")) out.slug = translation.slug ?? null;
-  if (has("excerpt")) out.excerpt = translation.excerpt ?? null;
-  if (has("description")) out.description = translation.description ?? null;
-  if (has("content")) out.content = translation.content ?? null;
-  if (has("meta_title")) out.meta_title = translation.meta_title ?? null;
-  if (has("meta_description")) out.meta_description = translation.meta_description ?? null;
-  if (has("product_information")) out.product_information = translation.product_information ?? null;
+  const apply = (field: TranslatedProductField) => {
+    const val = translation[field];
+    // If the translation has a non-null, non-empty value, use it.
+    // Otherwise, keep the existing value from the product (the default/Dutch value).
+    if (val !== null && val !== undefined) {
+      if (typeof val === "string") {
+        if (val.trim() !== "") {
+          (out as any)[field] = val.trim();
+        }
+      } else {
+        (out as any)[field] = val;
+      }
+    }
+  };
+
+  apply("name");
+  apply("title");
+  apply("subtitle");
+  apply("slug");
+  apply("excerpt");
+  apply("description");
+  apply("content");
+  apply("meta_title");
+  apply("meta_description");
+  apply("product_information");
 
   return out;
 }
