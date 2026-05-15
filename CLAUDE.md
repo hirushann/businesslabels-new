@@ -10,7 +10,7 @@ Businesslabels — Next.js e-commerce frontend for Epson ColorWorks label printe
 
 ## Stack
 
-Next.js 16 (App Router), React 19, JavaScript with `.jsx` extensions (no TypeScript), Tailwind CSS v4 (`@theme` in `globals.css`, no config file). No test framework configured.
+Next.js 16 (App Router), React 19, TypeScript with `.tsx` extensions, Tailwind CSS v4 (`@theme` in `globals.css`, no config file). Testing via Vitest.
 
 ## Architecture
 
@@ -25,7 +25,7 @@ All components flat in `src/components/`. Server components by default; `'use cl
 - Inline SVGs for icons, no icon library
 - `next/image` with `placehold.co` remote pattern; static assets in `public/`
 - Content sections: `max-w-[1440px] mx-auto`
-- Use `.jsx` for all React component files, `.js` for non-JSX modules (config, utils)
+- Use `.tsx` for React component files, `.ts` for non-JSX modules. Follow TypeScript best practices.
 - Product types are `"simple"` or `"variable"`, never generic string
 - Centralized routes in `src/config/routes.js` — use `ROUTES` constants instead of hardcoding paths
 - Format prices: `Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' })`

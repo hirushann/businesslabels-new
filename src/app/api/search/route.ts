@@ -932,74 +932,200 @@ async function loadSearchStats(
   }
 }
 
-function buildRelevanceQuery(state: RequestState, queryConfig: QueryConfig) {
+function buildRelevanceQuery(state: RequestState, _queryConfig: QueryConfig) {
   const searchTerm = state.searchTerm?.trim();
   if (!searchTerm) return { match_all: {} };
 
-  const primaryFields = ['title^8', 'name^7', 'post_title^8', 'sku^10', 'meta._sku.value^10', 'article_number^10'];
-  const fallbackFields = [
-    'slug^2',
-    'post_name^2',
-    'variant_skus^2',
-    'excerpt^1.5',
-    'description^0.4',
-    'content^0.3',
-    'post_content^0.4',
-    'product_information^0.3',
-    'meta.*.value^0.8',
-    'terms.*.name^0.6',
-  ];
+  // Tiered boosts - aligned with products.ts
+  const BOOST_SKU_EXACT = 100000;
+  const BOOST_SKU_PREFIX = 10000;
+  const BOOST_TITLE_PHRASE = 5000;
+  const BOOST_TITLE_AND = 2000;
+  const BOOST_FEATURE_SECTION = 1000;
+  const BOOST_TITLE_PARTIAL = 100;
+  const BOOST_BRAND_GENUINE = 50;
+  const BOOST_SECONDARY = 10;
+  const BOOST_DESCRIPTION = 0.05;
 
-  // Respect queryConfig.search_fields when present, but keep primary/fallback strategy explicit.
-  const configuredPrimary = Object.entries(queryConfig.search_fields || {})
-    .filter(([field]) => ['title', 'name', 'post_title', 'sku', 'meta._sku.value', 'article_number'].includes(field))
-    .map(([field, config]) => `${field}^${config.weight ?? 1}`);
-  const primary = configuredPrimary.length > 0 ? configuredPrimary : primaryFields;
+  const skuFields = ['sku', 'meta._sku.value', 'article_number', 'variant_skus'];
+  const titleFields = ['title', 'name', 'post_title'];
+  const featureFields = ['subtitle', 'catalog_material', 'catalog_material_code', 'excerpt'];
+  const brandFields = ['catalog_brand'];
+  const secondaryFields = [
+    'compatible_brands',
+    'excerpt',
+    'slug',
+    'post_name',
+    'meta.*.value',
+    'terms.*.name',
+  ];
+  const descriptionFields = ['description', 'content', 'post_content', 'product_information'];
+
+  const tokens = searchTerm.split(/\s+/).filter(Boolean);
+  const isMultiTerm = tokens.length > 1;
+  const productCodeRegex = /^[A-Z]{1,4}-?[0-9]{2,}[A-Z0-9]*$/i;
+  const isProductCodeIntent = tokens.every(t => productCodeRegex.test(t));
+  const hasNumericToken = tokens.some((t) => /[0-9]{2,}/.test(t));
+  const isPureNumeric = tokens.every(t => /^[0-9]+$/.test(t));
+
+  const should: Record<string, unknown>[] = [];
+
+  // --- TIER 1: SKU Exact Matches ---
+  skuFields.forEach((field) => {
+    if (!field.includes('*')) {
+      should.push({
+        term: {
+          [`${field}.keyword`]: {
+            value: searchTerm,
+            boost: BOOST_SKU_EXACT,
+            case_insensitive: true,
+          },
+        },
+      });
+    }
+  });
+
+  // --- TIER 2: SKU Partial/Prefix Matches ---
+  should.push({
+    multi_match: {
+      query: searchTerm,
+      fields: skuFields.map((f) => `${f}^20`),
+      type: 'phrase_prefix',
+      boost: BOOST_SKU_PREFIX,
+    },
+  });
+
+  // --- TIER 3: Title/Name Matches ---
+  should.push({
+    multi_match: {
+      query: searchTerm,
+      fields: titleFields.map((f) => `${f}^10`),
+      type: 'phrase',
+      boost: BOOST_TITLE_PHRASE,
+    },
+  });
+
+  if (isMultiTerm) {
+    should.push({
+      multi_match: {
+        query: searchTerm,
+        fields: titleFields,
+        type: 'cross_fields',
+        operator: 'and',
+        boost: BOOST_TITLE_AND,
+      },
+    });
+
+    // 3c. Partial Word Match for Numeric Tokens
+    if (hasNumericToken && !isProductCodeIntent) {
+      const wildcardQuery = tokens
+        .map((t) => (/[0-9]{2,}/.test(t) ? `*${t}*` : t))
+        .join(' AND ');
+      should.push({
+        query_string: {
+          query: wildcardQuery,
+          fields: titleFields,
+          boost: BOOST_TITLE_AND * 0.5,
+          default_operator: 'AND',
+          analyze_wildcard: true,
+        },
+      });
+    }
+  }
+
+  // --- TIER 4: Feature Section ---
+  should.push({
+    multi_match: {
+      query: searchTerm,
+      fields: featureFields,
+      type: 'best_fields',
+      operator: isMultiTerm ? 'and' : 'or',
+      boost: BOOST_FEATURE_SECTION,
+    },
+  });
+
+  // --- TIER 5: Brand & Secondary ---
+  should.push({
+    multi_match: {
+      query: searchTerm,
+      fields: brandFields,
+      type: 'best_fields',
+      boost: BOOST_BRAND_GENUINE,
+    },
+  });
+
+  // --- TIER 6: Secondary & Description ---
+  const useFuzzy = !isProductCodeIntent;
+
+  if (!isProductCodeIntent) {
+    const minShouldMatch = '2<67%';
+
+    should.push({
+      multi_match: {
+        query: searchTerm,
+        fields: titleFields,
+        type: 'best_fields',
+        operator: 'or',
+        minimum_should_match: minShouldMatch,
+        boost: BOOST_TITLE_PARTIAL,
+      },
+    });
+
+    should.push({
+      multi_match: {
+        query: searchTerm,
+        fields: secondaryFields,
+        type: 'best_fields',
+        operator: 'and',
+        boost: BOOST_SECONDARY,
+      },
+    });
+
+    if (useFuzzy) {
+      const fuzzyQuery = tokens.filter(t => !/[0-9]/.test(t)).join(' ');
+      if (fuzzyQuery) {
+        should.push({
+          multi_match: {
+            query: fuzzyQuery,
+            fields: [...titleFields, 'catalog_brand'],
+            type: 'best_fields',
+            fuzziness: 'AUTO',
+            prefix_length: 2,
+            boost: BOOST_SECONDARY * 0.5,
+          },
+        });
+      }
+    }
+
+    should.push({
+      multi_match: {
+        query: searchTerm,
+        fields: descriptionFields,
+        type: 'cross_fields',
+        operator: 'and',
+        boost: BOOST_DESCRIPTION,
+      },
+    });
+  } else {
+    should.push({
+      multi_match: {
+        query: searchTerm,
+        fields: titleFields,
+        type: 'phrase_prefix',
+        boost: BOOST_TITLE_PARTIAL,
+      },
+    });
+  }
 
   return {
     bool: {
+      should,
       minimum_should_match: 1,
-      should: [
-        {
-          multi_match: {
-            query: searchTerm,
-            fields: primary,
-            type: 'best_fields',
-            operator: 'and',
-            boost: 6,
-          },
-        },
-        {
-          multi_match: {
-            query: searchTerm,
-            fields: primary,
-            type: 'phrase_prefix',
-            boost: 5,
-          },
-        },
-        {
-          multi_match: {
-            query: searchTerm,
-            fields: primary,
-            type: 'best_fields',
-            fuzziness: 'AUTO',
-            prefix_length: 1,
-            boost: 3,
-          },
-        },
-        {
-          multi_match: {
-            query: searchTerm,
-            fields: fallbackFields,
-            type: 'best_fields',
-            operator: 'or',
-            boost: 0.8,
-          },
-        },
-      ],
     },
   };
 }
+
+
 
 export async function POST(request: NextRequest) {
   const host = elasticHost();
@@ -1048,6 +1174,14 @@ export async function POST(request: NextRequest) {
         if (brandSlug) {
           safeRequestBody = withBrandConstraint(safeRequestBody, brandSlug);
         }
+
+        // Add min_score for multi-term searches to filter noise
+        const searchTerm = body?.state?.searchTerm?.trim() || '';
+        const tokens = searchTerm.split(/\s+/).filter(Boolean);
+        if (tokens.length >= 2) {
+          (safeRequestBody as any).min_score = tokens.length === 2 ? 3.0 : 2.0;
+        }
+
         return next(safeRequestBody as never);
       },
     });

@@ -283,210 +283,208 @@ export function parseCatalogSearchParams(params: URLSearchParams, locale?: "en" 
   };
 }
 
-function textQuery(search: string): estypes.QueryDslQueryContainer {
+export function textQuery(search: string): estypes.QueryDslQueryContainer {
   const query = search.trim();
   if (!query) return { match_all: {} };
 
-  // Check if query looks like a SKU/article number (alphanumeric with optional hyphens/underscores)
-  const looksLikeSKU = /^[A-Z0-9][-_A-Z0-9]*$/i.test(query);
-  
-  // Count terms in query
-  const terms = query.split(/\s+/);
-  const termCount = terms.length;
-  const isMultiTerm = termCount > 1;
+  // Tiered boosts
+  const BOOST_SKU_EXACT = 100000;
+  const BOOST_SKU_PREFIX = 10000;
+  const BOOST_TITLE_PHRASE = 5000;
+  const BOOST_TITLE_AND = 2000;
+  const BOOST_FEATURE_SECTION = 1000;
+  const BOOST_TITLE_PARTIAL = 100;
+  const BOOST_BRAND_GENUINE = 50; // Higher than compatible
+  const BOOST_SECONDARY = 10;
+  const BOOST_DESCRIPTION = 0.05; // Extremely low to require other matches
 
-  // Primary fields: SKU for exact lookups, name for product titles
-  const primary = [
-    "sku^100",              // Highest priority - exact product codes
-    "article_number^100",   // Alternative product codes
-    "variant_skus^80",      // Variant product codes
-    "name^80",              // Main product name (removed title - duplicate)
+  const skuFields = ["sku", "article_number", "variant_skus"];
+  const titleFields = ["name", "title", "post_title"];
+  const featureFields = ["subtitle", "catalog_material", "catalog_material_code", "excerpt"];
+  const brandFields = ["catalog_brand"];
+  const secondaryFields = [
+    "compatible_brands",
+    "properties.printmethode",
+    "properties.afwerking",
+    "properties.lijm",
+    "properties.detectie",
+    "slug",
   ];
-  
-  // Secondary fields: material, brand, and product attributes
-  const secondary = [
-    "catalog_brand^15",             // Brand searches (Epson, etc.)
-    "catalog_material_code^12",     // Material code searches (DIA055, etc.)
-    "catalog_material^12",          // Material searches (polyester, paper)
-    "compatible_brands^5",          // Compatible printer makes
-    "properties.printmethode^8",    // Print method (TD/TT)
-    "properties.afwerking^5",       // Surface finish (glossy, matte)
-    "properties.lijm^5",            // Adhesive/glue
-    "properties.detectie^5",        // Detection
-    "excerpt^3",            // Short descriptions
-    "slug^2",               // URL slugs (low priority)
-  ];
-  
-  // Fallback: only keep description, remove redundant fields
-  const fallback = [
-    "description^0.5",      // Full description only
-  ];
+  const descriptionFields = ["description", "content", "product_information"];
 
-  // If it looks like a SKU, prioritize exact matches heavily
-  if (looksLikeSKU) {
-    return {
-      bool: {
-        should: [
-          // Exact SKU match - if this matches, it will dominate
-          {
-            term: {
-              "sku.keyword": {
-                value: query,
-                boost: 10000,
-                case_insensitive: true,
-              },
-            },
-          },
-          // Exact article number match
-          {
-            term: {
-              "article_number.keyword": {
-                value: query,
-                boost: 10000,
-                case_insensitive: true,
-              },
-            },
-          },
-          // Exact variant SKU match
-          {
-            term: {
-              "variant_skus.keyword": {
-                value: query,
-                boost: 9000,
-                case_insensitive: true,
-              },
-            },
-          },
-          // Partial SKU/article matches (much lower priority)
-          { multi_match: { query, fields: ["sku^10", "article_number^10", "variant_skus^8"], type: "phrase_prefix", boost: 1 } },
-          // Name matches (minimal priority for SKU searches)
-          { multi_match: { query, fields: ["name^2"], type: "phrase_prefix", boost: 0.1 } },
-        ],
-        minimum_should_match: 1,
+  const tokens = query.split(/\s+/).filter(Boolean);
+  const isMultiTerm = tokens.length > 1;
+  
+  // Pattern for product codes like C8000, CW-C8000, TM-C3500, D6000
+  const productCodeRegex = /^[A-Z]{1,4}-?[0-9]{2,}[A-Z0-9]*$|^[A-Z]{2,}-[A-Z][0-9]{2,}[A-Z0-9]*$/i;
+  const isProductCodeIntent = tokens.every(t => productCodeRegex.test(t));
+  const hasNumericToken = tokens.some((t) => /[0-9]{2,}/.test(t));
+  const isPureNumeric = tokens.every(t => /^[0-9]+$/.test(t));
+
+  const should: estypes.QueryDslQueryContainer[] = [];
+
+  // --- TIER 1: SKU Exact Matches (Global Short-Circuit Priority) ---
+  skuFields.forEach((field) => {
+    should.push({
+      term: {
+        [`${field}.keyword`]: {
+          value: query,
+          boost: BOOST_SKU_EXACT,
+          case_insensitive: true,
+        },
       },
-    };
-  }
+    });
+  });
 
-  // Multi-term search (e.g., "d6000 geel" or "ColorWorks 8000")
+  // --- TIER 2: SKU Partial/Prefix Matches ---
+  should.push({
+    multi_match: {
+      query,
+      fields: skuFields.map((f) => `${f}^20`),
+      type: "phrase_prefix",
+      boost: BOOST_SKU_PREFIX,
+    },
+  });
+
+  // --- TIER 3: Title/Name Matches ---
+  should.push({
+    multi_match: {
+      query,
+      fields: titleFields.map((f) => `${f}^10`),
+      type: "phrase",
+      boost: BOOST_TITLE_PHRASE,
+    },
+  });
+
   if (isMultiTerm) {
-    // For 2 terms: require both (100%)
-    // For 3+ terms: require at least 75%
-    const minMatch = termCount === 2 ? "100%" : "75%";
-    
-    // Build wildcard queries for each individual term (e.g., "8000" → "*8000*")
-    // This allows "ColorWorks 8000" to match "ColorWorks C8000e BK"
-    const termWildcards: estypes.QueryDslQueryContainer[] = [];
-    for (const term of terms) {
-      const wildcardValue = `*${term.toLowerCase()}*`;
-      termWildcards.push(
-        { bool: {
-          should: [
-            { wildcard: { name: { value: wildcardValue, boost: 1, case_insensitive: true } } },
-            { wildcard: { catalog_brand: { value: wildcardValue, boost: 1, case_insensitive: true } } },
-            { wildcard: { catalog_material_code: { value: wildcardValue, boost: 1, case_insensitive: true } } },
-            { wildcard: { catalog_material: { value: wildcardValue, boost: 1, case_insensitive: true } } },
-            { wildcard: { sku: { value: wildcardValue, boost: 1, case_insensitive: true } } },
-            { wildcard: { article_number: { value: wildcardValue, boost: 1, case_insensitive: true } } },
-          ],
-          minimum_should_match: 1,
-        }}
-      );
-    }
-    
-    // Build "both terms in name" clause (highest relevance for focused matches)
-    // e.g., "D6000 geel" → both must be in the name field
-    const nameWildcards: estypes.QueryDslQueryContainer[] = terms.map(term => ({
-      wildcard: { name: { value: `*${term.toLowerCase()}*`, boost: 1, case_insensitive: true } }
-    }));
-    
-    return {
-      bool: {
-        should: [
-          // HIGHEST: Both terms in the name field (e.g., "CW-D6000 series Inktcartridges Geel")
-          { bool: { must: nameWildcards, boost: 200 } },
-          // Exact phrase in primary fields
-          { multi_match: { query, fields: primary, type: "phrase", boost: 100 } },
-          // All individual terms match via wildcards in any primary field
-          { bool: { must: termWildcards, boost: 50 } },
-          // All terms must match in primary fields
-          { multi_match: { query, fields: primary, type: "best_fields", operator: "and", boost: 40 } },
-          // Cross-field matching (terms can be in different fields)
-          { multi_match: { query, fields: primary, type: "cross_fields", operator: "and", boost: 30 } },
-          // Phrase prefix for partial matches
-          { multi_match: { query, fields: primary, type: "phrase_prefix", boost: 20 } },
-          // Most terms match in primary fields
-          { multi_match: { query, fields: primary, type: "best_fields", minimum_should_match: minMatch, boost: 10 } },
-          // Secondary fields (brand, material, attributes) - flexible OR matching
-          { multi_match: { query, fields: secondary, operator: "or", boost: 8 } },
-          // Individual wildcard matches in secondary fields
-          ...terms.flatMap((term) => [
-            { wildcard: { catalog_material_code: { value: `*${term.toLowerCase()}*`, boost: 3, case_insensitive: true } } },
-            { wildcard: { catalog_material: { value: `*${term.toLowerCase()}*`, boost: 3, case_insensitive: true } } },
-          ]),
-          // Fallback to description with flexible matching
-          { multi_match: { query, fields: fallback, operator: "or", boost: 1 } },
-        ],
-        minimum_should_match: 1,
+    should.push({
+      multi_match: {
+        query,
+        fields: titleFields,
+        type: "cross_fields",
+        operator: "and",
+        boost: BOOST_TITLE_AND,
       },
-    };
+    });
+
+    // 3c. Partial Word Match for Numeric Tokens (e.g. "8000" matching "C8000")
+    if (hasNumericToken && !isProductCodeIntent) {
+      const wildcardQuery = tokens
+        .map((t) => (/[0-9]{2,}/.test(t) ? `*${t}*` : t))
+        .join(" AND ");
+      should.push({
+        query_string: {
+          query: wildcardQuery,
+          fields: titleFields,
+          boost: BOOST_TITLE_AND * 0.5,
+          default_operator: "AND",
+          analyze_wildcard: true,
+        },
+      });
+    }
   }
 
-  // Single-term text search (for product names, descriptions, etc.)
+  // --- TIER 4: Feature Section (Subtitle, Material, Excerpt) ---
+  should.push({
+    multi_match: {
+      query,
+      fields: featureFields,
+      type: "best_fields",
+      operator: isMultiTerm ? "and" : "or",
+      boost: BOOST_FEATURE_SECTION,
+    },
+  });
+
+  // --- TIER 5: Brand & Secondary ---
+  // Genuine brand match gets higher priority
+  should.push({
+    multi_match: {
+      query,
+      fields: brandFields,
+      type: "best_fields",
+      boost: BOOST_BRAND_GENUINE,
+    },
+  });
+
+  // --- TIER 6: Secondary & Description (STRICT) ---
+  const useFuzzy = !isProductCodeIntent; // Allow fuzzy for text parts of the query
+
+  if (!isProductCodeIntent) {
+    // Dynamic minimum_should_match for text searches
+    // "2<67%" means if 2 terms, 100% must match. If 3+, 67% (2 out of 3) must match.
+    const minShouldMatch = "2<67%";
+
+    should.push({
+      multi_match: {
+        query,
+        fields: titleFields,
+        type: "best_fields",
+        operator: "or",
+        minimum_should_match: minShouldMatch,
+        boost: BOOST_TITLE_PARTIAL,
+      },
+    });
+
+    should.push({
+      multi_match: {
+        query,
+        fields: secondaryFields,
+        type: "best_fields",
+        operator: "and",
+        boost: BOOST_SECONDARY,
+      },
+    });
+
+    if (useFuzzy) {
+      // Filter out numeric tokens from the fuzzy query to prevent "7500" matching "7501"
+      const fuzzyQuery = tokens.filter(t => !/[0-9]/.test(t)).join(" ");
+      if (fuzzyQuery) {
+        should.push({
+          multi_match: {
+            query: fuzzyQuery,
+            fields: [...titleFields, "catalog_brand"],
+            type: "best_fields",
+            fuzziness: "AUTO",
+            prefix_length: 2,
+            boost: BOOST_SECONDARY * 0.5,
+          },
+        });
+      }
+    }
+
+    // Description fallback only for non-product-code queries
+    should.push({
+      multi_match: {
+        query,
+        fields: descriptionFields,
+        type: "cross_fields",
+        operator: "and",
+        boost: BOOST_DESCRIPTION,
+      },
+    });
+  } else {
+    // For product codes, we only allow very strict Title matching as a fallback to SKU
+    should.push({
+      multi_match: {
+        query,
+        fields: titleFields,
+        type: "phrase_prefix",
+        boost: BOOST_TITLE_PARTIAL,
+      },
+    });
+  }
+
+
   return {
     bool: {
+      should,
       minimum_should_match: 1,
-      should: [
-        // Exact SKU match still gets high priority
-        {
-          term: {
-            "sku.keyword": {
-              value: query,
-              boost: 1000,
-              case_insensitive: true,
-            },
-          },
-        },
-        // Exact article number match
-        {
-          term: {
-            "article_number.keyword": {
-              value: query,
-              boost: 1000,
-              case_insensitive: true,
-            },
-          },
-        },
-        // Exact variant SKU match
-        {
-          term: {
-            "variant_skus.keyword": {
-              value: query,
-              boost: 900,
-              case_insensitive: true,
-            },
-          },
-        },
-        // Wildcard matching - HIGH PRIORITY for partial matches (e.g., "colorwork" → "ColorWorks")
-        { wildcard: { name: { value: `*${query.toLowerCase()}*`, boost: 50, case_insensitive: true } } },
-        { wildcard: { catalog_brand: { value: `*${query.toLowerCase()}*`, boost: 40, case_insensitive: true } } },
-        { wildcard: { catalog_material_code: { value: `*${query.toLowerCase()}*`, boost: 35, case_insensitive: true } } },
-        { wildcard: { catalog_material: { value: `*${query.toLowerCase()}*`, boost: 35, case_insensitive: true } } },
-        { wildcard: { sku: { value: `*${query.toLowerCase()}*`, boost: 30, case_insensitive: true } } },
-        { wildcard: { article_number: { value: `*${query.toLowerCase()}*`, boost: 30, case_insensitive: true } } },
-        // Exact term match in primary fields (e.g., "polyester" exact match)
-        { multi_match: { query, fields: primary, type: "best_fields", operator: "or", boost: 20 } },
-        // Phrase prefix for partial matches at word boundaries
-        { multi_match: { query, fields: primary, type: "phrase_prefix", boost: 15 } },
-        // Secondary fields with OR operator (flexible matching)
-        { multi_match: { query, fields: secondary, operator: "or", boost: 10 } },
-        // Fuzzy matching with no prefix requirement (handles typos)
-        { multi_match: { query, fields: [...primary, ...secondary], fuzziness: "AUTO", prefix_length: 0, boost: 5 } },
-        // Fallback to description with low priority
-        { multi_match: { query, fields: fallback, operator: "or", boost: 1 } },
-      ],
     },
   };
 }
+
+
+
 
 function termsFilter(field: string, values: Array<string | number>): estypes.QueryDslQueryContainer | null {
   return values.length ? { terms: { [field]: values } } : null;
@@ -934,9 +932,9 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number, loc
   const slug = stringValue(source.slug) ?? stringValue(source.post_name);
   const frontendPath = stringValue(source.frontend_path);
   
-  let title = getLocalizedValue(source.title, locale) ?? getLocalizedValue(source.name, locale) ?? getLocalizedValue(source.post_title, locale) ?? "Unnamed product";
-  let subtitle = getLocalizedValue(source.subtitle, locale);
-  let excerpt = getLocalizedValue(source.excerpt, locale);
+  const title = getLocalizedValue(source.title, locale) ?? getLocalizedValue(source.name, locale) ?? getLocalizedValue(source.post_title, locale) ?? "Unnamed product";
+  const subtitle = getLocalizedValue(source.subtitle, locale);
+  const excerpt = getLocalizedValue(source.excerpt, locale);
 
   const warranty = warrantyFromSource(source);
 
@@ -1004,8 +1002,8 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
     track_total_hits: true,
     _source: RESULT_SOURCE_FIELDS as unknown as string[],
     query,
-    ...(params.search && params.search.trim().split(/\s+/).length >= 2 
-      ? { min_score: params.search.trim().split(/\s+/).length === 2 ? 5.0 : 1.5 } 
+    ...(params.search && params.search.trim().split(/\s+/).filter(Boolean).length >= 2 
+      ? { min_score: params.search.trim().split(/\s+/).filter(Boolean).length === 2 ? 3.0 : 2.0 } 
       : {}),
     ...(sortClauses(params.sort) ? { sort: sortClauses(params.sort) } : {}),
     aggs: aggregations(),
