@@ -67,6 +67,7 @@ type ProductPurchaseProps = {
     } | null;
   } | null;
   componentCount?: number | null;
+  isLabelProduct?: boolean | null;
 };
 
 
@@ -174,6 +175,7 @@ export default function ProductPurchase({
   discounts,
   warranty,
   componentCount,
+  isLabelProduct,
 }: ProductPurchaseProps) {
   const { addItem, openCart } = useCart();
   const wishlist = useWishlist();
@@ -561,64 +563,10 @@ export default function ProductPurchase({
           }
         }}
       >
-        {hasPackingGroup ? (
-          // Two-button layout for products with packing groups
+        {isLabelProduct ? (
+          // Label product layout with Rolls/Stack and Box buttons
           <PopoverAnchor asChild>
             <div className="flex flex-col gap-3">
-              <span className="text-neutral-800 text-lg font-bold leading-5">Select Quantity</span>
-              <div className="relative">
-                <div className="h-12 px-1 rounded-[50px] outline outline-1 outline-offset-[-1px] outline-black/10 flex justify-between items-center bg-white">
-                  <button
-                    type="button"
-                    onClick={decrement}
-                    className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
-                    aria-label="Decrease quantity"
-                  >
-                    <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
-                      <path strokeLinecap="round" d="M2 6h8" />
-                    </svg>
-                  </button>
-                  <input
-                    type="number"
-                    min={allowSingulars ? 1 : (hasPackingGroup ? normalizedPackingGroup : 1)}
-                    step={quantityStep}
-                    value={quantity}
-                    onChange={(event) => handleQuantityChange(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "ArrowUp") {
-                        event.preventDefault();
-                        increment();
-                      }
-
-                      if (event.key === "ArrowDown") {
-                        event.preventDefault();
-                        decrement();
-                      }
-                    }}
-                    aria-describedby={quantityError ? "quantity-error" : undefined}
-                    className="h-full min-w-0 flex-1 bg-transparent px-2 text-center text-sm font-semibold leading-5 text-neutral-800 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={increment}
-                    className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
-                    aria-label="Increase quantity"
-                  >
-                    <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
-                      <path strokeLinecap="round" d="M6 2v8M2 6h8" />
-                    </svg>
-                  </button>
-                </div>
-                {quantityError ? (
-                  <div
-                    id="quantity-error"
-                    role="alert"
-                    className="absolute left-4 top-full z-20 mt-2 max-w-72 rounded-xl border border-red-100 bg-white px-3 py-2 text-xs font-semibold leading-5 text-red-600 shadow-lg"
-                  >
-                    {quantityError}
-                  </div>
-                ) : null}
-              </div>
               <div className="flex items-center gap-3">
                 <button
                   type="button"
@@ -675,7 +623,7 @@ export default function ProductPurchase({
               <div className="flex flex-1 flex-col gap-2">
                 <button
                   type="button"
-                  onClick={() => handleAddToCart()}
+                  onClick={() => handleAddToCart(quantity)}
                   aria-describedby={quantityError ? "quantity-error" : undefined}
                   className="flex h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm"
                 >
