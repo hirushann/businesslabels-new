@@ -132,7 +132,7 @@ function parseSortValue(value: string | null): PrinterSortValue {
   return PRINTER_SORT_VALUES.includes(value as PrinterSortValue) ? (value as PrinterSortValue) : "latest";
 }
 
-export function parsePrinterSearchParams(params: URLSearchParams): PrinterSearchParams {
+export function parsePrinterSearchParams(params: URLSearchParams, locale?: "en" | "nl"): PrinterSearchParams {
   const page = Math.max(1, Number.parseInt(params.get("page") ?? String(DEFAULT_PAGE), 10) || DEFAULT_PAGE);
   const perPage = Math.min(
     MAX_PER_PAGE,
@@ -151,6 +151,7 @@ export function parsePrinterSearchParams(params: URLSearchParams): PrinterSearch
     detectie: params.getAll("detectie").flatMap(v => v.split(",")).filter(Boolean),
     width: params.getAll("width").flatMap(v => v.split(",")).filter(Boolean),
     buitenDiameter: params.getAll("buiten_diameter").flatMap(v => v.split(",")).filter(Boolean),
+    locale,
   };
 }
 
@@ -356,6 +357,7 @@ export async function searchPrinters(params: PrinterSearchParams): Promise<Print
         "original_price",
         "status",
         "created_at",
+        "translations",
       ],
     };
 
@@ -402,12 +404,48 @@ export async function searchPrinters(params: PrinterSearchParams): Promise<Print
       const slugs = Array.isArray(source.slug) ? source.slug : [source.slug];
       const excerpts = Array.isArray(source.excerpt) ? source.excerpt : [source.excerpt];
 
+      let name = String(titles[0] || "");
+      let subtitle = subtitles[0] ? String(subtitles[0]) : null;
+      let excerpt = excerpts[0] ? String(excerpts[0]) : null;
+
+      // Apply translations if locale is provided
+      if (params.locale && Array.isArray(source.translations)) {
+        const entry = source.translations.find((e: any) => {
+          if (!e || typeof e !== "object") return false;
+          return e[params.locale!] || e.language === params.locale;
+        });
+
+        if (entry) {
+          const translation = entry[params.locale!] || entry;
+          
+          const apply = (val: unknown) => {
+            if (val !== null && val !== undefined) {
+              if (typeof val === "string") {
+                const trimmed = val.trim();
+                return trimmed !== "" ? trimmed : null;
+              }
+              return val;
+            }
+            return null;
+          };
+
+          const translatedTitle = apply(translation.title) || apply(translation.name);
+          if (translatedTitle) name = translatedTitle as string;
+
+          const translatedSubtitle = apply(translation.subtitle);
+          if (translatedSubtitle) subtitle = translatedSubtitle as string;
+
+          const translatedExcerpt = apply(translation.excerpt);
+          if (translatedExcerpt) excerpt = translatedExcerpt as string;
+        }
+      }
+
       return {
         id: String(source.id),
         sku: "",
-        name: String(titles[0] || ""),
-        subtitle: subtitles[0] ? String(subtitles[0]) : null,
-        excerpt: excerpts[0] ? String(excerpts[0]) : null,
+        name,
+        subtitle,
+        excerpt,
         materialTitle: null,
         price: source.price ? Number(source.price) : 0,
         originalPrice: source.original_price ? Number(source.original_price) : null,

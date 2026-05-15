@@ -3,7 +3,8 @@ import { parseCatalogSearchParams, searchCatalogProducts } from "@/lib/search/pr
 
 export async function GET(request: NextRequest) {
   try {
-    const params = parseCatalogSearchParams(request.nextUrl.searchParams);
+    const locale = request.nextUrl.searchParams.get("locale") as "en" | "nl" | null;
+    const params = parseCatalogSearchParams(request.nextUrl.searchParams, locale || undefined);
     const response = await searchCatalogProducts(params);
     return NextResponse.json(response);
   } catch (error) {

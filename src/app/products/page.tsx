@@ -8,6 +8,8 @@ import type { CatalogSearchResponse } from "@/lib/search/types";
 import { getTranslations } from "next-intl/server";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
+import { getServerLocale } from "@/lib/i18n";
+
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations();
 
@@ -46,6 +48,7 @@ export default async function ProductsPage({
   searchParams: Promise<ProductsPageSearchParams>;
 }) {
   const t = await getTranslations();
+  const locale = await getServerLocale();
   const rawParams = await searchParams;
   const query = toUrlSearchParams(rawParams);
   let initialCatalog = emptyCatalogResponse;
@@ -53,8 +56,8 @@ export default async function ProductsPage({
 
   try {
     [initialCatalog, baselineCatalog] = await Promise.all([
-      searchCatalogProducts(parseCatalogSearchParams(query)),
-      searchCatalogProducts(parseCatalogSearchParams(new URLSearchParams())),
+      searchCatalogProducts(parseCatalogSearchParams(query, locale)),
+      searchCatalogProducts(parseCatalogSearchParams(new URLSearchParams(), locale)),
     ]);
   } catch (error) {
     console.error("Failed to load product catalog.", error);

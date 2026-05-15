@@ -42,12 +42,15 @@ const emptyCatalogResponse: CatalogSearchResponse = {
   filters: { ranges: [], options: [] },
 };
 
+import { getServerLocale } from "@/lib/i18n";
+
 export default async function PrinterPage({
   searchParams,
 }: {
   searchParams: Promise<PrintersPageSearchParams>;
 }) {
   const t = await getTranslations();
+  const locale = await getServerLocale();
   const rawParams = await searchParams;
   const routeQuery = toUrlSearchParams(rawParams);
   const scopeQuery = new URLSearchParams({ category: "labelprinters" });
@@ -62,8 +65,8 @@ export default async function PrinterPage({
 
   try {
     [initialCatalog, baselineCatalog] = await Promise.all([
-      searchCatalogProducts(parseCatalogSearchParams(initialSearchQuery)),
-      searchCatalogProducts(parseCatalogSearchParams(scopeQuery)),
+      searchCatalogProducts(parseCatalogSearchParams(initialSearchQuery, locale)),
+      searchCatalogProducts(parseCatalogSearchParams(scopeQuery, locale)),
     ]);
   } catch (error) {
     console.error("Failed to load printer catalog.", error);
