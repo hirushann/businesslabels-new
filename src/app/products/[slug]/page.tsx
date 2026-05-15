@@ -190,10 +190,14 @@ type TranslatedProductField =
 
 const PRODUCT_LOCALES = ["en", "nl"] as const;
 
-function normalizeType(raw: string | string[] | undefined): "simple" | "variable" | "group_product" | null {
+function normalizeType(raw: string | string[] | undefined, isGroupProduct?: boolean | null): "simple" | "variable" | "group_product" | null {
+  if (isGroupProduct) return "group_product";
   const value = Array.isArray(raw) ? raw[0] : raw;
   if (value === "simple" || value === "variable" || value === "group_product") {
     return value;
+  }
+  if (value === "group") {
+    return "group_product";
   }
   return null;
 }
@@ -567,9 +571,21 @@ export default async function SingleProductPage({
   const relatedProducts = (product.up_sells ?? []).map(mapUpsellToProductCard);
   const showCompatibilityCta = product.is_label_product == true || product.meta?.is_label_product === true;
 
+  const isGroup = normalizeType(product?.type, product?.is_group_product) === "group_product";
   let price = product?.price ?? 0;
-  if(product?.discount !== null && product.discount !== undefined && product.discount > 0){
-    price = price - (price * (product.discount / 100));
+  const originalPrice = product?.original_price ?? 0;
+  const discount = product?.discount ?? 0;
+
+  // For group products, if price is 0 or missing, derive it from original_price and discount
+  if (isGroup && price === 0 && originalPrice > 0 && discount > 0) {
+    price = originalPrice - (originalPrice * (discount / 100));
+  } else if (!isGroup && discount > 0 && price > 0) {
+    // If it's NOT a group product, the legacy logic applied discount to price.
+    // We keep this for simple products if the API still returns original price in 'price' field.
+    // However, if it IS a group product, the guide says 'price' is already the final price.
+    // To be safe, if price is already significantly lower than originalPrice, we might not want to apply it again.
+    // But for now, we'll just fix the 0 price for group products.
+    price = price - (price * (discount / 100));
   }
   console.log(product)
 
@@ -701,7 +717,7 @@ export default async function SingleProductPage({
             <ProductPurchase
               id={product?.id}
               slug={product?.slug}
-              type={normalizeType(product?.type)}
+              type={normalizeType(product?.type, product?.is_group_product)}
               name={productName}
               sku={product?.sku}
               subtitle={normalizeValue(product?.subtitle)}

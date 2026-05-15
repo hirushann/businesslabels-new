@@ -90,6 +90,7 @@ type CatalogProductDocument = {
   warranty_option_prices?: number[];
   warranty_option_skus?: string[];
   created_at_timestamp: number;
+  discount?: number;
 };
 ```
 
@@ -98,6 +99,7 @@ Important differences:
 - `Product` stores many localized fields as arrays, for example `title: string[]`.
 - `MasterProduct` stores `name` and `title` as strings, but stores other localized fields like `slug` and `description` as arrays.
 - `GroupProduct` stores `name` and `title` as strings, uses `product_type: "group"`, and has `is_group_product: true`.
+- `GroupProduct` prices are derived from components: `price` is the final discounted price, `original_price` is the subtotal before discount, and `discount` is the percentage.
 - For product detail pages, prefer `api_path_by_id`, `api_path_by_slug`, or `frontend_path` when available instead of reconstructing paths in the frontend.
 - Product facets use canonical fields only: `catalog_brand`, `catalog_material_code`, `catalog_material`, and `compatible_brands`. Use `catalog_brand.keyword` for exact brand filtering and aggregations.
 - Vanilo properties are the source of truth for catalog attributes. Promoted properties are intentionally not duplicated in `properties`.

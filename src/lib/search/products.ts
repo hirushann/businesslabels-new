@@ -140,6 +140,7 @@ const RESULT_SOURCE_FIELDS = [
   "excerpt",
   "price",
   "original_price",
+  "discount",
   "stock",
   "in_stock",
   "main_image",
@@ -162,6 +163,7 @@ const RESULT_SOURCE_FIELDS = [
   "warranty_option_months",
   "warranty_option_prices",
   "properties",
+  "is_group_product",
 ] as const;
 
 type ProductSource = Record<string, unknown>;
@@ -822,6 +824,7 @@ function booleanValue(value: unknown): boolean {
 
 function productType(value: unknown): ProductRouteType | null {
   const type = stringValue(value);
+  if (type === "group" || type === "group_product") return "group_product";
   return type === "simple" || type === "variable" ? type : null;
 }
 
@@ -901,11 +904,24 @@ function categoriesFromSource(source: ProductSource): Array<{ id?: number; name?
 function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number): CatalogProductResult {
   const source = hit._source ?? {};
   const id = stringValue(source.id) ?? stringValue(source.ID) ?? hit._id ?? `result-${index}`;
-  const type = productType(source.product_type) ?? productType(source.type);
+  let type = productType(source.product_type) ?? productType(source.type);
+  if (!type && booleanValue(source.is_group_product)) {
+    type = "group_product";
+  }
   const slug = stringValue(source.slug) ?? stringValue(source.post_name);
   const frontendPath = stringValue(source.frontend_path);
   const title = stringValue(source.title) ?? stringValue(source.name) ?? stringValue(source.post_title) ?? "Unnamed product";
   const warranty = warrantyFromSource(source);
+
+  const rawPrice = numberValue(source.price);
+  const originalPrice = numberValue(source.original_price);
+  const discount = numberValue(source.discount);
+
+  let price = rawPrice;
+  // Fallback for group products if price is 0 but original_price and discount are present
+  if (type === "group_product" && (!price || price === 0) && originalPrice && discount) {
+    price = originalPrice - (originalPrice * (discount / 100));
+  }
 
   const product: ProductCardData = {
     id,
@@ -914,8 +930,9 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number): Ca
     subtitle: stringValue(source.subtitle),
     excerpt: stringValue(source.excerpt),
     materialTitle: stringValue(source.catalog_material) ?? stringValue(source.catalog_material_code),
-    price: numberValue(source.price),
-    originalPrice: numberValue(source.original_price),
+    price,
+    originalPrice,
+    discount: discount ?? 0,
     inStock: booleanValue(source.in_stock) || Boolean((numberValue(source.stock) ?? 0) > 0),
     mainImage: imageUrl(stringValue(source.main_image) ?? stringValue(source.image)),
     categories: categoriesFromSource(source),
