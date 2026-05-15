@@ -733,7 +733,7 @@ export default function CheckoutPageClient({
       payment_fee: paymentFee,
       payment_method: form.paymentMethod,
       total: finalTotal,
-      language: locale,
+      lang: locale.split('-')[0] === 'nl' ? 'nl' : 'en',
       order_items: items
         // Warranty items are addons and don't have numeric product IDs, so exclude them.
         .flatMap((item) => {
