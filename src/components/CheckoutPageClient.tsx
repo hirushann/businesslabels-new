@@ -748,9 +748,12 @@ export default function CheckoutPageClient({
             name: item.name?.trim() || item.sku || "Product",
             price: typeof item.price === "number" && Number.isFinite(item.price) ? item.price : 0,
             quantity: item.quantity,
+            is_group_product: item.type === "group_product",
           }];
         })
     };
+
+    console.log("[Checkout] Submitting order data:", JSON.stringify(orderData, null, 2));
 
     try {
       const response = await fetch("/api/checkout", {
