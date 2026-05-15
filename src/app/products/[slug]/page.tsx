@@ -748,6 +748,7 @@ export default async function SingleProductPage({
               discounts={product?.discounts}
               warranty={product?.warranty}
               componentCount={product?.component_products?.length || null}
+              isLabelProduct={product?.is_label_product == true || product?.meta?.is_label_product === true}
             />
 
             {/* Consumable Items */}
