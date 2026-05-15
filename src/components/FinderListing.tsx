@@ -165,7 +165,7 @@ export default function FinderListing({
     startTransition(() => {
       router.push(href, { scroll: false });
     });
-  }, [pathname, router, searchParams]);
+}, [pathname, router, searchParams]);
 
   const setSearch = useCallback((value: string) => {
     setParams((params) => {
