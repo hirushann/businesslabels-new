@@ -3,6 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { LinkProps } from "next/link";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export type PrinterCardData = {
   id: string | number;
@@ -33,6 +39,12 @@ function featureLines(printer: PrinterCardData): string[] {
     .slice(0, 3);
 }
 
+const truncateWords = (text: string, count: number) => {
+  const words = text.split(/\s+/);
+  if (words.length <= count) return text;
+  return words.slice(0, count).join(' ') + ' .....';
+};
+
 export default function PrinterCard({ printer, href }: PrinterCardProps) {
   const printerName = printer.name ?? "";
   const features = featureLines(printer);
@@ -55,7 +67,25 @@ export default function PrinterCard({ printer, href }: PrinterCardProps) {
                 </clipPath>
               </defs>
             </svg>
-            <span className="text-neutral-700 text-xs font-normal font-['Segoe_UI'] leading-4">Printer</span>
+            {(() => {
+              const label = "Printer"; // This could be dynamic or translated in the future
+              const truncated = truncateWords(label, 2);
+              const isTruncated = label !== truncated;
+              return isTruncated ? (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="text-neutral-700 text-xs font-normal font-['Segoe_UI'] leading-4 cursor-default">{truncated}</span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{label}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : (
+                <span className="text-neutral-700 text-xs font-normal font-['Segoe_UI'] leading-4">{label}</span>
+              );
+            })()}
           </div>
         </div>
         <Image

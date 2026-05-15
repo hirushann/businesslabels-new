@@ -6,6 +6,12 @@ import Link from "next/link";
 import { useTranslations } from 'next-intl';
 import EmptyState from "@/components/EmptyState";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type Printer = {
   id: number;
@@ -42,6 +48,15 @@ function PrinterCard({ printer }: { printer: Printer }) {
   const t = useTranslations();
   const printerImage = toDisplayImageUrl(printer.image) || "https://placehold.co/600x400";
   const href = `/finder?printer_id=${printer.id}`;
+  const printerLabel = t('finder.printer');
+  const truncateWords = (text: string, count: number) => {
+    const words = text.split(/\s+/);
+    if (words.length <= count) return text;
+    return words.slice(0, count).join(' ') + ' .....';
+  };
+
+  const truncatedLabel = truncateWords(printerLabel, 2);
+  const isTruncated = printerLabel !== truncatedLabel;
 
   return (
     <Link href={href} className="group mx-auto block h-full w-full max-w-88">
@@ -61,7 +76,20 @@ function PrinterCard({ printer }: { printer: Printer }) {
                   </clipPath>
                 </defs>
               </svg>
-              <span className="text-neutral-700 text-xs font-normal font-['Segoe_UI'] leading-4">{t('finder.printer')}</span>
+              {isTruncated ? (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="text-neutral-700 text-xs font-normal font-['Segoe_UI'] leading-4 cursor-default">{truncatedLabel}</span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{printerLabel}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : (
+                <span className="text-neutral-700 text-xs font-normal font-['Segoe_UI'] leading-4">{printerLabel}</span>
+              )}
             </div>
           </div>
           <Image

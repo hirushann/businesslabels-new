@@ -7,6 +7,12 @@ import type { LinkProps } from "next/link";
 import { buildCartItemKey, useCart } from "@/components/CartProvider";
 import { Popover, PopoverAnchor, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle } from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export type ProductRouteType = "simple" | "variable" | "group_product";
 
@@ -117,6 +123,12 @@ export function lastCategoryLabel(categories: ProductCardData["categories"]): st
   return label || null;
 }
 
+const truncateWords = (text: string, count: number) => {
+  const words = text.split(/\s+/);
+  if (words.length <= count) return text;
+  return words.slice(0, count).join(' ') + ' .....';
+};
+
 export default function ProductCard({ product, href, onClick }: ProductCardProps) {
   const { addItem, openCart } = useCart();
   const productName = product.name ?? "";
@@ -220,7 +232,26 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
                   </clipPath>
                 </defs>
               </svg>
-              <span className="text-neutral-700 text-xs font-normal font-['Segoe_UI'] leading-4">{categoryBadge}</span>
+              {categoryBadge && (
+                (() => {
+                  const truncated = truncateWords(categoryBadge, 2);
+                  const isTruncated = categoryBadge !== truncated;
+                  return isTruncated ? (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="text-neutral-700 text-xs font-normal font-['Segoe_UI'] leading-4 cursor-default">{truncated}</span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{categoryBadge}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : (
+                    <span className="text-neutral-700 text-xs font-normal font-['Segoe_UI'] leading-4">{categoryBadge}</span>
+                  );
+                })()
+              )}
             </div>
           ) : <div className="w-8" />}
           {product.inStock ? (
