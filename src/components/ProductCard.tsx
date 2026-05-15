@@ -53,6 +53,7 @@ export type ProductCardData = {
   type?: ProductRouteType | null;
   packing_group?: number | null;
   warranty?: ProductWarrantyData | null;
+  discount?: number | 0;
 };
 
 type ProductCardProps = {
@@ -139,7 +140,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
     typeof product.originalPrice === "number" &&
     Number.isFinite(product.originalPrice) &&
     (!hasPrice || (hasPrice && (product.price !== undefined && product.price !== null) && product.originalPrice > product.price));
-  const imageSrc = normalizeText(product.mainImage) || "https://placehold.co/600x400";
+  const imageSrc = normalizeText(product.mainImage) || "https://placehold.co/600x400?text=" + encodeURIComponent(productName);
   const normalizedWarranty = useMemo(() => normalizeWarrantyOptions(product.warranty), [product.warranty]);
   const defaultWarrantyOption = normalizedWarranty.options.find(
     (option) => option.id === normalizedWarranty.defaultOptionId,

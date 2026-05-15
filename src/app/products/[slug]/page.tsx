@@ -137,6 +137,7 @@ type ProductDetail = {
   packing_group?: string | number | null;
   allow_singulars?: string | number | boolean | null;
   discounts?: string | Array<{ discount?: string | number | null; quantity?: string | number | null }> | null;
+  discount?: number | null;
   dimensions?: {
     weight?: string | number | null;
     width?: string | number | null;
@@ -565,6 +566,11 @@ export default async function SingleProductPage({
   console.log("Specs derived from product:", specs);
   const relatedProducts = (product.up_sells ?? []).map(mapUpsellToProductCard);
   const showCompatibilityCta = product.is_label_product == true || product.meta?.is_label_product === true;
+
+  let price = product?.price ?? 0;
+  if(product?.discount !== null && product.discount !== undefined && product.discount > 0){
+    price = price - (price * (product.discount / 100));
+  }
   console.log(product)
 
   return (
@@ -702,7 +708,7 @@ export default async function SingleProductPage({
               excerpt={normalizeValue(product?.excerpt)}
               materialTitle={normalizeValue(product?.material?.title)}
               inStock={product?.in_stock}
-              price={product?.price}
+              price={price}
               originalPrice={product?.original_price}
               mainImage={product?.main_image}
               packingGroup={normalizePackingGroup(product?.packing_group)}

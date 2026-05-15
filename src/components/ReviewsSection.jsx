@@ -27,11 +27,11 @@ async function getFallbackReviews() {
 }
 
 async function getGoogleReviews() {
-  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   const placeId = process.env.GOOGLE_PLACE_ID;
   
   if (!apiKey || !placeId) {
-    console.warn("Missing GOOGLE_PLACES_API_KEY or GOOGLE_PLACE_ID in environment variables.");
+    console.warn("Missing NEXT_PUBLIC_GOOGLE_MAPS_API_KEY or GOOGLE_PLACE_ID in environment variables.");
     return null;
   }
   
