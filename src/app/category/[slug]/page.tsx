@@ -69,6 +69,8 @@ const emptyCatalogResponse: CatalogSearchResponse = {
   filters: { ranges: [], options: [] },
 };
 
+import { getServerLocale } from "@/lib/i18n";
+
 export default async function CategoryArchivePage({
   params,
   searchParams,
@@ -79,6 +81,7 @@ export default async function CategoryArchivePage({
   const { slug } = await params;
   const rawParams = await searchParams;
   const t = await getTranslations();
+  const locale = await getServerLocale();
   const categoryTitle = categoryTitleForSlug(slug);
   const routeQuery = toUrlSearchParams(rawParams);
   const scopeQuery = new URLSearchParams({
@@ -95,8 +98,8 @@ export default async function CategoryArchivePage({
 
   try {
     [initialCatalog, baselineCatalog] = await Promise.all([
-      searchCatalogProducts(parseCatalogSearchParams(initialSearchQuery)),
-      searchCatalogProducts(parseCatalogSearchParams(scopeQuery)),
+      searchCatalogProducts(parseCatalogSearchParams(initialSearchQuery, locale)),
+      searchCatalogProducts(parseCatalogSearchParams(scopeQuery, locale)),
     ]);
   } catch (error) {
     console.error(`Failed to load category catalog for slug '${slug}'.`, error);

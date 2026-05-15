@@ -748,7 +748,7 @@ export default function CheckoutPageClient({
             name: item.name?.trim() || item.sku || "Product",
             price: typeof item.price === "number" && Number.isFinite(item.price) ? item.price : 0,
             quantity: item.quantity,
-            is_group_product: item.type === "group_product",
+            is_group_product: item.type === "group_product" || (item.componentCount ?? 0) > 0,
           }];
         })
     };

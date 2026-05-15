@@ -264,12 +264,15 @@ function SpecItem({ label, value }: { label: string; value: string }) {
   );
 }
 
+import { getServerLocale } from "@/lib/i18n";
+
 export default async function FinderPage({
   searchParams,
 }: {
   searchParams: Promise<FinderPageSearchParams>;
 }) {
   const t = await getTranslations();
+  const locale = await getServerLocale();
   const rawParams = await searchParams;
 
   // If printer_id is present, show the products view
@@ -290,8 +293,8 @@ export default async function FinderPage({
       try {
         [printer, initialCatalog, baselineCatalog] = await Promise.all([
           getPrinterById(printerId),
-          searchCatalogProducts(parseCatalogSearchParams(query)),
-          searchCatalogProducts(parseCatalogSearchParams(baselineQuery)),
+          searchCatalogProducts(parseCatalogSearchParams(query, locale)),
+          searchCatalogProducts(parseCatalogSearchParams(baselineQuery, locale)),
         ]);
       } catch (error) {
         console.error("Failed to load finder product catalog.", error);
@@ -348,7 +351,7 @@ export default async function FinderPage({
   let initialCatalog = emptyPrinterCatalog;
 
   try {
-    initialCatalog = await searchPrinters(parsePrinterSearchParams(query));
+    initialCatalog = await searchPrinters(parsePrinterSearchParams(query, locale));
   } catch (error) {
     console.error("Failed to load printer catalog.", error);
   }

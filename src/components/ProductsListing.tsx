@@ -9,7 +9,7 @@ import {
   useTransition,
 } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import Accordion from "@/components/Accordion";
 import EmptyState from "@/components/EmptyState";
 import ProductCard from "@/components/ProductCard";
@@ -209,6 +209,7 @@ function CatalogProductsListing({
   baselineRangeFilters,
 }: ProductsListingProps) {
   const t = useTranslations();
+  const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -382,7 +383,7 @@ function CatalogProductsListing({
       setError(null);
     }, 0);
 
-    fetch(`/api/catalog/products?${scopedCurrentQueryString}`, {
+    fetch(`/api/catalog/products?${scopedCurrentQueryString}&locale=${locale}`, {
       signal: controller.signal,
     })
       .then(async (response) => {

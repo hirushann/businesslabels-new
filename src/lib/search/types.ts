@@ -99,6 +99,7 @@ export type CatalogSearchParams = {
   printerTypes: string[];
   detections: string[];
   marks: string[];
+  locale?: "en" | "nl";
 };
 
 export type CatalogProductResult = {

@@ -175,7 +175,7 @@ export default function ProductPurchase({
   warranty,
   componentCount,
 }: ProductPurchaseProps) {
-  const { addItem } = useCart();
+  const { addItem, openCart } = useCart();
   const wishlist = useWishlist();
   const normalizedPackingGroup = packingGroup ? Number.parseInt(packingGroup, 10) : null;
   const hasPackingGroup =
@@ -403,6 +403,8 @@ export default function ProductPurchase({
         qtyToAdd,
       );
     }
+
+    openCart();
   };
 
   const handleAddToCart = (customQuantity?: number) => {

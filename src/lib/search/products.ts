@@ -164,6 +164,7 @@ const RESULT_SOURCE_FIELDS = [
   "warranty_option_prices",
   "properties",
   "is_group_product",
+  "translations",
 ] as const;
 
 type ProductSource = Record<string, unknown>;
@@ -224,7 +225,7 @@ function sortParam(value: string | null): CatalogSortValue {
   return CATALOG_SORT_VALUES.includes(value as CatalogSortValue) ? (value as CatalogSortValue) : "latest";
 }
 
-export function parseCatalogSearchParams(params: URLSearchParams): CatalogSearchParams {
+export function parseCatalogSearchParams(params: URLSearchParams, locale?: "en" | "nl"): CatalogSearchParams {
   const page = Math.max(1, Number.parseInt(params.get("page") ?? String(DEFAULT_PAGE), 10) || DEFAULT_PAGE);
   const perPage = Math.min(
     MAX_PER_PAGE,
@@ -278,6 +279,7 @@ export function parseCatalogSearchParams(params: URLSearchParams): CatalogSearch
     printerTypes: valuesParam(params, MULTI_VALUE_KEYS.printerTypes),
     detections: valuesParam(params, MULTI_VALUE_KEYS.detections),
     marks: valuesParam(params, MULTI_VALUE_KEYS.marks),
+    locale,
   };
 }
 
@@ -804,6 +806,28 @@ function stringValue(value: unknown): string | null {
   return scalar === null ? null : String(scalar);
 }
 
+function getLocalizedValue(value: unknown, locale?: "en" | "nl"): string | null {
+  if (!value) return null;
+  
+  if (Array.isArray(value)) {
+    const strings = value.filter(v => typeof v === 'string' && v.trim() !== '') as string[];
+    if (strings.length === 0) return null;
+    if (strings.length === 1) return strings[0];
+    
+    // Assuming backend flattens ['en' => '...', 'nl' => '...']
+    // English is index 0, Dutch is index 1
+    if (locale === 'nl') return strings[1] || strings[0];
+    return strings[0];
+  }
+  
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed !== '' ? trimmed : null;
+  }
+  
+  return stringValue(value);
+}
+
 function numberValue(value: unknown): number | null {
   const scalar = firstScalar(value);
   if (typeof scalar === "number") return scalar;
@@ -824,8 +848,7 @@ function booleanValue(value: unknown): boolean {
 
 function productType(value: unknown): ProductRouteType | null {
   const type = stringValue(value);
-  if (type === "group" || type === "group_product") return "group_product";
-  return type === "simple" || type === "variable" ? type : null;
+  return type === "simple" || type === "variable" || type === "group_product" ? type : null;
 }
 
 function imageUrl(url: string | null): string | null {
@@ -901,7 +924,7 @@ function categoriesFromSource(source: ProductSource): Array<{ id?: number; name?
   return [];
 }
 
-function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number): CatalogProductResult {
+function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number, locale?: "en" | "nl"): CatalogProductResult {
   const source = hit._source ?? {};
   const id = stringValue(source.id) ?? stringValue(source.ID) ?? hit._id ?? `result-${index}`;
   let type = productType(source.product_type) ?? productType(source.type);
@@ -910,7 +933,11 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number): Ca
   }
   const slug = stringValue(source.slug) ?? stringValue(source.post_name);
   const frontendPath = stringValue(source.frontend_path);
-  const title = stringValue(source.title) ?? stringValue(source.name) ?? stringValue(source.post_title) ?? "Unnamed product";
+  
+  let title = getLocalizedValue(source.title, locale) ?? getLocalizedValue(source.name, locale) ?? getLocalizedValue(source.post_title, locale) ?? "Unnamed product";
+  let subtitle = getLocalizedValue(source.subtitle, locale);
+  let excerpt = getLocalizedValue(source.excerpt, locale);
+
   const warranty = warrantyFromSource(source);
 
   const rawPrice = numberValue(source.price);
@@ -927,8 +954,8 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number): Ca
     id,
     sku: stringValue(source.sku) ?? "-",
     name: title,
-    subtitle: stringValue(source.subtitle),
-    excerpt: stringValue(source.excerpt),
+    subtitle,
+    excerpt,
     materialTitle: stringValue(source.catalog_material) ?? stringValue(source.catalog_material_code),
     price,
     originalPrice,
@@ -962,6 +989,13 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
   const filters = buildFilters(params);
   const from = (params.page - 1) * params.perPage;
 
+  const query: estypes.QueryDslQueryContainer = {
+    bool: {
+      must: [textQuery(params.search)],
+      filter: filters,
+    },
+  };
+
   const response = await client.search<ProductSource>({
     index: catalogIndexForType(params.type),
     ignore_unavailable: true,
@@ -969,21 +1003,15 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
     size: params.perPage,
     track_total_hits: true,
     _source: RESULT_SOURCE_FIELDS as unknown as string[],
-    query: {
-      bool: {
-        must: [textQuery(params.search)],
-        filter: filters,
-      },
-    },
-    // Apply min_score for multi-term searches to filter weak matches
-    // 2 terms: stricter threshold (5.0) to prevent broad matches (e.g., "D6000 geel")
-    // 3+ terms: more lenient (1.5) to allow partial matches
+    query,
     ...(params.search && params.search.trim().split(/\s+/).length >= 2 
       ? { min_score: params.search.trim().split(/\s+/).length === 2 ? 5.0 : 1.5 } 
       : {}),
     ...(sortClauses(params.sort) ? { sort: sortClauses(params.sort) } : {}),
     aggs: aggregations(),
   });
+
+  console.log(`[Search] Query locale: ${params.locale}, Total hits: ${totalHitsValue(response.hits.total)}`);
 
   const total = totalHitsValue(response.hits.total);
   const lastPage = Math.max(1, Math.ceil(total / params.perPage));
@@ -1031,8 +1059,10 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
     }
   }
 
+
+
   return {
-    products: response.hits.hits.map(mapProductHit),
+    products: response.hits.hits.map((hit, index) => mapProductHit(hit, index, params.locale)),
     total,
     currentPage: Math.min(params.page, lastPage),
     lastPage,

@@ -36,6 +36,7 @@ export type PrinterSearchParams = {
   detectie: string[];
   width: string[];
   buitenDiameter: string[];
+  locale?: "en" | "nl";
 };
 
 export type PrinterSearchResponse = {
