@@ -1,31 +1,28 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import CategoryListing from "@/components/CategoryListing";
-import type { CategoryCardData } from "@/components/CategoryListing";
 import { getTranslations } from "next-intl/server";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
-import { listProducts } from "@/lib/api/products";
-import { mapLaravelProductToCardData } from "@/lib/mappings/product";
-import { getServerLocale } from "@/lib/i18n/server";
+import ProductsListing from "@/components/ProductsListing";
+import {
+  parseCatalogSearchParams,
+  searchCatalogProducts,
+} from "@/lib/search/products";
+import type { CatalogSearchResponse } from "@/lib/search/types";
+import { getServerLocale } from "@/lib/i18n";
 
 const BRAND_TITLES: Record<string, string> = {
-  epson: "EPSON",
-  sii: "SII",
-  godex: "GoDEX",
-  diamondlabels: "diamondlabels",
-  expo_badge: "EXPO BADGE",
+  epson: "Epson",
+  sii: "Seiko",
+  godex: "Godex",
+  diamondlabels: "Diamondlabels",
+  expo_badge: "ExpoBadge",
+  zebra: "Zebra",
+  botlr: "Botlr",
+  creative: "Creative",
 };
 
-function fallbackBrandTitle(slug: string): string {
-  return slug
-    .split(/[-_]+/)
-    .filter(Boolean)
-    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-    .join(" ");
-}
-
 function brandTitleForSlug(slug: string): string {
-  return BRAND_TITLES[slug] ?? fallbackBrandTitle(slug);
+  return BRAND_TITLES[slug.toLowerCase()] ?? fallbackBrandTitle(slug);
 }
 
 export async function generateMetadata({
@@ -43,24 +40,63 @@ export async function generateMetadata({
   };
 }
 
+type BrandPageSearchParams = Record<string, string | string[] | undefined>;
+
+function toUrlSearchParams(query: BrandPageSearchParams): URLSearchParams {
+  const params = new URLSearchParams();
+
+  Object.entries(query).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      value.forEach((item) => params.append(key, item));
+    } else if (value !== undefined) {
+      params.append(key, value);
+    }
+  });
+
+  return params;
+}
+
+const emptyCatalogResponse: CatalogSearchResponse = {
+  products: [],
+  total: 0,
+  currentPage: 1,
+  lastPage: 1,
+  perPage: 24,
+  filters: { ranges: [], options: [] },
+};
+
 export default async function BrandArchivePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<BrandPageSearchParams>;
 }) {
   const { slug } = await params;
+  const rawParams = await searchParams;
   const brandTitle = brandTitleForSlug(slug);
   const locale = await getServerLocale();
   const t = await getTranslations();
+  const routeQuery = toUrlSearchParams(rawParams);
+  
+  // Scope the search to the exact brand name in ES
+  const scopeQuery = new URLSearchParams({
+    brand: brandTitle,
+  });
+  
+  const initialSearchQuery = new URLSearchParams(scopeQuery);
+  routeQuery.forEach((value, key) => {
+    initialSearchQuery.append(key, value);
+  });
 
-  let initialProducts: CategoryCardData[] = [];
+  let initialCatalog = emptyCatalogResponse;
+  let baselineCatalog = emptyCatalogResponse;
+
   try {
-    const response = await listProducts({ make: slug, per_page: 24 });
-    if (response && response.data) {
-      initialProducts = (response.data as Array<Parameters<typeof mapLaravelProductToCardData>[0]>).map((product) =>
-        mapLaravelProductToCardData(product, locale),
-      );
-    }
+    [initialCatalog, baselineCatalog] = await Promise.all([
+      searchCatalogProducts(parseCatalogSearchParams(initialSearchQuery, locale)),
+      searchCatalogProducts(parseCatalogSearchParams(scopeQuery, locale)),
+    ]);
   } catch (error) {
     console.error(`Failed to fetch products for brand ${slug}:`, error);
   }
@@ -86,13 +122,18 @@ export default async function BrandArchivePage({
                   { label: brandTitle }
                 ]} 
               />
-            <h1 className="text-white text-4xl font-bold leading-[48px]">{brandTitle}</h1>
+              <h1 className="text-white text-4xl font-bold leading-[48px]">{brandTitle}</h1>
+            </div>
           </div>
-        </div>
 
-        <CategoryListing products={initialProducts} brandSlug={slug} />
+          <ProductsListing 
+            initialCatalog={initialCatalog} 
+            initialQueryString={routeQuery.toString()}
+            scopeQueryString={scopeQuery.toString()}
+            baselineRangeFilters={baselineCatalog.filters.ranges}
+          />
+        </div>
       </div>
     </div>
-  </div>
   );
 }
