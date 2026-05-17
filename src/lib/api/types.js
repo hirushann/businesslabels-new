@@ -330,6 +330,7 @@
 /**
  * @typedef {Object} Printer
  * @property {number} id
+ * @property {Array<Object<string, PageTranslation>>} translations  Both locales bundled; switch client-side.
  * @property {LocalizedString} title
  * @property {LocalizedString} [subtitle]
  * @property {LocalizedString} slug
@@ -364,6 +365,89 @@
  * returned for a given printer.
  *
  * @typedef {Warranty} WarrantyOption
+ */
+
+// ─── Translations ────────────────────────────────────────────
+
+/**
+ * One locale's translatable fields for a page, post, or printer.
+ *
+ * The API returns `translations` as an array of single-key objects — one per
+ * locale — so the frontend can switch language client-side without another
+ * request:  [ { en: {...} }, { nl: {...} } ]
+ *
+ * @typedef {Object} PageTranslation
+ * @property {string} language  Locale code, e.g. 'en' | 'nl'
+ * @property {string|null} title
+ * @property {string|null} subtitle
+ * @property {string|null} slug
+ * @property {string|null} excerpt
+ * @property {string|null} content
+ * @property {string|null} meta_title
+ * @property {string|null} meta_description
+ */
+
+/**
+ * One locale's translatable fields for a material.
+ *
+ * @typedef {Object} MaterialTranslation
+ * @property {string} language
+ * @property {string|null} title
+ * @property {string|null} subtitle
+ * @property {string|null} slug
+ * @property {string|null} description
+ */
+
+// ─── Pages & Posts ───────────────────────────────────────────
+
+/**
+ * A CMS page or a blog post. Both `/pages` and `/posts` return this shape
+ * (same Laravel PageResource).
+ *
+ * @typedef {Object} Page
+ * @property {number} id
+ * @property {Array<Object<string, PageTranslation>>} translations  Both locales bundled; switch client-side.
+ * @property {string|null} title  Resolved for the active server locale.
+ * @property {string|null} slug
+ * @property {string|null} excerpt
+ * @property {string|null} content
+ * @property {string} status
+ * @property {string|null} template
+ * @property {Object<string, string>} meta
+ * @property {string|null} image
+ * @property {string} created_at
+ * @property {string} updated_at
+ */
+
+// ─── Material ────────────────────────────────────────────────
+
+/**
+ * @typedef {Object} Material
+ * @property {number} id
+ * @property {Array<Object<string, MaterialTranslation>>} translations  Both locales bundled; switch client-side.
+ * @property {string|null} title  Resolved for the active server locale.
+ * @property {string|null} subtitle
+ * @property {string|null} slug
+ * @property {string|null} code
+ * @property {string|null} brand
+ * @property {string} status
+ * @property {{ id: number, name: string, slug: string }[]} [categories]
+ * @property {string} created_at
+ * @property {string} updated_at
+ *
+ * Detail-only fields (present on show/showBySlug):
+ * @property {string|null} [description]
+ * @property {Object|null} [specifications]
+ * @property {string|null} [print_method]
+ * @property {string|null} [base_material]
+ * @property {string|null} [finish]
+ * @property {string|null} [adhesive]
+ * @property {string|null} [supplier]
+ * @property {string|null} [supplier_reference]
+ * @property {number} [price_per_sq_meter]
+ * @property {string|null} [certificate]
+ * @property {Object[]} [products]
+ * @property {number} [products_count]
  */
 
 export {};
