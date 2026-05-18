@@ -307,7 +307,7 @@ async function requestAccountOrders() {
     if (response.status === 401 || data.message === 'Unauthenticated.') {
       if (typeof window !== 'undefined') {
         localStorage.removeItem('auth_user');
-        window.location.href = '/login?redirect=/account';
+        window.location.href = '/login?redirect=/my-account';
       }
       return [];
     }
@@ -419,7 +419,7 @@ async function requestAccountAddresses() {
     if (response.status === 401 || data.message === 'Unauthenticated.') {
       if (typeof window !== 'undefined') {
         localStorage.removeItem('auth_user');
-        window.location.href = '/login?redirect=/account';
+        window.location.href = '/login?redirect=/my-account';
       }
       return [];
     }
@@ -625,7 +625,7 @@ function DashboardView({ setActiveTab, user }: { setActiveTab: (tab: Tab) => voi
   const stats = [
     { label: 'Recent Orders', value: isLoading ? '...' : String(orders.length), sub: 'Lifetime total' },
     { label: 'Active Printers', value: '3', sub: 'Status: Online' },
-    { label: 'Rewards Balance', value: '€ 45.00', sub: '450 pts' },
+    // { label: 'Rewards Balance', value: '€ 45.00', sub: '450 pts' },
   ];
 
   return (
