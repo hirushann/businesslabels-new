@@ -648,25 +648,65 @@ export default async function SingleProductPage({
 
             <div className="flex flex-col gap-6">
 
-{componentProducts ? (
+{componentProducts.length > 0 ? (
                 <Accordion
                 title={t('product.componentProduct')}
               >
-                <div className="flex flex-wrap flex-col gap-2">
-                  {componentProducts.map((item) => (
-                    <div key={item.id}>
-                      <Link href={item.slug ? productPathForSlug(item.slug, null) : "#"} className="text-start flex items-center gap-3">
-                        {item.main_image && <Image src={item.main_image!} alt={item.name!} width={64} height={64} className="rounded-lg" />}
-                        <h5 className="text-neutral-700 text-sm font-semibold">{item.name}</h5>
-
+                <div className="flex flex-col gap-2">
+                  {componentProducts.map((item) => {
+                    const proxiedImage = toDisplayImageUrl(item.main_image);
+                    return (
+                      <div key={item.id}>
+                        <Link
+                          href={item.slug ? productPathForSlug(item.slug, "simple") : "#"}
+                          className="group flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3 text-start transition-colors hover:border-amber-200 hover:bg-amber-50"
+                        >
+                          {proxiedImage ? (
+                            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white">
+                              <Image
+                                src={proxiedImage}
+                                alt={item.name ?? ""}
+                                width={56}
+                                height={56}
+                                className="h-full w-full object-contain p-1"
+                                unoptimized
+                              />
+                            </div>
+                          ) : (
+                            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-300">
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.5" />
+                                <path d="M3 15l5-5 4 4 3-3 6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </div>
+                          )}
+                          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                            <h5 className="truncate text-sm font-semibold text-neutral-700 group-hover:text-amber-700">
+                              {item.name}
+                            </h5>
+                            {item.sku && (
+                              <span className="text-xs text-neutral-400">SKU: {item.sku}</span>
+                            )}
+                          </div>
                           {item.quantity && (
-                            <span className="text-neutral-700 text-sm font-normal">
-                              x {item.quantity}
+                            <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
+                              x{item.quantity}
                             </span>
                           )}
-                      </Link>
-                    </div>
-                  ))}
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 16 16"
+                            fill="none"
+                            className="shrink-0 text-slate-400 transition-colors group-hover:text-amber-500"
+                            aria-hidden="true"
+                          >
+                            <path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </Link>
+                      </div>
+                    );
+                  })}
                 </div>
                 </Accordion>
             ) : null}
