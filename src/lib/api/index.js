@@ -28,3 +28,5 @@ export {
   checkCompatibility 
 } from './compatibility';
 export { fetchPrinterOptions } from './printers';
+export { listPages, getPage, listPosts, getPost } from './pages';
+export { listMaterials, getMaterial, getMaterialBySlug } from './materials';
