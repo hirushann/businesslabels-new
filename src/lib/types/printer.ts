@@ -72,11 +72,34 @@ export type PrinterProperties = {
 };
 
 /**
+ * One locale's translatable fields for a printer.
+ *
+ * The API returns `translations` as an array of single-key objects — one per
+ * locale — so the frontend can switch language client-side without another
+ * request:  [ { en: {...} }, { nl: {...} } ]
+ *
+ * @see Backend: app/Models/Post::formattedTranslations
+ */
+export type PrinterTranslation = {
+  /** Locale code, e.g. 'en' | 'nl' */
+  language: string;
+  title: string | null;
+  subtitle: string | null;
+  slug: string | null;
+  excerpt: string | null;
+  content: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
+};
+
+/**
  * Full printer resource from the API.
  * Uses `properties` field (Vanilo system) instead of legacy `meta` field.
  */
 export type Printer = {
   id: number;
+  /** Both locales bundled; switch language client-side without a refetch. */
+  translations: Array<Record<string, PrinterTranslation>>;
   title: string | null;
   subtitle: string | null;
   slug: string | null;
