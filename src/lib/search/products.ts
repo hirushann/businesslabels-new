@@ -951,6 +951,9 @@ function categoriesFromSource(source: ProductSource): Array<{ id?: number; name?
 function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number, locale?: "en" | "nl"): CatalogProductResult {
   const source = hit._source ?? {};
   const id = stringValue(source.id) ?? stringValue(source.ID) ?? hit._id ?? `result-${index}`;
+  // `id` is only unique per product type/index; combine ES index + doc id for a
+  // globally-unique result key so React keys don't collide across indices.
+  const resultKey = `${hit._index ?? "idx"}::${hit._id ?? `${id}-${index}`}`;
   let type = productType(source.product_type) ?? productType(source.type);
   if (!type && booleanValue(source.is_group_product)) {
     type = "group_product";
@@ -1000,7 +1003,7 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number, loc
         ? `/products/${slug}`
         : undefined;
 
-  return { id, product, href };
+  return { id: resultKey, product, href };
 }
 
 function totalHitsValue(total: estypes.SearchTotalHits | number | undefined): number {

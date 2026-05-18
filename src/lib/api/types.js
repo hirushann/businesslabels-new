@@ -177,10 +177,12 @@
  * @property {number} id
  * @property {LocalizedString} name
  * @property {LocalizedString} slug
+ * @property {LocalizedString|null} [meta_title]
+ * @property {LocalizedString|null} [meta_description]
  * @property {number|null} parent_id
  * @property {number} count
  * @property {{ id: number, name: LocalizedString, slug: LocalizedString }} [taxonomy]
- * @property {Category[]} [children]
+ * @property {Category[]} [children]  Nested recursively to any depth.
  */
 
 /**

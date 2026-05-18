@@ -72,6 +72,12 @@ export const MESSAGES_V4 = {
       inkSupplies: 'Ink & Supplies',
       specialLabels: 'Special Labels',
     },
+    categoryArchive: {
+      subcategoriesLabel: 'Subcategories',
+      productsTitle: 'All {category}',
+      productCount: '{count} {count, plural, one {product} other {products}}',
+      subcategoryCount: '{count} {count, plural, one {subcategory} other {subcategories}}',
+    },
     whyChoose: {
       title: 'Why Choose Businesslabels',
       subtitle: 'We believe in people-first communication. Our small team provides expert knowledge, quick support, and honest advice.',
@@ -773,6 +779,12 @@ export const MESSAGES_V4 = {
       labelRolls: 'Labelrollen',
       inkSupplies: 'Inkt en supplies',
       specialLabels: 'Speciale labels',
+    },
+    categoryArchive: {
+      subcategoriesLabel: 'Subcategorieën',
+      productsTitle: 'Alle {category}',
+      productCount: '{count} {count, plural, one {product} other {producten}}',
+      subcategoryCount: '{count} {count, plural, one {subcategorie} other {subcategorieën}}',
     },
     whyChoose: {
       title: 'Waarom kiezen voor Businesslabels',
