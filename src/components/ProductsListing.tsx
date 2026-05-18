@@ -344,7 +344,7 @@ function CatalogProductsListing({
     [displayQueryString, pathname, router],
   );
 
-  const isOnlyNumbers = (str) => /^\d+$/.test(str);
+  const isOnlyNumbers = (str: string) => /^\d+$/.test(str);
 
   const commitSearch = useCallback(
     (nextSearch: string) => {
