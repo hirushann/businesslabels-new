@@ -13,6 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useLocale } from "next-intl";
 
 export type ProductRouteType = "simple" | "variable" | "group_product";
 
@@ -131,6 +132,8 @@ const truncateWords = (text: string, count: number) => {
 };
 
 export default function ProductCard({ product, href, onClick }: ProductCardProps) {
+  const locale = useLocale();
+  console.log("product",product);
   const { addItem, openCart } = useCart();
   const productName = product.name ?? "";
   const categoryBadge = lastCategoryLabel(product.categories);
@@ -263,8 +266,8 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
               <span className="text-white text-xs font-normal font-['Segoe_UI'] leading-4">In Stock</span>
             </div>
           ) : (
-            <div className="px-2.5 py-1 bg-gray-200 rounded-full flex items-center gap-1.5">
-              <span className="text-gray-600 text-xs font-normal font-['Segoe_UI'] leading-4">Out of Stock</span>
+            <div className="px-2.5 py-1 rounded-full flex items-center gap-1.5">
+              {/* <span className="text-gray-600 text-xs font-normal font-['Segoe_UI'] leading-4">Out of Stock</span> */}
             </div>
           )}
         </div>
@@ -276,6 +279,13 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
           className="h-full w-auto object-contain mx-auto py-5"
           unoptimized
         />
+        {product.packing_group != null && Number(product.packing_group) > 0 && (
+          <div className="absolute bottom-4 right-4 z-10 px-2.5 py-1 bg-white rounded-full flex items-center gap-1.5 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.08)] border border-slate-100">
+            <span className="text-neutral-700 text-xs font-normal font-['Segoe_UI'] leading-4">
+              {product.packing_group} {locale === "nl" ? "per doos" : "per box"}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="p-5 flex flex-col gap-4 flex-1">

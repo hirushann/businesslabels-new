@@ -2,6 +2,7 @@ import type { estypes } from "@elastic/elasticsearch";
 import type { LinkProps } from "next/link";
 import type { ProductCardData, ProductRouteType, ProductWarrantyData } from "@/components/ProductCard";
 import { catalogIndexForType, elasticClient } from "@/lib/search/client";
+import type { LaravelProduct } from "@/lib/mappings/product";
 import {
   CATALOG_SORT_VALUES,
   type CatalogFilters,
@@ -165,6 +166,7 @@ const RESULT_SOURCE_FIELDS = [
   "properties",
   "is_group_product",
   "translations",
+  "packing_group",
 ] as const;
 
 type ProductSource = Record<string, unknown>;
@@ -990,6 +992,7 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number, loc
     slug,
     type,
     ...(warranty !== undefined ? { warranty } : {}),
+    packing_group: numberValue(source.packing_group),
   };
 
   const href: LinkProps["href"] | undefined = frontendPath
@@ -1085,8 +1088,60 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
 
 
 
+  const products = response.hits.hits.map((hit, index) => mapProductHit(hit, index, params.locale));
+
+  // Secondary fetch to Laravel database to resolve correct packing_group values
+  if (products.length > 0) {
+    try {
+      const backendUrl = process.env.BBNL_API_BASE_URL;
+      if (backendUrl) {
+        const slugs = products
+          .map((p) => p.product.slug)
+          .filter((slug): slug is string => typeof slug === "string" && slug.length > 0);
+          
+        if (slugs.length > 0) {
+          const queryParams = new URLSearchParams();
+          slugs.forEach((slug) => queryParams.append("slug[]", slug));
+          queryParams.append("per_page", slugs.length.toString());
+          if (params.locale) {
+            queryParams.append("lang", params.locale);
+          }
+          
+          const url = `${backendUrl}/api/products?${queryParams.toString()}`;
+          const res = await fetch(url, {
+            headers: { "Accept": "application/json" },
+            next: { revalidate: 300 }
+          });
+          
+          if (res.ok) {
+            const json = await res.json();
+            if (json && Array.isArray(json.data)) {
+              const packingMap = new Map<string, number | null>();
+              (json.data as LaravelProduct[]).forEach((p) => {
+                if (p && p.slug) {
+                  const resolvedSlug = typeof p.slug === "string" ? p.slug : (p.slug.en || p.slug.nl || "");
+                  if (resolvedSlug) {
+                    packingMap.set(resolvedSlug, p.packing_group != null ? Number(p.packing_group) : null);
+                  }
+                }
+              });
+              
+              products.forEach((p) => {
+                if (p.product.slug && packingMap.has(p.product.slug)) {
+                  p.product.packing_group = packingMap.get(p.product.slug);
+                }
+              });
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error("[Search] Failed to fetch packing_group overrides:", err);
+    }
+  }
+
   return {
-    products: response.hits.hits.map((hit, index) => mapProductHit(hit, index, params.locale)),
+    products,
     total,
     currentPage: Math.min(params.page, lastPage),
     lastPage,
