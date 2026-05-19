@@ -39,3 +39,18 @@ export async function getMaterialBySlug(slug) {
   const { data } = await api.get(`/materials/slug/${slug}`);
   return data;
 }
+
+/**
+ * Build the spec-sheet download URL for a material.
+ *
+ * The endpoint streams the admin-uploaded PDF when one exists, otherwise it
+ * generates a PDF on the fly from the material's data (never stored). Each
+ * request yields a fresh document. Resources also expose this as
+ * `material.spec_sheet_url` — use that when you already have the material.
+ *
+ * @param {number} id
+ * @returns {string}
+ */
+export function getMaterialSpecSheetUrl(id) {
+  return `${api.defaults.baseURL}/materials/${id}/spec-sheet`;
+}

@@ -431,20 +431,28 @@
  * @property {string|null} subtitle
  * @property {string|null} slug
  * @property {string|null} code
- * @property {string|null} brand
+ * @property {string|null} brand  Stored option key.
+ * @property {string|null} brand_label  Human-readable label for `brand`.
  * @property {string} status
  * @property {{ id: number, name: string, slug: string }[]} [categories]
  * @property {string} created_at
  * @property {string} updated_at
+ * @property {string} spec_sheet_url  Always downloadable — streams the uploaded PDF or one generated on the fly.
  *
  * Detail-only fields (present on show/showBySlug):
+ * @property {boolean} [has_uploaded_spec_sheet]  True when an admin uploaded a PDF; false when it is generated on download.
  * @property {string|null} [description]
  * @property {Object|null} [specifications]
  * @property {string|null} [print_method]
+ * @property {string|null} [print_method_label]  Human-readable label for `print_method`.
  * @property {string|null} [base_material]
+ * @property {string|null} [base_material_label]  Human-readable label for `base_material`.
  * @property {string|null} [finish]
+ * @property {string|null} [finish_label]  Human-readable label for `finish`.
  * @property {string|null} [adhesive]
+ * @property {string|null} [adhesive_label]  Human-readable label for `adhesive`.
  * @property {string|null} [supplier]
+ * @property {string|null} [supplier_label]  Human-readable label for `supplier`.
  * @property {string|null} [supplier_reference]
  * @property {number} [price_per_sq_meter]
  * @property {string|null} [certificate]
