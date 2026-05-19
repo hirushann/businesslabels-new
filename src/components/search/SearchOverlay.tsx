@@ -274,6 +274,7 @@ function mapOverlayResult(result: unknown, resultIndex: number): OverlayProductR
     categories: categoriesForProduct(result),
     slug,
     type: normalizedType,
+    packing_group: valueAsNumber(getRaw(result, 'packing_group')) ?? valueAsNumber(getMetaValue(result, '_packing_group')),
   };
   const href =
     slug && normalizedType
@@ -645,6 +646,7 @@ export default function SearchOverlay({ onClose }: SearchOverlayProps) {
           meta: { raw: {} },
           material: { raw: {} },
           material_title: { raw: {} },
+          packing_group: { raw: {} },
         },
       },
     }),
