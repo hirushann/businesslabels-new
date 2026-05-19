@@ -69,22 +69,22 @@ export default function WhyChooseUs() {
   ];
   
   return (
-    <section className="w-full px-10 py-24 bg-slate-50">
+    <section className="w-full px-4 md:px-8 lg:px-10 py-16 lg:py-24 bg-slate-50">
       <div className="max-w-360 mx-auto w-full flex flex-col gap-12">
         {/* Header */}
         <div className="flex flex-col items-center gap-4">
-          <h2 className="text-center text-neutral-800 text-4xl font-bold font-['Segoe_UI'] leading-[48px]">
+          <h2 className="text-center text-neutral-800 text-3xl md:text-4xl font-bold font-['Segoe_UI'] leading-tight md:leading-[48px]">
             {t('whyChoose.title')}
           </h2>
-          <p className="text-center text-neutral-700 text-lg font-normal font-['Segoe_UI'] leading-7">
+          <p className="text-center text-neutral-700 text-base md:text-lg font-normal font-['Segoe_UI'] leading-relaxed md:leading-7">
             {t('whyChoose.subtitle')}
           </p>
         </div>
 
         {/* Two-column layout */}
-        <div className="flex gap-12 items-center">
+        <div className="flex flex-col lg:flex-row gap-12 lg:items-center">
           {/* Left image column */}
-          <div className="flex-1 relative h-[500px] rounded-xl overflow-hidden">
+          <div className="w-full lg:flex-1 relative h-[250px] sm:h-[400px] lg:h-[500px] rounded-xl overflow-hidden">
             <Image
               src="/whychoose.png"
               alt={t('whyChoose.altImage')}
@@ -95,19 +95,19 @@ export default function WhyChooseUs() {
           </div>
 
           {/* Right feature cards */}
-          <div className="flex-1 flex flex-col gap-6">
+          <div className="w-full lg:flex-1 flex flex-col gap-6">
             {translatedFeatures.map((f) => (
               <div
                 key={f.title}
-                className="p-6 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] border border-neutral-100 flex items-center gap-4"
+                className="p-5 sm:p-6 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] border border-neutral-100 flex flex-col sm:flex-row items-start sm:items-center gap-4"
               >
-                {/* Icon box — paste your SVG paths inside the data array above */}
+                {/* Icon box */}
                 <div className="p-4 bg-orange-50 rounded-lg shadow-sm flex items-center justify-center shrink-0">
                   {f.icon}
                 </div>
                 <div className="flex flex-col gap-2 flex-1">
-                  <h3 className="text-neutral-800 text-2xl font-semibold font-['Segoe_UI'] leading-7">{f.title}</h3>
-                  <p className="text-neutral-700 text-base font-normal font-['Segoe_UI'] leading-6">{f.desc}</p>
+                  <h3 className="text-neutral-800 text-xl sm:text-2xl font-semibold font-['Segoe_UI'] leading-snug sm:leading-7">{f.title}</h3>
+                  <p className="text-neutral-700 text-sm sm:text-base font-normal font-['Segoe_UI'] leading-relaxed sm:leading-6">{f.desc}</p>
                 </div>
               </div>
             ))}

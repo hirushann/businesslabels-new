@@ -36,30 +36,30 @@ export default async function PopularProducts() {
   }
 
   return (
-    <section className="relative w-full px-10 py-28 overflow-hidden">
+    <section className="relative w-full px-4 md:px-8 lg:px-10 py-16 lg:py-28 overflow-hidden">
       {/* Decorative blobs */}
       <div className="w-48 h-48 absolute right-52 top-0 bg-amber-500/30 rounded-full blur-[132px] pointer-events-none" />
       <div className="w-48 h-48 absolute left-0 top-0 bg-amber-500/30 rounded-full blur-[132px] pointer-events-none" />
 
       <div className="max-w-360 mx-auto w-full flex flex-col gap-12">
         {/* Header row */}
-        <div className="flex justify-between items-center">
-          <h2 className="text-neutral-800 text-4xl font-bold font-['Segoe_UI'] leading-[48px]">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-6">
+          <h2 className="text-neutral-800 text-3xl md:text-4xl font-bold font-['Segoe_UI'] leading-tight md:leading-[48px]">
             {t('popularProducts.title')}
           </h2>
           <Link
             href="/products"
-            className="px-6 py-4 rounded-full border border-amber-500 flex items-center gap-2.5 text-amber-500 text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-50 transition-colors"
+            className="w-fit px-6 py-4 rounded-full border border-amber-500 flex items-center gap-2.5 text-amber-500 text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-50 transition-colors"
           >
             {t('popularProducts.viewAll')}
           </Link>
         </div>
 
         {/* Product grid */}
-        <div className="grid grid-cols-[repeat(3,minmax(0,22rem))] justify-center gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 justify-center gap-8 max-w-[72rem] mx-auto w-full">
           {products.length === 0 ? (
             <EmptyState
-              className="col-span-3"
+              className="col-span-full"
               title={t('common.noProductsFound')}
               description={t('common.noProductsDescription')}
             />

@@ -34,6 +34,7 @@ export default function Header() {
   const t = useTranslations();
   const { isHelpOpen, openHelp, closeHelp } = useHelp();
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<DropdownKey>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { totalItemCount, isCartOpen, openCart, closeCart } = useCart();
@@ -59,7 +60,7 @@ export default function Header() {
   return (
     <header className="w-full left-0 top-0 z-50 flex flex-col items-center">
       {/* Top bar */}
-      <div className="w-full px-10 py-2.5 bg-sky-950 flex flex-col">
+      <div className="hidden lg:flex w-full px-10 py-2.5 bg-sky-950 flex-col">
         <div className="max-w-360 mx-auto w-full flex justify-between items-center">
           <div className="flex items-center gap-8">
             <div className="flex items-end gap-2">
@@ -112,8 +113,8 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Main nav row */}
-      <div className="w-full px-10 py-4 bg-white border-b border-slate-100">
+      {/* Desktop main nav row */}
+      <div className="hidden lg:flex w-full px-10 py-4 bg-white border-b border-slate-100">
         <div className="max-w-360 mx-auto w-full flex justify-between items-center">
           {/* Logo */}
           <Link href="/" className="flex items-center">
@@ -209,8 +210,70 @@ export default function Header() {
         </div>
       </div>
 
+      {/* Mobile main nav row */}
+      <div className="lg:hidden w-full px-4 py-3 bg-white border-b border-slate-100 flex flex-col gap-3">
+        <div className="flex justify-between items-center w-full">
+          {/* Left: Hamburger menu button */}
+          <button onClick={() => setIsMobileMenuOpen(true)} className="p-1" aria-label="Open menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#404040" strokeWidth="2">
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
+          
+          {/* Center: Logo */}
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/logo.png"
+              alt="Businesslabels"
+              width={140}
+              height={27}
+              priority
+              className="w-auto h-7 object-contain"
+            />
+          </Link>
+          
+          {/* Right: Cart, Wishlist, Language */}
+          <div className="flex items-center gap-3">
+            <LanguageSwitcher />
+            <Link href="/my-account" aria-label={t('header.accountLink')}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="8" r="4" stroke="#404040" strokeWidth="2" />
+                <path d="M4 20c0-4.42 3.58-8 8-8s8 3.58 8 8" stroke="#404040" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            </Link>
+            <button onClick={openCart} className="relative p-1" aria-label={t('header.cartOpen')}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <path d="M8 22C8.55228 22 9 21.5523 9 21C9 20.4477 8.55228 20 8 20C7.44772 20 7 20.4477 7 21C7 21.5523 7.44772 22 8 22Z" stroke="#444444" strokeWidth="2" />
+                <path d="M19 22C19.5523 22 20 21.5523 20 21C20 20.4477 19.5523 20 19 20C18.4477 20 18 20.4477 18 21C18 21.5523 18.4477 22 19 22Z" stroke="#444444" strokeWidth="2" />
+                <path d="M2.05078 2.04999H4.05078L6.71078 14.47C6.80836 14.9248 7.06145 15.3315 7.42649 15.6198C7.79153 15.9082 8.24569 16.0603 8.71078 16.05H18.4908C18.946 16.0493 19.3873 15.8933 19.7418 15.6078C20.0963 15.3224 20.3429 14.9245 20.4408 14.48L22.0908 7.04999H5.12078" stroke="#444444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {totalItemCount > 0 ? (
+                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[9px] font-bold text-white">
+                  {totalItemCount}
+                </span>
+              ) : null}
+            </button>
+          </div>
+        </div>
+        
+        {/* Search bar below row on mobile */}
+        <Link
+          href="/products?focus=true"
+          className="w-full px-4 py-2.5 rounded-full border border-slate-100 flex items-center gap-2 overflow-hidden text-left bg-slate-50"
+          aria-label={t('header.productsSearchLink')}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="6.75" cy="6.75" r="5.25" stroke="#9CA3AF" strokeWidth="1.5" />
+            <path d="M11.5 11.5L14.5 14.5" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          <span className="text-zinc-500 text-sm font-normal leading-5">{t('common.search')}</span>
+        </Link>
+      </div>
+
       {/* Sub-nav */}
-      <div className="w-full px-10 py-2 relative bg-gray-50 border-t border-violet-50">
+      <div className="hidden lg:flex w-full px-10 py-2 relative bg-gray-50 border-t border-violet-50">
         <div className="max-w-360 mx-auto w-full flex justify-between items-center">
           <nav className="flex items-center gap-6">
             {navItems.map((item, index) => (
@@ -276,6 +339,88 @@ export default function Header() {
           </div>
         </div>
       </div>
+
+      {/* Mobile Navigation Drawer */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-[100] flex lg:hidden">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+          
+          {/* Drawer Content */}
+          <div className="relative w-80 max-w-[85vw] h-full bg-white shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-200">
+            {/* Header */}
+            <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <span className="text-sky-950 font-bold text-lg">Menu</span>
+              <button
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-1 rounded-full hover:bg-slate-200 transition-colors"
+                aria-label="Close menu"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#404040" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Nav links */}
+            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-1">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`px-4 py-3 rounded-lg flex justify-between items-center ${
+                    item.active
+                      ? 'bg-sky-50 text-sky-950 font-semibold'
+                      : 'text-stone-600 font-normal hover:bg-slate-50 transition-colors'
+                  } text-base font-['Segoe_UI']`}
+                >
+                  <span>{t.has(item.labelKey) ? t(item.labelKey) : item.fallbackLabel}</span>
+                  {item.dropdown && (
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor">
+                      <path d="M6 12L10 8L6 4" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </Link>
+              ))}
+              
+              {/* Extra drawer items */}
+              <div className="h-px bg-slate-100 my-4" />
+              
+              <Link
+                href="/custom"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="px-4 py-3 text-amber-500 font-semibold text-base flex items-center gap-2 hover:bg-amber-50 rounded-lg transition-colors"
+              >
+                {t('header.customMadeForm')}
+              </Link>
+              
+              <Link
+                href="/finder"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="px-4 py-3 bg-amber-500 text-white font-semibold text-base rounded-full flex justify-center items-center gap-2 mt-4 hover:bg-amber-600 transition-colors"
+              >
+                {t('header.productFinder')}
+              </Link>
+              
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  openHelp();
+                }}
+                className="px-4 py-3 bg-slate-100 text-neutral-800 font-semibold text-base rounded-full flex justify-center items-center gap-2 mt-2 hover:bg-slate-200 transition-colors"
+              >
+                {t('header.needHelp')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isHelpOpen && <HelpDrawer onClose={closeHelp} />}
       {isWishlistOpen && <WishlistDrawer onClose={() => setIsWishlistOpen(false)} />}

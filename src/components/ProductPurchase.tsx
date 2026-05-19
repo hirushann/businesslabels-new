@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { Popover, PopoverAnchor, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Field, FieldContent, FieldDescription, FieldLabel, FieldTitle } from "@/components/ui/field";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 
 type BulkDiscount = {
   discount: string;
@@ -194,6 +194,28 @@ export default function ProductPurchase({
   const [selectedWarrantyId, setSelectedWarrantyId] = useState<number | null>(null);
   const [pendingQuantity, setPendingQuantity] = useState<number | null>(null);
   const [shareUrl, setShareUrl] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isStickyVisible, setIsStickyVisible] = useState(false);
+
+  useEffect(() => {
+    const element = containerRef.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsStickyVisible(!entry.isIntersecting);
+      },
+      {
+        threshold: 0,
+      }
+    );
+
+    observer.observe(element);
+
+    return () => {
+      observer.unobserve(element);
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -436,6 +458,8 @@ export default function ProductPurchase({
     setPendingQuantity(null);
   };
 
+  const locale = useLocale();
+
   const handleAddToWishlist = () => {
     wishlist.addItem({
       ...itemIdentity,
@@ -448,6 +472,27 @@ export default function ProductPurchase({
       materialTitle,
       inStock: Boolean(inStock),
     });
+    toast.success(t("product.savedToWishlist") || "Saved to Wishlist");
+  };
+
+  const handleRemoveFromWishlist = () => {
+    const key = wishlist.items.find(
+      (item) =>
+        item.id === id ||
+        (item.slug === slug && item.type === type)
+    )?.key;
+    if (key) {
+      wishlist.removeItem(key);
+      toast.success(locale === "nl" ? "Verwijderd van verlanglijst" : "Removed from Wishlist");
+    }
+  };
+
+  const handleToggleWishlist = () => {
+    if (isWishlisted) {
+      handleRemoveFromWishlist();
+    } else {
+      handleAddToWishlist();
+    }
   };
   
   const [isSharing, setIsSharing] = useState(false);
@@ -499,7 +544,8 @@ export default function ProductPurchase({
   };
 
   return (
-    <div className="p-6 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col gap-6">
+    <>
+    <div ref={containerRef} className="p-6 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col gap-6">
       {/* Price Section */}
       <div className="flex flex-col gap-3">
         <div className="flex justify-between items-center">
@@ -569,12 +615,12 @@ export default function ProductPurchase({
           // Label product layout with Rolls/Stack and Box buttons
           <PopoverAnchor asChild>
             <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                 <button
                   type="button"
                   onClick={() => handleAddToCart(quantity)}
                   aria-describedby={quantityError ? "quantity-error" : undefined}
-                  className="flex-1 h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm flex"
+                  className="w-full sm:flex-1 h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm flex"
                 >
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -584,7 +630,7 @@ export default function ProductPurchase({
                 <button
                   type="button"
                   onClick={() => handleAddToCart(normalizedPackingGroup!)}
-                  className="flex-1 h-12 px-4 py-2.5 bg-amber-100 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-amber-300 justify-center items-center gap-2 hover:bg-amber-300 transition-colors flex"
+                  className="w-full sm:flex-1 h-12 px-4 py-2.5 bg-amber-100 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-amber-300 justify-center items-center gap-2 hover:bg-amber-300 transition-colors flex"
                 >
                   <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -597,10 +643,10 @@ export default function ProductPurchase({
         ) : (
           // Original single-button layout with quantity selector
           <PopoverAnchor asChild>
-            <div className="flex items-end gap-4">
-              <div className="flex flex-col gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+              <div className="flex flex-col gap-3 w-full sm:w-auto">
                 <span className="text-neutral-800 text-lg font-bold leading-5 w-full">{t("product.selectQuantity")}</span>
-                <div className="h-12 px-1 rounded-[50px] outline outline-1 outline-offset-[-1px] outline-black/10 flex justify-between items-center bg-white">
+                <div className="h-12 w-full sm:w-32 px-1 rounded-[50px] outline outline-1 outline-offset-[-1px] outline-black/10 flex justify-between items-center bg-white">
                   <button
                     onClick={decrement}
                     className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
@@ -622,7 +668,7 @@ export default function ProductPurchase({
                   </button>
                 </div>
               </div>
-              <div className="flex flex-1 flex-col gap-2">
+              <div className="flex flex-col gap-2 w-full sm:flex-1">
                 <button
                   type="button"
                   onClick={() => handleAddToCart(quantity)}
@@ -734,7 +780,7 @@ export default function ProductPurchase({
           <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.67} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
           </svg>
-          <span className="text-base font-semibold">{isWishlisted ? t("product.savedToWishlist") : t("product.addToWishlist")}</span>
+          <span className="text-sm sm:text-base font-semibold">{isWishlisted ? t("product.savedToWishlist") : t("product.addToWishlist")}</span>
         </button>
         <Popover>
           <PopoverTrigger asChild>
@@ -825,7 +871,7 @@ export default function ProductPurchase({
     {/* Need Help Section with Custom Icons */}
     <div className="flex flex-col gap-4">
       <h3 className="text-neutral-700 text-lg font-bold leading-5">{t("supportPanel.title")}</h3>
-      <div className="flex gap-4">
+      <div className="grid grid-cols-3 gap-3 md:gap-4">
         {[
           {
             label: t("supportPanel.callUs"),
@@ -863,11 +909,113 @@ export default function ProductPurchase({
             <div className="w-8 h-8 p-1.5 bg-orange-50 rounded-lg shadow-sm flex items-center justify-center">
               {icon}
             </div>
-            <span className="text-neutral-800 text-base font-semibold leading-5">{label}</span>
+            <span className="text-neutral-800 text-xs sm:text-sm md:text-base font-semibold leading-5 text-center">{label}</span>
           </Link>
         ))}
       </div>
     </div>
     </div>
+
+    {/* Mobile/Tablet Sticky Bottom Bar */}
+    <div className={`lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] px-4 py-3 pb-safe flex flex-col gap-3 transition-transform duration-300 ${
+      isStickyVisible ? "translate-y-0" : "translate-y-full"
+    }`}>
+      {/* Row 1: Price, Quantity Selector, Wishlist */}
+      <div className="flex items-center justify-between gap-4">
+        {/* Price info */}
+        <div className="flex flex-col">
+          <span className="text-zinc-500 text-[10px] uppercase tracking-wider font-semibold leading-3">{t("common.total") || "Total"}</span>
+          <div className="flex items-baseline gap-1">
+            <span className="text-neutral-800 text-xl font-bold leading-7">
+              {hasPrice ? formatEuro(price * quantity) : "-"}
+            </span>
+          </div>
+          <span className="text-zinc-500 text-[10px] font-normal leading-3">{t("product.exVat")}</span>
+        </div>
+
+        {/* Quantity + Wishlist wrapper */}
+        <div className="flex items-center gap-2">
+          {/* Compact Quantity selector */}
+          <div className="h-9 px-1 rounded-[50px] outline outline-1 outline-black/10 flex items-center bg-white w-24">
+            <button
+              onClick={decrement}
+              className="w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <svg className="w-2.5 h-2.5 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 12 12">
+                <path strokeLinecap="round" d="M2 6h8" />
+              </svg>
+            </button>
+            <span className="flex-1 text-center text-sm font-semibold text-neutral-800">{quantity}</span>
+            <button
+              onClick={increment}
+              className="w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <svg className="w-2.5 h-2.5 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 12 12">
+                <path strokeLinecap="round" d="M6 2v8M2 6h8" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Wishlist Button */}
+          <button
+            type="button"
+            onClick={handleToggleWishlist}
+            className={`w-9 h-9 rounded-full border flex items-center justify-center transition-colors ${isWishlisted
+                ? "bg-red-50 border-red-200 text-red-500 hover:bg-red-100"
+                : "border-slate-200 text-neutral-700 hover:bg-slate-50"
+              }`}
+          >
+            <svg className="w-4 h-4" fill={isWishlisted ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Row 2: Add to Cart Button(s) */}
+      <div>
+        {isLabelProduct ? (
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => handleAddToCart(quantity)}
+              aria-describedby={quantityError ? "quantity-error" : undefined}
+              className="flex-1 h-11 px-4 bg-amber-500 rounded-[100px] justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm flex"
+            >
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <span className="text-white text-sm font-bold whitespace-nowrap">{t("product.rollsStack")}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAddToCart(normalizedPackingGroup!)}
+              className="flex-1 h-11 px-4 bg-amber-100 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-amber-300 justify-center items-center gap-2 hover:bg-amber-300 transition-colors flex"
+            >
+              <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <span className="text-amber-600 text-sm font-bold whitespace-nowrap">
+                {t("product.box")}{" "}
+                <span className="text-[10px] text-amber-600">({normalizedPackingGroup ?? 0})</span>
+              </span>
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => handleAddToCart(quantity)}
+            aria-describedby={quantityError ? "quantity-error" : undefined}
+            className="w-full h-11 bg-amber-500 rounded-[100px] justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm flex"
+          >
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <span className="text-white text-base font-bold whitespace-nowrap">{t("product.addToCart")}</span>
+          </button>
+        )}
+      </div>
+    </div>
+  </>
   );
 }

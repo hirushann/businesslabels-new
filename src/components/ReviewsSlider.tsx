@@ -71,11 +71,11 @@ export default function ReviewsSlider({ reviews, totalRatings }: ReviewsSliderPr
   return (
     <div className="flex flex-col gap-10 relative z-10 w-full max-w-360 mx-auto">
       {/* Header & Controls */}
-      <div className="flex justify-between items-end">
-        <h2 className="text-neutral-900 text-[40px] font-bold font-['Segoe_UI'] leading-tight">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-6">
+        <h2 className="text-neutral-900 text-3xl md:text-[40px] font-bold font-['Segoe_UI'] leading-tight">
           Over {totalRatings} Positive Reviews
         </h2>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 self-end sm:self-auto">
           <button
             onClick={scrollLeft}
             disabled={!canScrollLeft}

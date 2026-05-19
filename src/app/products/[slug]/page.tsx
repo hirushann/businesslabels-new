@@ -603,10 +603,10 @@ export default async function SingleProductPage({
   console.log(product)
 
   return (
-    <div className="bg-white">
+    <div className="bg-white pb-28 lg:pb-0">
 
 
-      <div className="px-10 py-10">
+      <div className="px-4 md:px-8 lg:px-10 py-6 lg:py-10">
         {/* Breadcrumb */}
         <div className="pb-8">
           <div className="max-w-360 mx-auto">
@@ -623,9 +623,9 @@ export default async function SingleProductPage({
             />
           </div>
         </div>
-        <div className="max-w-360 mx-auto flex gap-12 items-start">
+        <div className="max-w-360 mx-auto flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
           {/* LEFT: Images + Description + Specs */}
-          <div className="flex-1 flex flex-col gap-12">
+          <div className="w-full lg:flex-1 flex flex-col gap-8 lg:gap-12">
             {/* Title & Description */}
             <div className="flex flex-col gap-4">
               {productName ? (
@@ -743,8 +743,8 @@ export default async function SingleProductPage({
               </Accordion>
 
               {showCompatibilityCta ? (
-                <div className="p-6 bg-gradient-to-br from-orange-50 to-white rounded-xl outline outline-2 outline-offset-[-2px] outline-orange-100">
-                  <div className="flex gap-3 items-start">
+                <div className="p-5 sm:p-6 bg-gradient-to-br from-orange-50 to-white rounded-xl outline outline-2 outline-offset-[-2px] outline-orange-100">
+                  <div className="flex flex-col sm:flex-row gap-4 sm:gap-3 items-start">
                     <div className="w-8 h-8 p-2 bg-white rounded-lg shadow-sm flex-shrink-0 flex items-center justify-center">
                       <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0H3" />
@@ -752,7 +752,7 @@ export default async function SingleProductPage({
                     </div>
                     <div className="flex-1 flex flex-col gap-4">
                       <div className="flex flex-col gap-2">
-                        <h3 className="text-neutral-700 text-2xl font-bold leading-7">{t('product.doesThisFitMyPrinter')}</h3>
+                        <h3 className="text-neutral-700 text-xl sm:text-2xl font-bold leading-7">{t('product.doesThisFitMyPrinter')}</h3>
                         <p className="text-neutral-700 text-base font-normal leading-6">
                           {t('product.compatibilityDescription')}
                         </p>
@@ -766,7 +766,7 @@ export default async function SingleProductPage({
           </div>
 
           {/* RIGHT: Purchase Card */}
-          <div className="flex flex-col gap-6 w-[420px] sticky top-24">
+          <div className="w-full lg:w-[400px] xl:w-[420px] flex flex-col gap-6 lg:sticky lg:top-24">
             <ProductPurchase
               id={product?.id}
               slug={product?.slug}
@@ -800,7 +800,7 @@ export default async function SingleProductPage({
                 {[t('product.hardwares'), t('product.inkMaintenance'), t('product.badgesMedia')].map((item) => (
                   <button
                     key={item}
-                    className="px-4 py-2.5 bg-blue-400/10 rounded-[5px] outline outline-1 outline-offset-[-1px] outline-blue-400/50 text-blue-400 text-base font-bold text-left hover:bg-blue-400/20 transition-colors"
+                    className="px-3 sm:px-4 py-2.5 bg-blue-400/10 rounded-[5px] outline outline-1 outline-offset-[-1px] outline-blue-400/50 text-blue-400 text-xs sm:text-sm md:text-base font-bold text-left hover:bg-blue-400/20 transition-colors"
                     style={{ fontFamily: "'DM Sans', sans-serif" }}
                   >
                     {item}
@@ -814,7 +814,7 @@ export default async function SingleProductPage({
 
       {/* Related Products Section */}
       {relatedProducts.length > 0 && (
-        <div className="px-10 py-10 bg-gray-50">
+        <div className="px-4 sm:px-10 py-10 bg-gray-50">
           <div className="mx-auto flex flex-col gap-12">
             <Carousel
               opts={{
@@ -823,9 +823,9 @@ export default async function SingleProductPage({
               }}
               className="w-full"
             >
-              <div className="flex justify-between items-center px-20">
-                <h2 className="text-neutral-800 text-4xl font-bold leading-[48px]">{t('product.relatedProducts')}</h2>
-                <div className="flex items-center gap-6">
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 px-4 sm:px-10 lg:px-20">
+                <h2 className="text-neutral-800 text-2xl sm:text-3xl md:text-4xl font-bold leading-tight md:leading-[48px]">{t('product.relatedProducts')}</h2>
+                <div className="flex items-center gap-6 self-end sm:self-auto">
                   <CarouselPrevious className="static translate-y-0 w-12 h-12 p-3 bg-gray-50 rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-gray-200 hover:bg-white transition-colors" />
                   <CarouselNext className="static translate-y-0 w-12 h-12 p-3 bg-white rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-amber-500 hover:bg-amber-50 transition-colors" />
                 </div>
@@ -834,7 +834,7 @@ export default async function SingleProductPage({
                 {relatedProducts.map((product) => {
                   const href = productHref(product);
                   return (
-                    <CarouselItem key={product.id} className="pl-6 basis-1/3">
+                    <CarouselItem key={product.id} className="pl-6 basis-full sm:basis-1/2 lg:basis-1/3">
                       <ProductCard product={product} href={href ?? undefined} />
                     </CarouselItem>
                   );

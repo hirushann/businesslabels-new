@@ -74,7 +74,7 @@ export default function HeroSection() {
   };
 
   return (
-    <section className="relative w-full h-[85vh] overflow-hidden">
+    <section className="relative w-full min-h-[85vh] lg:h-[85vh] py-12 lg:py-0 flex items-center overflow-hidden">
       {/* Background image */}
       <Image
         src="/Herobg.png"
@@ -88,10 +88,10 @@ export default function HeroSection() {
       <div className="absolute inset-0 bg-gradient-to-br from-stone-700/70 to-yellow-950/60" />
 
       {/* Content */}
-      <div className="relative z-10 max-w-360 mx-auto h-full flex items-center">
-        <div className="w-full flex justify-start items-center gap-12">
+      <div className="relative z-10 max-w-360 mx-auto w-full px-4 md:px-8 lg:px-10 h-full flex items-center">
+        <div className="w-full flex flex-col lg:flex-row justify-between lg:justify-start items-center gap-10 lg:gap-12">
           {/* Left: text & CTAs */}
-          <div className="flex-1 flex flex-col gap-12">
+          <div className="flex-1 flex flex-col gap-8 lg:gap-12">
             <div className="flex flex-col gap-6">
               {/* Badge */}
               <div className="flex items-center gap-2">
@@ -123,26 +123,26 @@ export default function HeroSection() {
               </div>
               {/* Headline */}
               <div className="flex flex-col gap-4">
-                <h1 className="text-white text-7xl font-bold font-['Segoe_UI'] leading-[86.4px]">
+                <h1 className="text-white text-4xl md:text-5xl lg:text-7xl font-bold font-['Segoe_UI'] leading-tight lg:leading-[86.4px]">
                   {t('hero.title')}
                 </h1>
-                <p className="text-white text-xl font-normal font-['Segoe_UI'] leading-8">
+                <p className="text-white text-lg md:text-xl font-normal font-['Segoe_UI'] leading-relaxed md:leading-8">
                   {t('hero.subtitle')}
                 </p>
               </div>
             </div>
             {/* Buttons */}
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
               <Link
                 href="/products"
-                className="px-7 py-4 bg-amber-500 rounded-full flex items-center gap-2.5 text-white text-lg font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors"
+                className="w-full sm:w-auto justify-center px-7 py-4 bg-amber-500 rounded-full flex items-center gap-2.5 text-white text-lg font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors"
               >
                 {t('common.browseProducts')}
               </Link>
               <button
                 type="button"
                 onClick={openHelp}
-                className="px-7 py-4 bg-white/10 rounded-full border border-white/20 backdrop-blur-sm flex items-center gap-2.5 text-white text-lg font-semibold font-['Segoe_UI'] leading-6 hover:bg-white/20 transition-colors"
+                className="w-full sm:w-auto justify-center px-7 py-4 bg-white/10 rounded-full border border-white/20 backdrop-blur-sm flex items-center gap-2.5 text-white text-lg font-semibold font-['Segoe_UI'] leading-6 hover:bg-white/20 transition-colors"
               >
                 {t('hero.talkToExpert')}
               </button>
@@ -150,7 +150,7 @@ export default function HeroSection() {
           </div>
 
           {/* Right: Smart Product Finder widget */}
-          <div className="w-[540px] pb-5 bg-white rounded-xl shadow-xl border border-gray-200 flex flex-col gap-6 overflow-hidden">
+          <div className="w-full lg:w-[540px] max-w-[540px] pb-5 bg-white rounded-xl shadow-xl border border-gray-200 flex flex-col gap-6 overflow-hidden">
             {/* Widget header */}
             <div className="px-6 py-5 bg-white shadow border border-gray-200 flex items-center gap-4">
               <svg
@@ -217,11 +217,11 @@ export default function HeroSection() {
                 {t('hero.whatLookingFor')}
               </span>
               <RadioGroup value={productType} onValueChange={setProductType}>
-                <div className="flex gap-4">
-                  <Field>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Field className="flex-1 w-full">
                     <FieldLabel
                       htmlFor="labels"
-                      className="w-60 px-3 py-3 bg-gray-50 rounded-lg border border-zinc-100 flex items-center gap-3 cursor-pointer hover:border-amber-300 transition-colors data-checked:border-amber-400 data-checked:bg-amber-50"
+                      className="w-full sm:w-60 px-3 py-3 bg-gray-50 rounded-lg border border-zinc-100 flex items-center gap-3 cursor-pointer hover:border-amber-300 transition-colors data-checked:border-amber-400 data-checked:bg-amber-50"
                     >
                       <RadioGroupItem
                         value="labels"
@@ -275,10 +275,10 @@ export default function HeroSection() {
                     </FieldLabel>
                   </Field>
 
-                  <Field>
+                  <Field className="flex-1 w-full">
                     <FieldLabel
                       htmlFor="ink"
-                      className={`w-60 px-3 py-3 rounded-lg border flex items-center gap-3 transition-colors ${
+                      className={`w-full sm:w-60 px-3 py-3 rounded-lg border flex items-center gap-3 transition-colors ${
                         !isEpsonPrinter
                           ? "bg-gray-100 border-gray-200 opacity-50 cursor-not-allowed"
                           : "bg-gray-50 border-zinc-100 cursor-pointer hover:border-amber-300 data-checked:border-amber-400 data-checked:bg-amber-50"
@@ -305,14 +305,14 @@ export default function HeroSection() {
                           strokeLinejoin="round"
                         />
                         <path
-                          d="M8 12.0003V4.00033C8 3.6467 8.14048 3.30756 8.39052 3.05752C8.64057 2.80747 8.97971 2.66699 9.33333 2.66699H22.6667C23.0203 2.66699 23.3594 2.80747 23.6095 3.05752C23.8595 3.30756 24 3.6467 24 4.00033V12.0003"
+                          d="M8 12.0003V4.00033C8 3.6467 8.14048 3.30756 8.39052 3.05752C8.64057 2.80747 8.97971 2.66699 9.33398 2.66699H22.6667C23.0203 2.66699 23.3594 2.80747 23.6095 3.05752C23.8595 3.30756 24 3.6467 24 4.00033V12.0003"
                           stroke="#888888"
                           strokeWidth="1.5"
                           strokeLinecap="round"
                           strokeLinejoin="round"
                         />
                         <path
-                          d="M22.6667 18.667H9.33333C8.59695 18.667 8 19.2639 8 20.0003V28.0003C8 28.7367 8.59695 29.3337 9.33333 29.3337H22.6667C23.403 29.3337 24 28.7367 24 28.0003V20.0003C24 19.2639 23.403 18.667 22.6667 18.667Z"
+                          d="M22.6667 18.667H9.33398C8.59695 18.667 8 19.2639 8 20.0003V28.0003C8 28.7367 8.59695 29.3337 9.33398 29.3337H22.6667C23.403 29.3337 24 28.7367 24 28.0003V20.0003C24 19.2639 23.403 18.667 22.6667 18.667Z"
                           stroke="#888888"
                           strokeWidth="1.5"
                           strokeLinecap="round"

@@ -71,15 +71,15 @@ export default function Footer() {
     <footer className="w-full flex flex-col">
       {/* Trust bar */}
       <div
-        className="w-full px-10 py-8"
+        className="w-full px-4 md:px-8 lg:px-10 py-8"
         style={{
           background:
             'linear-gradient(0deg, rgba(255,255,255,0.03), rgba(255,255,255,0.03)), linear-gradient(0deg, #101828, #101828)',
         }}
       >
-        <div className="max-w-[1512px] mx-auto w-full grid grid-cols-4 gap-4">
+        <div className="max-w-[1512px] mx-auto w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-4">
           {trustItems.map((item) => (
-            <div key={item.titleKey} className="flex justify-center items-center gap-3">
+            <div key={item.titleKey} className="flex justify-start lg:justify-center items-center gap-3 px-4 sm:px-0">
               <div className="w-10 flex items-center justify-center shrink-0">
                 {item.icon}
               </div>
@@ -94,9 +94,9 @@ export default function Footer() {
 
       {/* Main footer */}
       <div className="w-full pt-14 bg-gray-900 flex flex-col gap-4">
-        <div className="max-w-[1512px] mx-auto w-full px-10 flex gap-8">
+        <div className="max-w-[1512px] mx-auto w-full px-4 md:px-8 lg:px-10 flex flex-col lg:flex-row gap-12 lg:gap-8">
           {/* Brand column */}
-          <div className="w-[480px] flex flex-col gap-5">
+          <div className="w-full lg:w-[400px] xl:w-[480px] flex flex-col gap-5">
             <div className="flex flex-col gap-4">
               {/* Logo */}
               <div>
@@ -136,35 +136,37 @@ export default function Footer() {
           </div>
 
           {/* Link columns */}
-          {Object.entries(footerLinks).map(([section, links]) => (
-            <div key={section} className="w-56 flex flex-col gap-5">
-              <Link 
-                href={section === 'products' ? '/products' : '#'} 
-                className={`text-white text-lg font-semibold font-['Segoe_UI'] leading-6 ${section === 'products' ? 'hover:text-amber-500 transition-colors' : 'pointer-events-none'}`}
-              >
-                {t(`footer.columns.${section}`)}
-              </Link>
-              <div className="flex flex-col gap-4">
-                {links.map((item) => (
-                  <Link
-                    key={item.href + (item.nameKey || item.name)}
-                    href={item.href}
-                    className="text-white/80 text-base font-normal font-['Segoe_UI'] leading-5 hover:text-white transition-colors"
-                  >
-                    {item.nameKey ? t(item.nameKey) : item.name}
-                  </Link>
-                ))}
+          <div className="flex-1 grid grid-cols-2 md:grid-cols-3 gap-8">
+            {Object.entries(footerLinks).map(([section, links]) => (
+              <div key={section} className="flex flex-col gap-5">
+                <Link 
+                  href={section === 'products' ? '/products' : '#'} 
+                  className={`text-white text-lg font-semibold font-['Segoe_UI'] leading-6 ${section === 'products' ? 'hover:text-amber-500 transition-colors' : 'pointer-events-none'}`}
+                >
+                  {t(`footer.columns.${section}`)}
+                </Link>
+                <div className="flex flex-col gap-4">
+                  {links.map((item) => (
+                    <Link
+                      key={item.href + (item.nameKey || item.name)}
+                      href={item.href}
+                      className="text-white/80 text-base font-normal font-['Segoe_UI'] leading-5 hover:text-white transition-colors"
+                    >
+                      {item.nameKey ? t(item.nameKey) : item.name}
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
         {/* Bottom bar */}
-        <div className="max-w-[1512px] mx-auto w-full px-10 pt-6 pb-10 border-t border-slate-800 flex justify-between items-center">
+        <div className="max-w-[1512px] mx-auto w-full px-4 md:px-8 lg:px-10 pt-6 pb-32 md:pb-10 border-t border-slate-800 flex flex-col md:flex-row gap-6 md:gap-0 justify-between items-center text-center md:text-left">
           <span className="text-white/60 text-sm font-normal font-['Segoe_UI'] leading-5">
             {t('footer.legal.copyright')}
           </span>
-          <div className="flex gap-5">
+          <div className="flex flex-wrap justify-center gap-5">
             {[
               { key: 'footer.legal.privacy', href: '#' },
               { key: 'footer.legal.terms', href: '#' },

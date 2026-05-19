@@ -69,10 +69,10 @@ export default function StatsBar() {
   ];
   
   return (
-    <div className="w-full px-10 py-8 bg-slate-50 border-b border-slate-100">
-      <div className="max-w-360 mx-auto w-full grid grid-cols-4 gap-4">
+    <div className="w-full px-4 md:px-8 lg:px-10 py-8 bg-slate-50 border-b border-slate-100">
+      <div className="max-w-360 mx-auto w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-4">
         {translatedStats.map((stat) => (
-          <div key={stat.label} className="flex-1 rounded-[10px] flex justify-center items-center gap-4">
+          <div key={stat.label} className="flex-1 rounded-[10px] flex justify-start sm:justify-center items-center gap-4 px-4 sm:px-0">
             {/* Icon box */}
             <div className="p-4 bg-white rounded-lg shadow border border-gray-100 flex items-center justify-center shrink-0">
               {stat.icon}

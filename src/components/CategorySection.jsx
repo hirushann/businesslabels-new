@@ -15,21 +15,21 @@ export default function CategorySection() {
   const t = useTranslations();
   
   return (
-    <section className="w-full px-10 py-28 relative overflow-hidden">
+    <section className="w-full px-4 md:px-8 lg:px-10 py-16 lg:py-28 relative overflow-hidden">
       {/* Decorative blobs */}
       <div className="w-48 absolute left-0 top-0 bg-amber-500/30 rounded-full blur-[132px] pointer-events-none" />
       <div className="w-48 absolute right-52 bottom-0 bg-amber-500/30 rounded-full blur-[132px] pointer-events-none" />
 
       <div className="max-w-360 mx-auto w-full flex flex-col gap-12">
-        <h2 className="text-center text-neutral-800 text-4xl font-bold font-['Segoe_UI'] leading-[48px]">
+        <h2 className="text-center text-neutral-800 text-3xl md:text-4xl font-bold font-['Segoe_UI'] leading-tight md:leading-[48px]">
           {t('categories.title')}
         </h2>
-        <div className="grid grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {categories.map((cat) => (
             <Link
               key={cat.key}
               href={cat.href}
-              className="relative h-98 bg-white rounded-xl shadow border-2 border-gray-200 overflow-hidden group hover:border-amber-400 transition-colors"
+              className="relative h-72 sm:h-98 bg-white rounded-xl shadow border-2 border-gray-200 overflow-hidden group hover:border-amber-400 transition-colors"
             >
               <Image
                 src={cat.image}
