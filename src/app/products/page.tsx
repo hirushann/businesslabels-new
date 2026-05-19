@@ -54,6 +54,8 @@ export default async function ProductsPage({
   let initialCatalog = emptyCatalogResponse;
   let baselineCatalog = emptyCatalogResponse;
 
+  console.log("Received search parameters:", Object.fromEntries(query.entries()));
+
   try {
     [initialCatalog, baselineCatalog] = await Promise.all([
       searchCatalogProducts(parseCatalogSearchParams(query, locale)),

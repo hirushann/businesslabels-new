@@ -95,6 +95,94 @@ function getProductId(item: CartItem): number | null {
   return null;
 }
 
+type CheckoutOrderItem = {
+  product_id: number;
+  name: string;
+  price: number;
+  quantity: number;
+  is_group_product: boolean;
+  warranty_option_id?: number;
+  extended_warranty_id?: number;
+  extended_warranty_name?: string;
+  extended_warranty_sku?: string;
+  extended_warranty_price?: number;
+  extended_warranty_quantity?: number;
+  extended_warranty_duration_months?: number | null;
+  extended_warranty?: {
+    option_id: number;
+    name: string;
+    sku: string;
+    price: number;
+    quantity: number;
+    duration_months: number | null;
+    parent_sku: string | null;
+    parent_name: string | null;
+  };
+};
+
+function getLinkedWarrantyItem(items: CartItem[], parentItem: CartItem): CartItem | null {
+  return items.find((item) => item.itemKind === "warranty" && item.linkedToKey === parentItem.key) ?? null;
+}
+
+function buildCheckoutOrderItems(items: CartItem[]): CheckoutOrderItem[] {
+  return items.flatMap((item) => {
+    if (item.itemKind === "warranty") {
+      return [];
+    }
+
+    const productId = getProductId(item);
+
+    if (productId === null) {
+      return [];
+    }
+
+    const orderItem: CheckoutOrderItem = {
+      product_id: productId,
+      name: item.name?.trim() || item.sku || "Product",
+      price: typeof item.price === "number" && Number.isFinite(item.price) ? item.price : 0,
+      quantity: item.quantity,
+      is_group_product: item.type === "group_product" || (item.componentCount ?? 0) > 0,
+    };
+
+    const warrantyItem = getLinkedWarrantyItem(items, item);
+    const warrantyOptionId = warrantyItem?.warranty?.optionId;
+
+    if (!warrantyItem || typeof warrantyOptionId !== "number" || !Number.isFinite(warrantyOptionId)) {
+      return [orderItem];
+    }
+
+    const warrantyPrice =
+      typeof warrantyItem.price === "number" && Number.isFinite(warrantyItem.price) ? warrantyItem.price : 0;
+    const warrantyDurationMonths =
+      typeof warrantyItem.warranty?.durationMonths === "number" && Number.isFinite(warrantyItem.warranty.durationMonths)
+        ? warrantyItem.warranty.durationMonths
+        : null;
+
+    return [
+      {
+        ...orderItem,
+        warranty_option_id: warrantyOptionId,
+        extended_warranty_id: warrantyOptionId,
+        extended_warranty_name: warrantyItem.name,
+        extended_warranty_sku: warrantyItem.sku,
+        extended_warranty_price: warrantyPrice,
+        extended_warranty_quantity: warrantyItem.quantity,
+        extended_warranty_duration_months: warrantyDurationMonths,
+        extended_warranty: {
+          option_id: warrantyOptionId,
+          name: warrantyItem.name,
+          sku: warrantyItem.sku,
+          price: warrantyPrice,
+          quantity: warrantyItem.quantity,
+          duration_months: warrantyDurationMonths,
+          parent_sku: warrantyItem.warranty?.parentSku ?? item.sku ?? null,
+          parent_name: warrantyItem.warranty?.parentName ?? item.name ?? null,
+        },
+      },
+    ];
+  });
+}
+
 function CheckoutShell({
   items,
   totalAmount,
@@ -734,23 +822,7 @@ export default function CheckoutPageClient({
       payment_method: form.paymentMethod,
       total: finalTotal,
       lang: locale.split('-')[0] === 'nl' ? 'nl' : 'en',
-      order_items: items
-        // Warranty items are addons and don't have numeric product IDs, so exclude them.
-        .flatMap((item) => {
-          const productId = item.itemKind === "warranty" ? null : getProductId(item);
-
-          if (productId === null) {
-            return [];
-          }
-
-          return [{
-            product_id: productId,
-            name: item.name?.trim() || item.sku || "Product",
-            price: typeof item.price === "number" && Number.isFinite(item.price) ? item.price : 0,
-            quantity: item.quantity,
-            is_group_product: item.type === "group_product" || (item.componentCount ?? 0) > 0,
-          }];
-        })
+      order_items: buildCheckoutOrderItems(items),
     };
 
     console.log("[Checkout] Submitting order data:", JSON.stringify(orderData, null, 2));

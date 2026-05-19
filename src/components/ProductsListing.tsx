@@ -305,7 +305,7 @@ function CatalogProductsListing({
     () => mergeQueryStrings(scopeQueryString, initialQueryString),
     [scopeQueryString, initialQueryString],
   );
-  const searchValue = searchParams.get("search") ?? searchParams.get("q") ?? "";
+  const searchValue =  searchParams.get("search") ?? searchParams.get("q") ?? "";
   const displaySearchValue =
     displayParams.get("search") ?? displayParams.get("q") ?? "";
   const selectedSort = normalizeSortValue(
@@ -344,11 +344,16 @@ function CatalogProductsListing({
     [displayQueryString, pathname, router],
   );
 
+  const isOnlyNumbers = (str: string) => /^\d+$/.test(str);
+
   const commitSearch = useCallback(
     (nextSearch: string) => {
       setParams((params) => {
         params.delete("q");
         if (nextSearch) {
+          if (isOnlyNumbers(nextSearch)) {
+            nextSearch = `*${nextSearch}*`;
+          }
           params.set("search", nextSearch);
         } else {
           params.delete("search");
