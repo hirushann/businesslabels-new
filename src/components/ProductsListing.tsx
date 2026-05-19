@@ -735,8 +735,8 @@ function CatalogProductsListing({
               </div>
 
               <div className="flex flex-col gap-3">
-                {/* No availability filter — out-of-stock products are always
-                    excluded from listings, so every result is in stock. */}
+                {/* No availability filter — every product stays listed; only
+                    the "In Stock" label is conditional on delivery time. */}
                 {orderedFilters.map((entry) => {
                   if (entry.kind === "range") {
                     const filter = entry.filter;

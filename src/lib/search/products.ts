@@ -2,7 +2,7 @@ import type { estypes } from "@elastic/elasticsearch";
 import type { LinkProps } from "next/link";
 import type { ProductCardData, ProductRouteType, ProductWarrantyData } from "@/components/ProductCard";
 import { catalogIndexForType, elasticClient } from "@/lib/search/client";
-import { IN_STOCK_DELIVERY_DAY_LIMIT, isDeliverableInStock } from "@/lib/utils/delivery";
+import { isDeliverableInStock } from "@/lib/utils/delivery";
 import {
   CATALOG_SORT_VALUES,
   type CatalogFilters,
@@ -651,49 +651,11 @@ function rangeOrStringFilter(
   };
 }
 
-/**
- * Out-of-stock products must never surface in listings. A product is out of
- * stock when its effective delivery time exceeds the in-stock window: when
- * stock is on hand the in-stock lead time applies, otherwise the no-stock
- * lead time. Products whose delivery data is missing from the index are left
- * visible — the exclusion fails safe rather than hiding the whole catalog.
- */
-function outOfStockExclusionFilter(): estypes.QueryDslQueryContainer {
-  return {
-    bool: {
-      must_not: [
-        {
-          bool: {
-            minimum_should_match: 1,
-            should: [
-              {
-                bool: {
-                  must: [
-                    { range: { stock: { gt: 0 } } },
-                    { range: { delivery_dates_in_stock: { gt: IN_STOCK_DELIVERY_DAY_LIMIT } } },
-                  ],
-                },
-              },
-              {
-                bool: {
-                  must: [
-                    { range: { stock: { lte: 0 } } },
-                    { range: { delivery_dates_no_stock: { gt: IN_STOCK_DELIVERY_DAY_LIMIT } } },
-                  ],
-                },
-              },
-            ],
-          },
-        },
-      ],
-    },
-  };
-}
-
 function buildFilters(params: CatalogSearchParams): estypes.QueryDslQueryContainer[] {
+  // Slow-delivery products are NOT hidden from listings — they stay visible
+  // and simply render without the "In Stock" label (see `mapProductHit`).
   const filters: Array<estypes.QueryDslQueryContainer | null> = [
     { term: { "state.keyword": "active" } },
-    outOfStockExclusionFilter(),
     params.type ? { term: { product_type: params.type } } : null,
     termsFilter("id", params.ids),
     termsFilter("printer_ids", params.printerIds),
