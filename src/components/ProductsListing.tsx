@@ -168,12 +168,6 @@ function formatRangeValue(
   return `${unitPrefix ?? ""}${value}${unitSuffix ? ` ${unitSuffix}` : ""}`;
 }
 
-function isTruthyParam(value: string | null): boolean {
-  return (
-    value === "1" || value === "true" || value === "yes" || value === "in_stock"
-  );
-}
-
 function normalizeSortValue(
   value: string | null,
   hasSearch: boolean,
@@ -313,7 +307,6 @@ function CatalogProductsListing({
     Boolean(displaySearchValue),
     SORT_OPTIONS,
   );
-  const inStockSelected = isTruthyParam(displayParams.get("in_stock"));
   const hasInitialCatalog =
     scopedCurrentQueryString === initialSortedQueryString;
 
@@ -468,7 +461,6 @@ function CatalogProductsListing({
       }
     });
 
-    if (displayParams.has("in_stock")) count += 1;
     if (displayParams.has("type") || displayParams.has("product_type"))
       count += 1;
     return count;
@@ -547,17 +539,6 @@ function CatalogProductsListing({
 
       params.delete(paramKey);
       Array.from(selected).forEach((item) => params.append(paramKey, item));
-      params.set("page", "1");
-    });
-  };
-
-  const toggleInStock = () => {
-    setParams((params) => {
-      if (isTruthyParam(params.get("in_stock"))) {
-        params.delete("in_stock");
-      } else {
-        params.set("in_stock", "true");
-      }
       params.set("page", "1");
     });
   };
@@ -754,56 +735,8 @@ function CatalogProductsListing({
               </div>
 
               <div className="flex flex-col gap-3">
-                <Accordion
-                  title={t("common.availability")}
-                  defaultOpen={true}
-                  size="compact"
-                  className="bg-white"
-                >
-                  <button
-                    type="button"
-                    onClick={toggleInStock}
-                    className={`inline-flex min-h-9 w-fit items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-                      inStockSelected
-                        ? "bg-amber-500 text-white shadow-sm hover:bg-amber-600"
-                        : "bg-slate-100 text-neutral-700 hover:bg-amber-50 hover:text-amber-600"
-                    }`}
-                    aria-pressed={inStockSelected}
-                  >
-                    <span
-                      className={`flex h-4 w-4 items-center justify-center rounded border ${
-                        inStockSelected
-                          ? "border-white bg-white text-amber-500"
-                          : "border-slate-300 bg-white"
-                      }`}
-                      aria-hidden="true"
-                    >
-                      {inStockSelected ? (
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 12 12"
-                          fill="none"
-                        >
-                          <path
-                            d="M2.5 6.2L4.8 8.4L9.5 3.6"
-                            stroke="currentColor"
-                            strokeWidth="1.8"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      ) : null}
-                    </span>
-                    <span>{t("common.inStock")}</span>
-                    {inStockSelected ? (
-                      <span className="text-base leading-none text-white/80">
-                        ×
-                      </span>
-                    ) : null}
-                  </button>
-                </Accordion>
-
+                {/* No availability filter — out-of-stock products are always
+                    excluded from listings, so every result is in stock. */}
                 {orderedFilters.map((entry) => {
                   if (entry.kind === "range") {
                     const filter = entry.filter;

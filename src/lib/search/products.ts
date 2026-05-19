@@ -2,6 +2,7 @@ import type { estypes } from "@elastic/elasticsearch";
 import type { LinkProps } from "next/link";
 import type { ProductCardData, ProductRouteType, ProductWarrantyData } from "@/components/ProductCard";
 import { catalogIndexForType, elasticClient } from "@/lib/search/client";
+import { IN_STOCK_DELIVERY_DAY_LIMIT, isDeliverableInStock } from "@/lib/utils/delivery";
 import {
   CATALOG_SORT_VALUES,
   type CatalogFilters,
@@ -143,6 +144,9 @@ const RESULT_SOURCE_FIELDS = [
   "discount",
   "stock",
   "in_stock",
+  "delivery_dates_in_stock",
+  "delivery_dates_no_stock",
+  "packing_group",
   "main_image",
   "image",
   "thumbnail",
@@ -647,9 +651,49 @@ function rangeOrStringFilter(
   };
 }
 
+/**
+ * Out-of-stock products must never surface in listings. A product is out of
+ * stock when its effective delivery time exceeds the in-stock window: when
+ * stock is on hand the in-stock lead time applies, otherwise the no-stock
+ * lead time. Products whose delivery data is missing from the index are left
+ * visible — the exclusion fails safe rather than hiding the whole catalog.
+ */
+function outOfStockExclusionFilter(): estypes.QueryDslQueryContainer {
+  return {
+    bool: {
+      must_not: [
+        {
+          bool: {
+            minimum_should_match: 1,
+            should: [
+              {
+                bool: {
+                  must: [
+                    { range: { stock: { gt: 0 } } },
+                    { range: { delivery_dates_in_stock: { gt: IN_STOCK_DELIVERY_DAY_LIMIT } } },
+                  ],
+                },
+              },
+              {
+                bool: {
+                  must: [
+                    { range: { stock: { lte: 0 } } },
+                    { range: { delivery_dates_no_stock: { gt: IN_STOCK_DELIVERY_DAY_LIMIT } } },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+      ],
+    },
+  };
+}
+
 function buildFilters(params: CatalogSearchParams): estypes.QueryDslQueryContainer[] {
   const filters: Array<estypes.QueryDslQueryContainer | null> = [
     { term: { "state.keyword": "active" } },
+    outOfStockExclusionFilter(),
     params.type ? { term: { product_type: params.type } } : null,
     termsFilter("id", params.ids),
     termsFilter("printer_ids", params.printerIds),
@@ -670,8 +714,6 @@ function buildFilters(params: CatalogSearchParams): estypes.QueryDslQueryContain
     nestedTermsFilter("properties", "properties.printer_type.keyword", params.printerTypes),
     nestedTermsFilter("properties", "properties.detectie.keyword", params.detections),
     termsFilter("compatible_brands.keyword", params.marks),
-    params.inStock === true ? { range: { stock: { gt: 0 } } } : null,
-    params.inStock === false ? { range: { stock: { lte: 0 } } } : null,
     rangeFilter("price", params.priceMin, params.priceMax),
     rangeFilter("property_numbers.breedte", params.widthMin, params.widthMax),
     rangeFilter("property_numbers.hoogte", params.heightMin, params.heightMax),
@@ -977,6 +1019,16 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number, loc
     price = originalPrice - (originalPrice * (discount / 100));
   }
 
+  const stockCount = numberValue(source.stock);
+  // Stock status follows the 10-day delivery window. When the index carries
+  // no delivery data the helper returns null and we fall back to the raw
+  // stock signal.
+  const deliveryStockStatus = isDeliverableInStock({
+    stock: stockCount,
+    delivery_dates_in_stock: numberValue(source.delivery_dates_in_stock),
+    delivery_dates_no_stock: numberValue(source.delivery_dates_no_stock),
+  });
+
   const product: ProductCardData = {
     id,
     sku: stringValue(source.sku) ?? "-",
@@ -987,7 +1039,8 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number, loc
     price,
     originalPrice,
     discount: discount ?? 0,
-    inStock: booleanValue(source.in_stock) || Boolean((numberValue(source.stock) ?? 0) > 0),
+    inStock: deliveryStockStatus ?? (booleanValue(source.in_stock) || Boolean((stockCount ?? 0) > 0)),
+    packing_group: numberValue(source.packing_group),
     mainImage: imageUrl(stringValue(source.main_image) ?? stringValue(source.image)),
     categories: categoriesFromSource(source),
     slug,

@@ -1,5 +1,56 @@
 import { describe, it, expect } from 'vitest';
-import { getExpectedDeliveryMessage } from './delivery';
+import {
+  getExpectedDeliveryMessage,
+  getEffectiveDeliveryDays,
+  isDeliverableInStock,
+} from './delivery';
+
+describe('getEffectiveDeliveryDays', () => {
+  it('uses the in-stock lead time when stock is on hand', () => {
+    expect(
+      getEffectiveDeliveryDays({ stock: 5, delivery_dates_in_stock: 2, delivery_dates_no_stock: 14 }),
+    ).toBe(2);
+  });
+
+  it('uses the no-stock lead time when stock is depleted', () => {
+    expect(
+      getEffectiveDeliveryDays({ stock: 0, delivery_dates_in_stock: 2, delivery_dates_no_stock: 14 }),
+    ).toBe(14);
+  });
+
+  it('returns null when the relevant delivery figure is missing', () => {
+    expect(
+      getEffectiveDeliveryDays({ stock: 5, delivery_dates_in_stock: null, delivery_dates_no_stock: 14 }),
+    ).toBeNull();
+  });
+});
+
+describe('isDeliverableInStock', () => {
+  it('treats delivery within 10 days as in stock', () => {
+    expect(
+      isDeliverableInStock({ stock: 5, delivery_dates_in_stock: 10, delivery_dates_no_stock: 30 }),
+    ).toBe(true);
+  });
+
+  it('treats delivery slower than 10 days as out of stock', () => {
+    expect(
+      isDeliverableInStock({ stock: 5, delivery_dates_in_stock: 14, delivery_dates_no_stock: 30 }),
+    ).toBe(false);
+  });
+
+  it('uses the no-stock lead time when stock is depleted', () => {
+    expect(
+      isDeliverableInStock({ stock: 0, delivery_dates_in_stock: 1, delivery_dates_no_stock: 5 }),
+    ).toBe(true);
+    expect(
+      isDeliverableInStock({ stock: 0, delivery_dates_in_stock: 1, delivery_dates_no_stock: 14 }),
+    ).toBe(false);
+  });
+
+  it('returns null when delivery data is unavailable', () => {
+    expect(isDeliverableInStock({ stock: 5 })).toBeNull();
+  });
+});
 
 describe('getExpectedDeliveryMessage', () => {
   const pickupTime = '13:00';
