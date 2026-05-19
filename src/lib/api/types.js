@@ -437,10 +437,10 @@
  * @property {{ id: number, name: string, slug: string }[]} [categories]
  * @property {string} created_at
  * @property {string} updated_at
- * @property {string} spec_sheet_url  Always downloadable — streams the uploaded PDF or one generated on the fly.
+ * @property {string} spec_sheet_url  Always downloadable, scoped to the active locale — streams the uploaded PDF for that language or one generated on the fly in it.
  *
  * Detail-only fields (present on show/showBySlug):
- * @property {boolean} [has_uploaded_spec_sheet]  True when an admin uploaded a PDF; false when it is generated on download.
+ * @property {boolean} [has_uploaded_spec_sheet]  True when an admin uploaded a PDF for the active locale; false when it is generated on download.
  * @property {string|null} [description]
  * @property {Object|null} [specifications]
  * @property {string|null} [print_method]

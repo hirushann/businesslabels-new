@@ -41,16 +41,19 @@ export async function getMaterialBySlug(slug) {
 }
 
 /**
- * Build the spec-sheet download URL for a material.
+ * Build the spec-sheet download URL for a material in a given language.
  *
- * The endpoint streams the admin-uploaded PDF when one exists, otherwise it
- * generates a PDF on the fly from the material's data (never stored). Each
- * request yields a fresh document. Resources also expose this as
- * `material.spec_sheet_url` — use that when you already have the material.
+ * The endpoint streams the admin-uploaded PDF for that locale when one exists,
+ * otherwise it generates a PDF on the fly from the material's translated data
+ * (never stored). Each request yields a fresh document. Resources also expose
+ * this — already scoped to the active locale — as `material.spec_sheet_url`;
+ * prefer that when you already have the material.
  *
  * @param {number} id
+ * @param {string} [locale] - Language code (e.g. "en", "nl") sent as `?lang=`.
  * @returns {string}
  */
-export function getMaterialSpecSheetUrl(id) {
-  return `${api.defaults.baseURL}/materials/${id}/spec-sheet`;
+export function getMaterialSpecSheetUrl(id, locale) {
+  const base = `${api.defaults.baseURL}/materials/${id}/spec-sheet`;
+  return locale ? `${base}?lang=${encodeURIComponent(locale)}` : base;
 }
