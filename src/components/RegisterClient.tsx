@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FormEvent, Suspense, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { ArrowRight, Building2, ChevronDown, KeyRound, Loader2, Mail, MapPin, Phone, User } from 'lucide-react';
+import { ArrowRight, Building2, ChevronDown, KeyRound, Loader2, Mail, MapPin, Phone } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
 
@@ -49,6 +49,7 @@ type RegisterResponse = {
 type RegisterOption = {
   id: string;
   label: string;
+  provinces?: RegisterOption[];
 };
 
 type RegisterDataResponse = {
@@ -65,7 +66,16 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 }
 
 function readOptionId(value: Record<string, unknown>) {
-  const id = value.id ?? value.value ?? value.country_id ?? value.province_id ?? value.state_id ?? value.code;
+  const id =
+    value.id ??
+    value.value ??
+    value.country_id ??
+    value.province_id ??
+    value.state_id ??
+    value.code ??
+    value.country_code ??
+    value.iso_code ??
+    value.iso2;
 
   if (typeof id === 'number' && Number.isFinite(id)) {
     return String(id);
@@ -75,7 +85,16 @@ function readOptionId(value: Record<string, unknown>) {
 }
 
 function readOptionLabel(value: Record<string, unknown>) {
-  const label = value.name ?? value.label ?? value.title ?? value.country ?? value.province ?? value.state;
+  const label =
+    value.name ??
+    value.label ??
+    value.title ??
+    value.country ??
+    value.country_name ??
+    value.province ??
+    value.province_name ??
+    value.state ??
+    value.state_name;
 
   if (typeof label === 'number' && Number.isFinite(label)) {
     return String(label);
@@ -85,6 +104,34 @@ function readOptionLabel(value: Record<string, unknown>) {
 }
 
 function normalizeOptions(value: unknown): RegisterOption[] {
+  if (isPlainObject(value)) {
+    if (Array.isArray(value.data)) {
+      return normalizeOptions(value.data);
+    }
+
+    if (Array.isArray(value.items)) {
+      return normalizeOptions(value.items);
+    }
+
+    return Object.entries(value)
+      .map(([key, item]) => {
+        if (typeof item === 'string' && item.trim()) {
+          return { id: key, label: item.trim() };
+        }
+
+        if (!isPlainObject(item)) {
+          return null;
+        }
+
+        const id = readOptionId(item) || key;
+        const label = readOptionLabel(item) || id;
+        const provinces = normalizeOptions(item.provinces ?? item.states ?? item.regions);
+
+        return id && label ? { id, label, ...(provinces.length > 0 ? { provinces } : {}) } : null;
+      })
+      .filter((item): item is RegisterOption => Boolean(item));
+  }
+
   if (!Array.isArray(value)) {
     return [];
   }
@@ -101,8 +148,9 @@ function normalizeOptions(value: unknown): RegisterOption[] {
 
       const id = readOptionId(item);
       const label = readOptionLabel(item) || id;
+      const provinces = normalizeOptions(item.provinces ?? item.states ?? item.regions);
 
-      return id && label ? { id, label } : null;
+      return id && label ? { id, label, ...(provinces.length > 0 ? { provinces } : {}) } : null;
     })
     .filter((item): item is RegisterOption => Boolean(item));
 }
@@ -111,16 +159,14 @@ function readRegisterDataOptions(data: RegisterDataResponse) {
   const nestedData = isPlainObject(data.data) ? data.data : {};
 
   return {
-    countries: normalizeOptions(data.countries ?? nestedData.countries ?? data.country ?? nestedData.country),
-    provinces: normalizeOptions(
-      data.provinces ??
-        nestedData.provinces ??
-        data.states ??
-        nestedData.states ??
-        data.regions ??
-        nestedData.regions
-    ),
+    countries: normalizeOptions(data.countries ?? nestedData.countries ?? data.country ?? nestedData.country ?? data.data),
   };
+}
+
+function findOptionById(options: RegisterOption[], id: string) {
+  const normalizedId = id.trim().toLowerCase();
+
+  return options.find((option) => option.id.toLowerCase() === normalizedId);
 }
 
 function extractUser(data: RegisterResponse, email: string, name: string) {
@@ -168,11 +214,9 @@ function RegisterContent() {
   const [email, setEmail] = useState('');
   const [billingEmail, setBillingEmail] = useState('');
   const [countries, setCountries] = useState<RegisterOption[]>([]);
-  const [provinces, setProvinces] = useState<RegisterOption[]>([]);
   const [countryId, setCountryId] = useState('');
   const [stateId, setStateId] = useState('');
   const [isLoadingRegisterData, setIsLoadingRegisterData] = useState(true);
-  const [isLoadingProvinces, setIsLoadingProvinces] = useState(false);
   const [streetAddress, setStreetAddress] = useState('');
   const [postcode, setPostcode] = useState('');
   const [city, setCity] = useState('');
@@ -185,16 +229,15 @@ function RegisterContent() {
 
   const redirectTo = searchParams.get('redirect') || '/my-account';
   const fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
-  const selectedCountry = countries.find((country) => country.id === countryId);
-  const selectedProvince = provinces.find((province) => province.id === stateId);
+
+  const selectedCountry = findOptionById(countries, countryId);
+  // Filter provinces locally from the selected country
+  const provinces = selectedCountry?.provinces || [];
+  const selectedProvince = findOptionById(provinces, stateId);
 
   const handleCountryChange = (nextCountryId: string) => {
     setCountryId(nextCountryId);
     setStateId('');
-
-    if (!nextCountryId) {
-      setProvinces([]);
-    }
   };
 
   useEffect(() => {
@@ -218,7 +261,6 @@ function RegisterContent() {
 
         if (isActive) {
           setCountries(nextOptions.countries);
-          setProvinces(nextOptions.provinces);
         }
       } catch {
         if (isActive) {
@@ -237,59 +279,6 @@ function RegisterContent() {
       isActive = false;
     };
   }, []);
-
-  useEffect(() => {
-    if (!countryId) {
-      return;
-    }
-
-    let isActive = true;
-
-    async function loadProvinces() {
-      setIsLoadingProvinces(true);
-      setStateId('');
-
-      try {
-        const response = await fetch('/api/register/data', {
-          method: 'POST',
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ country_id: countryId }),
-        });
-        const data = (await response.json()) as RegisterDataResponse;
-
-        if (!response.ok) {
-          throw new Error(data.message || 'Unable to load provinces.');
-        }
-
-        const nextOptions = readRegisterDataOptions(data);
-
-        if (isActive) {
-          if (nextOptions.countries.length) {
-            setCountries(nextOptions.countries);
-          }
-
-          setProvinces(nextOptions.provinces);
-        }
-      } catch {
-        if (isActive) {
-          setProvinces([]);
-        }
-      } finally {
-        if (isActive) {
-          setIsLoadingProvinces(false);
-        }
-      }
-    }
-
-    loadProvinces();
-
-    return () => {
-      isActive = false;
-    };
-  }, [countryId]);
 
   const onAddressSelect = (address: {
     street: string;
@@ -316,7 +305,8 @@ function RegisterContent() {
     
     const mappedCountryId = countryMap[address.country];
     if (mappedCountryId) {
-      setCountryId(mappedCountryId);
+      setCountryId(findOptionById(countries, mappedCountryId)?.id ?? mappedCountryId);
+      setStateId('');
     }
   };
 
@@ -341,14 +331,18 @@ function RegisterContent() {
           phone,
           email,
           billing_email: billingEmail,
-          country_id: countryId,
+          country_id: selectedCountry?.id ?? countryId,
           country: selectedCountry?.label ?? '',
           street_address: streetAddress,
           postcode,
           city,
-          state_id: stateId,
-          province_id: stateId,
-          state: selectedProvince?.label ?? '',
+          ...(selectedProvince || stateId
+            ? {
+                state_id: selectedProvince?.id ?? stateId,
+                province_id: selectedProvince?.id ?? stateId,
+                state: selectedProvince?.label ?? '',
+              }
+            : {}),
           vat_number: vatNumber,
           kvk_number: kvkNumber,
           password,
@@ -361,6 +355,7 @@ function RegisterContent() {
       if (!response.ok) {
         setErrors(data.errors ?? {});
         setFormMessage(data.message || t('register.formError'));
+        setIsSubmitting(false);
         return;
       }
 
@@ -371,15 +366,34 @@ function RegisterContent() {
       toast.success(t('register.accountCreated'));
       router.push(redirectTo);
       router.refresh();
+      
+      // Note: We don't set setIsSubmitting(false) here to keep the loader visible during redirection
     } catch {
       setFormMessage(t('register.registerError'));
-    } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
     <section className="bg-slate-50 px-5 py-10 sm:px-8 sm:py-14 lg:py-16">
+      {isSubmitting && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white/80 backdrop-blur-md">
+          <div className="flex flex-col items-center gap-6 text-center">
+            <div className="relative">
+              <div className="size-20 rounded-full border-4 border-sky-100 border-t-sky-500 animate-spin" />
+              <Loader2 className="absolute inset-0 m-auto size-10 animate-spin text-sky-500 opacity-50" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-2xl font-black uppercase tracking-tight text-neutral-800">
+                {t('register.registeringText')}...
+              </h2>
+              <p className="text-base font-semibold text-neutral-500 animate-pulse">
+                {t('register.preparingAccount') || 'Preparing your account...'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="mx-auto w-full max-w-350">
         <Link href="/" className="mb-10 inline-flex">
           <Image src="/logo.png" alt="Businesslabels" width={205} height={40} priority className="h-auto w-52" />
@@ -401,6 +415,7 @@ function RegisterContent() {
                 <TextInput
                   id="email"
                   label={t('register.email')}
+                  required
                   value={email}
                   onChange={setEmail}
                   type="email"
@@ -414,6 +429,7 @@ function RegisterContent() {
                 <TextInput
                   id="first-name"
                   label={t('register.firstName')}
+                  required
                   value={firstName}
                   onChange={setFirstName}
                   autoComplete="given-name"
@@ -425,6 +441,7 @@ function RegisterContent() {
                 <TextInput
                   id="last-name"
                   label={t('register.lastName')}
+                  required
                   value={lastName}
                   onChange={setLastName}
                   autoComplete="family-name"
@@ -436,6 +453,7 @@ function RegisterContent() {
                 <TextInput
                   id="password"
                   label={t('register.password')}
+                  required
                   value={password}
                   onChange={setPassword}
                   type="password"
@@ -467,6 +485,7 @@ function RegisterContent() {
                   <TextInput
                     id="phone"
                     label={t('register.phone')}
+                    required
                     value={phone}
                     onChange={setPhone}
                     type="tel"
@@ -480,6 +499,7 @@ function RegisterContent() {
                   <TextInput
                     id="billing-email"
                     label={t('register.billingEmail')}
+                    required
                     value={billingEmail}
                     onChange={setBillingEmail}
                     type="email"
@@ -493,7 +513,8 @@ function RegisterContent() {
                   <SelectInput
                     id="country"
                     label={t('register.country')}
-                    value={countryId}
+                    required
+                    value={selectedCountry?.id ?? countryId}
                     onChange={handleCountryChange}
                     disabled={isSubmitting || isLoadingRegisterData}
                     error={errors.country_id?.[0] ?? errors.country?.[0]}
@@ -502,7 +523,9 @@ function RegisterContent() {
                   />
 
                   <div className="md:col-span-1">
-                    <Label className="text-sm font-semibold text-neutral-700 mb-2 block ml-4">Straat en huisnummer</Label>
+                    <Label className="text-sm font-semibold text-neutral-700 mb-2 flex items-center gap-1 ml-4">
+                      Straat en huisnummer <span className="text-red-500">*</span>
+                    </Label>
                     <AddressAutocomplete
                       value={streetAddress}
                       onChange={setStreetAddress}
@@ -515,6 +538,7 @@ function RegisterContent() {
                   <TextInput
                     id="street-address"
                     label={t('register.streetAddress')}
+                    required
                     value={streetAddress}
                     onChange={setStreetAddress}
                     autoComplete="street-address"
@@ -527,6 +551,7 @@ function RegisterContent() {
                   <TextInput
                     id="postcode"
                     label={t('register.postcode')}
+                    required
                     value={postcode}
                     onChange={setPostcode}
                     autoComplete="postal-code"
@@ -538,6 +563,7 @@ function RegisterContent() {
                   <TextInput
                     id="city"
                     label={t('register.city')}
+                    required
                     value={city}
                     onChange={setCity}
                     autoComplete="address-level2"
@@ -551,23 +577,22 @@ function RegisterContent() {
                     label={t('register.state')}
                     value={stateId}
                     onChange={setStateId}
-                    disabled={isSubmitting || !countryId || isLoadingProvinces || !provinces.length}
+                    disabled={isSubmitting || !countryId || !provinces.length}
                     error={errors.state_id?.[0] ?? errors.province_id?.[0] ?? errors.state?.[0]}
                     options={provinces}
                     placeholder={
                       !countryId
                         ? t('register.selectCountryFirst')
-                        : isLoadingProvinces
-                          ? t('register.loadingProvinces')
-                          : provinces.length
-                            ? t('register.statePlaceholder')
-                            : t('register.noProvincesAvailable')
+                        : provinces.length
+                          ? t('register.statePlaceholder')
+                          : t('register.noProvincesAvailable')
                     }
                   />
 
                   <TextInput
                     id="vat-number"
                     label={t('register.vatNumber')}
+                    required
                     value={vatNumber}
                     onChange={setVatNumber}
                     autoComplete="off"
@@ -631,6 +656,7 @@ function RegisterContent() {
 function TextInput({
   id,
   label,
+  required,
   value,
   onChange,
   type = 'text',
@@ -643,6 +669,7 @@ function TextInput({
 }: {
   id: string;
   label: string;
+  required?: boolean;
   value: string;
   onChange: (value: string) => void;
   type?: string;
@@ -656,7 +683,7 @@ function TextInput({
   return (
     <div className={className}>
       <Label htmlFor={id} className="sr-only">
-        {label}
+        {label} {required && <span className="text-red-500">*</span>}
       </Label>
       <div className="relative">
         {icon}
@@ -680,6 +707,7 @@ function TextInput({
 function SelectInput({
   id,
   label,
+  required,
   value,
   onChange,
   disabled,
@@ -689,6 +717,7 @@ function SelectInput({
 }: {
   id: string;
   label: string;
+  required?: boolean;
   value: string;
   onChange: (value: string) => void;
   disabled: boolean;
@@ -699,7 +728,7 @@ function SelectInput({
   return (
     <div>
       <Label htmlFor={id} className="sr-only">
-        {label}
+        {label} {required && <span className="text-red-500">*</span>}
       </Label>
       <div className="relative">
         <select

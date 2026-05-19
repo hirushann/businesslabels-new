@@ -544,6 +544,7 @@ export const MESSAGES_V4 = {
       registerError: 'Unable to register right now. Please try again.',
       registerButtonText: 'Create account',
       registeringText: 'Creating account',
+      preparingAccount: 'Preparing your account...',
       accountCreated: 'Account created successfully',
       privacyText: 'Your personal data will be used to support your experience on this site, manage access to your account, and for other purposes described in our',
       privacyPolicy: 'privacy policy',
