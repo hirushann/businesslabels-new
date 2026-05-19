@@ -1,4 +1,4 @@
-import type { ProductCardData } from "@/components/ProductCard";
+import type { ProductCardData, ProductWarrantyData } from "@/components/ProductCard";
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 
 type LocalizedString = {
@@ -12,7 +12,17 @@ type LaravelCategory = {
   slug?: string | LocalizedString | null;
 };
 
-type LaravelProduct = {
+type LaravelProductTranslation = {
+  language?: string;
+  name?: string | null;
+  title?: string | null;
+  subtitle?: string | null;
+  slug?: string | null;
+  excerpt?: string | null;
+  description?: string | null;
+};
+
+export type LaravelProduct = {
   id: number | string;
   sku?: string | null;
   title?: string | null;
@@ -30,7 +40,27 @@ type LaravelProduct = {
   categories?: LaravelCategory[];
   slug?: string | LocalizedString | null;
   type?: string | null;
+  translations?: Array<Record<string, LaravelProductTranslation> | LaravelProductTranslation> | null;
+  warranty?: ProductWarrantyData | null;
+  discount?: number | null;
 };
+
+function getProductTranslation(
+  translations: Array<Record<string, LaravelProductTranslation> | LaravelProductTranslation> | null | undefined,
+  locale: string
+): LaravelProductTranslation | null {
+  if (!translations) return null;
+  for (const entry of translations) {
+    if (!entry || typeof entry !== "object") continue;
+    if (locale in entry) {
+      const keyed = (entry as Record<string, LaravelProductTranslation>)[locale];
+      if (keyed) return keyed;
+    }
+    const direct = entry as LaravelProductTranslation;
+    if (direct.language === locale) return direct;
+  }
+  return null;
+}
 
 function getLocalizedValue(value: string | LocalizedString | null | undefined, locale: string): string | null {
   if (!value) return null;
@@ -39,16 +69,28 @@ function getLocalizedValue(value: string | LocalizedString | null | undefined, l
 }
 
 export function mapLaravelProductToCardData(product: LaravelProduct, locale: string = "en"): ProductCardData {
-  const name = getLocalizedValue(product.name, locale) || product.title || "Unnamed Product";
-  const slug = getLocalizedValue(product.slug, locale);
-  const subtitle = getLocalizedValue(product.subtitle, locale);
-  const excerpt = getLocalizedValue(product.excerpt, locale);
-  const materialTitle = product.material ? getLocalizedValue(product.material.title, locale) : null;
+  const translation = getProductTranslation(product.translations, locale);
 
-  const categories = (product.categories ?? []).map(cat => ({
+  const rawName = translation?.name || translation?.title || product.name || product.title || "Unnamed Product";
+  const name = typeof rawName === "string" ? rawName : getLocalizedValue(rawName, locale) || "Unnamed Product";
+
+  const rawSlug = translation?.slug || product.slug;
+  const slug = typeof rawSlug === "string" ? rawSlug : getLocalizedValue(rawSlug, locale);
+
+  const rawSubtitle = translation?.subtitle || product.subtitle;
+  const subtitle = typeof rawSubtitle === "string" ? rawSubtitle : getLocalizedValue(rawSubtitle, locale);
+
+  const rawExcerpt = translation?.excerpt || product.excerpt;
+  const excerpt = typeof rawExcerpt === "string" ? rawExcerpt : getLocalizedValue(rawExcerpt, locale);
+
+  const materialTitle = product.material
+    ? (typeof product.material.title === "string" ? product.material.title : getLocalizedValue(product.material.title, locale))
+    : null;
+
+  const categories = (product.categories ?? []).map((cat) => ({
     id: cat.id,
-    name: getLocalizedValue(cat.name, locale),
-    slug: getLocalizedValue(cat.slug, locale)
+    name: typeof cat.name === "string" ? cat.name : getLocalizedValue(cat.name, locale),
+    slug: typeof cat.slug === "string" ? cat.slug : getLocalizedValue(cat.slug, locale)
   }));
 
   return {
@@ -65,5 +107,7 @@ export function mapLaravelProductToCardData(product: LaravelProduct, locale: str
     categories,
     slug,
     type: (product.type === "simple" || product.type === "variable") ? product.type : null,
+    warranty: product.warranty ?? null,
+    discount: product.discount ?? 0,
   };
 }

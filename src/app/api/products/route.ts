@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const searchParams = request.nextUrl.searchParams;
-    const locale = normalizeLocale(request.cookies.get(LOCALE_COOKIE)?.value);
+    const locale = normalizeLocale(searchParams.get('lang') || request.cookies.get(LOCALE_COOKIE)?.value);
     
     // Pass through all search params to the backend
     const queryString = searchParams.toString();

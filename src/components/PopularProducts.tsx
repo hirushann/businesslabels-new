@@ -1,58 +1,38 @@
 import Link from 'next/link';
 import EmptyState from "@/components/EmptyState";
-import ProductCard, { type ProductCardData } from "@/components/ProductCard";
+import ProductCard from "@/components/ProductCard";
 import { getTranslations } from 'next-intl/server';
-import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
-
-type Product = {
-  id: number;
-  type: "simple" | "variable" | string;
-  slug?: string | null;
-  name: string;
-  sku: string;
-  subtitle: string;
-  excerpt: string;
-  price: number;
-  original_price: number;
-  in_stock: boolean;
-  main_image: string;
-  material?: {
-    title: string;
-  };
-  categories?: Array<{
-    id?: number;
-    name?: string | null;
-  }>;
-};
-
-type ProductsResponse = {
-  data: Product[];
-};
-
-function normalizeType(raw: string | undefined): "simple" | "variable" | null {
-  if (raw === "simple" || raw === "variable") {
-    return raw;
-  }
-  return null;
-}
+import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
+import { mapLaravelProductToCardData, type LaravelProduct } from "@/lib/mappings/product";
 
 export default async function PopularProducts() {
+  const locale = await getServerLocale();
   const t = await getTranslations();
 
-  let products: Product[] = [];
+  let products: LaravelProduct[] = [];
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/products`, {
-      next: { revalidate: 3600 },
-      cache: 'force-cache',
-    });
+    const backendUrl = process.env.BBNL_API_BASE_URL;
+    if (!backendUrl) {
+      console.warn('BBNL_API_BASE_URL is not configured');
+    } else {
+      const url = withLocaleParam(`${backendUrl}/api/products`, locale);
+      const response = await fetch(url, {
+        headers: { 'Accept': 'application/json' },
+        next: { revalidate: 3600 },
+      });
 
-    const json = (await response.json()) as ProductsResponse;
-    if (json.data && Array.isArray(json.data)) {
-      products = json.data.slice(0, 6);
+      if (response.ok) {
+        const json = await response.json();
+        if (json.data && Array.isArray(json.data)) {
+          // Limit to 6 popular products
+          products = json.data.slice(0, 6);
+        }
+      } else {
+        console.error(`Failed to fetch popular products: ${response.status} ${response.statusText}`);
+      }
     }
   } catch (error) {
     console.error('Error fetching products:', error);
-    // Gracefully continue with empty products array
   }
 
   return (
@@ -85,29 +65,15 @@ export default async function PopularProducts() {
             />
           ) : (
             products.map((product) => {
-              const cardProduct: ProductCardData = {
-                id: product.id,
-                sku: product.sku,
-                name: product.name,
-                subtitle: product.subtitle,
-                excerpt: product.excerpt,
-                materialTitle: product.material?.title ?? null,
-                price: product.price,
-                originalPrice: product.original_price,
-                inStock: product.in_stock,
-                mainImage: toDisplayImageUrl(product.main_image),
-                categories: product.categories,
-                slug: product.slug,
-                type: normalizeType(product.type),
-              };
+              const cardProduct = mapLaravelProductToCardData(product, locale);
 
-              const href = product.slug
-                ? normalizeType(product.type)
-                  ? { pathname: `/products/${product.slug}` }
-                  : { pathname: `/products/${product.slug}` }
+              const href = cardProduct.slug
+                ? (cardProduct.type === "simple" || cardProduct.type === "variable")
+                  ? { pathname: `/products/${cardProduct.slug}`, query: { type: cardProduct.type } }
+                  : { pathname: `/products/${cardProduct.slug}` }
                 : undefined;
 
-              return <ProductCard key={product.sku} product={cardProduct} href={href} />;
+              return <ProductCard key={cardProduct.sku} product={cardProduct} href={href} />;
             })
           )}
         </div>
