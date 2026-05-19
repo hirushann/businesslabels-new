@@ -237,6 +237,24 @@ function PrinterSummary({
               ) : null}
             </div>
           ) : null}
+
+          {printer.content ? (
+            <div className="mt-4 rounded-lg bg-slate-50 p-4">
+              <div className="text-sm font-medium text-neutral-500">{t("product.productDescription")}</div>
+              <div 
+                className="mt-2 text-sm leading-relaxed text-neutral-700 font-normal [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
+                dangerouslySetInnerHTML={{ __html: printer.content }}
+              />
+            </div>
+          ) : printer.excerpt ? (
+            <div className="mt-4 rounded-lg bg-slate-50 p-4">
+              <div className="text-sm font-medium text-neutral-500">{t("product.productDescription")}</div>
+              <div 
+                className="mt-2 text-sm leading-relaxed text-neutral-700 font-normal [&_p]:mb-2"
+                dangerouslySetInnerHTML={{ __html: printer.excerpt }}
+              />
+            </div>
+          ) : null}
         </div>
 
         {imageUrl ? (
@@ -292,7 +310,7 @@ export default async function FinderPage({
 
       try {
         [printer, initialCatalog, baselineCatalog] = await Promise.all([
-          getPrinterById(printerId),
+          getPrinterById(printerId, locale),
           searchCatalogProducts(parseCatalogSearchParams(query, locale)),
           searchCatalogProducts(parseCatalogSearchParams(baselineQuery, locale)),
         ]);

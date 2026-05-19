@@ -3,14 +3,15 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { FormEvent, Suspense, useState } from 'react';
-import { ArrowRight, Eye, EyeOff, Loader2, LockKeyhole, Mail } from 'lucide-react';
+import { FormEvent, Suspense, useState, useRef } from 'react';
+import { ArrowRight, Eye, EyeOff, Loader2, LockKeyhole, Mail, CheckCircle2, Home, ShoppingBag } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 type LoginErrors = {
   email?: string[];
@@ -96,7 +97,34 @@ function LoginContent() {
   const [resetMessage, setResetMessage] = useState('');
   const [resetMessageTone, setResetMessageTone] = useState<'success' | 'error' | null>(null);
 
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const isActionTaken = useRef(false);
+
   const redirectTo = searchParams.get('redirect') || '/my-account';
+
+  const handleGoToHome = () => {
+    isActionTaken.current = true;
+    setShowSuccessPopup(false);
+    router.push('/');
+    router.refresh();
+  };
+
+  const handleGoToShop = () => {
+    isActionTaken.current = true;
+    setShowSuccessPopup(false);
+    router.push('/category/labels-en-tickets');
+    router.refresh();
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      setShowSuccessPopup(false);
+      if (!isActionTaken.current) {
+        router.push('/');
+        router.refresh();
+      }
+    }
+  };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -127,7 +155,7 @@ function LoginContent() {
       window.dispatchEvent(new Event('auth-user-updated'));
 
       toast.success(t('login.loginSuccess'));
-      router.push(redirectTo);
+      setShowSuccessPopup(true);
       router.refresh();
     } catch {
       setFormMessage(t('login.loginError'));
@@ -435,6 +463,42 @@ function LoginContent() {
           </div>
         </div>
       </div>
+
+      <Dialog open={showSuccessPopup} onOpenChange={handleOpenChange}>
+        <DialogContent className="sm:max-w-md rounded-3xl p-6 border-slate-100 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-200" showCloseButton={true}>
+          <div className="flex flex-col items-center text-center py-4">
+            <div className="rounded-full bg-emerald-50 p-4 mb-4 text-emerald-500 animate-bounce">
+              <CheckCircle2 className="size-12 stroke-[2.5]" />
+            </div>
+            
+            <DialogHeader className="gap-2">
+              <DialogTitle className="text-2xl font-black text-slate-800 tracking-tight">
+                {t('login.loginSuccessTitle')}
+              </DialogTitle>
+              <DialogDescription className="text-sm text-slate-500 font-medium px-2 leading-relaxed">
+                {t('login.loginSuccessSubtitle')}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="mt-6 flex flex-col sm:flex-row gap-3 w-full">
+              <Button
+                onClick={handleGoToHome}
+                className="flex-1 h-12 rounded-xl bg-slate-100 text-slate-800 font-black hover:bg-slate-200 border-none flex items-center justify-center gap-2 transition-colors cursor-pointer"
+              >
+                <Home className="size-4" />
+                {t('login.goToHome')}
+              </Button>
+              <Button
+                onClick={handleGoToShop}
+                className="flex-1 h-12 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 transition-colors cursor-pointer"
+              >
+                <ShoppingBag className="size-4" />
+                {t('login.goToShop')}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

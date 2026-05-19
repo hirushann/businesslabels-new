@@ -57,6 +57,8 @@ export type FinderPrinterDetails = {
   slug: string;
   image?: string | null;
   properties?: Record<string, string[]>;
+  excerpt?: string | null;
+  content?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
 };
@@ -110,19 +112,59 @@ function stringArrayMap(value: unknown): Record<string, string[]> | undefined {
   return entries.length > 0 ? Object.fromEntries(entries) : undefined;
 }
 
-function mapFinderPrinter(source: PrinterSource): FinderPrinterDetails | null {
+function mapFinderPrinter(source: PrinterSource, locale?: "en" | "nl"): FinderPrinterDetails | null {
   const id = numberValue(source.id);
-  const title = stringValue(source.title);
+  let title = stringValue(source.title) || "";
+  let subtitle = stringValue(source.subtitle);
+  let excerpt = stringValue(source.excerpt);
+  let content = stringValue(source.content);
+
+  // Apply translations if locale is provided
+  if (locale && Array.isArray(source.translations)) {
+    const entry = source.translations.find((e: any) => {
+      if (!e || typeof e !== "object") return false;
+      return e[locale] || e.language === locale;
+    });
+
+    if (entry) {
+      const translation = entry[locale] || entry;
+      
+      const apply = (val: unknown) => {
+        if (val !== null && val !== undefined) {
+          if (typeof val === "string") {
+            const trimmed = val.trim();
+            return trimmed !== "" ? trimmed : null;
+          }
+          return val;
+        }
+        return null;
+      };
+
+      const translatedTitle = apply(translation.title) || apply(translation.name);
+      if (translatedTitle) title = translatedTitle as string;
+
+      const translatedSubtitle = apply(translation.subtitle);
+      if (translatedSubtitle) subtitle = translatedSubtitle as string;
+
+      const translatedExcerpt = apply(translation.excerpt);
+      if (translatedExcerpt) excerpt = translatedExcerpt as string;
+
+      const translatedContent = apply(translation.content);
+      if (translatedContent) content = translatedContent as string;
+    }
+  }
 
   if (id === null || !title) return null;
 
   return {
     id,
     title,
-    subtitle: stringValue(source.subtitle),
+    subtitle,
     slug: stringValue(source.slug) ?? "",
     image: stringValue(source.image) ?? stringValue(source.main_image),
     properties: stringArrayMap(source.properties),
+    excerpt,
+    content,
     created_at: stringValue(source.created_at),
     updated_at: stringValue(source.updated_at),
   };
@@ -155,7 +197,7 @@ export function parsePrinterSearchParams(params: URLSearchParams, locale?: "en" 
   };
 }
 
-export async function getPrinterById(id: number): Promise<FinderPrinterDetails | null> {
+export async function getPrinterById(id: number, locale?: "en" | "nl"): Promise<FinderPrinterDetails | null> {
   if (!Number.isFinite(id)) return null;
 
   const client = elasticClient();
@@ -171,6 +213,9 @@ export async function getPrinterById(id: number): Promise<FinderPrinterDetails |
       "image",
       "main_image",
       "properties",
+      "content",
+      "excerpt",
+      "translations",
       "created_at",
       "updated_at",
     ],
@@ -185,7 +230,7 @@ export async function getPrinterById(id: number): Promise<FinderPrinterDetails |
   });
 
   const source = response.hits.hits[0]?._source;
-  return source ? mapFinderPrinter(source) : null;
+  return source ? mapFinderPrinter(source, locale) : null;
 }
 
 function buildSortClause(sort: PrinterSortValue): estypes.Sort {
