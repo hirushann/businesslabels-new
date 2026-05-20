@@ -144,6 +144,14 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
     Number.isFinite(product.originalPrice) &&
     (!hasPrice || (hasPrice && (product.price !== undefined && product.price !== null) && product.originalPrice > product.price));
   const imageSrc = normalizeText(product.mainImage) || "https://placehold.co/600x400?text=" + encodeURIComponent(productName);
+  // Units per box (roll/stack count) — shown when the product is packed in
+  // multiples, so shoppers see the box quantity at a glance.
+  const unitsPerBox =
+    typeof product.packing_group === "number" &&
+    Number.isFinite(product.packing_group) &&
+    product.packing_group > 1
+      ? product.packing_group
+      : null;
   const normalizedWarranty = useMemo(() => normalizeWarrantyOptions(product.warranty), [product.warranty]);
   const defaultWarrantyOption = normalizedWarranty.options.find(
     (option) => option.id === normalizedWarranty.defaultOptionId,
@@ -258,6 +266,8 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
               )}
             </div>
           ) : <div className="w-8" />}
+          {/* Only an in-stock badge is ever shown — out-of-stock products are
+              filtered out of listings, never flagged. */}
           {product.inStock ? (
             <div className="px-2.5 py-1 bg-green-600 rounded-full flex items-center gap-1.5">
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -291,7 +301,14 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
       <div className="p-5 flex flex-col gap-4 flex-1">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <span className="text-blue-400 text-sm font-normal font-['Segoe_UI'] leading-5">SKU: {product.sku}</span>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-blue-400 text-sm font-normal font-['Segoe_UI'] leading-5">SKU: {product.sku}</span>
+              {unitsPerBox ? (
+                <span className="shrink-0 px-2.5 py-1 bg-slate-100 rounded-full text-neutral-700 text-xs font-normal font-['Segoe_UI'] leading-4">
+                  {unitsPerBox} per box
+                </span>
+              ) : null}
+            </div>
             <h3 className="text-neutral-800 text-xl font-semibold font-['Segoe_UI'] leading-6">{product.name}</h3>
           </div>
           {features.length > 0 && (

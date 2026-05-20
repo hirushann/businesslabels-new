@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import CategorySubnav from "@/components/CategorySubnav";
 import ProductsListing from "@/components/ProductsListing";
 import {
   parseCatalogSearchParams,
@@ -9,6 +10,13 @@ import {
 } from "@/lib/search/products";
 import type { CatalogSearchResponse } from "@/lib/search/types";
 import ReviewsSection from "@/components/ReviewsSection";
+import {
+  categoryRouteSlug,
+  fetchCategoryGroups,
+  findCategoryBySlug,
+  resolveLocalized,
+  type CategoryNode,
+} from "@/lib/categories/tree";
 
 function slugToTitle(slug: string): string {
   return slug
@@ -82,7 +90,6 @@ export default async function CategoryArchivePage({
   const rawParams = await searchParams;
   const t = await getTranslations();
   const locale = await getServerLocale();
-  const categoryTitle = categoryTitleForSlug(slug);
   const routeQuery = toUrlSearchParams(rawParams);
   const scopeQuery = new URLSearchParams({
     category: indexedCategorySlugForRoute(slug),
@@ -95,15 +102,39 @@ export default async function CategoryArchivePage({
 
   let initialCatalog = emptyCatalogResponse;
   let baselineCatalog = emptyCatalogResponse;
+  let categoryGroups: Awaited<ReturnType<typeof fetchCategoryGroups>> = [];
 
   try {
-    [initialCatalog, baselineCatalog] = await Promise.all([
+    [initialCatalog, baselineCatalog, categoryGroups] = await Promise.all([
       searchCatalogProducts(parseCatalogSearchParams(initialSearchQuery, locale)),
       searchCatalogProducts(parseCatalogSearchParams(scopeQuery, locale)),
+      fetchCategoryGroups(locale),
     ]);
   } catch (error) {
     console.error(`Failed to load category catalog for slug '${slug}'.`, error);
   }
+
+  // Locate the current category in the tree so we can render its direct
+  // subcategories above the products. When the slug is not found we fall
+  // back to a plain title and no subcategory navigation.
+  const lookup = findCategoryBySlug(categoryGroups, slug, locale);
+  const currentCategory = lookup?.category;
+  const ancestors = lookup?.ancestors ?? [];
+  const subcategories: CategoryNode[] = currentCategory?.children ?? [];
+  const hasSubcategories = subcategories.length > 0;
+
+  const categoryTitle = currentCategory
+    ? resolveLocalized(currentCategory.name, locale)
+    : categoryTitleForSlug(slug);
+
+  const breadcrumbItems = [
+    { label: t("common.products"), href: "/products" },
+    ...ancestors.map((ancestor) => ({
+      label: resolveLocalized(ancestor.name, locale),
+      href: `/category/${encodeURIComponent(categoryRouteSlug(ancestor, locale))}`,
+    })),
+    { label: categoryTitle },
+  ];
 
   return (
     <div className="bg-white">
@@ -119,25 +150,37 @@ export default async function CategoryArchivePage({
             />
             <div className="absolute inset-0 bg-black/30 bg-gradient-to-t from-black/40 to-transparent" />
             <div className="absolute left-6 top-6 flex flex-col gap-12">
-              <Breadcrumbs
-                className="text-white"
-                items={[
-                  { label: t("common.products"), href: "/products" },
-                  { label: categoryTitle },
-                ]}
-              />
+              <Breadcrumbs className="text-white" items={breadcrumbItems} />
               <h1 className="text-4xl font-bold leading-[48px] text-white">
                 {categoryTitle}
               </h1>
             </div>
           </div>
 
-          <ProductsListing
-            initialCatalog={initialCatalog}
-            initialQueryString={routeQuery.toString()}
-            scopeQueryString={scopeQuery.toString()}
-            baselineRangeFilters={baselineCatalog.filters.ranges}
-          />
+          {/* Direct subcategories of the current level — always above the
+              products. Drilling into one re-renders this section for the
+              next level down; the deepest level renders nothing here. */}
+          {hasSubcategories ? (
+            <CategorySubnav subcategories={subcategories} locale={locale} />
+          ) : null}
+
+          {/* Products for the currently selected category. The heading only
+              appears when subcategories are present, so the deepest level
+              keeps the unchanged product-grid layout. */}
+          <div className="flex flex-col gap-6">
+            {hasSubcategories ? (
+              <h2 className="text-2xl font-bold leading-8 text-neutral-800">
+                {t("categoryArchive.productsTitle", { category: categoryTitle })}
+              </h2>
+            ) : null}
+
+            <ProductsListing
+              initialCatalog={initialCatalog}
+              initialQueryString={routeQuery.toString()}
+              scopeQueryString={scopeQuery.toString()}
+              baselineRangeFilters={baselineCatalog.filters.ranges}
+            />
+          </div>
         </div>
       </div>
 
