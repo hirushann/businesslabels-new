@@ -6,10 +6,12 @@ import { useTranslations } from "next-intl";
 import EmptyState from "@/components/EmptyState";
 import PrinterCard from "@/components/PrinterCard";
 import { useDebouncedSearchParam } from "@/components/search/useDebouncedSearchParam";
+import { RequestPrinterModal } from "@/components/RequestPrinterModal";
 import type {
   PrinterCardData,
   PrinterSearchResponse,
 } from "@/lib/search/printerTypes";
+
 
 type PrintersListingProps = {
   initialCatalog: PrinterSearchResponse;
@@ -57,6 +59,7 @@ export default function FinderListing({
   const [isFetching, setIsFetching] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const currentQueryString = searchParams.toString();
   const loading = isPending || isFetching;
@@ -239,6 +242,7 @@ export default function FinderListing({
           {/* Request a New Printer button */}
           <button
             type="button"
+            onClick={() => setIsModalOpen(true)}
             className="inline-flex items-center justify-center px-5 rounded-full border border-[#F18800] text-[#F18800] font-semibold text-base leading-6 hover:bg-orange-50 transition-colors duration-150 whitespace-nowrap"
             style={{ fontFamily: "Segoe UI, sans-serif" }}
           >
@@ -365,6 +369,12 @@ export default function FinderListing({
           ))}
         </div>
       </div>
+
+      {/* Request Printer Modal */}
+      <RequestPrinterModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+      />
     </div>
   );
 }
