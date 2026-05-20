@@ -54,14 +54,51 @@ const europeanCountries = [
   { name: 'Vatican City', code: 'VA', dialCode: '+379' },
 ];
 
-const schedule = [
-  { day: 'Monday', hours: '08:00 - 17:30', active: false },
-  { day: 'Tuesday', hours: '08:00 - 17:30', active: true },
-  { day: 'Wednesday', hours: '08:00 - 17:30', active: true },
-  { day: 'Thursday', hours: '08:00 - 17:30', active: true },
-  { day: 'Friday', hours: '08:00 - 17:30', active: false },
-  { day: 'Saturday', hours: '08:00 - 17:30', active: true }
-];
+type AvailabilityResponse = {
+  data?: unknown;
+};
+
+const WORKING_HOURS = '08:00 - 17:30';
+const UNAVAILABLE_LABEL = 'Unavailable';
+
+function toLocalDateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
+function formatScheduleDate(dateKey: string) {
+  const [, month, day] = dateKey.split('-').map(Number);
+
+  return `${String(day).padStart(2, '0')}-${String(month).padStart(2, '0')}`;
+}
+
+function getCurrentWeekSchedule(availableDateKeys: Set<string>) {
+  const today = new Date();
+  const monday = new Date(today);
+  const dayOfWeek = today.getDay();
+  const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+
+  monday.setHours(0, 0, 0, 0);
+  monday.setDate(today.getDate() - daysSinceMonday);
+
+  return Array.from({ length: 6 }, (_, index) => {
+    const date = new Date(monday);
+    date.setDate(monday.getDate() + index);
+
+    const dateKey = toLocalDateKey(date);
+    const active = availableDateKeys.has(dateKey);
+
+    return {
+      date: dateKey,
+      day: date.toLocaleDateString('en-US', { weekday: 'long' }),
+      hours: active ? WORKING_HOURS : UNAVAILABLE_LABEL,
+      active,
+    };
+  });
+}
 
 function CollapseIcon({ open }: { open: boolean }) {
   return (
@@ -86,8 +123,10 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
   const [contactMessage, setContactMessage] = useState('');
   const [contactStatus, setContactStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [contactStatusMessage, setContactStatusMessage] = useState('');
+  const [availableDateKeys, setAvailableDateKeys] = useState<Set<string>>(() => new Set());
 
   const selectedCountry = europeanCountries.find((country) => country.code === selectedCountryCode) ?? europeanCountries[0];
+  const schedule = getCurrentWeekSchedule(availableDateKeys);
 
   // Close on Escape
   useEffect(() => {
@@ -100,6 +139,49 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = ''; };
+  }, []);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadAvailability() {
+      try {
+        const response = await fetch('/api/availabilities', {
+          headers: {
+            'Accept': 'application/json',
+          },
+        });
+        const data = (await response.json().catch(() => ({}))) as AvailabilityResponse & { message?: unknown };
+
+        if (!response.ok) {
+          throw new Error(typeof data === 'object' && data && 'message' in data && typeof data.message === 'string'
+            ? data.message
+            : 'Failed to fetch availability.'
+          );
+        }
+
+        const dates = Array.isArray(data.data)
+          ? data.data.filter((date): date is string => typeof date === 'string')
+          : [];
+
+        if (!ignore) {
+          console.log('Loaded availability dates:', dates);
+          setAvailableDateKeys(new Set(dates));
+        }
+      } catch (error) {
+        console.error('Error loading availability schedule:', error);
+
+        if (!ignore) {
+          setAvailableDateKeys(new Set());
+        }
+      }
+    }
+
+    loadAvailability();
+
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const resetBookingForm = () => {
@@ -476,18 +558,18 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
               onClick={() => setScheduleOpen(v => !v)}
             >
               <span className="text-neutral-800 text-lg font-normal font-['Segoe_UI'] leading-6">
-                Check When Our Team Is Available (+2)
+                Check When Our Team Is Available
               </span>
               <CollapseIcon open={scheduleOpen} />
             </button>
 
             {scheduleOpen && (
               <div className="flex flex-col gap-4">
-                <div className="w-56 flex flex-col gap-2">
-                  {schedule.map(({ day, hours, active }) => (
-                    <div key={day} className="flex justify-between items-center">
+                <div className="w-full max-w-xs flex flex-col gap-2">
+                  {schedule.map(({ date, day, hours, active }) => (
+                    <div key={date} className="flex justify-between items-center gap-4">
                       <span className={`text-sm font-normal font-['Segoe_UI'] ${active ? 'text-neutral-800' : 'text-zinc-500'}`}>
-                        {day}
+                        {day} <span className="text-xs">({formatScheduleDate(date)})</span>
                       </span>
                       <span className={`text-sm font-normal font-['Segoe_UI'] ${active ? 'text-neutral-800' : 'text-zinc-500'}`}>
                         {hours}

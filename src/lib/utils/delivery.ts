@@ -1,3 +1,60 @@
+/**
+ * Maximum effective delivery time, in days, for a product to count as
+ * "in stock". Anything slower (2 weeks or more) is treated as out of stock
+ * and hidden from listings.
+ */
+export const IN_STOCK_DELIVERY_DAY_LIMIT = 10;
+
+type NumericLike = number | string | null | undefined;
+
+type StockStatusParams = {
+  stock?: NumericLike;
+  delivery_dates_in_stock?: NumericLike;
+  delivery_dates_no_stock?: NumericLike;
+};
+
+/** Coerce a number-or-numeric-string into a finite number, else null. */
+function toFiniteNumber(value: NumericLike): number | null {
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+/**
+ * Effective delivery time in days: the in-stock lead time when stock is on
+ * hand, otherwise the replenishment (no-stock) lead time. Returns `null` when
+ * the relevant delivery figure is missing or not a positive number.
+ *
+ * Delivery figures are accepted as numbers or numeric strings, since the API
+ * has been observed to return either.
+ */
+export function getEffectiveDeliveryDays({
+  stock,
+  delivery_dates_in_stock,
+  delivery_dates_no_stock,
+}: StockStatusParams): number | null {
+  const stockCount = toFiniteNumber(stock);
+  const hasStock = stockCount !== null && stockCount > 0;
+  const days = toFiniteNumber(hasStock ? delivery_dates_in_stock : delivery_dates_no_stock);
+  return days !== null && days > 0 ? days : null;
+}
+
+/**
+ * A product counts as "in stock" when it can be delivered within
+ * `IN_STOCK_DELIVERY_DAY_LIMIT` days. Anything slower is out of stock.
+ *
+ * Returns `null` when delivery data is unavailable, so callers can fall back
+ * to whatever stock signal they already have.
+ */
+export function isDeliverableInStock(params: StockStatusParams): boolean | null {
+  const days = getEffectiveDeliveryDays(params);
+  if (days === null) return null;
+  return days <= IN_STOCK_DELIVERY_DAY_LIMIT;
+}
+
 type DeliveryMessageParams = {
   stock: number;
   delivery_dates_in_stock: number;

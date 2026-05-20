@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import type { ProductRouteType } from "@/components/ProductCard";
 import { buildCartItemKey, useCart } from "@/components/CartProvider";
 import { useWishlist } from "@/components/WishlistProvider";
-import { getExpectedDeliveryMessage } from "@/lib/utils/delivery";
+import { getExpectedDeliveryMessage, isDeliverableInStock } from "@/lib/utils/delivery";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Popover, PopoverAnchor, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
@@ -297,6 +297,14 @@ export default function ProductPurchase({
   const stockText = inStock ? t("product.inStock") : t("product.outOfStock");
   const stockTextClass = inStock ? "text-green-600" : "text-zinc-500";
   const stockIconClass = inStock ? "text-green-600" : "text-zinc-500";
+  // Stock status follows the 10-day delivery window; fall back to the raw
+  // flag when delivery data is unavailable. Out-of-stock is never labelled.
+  const resolvedInStock =
+    isDeliverableInStock({
+      stock,
+      delivery_dates_in_stock: deliveryDatesInStock,
+      delivery_dates_no_stock: deliveryDatesNoStock,
+    }) ?? Boolean(inStock);
 
   const discountPercentage =
     hasPrice && hasOriginalPrice
@@ -470,7 +478,7 @@ export default function ProductPurchase({
       subtitle,
       excerpt,
       materialTitle,
-      inStock: Boolean(inStock),
+      inStock: resolvedInStock,
     });
     toast.success(t("product.savedToWishlist") || "Saved to Wishlist");
   };
@@ -557,6 +565,16 @@ export default function ProductPurchase({
             </svg>
             <span className={`${stockTextClass} text-xs font-normal leading-4`}>{stockText}</span>
           </div>
+          <span className="text-blue-400 text-base font-normal leading-5">SKU: {displaySku}</span>
+          {resolvedInStock ? (
+            <div className="flex items-center gap-2">
+              <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 12 12">
+                <circle cx="6" cy="6" r="5" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6l1.5 1.5L8 4" />
+              </svg>
+              <span className="text-green-600 text-xs font-normal leading-4">In Stock</span>
+            </div>
+          ) : null}
         </div>
         <div className="flex items-baseline gap-2">
           <span className="text-neutral-800 text-4xl font-bold leading-[48px]">

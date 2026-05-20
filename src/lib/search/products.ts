@@ -3,6 +3,7 @@ import type { LinkProps } from "next/link";
 import type { ProductCardData, ProductRouteType, ProductWarrantyData } from "@/components/ProductCard";
 import { catalogIndexForType, elasticClient } from "@/lib/search/client";
 import type { LaravelProduct } from "@/lib/mappings/product";
+import { isDeliverableInStock } from "@/lib/utils/delivery";
 import {
   CATALOG_SORT_VALUES,
   type CatalogFilters,
@@ -144,6 +145,9 @@ const RESULT_SOURCE_FIELDS = [
   "discount",
   "stock",
   "in_stock",
+  "delivery_dates_in_stock",
+  "delivery_dates_no_stock",
+  "packing_group",
   "main_image",
   "image",
   "thumbnail",
@@ -650,6 +654,8 @@ function rangeOrStringFilter(
 }
 
 function buildFilters(params: CatalogSearchParams): estypes.QueryDslQueryContainer[] {
+  // Slow-delivery products are NOT hidden from listings — they stay visible
+  // and simply render without the "In Stock" label (see `mapProductHit`).
   const filters: Array<estypes.QueryDslQueryContainer | null> = [
     { term: { "state.keyword": "active" } },
     params.type ? { term: { product_type: params.type } } : null,
@@ -672,8 +678,6 @@ function buildFilters(params: CatalogSearchParams): estypes.QueryDslQueryContain
     nestedTermsFilter("properties", "properties.printer_type.keyword", params.printerTypes),
     nestedTermsFilter("properties", "properties.detectie.keyword", params.detections),
     termsFilter("compatible_brands.keyword", params.marks),
-    params.inStock === true ? { range: { stock: { gt: 0 } } } : null,
-    params.inStock === false ? { range: { stock: { lte: 0 } } } : null,
     rangeFilter("price", params.priceMin, params.priceMax),
     rangeFilter("property_numbers.breedte", params.widthMin, params.widthMax),
     rangeFilter("property_numbers.hoogte", params.heightMin, params.heightMax),
@@ -953,6 +957,9 @@ function categoriesFromSource(source: ProductSource): Array<{ id?: number; name?
 function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number, locale?: "en" | "nl"): CatalogProductResult {
   const source = hit._source ?? {};
   const id = stringValue(source.id) ?? stringValue(source.ID) ?? hit._id ?? `result-${index}`;
+  // `id` is only unique per product type/index; combine ES index + doc id for a
+  // globally-unique result key so React keys don't collide across indices.
+  const resultKey = `${hit._index ?? "idx"}::${hit._id ?? `${id}-${index}`}`;
   let type = productType(source.product_type) ?? productType(source.type);
   if (!type && booleanValue(source.is_group_product)) {
     type = "group_product";
@@ -976,6 +983,16 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number, loc
     price = originalPrice - (originalPrice * (discount / 100));
   }
 
+  const stockCount = numberValue(source.stock);
+  // Stock status follows the 10-day delivery window. When the index carries
+  // no delivery data the helper returns null and we fall back to the raw
+  // stock signal.
+  const deliveryStockStatus = isDeliverableInStock({
+    stock: stockCount,
+    delivery_dates_in_stock: numberValue(source.delivery_dates_in_stock),
+    delivery_dates_no_stock: numberValue(source.delivery_dates_no_stock),
+  });
+
   const product: ProductCardData = {
     id,
     sku: stringValue(source.sku) ?? "-",
@@ -986,13 +1003,13 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number, loc
     price,
     originalPrice,
     discount: discount ?? 0,
-    inStock: booleanValue(source.in_stock) || Boolean((numberValue(source.stock) ?? 0) > 0),
+    inStock: deliveryStockStatus ?? (booleanValue(source.in_stock) || Boolean((stockCount ?? 0) > 0)),
+    packing_group: numberValue(source.packing_group),
     mainImage: imageUrl(stringValue(source.main_image) ?? stringValue(source.image)),
     categories: categoriesFromSource(source),
     slug,
     type,
-    ...(warranty !== undefined ? { warranty } : {}),
-    packing_group: numberValue(source.packing_group),
+    ...(warranty !== undefined ? { warranty } : {})
   };
 
   const href: LinkProps["href"] | undefined = frontendPath
@@ -1003,7 +1020,7 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number, loc
         ? `/products/${slug}`
         : undefined;
 
-  return { id, product, href };
+  return { id: resultKey, product, href };
 }
 
 function totalHitsValue(total: estypes.SearchTotalHits | number | undefined): number {

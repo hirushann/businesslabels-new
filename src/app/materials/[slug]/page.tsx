@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import Accordion from "@/components/Accordion";
@@ -15,6 +16,8 @@ type MaterialProduct = {
   id: number;
   name: string;
   slug: string;
+  subtitle: string | null;
+  excerpt: string | null;
   sku: string | null;
   article_number: string | null;
   state: "draft" | "active" | "inactive" | "retired";
@@ -26,6 +29,11 @@ type MaterialProduct = {
   packing_group?: number | null;
 };
 
+type MaterialSpec = {
+  label: string;
+  value: string;
+};
+
 type Material = {
   id: number;
   title: string;
@@ -33,21 +41,30 @@ type Material = {
   slug: string;
   code: string;
   brand: string;
+  brand_label: string | null;
   status: string;
   description: string;
-  specifications: Record<string, string | number | boolean> | null;
+  specifications: { material_specs?: MaterialSpec[] } | null;
   print_method: string | null;
+  print_method_label: string | null;
   base_material: string | null;
+  base_material_label: string | null;
   finish: string | null;
+  finish_label: string | null;
   adhesive: string | null;
+  adhesive_label: string | null;
   supplier: string | null;
+  supplier_label: string | null;
+  supplier_reference: string | null;
   price_per_sq_meter: number | null;
   certificate: string | null;
-  category: {
+  spec_sheet_url: string;
+  has_uploaded_spec_sheet?: boolean;
+  categories: {
     id: number;
     name: string;
     slug: string;
-  } | null;
+  }[];
   products: MaterialProduct[];
   products_count: number;
 };
@@ -93,8 +110,6 @@ function buildVisiblePages(currentPage: number, lastPage: number): Array<number 
 
   return visible;
 }
-
-// relatedSections is deprecated in favor of server-fetched products
 
 async function getMaterial(slug: string): Promise<Material | null> {
   const baseUrl = process.env.BBNL_API_BASE_URL;
@@ -187,6 +202,48 @@ function ContactIcon({ type }: { type: "call" | "email" | "whatsapp" }) {
   );
 }
 
+/**
+ * Two-column key/value table with zebra striping, used inside the
+ * "About this material" and "Specifications" accordions.
+ */
+function DetailTable({ rows }: { rows: { label: string; value: ReactNode }[] }) {
+  return (
+    <div className="overflow-hidden rounded-lg border border-black/5">
+      {rows.map((row, index) => (
+        <div
+          key={`${row.label}-${index}`}
+          className={`flex items-center justify-between gap-6 px-4 py-3 ${
+            index % 2 === 0 ? "bg-white/70" : "bg-transparent"
+          }`}
+        >
+          <span className="text-base leading-6 text-neutral-500">{row.label}</span>
+          <span className="text-right text-base font-semibold leading-6 text-neutral-800">{row.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SidebarCard({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)]">
+      <div className="flex flex-col gap-1">
+        <h2 className="text-lg font-bold leading-6 text-neutral-800">{title}</h2>
+        <p className="text-sm leading-5 text-neutral-500">{description}</p>
+      </div>
+      {children}
+    </div>
+  );
+}
+
 function HelpPanel({
   labels,
 }: {
@@ -206,23 +263,21 @@ function HelpPanel({
   ];
 
   return (
-    <aside className="flex w-full flex-col gap-6 lg:sticky lg:top-24 lg:w-96">
-      <div className="flex flex-col gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)]">
-        <h2 className="text-lg font-bold leading-5 text-neutral-700">{labels.title}</h2>
-        <div className="grid grid-cols-3 gap-4">
-          {actions.map((action) => (
-            <button
-              key={action.label}
-              type="button"
-              className="flex flex-col items-center justify-center gap-3 rounded-xl border border-gray-100 bg-slate-100/30 p-3 text-center transition-colors hover:border-amber-200 hover:bg-orange-50"
-            >
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-50 shadow-sm">
-                <ContactIcon type={action.type} />
-              </span>
-              <span className="text-base font-semibold leading-5 text-neutral-800">{action.label}</span>
-            </button>
-          ))}
-        </div>
+    <div className="flex flex-col gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)]">
+      <h2 className="text-lg font-bold leading-6 text-neutral-800">{labels.title}</h2>
+      <div className="grid grid-cols-3 gap-4">
+        {actions.map((action) => (
+          <button
+            key={action.label}
+            type="button"
+            className="flex flex-col items-center justify-center gap-3 rounded-xl border border-gray-100 bg-slate-100/30 p-3 text-center transition-colors hover:border-amber-200 hover:bg-orange-50"
+          >
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-50 shadow-sm">
+              <ContactIcon type={action.type} />
+            </span>
+            <span className="text-sm font-semibold leading-5 text-neutral-800">{action.label}</span>
+          </button>
+        ))}
       </div>
 
       <div className="flex flex-col gap-3">
@@ -239,7 +294,7 @@ function HelpPanel({
           {labels.customMade}
         </Link>
       </div>
-    </aside>
+    </div>
   );
 }
 
@@ -304,7 +359,34 @@ function SpecsTable({
   );
 }
 
-function productHref(product: ProductCardData): { pathname: string; query?: { type: "simple" | "variable" | "group_product" } } | undefined {
+function FilterIcon() {
+  return (
+    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M3 5H17" stroke="#52525B" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M5.5 10H14.5" stroke="#52525B" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M8 15H12" stroke="#52525B" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function PdfIcon() {
+  return (
+    <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M14 3H7A2 2 0 0 0 5 5V19A2 2 0 0 0 7 21H17A2 2 0 0 0 19 19V8L14 3Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M14 3V8H19" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function productHref(
+  product: ProductCardData,
+): { pathname: string; query?: { type: "simple" | "variable" | "group_product" } } | undefined {
   if (!product.slug) {
     return undefined;
   }
@@ -337,22 +419,40 @@ function MaterialProductsSection({
     noProductsDescription: string;
     previous: string;
     next: string;
+    filters: string;
+    sortNameAsc: string;
   };
 }) {
   const visiblePages = buildVisiblePages(currentPage, lastPage);
 
   return (
-    <section className="px-4 py-24 odd:bg-gray-50 even:bg-white sm:px-6 lg:px-10">
-      <div className="mx-auto flex max-w-300 flex-col gap-12">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-4xl font-bold leading-12 text-neutral-800">{title}</h2>
+    <section className="bg-gray-50 px-4 py-24 sm:px-6 lg:px-10">
+      <div className="mx-auto flex max-w-300 flex-col gap-8">
+        <h2 className="text-4xl font-bold leading-12 text-neutral-800">{title}</h2>
+
+        {/* Filters + sort bar — visual only, mirrors the materials listing. */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <button
+            type="button"
+            className="inline-flex h-10 w-fit items-center gap-2 rounded-[42px] border border-slate-200 px-5 text-neutral-800 transition-colors hover:bg-slate-50"
+          >
+            <FilterIcon />
+            <span className="text-base font-semibold leading-6">{labels.filters}</span>
+          </button>
+          <label className="flex h-10 w-fit items-center gap-3 rounded-[42px] border border-slate-200 px-5 text-neutral-800">
+            <span className="sr-only">{labels.sortNameAsc}</span>
+            <select
+              defaultValue="name_asc"
+              disabled
+              className="bg-transparent text-base leading-5 outline-none disabled:opacity-100"
+            >
+              <option value="name_asc">{labels.sortNameAsc}</option>
+            </select>
+          </label>
         </div>
 
         {products.length === 0 ? (
-          <EmptyState 
-            title={labels.noProductsTitle}
-            description={labels.noProductsDescription}
-          />
+          <EmptyState title={labels.noProductsTitle} description={labels.noProductsDescription} />
         ) : (
           <>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -362,10 +462,10 @@ function MaterialProductsSection({
             </div>
 
             {lastPage > 1 && (
-              <div className="mt-12 flex flex-wrap items-center justify-center gap-3">
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
                 <Link
                   href={{ pathname: `/materials/${materialSlug}`, query: { page: Math.max(1, currentPage - 1) } }}
-                  className={`rounded-[50px] border border-slate-100 px-6 py-2.5 text-base font-medium text-neutral-800 transition-colors hover:bg-slate-50 ${
+                  className={`rounded-[50px] border border-slate-100 bg-white px-6 py-2.5 text-base font-medium text-neutral-800 transition-colors hover:bg-slate-50 ${
                     currentPage <= 1 ? "pointer-events-none opacity-50" : ""
                   }`}
                 >
@@ -382,9 +482,9 @@ function MaterialProductsSection({
                       key={item}
                       href={{ pathname: `/materials/${materialSlug}`, query: { page: item } }}
                       className={`flex h-10 min-w-10 items-center justify-center rounded-[50px] border border-slate-100 px-3 text-sm font-semibold transition-colors ${
-                        item === currentPage 
-                          ? "bg-amber-500 text-white border-amber-500" 
-                          : "text-neutral-700 hover:bg-slate-50"
+                        item === currentPage
+                          ? "border-amber-500 bg-amber-500 text-white"
+                          : "bg-white text-neutral-700 hover:bg-slate-50"
                       }`}
                       aria-current={item === currentPage ? "page" : undefined}
                     >
@@ -395,7 +495,7 @@ function MaterialProductsSection({
 
                 <Link
                   href={{ pathname: `/materials/${materialSlug}`, query: { page: Math.min(lastPage, currentPage + 1) } }}
-                  className={`rounded-[50px] border border-slate-100 px-6 py-2.5 text-base font-semibold text-neutral-800 transition-colors hover:bg-slate-50 ${
+                  className={`rounded-[50px] border border-slate-100 bg-white px-6 py-2.5 text-base font-semibold text-neutral-800 transition-colors hover:bg-slate-50 ${
                     currentPage >= lastPage ? "pointer-events-none opacity-50" : ""
                   }`}
                 >
@@ -420,14 +520,18 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
     notFound();
   }
 
+  const category = material.categories?.[0] ?? null;
+
   // Transform MaterialProduct[] to ProductCardData[]
+  // Spec lines on each card come from the product's own subtitle/excerpt.
+  // materialTitle is omitted — every product here is already from this material.
   const products: ProductCardData[] = (material.products || []).map((product) => ({
     id: product.id,
     sku: product.sku || "",
     name: product.name,
-    subtitle: null,
-    excerpt: null,
-    materialTitle: material.title,
+    subtitle: product.subtitle,
+    excerpt: product.excerpt,
+    materialTitle: null,
     price: product.price || 0,
     originalPrice: null,
     inStock: product.in_stock,
@@ -445,89 +549,185 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
   const currentPage = Number.isFinite(normalizedPage) && normalizedPage > 0 ? normalizedPage : 1;
   const perPage = 9;
   const totalProducts = products.length;
-  const lastPage = Math.ceil(totalProducts / perPage);
+  const lastPage = Math.ceil(totalProducts / perPage) || 1;
   const startIndex = (currentPage - 1) * perPage;
-  const endIndex = startIndex + perPage;
-  const paginatedProducts = products.slice(startIndex, endIndex);
+  const paginatedProducts = products.slice(startIndex, startIndex + perPage);
 
   const materialImage = toDisplayImageUrl(material.products?.[0]?.main_image) || "/images/labelrolls.png";
+
+  // "About this material" rows — only render fields that have a value.
+  const aboutRows = [
+    { label: t("materialSpecs.code"), value: material.code },
+    { label: t("materialSpecs.brand"), value: material.brand_label || material.brand },
+    { label: t("materialSpecs.printMethod"), value: material.print_method_label || material.print_method },
+    { label: t("materialSpecs.baseMaterial"), value: material.base_material_label || material.base_material },
+    { label: t("materialSpecs.finish"), value: material.finish_label || material.finish },
+    { label: t("materialSpecs.adhesive"), value: material.adhesive_label || material.adhesive },
+    { label: t("materialSpecs.supplier"), value: material.supplier_label || material.supplier },
+    { label: t("materialSpecs.supplierReference"), value: material.supplier_reference },
+    {
+      label: t("materialSpecs.certificate"),
+      value: material.certificate && material.certificate !== "none" ? material.certificate : null,
+    },
+    {
+      label: t("materialSpecs.pricePerSquareMeter"),
+      value: material.price_per_sq_meter != null ? `€${material.price_per_sq_meter}` : null,
+    },
+  ].filter((row): row is { label: string; value: string } => row.value != null && row.value !== "");
+
+  // "Specifications" rows — the per-material spec entries, plus a spec-sheet link.
+  const specEntries = material.specifications?.material_specs ?? [];
+  const specRows: { label: string; value: ReactNode }[] = specEntries
+    .filter((spec) => spec.label && spec.value)
+    .map((spec) => ({ label: spec.label, value: spec.value }));
+
+  specRows.push({
+    label: t("materialDetail.specSheet"),
+    value: (
+      <a
+        href={material.spec_sheet_url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-1.5 font-semibold text-amber-600 transition-colors hover:text-amber-700"
+      >
+        <PdfIcon />
+        {t("materialsPage.downloadSpecSheet")}
+      </a>
+    ),
+  });
 
   return (
     <div className="bg-white">
       <section className="px-4 py-10 sm:px-6 lg:px-10">
-        <div className="mx-auto flex max-w-300 flex-col gap-4">
-          <Breadcrumbs 
+        <div className="mx-auto flex max-w-300 flex-col gap-6">
+          <Breadcrumbs
             items={[
               { label: t("common.materials"), href: "/materials" },
-              ...(material.category ? [{ 
-                label: material.category.name, 
-                href: `/category/${material.category.slug || material.category.id}` 
-              }] : []),
-              { label: material.title }
-            ]} 
+              ...(category
+                ? [{ label: category.name, href: `/category/${category.slug || category.id}` }]
+                : []),
+              { label: material.title },
+            ]}
           />
 
-          <div className="flex flex-col gap-12 lg:flex-row lg:items-start">
-            <div className="flex min-w-0 flex-1 flex-col gap-12">
-              <div className="flex flex-col gap-4">
-                <h1 className="text-3xl font-bold leading-10 text-neutral-800">{material.title}</h1>
-                <p className="text-lg leading-7 text-neutral-700">{material.subtitle}</p>
-                <div className="relative min-h-80 overflow-hidden rounded-xl bg-gray-100 sm:min-h-127.25">
-                  <Image
-                    src={materialImage}
-                    alt={t("materialsPage.materialAlt", { title: material.title })}
-                    fill
-                    priority
-                    sizes="(max-width: 1024px) 100vw, 732px"
-                    className="object-cover"
-                    unoptimized
-                  />
+          {/* Title block */}
+          <div className="flex flex-col gap-2">
+            {material.code ? (
+              <span className="text-sm font-semibold uppercase tracking-wide text-amber-500">
+                {material.code}
+              </span>
+            ) : null}
+            <h1 className="text-3xl font-bold leading-10 text-neutral-800">{material.title}</h1>
+            {material.subtitle ? (
+              <p className="text-lg leading-7 text-neutral-600">{material.subtitle}</p>
+            ) : null}
+          </div>
+
+          <div className="flex flex-col gap-10 lg:flex-row lg:items-start">
+            {/* Left column */}
+            <div className="flex min-w-0 flex-1 flex-col gap-6">
+              <div className="relative min-h-80 overflow-hidden rounded-xl bg-gray-100 sm:min-h-[460px]">
+                <Image
+                  src={materialImage}
+                  alt={t("materialsPage.materialAlt", { title: material.title })}
+                  fill
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 720px"
+                  className="object-cover"
+                  unoptimized
+                />
+              </div>
+
+              <Accordion title={t("materialDetail.aboutThisMaterial")}>
+                <div className="flex flex-col gap-5">
+                  <DetailTable rows={aboutRows} />
+                  {material.description ? (
+                    <div
+                      className="text-base leading-7 text-neutral-600 [&_a]:font-medium [&_a]:text-amber-600 [&_a:hover]:text-amber-700"
+                      dangerouslySetInnerHTML={{ __html: material.description }}
+                    />
+                  ) : null}
                 </div>
-              </div>
+              </Accordion>
 
-              <div className="flex flex-col gap-6">
-                <Accordion title={t("product.productDescription")}>
-                  <div 
-                    className="text-base leading-6 text-neutral-700"
-                    dangerouslySetInnerHTML={{ __html: material.description }}
-                  />
-                </Accordion>
-
-                <Accordion title={t("product.productSpecifications")}>
-                  <SpecsTable
-                    material={material}
-                    labels={{
-                      brand: t("materialSpecs.brand"),
-                      code: t("materialSpecs.code"),
-                      printMethod: t("materialSpecs.printMethod"),
-                      baseMaterial: t("materialSpecs.baseMaterial"),
-                      finish: t("materialSpecs.finish"),
-                      adhesive: t("materialSpecs.adhesive"),
-                      pricePerSquareMeter: t("materialSpecs.pricePerSquareMeter"),
-                      certificate: t("materialSpecs.certificate"),
-                    }}
-                  />
-                </Accordion>
-              </div>
+              <Accordion title={t("materialDetail.specifications")}>
+                {specRows.length > 0 ? (
+                  <DetailTable rows={specRows} />
+                ) : (
+                  <p className="text-base leading-6 text-neutral-500">
+                    {t("materialDetail.noSpecifications")}
+                  </p>
+                )}
+              </Accordion>
             </div>
 
-            <HelpPanel
-              labels={{
-                title: t("supportPanel.title"),
-                callUs: t("supportPanel.callUs"),
-                email: t("supportPanel.email"),
-                whatsapp: t("supportPanel.whatsapp"),
-                availableProduct: t("supportPanel.availableProduct"),
-                customMade: t("supportPanel.customMade"),
-              }}
-            />
+            {/* Right sidebar */}
+            <aside className="flex w-full flex-col gap-6 lg:sticky lg:top-24 lg:w-96">
+              <SidebarCard
+                title={t("materialDetail.availableStockItemsTitle")}
+                description={t("materialDetail.availableStockItemsDesc")}
+              >
+                <Link
+                  href="/products"
+                  className="flex h-12 items-center justify-center rounded-full bg-amber-500 px-4 text-base font-semibold leading-6 text-white transition-colors hover:bg-amber-600"
+                >
+                  {t("materialDetail.viewStockItems")}
+                </Link>
+              </SidebarCard>
+
+              <SidebarCard
+                title={t("materialDetail.customSizeTitle")}
+                description={t("materialDetail.customSizeDesc")}
+              >
+                <Link
+                  href="/custom"
+                  className="flex h-12 items-center justify-center rounded-full border border-amber-500 bg-amber-500/10 px-4 text-base font-semibold leading-6 text-amber-600 transition-colors hover:bg-amber-500/20"
+                >
+                  {t("materialDetail.requestCustomMade")}
+                </Link>
+              </SidebarCard>
+
+              <HelpPanel
+                labels={{
+                  title: t("supportPanel.title"),
+                  callUs: t("supportPanel.callUs"),
+                  email: t("supportPanel.email"),
+                  whatsapp: t("supportPanel.whatsapp"),
+                }}
+              />
+
+              <div className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-6">
+                <h2 className="text-lg font-bold leading-6 text-neutral-800">
+                  {t("materialDetail.iccProfilesTitle")}
+                </h2>
+                <p className="text-sm leading-5 text-neutral-600">
+                  {t("materialDetail.iccProfilesDesc")}
+                </p>
+                <Link
+                  href="/contact"
+                  className="text-sm font-semibold text-amber-600 transition-colors hover:text-amber-700"
+                >
+                  {t("materialDetail.requestIccProfile")}
+                </Link>
+              </div>
+
+              <a
+                href={material.spec_sheet_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-12 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-4 text-base font-semibold leading-6 text-neutral-700 transition-colors hover:border-amber-200 hover:bg-orange-50"
+              >
+                <PdfIcon />
+                {t("materialsPage.downloadSpecSheet")}
+              </a>
+            </aside>
           </div>
         </div>
       </section>
 
-      <MaterialProductsSection 
+      <MaterialProductsSection
         title={t("materialsPage.productsFromThisMaterial")}
-        products={paginatedProducts} 
+        products={paginatedProducts}
         currentPage={currentPage}
         lastPage={lastPage}
         materialSlug={slug}
@@ -536,6 +736,8 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
           noProductsDescription: t("materialsPage.noProductsForMaterial"),
           previous: t("common.previous"),
           next: t("common.next"),
+          filters: t("common.filters"),
+          sortNameAsc: t("materialDetail.sortNameAsc"),
         }}
       />
 
