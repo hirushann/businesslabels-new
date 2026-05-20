@@ -460,4 +460,50 @@
  * @property {number} [products_count]
  */
 
+// ─── FAQ ─────────────────────────────────────────────────────
+
+/**
+ * A single reusable FAQ question & answer, resolved for the active locale.
+ * The same item may appear in many sections / many pages.
+ *
+ * @typedef {Object} FaqItem
+ * @property {number} id
+ * @property {string|null} question
+ * @property {string|null} answer  Rich-text HTML (links, lists, images, formatting).
+ */
+
+/**
+ * A section of a FAQ page — a named, ordered group of FAQ items. `anchor`
+ * is the stable in-page navigation target; build the topic navigation by
+ * mapping over a page's sections.
+ *
+ * @typedef {Object} FaqSection
+ * @property {number} id
+ * @property {string} anchor  Stable element id, e.g. "faq-section-12".
+ * @property {string|null} name
+ * @property {string|null} subtitle
+ * @property {string|null} icon  Icon name (matches lucide-react), or null.
+ * @property {FaqItem[]} [items]  Ordered; present on the detail endpoint.
+ */
+
+/**
+ * A public FAQ page (a structured FAQ hub). Resolved for the active server
+ * locale — pass `?lang=` to switch language. `sections` is present on the
+ * detail endpoint (`getFaqPage`) and omitted from the list endpoint.
+ *
+ * @typedef {Object} FaqPage
+ * @property {number} id
+ * @property {string|null} title
+ * @property {string|null} slug
+ * @property {string|null} intro  Rich-text HTML for the intro area.
+ * @property {string} status
+ * @property {string|null} hero_image  Full-size hero image URL.
+ * @property {string|null} hero_image_preview  Resized hero image URL.
+ * @property {{ title: string, text: string }} support  "Contact our experts" CTA copy.
+ * @property {{ meta_title: string|null, meta_description: string|null }} meta
+ * @property {FaqSection[]} [sections]  Ordered; present on the detail endpoint.
+ * @property {string} created_at
+ * @property {string} updated_at
+ */
+
 export {};
