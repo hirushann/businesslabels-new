@@ -148,6 +148,7 @@ const RESULT_SOURCE_FIELDS = [
   "delivery_dates_in_stock",
   "delivery_dates_no_stock",
   "packing_group",
+  "allow_singulars",
   "main_image",
   "image",
   "thumbnail",
@@ -171,6 +172,7 @@ const RESULT_SOURCE_FIELDS = [
   "is_group_product",
   "translations",
   "packing_group",
+  "allow_singulars",
 ] as const;
 
 type ProductSource = Record<string, unknown>;
@@ -1005,6 +1007,7 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number, loc
     discount: discount ?? 0,
     inStock: deliveryStockStatus ?? (booleanValue(source.in_stock) || Boolean((stockCount ?? 0) > 0)),
     packing_group: numberValue(source.packing_group),
+    allow_singulars: firstScalar(source.allow_singulars),
     mainImage: imageUrl(stringValue(source.main_image) ?? stringValue(source.image)),
     categories: categoriesFromSource(source),
     slug,
@@ -1133,19 +1136,24 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
           if (res.ok) {
             const json = await res.json();
             if (json && Array.isArray(json.data)) {
-              const packingMap = new Map<string, number | null>();
+              const productConfigMap = new Map<string, { packingGroup: number | null; allowSingulars: LaravelProduct["allow_singulars"] }>();
               (json.data as LaravelProduct[]).forEach((p) => {
                 if (p && p.slug) {
                   const resolvedSlug = typeof p.slug === "string" ? p.slug : (p.slug.en || p.slug.nl || "");
                   if (resolvedSlug) {
-                    packingMap.set(resolvedSlug, p.packing_group != null ? Number(p.packing_group) : null);
+                    productConfigMap.set(resolvedSlug, {
+                      packingGroup: p.packing_group != null ? Number(p.packing_group) : null,
+                      allowSingulars: p.allow_singulars ?? null,
+                    });
                   }
                 }
               });
               
               products.forEach((p) => {
-                if (p.product.slug && packingMap.has(p.product.slug)) {
-                  p.product.packing_group = packingMap.get(p.product.slug);
+                if (p.product.slug && productConfigMap.has(p.product.slug)) {
+                  const productConfig = productConfigMap.get(p.product.slug);
+                  p.product.packing_group = productConfig?.packingGroup ?? null;
+                  p.product.allow_singulars = productConfig?.allowSingulars ?? null;
                 }
               });
             }

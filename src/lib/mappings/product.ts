@@ -44,6 +44,7 @@ export type LaravelProduct = {
   warranty?: ProductWarrantyData | null;
   discount?: number | null;
   packing_group?: number | string | null;
+  allow_singulars?: string | number | boolean | null;
 };
 
 function getProductTranslation(
@@ -111,5 +112,6 @@ export function mapLaravelProductToCardData(product: LaravelProduct, locale: str
     warranty: product.warranty ?? null,
     discount: product.discount ?? 0,
     packing_group: product.packing_group ? Number(product.packing_group) : null,
+    allow_singulars: product.allow_singulars ?? null,
   };
 }

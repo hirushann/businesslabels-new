@@ -152,5 +152,6 @@ export function mapDemoProductToCard(product: DemoProductDetail): ProductCardDat
     categories: product.categories,
     slug: product.slug,
     type: product.type,
+    packing_group: product.packing_group,
   };
 }
