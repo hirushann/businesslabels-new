@@ -15,6 +15,8 @@ export type CartItem = {
   price?: number | null;
   mainImage?: string | null;
   quantity: number;
+  packingGroup?: number | null;
+  allowSingulars?: boolean | null;
   itemKind?: "product" | "warranty";
   linkedToKey?: string | null;
   componentCount?: number | null;
@@ -52,6 +54,53 @@ export function buildCartItemKey(item: Pick<CartInput, "id" | "slug" | "type">):
     return type ? `${slug}::${type}` : slug;
   }
   return type ? `${item.id}::${type}` : String(item.id);
+}
+
+function normalizePackingGroup(value: unknown): number | null {
+  const parsed = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return null;
+  }
+
+  return Math.floor(parsed);
+}
+
+function nextQuantityForItem(item: CartItem): number {
+  const packingGroup = normalizePackingGroup(item.packingGroup);
+  if (!packingGroup) {
+    return item.quantity + 1;
+  }
+
+  if (item.allowSingulars && item.quantity < packingGroup) {
+    return item.quantity + 1;
+  }
+
+  if (item.quantity < packingGroup) {
+    return packingGroup;
+  }
+
+  return Math.ceil((item.quantity + 1) / packingGroup) * packingGroup;
+}
+
+function previousQuantityForItem(item: CartItem): number {
+  const packingGroup = normalizePackingGroup(item.packingGroup);
+  if (!packingGroup) {
+    return item.quantity > 1 ? item.quantity - 1 : 1;
+  }
+
+  if (item.quantity <= 1) {
+    return 1;
+  }
+
+  if (item.allowSingulars && item.quantity <= packingGroup) {
+    return item.quantity - 1;
+  }
+
+  if (item.quantity <= packingGroup) {
+    return packingGroup;
+  }
+
+  return Math.max(packingGroup, Math.floor((item.quantity - 1) / packingGroup) * packingGroup);
 }
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
@@ -97,7 +146,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (existingItem) {
         return currentItems.map((currentItem) =>
           currentItem.key === key
-            ? { ...currentItem, quantity: currentItem.quantity + normalizedQuantity }
+            ? {
+                ...currentItem,
+                packingGroup: item.packingGroup ?? currentItem.packingGroup,
+                allowSingulars: item.allowSingulars ?? currentItem.allowSingulars,
+                quantity: currentItem.quantity + normalizedQuantity,
+              }
             : currentItem,
         );
       }
@@ -136,12 +190,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
 
       return currentItems.map((item) => {
+        const nextQuantity = nextQuantityForItem(item);
+
         if (item.key === key) {
-          return { ...item, quantity: item.quantity + 1 };
+          return { ...item, quantity: nextQuantity };
         }
 
         if (target.itemKind !== "warranty" && item.linkedToKey === key) {
-          return { ...item, quantity: item.quantity + 1 };
+          return { ...item, quantity: nextQuantity };
         }
 
         return item;
@@ -157,17 +213,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
 
       return currentItems.map((item) => {
+        const previousQuantity = previousQuantityForItem(item);
+
         if (item.key === key) {
           return {
             ...item,
-            quantity: item.quantity > 1 ? item.quantity - 1 : 1,
+            quantity: previousQuantity,
           };
         }
 
         if (target.itemKind !== "warranty" && item.linkedToKey === key) {
           return {
             ...item,
-            quantity: item.quantity > 1 ? item.quantity - 1 : 1,
+            quantity: previousQuantity,
           };
         }
 

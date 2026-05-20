@@ -375,25 +375,99 @@ export default async function FinderPage({
   }
 
   return (
-    <section className="bg-white px-4 py-10 sm:px-6 lg:px-10">
-      <div className="mx-auto flex max-w-360 flex-col gap-10">
-        <div className="border-b border-slate-200 pb-5">
-          <Breadcrumbs 
-            items={[
-              { label: t("common.printers") || "Printers" }
-            ]} 
-            className="mb-4"
-          />
-          <h1 className="text-3xl font-bold font-['Segoe_UI'] leading-8 text-neutral-800">
-            {t("finder.printerFinder")}
-          </h1>
+    <div className="bg-white">
+      {/* ── Hero Banner ── */}
+      <div className="px-4 pt-6 sm:px-6 lg:px-10">
+        <div className="mx-auto max-w-360">
+          <div
+            className="relative overflow-hidden rounded-xl"
+            style={{ height: "224px" }}
+          >
+            {/* Background image */}
+            <Image
+              src="/labelprinters.jpeg"
+              alt="Label printers"
+              fill
+              className="object-cover"
+              priority
+              unoptimized
+            />
+            {/* Dark overlay */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  "linear-gradient(90deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.55) 50%, rgba(0,0,0,0.25) 100%)",
+              }}
+            />
+            {/* Content overlay */}
+            <div className="absolute inset-0 flex flex-col justify-center gap-4 px-6 py-6">
+              {/* Breadcrumbs */}
+              <div className="flex items-center gap-2">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M2 6L8 1.5L14 6V14H10V10H6V14H2V6Z"
+                    stroke="rgba(255,255,255,0.7)"
+                    strokeWidth="1.2"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span
+                  className="text-sm"
+                  style={{ color: "rgba(255,255,255,0.7)", fontFamily: "Segoe UI, sans-serif" }}
+                >
+                  /
+                </span>
+                <span
+                  className="text-sm font-semibold text-white"
+                  style={{ fontFamily: "Segoe UI, sans-serif" }}
+                >
+                  Printers
+                </span>
+              </div>
+              {/* Title */}
+              <h1
+                className="text-white font-bold"
+                style={{
+                  fontFamily: "Segoe UI, sans-serif",
+                  fontSize: "40px",
+                  lineHeight: "120%",
+                }}
+              >
+                Product Finder
+              </h1>
+              {/* Description */}
+              <p
+                className="text-white max-w-3xl"
+                style={{
+                  fontFamily: "Segoe UI, sans-serif",
+                  fontSize: "18px",
+                  lineHeight: "26px",
+                  fontWeight: 400,
+                }}
+              >
+                Find products engineered to match your printer&apos;s needs — from premium media and inks to specialized materials for compatibility, reliability, and performance.
+              </p>
+            </div>
+          </div>
         </div>
-
-        <FinderListing
-          initialCatalog={initialCatalog}
-          initialQueryString={query.toString()}
-        />
       </div>
-    </section>
+
+      {/* ── Main Content ── */}
+      <div className="px-4 py-10 sm:px-6 lg:px-10">
+        <div className="mx-auto max-w-360">
+          <FinderListing
+            initialCatalog={initialCatalog}
+            initialQueryString={query.toString()}
+          />
+        </div>
+      </div>
+    </div>
   );
 }

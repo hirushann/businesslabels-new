@@ -53,6 +53,7 @@ export type ProductCardData = {
   slug?: string | null;
   type?: ProductRouteType | null;
   packing_group?: number | null;
+  allow_singulars?: string | number | boolean | null;
   warranty?: ProductWarrantyData | null;
   discount?: number | 0;
 };
@@ -83,6 +84,32 @@ function formatEuro(value: number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value);
+}
+
+function normalizePositiveInteger(value: unknown): number | null {
+  const parsed = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return null;
+  }
+
+  return Math.floor(parsed);
+}
+
+function normalizeBoolean(value: unknown): boolean {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value === "number") {
+    return value === 1;
+  }
+
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    return normalized === "true" || normalized === "1" || normalized === "yes";
+  }
+
+  return false;
 }
 
 function normalizeWarrantyOptions(warranty: ProductWarrantyData | null | undefined) {
@@ -144,14 +171,11 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
     Number.isFinite(product.originalPrice) &&
     (!hasPrice || (hasPrice && (product.price !== undefined && product.price !== null) && product.originalPrice > product.price));
   const imageSrc = normalizeText(product.mainImage) || "https://placehold.co/600x400?text=" + encodeURIComponent(productName);
+  const normalizedPackingGroup = normalizePositiveInteger(product.packing_group);
+  const addQuantity = normalizeBoolean(product.allow_singulars) ? 1 : normalizedPackingGroup ?? 1;
   // Units per box (roll/stack count) — shown when the product is packed in
   // multiples, so shoppers see the box quantity at a glance.
-  const unitsPerBox =
-    typeof product.packing_group === "number" &&
-    Number.isFinite(product.packing_group) &&
-    product.packing_group > 1
-      ? product.packing_group
-      : null;
+  const unitsPerBox = normalizedPackingGroup && normalizedPackingGroup > 1 ? normalizedPackingGroup : null;
   const normalizedWarranty = useMemo(() => normalizeWarrantyOptions(product.warranty), [product.warranty]);
   const defaultWarrantyOption = normalizedWarranty.options.find(
     (option) => option.id === normalizedWarranty.defaultOptionId,
@@ -166,15 +190,20 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
   const hasWarrantyOptions = normalizedWarranty.options.length > 0;
 
   const addProductWithWarranty = (selectedOption: typeof selectedWarrantyOption) => {
-    addItem({
-      id: product.id,
-      slug: product.slug,
-      type: product.type,
-      name: product.name,
-      sku: product.sku,
-      price: product.price ?? null,
-      mainImage: product.mainImage ?? null,
-    });
+    addItem(
+      {
+        id: product.id,
+        slug: product.slug,
+        type: product.type,
+        name: product.name,
+        sku: product.sku,
+        price: product.price ?? null,
+        mainImage: product.mainImage ?? null,
+        packingGroup: normalizedPackingGroup,
+        allowSingulars: normalizeBoolean(product.allow_singulars),
+      },
+      addQuantity,
+    );
 
     const warrantyPrice =
       selectedOption && typeof selectedOption.price === "number" && Number.isFinite(selectedOption.price)
@@ -185,21 +214,26 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
       const parentKey = buildCartItemKey({ id: product.id, slug: product.slug, type: product.type });
       const warrantyName = selectedOption.name || `${productName} Extended Warranty`;
 
-      addItem({
-        id: `warranty-${parentKey}-${selectedOption.id}`,
-        name: warrantyName,
-        sku: `${product.sku}-WARRANTY`,
-        price: warrantyPrice,
-        mainImage: product.mainImage ?? null,
-        itemKind: "warranty",
-        linkedToKey: parentKey,
-        warranty: {
-          optionId: selectedOption.id,
-          durationMonths: selectedOption.durationMonths,
-          parentSku: product.sku,
-          parentName: productName,
+      addItem(
+        {
+          id: `warranty-${parentKey}-${selectedOption.id}`,
+          name: warrantyName,
+          sku: `${product.sku}-WARRANTY`,
+          price: warrantyPrice,
+          mainImage: product.mainImage ?? null,
+          itemKind: "warranty",
+          linkedToKey: parentKey,
+          packingGroup: normalizedPackingGroup,
+          allowSingulars: normalizeBoolean(product.allow_singulars),
+          warranty: {
+            optionId: selectedOption.id,
+            durationMonths: selectedOption.durationMonths,
+            parentSku: product.sku,
+            parentName: productName,
+          },
         },
-      });
+        addQuantity,
+      );
     }
     
     openCart();
