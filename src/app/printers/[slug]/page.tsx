@@ -112,6 +112,7 @@ function ContactIcon({ type }: { type: "call" | "email" | "whatsapp" }) {
 
 function HelpPanel({
   labels,
+  printerCode,
 }: {
   labels: {
     title: string;
@@ -121,11 +122,24 @@ function HelpPanel({
     availableProduct: string;
     customMade: string;
   };
+  printerCode?: string;
 }) {
   const actions = [
-    { label: labels.callUs, type: "call" as const },
-    { label: labels.email, type: "email" as const },
-    { label: labels.whatsapp, type: "whatsapp" as const },
+    {
+      label: labels.callUs,
+      type: "call" as const,
+      href: "tel:0031318590465",
+    },
+    {
+      label: labels.email,
+      type: "email" as const,
+      href: "mailto:verkoop@businesslabels.nl?&subject=Business%20Labels&body=" + encodeURIComponent(printerCode ?? ""),
+    },
+    {
+      label: labels.whatsapp,
+      type: "whatsapp" as const,
+      href: "https://wa.me/31318590212?text=" + encodeURIComponent(printerCode ?? ""),
+    },
   ];
 
   return (
@@ -134,16 +148,16 @@ function HelpPanel({
         <h2 className="text-lg font-bold leading-5 text-neutral-700">{labels.title}</h2>
         <div className="grid grid-cols-3 gap-4">
           {actions.map((action) => (
-            <button
+            <Link
               key={action.label}
-              type="button"
+              href={action.href}
               className="flex flex-col items-center justify-center gap-3 rounded-xl border border-gray-100 bg-slate-100/30 p-3 text-center transition-colors hover:border-amber-200 hover:bg-orange-50"
             >
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-50 shadow-sm">
                 <ContactIcon type={action.type} />
               </span>
               <span className="text-base font-semibold leading-5 text-neutral-800">{action.label}</span>
-            </button>
+            </Link>
           ))}
         </div>
       </div>
@@ -486,6 +500,7 @@ export default async function PrinterDetailPage({ params }: PrinterPageProps) {
                 availableProduct: t("supportPanel.availableProduct"),
                 customMade: t("supportPanel.customMade"),
               }}
+              printerCode={printer.title || ""}
             />
           </div>
         </div>

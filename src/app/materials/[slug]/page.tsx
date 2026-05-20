@@ -10,6 +10,7 @@ import IccProfileModal from "@/components/materials/IccProfileModal";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
+import DownloadSpecSheetButton from "@/components/materials/DownloadSpecSheetButton";
 
 type MaterialProduct = {
   id: number;
@@ -198,23 +199,45 @@ function SidebarCard({ title, description, children }: { title: string; descript
   );
 }
 
-function HelpPanel({ labels }: { labels: { title: string; callUs: string; email: string; whatsapp: string } }) {
+function HelpPanel({
+  labels,
+  materialCode,
+}: {
+  labels: { title: string; callUs: string; email: string; whatsapp: string };
+  materialCode?: string;
+}) {
   const actions = [
-    { label: labels.callUs, type: "call" as const },
-    { label: labels.email, type: "email" as const },
-    { label: labels.whatsapp, type: "whatsapp" as const },
+    {
+      label: labels.callUs,
+      type: "call" as const,
+      href: "tel:0031318590465",
+    },
+    {
+      label: labels.email,
+      type: "email" as const,
+      href: "mailto:verkoop@businesslabels.nl?&subject=Business%20Labels&body=" + encodeURIComponent(materialCode ?? ""),
+    },
+    {
+      label: labels.whatsapp,
+      type: "whatsapp" as const,
+      href: "https://wa.me/31318590212?text=" + encodeURIComponent(materialCode ?? ""),
+    },
   ];
   return (
     <div className="flex flex-col gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)]">
       <h2 className="text-lg font-bold leading-6 text-neutral-800">{labels.title}</h2>
       <div className="grid grid-cols-3 gap-4">
         {actions.map((action) => (
-          <button key={action.label} type="button" className="flex flex-col items-center justify-center gap-3 rounded-xl border border-gray-100 bg-slate-100/30 p-3 text-center transition-colors hover:border-amber-200 hover:bg-orange-50">
+          <Link
+            key={action.label}
+            href={action.href}
+            className="flex flex-col items-center justify-center gap-3 rounded-xl border border-gray-100 bg-slate-100/30 p-3 text-center transition-colors hover:border-amber-200 hover:bg-orange-50"
+          >
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-50 shadow-sm">
               <ContactIcon type={action.type} />
             </span>
             <span className="text-sm font-semibold leading-5 text-neutral-800">{action.label}</span>
-          </button>
+          </Link>
         ))}
       </div>
     </div>
@@ -407,14 +430,31 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
     .filter((spec) => spec.label && spec.value)
     .map((spec) => ({ label: spec.label, value: spec.value }));
 
+  const rawSpecRows = specEntries
+    .filter((spec) => spec.label && spec.value)
+    .map((spec) => ({ label: spec.label, value: spec.value }));
+
   if (material.spec_sheet_url) {
     specRows.push({
       label: t("materialDetail.specSheet"),
       value: (
-        <a href={material.spec_sheet_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 font-semibold text-amber-600 transition-colors hover:text-amber-700">
-          <PdfIcon />
-          {t("materialsPage.downloadSpecSheet")}
-        </a>
+        <DownloadSpecSheetButton
+          materialId={material.id}
+          materialTitle={material.title}
+          materialCode={material.code}
+          materialSubtitle={material.subtitle || undefined}
+          hasUploadedSpecSheet={!!material.has_uploaded_spec_sheet}
+          specSheetUrl={material.spec_sheet_url}
+          aboutRows={aboutRows}
+          specRows={rawSpecRows}
+          variant="link"
+          downloadLabel={t("materialsPage.downloadSpecSheet")}
+          pdfTitleLabel={t("materialDetail.specSheet")}
+          aboutThisMaterialLabel={t("materialDetail.aboutThisMaterial")}
+          specificationsLabel={t("materialDetail.specifications")}
+          pageLabel={locale === "nl" ? "Pagina" : "Page"}
+          ofLabel={locale === "nl" ? "van" : "of"}
+        />
       ),
     });
   }
@@ -422,7 +462,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
   return (
     <div className="bg-white">
       <section className="px-4 py-10 sm:px-6 lg:px-10">
-        <div className="mx-auto flex max-w-300 flex-col gap-6">
+        <div className="mx-auto flex max-w-[1440px] flex-col gap-6">
           <Breadcrumbs
             items={[
               { label: t("common.materials"), href: "/materials" },
@@ -496,6 +536,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
                   email: t("supportPanel.email"),
                   whatsapp: t("supportPanel.whatsapp"),
                 }}
+                materialCode={material.code || material.title || ""}
               />
 
               {/* ICC Color Profiles */}
@@ -512,10 +553,23 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
               </div>
 
               {material.spec_sheet_url && (
-                <a href={material.spec_sheet_url} target="_blank" rel="noopener noreferrer" className="flex h-12 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-4 text-base font-semibold leading-6 text-neutral-700 transition-colors hover:border-amber-200 hover:bg-orange-50">
-                  <PdfIcon />
-                  {t("materialsPage.downloadSpecSheet")}
-                </a>
+                <DownloadSpecSheetButton
+                  materialId={material.id}
+                  materialTitle={material.title}
+                  materialCode={material.code}
+                  materialSubtitle={material.subtitle || undefined}
+                  hasUploadedSpecSheet={!!material.has_uploaded_spec_sheet}
+                  specSheetUrl={material.spec_sheet_url}
+                  aboutRows={aboutRows}
+                  specRows={rawSpecRows}
+                  variant="button"
+                  downloadLabel={t("materialsPage.downloadSpecSheet")}
+                  pdfTitleLabel={t("materialDetail.specSheet")}
+                  aboutThisMaterialLabel={t("materialDetail.aboutThisMaterial")}
+                  specificationsLabel={t("materialDetail.specifications")}
+                  pageLabel={locale === "nl" ? "Pagina" : "Page"}
+                  ofLabel={locale === "nl" ? "van" : "of"}
+                />
               )}
             </aside>
           </div>
