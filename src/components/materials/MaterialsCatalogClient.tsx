@@ -477,7 +477,7 @@ export default function MaterialsCatalogClient({
   }, [searchParams]);
 
   return (
-    <div className="mx-auto flex max-w-[1440px] flex-col gap-10">
+    <div className="mx-auto flex max-w-[1440px] flex-col gap-10 !w-full">
       {/* Print Technology Selector Cards */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
         {/* Inkjet Card */}
