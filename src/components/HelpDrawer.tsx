@@ -65,6 +65,17 @@ type AvailabilitySlot = {
   unavailable_end_time: string | null;
 };
 
+type TeamMember = {
+  id: number;
+  first_name: string;
+  last_name: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  profile_pic_url: string | null;
+  sort_order: number;
+};
+
 const WORKING_HOURS = '08:00 - 17:30';
 const UNAVAILABLE_LABEL = 'Unavailable';
 const BUSINESS_START_TIME = '08:00';
@@ -171,9 +182,15 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
   const [contactStatus, setContactStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [contactStatusMessage, setContactStatusMessage] = useState('');
   const [availabilityByDate, setAvailabilityByDate] = useState<Map<string, AvailabilitySlot>>(() => new Map());
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
 
   const selectedCountry = europeanCountries.find((country) => country.code === selectedCountryCode) ?? europeanCountries[0];
   const schedule = getCurrentWeekSchedule(availabilityByDate);
+  const displayMembers = teamMembers.length > 0 ? teamMembers.slice(0, 3) : [
+    { id: 1, name: 'Support Agent 1', profile_pic_url: 'https://randomuser.me/api/portraits/men/32.jpg' },
+    { id: 2, name: 'Support Agent 2', profile_pic_url: 'https://randomuser.me/api/portraits/men/44.jpg' },
+    { id: 3, name: 'Support Agent 3', profile_pic_url: 'https://randomuser.me/api/portraits/men/68.jpg' },
+  ];
 
   // Close on Escape
   useEffect(() => {
@@ -224,6 +241,35 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
     }
 
     loadAvailability();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  // Load team members
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadTeamMembers() {
+      try {
+        const response = await fetch('/api/team-members', {
+          headers: {
+            'Accept': 'application/json',
+          },
+        });
+        const data = await response.json();
+        const members = Array.isArray(data.data) ? data.data : [];
+
+        if (!ignore) {
+          setTeamMembers(members);
+        }
+      } catch (error) {
+        console.error('Error loading team members:', error);
+      }
+    }
+
+    loadTeamMembers();
 
     return () => {
       ignore = true;
@@ -382,19 +428,22 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
           <div className="flex flex-col gap-4">
             {/* Avatars */}
             <div className="flex items-center gap-4 justify-center">
-              {[
-                'https://randomuser.me/api/portraits/men/32.jpg',
-                'https://randomuser.me/api/portraits/men/44.jpg',
-                'https://randomuser.me/api/portraits/men/68.jpg',
-              ].map((src, i) => (
-                <img
-                  key={i}
-                  src={src}
-                  alt="Support agent"
-                  width={64}
-                  height={64}
-                  className="w-16 h-16 rounded-full object-cover border-2 border-white shadow"
-                />
+              {displayMembers.map((member) => (
+                <div key={member.id} className="group relative flex justify-center">
+                  <img
+                    src={member.profile_pic_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=f59e0b&color=fff`}
+                    alt={member.name}
+                    width={64}
+                    height={64}
+                    className="w-16 h-16 rounded-full object-cover border-2 border-white shadow hover:scale-105 transition-transform duration-200"
+                  />
+                  {/* Tooltip */}
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-neutral-900/90 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap shadow-md border border-neutral-700/50 z-50">
+                    {member.name}
+                    {/* Tooltip arrow */}
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-neutral-900/90" />
+                  </div>
+                </div>
               ))}
             </div>
 
