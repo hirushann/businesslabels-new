@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Accordion from "@/components/Accordion";
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
+import EmptyState from "@/components/EmptyState";
 
 type Material = {
   id: number;
@@ -213,13 +214,12 @@ function MaterialCard({
           className="object-contain p-4 transition-transform duration-500 hover:scale-105"
         />
         <span
-          className={`absolute left-4 top-4 rounded-full px-3 py-1.5 text-xs font-semibold text-white shadow-sm flex items-center gap-1.5 ${
-            isInkjet
-              ? "bg-amber-500"
-              : isTtr
+          className={`absolute left-4 top-4 rounded-full px-3 py-1.5 text-xs font-semibold text-white shadow-sm flex items-center gap-1.5 ${isInkjet
+            ? "bg-amber-500"
+            : isTtr
               ? "bg-slate-700"
               : "bg-emerald-600"
-          }`}
+            }`}
         >
           <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.867 48.867 0 00-14.326 0C3.768 7.44 3 8.375 3 9.456V15.75a2.25 2.25 0 002.25 2.25h1.091M9 9h6m-6 3h6" />
@@ -297,8 +297,8 @@ export default function MaterialsCatalogClient({
   const searchParams = useSearchParams();
   const pathname = usePathname();
 
-  // Mobile filters drawer state
-  const [mobileOpen, setMobileOpen] = useState(false);
+  // Filters sidebar toggle state (collapsible like category/shop pages)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Sync state from query parameters
   const printMethod = searchParams.get("print_method") || "";
@@ -464,8 +464,12 @@ export default function MaterialsCatalogClient({
     },
   ];
 
-  const hasActiveFilters =
-    selectedBaseMaterials.length > 0 || selectedFinishes.length > 0 || selectedAdhesives.length > 0;
+
+  const activeFilterCount =
+    selectedBaseMaterials.length +
+    selectedFinishes.length +
+    selectedAdhesives.length +
+    (printMethod ? 1 : 0);
 
   // Sync scroll on change
   useEffect(() => {
@@ -480,15 +484,15 @@ export default function MaterialsCatalogClient({
         <button
           type="button"
           onClick={() => togglePrintMethod("inkjet")}
-          className={`group flex flex-col overflow-hidden text-left rounded-2xl border bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${
-            printMethod === "inkjet" ? "border-amber-500 ring-2 ring-amber-500/20" : "border-slate-100"
-          }`}
+          className={`group flex flex-col overflow-hidden text-left rounded-2xl border bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${printMethod === "inkjet" ? "border-amber-500 ring-2 ring-amber-500/20" : "border-slate-100"
+            }`}
         >
-          <div className="relative h-44 w-full overflow-hidden rounded-xl bg-slate-50">
+          <div className="relative h-44 w-full overflow-hidden rounded-xl">
             <Image
               src="/images/inkjet_preview.png"
               alt="Inkjet printer preview"
               fill
+              priority
               sizes="(max-width: 768px) 100vw, 33vw"
               className="object-contain p-2 transition-transform duration-500 group-hover:scale-105"
             />
@@ -498,9 +502,8 @@ export default function MaterialsCatalogClient({
               <h3 className="text-lg font-bold text-slate-800 flex items-center justify-between">
                 {getLocalizedLabel("Inkjet", locale)}
                 <span
-                  className={`h-2.5 w-2.5 rounded-full transition-all duration-200 ${
-                    printMethod === "inkjet" ? "bg-amber-500 scale-125" : "bg-slate-200"
-                  }`}
+                  className={`h-2.5 w-2.5 rounded-full transition-all duration-200 ${printMethod === "inkjet" ? "bg-amber-500 scale-125" : "bg-slate-200"
+                    }`}
                 />
               </h3>
               <p className="mt-1 text-sm text-slate-500 leading-relaxed">
@@ -514,11 +517,10 @@ export default function MaterialsCatalogClient({
         <button
           type="button"
           onClick={() => togglePrintMethod("thermal-transfer")}
-          className={`group flex flex-col overflow-hidden text-left rounded-2xl border bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${
-            printMethod === "thermal-transfer" ? "border-slate-800 ring-2 ring-slate-800/10" : "border-slate-100"
-          }`}
+          className={`group flex flex-col overflow-hidden text-left rounded-2xl border bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${printMethod === "thermal-transfer" ? "border-slate-800 ring-2 ring-slate-800/10" : "border-slate-100"
+            }`}
         >
-          <div className="relative h-44 w-full overflow-hidden rounded-xl bg-slate-50">
+          <div className="relative h-44 w-full overflow-hidden rounded-xl">
             <Image
               src="/images/thermal_transfer_preview.png"
               alt="Thermal transfer printer preview"
@@ -532,9 +534,8 @@ export default function MaterialsCatalogClient({
               <h3 className="text-lg font-bold text-slate-800 flex items-center justify-between">
                 {getLocalizedLabel("Thermal Transfer", locale)}
                 <span
-                  className={`h-2.5 w-2.5 rounded-full transition-all duration-200 ${
-                    printMethod === "thermal-transfer" ? "bg-slate-800 scale-125" : "bg-slate-200"
-                  }`}
+                  className={`h-2.5 w-2.5 rounded-full transition-all duration-200 ${printMethod === "thermal-transfer" ? "bg-slate-800 scale-125" : "bg-slate-200"
+                    }`}
                 />
               </h3>
               <p className="mt-1 text-sm text-slate-500 leading-relaxed">
@@ -548,11 +549,10 @@ export default function MaterialsCatalogClient({
         <button
           type="button"
           onClick={() => togglePrintMethod("thermal-direct")}
-          className={`group flex flex-col overflow-hidden text-left rounded-2xl border bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${
-            printMethod === "thermal-direct" ? "border-emerald-600 ring-2 ring-emerald-500/15" : "border-slate-100"
-          }`}
+          className={`group flex flex-col overflow-hidden text-left rounded-2xl border bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${printMethod === "thermal-direct" ? "border-emerald-600 ring-2 ring-emerald-500/15" : "border-slate-100"
+            }`}
         >
-          <div className="relative h-44 w-full overflow-hidden rounded-xl bg-slate-50">
+          <div className="relative h-44 w-full overflow-hidden rounded-xl">
             <Image
               src="/images/thermal_direct_preview.png"
               alt="Thermal direct printer preview"
@@ -566,9 +566,8 @@ export default function MaterialsCatalogClient({
               <h3 className="text-lg font-bold text-slate-800 flex items-center justify-between">
                 {getLocalizedLabel("Thermal Direct", locale)}
                 <span
-                  className={`h-2.5 w-2.5 rounded-full transition-all duration-200 ${
-                    printMethod === "thermal-direct" ? "bg-emerald-600 scale-125" : "bg-slate-200"
-                  }`}
+                  className={`h-2.5 w-2.5 rounded-full transition-all duration-200 ${printMethod === "thermal-direct" ? "bg-emerald-600 scale-125" : "bg-slate-200"
+                    }`}
                 />
               </h3>
               <p className="mt-1 text-sm text-slate-500 leading-relaxed">
@@ -583,169 +582,164 @@ export default function MaterialsCatalogClient({
       <div className="flex flex-col gap-6">
         {/* Section heading with controls */}
         <div className="flex flex-col gap-4 border-b border-slate-200 pb-5">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-2xl font-bold tracking-tight text-slate-800">
               {getLocalizedLabel("all_materials", locale)}
               {total > 0 && <span className="ml-2.5 text-sm font-normal text-slate-400">({total})</span>}
             </h2>
-          </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Mobile Filters Toggle Button */}
-            <button
-              type="button"
-              onClick={() => setMobileOpen(true)}
-              className="inline-flex md:hidden h-10 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
-            >
-              <svg className="h-4 w-4 text-slate-500" viewBox="0 0 20 20" fill="none">
-                <path d="M3 5H17" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                <path d="M5.5 10H14.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                <path d="M8 15H12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-              </svg>
-              <span>{getLocalizedLabel("filters", locale)}</span>
-            </button>
-
-            {/* Active print_method pill filter */}
-            {printMethod && (
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Filters Toggle Button */}
               <button
                 type="button"
-                onClick={() => togglePrintMethod(printMethod)}
-                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 pl-3 pr-2 text-xs font-semibold text-amber-800 transition-colors hover:bg-amber-100"
+                onClick={() => setIsSidebarOpen((prev) => !prev)}
+                className={`inline-flex h-10 w-fit items-center gap-4 rounded-[42px] border px-5 py-2 text-neutral-800 transition-colors ${isSidebarOpen
+                  ? "border-amber-500 bg-amber-50 text-amber-600"
+                  : "border-slate-200 hover:border-amber-200 bg-white"
+                  }`}
+                aria-expanded={isSidebarOpen}
               >
-                <span>
-                  {getLocalizedLabel(
-                    printMethod === "inkjet"
-                      ? "Inkjet"
-                      : printMethod === "thermal-transfer"
-                      ? "Thermal Transfer"
-                      : "Thermal Direct",
-                    locale
-                  )}
+                <span className="flex items-center gap-2">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M3 5H17"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M5.5 10H14.5"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M8 15H12"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <span className="text-lg font-semibold font-['Segoe_UI'] leading-6">
+                    {getLocalizedLabel("filters", locale)}
+                  </span>
+                  {activeFilterCount > 0 ? (
+                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-100 px-1.5 text-xs font-semibold text-amber-600">
+                      {activeFilterCount}
+                    </span>
+                  ) : null}
                 </span>
-                <span className="text-sm font-bold opacity-60">×</span>
               </button>
-            )}
 
-            {/* Active base material pills */}
-            {selectedBaseMaterials.map((val) => (
-              <button
-                key={val}
-                type="button"
-                onClick={() => toggleFilter("base_material", val)}
-                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 pl-3 pr-2 text-xs font-semibold text-amber-800 transition-colors hover:bg-amber-100"
-              >
-                <span>{getLocalizedLabel(val === "paper" ? "Paper" : val === "pe (polyethylene)" ? "PE (polyethylene)" : val === "pp (polypropylene)" ? "PP (polypropylene)" : "PO (polyolefin)", locale)}</span>
-                <span className="text-sm font-bold opacity-60">×</span>
-              </button>
-            ))}
-
-            {/* Active finish pills */}
-            {selectedFinishes.map((val) => (
-              <button
-                key={val}
-                type="button"
-                onClick={() => toggleFilter("finish", val)}
-                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 pl-3 pr-2 text-xs font-semibold text-amber-800 transition-colors hover:bg-amber-100"
-              >
-                <span>{getLocalizedLabel(val === "glossy" ? "Glossy" : val === "matte" ? "Matte" : "Top Coated", locale)}</span>
-                <span className="text-sm font-bold opacity-60">×</span>
-              </button>
-            ))}
-
-            {/* Active adhesive pills */}
-            {selectedAdhesives.map((val) => (
-              <button
-                key={val}
-                type="button"
-                onClick={() => toggleFilter("adhesive", val)}
-                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 pl-3 pr-2 text-xs font-semibold text-amber-800 transition-colors hover:bg-amber-100"
-              >
-                <span>{getLocalizedLabel(val === "permanent" ? "Permanent" : "Removable", locale)}</span>
-                <span className="text-sm font-bold opacity-60">×</span>
-              </button>
-            ))}
-
-            {/* Clear All button */}
-            {hasActiveFilters && (
-              <button
-                type="button"
-                onClick={clearAllFilters}
-                className="text-xs font-bold text-amber-600 hover:text-amber-700 transition-colors py-1.5 px-3 rounded-full hover:bg-amber-50"
-              >
-                {getLocalizedLabel("clear_all", locale)}
-              </button>
-            )}
-
-            {/* Sort select indicator */}
-            <div className="ml-auto flex h-10 w-fit items-center gap-2.5 rounded-full border border-slate-200 bg-white px-4 text-sm text-slate-700 shadow-sm">
-              <select
-                value={sort}
-                onChange={(e) => updateQuery({ sort: e.target.value })}
-                className="bg-transparent font-semibold text-slate-700 outline-none cursor-pointer"
-              >
-                <option value="name_asc">{getLocalizedLabel("sort_by", locale)}</option>
-                <option value="name_desc">{getLocalizedLabel("sort_by_desc", locale)}</option>
-              </select>
+              {/* Sort select indicator */}
+              <label className="flex h-10 items-center gap-3 rounded-[42px] border border-slate-200 bg-white px-5 py-2 text-neutral-800">
+                <span className="sr-only">Sort materials</span>
+                <select
+                  value={sort}
+                  onChange={(e) => updateQuery({ sort: e.target.value })}
+                  className="bg-transparent text-base font-normal font-['Segoe_UI'] leading-5 outline-none cursor-pointer"
+                >
+                  <option value="name_asc">{getLocalizedLabel("sort_by", locale)}</option>
+                  <option value="name_desc">{getLocalizedLabel("sort_by_desc", locale)}</option>
+                </select>
+              </label>
             </div>
           </div>
         </div>
 
         {/* Layout: Sidebar + Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 md:gap-8 items-start">
-          {/* Desktop Filters Sidebar */}
-          <aside className="hidden md:flex flex-col gap-5 md:col-span-1">
-            {filterSections.map((sec) => (
-              <Accordion key={sec.type} title={sec.title} defaultOpen={true} size="compact" className="bg-white">
-                <div className="flex flex-col gap-2 mt-2">
-                  {sec.options.map((opt) => {
-                    const active = sec.selected.includes(opt.value);
-                    return (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => toggleFilter(sec.type, opt.value)}
-                        className={`flex w-full min-h-9 items-center justify-between rounded-lg px-3 py-1.5 text-left text-xs font-semibold border transition-all ${
-                          active
-                            ? "bg-amber-50 border-amber-300 text-amber-900 font-bold"
-                            : "bg-white border-slate-100 hover:bg-slate-50 text-slate-600"
-                        }`}
-                      >
-                        <span>{opt.label}</span>
-                        {active && <span className="text-amber-600 font-bold text-sm">✓</span>}
-                      </button>
-                    );
-                  })}
+        <div className={`flex flex-col gap-6 ${isSidebarOpen ? "lg:flex-row lg:items-start" : ""}`}>
+          {/* Collapsible Filters Sidebar */}
+          {isSidebarOpen && (
+            <aside className="w-full shrink-0 rounded-xl border border-slate-100 bg-white p-4 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.08)] md:w-80 lg:w-80 lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto custom-scrollbar">
+              <div className="flex flex-col gap-5">
+                <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl font-bold text-neutral-800">
+                      {getLocalizedLabel("filters", locale)}
+                    </h2>
+                    {activeFilterCount > 0 ? (
+                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-100 px-1.5 text-xs font-semibold text-amber-600">
+                        {activeFilterCount}
+                      </span>
+                    ) : null}
+                  </div>
+                  {activeFilterCount > 0 ? (
+                    <button
+                      type="button"
+                      onClick={clearAllFilters}
+                      className="text-sm font-medium text-amber-500 hover:underline"
+                    >
+                      {getLocalizedLabel("clear_all", locale)}
+                    </button>
+                  ) : null}
                 </div>
-              </Accordion>
-            ))}
-          </aside>
+
+                <div className="flex flex-col gap-3">
+                  {filterSections.map((sec) => (
+                    <Accordion
+                      key={sec.type}
+                      title={sec.title}
+                      defaultOpen={true}
+                      size="compact"
+                      className="bg-white"
+                    >
+                      <div className="flex flex-col gap-3 pt-2">
+                        <div className="flex flex-wrap gap-2">
+                          {sec.options.map((opt) => {
+                            const selected = sec.selected.includes(opt.value);
+                            return (
+                              <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => toggleFilter(sec.type, opt.value)}
+                                className={`inline-flex min-h-9 items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${selected
+                                  ? "bg-amber-500 text-white shadow-sm hover:bg-amber-600"
+                                  : "bg-slate-100 text-neutral-700 hover:bg-amber-50 hover:text-amber-600"
+                                  }`}
+                                aria-pressed={selected}
+                              >
+                                <span>{opt.label}</span>
+                                {selected && (
+                                  <span className="text-base leading-none text-white/80">
+                                    ×
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </Accordion>
+                  ))}
+                </div>
+              </div>
+            </aside>
+          )}
 
           {/* Grid listing */}
-          <div className="col-span-1 md:col-span-3 flex flex-col gap-8">
+          <div className="min-w-0 flex-1 flex flex-col gap-8">
             {paginatedMaterials.length > 0 ? (
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div
+                className={`grid grid-cols-1 gap-6 sm:grid-cols-2 ${isSidebarOpen ? "xl:grid-cols-3" : "xl:grid-cols-4"
+                  }`}
+              >
                 {paginatedMaterials.map((material) => (
                   <MaterialCard key={material.id} material={material} locale={locale} />
                 ))}
               </div>
             ) : (
-              <div className="my-10 flex flex-col items-center justify-center text-center p-12 bg-white rounded-2xl border border-slate-100 shadow-sm max-w-lg mx-auto w-full">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-50 text-slate-400 mb-4">
-                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-base font-bold text-slate-800 mb-1">
-                  {getLocalizedLabel("no_materials_found", locale)}
-                </h3>
-                <p className="text-sm text-slate-500 leading-relaxed">
-                  {getLocalizedLabel("no_materials_desc", locale)}
-                </p>
-              </div>
+              <EmptyState
+                title={getLocalizedLabel("no_materials_found", locale)}
+                description={getLocalizedLabel("no_materials_desc", locale)}
+                className="my-10 w-full"
+              />
             )}
 
             {/* Pagination controls */}
@@ -765,11 +759,10 @@ export default function MaterialsCatalogClient({
                     <button
                       key={p}
                       onClick={() => updateQuery({ page: String(p) })}
-                      className={`flex h-10 min-w-10 items-center justify-center rounded-full border px-3.5 text-xs font-bold transition-all ${
-                        p === activePage
-                          ? "bg-amber-50 border-amber-500 text-white shadow-md shadow-amber-500/10"
-                          : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                      }`}
+                      className={`flex h-10 min-w-10 items-center justify-center rounded-full border px-3.5 text-xs font-bold transition-all ${p === activePage
+                        ? "bg-amber-500 border-amber-500 text-white shadow-md shadow-amber-500/10"
+                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                        }`}
                     >
                       {p}
                     </button>
@@ -788,75 +781,6 @@ export default function MaterialsCatalogClient({
           </div>
         </div>
       </div>
-
-      {/* Mobile Drawer/Modal for Filters */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-xs transition-opacity duration-300 md:hidden">
-          <div className="flex h-full w-[280px] flex-col bg-white p-6 shadow-2xl animate-in slide-in-from-right duration-200">
-            <div className="flex items-center justify-between border-b pb-4 mb-4">
-              <h3 className="text-lg font-bold text-slate-800">{getLocalizedLabel("filters", locale)}</h3>
-              <button
-                type="button"
-                onClick={() => setMobileOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 font-bold text-xl"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto flex flex-col gap-4 pr-1">
-              {filterSections.map((sec) => (
-                <div key={sec.type} className="flex flex-col gap-2">
-                  <h4 className="text-sm font-bold text-slate-700 border-l-2 border-amber-500 pl-2 mb-1">
-                    {sec.title}
-                  </h4>
-                  <div className="flex flex-wrap gap-1.5">
-                    {sec.options.map((opt) => {
-                      const active = sec.selected.includes(opt.value);
-                      return (
-                        <button
-                          key={opt.value}
-                          type="button"
-                          onClick={() => toggleFilter(sec.type, opt.value)}
-                          className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold border transition-all ${
-                            active
-                              ? "bg-amber-500 border-amber-500 text-white shadow-sm"
-                              : "bg-slate-100 border-slate-100 hover:bg-amber-50 text-slate-600"
-                          }`}
-                        >
-                          <span>{opt.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="border-t pt-4 mt-4 flex flex-col gap-2.5">
-              {hasActiveFilters && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    clearAllFilters();
-                    setMobileOpen(false);
-                  }}
-                  className="w-full h-10 border border-slate-200 rounded-full text-xs font-bold text-slate-500 hover:bg-slate-50"
-                >
-                  {getLocalizedLabel("clear_all", locale)}
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => setMobileOpen(false)}
-                className="w-full h-11 bg-amber-500 hover:bg-amber-600 text-white rounded-full text-sm font-semibold shadow-sm"
-              >
-                Apply
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
