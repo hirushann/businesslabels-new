@@ -5,6 +5,17 @@ import { getTranslations } from 'next-intl/server';
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 import { mapLaravelProductToCardData, type LaravelProduct } from "@/lib/mappings/product";
 
+function shuffleArray<T>(array: T[]): T[] {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const temp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = temp;
+  }
+  return arr;
+}
+
 export default async function PopularProducts() {
   const locale = await getServerLocale();
   const t = await getTranslations();
@@ -15,24 +26,23 @@ export default async function PopularProducts() {
     if (!backendUrl) {
       console.warn('BBNL_API_BASE_URL is not configured');
     } else {
-      const url = withLocaleParam(`${backendUrl}/api/products`, locale);
+      const url = withLocaleParam(`${backendUrl}/api/popular-products`, locale);
       const response = await fetch(url, {
         headers: { 'Accept': 'application/json' },
         next: { revalidate: 3600 },
       });
-
       if (response.ok) {
-        const json = await response.json();
+        const json = (await response.json()) as { data?: LaravelProduct[] };
         if (json.data && Array.isArray(json.data)) {
-          // Limit to 6 popular products
-          products = json.data.slice(0, 6);
+          // Shuffle and limit to 6 popular products
+          products = shuffleArray(json.data).slice(0, 6);
         }
       } else {
         console.error(`Failed to fetch popular products: ${response.status} ${response.statusText}`);
       }
     }
   } catch (error) {
-    console.error('Error fetching products:', error);
+    console.error('Error fetching popular products:', error);
   }
 
   return (
