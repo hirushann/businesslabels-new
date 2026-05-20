@@ -9,6 +9,7 @@ import EmptyState from "@/components/EmptyState";
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 
 type MaterialProduct = {
   id: number;
@@ -22,6 +23,7 @@ type MaterialProduct = {
   in_stock: boolean;
   main_image: string | null;
   updated_at: string;
+  packing_group?: number | null;
 };
 
 type Material = {
@@ -248,6 +250,31 @@ function SpecsTable({
   material: Material;
   labels: Record<string, string>;
 }) {
+  const dynamicSpecs: Array<{ label: string; value: string }> = [];
+
+  if (material.specifications && typeof material.specifications === "object") {
+    const specsArray = (material.specifications as any).material_specs;
+    if (Array.isArray(specsArray)) {
+      for (const item of specsArray) {
+        if (item && item.label && item.value) {
+          dynamicSpecs.push({
+            label: item.label,
+            value: item.value,
+          });
+        }
+      }
+    } else {
+      for (const [key, val] of Object.entries(material.specifications)) {
+        if (val !== null && val !== undefined) {
+          dynamicSpecs.push({
+            label: key,
+            value: typeof val === "string" ? val : String(val),
+          });
+        }
+      }
+    }
+  }
+
   const specs = [
     { label: labels.brand, value: material.brand },
     { label: labels.code, value: material.code },
@@ -257,10 +284,7 @@ function SpecsTable({
     { label: labels.adhesive, value: material.adhesive },
     { label: labels.pricePerSquareMeter, value: material.price_per_sq_meter != null ? `€${material.price_per_sq_meter}` : null },
     { label: labels.certificate, value: material.certificate },
-    ...Object.entries(material.specifications || {}).map(([label, value]) => ({
-      label,
-      value: typeof value === "string" ? value : String(value),
-    })),
+    ...dynamicSpecs,
   ].filter((spec) => spec.value != null && spec.value !== "" && spec.value !== "null");
 
   return (
@@ -269,7 +293,7 @@ function SpecsTable({
         <div
           key={spec.label}
           className={`flex items-center justify-between gap-6 px-6 py-3 ${
-            index % 2 === 0 ? "border-x border-black/10 bg-white/50" : "bg-transparent"
+            index % 2 === 0 ? "border-x border-slate-100 bg-slate-50/50" : "bg-transparent"
           }`}
         >
           <span className="text-base leading-6 text-neutral-700">{spec.label}</span>
@@ -412,6 +436,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
     slug: product.slug,
     type: null,
     createdAt: Date.parse(product.updated_at),
+    packing_group: product.packing_group || null,
   }));
 
   // Client-side pagination for products
@@ -425,7 +450,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
   const endIndex = startIndex + perPage;
   const paginatedProducts = products.slice(startIndex, endIndex);
 
-  const materialImage = `https://placehold.co/1200x800?text=${encodeURIComponent(material.title)}`;
+  const materialImage = toDisplayImageUrl(material.products?.[0]?.main_image) || "/images/labelrolls.png";
 
   return (
     <div className="bg-white">
