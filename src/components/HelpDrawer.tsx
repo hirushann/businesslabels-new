@@ -58,8 +58,17 @@ type AvailabilityResponse = {
   data?: unknown;
 };
 
+type AvailabilitySlot = {
+  date: string;
+  is_fully_unavailable: boolean;
+  unavailable_start_time: string | null;
+  unavailable_end_time: string | null;
+};
+
 const WORKING_HOURS = '08:00 - 17:30';
 const UNAVAILABLE_LABEL = 'Unavailable';
+const BUSINESS_START_TIME = '08:00';
+const BUSINESS_END_TIME = '17:30';
 
 function toLocalDateKey(date: Date) {
   const year = date.getFullYear();
@@ -75,7 +84,44 @@ function formatScheduleDate(dateKey: string) {
   return `${String(day).padStart(2, '0')}-${String(month).padStart(2, '0')}`;
 }
 
-function getCurrentWeekSchedule(availableDateKeys: Set<string>) {
+function formatTimeSlot(time: string | null) {
+  return time ? time.slice(0, 5) : null;
+}
+
+function isAvailabilitySlot(value: unknown): value is AvailabilitySlot {
+  if (!value || typeof value !== 'object') return false;
+
+  const slot = value as Partial<AvailabilitySlot>;
+
+  return (
+    typeof slot.date === 'string' &&
+    typeof slot.is_fully_unavailable === 'boolean' &&
+    (typeof slot.unavailable_start_time === 'string' || slot.unavailable_start_time === null) &&
+    (typeof slot.unavailable_end_time === 'string' || slot.unavailable_end_time === null)
+  );
+}
+
+function getAvailabilityHours(slot: AvailabilitySlot | undefined) {
+  if (!slot || slot.is_fully_unavailable) {
+    return UNAVAILABLE_LABEL;
+  }
+
+  const unavailableStart = formatTimeSlot(slot.unavailable_start_time);
+  const unavailableEnd = formatTimeSlot(slot.unavailable_end_time);
+
+  if (!unavailableStart || !unavailableEnd) {
+    return WORKING_HOURS;
+  }
+
+  const availableSlots = [
+    `${BUSINESS_START_TIME} - ${unavailableStart}`,
+    `${unavailableEnd} - ${BUSINESS_END_TIME}`,
+  ];
+
+  return availableSlots.join(', ');
+}
+
+function getCurrentWeekSchedule(availabilityByDate: Map<string, AvailabilitySlot>) {
   const today = new Date();
   const monday = new Date(today);
   const dayOfWeek = today.getDay();
@@ -84,17 +130,18 @@ function getCurrentWeekSchedule(availableDateKeys: Set<string>) {
   monday.setHours(0, 0, 0, 0);
   monday.setDate(today.getDate() - daysSinceMonday);
 
-  return Array.from({ length: 6 }, (_, index) => {
+  return Array.from({ length: 7 }, (_, index) => {
     const date = new Date(monday);
     date.setDate(monday.getDate() + index);
 
     const dateKey = toLocalDateKey(date);
-    const active = availableDateKeys.has(dateKey);
+    const hours = getAvailabilityHours(availabilityByDate.get(dateKey));
+    const active = hours !== UNAVAILABLE_LABEL;
 
     return {
       date: dateKey,
       day: date.toLocaleDateString('en-US', { weekday: 'long' }),
-      hours: active ? WORKING_HOURS : UNAVAILABLE_LABEL,
+      hours,
       active,
     };
   });
@@ -123,10 +170,10 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
   const [contactMessage, setContactMessage] = useState('');
   const [contactStatus, setContactStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [contactStatusMessage, setContactStatusMessage] = useState('');
-  const [availableDateKeys, setAvailableDateKeys] = useState<Set<string>>(() => new Set());
+  const [availabilityByDate, setAvailabilityByDate] = useState<Map<string, AvailabilitySlot>>(() => new Map());
 
   const selectedCountry = europeanCountries.find((country) => country.code === selectedCountryCode) ?? europeanCountries[0];
-  const schedule = getCurrentWeekSchedule(availableDateKeys);
+  const schedule = getCurrentWeekSchedule(availabilityByDate);
 
   // Close on Escape
   useEffect(() => {
@@ -160,19 +207,18 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
           );
         }
 
-        const dates = Array.isArray(data.data)
-          ? data.data.filter((date): date is string => typeof date === 'string')
+        const availabilitySlots = Array.isArray(data.data)
+          ? data.data.filter(isAvailabilitySlot)
           : [];
 
         if (!ignore) {
-          console.log('Loaded availability dates:', dates);
-          setAvailableDateKeys(new Set(dates));
+          setAvailabilityByDate(new Map(availabilitySlots.map((slot) => [slot.date, slot])));
         }
       } catch (error) {
         console.error('Error loading availability schedule:', error);
 
         if (!ignore) {
-          setAvailableDateKeys(new Set());
+          setAvailabilityByDate(new Map());
         }
       }
     }
@@ -565,13 +611,13 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
 
             {scheduleOpen && (
               <div className="flex flex-col gap-4">
-                <div className="w-full max-w-xs flex flex-col gap-2">
+                <div className="w-full max-w-sm flex flex-col gap-2">
                   {schedule.map(({ date, day, hours, active }) => (
                     <div key={date} className="flex justify-between items-center gap-4">
                       <span className={`text-sm font-normal font-['Segoe_UI'] ${active ? 'text-neutral-800' : 'text-zinc-500'}`}>
                         {day} <span className="text-xs">({formatScheduleDate(date)})</span>
                       </span>
-                      <span className={`text-sm font-normal font-['Segoe_UI'] ${active ? 'text-neutral-800' : 'text-zinc-500'}`}>
+                      <span className={`text-sm font-normal font-['Segoe_UI'] text-right ${active ? 'text-neutral-800' : 'text-zinc-500'}`}>
                         {hours}
                       </span>
                     </div>
