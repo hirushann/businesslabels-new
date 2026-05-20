@@ -30,3 +30,4 @@ export {
 export { fetchPrinterOptions } from './printers';
 export { listPages, getPage, listPosts, getPost } from './pages';
 export { listMaterials, getMaterial, getMaterialBySlug, getMaterialSpecSheetUrl } from './materials';
+export { listFaqPages, getFaqPage } from './faq';
