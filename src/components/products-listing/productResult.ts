@@ -226,6 +226,8 @@ export function mapProductListingResult(
     categories: categoriesForProduct(result),
     slug,
     type: normalizedType,
+    packing_group: valueAsNumber(getRaw(result, "packing_group")) ?? valueAsNumber(getMetaValue(result, "_packing_group")),
+    allow_singulars: firstScalar(getRaw(result, "allow_singulars")) ?? firstScalar(getMetaValue(result, "_allow_singulars")),
   };
 
   const href =

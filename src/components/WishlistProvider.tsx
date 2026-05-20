@@ -19,6 +19,8 @@ export type WishlistItem = {
   excerpt?: string | null;
   materialTitle?: string | null;
   inStock: boolean;
+  packingGroup?: number | null;
+  allowSingulars?: boolean | null;
 };
 
 export type WishlistInput = Omit<WishlistItem, "key">;
@@ -113,6 +115,8 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
           sku: item.sku,
           price: item.price ?? null,
           mainImage: item.mainImage ?? null,
+          packingGroup: item.packingGroup ?? null,
+          allowSingulars: item.allowSingulars ?? null,
         });
       },
       hasItem: (item) => {

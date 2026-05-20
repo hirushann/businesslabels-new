@@ -405,6 +405,8 @@ export default function ProductPurchase({
         price,
         mainImage,
         componentCount,
+        packingGroup: normalizedPackingGroup,
+        allowSingulars: Boolean(allowSingulars),
       },
       qtyToAdd,
     );
@@ -427,6 +429,8 @@ export default function ProductPurchase({
           mainImage,
           itemKind: "warranty",
           linkedToKey: parentKey,
+          packingGroup: normalizedPackingGroup,
+          allowSingulars: Boolean(allowSingulars),
           warranty: {
             optionId: selectedOption.id,
             durationMonths: selectedOption.durationMonths,
@@ -479,6 +483,8 @@ export default function ProductPurchase({
       excerpt,
       materialTitle,
       inStock: resolvedInStock,
+      packingGroup: normalizedPackingGroup,
+      allowSingulars: Boolean(allowSingulars),
     });
     toast.success(t("product.savedToWishlist") || "Saved to Wishlist");
   };
