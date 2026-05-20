@@ -82,7 +82,7 @@ export default async function MaterialPage() {
 
         {/* Hero Section */}
         <section className="px-4 py-8 sm:px-6 lg:px-10">
-          <div className="mx-auto flex max-w-[1440px] flex-col gap-10">
+          <div className="mx-auto flex max-w-[1440px] flex-col gap-10 w-full">
             
             {/* Hero banner */}
             <div className="relative min-h-[260px] overflow-hidden rounded-2xl bg-neutral-900 shadow-[0_15px_40px_rgba(0,0,0,0.06)]">
