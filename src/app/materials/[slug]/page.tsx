@@ -253,7 +253,11 @@ function ProductCard({ product, href }: { product: ProductCardData; href?: { pat
       <div className="flex flex-1 flex-col gap-2 p-5">
         <p className="text-base font-semibold leading-6 text-neutral-800 transition-colors group-hover:text-amber-600">{product.name}</p>
         {product.subtitle && <p className="text-sm leading-5 text-neutral-500">{product.subtitle}</p>}
-        {product.price > 0 && <p className="mt-auto pt-2 text-base font-bold text-neutral-900">€{product.price.toFixed(2)}</p>}
+        {Number(product.price) > 0 && (
+          <p className="mt-auto pt-2 text-base font-bold text-neutral-900">
+            €{Number(product.price).toFixed(2)}
+          </p>
+        )}
       </div>
     </Link>
   );
@@ -362,7 +366,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
     subtitle: product.subtitle,
     excerpt: product.excerpt,
     materialTitle: null,
-    price: product.price || 0,
+    price: product.price ? Number(product.price) : 0,
     originalPrice: null,
     inStock: product.in_stock,
     mainImage: product.main_image,
