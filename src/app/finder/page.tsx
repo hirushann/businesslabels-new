@@ -314,6 +314,7 @@ export default async function FinderPage({
           searchCatalogProducts(parseCatalogSearchParams(query, locale)),
           searchCatalogProducts(parseCatalogSearchParams(baselineQuery, locale)),
         ]);
+        console.log("[Finder Page] Server-side printer details loaded:", printer);
       } catch (error) {
         console.error("Failed to load finder product catalog.", error);
       }
@@ -370,6 +371,10 @@ export default async function FinderPage({
 
   try {
     initialCatalog = await searchPrinters(parsePrinterSearchParams(query, locale));
+    console.log(
+      `[Finder Page] Server-side initial catalog loaded (${initialCatalog.printers.length} printers):`,
+      initialCatalog.printers
+    );
   } catch (error) {
     console.error("Failed to load printer catalog.", error);
   }

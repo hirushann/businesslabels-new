@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
     const params = parsePrinterSearchParams(searchParams);
 
     const result = await searchPrinters(params);
+    console.log(`[API /api/printers] Returning ${result.printers.length} printers (total: ${result.total})`, result.printers);
 
     return NextResponse.json(result, {
       headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' },

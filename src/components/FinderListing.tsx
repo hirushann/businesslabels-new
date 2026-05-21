@@ -96,6 +96,7 @@ export default function FinderListing({
         const response = await fetch(endpoint, { signal: controller.signal });
         if (response.ok && isCurrent) {
           const data: PrinterSearchResponse = await response.json();
+          console.log("[FinderListing] Client-side fetchPage1 printers received:", data.printers);
           setPrinters(data.printers);
           setCurrentPage(data.currentPage);
           setLastPage(data.lastPage);
@@ -138,6 +139,7 @@ export default function FinderListing({
       const response = await fetch(endpoint);
       if (response.ok) {
         const data: PrinterSearchResponse = await response.json();
+        console.log("[FinderListing] Client-side loadMore printers received:", data.printers);
         setPrinters((prev) => [...prev, ...data.printers]);
         setCurrentPage(data.currentPage);
         setLastPage(data.lastPage);
