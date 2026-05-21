@@ -180,7 +180,7 @@ function PrinterSummary({
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-center">
         <div className="min-w-0 flex-1">
           <h1 className="text-3xl font-bold font-['Segoe_UI'] leading-9 text-neutral-800">
             {printer.title}
@@ -190,51 +190,56 @@ function PrinterSummary({
           ) : null}
 
           {properties ? (
-            <div className="mt-6 grid grid-cols-1 gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
-              {printMethods.length > 0 ? (
-                <SpecItem
-                  label={t("finder.printTechnology")}
-                  value={
-                    printMethods.includes("TD") && printMethods.includes("TT")
-                      ? "Thermal Direct & Thermal Transfer"
-                      : printMethods.join(", ")
-                  }
-                />
-              ) : null}
-              {cores.length > 0 ? (
-                <SpecItem
-                  label={t("finder.core")}
-                  value={cores.join(", ")}
-                />
-              ) : null}
-              {parsedMinWidth != null && parsedMaxWidth != null ? (
-                <SpecItem
-                  label={t("finder.mediaWidth")}
-                  value={formatMillimeterRange(
-                    parsedMinWidth,
-                    parsedMaxWidth,
-                    t,
-                  )}
-                />
-              ) : widthRange.length > 0 ? (
-                <SpecItem
-                  label={t("finder.mediaWidth")}
-                  value={
-                    numberRangeLabel(widthRange, t) ?? widthRange.join(", ")
-                  }
-                />
-              ) : widths.length > 0 ? (
-                <SpecItem
-                  label={t("finder.mediaWidth")}
-                  value={numberRangeLabel(widths, t) ?? widths.join(", ")}
-                />
-              ) : null}
-              {maxOuterDiameter[0] ? (
-                <SpecItem
-                  label={t("finder.maxOuterDiameter")}
-                  value={withMillimeterUnit(maxOuterDiameter[0])}
-                />
-              ) : null}
+            <div className="mt-6 border-t border-slate-100 pt-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                {t("finder.mediaSpecifications")}
+              </h3>
+              <div className="mt-4 grid grid-cols-1 gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
+                {printMethods.length > 0 ? (
+                  <SpecItem
+                    label={t("finder.printTechnology")}
+                    value={
+                      printMethods.includes("TD") && printMethods.includes("TT")
+                        ? "Thermal Direct & Thermal Transfer"
+                        : printMethods.join(", ")
+                    }
+                  />
+                ) : null}
+                {cores.length > 0 ? (
+                  <SpecItem
+                    label={t("finder.core")}
+                    value={cores.join(", ")}
+                  />
+                ) : null}
+                {parsedMinWidth != null && parsedMaxWidth != null ? (
+                  <SpecItem
+                    label={t("finder.mediaWidth")}
+                    value={formatMillimeterRange(
+                      parsedMinWidth,
+                      parsedMaxWidth,
+                      t,
+                    )}
+                  />
+                ) : widthRange.length > 0 ? (
+                  <SpecItem
+                    label={t("finder.mediaWidth")}
+                    value={
+                      numberRangeLabel(widthRange, t) ?? widthRange.join(", ")
+                    }
+                  />
+                ) : widths.length > 0 ? (
+                  <SpecItem
+                    label={t("finder.mediaWidth")}
+                    value={numberRangeLabel(widths, t) ?? widths.join(", ")}
+                  />
+                ) : null}
+                {maxOuterDiameter[0] ? (
+                  <SpecItem
+                    label={t("finder.maxOuterDiameter")}
+                    value={withMillimeterUnit(maxOuterDiameter[0])}
+                  />
+                ) : null}
+              </div>
             </div>
           ) : null}
 
@@ -258,13 +263,11 @@ function PrinterSummary({
         </div>
 
         {imageUrl ? (
-          <div className="relative h-56 w-full shrink-0 lg:w-80">
-            <Image
+          <div className="shrink-0 mx-auto lg:mx-0 w-full max-w-72 lg:w-72 aspect-square rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center p-6">
+            <img
               src={imageUrl}
               alt={printer.title}
-              fill
-              className="object-contain"
-              unoptimized
+              className="max-h-full max-w-full object-contain"
             />
           </div>
         ) : null}
@@ -274,10 +277,11 @@ function PrinterSummary({
 }
 
 function SpecItem({ label, value }: { label: string; value: string }) {
+  const cleanLabel = label.endsWith(":") ? label.slice(0, -1) : label;
   return (
-    <div className="rounded-lg bg-slate-50 p-4">
-      <div className="text-sm font-medium text-neutral-500">{label}</div>
-      <div className="mt-1 font-semibold text-blue-600">{value}</div>
+    <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-all duration-300 hover:bg-slate-50">
+      <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">{cleanLabel}</div>
+      <div className="mt-1.5 text-base font-bold text-slate-800">{value}</div>
     </div>
   );
 }
