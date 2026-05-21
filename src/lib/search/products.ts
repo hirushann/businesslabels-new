@@ -763,6 +763,16 @@ function buildFilters(params: CatalogSearchParams, printerInfo?: PrinterInfo): e
   // and simply render without the "In Stock" label (see `mapProductHit`).
   const filters: Array<estypes.QueryDslQueryContainer | null> = [
     { term: { "state.keyword": "active" } },
+    params.printerIds && params.printerIds.length > 0
+      ? {
+          bool: {
+            must_not: [
+              { term: { is_group_product: true } },
+              { term: { "product_type.keyword": "group" } }
+            ]
+          }
+        }
+      : null,
     params.type ? { term: { product_type: params.type } } : null,
     termsFilter("id", params.ids),
     params.printerIds && params.printerIds.length > 0

@@ -149,8 +149,8 @@ function PrinterSummary({
     const hasFanFold = baselineCatalog.filters.options
       .find((f) => f.key === "kern_string")
       ?.options.some((o) => o.value.toLowerCase() === "fan-fold");
-    
-    if (hasFanFold && !cores.some(c => c.toLowerCase() === "fan-fold")) {
+
+    if (hasFanFold && !cores.some((c) => c.toLowerCase() === "fan-fold")) {
       cores.push("Fan-fold");
     }
   }
@@ -189,6 +189,28 @@ function PrinterSummary({
             <p className="mt-2 text-lg text-sky-600">{printer.subtitle}</p>
           ) : null}
 
+          {printer.content ? (
+            <div className="mt-4 rounded-lg bg-slate-50 p-4">
+              <div className="text-sm font-medium text-neutral-500">
+                {t("product.productDescription")}
+              </div>
+              <div
+                className="mt-2 text-sm leading-relaxed text-neutral-700 font-normal [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
+                dangerouslySetInnerHTML={{ __html: printer.content }}
+              />
+            </div>
+          ) : printer.excerpt ? (
+            <div className="mt-4 rounded-lg bg-slate-50 p-4">
+              <div className="text-sm font-medium text-neutral-500">
+                {t("product.productDescription")}
+              </div>
+              <div
+                className="mt-2 text-sm leading-relaxed text-neutral-700 font-normal [&_p]:mb-2"
+                dangerouslySetInnerHTML={{ __html: printer.excerpt }}
+              />
+            </div>
+          ) : null}
+
           {properties ? (
             <div className="mt-6 border-t border-slate-100 pt-6">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
@@ -206,10 +228,7 @@ function PrinterSummary({
                   />
                 ) : null}
                 {cores.length > 0 ? (
-                  <SpecItem
-                    label={t("finder.core")}
-                    value={cores.join(", ")}
-                  />
+                  <SpecItem label={t("finder.core")} value={cores.join(", ")} />
                 ) : null}
                 {parsedMinWidth != null && parsedMaxWidth != null ? (
                   <SpecItem
@@ -242,24 +261,6 @@ function PrinterSummary({
               </div>
             </div>
           ) : null}
-
-          {printer.content ? (
-            <div className="mt-4 rounded-lg bg-slate-50 p-4">
-              <div className="text-sm font-medium text-neutral-500">{t("product.productDescription")}</div>
-              <div 
-                className="mt-2 text-sm leading-relaxed text-neutral-700 font-normal [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
-                dangerouslySetInnerHTML={{ __html: printer.content }}
-              />
-            </div>
-          ) : printer.excerpt ? (
-            <div className="mt-4 rounded-lg bg-slate-50 p-4">
-              <div className="text-sm font-medium text-neutral-500">{t("product.productDescription")}</div>
-              <div 
-                className="mt-2 text-sm leading-relaxed text-neutral-700 font-normal [&_p]:mb-2"
-                dangerouslySetInnerHTML={{ __html: printer.excerpt }}
-              />
-            </div>
-          ) : null}
         </div>
 
         {imageUrl ? (
@@ -280,7 +281,9 @@ function SpecItem({ label, value }: { label: string; value: string }) {
   const cleanLabel = label.endsWith(":") ? label.slice(0, -1) : label;
   return (
     <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-all duration-300 hover:bg-slate-50">
-      <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">{cleanLabel}</div>
+      <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+        {cleanLabel}
+      </div>
       <div className="mt-1.5 text-base font-bold text-slate-800">{value}</div>
     </div>
   );
@@ -316,9 +319,14 @@ export default async function FinderPage({
         [printer, initialCatalog, baselineCatalog] = await Promise.all([
           getPrinterById(printerId, locale),
           searchCatalogProducts(parseCatalogSearchParams(query, locale)),
-          searchCatalogProducts(parseCatalogSearchParams(baselineQuery, locale)),
+          searchCatalogProducts(
+            parseCatalogSearchParams(baselineQuery, locale),
+          ),
         ]);
-        console.log("[Finder Page] Server-side printer details loaded:", printer);
+        console.log(
+          "[Finder Page] Server-side printer details loaded:",
+          printer,
+        );
       } catch (error) {
         console.error("Failed to load finder product catalog.", error);
       }
@@ -336,11 +344,11 @@ export default async function FinderPage({
       <section className="bg-slate-50 px-4 py-10 sm:px-6 lg:px-10">
         <div className="mx-auto flex max-w-360 flex-col gap-8">
           <div className="border-b border-slate-200 pb-5">
-            <Breadcrumbs 
+            <Breadcrumbs
               items={[
                 { label: t("finder.printerFinder"), href: "/finder" },
-                { label: printer?.title || "Printer" }
-              ]} 
+                { label: printer?.title || "Printer" },
+              ]}
               className="mb-4"
             />
             <h1 className="text-3xl font-bold font-['Segoe_UI'] leading-8 text-neutral-800">
@@ -357,7 +365,13 @@ export default async function FinderPage({
             ) : null}
           </div>
 
-          {printer ? <PrinterSummary printer={printer} baselineCatalog={baselineCatalog} t={t} /> : null}
+          {printer ? (
+            <PrinterSummary
+              printer={printer}
+              baselineCatalog={baselineCatalog}
+              t={t}
+            />
+          ) : null}
 
           <ProductsListing
             initialCatalog={initialCatalog}
@@ -375,10 +389,12 @@ export default async function FinderPage({
   let initialCatalog = emptyPrinterCatalog;
 
   try {
-    initialCatalog = await searchPrinters(parsePrinterSearchParams(query, locale));
+    initialCatalog = await searchPrinters(
+      parsePrinterSearchParams(query, locale),
+    );
     console.log(
       `[Finder Page] Server-side initial catalog loaded (${initialCatalog.printers.length} printers):`,
-      initialCatalog.printers
+      initialCatalog.printers,
     );
   } catch (error) {
     console.error("Failed to load printer catalog.", error);
@@ -430,7 +446,10 @@ export default async function FinderPage({
                 </svg>
                 <span
                   className="text-sm"
-                  style={{ color: "rgba(255,255,255,0.7)", fontFamily: "Segoe UI, sans-serif" }}
+                  style={{
+                    color: "rgba(255,255,255,0.7)",
+                    fontFamily: "Segoe UI, sans-serif",
+                  }}
                 >
                   /
                 </span>
@@ -462,7 +481,9 @@ export default async function FinderPage({
                   fontWeight: 400,
                 }}
               >
-                Find products engineered to match your printer&apos;s needs — from premium media and inks to specialized materials for compatibility, reliability, and performance.
+                Find products engineered to match your printer&apos;s needs —
+                from premium media and inks to specialized materials for
+                compatibility, reliability, and performance.
               </p>
             </div>
           </div>
