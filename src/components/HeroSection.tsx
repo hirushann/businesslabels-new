@@ -55,7 +55,7 @@ const CATEGORY_CARDS = {
 } satisfies Record<string, CategoryCard>;
 
 function printerLabel(printer: PrinterSearchResult) {
-  return [printer.brand, printer.name].filter(Boolean).join(" ");
+  return printer.name.trim();
 }
 
 function isEpsonPrinter(printer: PrinterSearchResult | null) {
