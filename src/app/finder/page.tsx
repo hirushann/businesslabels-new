@@ -359,6 +359,7 @@ export default async function FinderPage({
             initialCatalog={initialCatalog}
             initialQueryString={query.toString()}
             baselineRangeFilters={baselineCatalog.filters.ranges}
+            printer={printer}
           />
         </div>
       </section>

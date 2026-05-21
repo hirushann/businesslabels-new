@@ -14,6 +14,7 @@ import Accordion from "@/components/Accordion";
 import EmptyState from "@/components/EmptyState";
 import ProductCard from "@/components/ProductCard";
 import RangeSlider from "@/components/RangeSlider";
+import Image from "next/image";
 import { useDebouncedSearchParam } from "@/components/search/useDebouncedSearchParam";
 import type {
   CatalogOptionFilter,
@@ -30,6 +31,7 @@ type ProductsListingProps = {
   initialQueryString: string;
   scopeQueryString?: string;
   baselineRangeFilters?: CatalogRangeFilter[];
+  printer?: { title: string; slug: string } | null;
 };
 
 const OPTION_PARAM_KEY: Record<CatalogOptionFilterKey, string> = {
@@ -196,11 +198,35 @@ function ProductSkeletonGrid({ isSidebarOpen }: { isSidebarOpen: boolean }) {
   );
 }
 
+const getLocalizedCategoryLabel = (key: string, locale: string) => {
+  const dictionary: Record<string, Record<string, string>> = {
+    en: {
+      inktsets: "Ink sets",
+      lints: "Ribbons",
+      labels: "Labels",
+      inktsetsDesc: "Compatible ink cartridges",
+      lintsDesc: "Thermal transfer ribbons",
+      labelsDesc: "Compatible label rolls",
+    },
+    nl: {
+      inktsets: "Inktsets",
+      lints: "Linten",
+      labels: "Labels",
+      inktsetsDesc: "Compatibele inktcartridges",
+      lintsDesc: "Thermal transfer printlinten",
+      labelsDesc: "Compatibele labelrollen",
+    },
+  };
+  const lang = locale === "nl" ? "nl" : "en";
+  return dictionary[lang][key] || key;
+};
+
 function CatalogProductsListing({
   initialCatalog,
   initialQueryString,
   scopeQueryString,
   baselineRangeFilters,
+  printer,
 }: ProductsListingProps) {
   const t = useTranslations();
   const locale = useLocale();
@@ -336,6 +362,57 @@ function CatalogProductsListing({
     },
     [displayQueryString, pathname, router],
   );
+
+  const isEpson = printer?.slug?.toLowerCase().includes("epson") || printer?.title?.toLowerCase().includes("epson");
+  const activeCategory = displayParams.get("category") || "";
+
+  const categoryCards = isEpson
+    ? [
+        {
+          id: "inkt-cartridges-nl",
+          title: getLocalizedCategoryLabel("inktsets", locale),
+          desc: getLocalizedCategoryLabel("inktsetsDesc", locale),
+          image: "/inkandsupplies.png",
+        },
+        {
+          id: "tt-printlinten-nl",
+          title: getLocalizedCategoryLabel("lints", locale),
+          desc: getLocalizedCategoryLabel("lintsDesc", locale),
+          image: "/images/thermal_transfer_preview.png",
+        },
+        {
+          id: "labels-en-tickets",
+          title: getLocalizedCategoryLabel("labels", locale),
+          desc: getLocalizedCategoryLabel("labelsDesc", locale),
+          image: "/labelrolls.png",
+        },
+      ]
+    : [
+        {
+          id: "tt-printlinten-nl",
+          title: getLocalizedCategoryLabel("lints", locale),
+          desc: getLocalizedCategoryLabel("lintsDesc", locale),
+          image: "/images/thermal_transfer_preview.png",
+        },
+        {
+          id: "labels-en-tickets",
+          title: getLocalizedCategoryLabel("labels", locale),
+          desc: getLocalizedCategoryLabel("labelsDesc", locale),
+          image: "/labelrolls.png",
+        },
+      ];
+
+  const handleCategoryClick = (categorySlug: string) => {
+    setParams((params) => {
+      const currentCategory = params.get("category") || "";
+      if (currentCategory === categorySlug) {
+        params.delete("category");
+      } else {
+        params.set("category", categorySlug);
+      }
+      params.set("page", "1");
+    });
+  };
 
   const isOnlyNumbers = (str: string) => /^\d+$/.test(str);
 
@@ -605,6 +682,51 @@ function CatalogProductsListing({
 
   return (
     <div className="flex flex-col gap-8">
+      {printer && (
+        <div className={`grid grid-cols-1 gap-6 ${isEpson ? "md:grid-cols-3" : "sm:grid-cols-2"} max-w-6xl`}>
+          {categoryCards.map((card) => {
+            const isActive = activeCategory === card.id;
+            return (
+              <button
+                key={card.id}
+                type="button"
+                onClick={() => handleCategoryClick(card.id)}
+                className={`group flex flex-col overflow-hidden text-left rounded-2xl border bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${
+                  isActive
+                    ? "border-amber-500 ring-2 ring-amber-500/20"
+                    : "border-slate-100"
+                }`}
+              >
+                <div className="relative h-44 w-full overflow-hidden rounded-xl bg-slate-50">
+                  <Image
+                    src={card.image}
+                    alt={card.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    className="object-contain p-2 transition-transform duration-500 group-hover:scale-105"
+                  />
+                </div>
+                <div className="mt-4 flex flex-1 flex-col justify-between w-full">
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-800 flex items-center justify-between">
+                      {card.title}
+                      <span
+                        className={`h-2.5 w-2.5 rounded-full transition-all duration-200 ${
+                          isActive ? "bg-amber-500 scale-125" : "bg-slate-200"
+                        }`}
+                      />
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-500 leading-relaxed">
+                      {card.desc}
+                    </p>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex min-h-11 w-full items-center gap-3 rounded-lg border border-slate-200 px-3 lg:max-w-xl">
           <svg
