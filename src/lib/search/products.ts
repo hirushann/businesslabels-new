@@ -655,14 +655,172 @@ function rangeOrStringFilter(
   };
 }
 
-function buildFilters(params: CatalogSearchParams): estypes.QueryDslQueryContainer[] {
+function getCompatibleInkCategorySlugs(printerSlug: string): string[] {
+  const slug = printerSlug.toLowerCase();
+  if (slug.includes("cw-c8000")) {
+    return ["inkt-cartridges-epson-cw-c8000", "inkt-cartridges-cw-c8000-bk", "inkt-cartridges-cw-c8000-mk"];
+  }
+  if (slug.includes("cw-c4000")) {
+    return ["inkt-epson-cw-c4000"];
+  }
+  if (slug.includes("tm-c3500")) {
+    return ["inkt-cartridges-tm-c3500-nl"];
+  }
+  if (slug.includes("tm-c7500g")) {
+    return ["inkt-cartridges-tm-c7500g-nl"];
+  }
+  if (slug.includes("tm-c7500")) {
+    return ["inkt-cartridges-tm-c7500-nl"];
+  }
+  if (slug.includes("cw-c6000") || slug.includes("cw-c6500")) {
+    return ["inkt-cartridges-cw-c6000-series"];
+  }
+  if (slug.includes("gpc831") || slug.includes("gp-c831")) {
+    return ["inkt-cartridges-gp-c831"];
+  }
+  if (slug.includes("tm-c3400")) {
+    return ["inkt-cartridges-tm-c3400"];
+  }
+  if (slug.includes("cw-d6000") || slug.includes("cw-d6500")) {
+    return ["inkt-cartridges-cw-d6000-series"];
+  }
+  return [];
+}
+
+function getPrinterBrandFromSlug(printerSlug: string): string | null {
+  const slug = printerSlug.toLowerCase();
+  if (slug.startsWith("godex-")) return "Godex";
+  if (slug.startsWith("zebra-")) return "Zebra";
+  if (slug.startsWith("epson-")) return "Epson";
+  if (slug.startsWith("citizen-")) return "Citizen";
+  if (slug.startsWith("tsc-")) return "TSC";
+  if (slug.startsWith("honeywell-")) return "Honeywell";
+  if (slug.startsWith("metapace-")) return "Metapace";
+  if (slug.startsWith("seiko-")) return "Seiko";
+  if (slug.startsWith("primera-") || slug.startsWith("dtm-")) return "Primera";
+  return null;
+}
+
+export type PrinterInfo = {
+  productIds: number[];
+  slugs: string[];
+  titles: string[];
+};
+
+export async function getPrinterInfo(printerIds: number[]): Promise<PrinterInfo> {
+  const result: PrinterInfo = { productIds: [], slugs: [], titles: [] };
+  if (!printerIds || printerIds.length === 0) return result;
+
+  const client = elasticClient();
+  const prefix = process.env.SCOUT_PREFIX?.trim() ?? "";
+  const index = prefix ? `${prefix}catalog_printers` : "catalog_printers";
+
+  try {
+    const response = await client.search<Record<string, unknown>>({
+      index,
+      ignore_unavailable: true,
+      size: printerIds.length,
+      _source: ["product_ids", "slug", "title"],
+      query: {
+        terms: { id: printerIds },
+      },
+    });
+
+    const productIdsSet = new Set<number>();
+    for (const hit of response.hits.hits) {
+      if (hit._source?.product_ids && Array.isArray(hit._source.product_ids)) {
+        for (const pid of hit._source.product_ids) {
+          if (typeof pid === "number" && Number.isFinite(pid)) {
+            productIdsSet.add(pid);
+          }
+        }
+      }
+      
+      const slugVal = hit._source?.slug;
+      if (Array.isArray(slugVal)) {
+        result.slugs.push(...slugVal.filter((s): s is string => typeof s === "string"));
+      } else if (typeof slugVal === "string") {
+        result.slugs.push(slugVal);
+      }
+
+      const titleVal = hit._source?.title;
+      if (Array.isArray(titleVal)) {
+        result.titles.push(...titleVal.filter((t): t is string => typeof t === "string"));
+      } else if (typeof titleVal === "string") {
+        result.titles.push(titleVal);
+      }
+    }
+    result.productIds = Array.from(productIdsSet);
+    return result;
+  } catch (error) {
+    console.error(`[Search] Failed to fetch printer info for printers ${printerIds}:`, error);
+    return result;
+  }
+}
+
+function buildFilters(params: CatalogSearchParams, printerInfo?: PrinterInfo): estypes.QueryDslQueryContainer[] {
   // Slow-delivery products are NOT hidden from listings — they stay visible
   // and simply render without the "In Stock" label (see `mapProductHit`).
   const filters: Array<estypes.QueryDslQueryContainer | null> = [
     { term: { "state.keyword": "active" } },
     params.type ? { term: { product_type: params.type } } : null,
     termsFilter("id", params.ids),
-    termsFilter("printer_ids", params.printerIds),
+    params.printerIds && params.printerIds.length > 0
+      ? (() => {
+          const printerShould: estypes.QueryDslQueryContainer[] = [
+            {
+              bool: {
+                should: [
+                  { terms: { printer_ids: params.printerIds } },
+                  ...(printerInfo && printerInfo.productIds.length > 0
+                    ? [{ terms: { id: printerInfo.productIds } }]
+                    : []),
+                ],
+                minimum_should_match: 1,
+              },
+            },
+          ];
+
+          if (printerInfo) {
+            const isEpson = printerInfo.slugs.some(slug => slug.toLowerCase().includes("epson"));
+            if (isEpson) {
+              const inkSlugs = printerInfo.slugs.flatMap(getCompatibleInkCategorySlugs);
+              if (inkSlugs.length > 0) {
+                printerShould.push({
+                  bool: {
+                    must: [
+                      { term: { "category_slugs.keyword": "inkt-cartridges-nl" } },
+                      { terms: { "category_slugs.keyword": inkSlugs } },
+                    ],
+                  },
+                });
+              }
+            } else {
+              const brands = printerInfo.slugs
+                .map(getPrinterBrandFromSlug)
+                .filter((b): b is string => b !== null);
+              
+              if (brands.length > 0) {
+                printerShould.push({
+                  bool: {
+                    must: [
+                      { term: { "category_slugs.keyword": "tt-printlinten-nl" } },
+                      { terms: { "catalog_brand.keyword": [...brands, "Diamondlabels"] } },
+                    ],
+                  },
+                });
+              }
+            }
+          }
+
+          return {
+            bool: {
+              should: printerShould,
+              minimum_should_match: 1,
+            },
+          };
+        })()
+      : null,
     exactKeywordFilter("slug.keyword", params.slugs),
     exactKeywordFilter("sku.keyword", params.skus),
     exactKeywordFilter("article_number.keyword", params.articleNumbers),
@@ -1033,7 +1191,11 @@ function totalHitsValue(total: estypes.SearchTotalHits | number | undefined): nu
 
 export async function searchCatalogProducts(params: CatalogSearchParams): Promise<CatalogSearchResponse> {
   const client = elasticClient();
-  const filters = buildFilters(params);
+  let printerInfo: PrinterInfo | undefined;
+  if (params.printerIds && params.printerIds.length > 0) {
+    printerInfo = await getPrinterInfo(params.printerIds);
+  }
+  const filters = buildFilters(params, printerInfo);
   const from = (params.page - 1) * params.perPage;
 
   const query: estypes.QueryDslQueryContainer = {
