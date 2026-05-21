@@ -179,9 +179,10 @@ function PrinterSummary({
     : undefined;
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-center">
-        <div className="min-w-0 flex-1">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <div className="flex flex-col lg:flex-row lg:min-h-64">
+        {/* ── Left: Content (50%) ── */}
+        <div className="flex-1 basis-1/2 p-6 flex flex-col">
           <h1 className="text-3xl font-bold font-['Segoe_UI'] leading-9 text-neutral-800">
             {printer.title}
           </h1>
@@ -212,11 +213,11 @@ function PrinterSummary({
           ) : null}
 
           {properties ? (
-            <div className="mt-6 border-t border-slate-100 pt-6">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+            <div className="mt-2 pt-3">
+              <h3 className="text-xl font-bold text-neutral-800">
                 {t("finder.mediaSpecifications")}
               </h3>
-              <div className="mt-4 grid grid-cols-1 gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
+              <ul className="mt-4 flex flex-col gap-3">
                 {printMethods.length > 0 ? (
                   <SpecItem
                     label={t("finder.printTechnology")}
@@ -258,17 +259,18 @@ function PrinterSummary({
                     value={withMillimeterUnit(maxOuterDiameter[0])}
                   />
                 ) : null}
-              </div>
+              </ul>
             </div>
           ) : null}
         </div>
 
+        {/* ── Right: Image (50%) ── */}
         {imageUrl ? (
-          <div className="shrink-0 mx-auto lg:mx-0 w-full max-w-72 lg:w-72 aspect-square rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center p-6">
+          <div className="flex-1 basis-1/2 bg-slate-50 border-t border-slate-100 lg:border-t-0 lg:border-l lg:border-slate-100 flex items-center justify-center p-8 min-h-56 lg:min-h-0">
             <img
               src={imageUrl}
               alt={printer.title}
-              className="max-h-full max-w-full object-contain"
+              className="w-full h-full max-h-80 object-contain"
             />
           </div>
         ) : null}
@@ -280,12 +282,37 @@ function PrinterSummary({
 function SpecItem({ label, value }: { label: string; value: string }) {
   const cleanLabel = label.endsWith(":") ? label.slice(0, -1) : label;
   return (
-    <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-all duration-300 hover:bg-slate-50">
-      <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-        {cleanLabel}
-      </div>
-      <div className="mt-1.5 text-base font-bold text-slate-800">{value}</div>
-    </div>
+    <li className="flex items-start gap-3">
+      {/* Green checkmark circle icon */}
+      <svg
+        className="mt-0.5 shrink-0"
+        width="22"
+        height="22"
+        viewBox="0 0 22 22"
+        fill="none"
+        aria-hidden="true"
+      >
+        <circle
+          cx="11"
+          cy="11"
+          r="10"
+          stroke="#22c55e"
+          strokeWidth="1.5"
+          fill="none"
+        />
+        <path
+          d="M7 11.5l2.5 2.5 5.5-5.5"
+          stroke="#22c55e"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+      <span className="text-base text-neutral-700">
+        <span className="font-semibold text-neutral-800">{cleanLabel}:</span>{" "}
+        {value}
+      </span>
+    </li>
   );
 }
 
@@ -341,29 +368,14 @@ export default async function FinderPage({
           : "Products";
 
     return (
-      <section className="bg-slate-50 px-4 py-10 sm:px-6 lg:px-10">
-        <div className="mx-auto flex max-w-360 flex-col gap-8">
-          <div className="border-b border-slate-200 pb-5">
-            <Breadcrumbs
-              items={[
-                { label: t("finder.printerFinder"), href: "/finder" },
-                { label: printer?.title || "Printer" },
-              ]}
-              className="mb-4"
-            />
-            <h1 className="text-3xl font-bold font-['Segoe_UI'] leading-8 text-neutral-800">
-              {t("finder.compatibleProductsTitle", { type: productTypeLabel })}
-            </h1>
-            {printer ? (
-              <p className="mt-3 text-base text-neutral-600">
-                {t("finder.showingCompatibleProducts", {
-                  filtered: initialCatalog.total,
-                  total: baselineCatalog.total,
-                  printer: printer.title,
-                })}
-              </p>
-            ) : null}
-          </div>
+      <section className="bg-slate-50 px-4 py-4 sm:px-6 lg:px-10">
+        <div className="mx-auto flex max-w-360 flex-col gap-6">
+          <Breadcrumbs
+            items={[
+              { label: t("finder.printerFinder"), href: "/finder" },
+              { label: printer?.title || "Printer" },
+            ]}
+          />
 
           {printer ? (
             <PrinterSummary

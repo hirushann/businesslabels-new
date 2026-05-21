@@ -249,7 +249,6 @@ function CatalogProductsListing({
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [isPending, startTransition] = useTransition();
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const loadMoreRef = useRef<HTMLDivElement>(null);
   const hasFocusedSearchRef = useRef(false);
 
   const stableRangeFilters = useMemo(
@@ -663,22 +662,7 @@ function CatalogProductsListing({
     return () => window.clearTimeout(timeoutId);
   }, [loading]);
 
-  useEffect(() => {
-    const target = loadMoreRef.current;
-    if (!target || !hasMoreProducts) return;
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          loadMoreProducts();
-        }
-      },
-      { rootMargin: "480px 0px", threshold: 0.01 },
-    );
-
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, [hasMoreProducts, loadMoreProducts]);
 
   return (
     <div className="flex flex-col gap-8">
@@ -1106,13 +1090,45 @@ function CatalogProductsListing({
               ) : null}
 
               {hasMoreProducts ? (
-                <div
-                  ref={loadMoreRef}
-                  className="flex min-h-20 items-center justify-center pt-4 text-sm text-slate-500"
-                >
-                  {isFetchingMore || loading
-                    ? t("search.loadingProducts")
-                    : "Scroll for more products"}
+                <div className="mt-10 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={loadMoreProducts}
+                    disabled={isFetchingMore || loading}
+                    className="inline-flex items-center justify-center gap-2 h-[52px] px-8 rounded-full border-[1.5px] border-[#F18800] text-[#F18800] font-semibold text-lg leading-6 hover:bg-orange-50 transition-colors duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
+                    style={{ fontFamily: "Segoe UI, sans-serif" }}
+                  >
+                    {isFetchingMore || loading ? (
+                      <>
+                        <svg
+                          className="animate-spin"
+                          width="20"
+                          height="20"
+                          viewBox="0 0 20 20"
+                          fill="none"
+                          aria-hidden="true"
+                        >
+                          <circle
+                            cx="10"
+                            cy="10"
+                            r="8"
+                            stroke="#F18800"
+                            strokeWidth="2"
+                            strokeOpacity="0.3"
+                          />
+                          <path
+                            d="M10 2a8 8 0 0 1 8 8"
+                            stroke="#F18800"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                        Loading...
+                      </>
+                    ) : (
+                      "View more Products"
+                    )}
+                  </button>
                 </div>
               ) : null}
             </>
