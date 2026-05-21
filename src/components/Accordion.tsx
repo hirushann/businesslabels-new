@@ -54,7 +54,7 @@ export default function Accordion({
 
   return (
     <div
-      className={`bg-gray-50 rounded-xl outline outline-1 outline-offset-[-1px] outline-black/10 ${className}`}
+      className={`bg-[#F7F9FA] rounded-xl outline outline-1 outline-offset-[-1px] outline-black/10 ${className}`}
     >
       <button
         type="button"

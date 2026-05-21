@@ -3,7 +3,7 @@ import Accordion from "@/components/Accordion";
 import ProductPurchase from "@/components/ProductPurchase";
 import ProductCard, { type ProductCardData, type ProductRouteType } from "@/components/ProductCard";
 import ProductCompatibilityDialog from "@/components/ProductCompatibilityDialog";
-import ProductImageGallery from "@/components/ProductImageGallery";
+import ProductImage from "@/components/ProductImage";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations } from 'next-intl/server';
@@ -639,8 +639,8 @@ export default async function SingleProductPage({
               ) : null}
             </div>
 
-            {/* Image Gallery */}
-            <ProductImageGallery
+            {/* Product Image */}
+            <ProductImage
               productName={productName}
               mainImage={mainImage}
               galleryImages={galleryImages}
@@ -733,10 +733,10 @@ export default async function SingleProductPage({
                   {specs.map((spec, i) => (
                     <div
                       key={spec.label}
-                      className={`flex py-3 justify-between items-center ${i % 2 === 0 ? "bg-white/50" : ""}`}
+                      className={`flex px-6 py-3 justify-between items-center rounded-md ${i % 2 === 0 ? "bg-white/50" : ""}`}
                     >
                       <span className="text-neutral-500 text-base font-normal">{spec.label}</span>
-                      <span className="text-neutral-700 text-base font-medium">{spec.value}</span>
+                      <span className="text-neutral-700 text-base font-semibold">{spec.value}</span>
                     </div>
                   ))}
                 </div>
