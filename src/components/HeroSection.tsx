@@ -333,6 +333,7 @@ export default function HeroSection() {
                 }}
                 itemToStringValue={(printer) => printer ? printerLabel(printer) : ""}
                 autoHighlight
+                filter={null}
               >
                 <ComboboxInput
                   autoFocus

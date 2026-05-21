@@ -142,6 +142,37 @@ const PRINTER_SOURCE_FIELDS: string[] = [
 function buildPrinterTextQuery(query: string): estypes.QueryDslQueryContainer {
   const trimmed = query.trim();
   const lowerQuery = trimmed.toLowerCase();
+  const terms = lowerQuery.split(/\s+/).filter(Boolean);
+
+  const orderedKeywordWildcard = terms.length > 1
+    ? `*${terms.map((term) => term.replaceAll("*", "")).join("*")}*`
+    : `*${lowerQuery.replaceAll("*", "")}*`;
+
+  const perTermKeywordMust: estypes.QueryDslQueryContainer[] = terms.map((term) => ({
+    bool: {
+      should: [
+        {
+          wildcard: {
+            "title_sort.keyword": {
+              value: `*${term.replaceAll("*", "")}*`,
+              boost: 10,
+              case_insensitive: true,
+            },
+          },
+        },
+        {
+          wildcard: {
+            "slug.keyword": {
+              value: `*${term.replaceAll("*", "")}*`,
+              boost: 6,
+              case_insensitive: true,
+            },
+          },
+        },
+      ],
+      minimum_should_match: 1,
+    },
+  }));
 
   return {
     bool: {
@@ -161,6 +192,32 @@ function buildPrinterTextQuery(query: string): estypes.QueryDslQueryContainer {
             },
           },
         },
+        {
+          wildcard: {
+            "title_sort.keyword": {
+              value: orderedKeywordWildcard,
+              boost: 25,
+              case_insensitive: true,
+            },
+          },
+        },
+        {
+          wildcard: {
+            "slug.keyword": {
+              value: orderedKeywordWildcard,
+              boost: 20,
+              case_insensitive: true,
+            },
+          },
+        },
+        ...(perTermKeywordMust.length > 1
+          ? [{
+              bool: {
+                must: perTermKeywordMust,
+                boost: 18,
+              },
+            }]
+          : []),
       ],
       minimum_should_match: 1,
     },
