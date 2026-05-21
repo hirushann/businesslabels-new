@@ -655,7 +655,15 @@ function rangeOrStringFilter(
   };
 }
 
-function buildFilters(params: CatalogSearchParams): estypes.QueryDslQueryContainer[] {
+/**
+ * Filters that are always applied to both the main hits query and every facet
+ * aggregation. Includes the active-state guard, type and ID-based scoping
+ * (used by category/printer pages), ranges, and the kern_string /
+ * outer_diameter_string filters — those are combined with their range
+ * counterparts inside a single OR clause, so we keep them in the base rather
+ * than try to split them out per facet.
+ */
+function buildBaseFilters(params: CatalogSearchParams): estypes.QueryDslQueryContainer[] {
   // Slow-delivery products are NOT hidden from listings — they stay visible
   // and simply render without the "In Stock" label (see `mapProductHit`).
   const filters: Array<estypes.QueryDslQueryContainer | null> = [
@@ -666,20 +674,10 @@ function buildFilters(params: CatalogSearchParams): estypes.QueryDslQueryContain
     exactKeywordFilter("slug.keyword", params.slugs),
     exactKeywordFilter("sku.keyword", params.skus),
     exactKeywordFilter("article_number.keyword", params.articleNumbers),
-    categorySlugFilter(params.categories),
     termsFilter("category_ids", params.categoryIds),
-    termsFilter("catalog_brand.keyword", params.brands),
     termsFilter("material_id", params.materialIds),
     termsFilter("material_taxon_slugs", params.materialCategories),
     termsFilter("material_taxon_ids", params.materialCategoryIds),
-    termsFilter("catalog_material_code.keyword", params.materialCodes),
-    termsFilter("catalog_material.keyword", params.materials),
-    nestedTermsFilter("properties", "properties.afwerking.keyword", params.finishings),
-    nestedTermsFilter("properties", "properties.lijm.keyword", params.glues),
-    nestedTermsFilter("properties", "properties.printmethode.keyword", params.printMethods),
-    nestedTermsFilter("properties", "properties.printer_type.keyword", params.printerTypes),
-    nestedTermsFilter("properties", "properties.detectie.keyword", params.detections),
-    termsFilter("compatible_brands.keyword", params.marks),
     rangeFilter("price", params.priceMin, params.priceMax),
     rangeFilter("property_numbers.breedte", params.widthMin, params.widthMax),
     rangeFilter("property_numbers.hoogte", params.heightMin, params.heightMax),
@@ -697,6 +695,41 @@ function buildFilters(params: CatalogSearchParams): estypes.QueryDslQueryContain
   return filters.filter((filter): filter is estypes.QueryDslQueryContainer => filter !== null);
 }
 
+/**
+ * One filter clause per UI facet key. Used both for the main query (where all
+ * non-null entries are AND-ed in) and per-facet aggregations (where every
+ * entry EXCEPT the facet being aggregated is applied). The latter is the
+ * faceted-search pattern that lets a user switch values within a facet
+ * without first deselecting — each option shows the count it WOULD have if
+ * the user picked it.
+ */
+function buildFacetFilters(
+  params: CatalogSearchParams,
+): Partial<Record<CatalogOptionFilterKey, estypes.QueryDslQueryContainer>> {
+  const entries: Array<[CatalogOptionFilterKey, estypes.QueryDslQueryContainer | null]> = [
+    ["category", categorySlugFilter(params.categories)],
+    ["brand", termsFilter("catalog_brand.keyword", params.brands)],
+    ["material_code", termsFilter("catalog_material_code.keyword", params.materialCodes)],
+    ["material", termsFilter("catalog_material.keyword", params.materials)],
+    ["finishing", nestedTermsFilter("properties", "properties.afwerking.keyword", params.finishings)],
+    ["glue", nestedTermsFilter("properties", "properties.lijm.keyword", params.glues)],
+    ["print_method", nestedTermsFilter("properties", "properties.printmethode.keyword", params.printMethods)],
+    ["printer_type", nestedTermsFilter("properties", "properties.printer_type.keyword", params.printerTypes)],
+    ["detectie", nestedTermsFilter("properties", "properties.detectie.keyword", params.detections)],
+    ["merken", termsFilter("compatible_brands.keyword", params.marks)],
+  ];
+
+  const result: Partial<Record<CatalogOptionFilterKey, estypes.QueryDslQueryContainer>> = {};
+  for (const [key, value] of entries) {
+    if (value !== null) result[key] = value;
+  }
+  return result;
+}
+
+function buildFilters(params: CatalogSearchParams): estypes.QueryDslQueryContainer[] {
+  return [...buildBaseFilters(params), ...Object.values(buildFacetFilters(params))];
+}
+
 function sortClauses(sort: CatalogSortValue): estypes.Sort | undefined {
   const sortOptions: Record<CatalogSortValue, estypes.Sort> = {
     relevance: [{ _score: { order: "desc" } }, { created_at_timestamp: { order: "desc", unmapped_type: "long" } }],
@@ -711,33 +744,63 @@ function sortClauses(sort: CatalogSortValue): estypes.Sort | undefined {
   return sortOptions[sort];
 }
 
-function aggregations(): Record<string, estypes.AggregationsAggregationContainer> {
+function aggregations(
+  params: CatalogSearchParams,
+): Record<string, estypes.AggregationsAggregationContainer> {
+  const baseFilters = buildBaseFilters(params);
+  const facetFilters = buildFacetFilters(params);
+
   const optionAggs = Object.fromEntries(
-    OPTION_FILTERS.map((filter) => [
-      `options_${filter.key}`,
-      filter.nestedPath
-        ? ({
-            nested: {
-              path: filter.nestedPath,
+    OPTION_FILTERS.map((filter) => {
+      // For this facet's aggregation, apply base + every OTHER facet's
+      // filter, but not its own. That way the facet's options reflect what
+      // would be available if the user changed/added a value within it,
+      // instead of collapsing to whatever they just picked.
+      const otherFacetFilters = Object.entries(facetFilters)
+        .filter(([key]) => key !== filter.key)
+        .map(([, clause]) => clause);
+
+      const termsAgg: estypes.AggregationsAggregationContainer = {
+        terms: {
+          field: filter.field,
+          size: 100,
+          order: { _key: "asc" },
+        },
+      };
+
+      const innerAgg: estypes.AggregationsAggregationContainer = filter.nestedPath
+        ? {
+            nested: { path: filter.nestedPath },
+            aggs: { values: termsAgg },
+          }
+        : termsAgg;
+
+      // `global` escapes the parent query scope so we can re-apply *just*
+      // base + other facet filters — the standard ES recipe for showing
+      // counts that ignore the facet's own selection.
+      const textClause = textQuery(params.search);
+      const innerFilter = textClause
+        ? {
+            bool: {
+              must: [textClause],
+              filter: [...baseFilters, ...otherFacetFilters],
             },
-            aggs: {
-              values: {
-                terms: {
-                  field: filter.field,
-                  size: 100,
-                  order: { _key: "asc" },
-                },
-              },
+          }
+        : { bool: { filter: [...baseFilters, ...otherFacetFilters] } };
+
+      return [
+        `options_${filter.key}`,
+        {
+          global: {},
+          aggs: {
+            scoped: {
+              filter: innerFilter,
+              aggs: { facet: innerAgg },
             },
-          } satisfies estypes.AggregationsAggregationContainer)
-        : ({
-            terms: {
-              field: filter.field,
-              size: 100,
-              order: { _key: "asc" },
-            },
-          } satisfies estypes.AggregationsAggregationContainer),
-    ]),
+          },
+        } satisfies estypes.AggregationsAggregationContainer,
+      ];
+    }),
   );
 
   const rangeAggs = Object.fromEntries(
@@ -775,9 +838,25 @@ function aggregationBuckets(
 ): Array<{ key?: string | number; doc_count?: number }> {
   const agg = aggregationsResult?.[`options_${key}`];
   if (!agg || typeof agg !== "object") return [];
-  const buckets = (agg as { buckets?: unknown; values?: { buckets?: unknown } }).buckets
-    ?? (agg as { values?: { buckets?: unknown } }).values?.buckets;
-  return Array.isArray(buckets) ? (buckets as Array<{ key?: string | number; doc_count?: number }>) : [];
+  // Walk a fixed list of paths down through the wrapper aggregations.
+  // After the faceted-search refactor: agg = global > scoped(filter) >
+  // facet (terms) > [optional nested `values` for nested fields) > buckets.
+  type B = { buckets?: unknown };
+  const root = agg as Record<string, unknown> & B;
+  const scoped = (root as { scoped?: B & Record<string, unknown> }).scoped;
+  const facet = scoped
+    ? (scoped as { facet?: B & Record<string, unknown> }).facet
+    : (root as { facet?: B & Record<string, unknown> }).facet;
+  const values = facet
+    ? (facet as { values?: B }).values
+    : (root as { values?: B }).values;
+
+  for (const candidate of [values, facet, scoped, root]) {
+    if (candidate && Array.isArray(candidate.buckets)) {
+      return candidate.buckets as Array<{ key?: string | number; doc_count?: number }>;
+    }
+  }
+  return [];
 }
 
 function maxAggregation(
@@ -807,7 +886,10 @@ function buildCatalogFilters(aggregationsResult: Record<string, unknown> | undef
       title: filter.title,
       options: aggregatedOptions,
     };
-  }).filter((filter) => filter.options.length > 0);
+  // Hide facets that can't usefully narrow the result — i.e. zero options
+  // (nothing matches the field at all) or a single option (every remaining
+  // product shares that value, so picking it doesn't change anything).
+  }).filter((filter) => filter.options.length > 1);
 
   return {
     ranges: RANGE_FILTERS.map((filter) => ({
@@ -1055,7 +1137,7 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
       ? { min_score: params.search.trim().split(/\s+/).filter(Boolean).length === 2 ? 3.0 : 2.0 } 
       : {}),
     ...(sortClauses(params.sort) ? { sort: sortClauses(params.sort) } : {}),
-    aggs: aggregations(),
+    aggs: aggregations(params),
   });
 
   console.log(`[Search] Query locale: ${params.locale}, Total hits: ${totalHitsValue(response.hits.total)}`);

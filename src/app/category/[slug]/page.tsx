@@ -14,6 +14,7 @@ import {
   categoryRouteSlug,
   fetchCategoryGroups,
   findCategoryBySlug,
+  flattenCategorySlugs,
   resolveLocalized,
   type CategoryNode,
 } from "@/lib/categories/tree";
@@ -191,6 +192,19 @@ export default async function CategoryArchivePage({
               initialQueryString={routeQuery.toString()}
               scopeQueryString={scopeQuery.toString()}
               baselineRangeFilters={baselineCatalog.filters.ranges}
+              validCategorySlugs={
+                currentCategory
+                  ? // Facet offers the current category's direct children,
+                    // letting the user multi-select to narrow into one or
+                    // more subcategories. Leaf categories produce an empty
+                    // list and the facet auto-hides.
+                    subcategories
+                        .map((child) => resolveLocalized(child.slug, locale).trim())
+                        .filter((s) => s.length > 0)
+                  : // Lookup failed; fall back to the whole tree so the
+                    // sidebar still offers something to filter by.
+                    flattenCategorySlugs(categoryGroups, locale)
+              }
             />
           </div>
         </div>
