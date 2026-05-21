@@ -2,73 +2,187 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import { PrinterSelect } from "./PrinterSelect";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Field, FieldLabel } from "@/components/ui/field";
-import { toast } from "sonner";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { Droplet, Loader2, Search, ScrollText, Tags } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "@/components/ui/combobox";
 import { useHelp } from "./HelpProvider";
 import { useTranslations } from 'next-intl';
+
+type PrinterSearchResult = {
+  id: number;
+  brand: string | null;
+  name: string;
+  model: string | null;
+  slug: string | null;
+  image: string | null;
+};
+
+type CategoryCard = {
+  label: string;
+  description: string;
+  slug: string;
+  icon: typeof Droplet;
+};
+
+const CATEGORY_CARDS = {
+  ink: {
+    label: "Ink",
+    description: "Ink cartridges",
+    slug: "inkt-cartridges-nl",
+    icon: Droplet,
+  },
+  ribbons: {
+    label: "Ribbons",
+    description: "Thermal transfer ribbons",
+    slug: "tt-printlinten-nl",
+    icon: ScrollText,
+  },
+  labels: {
+    label: "Labels",
+    description: "Labels and tickets",
+    slug: "labels-en-tickets",
+    icon: Tags,
+  },
+} satisfies Record<string, CategoryCard>;
+
+function printerLabel(printer: PrinterSearchResult) {
+  return [printer.brand, printer.name].filter(Boolean).join(" ");
+}
+
+function isEpsonPrinter(printer: PrinterSearchResult | null) {
+  return printer?.brand?.toLowerCase().includes("epson") ?? false;
+}
 
 export default function HeroSection() {
   const t = useTranslations();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { openHelp } = useHelp();
-  const [selectedPrinter, setSelectedPrinter] = useState<number | null>(null);
-  const [selectedPrinterName, setSelectedPrinterName] = useState<string>("");
-  const [productType, setProductType] = useState<string>("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isComboboxOpen, setIsComboboxOpen] = useState(false);
+  const [printerQuery, setPrinterQuery] = useState("");
+  const [debouncedPrinterQuery, setDebouncedPrinterQuery] = useState("");
+  const [printerResults, setPrinterResults] = useState<PrinterSearchResult[]>([]);
+  const [selectedPrinter, setSelectedPrinter] = useState<PrinterSearchResult | null>(null);
+  const [isSearchingPrinters, setIsSearchingPrinters] = useState(false);
+  const [printerSearchError, setPrinterSearchError] = useState<string | null>(null);
 
-  // Check if the selected printer is an Epson
-  const isEpsonPrinter = selectedPrinterName.toLowerCase().includes("epson");
+  const printerId = searchParams.get("printer_id");
+  const canShowPrinterResults = printerQuery.trim().length >= 3;
 
-  // Fetch printer details when selected printer changes
+  const categoryCards = useMemo(
+    () => (isEpsonPrinter(selectedPrinter)
+      ? [CATEGORY_CARDS.ink, CATEGORY_CARDS.ribbons, CATEGORY_CARDS.labels]
+      : [CATEGORY_CARDS.ribbons, CATEGORY_CARDS.labels]),
+    [selectedPrinter],
+  );
+
   useEffect(() => {
-    async function fetchPrinterDetails() {
-      if (!selectedPrinter) {
-        setSelectedPrinterName("");
-        return;
-      }
+    const timeout = window.setTimeout(() => {
+      setDebouncedPrinterQuery(printerQuery.trim());
+    }, 350);
+
+    return () => window.clearTimeout(timeout);
+  }, [printerQuery]);
+
+  useEffect(() => {
+    if (debouncedPrinterQuery.length < 3) {
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function searchPrinters() {
+      setIsSearchingPrinters(true);
+      setPrinterSearchError(null);
 
       try {
-        const response = await fetch('/api/printers/select');
-        const data = await response.json();
-        const printer = data.data?.find((p: { id: number; name: string }) => p.id === selectedPrinter);
-        
-        if (printer) {
-          setSelectedPrinterName(printer.name);
-          
-          // If switching to non-Epson printer and ink is selected, clear the selection
-          if (!printer.name.toLowerCase().includes("epson") && productType === "ink") {
-            setProductType("");
-            toast.info(t('hero.inkOnlyEpson'));
-          }
+        const response = await fetch(`/api/printers/search?query=${encodeURIComponent(debouncedPrinterQuery)}`, {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error("Printer search failed");
         }
+
+        const payload = (await response.json()) as { data?: PrinterSearchResult[]; message?: string };
+        setPrinterResults(payload.data ?? []);
       } catch (error) {
-        console.error("Error fetching printer details:", error);
+        if (error instanceof DOMException && error.name === "AbortError") return;
+
+        setPrinterResults([]);
+        setPrinterSearchError("We could not search printers right now. Please try again.");
+      } finally {
+        setIsSearchingPrinters(false);
       }
     }
 
-    fetchPrinterDetails();
-  }, [selectedPrinter, productType]);
+    searchPrinters();
 
-  const handleShowProducts = () => {
-    if (!selectedPrinter) {
-      toast.error(t('hero.selectPrinterError'));
-      return;
-    }
-    if (!productType) {
-      toast.error(t('hero.selectTypeError'));
+    return () => controller.abort();
+  }, [debouncedPrinterQuery]);
+
+  useEffect(() => {
+    if (!printerId) {
       return;
     }
 
-    // Set loading state and navigate to finder page with parameters
-    setIsLoading(true);
-    const params = new URLSearchParams({
-      printer_id: selectedPrinter.toString(),
-      product_type: productType,
-    });
+    const currentPrinterId = printerId;
+    const controller = new AbortController();
+
+    async function loadSelectedPrinter() {
+      try {
+        const response = await fetch(`/api/printers/search?printer_id=${encodeURIComponent(currentPrinterId)}`, {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) return;
+
+        const payload = (await response.json()) as { data?: PrinterSearchResult[] };
+        setSelectedPrinter(payload.data?.[0] ?? null);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+      }
+    }
+
+    loadSelectedPrinter();
+
+    return () => controller.abort();
+  }, [printerId]);
+
+  const handlePrinterSelect = (printer: PrinterSearchResult) => {
+    setSelectedPrinter(printer);
+    setPrinterQuery(printerLabel(printer));
+    setIsComboboxOpen(false);
+  };
+
+  const handlePrinterQueryChange = (value: string) => {
+    setPrinterQuery(value);
+    setIsComboboxOpen(value.trim().length >= 3);
+
+    if (selectedPrinter && value !== printerLabel(selectedPrinter)) {
+      setSelectedPrinter(null);
+    }
+
+    if (value.trim().length < 3) {
+      setPrinterResults([]);
+      setPrinterSearchError(null);
+      setIsSearchingPrinters(false);
+    }
+  };
+
+  const handleShowCompatibleProducts = () => {
+    if (!selectedPrinter) return;
+
+    const params = new URLSearchParams({ printer_id: String(selectedPrinter.id) });
 
     router.push(`/finder?${params.toString()}`);
   };
@@ -205,194 +319,122 @@ export default function HeroSection() {
               <span className="text-neutral-800 text-lg font-semibold font-['Segoe_UI'] leading-5">
                 {t('hero.selectPrinter')}
               </span>
-              <PrinterSelect
+              <Combobox
+                items={canShowPrinterResults ? printerResults : []}
+                open={isComboboxOpen && canShowPrinterResults}
+                onOpenChange={setIsComboboxOpen}
                 value={selectedPrinter}
-                onValueChange={setSelectedPrinter}
-                placeholder={t('hero.searchPrinters')}
-              />
-            </div>
-            {/* Product type */}
-            <div className="px-6 flex flex-col gap-4">
-              <span className="text-neutral-800 text-lg font-semibold font-['Segoe_UI'] leading-5">
-                {t('hero.whatLookingFor')}
-              </span>
-              <RadioGroup value={productType} onValueChange={setProductType}>
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <Field className="flex-1 w-full">
-                    <FieldLabel
-                      htmlFor="labels"
-                      className="w-full sm:w-60 px-3 py-3 bg-gray-50 rounded-lg border border-zinc-100 flex items-center gap-3 cursor-pointer hover:border-amber-300 transition-colors data-checked:border-amber-400 data-checked:bg-amber-50"
-                    >
-                      <RadioGroupItem
-                        value="labels"
-                        id="labels"
-                        className="sr-only"
-                      />
-                      <svg
-                        width="32"
-                        height="32"
-                        viewBox="0 0 32 32"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M14.6667 28.9729C15.0721 29.2069 15.5319 29.3301 16 29.3301C16.4681 29.3301 16.9279 29.2069 17.3333 28.9729L26.6667 23.6395C27.0717 23.4057 27.408 23.0695 27.6421 22.6647C27.8761 22.2598 27.9995 21.8005 28 21.3329V10.6662C27.9995 10.1986 27.8761 9.73929 27.6421 9.33443C27.408 8.92956 27.0717 8.59336 26.6667 8.35954L17.3333 3.02621C16.9279 2.79216 16.4681 2.66895 16 2.66895C15.5319 2.66895 15.0721 2.79216 14.6667 3.02621L5.33333 8.35954C4.92835 8.59336 4.59197 8.92956 4.35795 9.33443C4.12392 9.73929 4.00048 10.1986 4 10.6662V21.3329C4.00048 21.8005 4.12392 22.2598 4.35795 22.6647C4.59197 23.0695 4.92835 23.4057 5.33333 23.6395L14.6667 28.9729Z"
-                          stroke="#888888"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <path
-                          d="M16 29.3333V16"
-                          stroke="#888888"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <path
-                          d="M4.38672 9.33301L16.0001 15.9997L27.6134 9.33301"
-                          stroke="#888888"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <path
-                          d="M10 5.69336L22 12.56"
-                          stroke="#888888"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-neutral-700 text-base font-semibold font-['Segoe_UI'] leading-5">
-                          {t('hero.labelRolls')}
-                        </span>
-                        <span className="text-zinc-500 text-sm font-normal font-['Segoe_UI'] leading-5">
-                          {t('hero.labelRollsDesc')}
-                        </span>
-                      </div>
-                    </FieldLabel>
-                  </Field>
-
-                  <Field className="flex-1 w-full">
-                    <FieldLabel
-                      htmlFor="ink"
-                      className={`w-full sm:w-60 px-3 py-3 rounded-lg border flex items-center gap-3 transition-colors ${
-                        !isEpsonPrinter
-                          ? "bg-gray-100 border-gray-200 opacity-50 cursor-not-allowed"
-                          : "bg-gray-50 border-zinc-100 cursor-pointer hover:border-amber-300 data-checked:border-amber-400 data-checked:bg-amber-50"
-                      }`}
-                    >
-                      <RadioGroupItem
-                        value="ink"
-                        id="ink"
-                        className="sr-only"
-                        disabled={!isEpsonPrinter}
-                      />
-                      <svg
-                        width="32"
-                        height="32"
-                        viewBox="0 0 32 32"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M8.0013 24H5.33464C4.62739 24 3.94911 23.719 3.44902 23.219C2.94892 22.7189 2.66797 22.0406 2.66797 21.3333V14.6667C2.66797 13.9594 2.94892 13.2811 3.44902 12.781C3.94911 12.281 4.62739 12 5.33464 12H26.668C27.3752 12 28.0535 12.281 28.5536 12.781C29.0537 13.2811 29.3346 13.9594 29.3346 14.6667V21.3333C29.3346 22.0406 29.0537 22.7189 28.5536 23.219C28.0535 23.719 27.3752 24 26.668 24H24.0013"
-                          stroke="#888888"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <path
-                          d="M8 12.0003V4.00033C8 3.6467 8.14048 3.30756 8.39052 3.05752C8.64057 2.80747 8.97971 2.66699 9.33398 2.66699H22.6667C23.0203 2.66699 23.3594 2.80747 23.6095 3.05752C23.8595 3.30756 24 3.6467 24 4.00033V12.0003"
-                          stroke="#888888"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <path
-                          d="M22.6667 18.667H9.33398C8.59695 18.667 8 19.2639 8 20.0003V28.0003C8 28.7367 8.59695 29.3337 9.33398 29.3337H22.6667C23.403 29.3337 24 28.7367 24 28.0003V20.0003C24 19.2639 23.403 18.667 22.6667 18.667Z"
-                          stroke="#888888"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                      <div className="flex flex-col gap-0.5">
-                        <span className={`text-base font-semibold font-['Segoe_UI'] leading-5 ${
-                          !isEpsonPrinter ? "text-gray-400" : "text-neutral-700"
-                        }`}>
-                          {t('hero.ink')}
-                        </span>
-                        <span className={`text-sm font-normal font-['Segoe_UI'] leading-5 ${
-                          !isEpsonPrinter ? "text-gray-400" : "text-zinc-500"
-                        }`}>
-                          {!isEpsonPrinter ? t('hero.epsonOnly') : t('hero.inkDesc')}
-                        </span>
-                      </div>
-                    </FieldLabel>
-                  </Field>
-                </div>
-              </RadioGroup>
-            </div>
-            {/* CTA Button */}
-            <div className="px-6">
-              <button
-                onClick={handleShowProducts}
-                disabled={isLoading}
-                className="w-full py-3 bg-blue-400 rounded-full flex justify-center items-center gap-2 hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                onValueChange={(printer) => {
+                  if (printer) {
+                    handlePrinterSelect(printer);
+                  } else {
+                    setSelectedPrinter(null);
+                  }
+                }}
+                itemToStringValue={(printer) => printer ? printerLabel(printer) : ""}
+                autoHighlight
               >
-                {isLoading ? (
-                  <>
-                    <svg
-                      className="animate-spin h-4 w-4 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    <span className="text-white text-base font-semibold font-['Segoe_UI'] leading-6">
-                      {t('hero.loading')}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <circle
-                        cx="6.75"
-                        cy="6.75"
-                        r="4.75"
-                        stroke="white"
-                        strokeWidth="1.5"
-                      />
-                      <path
-                        d="M10.5 10.5L13.5 13.5"
-                        stroke="white"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                    <span className="text-white text-base font-semibold font-['Segoe_UI'] leading-6">
-                      {t('hero.showProducts')}
-                    </span>
-                  </>
-                )}
-              </button>
+                <ComboboxInput
+                  autoFocus
+                  showTrigger={false}
+                  showClear
+                  value={printerQuery}
+                  onChange={(event) => handlePrinterQueryChange(event.currentTarget.value)}
+                  placeholder="Search your printer model..."
+                  className="w-full h-12 px-3 rounded-full"
+                />
+                {printerQuery.trim().length > 0 && printerQuery.trim().length < 3 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Type at least 3 characters to search
+                  </p>
+                ) : null}
+                <ComboboxContent className="p-0">
+                  {isSearchingPrinters ? (
+                    <div className="flex items-center gap-2 px-3 py-6 text-sm text-muted-foreground">
+                      <Loader2 data-icon="inline-start" className="animate-spin" />
+                      <span>Searching printers...</span>
+                    </div>
+                  ) : printerSearchError ? (
+                    <div className="px-3 py-6 text-sm text-destructive">
+                      {printerSearchError}
+                    </div>
+                  ) : (
+                    <>
+                      <ComboboxEmpty>No printers found</ComboboxEmpty>
+                      <ComboboxList>
+                        {(printer) => (
+                          <ComboboxItem
+                            key={printer.id}
+                            value={printer}
+                            className="items-start px-3 py-2"
+                          >
+                            {printer.image ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={printer.image}
+                                alt=""
+                                className="size-10 shrink-0 rounded-md border border-border object-contain"
+                              />
+                            ) : (
+                              <div className="flex size-10 shrink-0 items-center justify-center rounded-md border border-border bg-muted">
+                                <Search className="text-muted-foreground" />
+                              </div>
+                            )}
+                            <div className="flex min-w-0 flex-col">
+                              <span className="truncate font-medium">
+                                {printerLabel(printer)}
+                              </span>
+                              {printer.model ? (
+                                <span className="truncate text-xs text-muted-foreground">
+                                  {printer.model}
+                                </span>
+                              ) : null}
+                            </div>
+                          </ComboboxItem>
+                        )}
+                      </ComboboxList>
+                    </>
+                  )}
+                </ComboboxContent>
+              </Combobox>
             </div>
+            {selectedPrinter ? (
+              <div className="px-6 flex flex-col gap-4">
+                <span className="text-neutral-800 text-lg font-semibold font-['Segoe_UI'] leading-5">
+                  {t('hero.availableForPrinter')}
+                </span>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  {categoryCards.map((category) => {
+                    const Icon = category.icon;
+
+                    return (
+                      <div
+                        key={category.slug}
+                        className="flex h-auto flex-1 items-center gap-3 rounded-lg border border-zinc-100 bg-gray-50 px-3 py-3 text-left"
+                      >
+                        <Icon className="shrink-0 text-neutral-500" />
+                        <span className="flex min-w-0 flex-col gap-0.5">
+                          <span className="truncate text-base font-semibold font-['Segoe_UI'] leading-5 text-neutral-700">
+                            {category.label}
+                          </span>
+                          <span className="truncate text-sm font-normal font-['Segoe_UI'] leading-5 text-zinc-500">
+                            {category.description}
+                          </span>
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <Button
+                  type="button"
+                  onClick={handleShowCompatibleProducts}
+                  className="h-auto w-full rounded-full bg-blue-400 py-3 text-base font-semibold font-['Segoe_UI'] text-white hover:bg-blue-500"
+                >
+                  <Search data-icon="inline-start" />
+                  {t('hero.showProducts')}
+                </Button>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
