@@ -76,7 +76,6 @@ export const MESSAGES_V4 = {
       subcategoriesLabel: 'Subcategories',
       productsTitle: 'All {category}',
       productCount: '{count} {count, plural, one {product} other {products}}',
-      subcategoryCount: '{count} {count, plural, one {subcategory} other {subcategories}}',
     },
     whyChoose: {
       title: 'Why Choose Businesslabels',
@@ -837,7 +836,6 @@ export const MESSAGES_V4 = {
       subcategoriesLabel: 'Subcategorieën',
       productsTitle: 'Alle {category}',
       productCount: '{count} {count, plural, one {product} other {producten}}',
-      subcategoryCount: '{count} {count, plural, one {subcategorie} other {subcategorieën}}',
     },
     whyChoose: {
       title: 'Waarom kiezen voor Businesslabels',

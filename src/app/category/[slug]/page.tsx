@@ -91,9 +91,32 @@ export default async function CategoryArchivePage({
   const t = await getTranslations();
   const locale = await getServerLocale();
   const routeQuery = toUrlSearchParams(rawParams);
-  const scopeQuery = new URLSearchParams({
-    category: indexedCategorySlugForRoute(slug),
-  });
+
+  // Resolve the category tree first so we can scope the catalog by the
+  // looked-up category's ID. `category_ids` on each product includes the full
+  // ancestor chain, so an ID filter on the current taxon returns both its
+  // direct products and every descendant's — without double-counting.
+  let categoryGroups: Awaited<ReturnType<typeof fetchCategoryGroups>> = [];
+  try {
+    categoryGroups = await fetchCategoryGroups(locale);
+  } catch (error) {
+    console.error(`Failed to load category tree for slug '${slug}'.`, error);
+  }
+
+  const lookup = findCategoryBySlug(categoryGroups, slug, locale);
+  const currentCategory = lookup?.category;
+  const ancestors = lookup?.ancestors ?? [];
+  const subcategories: CategoryNode[] = currentCategory?.children ?? [];
+  const hasSubcategories = subcategories.length > 0;
+
+  const scopeQuery = new URLSearchParams();
+  if (currentCategory) {
+    scopeQuery.set("category_id", String(currentCategory.id));
+  } else {
+    // Fallback when the slug isn't in the tree (stale cache, etc.) — keep the
+    // old slug-based scoping so the page still renders something useful.
+    scopeQuery.set("category", indexedCategorySlugForRoute(slug));
+  }
   const initialSearchQuery = new URLSearchParams(scopeQuery);
 
   routeQuery.forEach((value, key) => {
@@ -102,26 +125,15 @@ export default async function CategoryArchivePage({
 
   let initialCatalog = emptyCatalogResponse;
   let baselineCatalog = emptyCatalogResponse;
-  let categoryGroups: Awaited<ReturnType<typeof fetchCategoryGroups>> = [];
 
   try {
-    [initialCatalog, baselineCatalog, categoryGroups] = await Promise.all([
+    [initialCatalog, baselineCatalog] = await Promise.all([
       searchCatalogProducts(parseCatalogSearchParams(initialSearchQuery, locale)),
       searchCatalogProducts(parseCatalogSearchParams(scopeQuery, locale)),
-      fetchCategoryGroups(locale),
     ]);
   } catch (error) {
     console.error(`Failed to load category catalog for slug '${slug}'.`, error);
   }
-
-  // Locate the current category in the tree so we can render its direct
-  // subcategories above the products. When the slug is not found we fall
-  // back to a plain title and no subcategory navigation.
-  const lookup = findCategoryBySlug(categoryGroups, slug, locale);
-  const currentCategory = lookup?.category;
-  const ancestors = lookup?.ancestors ?? [];
-  const subcategories: CategoryNode[] = currentCategory?.children ?? [];
-  const hasSubcategories = subcategories.length > 0;
 
   const categoryTitle = currentCategory
     ? resolveLocalized(currentCategory.name, locale)
