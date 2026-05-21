@@ -92,7 +92,7 @@ export default async function CategoryArchivePage({
   const locale = await getServerLocale();
   const routeQuery = toUrlSearchParams(rawParams);
   const scopeQuery = new URLSearchParams({
-    category: indexedCategorySlugForRoute(slug),
+    scope_category: indexedCategorySlugForRoute(slug),
   });
   const initialSearchQuery = new URLSearchParams(scopeQuery);
 

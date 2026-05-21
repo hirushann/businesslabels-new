@@ -82,6 +82,7 @@ const KNOWN_FILTER_PARAMS = [
   "article_number",
   "category",
   "category_slug",
+  "scope_category",
   "category_id",
   "brand",
   "material_id",

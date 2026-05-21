@@ -43,6 +43,7 @@ const MAX_PER_PAGE = 60;
 
 const MULTI_VALUE_KEYS = {
   categories: ["category", "category_slug"],
+  scopeCategories: ["scope_category"],
   categoryIds: ["category_id"],
   brands: ["brand"],
   materialIds: ["material_id"],
@@ -241,6 +242,7 @@ export function parseCatalogSearchParams(params: URLSearchParams, locale?: "en" 
   );
 
   const categoryValues = valuesParam(params, MULTI_VALUE_KEYS.categories);
+  const scopeCategoryValues = valuesParam(params, MULTI_VALUE_KEYS.scopeCategories);
   const categoryIdValues = valuesParam(params, MULTI_VALUE_KEYS.categoryIds);
   const materialIdValues = valuesParam(params, MULTI_VALUE_KEYS.materialIds);
   const materialCategoryIdValues = valuesParam(params, MULTI_VALUE_KEYS.materialCategoryIds);
@@ -274,6 +276,7 @@ export function parseCatalogSearchParams(params: URLSearchParams, locale?: "en" 
     articleNumbers: valuesParam(params, EXACT_VALUE_KEYS.articleNumbers),
     printerIds: integerValues(printerIdValues),
     categories: categoryValues,
+    scopeCategories: scopeCategoryValues,
     categoryIds: integerValues(categoryIdValues),
     brands: valuesParam(params, MULTI_VALUE_KEYS.brands),
     materialIds: integerValues(materialIdValues),
@@ -835,6 +838,7 @@ function buildFilters(params: CatalogSearchParams, printerInfo?: PrinterInfo): e
     exactKeywordFilter("sku.keyword", params.skus),
     exactKeywordFilter("article_number.keyword", params.articleNumbers),
     categorySlugFilter(params.categories),
+    categorySlugFilter(params.scopeCategories),
     termsFilter("category_ids", params.categoryIds),
     termsFilter("catalog_brand.keyword", params.brands),
     termsFilter("material_id", params.materialIds),
@@ -879,7 +883,7 @@ function sortClauses(sort: CatalogSortValue): estypes.Sort | undefined {
   return sortOptions[sort];
 }
 
-function aggregations(): Record<string, estypes.AggregationsAggregationContainer> {
+function aggregations(excludeCategories: string[] = []): Record<string, estypes.AggregationsAggregationContainer> {
   const optionAggs = Object.fromEntries(
     OPTION_FILTERS.map((filter) => [
       `options_${filter.key}`,
@@ -903,6 +907,9 @@ function aggregations(): Record<string, estypes.AggregationsAggregationContainer
               field: filter.field,
               size: 100,
               order: { _key: "asc" },
+              ...(filter.key === "category" && excludeCategories.length > 0
+                ? { exclude: excludeCategories }
+                : {}),
             },
           } satisfies estypes.AggregationsAggregationContainer),
     ]),
@@ -1227,7 +1234,7 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
       ? { min_score: params.search.trim().split(/\s+/).filter(Boolean).length === 2 ? 3.0 : 2.0 } 
       : {}),
     ...(sortClauses(params.sort) ? { sort: sortClauses(params.sort) } : {}),
-    aggs: aggregations(),
+    aggs: aggregations(params.scopeCategories),
   });
 
   console.log(`[Search] Query locale: ${params.locale}, Total hits: ${totalHitsValue(response.hits.total)}`);
