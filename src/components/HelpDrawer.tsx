@@ -193,12 +193,12 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
   const selectedCountry = europeanCountries.find((country) => country.code === selectedCountryCode) ?? europeanCountries[0];
   const schedule = getCurrentWeekSchedule(availabilityByDate, locale);
   const displayMembers = teamMembers.length > 0 ? teamMembers.slice(0, 6) : [
-    { id: 1, name: t('fallbackAgent', { num: 1 }), profile_pic_url: 'https://randomuser.me/api/portraits/men/32.jpg' },
-    { id: 2, name: t('fallbackAgent', { num: 2 }), profile_pic_url: 'https://randomuser.me/api/portraits/men/44.jpg' },
-    { id: 3, name: t('fallbackAgent', { num: 3 }), profile_pic_url: 'https://randomuser.me/api/portraits/men/68.jpg' },
-    { id: 4, name: t('fallbackAgent', { num: 4 }), profile_pic_url: 'https://randomuser.me/api/portraits/women/12.jpg' },
-    { id: 5, name: t('fallbackAgent', { num: 5 }), profile_pic_url: 'https://randomuser.me/api/portraits/women/24.jpg' },
-    { id: 6, name: t('fallbackAgent', { num: 6 }), profile_pic_url: 'https://randomuser.me/api/portraits/women/45.jpg' },
+    { id: 1, name: t('helpDrawer.fallbackAgent', { num: 1 }), profile_pic_url: 'https://randomuser.me/api/portraits/men/32.jpg' },
+    { id: 2, name: t('helpDrawer.fallbackAgent', { num: 2 }), profile_pic_url: 'https://randomuser.me/api/portraits/men/44.jpg' },
+    { id: 3, name: t('helpDrawer.fallbackAgent', { num: 3 }), profile_pic_url: 'https://randomuser.me/api/portraits/men/68.jpg' },
+    { id: 4, name: t('helpDrawer.fallbackAgent', { num: 4 }), profile_pic_url: 'https://randomuser.me/api/portraits/women/12.jpg' },
+    { id: 5, name: t('helpDrawer.fallbackAgent', { num: 5 }), profile_pic_url: 'https://randomuser.me/api/portraits/women/24.jpg' },
+    { id: 6, name: t('helpDrawer.fallbackAgent', { num: 6 }), profile_pic_url: 'https://randomuser.me/api/portraits/women/45.jpg' },
   ];
 
   // Close on Escape
@@ -229,7 +229,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
         if (!response.ok) {
           throw new Error(typeof data === 'object' && data && 'message' in data && typeof data.message === 'string'
             ? data.message
-            : t('callback.errorBookingFailed')
+            : t('helpDrawer.callback.errorBookingFailed')
           );
         }
 
