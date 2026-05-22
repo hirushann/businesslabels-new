@@ -31,7 +31,17 @@ type ProductsListingProps = {
   initialQueryString: string;
   scopeQueryString?: string;
   baselineRangeFilters?: CatalogRangeFilter[];
+<<<<<<< HEAD
   printer?: { title: string; slug: string } | null;
+=======
+  // Filter keys to omit from the sidebar.
+  hiddenFilterKeys?: CatalogOptionFilterKey[];
+  // When provided, the category facet's options are filtered against this
+  // allowlist of live slugs. Products that weren't reindexed after a taxon
+  // delete can still emit the old slug in ES aggregations; passing the live
+  // tree's slugs here keeps the accordion intact but drops the ghost entries.
+  validCategorySlugs?: string[];
+>>>>>>> hasan
 };
 
 const OPTION_PARAM_KEY: Record<CatalogOptionFilterKey, string> = {
@@ -227,7 +237,12 @@ function CatalogProductsListing({
   initialQueryString,
   scopeQueryString,
   baselineRangeFilters,
+<<<<<<< HEAD
   printer,
+=======
+  hiddenFilterKeys,
+  validCategorySlugs,
+>>>>>>> hasan
 }: ProductsListingProps) {
   const t = useTranslations();
   const locale = useLocale();
@@ -554,6 +569,11 @@ function CatalogProductsListing({
       catalog.filters.options.map((filter) => [filter.key, filter]),
     );
 
+    const hidden = new Set(hiddenFilterKeys ?? []);
+    const liveCategorySlugs = validCategorySlugs
+      ? new Set(validCategorySlugs)
+      : null;
+
     return FILTER_UI_ORDER.flatMap(
       (
         entry,
@@ -567,11 +587,34 @@ function CatalogProductsListing({
           return filter ? [{ kind: "range" as const, filter }] : [];
         }
 
+        if (hidden.has(entry.key)) return [];
+
         const filter = optionMap.get(entry.key);
-        return filter ? [{ kind: "option" as const, filter }] : [];
+        if (!filter) return [];
+
+        if (entry.key === "category" && liveCategorySlugs) {
+          const liveOptions = filter.options.filter((option) =>
+            liveCategorySlugs.has(option.value),
+          );
+          if (liveOptions.length === 0) return [];
+          return [
+            {
+              kind: "option" as const,
+              filter: { ...filter, options: liveOptions },
+            },
+          ];
+        }
+
+        return [{ kind: "option" as const, filter }];
       },
     );
-  }, [catalog.filters.options, catalog.filters.ranges, stableRangeFilters]);
+  }, [
+    catalog.filters.options,
+    catalog.filters.ranges,
+    stableRangeFilters,
+    hiddenFilterKeys,
+    validCategorySlugs,
+  ]);
 
   const clearFilters = () => {
     setParams((params) => {

@@ -33,11 +33,10 @@ export default async function CategorySubnav({
     >
       {subcategories.map((category) => {
         const name = resolveLocalized(category.name, locale);
-        const childCount = category.children?.length ?? 0;
-        const meta =
-          childCount > 0
-            ? t("categoryArchive.subcategoryCount", { count: childCount })
-            : t("categoryArchive.productCount", { count: category.count });
+        // The card always shows the product count for the (sub)category —
+        // including products in any deeper descendants, since `count` from
+        // the backend aggregates by ancestor chain.
+        const meta = t("categoryArchive.productCount", { count: category.count });
 
         return (
           <Link
