@@ -2,6 +2,7 @@
 
 import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 
 interface HelpDrawerProps {
   onClose: () => void;
@@ -132,7 +133,7 @@ function getAvailabilityHours(slot: AvailabilitySlot | undefined) {
   return availableSlots.join(', ');
 }
 
-function getCurrentWeekSchedule(availabilityByDate: Map<string, AvailabilitySlot>) {
+function getCurrentWeekSchedule(availabilityByDate: Map<string, AvailabilitySlot>, locale: string) {
   const today = new Date();
   const monday = new Date(today);
   const dayOfWeek = today.getDay();
@@ -149,9 +150,12 @@ function getCurrentWeekSchedule(availabilityByDate: Map<string, AvailabilitySlot
     const hours = getAvailabilityHours(availabilityByDate.get(dateKey));
     const active = hours !== UNAVAILABLE_LABEL;
 
+    const dayName = date.toLocaleDateString(locale === 'nl' ? 'nl-NL' : 'en-US', { weekday: 'long' });
+    const formattedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+
     return {
       date: dateKey,
-      day: date.toLocaleDateString('en-US', { weekday: 'long' }),
+      day: formattedDay,
       hours,
       active,
     };
@@ -169,6 +173,9 @@ function CollapseIcon({ open }: { open: boolean }) {
 }
 
 export default function HelpDrawer({ onClose }: HelpDrawerProps) {
+  const t = useTranslations('helpDrawer');
+  const locale = useLocale();
+
   const [callbackOpen, setCallbackOpen] = useState(true);
   const [moreWaysOpen, setMoreWaysOpen] = useState(true);
   const [scheduleOpen, setScheduleOpen] = useState(true);
@@ -185,14 +192,14 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
 
   const selectedCountry = europeanCountries.find((country) => country.code === selectedCountryCode) ?? europeanCountries[0];
-  const schedule = getCurrentWeekSchedule(availabilityByDate);
+  const schedule = getCurrentWeekSchedule(availabilityByDate, locale);
   const displayMembers = teamMembers.length > 0 ? teamMembers.slice(0, 6) : [
-    { id: 1, name: 'Support Agent 1', profile_pic_url: 'https://randomuser.me/api/portraits/men/32.jpg' },
-    { id: 2, name: 'Support Agent 2', profile_pic_url: 'https://randomuser.me/api/portraits/men/44.jpg' },
-    { id: 3, name: 'Support Agent 3', profile_pic_url: 'https://randomuser.me/api/portraits/men/68.jpg' },
-    { id: 4, name: 'Support Agent 4', profile_pic_url: 'https://randomuser.me/api/portraits/women/12.jpg' },
-    { id: 5, name: 'Support Agent 5', profile_pic_url: 'https://randomuser.me/api/portraits/women/24.jpg' },
-    { id: 6, name: 'Support Agent 6', profile_pic_url: 'https://randomuser.me/api/portraits/women/45.jpg' },
+    { id: 1, name: t('fallbackAgent', { num: 1 }), profile_pic_url: 'https://randomuser.me/api/portraits/men/32.jpg' },
+    { id: 2, name: t('fallbackAgent', { num: 2 }), profile_pic_url: 'https://randomuser.me/api/portraits/men/44.jpg' },
+    { id: 3, name: t('fallbackAgent', { num: 3 }), profile_pic_url: 'https://randomuser.me/api/portraits/men/68.jpg' },
+    { id: 4, name: t('fallbackAgent', { num: 4 }), profile_pic_url: 'https://randomuser.me/api/portraits/women/12.jpg' },
+    { id: 5, name: t('fallbackAgent', { num: 5 }), profile_pic_url: 'https://randomuser.me/api/portraits/women/24.jpg' },
+    { id: 6, name: t('fallbackAgent', { num: 6 }), profile_pic_url: 'https://randomuser.me/api/portraits/women/45.jpg' },
   ];
 
   // Close on Escape
@@ -223,7 +230,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
         if (!response.ok) {
           throw new Error(typeof data === 'object' && data && 'message' in data && typeof data.message === 'string'
             ? data.message
-            : 'Failed to fetch availability.'
+            : t('callback.errorBookingFailed')
           );
         }
 
@@ -248,7 +255,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [t]);
 
   // Load team members
   useEffect(() => {
@@ -292,7 +299,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
 
     if (!normalizedPhoneNumber) {
       setBookingStatus('error');
-      setBookingMessage('Please enter your phone number.');
+      setBookingMessage(t('callback.errorPhoneRequired'));
       return;
     }
 
@@ -321,7 +328,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
         const message =
           typeof data.message === 'string'
             ? data.message
-            : 'We could not book your callback. Please try again.';
+            : t('callback.errorBookingFailed');
 
         throw new Error(message);
       }
@@ -330,12 +337,12 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
       setBookingMessage(
         typeof data.message === 'string'
           ? data.message
-          : 'Your callback request has been sent.'
+          : t('callback.successBooking')
       );
       setPhoneNumber('');
     } catch (error) {
       setBookingStatus('error');
-      setBookingMessage(error instanceof Error ? error.message : 'We could not book your callback. Please try again.');
+      setBookingMessage(error instanceof Error ? error.message : t('callback.errorBookingFailed'));
     }
   };
 
@@ -347,7 +354,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
 
     if (!normalizedEmail || !normalizedMessage) {
       setContactStatus('error');
-      setContactStatusMessage('Please enter your email address and message.');
+      setContactStatusMessage(t('message.errorRequiredFields'));
       return;
     }
 
@@ -373,7 +380,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
         const message =
           typeof data.message === 'string'
             ? data.message
-            : 'We could not send your message. Please try again.';
+            : t('message.errorSendingFailed');
 
         throw new Error(message);
       }
@@ -382,13 +389,13 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
       setContactStatusMessage(
         typeof data.message === 'string'
           ? data.message
-          : 'Your message has been sent.'
+          : t('message.successSending')
       );
       setContactEmail('');
       setContactMessage('');
     } catch (error) {
       setContactStatus('error');
-      setContactStatusMessage(error instanceof Error ? error.message : 'We could not send your message. Please try again.');
+      setContactStatusMessage(error instanceof Error ? error.message : t('message.errorSendingFailed'));
     }
   };
 
@@ -405,7 +412,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Need Help"
+        aria-label={t('title')}
         className="fixed top-0 right-0 h-full w-[480px] bg-white z-[1000] shadow-2xl flex flex-col overflow-hidden"
         style={{ animation: 'slideInRight 0.28s cubic-bezier(0.16,1,0.3,1) both' }}
       >
@@ -414,11 +421,11 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
           {/* Title + close */}
           <div className="flex justify-between items-start">
             <h2 className="text-neutral-800 text-2xl font-semibold font-['Segoe_UI'] leading-7">
-              Need help?
+              {t('title')}
             </h2>
             <button
               onClick={onClose}
-              aria-label="Close"
+              aria-label={t('closeAria')}
               className="w-6 h-6 flex items-center justify-center text-zinc-500 hover:text-zinc-800 transition-colors"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -463,7 +470,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                   </svg>
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-neutral-800 text-base font-semibold font-['Segoe_UI'] leading-5">Call</span>
+                  <span className="text-neutral-800 text-base font-semibold font-['Segoe_UI'] leading-5">{t('contact.call')}</span>
                   <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI'] leading-5">
                     +31 (0)318 590 465
                   </span>
@@ -482,7 +489,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                   </svg>
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-neutral-800 text-base font-semibold font-['Segoe_UI'] leading-5">Email</span>
+                  <span className="text-neutral-800 text-base font-semibold font-['Segoe_UI'] leading-5">{t('contact.email')}</span>
                   <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI'] leading-5">verkoop@businesslabels.nl</span>
                 </div>
               </a>
@@ -500,32 +507,17 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
               onClick={() => setCallbackOpen(v => !v)}
             >
               <span className="text-neutral-800 text-lg font-normal font-['Segoe_UI'] leading-6">
-                Request a Call Back from Our Team
+                {t('callback.header')}
               </span>
               <CollapseIcon open={callbackOpen} />
             </button>
 
             {callbackOpen && (
               <div className="flex flex-col gap-4">
-                {/* Time slot */}
-                {/* <div className="p-6 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] border border-slate-100 flex flex-col items-center gap-6">
-                  <div className="flex items-center gap-3">
-                    <span className="text-neutral-800 text-xl font-semibold font-['Segoe_UI'] leading-7">
-                      Tuesday, 10:15 - 10:30
-                    </span>
-                    <span className="px-4 py-0.5 bg-slate-100 rounded-full text-neutral-800 text-xs font-semibold font-['Segoe_UI']">
-                      Central European Time
-                    </span>
-                  </div>
-                  <span className="text-amber-500 text-base font-semibold font-['Segoe_UI'] underline cursor-pointer hover:text-amber-600 transition-colors">
-                    Choose a different time slot
-                  </span>
-                </div> */}
-
                 <form className="flex flex-col gap-4" onSubmit={handleBookingSubmit}>
                   {/* Phone country */}
                   <label className="flex flex-col gap-2">
-                    <span className="sr-only">Country</span>
+                    <span className="sr-only">{t('callback.countryLabel')}</span>
                     <select
                       value={selectedCountryCode}
                       onChange={(event) => {
@@ -537,7 +529,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                     >
                       {europeanCountries.map((country) => (
                         <option key={country.code} value={country.code}>
-                          {country.name} ({country.dialCode})
+                          {t(`countries.${country.code}`)} ({country.dialCode})
                         </option>
                       ))}
                     </select>
@@ -545,7 +537,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
 
                   {/* Mobile number */}
                   <label className="flex flex-col gap-2">
-                    <span className="sr-only">Your mobile number</span>
+                    <span className="sr-only">{t('callback.phoneLabel')}</span>
                     <input
                       type="tel"
                       value={phoneNumber}
@@ -554,7 +546,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                         setBookingStatus('idle');
                         setBookingMessage('');
                       }}
-                      placeholder="Your mobile number"
+                      placeholder={t('callback.phonePlaceholder')}
                       autoComplete="tel"
                       className="h-11 px-5 py-2 rounded-xl border border-zinc-200 outline-none text-neutral-700 text-base font-normal font-['Segoe_UI'] placeholder-neutral-400 focus:border-amber-400 transition-colors w-full"
                     />
@@ -571,25 +563,6 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                     </p>
                   )}
 
-                  {/* Customer number */}
-                  {/* <div className="h-11 px-5 py-2 rounded-xl border border-zinc-200 flex justify-between items-center">
-                    <span className="text-neutral-400 text-base font-normal font-['Segoe_UI']">Your customer number</span>
-                    <span className="px-1.5 py-0.5 bg-slate-100 rounded text-neutral-700 text-[10px] font-normal font-['Segoe_UI']">
-                      Optional
-                    </span>
-                  </div> */}
-
-                  {/* Info note */}
-                  {/* <div className="flex items-start gap-1.5">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 mt-0.5">
-                      <circle cx="8" cy="8" r="7" stroke="#a1a1aa" strokeWidth="1.2" />
-                      <path d="M8 7v4M8 5.5v.5" stroke="#a1a1aa" strokeWidth="1.2" strokeLinecap="round" />
-                    </svg>
-                    <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">
-                      Please have your customer or order number at hand, if available
-                    </span>
-                  </div> */}
-
                   {/* Buttons */}
                   <div className="flex items-center gap-4">
                     <button
@@ -597,14 +570,14 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                       disabled={bookingStatus === 'submitting'}
                       className="w-24 h-12 px-4 py-2.5 bg-amber-500 rounded-full text-white text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors disabled:cursor-not-allowed disabled:opacity-70"
                     >
-                      {bookingStatus === 'submitting' ? 'Booking' : 'Book'}
+                      {bookingStatus === 'submitting' ? t('callback.booking') : t('callback.book')}
                     </button>
                     <button
                       type="button"
                       onClick={resetBookingForm}
                       className="w-24 h-12 px-4 py-2.5 bg-zinc-500/10 rounded-full text-zinc-500 text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-zinc-500/20 transition-colors"
                     >
-                      Cancel
+                      {t('callback.cancel')}
                     </button>
                   </div>
                 </form>
@@ -621,28 +594,21 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
               onClick={() => setMoreWaysOpen(v => !v)}
             >
               <span className="text-neutral-800 text-lg font-normal font-['Segoe_UI'] leading-6">
-                More Ways to Reach Our Team
+                {t('moreWays.header')}
               </span>
               <CollapseIcon open={moreWaysOpen} />
             </button>
 
             {moreWaysOpen && (
               <div className="flex flex-col gap-4">
-                {/* <div className="flex flex-col gap-1">
-                  <span className="text-neutral-800 text-base font-semibold font-['Segoe_UI']">FAX</span>
-                  <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">+31-1111-1111-11</span>
-                </div> */}
                 <div className="flex flex-col gap-1">
-                  <span className="text-neutral-800 text-base font-semibold font-['Segoe_UI']">ADDRESS</span>
+                  <span className="text-neutral-800 text-base font-semibold font-['Segoe_UI']">{t('moreWays.addressTitle')}</span>
                   <div className="flex flex-col gap-1">
                     <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">Lenderinkweg 8,</span>
                     <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">6733 AX Wekerom</span>
-                    <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">Netherlands</span>
+                    <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">{t('moreWays.netherlands')}</span>
                   </div>
                 </div>
-                {/* <span className="text-amber-500 text-base font-semibold font-['Segoe_UI'] underline cursor-pointer hover:text-amber-600 transition-colors">
-                  All Contacts
-                </span> */}
               </div>
             )}
           </div>
@@ -656,7 +622,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
               onClick={() => setScheduleOpen(v => !v)}
             >
               <span className="text-neutral-800 text-lg font-normal font-['Segoe_UI'] leading-6">
-                Check When Our Team Is Available
+                {t('schedule.header')}
               </span>
               <CollapseIcon open={scheduleOpen} />
             </button>
@@ -670,13 +636,13 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                         {day} <span className="text-xs">({formatScheduleDate(date)})</span>
                       </span>
                       <span className={`text-sm font-normal font-['Segoe_UI'] text-right ${active ? 'text-neutral-800' : 'text-zinc-500'}`}>
-                        {hours}
+                        {hours === UNAVAILABLE_LABEL ? t('schedule.unavailable') : hours}
                       </span>
                     </div>
                   ))}
                 </div>
                 <p className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">
-                  Thank you for your understanding. We respond to inquiries during our working hours only.
+                  {t('schedule.footer')}
                 </p>
               </div>
             )}
@@ -691,7 +657,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
               onClick={() => setMessageOpen(v => !v)}
             >
               <span className="text-neutral-800 text-lg font-normal font-['Segoe_UI'] leading-6">
-                Drop Us a Message
+                {t('message.header')}
               </span>
               <CollapseIcon open={messageOpen} />
             </button>
@@ -699,7 +665,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
             {messageOpen && (
               <form className="flex flex-col gap-3" onSubmit={handleContactSubmit}>
                 <p className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">
-                  Please leave a message and we will contact you as soon as possible.
+                  {t('message.description')}
                 </p>
                 <input
                   type="email"
@@ -709,7 +675,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                     setContactStatus('idle');
                     setContactStatusMessage('');
                   }}
-                  placeholder="Your Email Address"
+                  placeholder={t('message.emailPlaceholder')}
                   autoComplete="email"
                   className="h-11 px-5 py-2 rounded-xl border border-zinc-200 outline-none text-neutral-700 text-base font-normal font-['Segoe_UI'] placeholder-neutral-400 focus:border-amber-400 transition-colors w-full"
                 />
@@ -720,7 +686,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                     setContactStatus('idle');
                     setContactStatusMessage('');
                   }}
-                  placeholder="Write your message here..."
+                  placeholder={t('message.messagePlaceholder')}
                   rows={4}
                   className="px-3 py-2 rounded-xl border border-zinc-200 outline-none text-neutral-700 text-sm font-normal font-['Segoe_UI'] placeholder-neutral-400 focus:border-amber-400 transition-colors w-full resize-none"
                 />
@@ -740,7 +706,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                     disabled={contactStatus === 'submitting'}
                     className="w-36 h-12 px-4 py-2.5 bg-amber-500 rounded-full text-white text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    {contactStatus === 'submitting' ? 'Sending' : 'Send Message'}
+                    {contactStatus === 'submitting' ? t('message.sending') : t('message.sendMessage')}
                   </button>
                 </div>
               </form>
