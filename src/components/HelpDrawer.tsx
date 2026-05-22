@@ -2,7 +2,7 @@
 
 import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 
 interface HelpDrawerProps {
   onClose: () => void;
@@ -174,6 +174,7 @@ function CollapseIcon({ open }: { open: boolean }) {
 
 export default function HelpDrawer({ onClose }: HelpDrawerProps) {
   const t = useTranslations();
+  const locale = useLocale();
   const [callbackOpen, setCallbackOpen] = useState(true);
   const [moreWaysOpen, setMoreWaysOpen] = useState(true);
   const [scheduleOpen, setScheduleOpen] = useState(true);
