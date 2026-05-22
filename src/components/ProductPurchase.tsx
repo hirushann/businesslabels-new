@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import type { ProductRouteType } from "@/components/ProductCard";
 import { buildCartItemKey, useCart } from "@/components/CartProvider";
 import { useWishlist } from "@/components/WishlistProvider";
@@ -276,14 +276,23 @@ export default function ProductPurchase({
   };
   const handleQuantityChange = (value: string) => {
     setQuantityError(null);
-
-    const nextQuantity = Number.parseInt(value, 10);
-    if (!Number.isFinite(nextQuantity)) {
-      setQuantity(1);
+    if (value === "") {
+      setQuantity(0);
       return;
     }
 
-    setQuantity(Math.max(1, nextQuantity));
+    const nextQuantity = Number.parseInt(value, 10);
+    if (!Number.isFinite(nextQuantity)) {
+      return;
+    }
+
+    setQuantity(Math.max(0, nextQuantity));
+  };
+
+  const handleQuantityBlur = () => {
+    if (quantity < 1) {
+      setQuantity(initialQuantity);
+    }
   };
 
   const displaySku = sku?.trim() ? sku : "-";
@@ -330,6 +339,51 @@ export default function ProductPurchase({
   const selectedWarrantyOption = normalizedWarranty.options.find(
     (option) => option.id === selectedWarrantyId,
   ) ?? defaultWarrantyOption;
+
+  // Find active discount percentage based on quantity
+  const activeTier = useMemo(() => {
+    if (!hasPrice || !hasBulkDiscounts) return null;
+    // Find the highest tier that matches the current quantity
+    return [...bulkDiscounts]
+      .reverse()
+      .find((tier) => quantity >= Number.parseInt(tier.quantity, 10)) ?? null;
+  }, [bulkDiscounts, hasBulkDiscounts, hasPrice, quantity]);
+
+  const activeDiscountPercent = useMemo(() => {
+    if (!activeTier) return 0;
+    const pct = Number.parseInt(activeTier.discount.replace("%", ""), 10);
+    return Number.isFinite(pct) ? pct : 0;
+  }, [activeTier]);
+
+  const getUnitPriceForQuantity = useCallback((qty: number) => {
+    if (!hasPrice) return null;
+    if (!bulkDiscounts || bulkDiscounts.length === 0) return price;
+
+    const matchingTier = [...bulkDiscounts]
+      .reverse()
+      .find((tier) => qty >= Number.parseInt(tier.quantity, 10));
+
+    if (matchingTier) {
+      const pct = Number.parseInt(matchingTier.discount.replace("%", ""), 10);
+      if (Number.isFinite(pct) && pct > 0) {
+        return price * (1 - pct / 100);
+      }
+    }
+    return price;
+  }, [price, hasPrice, bulkDiscounts]);
+
+  const activeUnitPrice = useMemo(() => {
+    return getUnitPriceForQuantity(quantity);
+  }, [quantity, getUnitPriceForQuantity]);
+
+  const handleTierToggle = (tierQty: number, isSelected: boolean) => {
+    if (isSelected) {
+      setQuantity(initialQuantity);
+    } else {
+      setQuantity(tierQty);
+    }
+    setQuantityError(null);
+  };
 
   // Calculate delivery message
   const deliveryInfo = useMemo(() => {
@@ -391,6 +445,8 @@ export default function ProductPurchase({
   };
 
   const addProductWithWarranty = (qtyToAdd: number, selectedOption: WarrantyOption | null) => {
+    const itemPrice = getUnitPriceForQuantity(qtyToAdd) ?? price;
+
     addItem(
       {
         id: id ?? displaySku,
@@ -398,7 +454,7 @@ export default function ProductPurchase({
         type,
         name: displayName,
         sku: displaySku,
-        price,
+        price: itemPrice,
         mainImage,
         componentCount,
         packingGroup: normalizedPackingGroup,
@@ -577,14 +633,20 @@ export default function ProductPurchase({
         </div>
         <div className="flex items-baseline gap-2">
           <span className="text-neutral-800 text-4xl font-bold leading-[48px]">
-            {hasPrice ? formatEuro(price) : "-"}
+            {hasPrice ? formatEuro(activeUnitPrice ?? price ?? 0) : "-"}
           </span>
-          {hasOriginalPrice ? (
+          {activeDiscountPercent > 0 ? (
             <span className="text-zinc-500 text-2xl font-normal line-through leading-7">
-              {formatEuro(originalPrice)}
+              {formatEuro(price ?? 0)}
+            </span>
+          ) : hasOriginalPrice ? (
+            <span className="text-zinc-500 text-2xl font-normal line-through leading-7">
+              {formatEuro(originalPrice ?? 0)}
             </span>
           ) : null}
-          {discountPercentage ? (
+          {activeDiscountPercent > 0 ? (
+            <span className="text-red-600 text-2xl font-semibold leading-7">-{activeDiscountPercent}%</span>
+          ) : discountPercentage ? (
             <span className="text-red-600 text-2xl font-semibold leading-7">-{discountPercentage}%</span>
           ) : null}
         </div>
@@ -592,28 +654,64 @@ export default function ProductPurchase({
       </div>
 
       {hasBulkDiscounts ? (
-        <div className="p-4 bg-slate-100 rounded-[10px]">
-          <div className="flex flex-col gap-3">
-            <span className="text-neutral-800 text-base font-bold leading-5">{t("product.bulkDiscounts")}</span>
-            <div className="flex-1 flex justify-between">
-              <div className="flex flex-col gap-2">
-                <span className="text-neutral-700 text-base font-semibold leading-5">{t("product.quantity")}</span>
-                {bulkDiscounts.map((tier) => (
-                  <div key={`${tier.quantity}-${tier.discount}`} className="flex items-center gap-1.5">
-                    <div className="w-3.5 h-3.5 bg-white rounded-[3px] border border-zinc-500/20" />
-                    <span className="text-neutral-700 text-base font-normal leading-5">{tier.quantity}</span>
+        <div className="p-4 bg-[#F8F9FA] border border-[#EDEDED] rounded-2xl">
+          <div className="grid grid-cols-[1.2fr_1fr_1fr] gap-x-4 gap-y-3.5 items-center">
+            {/* Headers */}
+            <div
+              className="text-neutral-800 text-base font-bold leading-5 self-start"
+              style={{ gridRow: `span ${bulkDiscounts.length + 1}` }}
+            >
+              {t("product.bulkDiscounts")}
+            </div>
+            <span className="text-neutral-500 text-sm font-medium leading-4">
+              {t("product.quantity")}
+            </span>
+            <span className="text-neutral-500 text-sm font-medium leading-4">
+              {t("product.discount")}
+            </span>
+
+            {/* Rows */}
+            {bulkDiscounts.map((tier) => {
+              const tierQty = Number.parseInt(tier.quantity, 10);
+              const isSelected = activeTier?.quantity === tier.quantity;
+
+              return (
+                <div key={`${tier.quantity}-${tier.discount}`} className="contents">
+                  {/* Quantity cell with checkbox */}
+                  <div className="flex items-center">
+                    <label className="flex items-center gap-2.5 cursor-pointer select-none group">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => handleTierToggle(tierQty, isSelected)}
+                        className="sr-only"
+                      />
+                      <div
+                        className={`w-[18px] h-[18px] rounded-[4px] border flex items-center justify-center transition-all ${
+                          isSelected
+                            ? "bg-green-600 border-green-600 text-white"
+                            : "bg-white border-[#C8C8C8] group-hover:border-zinc-400"
+                        }`}
+                      >
+                        {isSelected && (
+                          <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 12 12">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 6l2 2 4-4" />
+                          </svg>
+                        )}
+                      </div>
+                      <span className="text-neutral-700 text-sm sm:text-base font-normal leading-5">
+                        {tier.quantity}
+                      </span>
+                    </label>
                   </div>
-                ))}
-              </div>
-              <div className="flex flex-col gap-2">
-                <span className="text-neutral-700 text-base font-semibold leading-5">{t("product.discount")}</span>
-                {bulkDiscounts.map((tier) => (
-                  <span key={`${tier.discount}-${tier.quantity}`} className="text-green-600 text-base font-normal leading-5">
+
+                  {/* Discount cell */}
+                  <span className="text-green-600 text-sm sm:text-base font-semibold leading-5">
                     {tier.discount}
                   </span>
-                ))}
-              </div>
-            </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       ) : null}
@@ -673,7 +771,14 @@ export default function ProductPurchase({
                     </svg>
                   </button>
                   <div className="flex-1 self-stretch flex justify-center items-center overflow-hidden">
-                    <span className="text-neutral-800 text-sm font-semibold leading-5 px-2">{quantity}</span>
+                    <input
+                      type="number"
+                      min="1"
+                      value={quantity === 0 ? "" : quantity}
+                      onChange={(e) => handleQuantityChange(e.target.value)}
+                      onBlur={handleQuantityBlur}
+                      className="w-full text-center text-neutral-800 text-sm font-semibold focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-transparent"
+                    />
                   </div>
                   <button
                     onClick={increment}
@@ -944,7 +1049,7 @@ export default function ProductPurchase({
           <span className="text-zinc-500 text-[10px] uppercase tracking-wider font-semibold leading-3">{t("common.total") || "Total"}</span>
           <div className="flex items-baseline gap-1">
             <span className="text-neutral-800 text-xl font-bold leading-7">
-              {hasPrice ? formatEuro(price * quantity) : "-"}
+              {hasPrice ? formatEuro((activeUnitPrice ?? price ?? 0) * quantity) : "-"}
             </span>
           </div>
           <span className="text-zinc-500 text-[10px] font-normal leading-3">{t("product.exVat")}</span>
@@ -962,7 +1067,14 @@ export default function ProductPurchase({
                 <path strokeLinecap="round" d="M2 6h8" />
               </svg>
             </button>
-            <span className="flex-1 text-center text-sm font-semibold text-neutral-800">{quantity}</span>
+            <input
+              type="number"
+              min="1"
+              value={quantity === 0 ? "" : quantity}
+              onChange={(e) => handleQuantityChange(e.target.value)}
+              onBlur={handleQuantityBlur}
+              className="flex-1 min-w-0 text-center text-sm font-semibold text-neutral-800 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-transparent"
+            />
             <button
               onClick={increment}
               className="w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"

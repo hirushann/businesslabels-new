@@ -43,6 +43,7 @@ export type LaravelProduct = {
   translations?: Array<Record<string, LaravelProductTranslation> | LaravelProductTranslation> | null;
   warranty?: ProductWarrantyData | null;
   discount?: number | null;
+  discounts?: Array<{ discount?: string | number | null; quantity?: string | number | null }> | string | null;
   packing_group?: number | string | null;
   allow_singulars?: string | number | boolean | null;
 };
@@ -111,6 +112,7 @@ export function mapLaravelProductToCardData(product: LaravelProduct, locale: str
     type: (product.type === "simple" || product.type === "variable") ? product.type : null,
     warranty: product.warranty ?? null,
     discount: product.discount ?? 0,
+    discounts: product.discounts ?? null,
     packing_group: product.packing_group ? Number(product.packing_group) : null,
     allow_singulars: product.allow_singulars ?? null,
   };

@@ -1136,7 +1136,7 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
           if (res.ok) {
             const json = await res.json();
             if (json && Array.isArray(json.data)) {
-              const productConfigMap = new Map<string, { packingGroup: number | null; allowSingulars: LaravelProduct["allow_singulars"] }>();
+              const productConfigMap = new Map<string, { packingGroup: number | null; allowSingulars: LaravelProduct["allow_singulars"]; discounts: LaravelProduct["discounts"] }>();
               (json.data as LaravelProduct[]).forEach((p) => {
                 if (p && p.slug) {
                   const resolvedSlug = typeof p.slug === "string" ? p.slug : (p.slug.en || p.slug.nl || "");
@@ -1144,6 +1144,7 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
                     productConfigMap.set(resolvedSlug, {
                       packingGroup: p.packing_group != null ? Number(p.packing_group) : null,
                       allowSingulars: p.allow_singulars ?? null,
+                      discounts: p.discounts ?? null,
                     });
                   }
                 }
@@ -1154,6 +1155,7 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
                   const productConfig = productConfigMap.get(p.product.slug);
                   p.product.packing_group = productConfig?.packingGroup ?? null;
                   p.product.allow_singulars = productConfig?.allowSingulars ?? null;
+                  p.product.discounts = productConfig?.discounts ?? null;
                 }
               });
             }

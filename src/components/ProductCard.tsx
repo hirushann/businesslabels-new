@@ -14,6 +14,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useLocale } from "next-intl";
+import BulkDiscountModal from "@/components/BulkDiscountModal";
 
 export type ProductRouteType = "simple" | "variable" | "group_product";
 
@@ -38,6 +39,11 @@ export type ProductWarrantyData = {
   } | null;
 };
 
+export type BulkDiscountTier = {
+  quantity?: string | number | null;
+  discount?: string | number | null;
+};
+
 export type ProductCardData = {
   id: string | number;
   sku: string;
@@ -56,6 +62,7 @@ export type ProductCardData = {
   allow_singulars?: string | number | boolean | null;
   warranty?: ProductWarrantyData | null;
   discount?: number | 0;
+  discounts?: BulkDiscountTier[] | string | null;
 };
 
 type ProductCardProps = {
@@ -160,7 +167,6 @@ const truncateWords = (text: string, count: number) => {
 
 export default function ProductCard({ product, href, onClick }: ProductCardProps) {
   const locale = useLocale();
-  console.log("product",product);
   const { addItem, openCart } = useCart();
   const productName = product.name ?? "";
   const categoryBadge = lastCategoryLabel(product.categories);
@@ -184,12 +190,34 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
     normalizedWarranty.defaultOptionId,
   );
   const [isWarrantyPopoverOpen, setIsWarrantyPopoverOpen] = useState(false);
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const selectedWarrantyOption =
     normalizedWarranty.options.find((option) => option.id === selectedWarrantyId) ??
     defaultWarrantyOption;
   const hasWarrantyOptions = normalizedWarranty.options.length > 0;
 
-  const addProductWithWarranty = (selectedOption: typeof selectedWarrantyOption) => {
+  // Normalize bulk discounts: only truthy arrays with valid tiers
+  const hasBulkDiscounts = useMemo(() => {
+    const raw = product.discounts;
+    if (!raw) return false;
+    let arr: Array<{ discount?: string | number | null; quantity?: string | number | null }>;
+    if (typeof raw === "string") {
+      try { arr = JSON.parse(raw); } catch { return false; }
+    } else {
+      arr = raw;
+    }
+    if (!Array.isArray(arr) || arr.length === 0) return false;
+    return arr.some((tier) => {
+      const qty = Number(tier?.quantity);
+      const pct = Number(tier?.discount);
+      return Number.isFinite(qty) && qty > 0 && Number.isFinite(pct) && pct > 0;
+    });
+  }, [product.discounts]);
+
+  const addProductWithWarranty = (selectedOption: typeof selectedWarrantyOption, overrideQty?: number, overridePrice?: number) => {
+    const finalQty = overrideQty ?? addQuantity;
+    const finalPrice = overridePrice ?? product.price ?? null;
+
     addItem(
       {
         id: product.id,
@@ -197,12 +225,12 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
         type: product.type,
         name: product.name,
         sku: product.sku,
-        price: product.price ?? null,
+        price: finalPrice,
         mainImage: product.mainImage ?? null,
         packingGroup: normalizedPackingGroup,
         allowSingulars: normalizeBoolean(product.allow_singulars),
       },
-      addQuantity,
+      finalQty,
     );
 
     const warrantyPrice =
@@ -232,7 +260,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
             parentName: productName,
           },
         },
-        addQuantity,
+        finalQty,
       );
     }
     
@@ -242,6 +270,12 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
   const handleAddToCart = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
+
+    // Products with bulk discounts get the dedicated pricing modal
+    if (hasBulkDiscounts) {
+      setIsBulkModalOpen(true);
+      return;
+    }
 
     if (hasWarrantyOptions) {
       setSelectedWarrantyId(selectedWarrantyId ?? normalizedWarranty.defaultOptionId);
@@ -257,6 +291,12 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
     event.stopPropagation();
     addProductWithWarranty(selectedWarrantyOption);
     setIsWarrantyPopoverOpen(false);
+  };
+
+  // Called when user confirms from bulk discount modal
+  const handleBulkModalConfirm = (quantity: number, unitPrice: number) => {
+    setIsBulkModalOpen(false);
+    addProductWithWarranty(null, quantity, unitPrice);
   };
 
   const cardContent = (
@@ -474,13 +514,36 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
     </div>
   );
 
+  const bulkModal = hasBulkDiscounts && hasPrice && product.discounts ? (
+    <BulkDiscountModal
+      isOpen={isBulkModalOpen}
+      onClose={() => setIsBulkModalOpen(false)}
+      onConfirm={handleBulkModalConfirm}
+      productName={productName}
+      productSku={product.sku}
+      productImage={normalizeText(product.mainImage)}
+      price={product.price!}
+      discounts={product.discounts}
+      packingGroup={normalizedPackingGroup}
+      allowSingulars={normalizeBoolean(product.allow_singulars)}
+    />
+  ) : null;
+
   if (!href) {
-    return <div>{cardContent}</div>;
+    return (
+      <>
+        <div>{cardContent}</div>
+        {bulkModal}
+      </>
+    );
   }
 
   return (
-    <Link href={href} className="block h-full w-full" onClick={onClick}>
-      {cardContent}
-    </Link>
+    <>
+      <Link href={href} className="block h-full w-full" onClick={onClick}>
+        {cardContent}
+      </Link>
+      {bulkModal}
+    </>
   );
 }
