@@ -133,7 +133,7 @@ function getAvailabilityHours(slot: AvailabilitySlot | undefined) {
   return availableSlots.join(', ');
 }
 
-function getCurrentWeekSchedule(availabilityByDate: Map<string, AvailabilitySlot>) {
+function getCurrentWeekSchedule(availabilityByDate: Map<string, AvailabilitySlot>, locale: string) {
   const today = new Date();
   const monday = new Date(today);
   const dayOfWeek = today.getDay();
@@ -150,9 +150,12 @@ function getCurrentWeekSchedule(availabilityByDate: Map<string, AvailabilitySlot
     const hours = getAvailabilityHours(availabilityByDate.get(dateKey));
     const active = hours !== UNAVAILABLE_LABEL;
 
+    const dayName = date.toLocaleDateString(locale === 'nl' ? 'nl-NL' : 'en-US', { weekday: 'long' });
+    const formattedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+
     return {
       date: dateKey,
-      day: date.toLocaleDateString('en-US', { weekday: 'long' }),
+      day: formattedDay,
       hours,
       active,
     };
@@ -187,11 +190,14 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
 
   const selectedCountry = europeanCountries.find((country) => country.code === selectedCountryCode) ?? europeanCountries[0];
-  const schedule = getCurrentWeekSchedule(availabilityByDate);
-  const displayMembers = teamMembers.length > 0 ? teamMembers.slice(0, 3) : [
-    { id: 1, name: 'Support Agent 1', profile_pic_url: 'https://randomuser.me/api/portraits/men/32.jpg' },
-    { id: 2, name: 'Support Agent 2', profile_pic_url: 'https://randomuser.me/api/portraits/men/44.jpg' },
-    { id: 3, name: 'Support Agent 3', profile_pic_url: 'https://randomuser.me/api/portraits/men/68.jpg' },
+  const schedule = getCurrentWeekSchedule(availabilityByDate, locale);
+  const displayMembers = teamMembers.length > 0 ? teamMembers.slice(0, 6) : [
+    { id: 1, name: t('fallbackAgent', { num: 1 }), profile_pic_url: 'https://randomuser.me/api/portraits/men/32.jpg' },
+    { id: 2, name: t('fallbackAgent', { num: 2 }), profile_pic_url: 'https://randomuser.me/api/portraits/men/44.jpg' },
+    { id: 3, name: t('fallbackAgent', { num: 3 }), profile_pic_url: 'https://randomuser.me/api/portraits/men/68.jpg' },
+    { id: 4, name: t('fallbackAgent', { num: 4 }), profile_pic_url: 'https://randomuser.me/api/portraits/women/12.jpg' },
+    { id: 5, name: t('fallbackAgent', { num: 5 }), profile_pic_url: 'https://randomuser.me/api/portraits/women/24.jpg' },
+    { id: 6, name: t('fallbackAgent', { num: 6 }), profile_pic_url: 'https://randomuser.me/api/portraits/women/45.jpg' },
   ];
 
   // Close on Escape
@@ -222,7 +228,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
         if (!response.ok) {
           throw new Error(typeof data === 'object' && data && 'message' in data && typeof data.message === 'string'
             ? data.message
-            : 'Failed to fetch availability.'
+            : t('callback.errorBookingFailed')
           );
         }
 
@@ -247,7 +253,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [t]);
 
   // Load team members
   useEffect(() => {
@@ -429,9 +435,9 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
           {/* Avatars + contact cards */}
           <div className="flex flex-col gap-4">
             {/* Avatars */}
-            <div className="flex items-center gap-4 justify-center">
+            <div className="flex items-center justify-center -space-x-4 isolate">
               {displayMembers.map((member) => (
-                <div key={member.id} className="group relative flex justify-center">
+                <div key={member.id} className="group relative flex justify-center z-0 hover:z-30 transition-all duration-200">
                   <img
                     src={member.profile_pic_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=f59e0b&color=fff`}
                     alt={member.name}
@@ -506,21 +512,6 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
 
             {callbackOpen && (
               <div className="flex flex-col gap-4">
-                {/* Time slot */}
-                {/* <div className="p-6 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] border border-slate-100 flex flex-col items-center gap-6">
-                  <div className="flex items-center gap-3">
-                    <span className="text-neutral-800 text-xl font-semibold font-['Segoe_UI'] leading-7">
-                      Tuesday, 10:15 - 10:30
-                    </span>
-                    <span className="px-4 py-0.5 bg-slate-100 rounded-full text-neutral-800 text-xs font-semibold font-['Segoe_UI']">
-                      Central European Time
-                    </span>
-                  </div>
-                  <span className="text-amber-500 text-base font-semibold font-['Segoe_UI'] underline cursor-pointer hover:text-amber-600 transition-colors">
-                    Choose a different time slot
-                  </span>
-                </div> */}
-
                 <form className="flex flex-col gap-4" onSubmit={handleBookingSubmit}>
                   {/* Phone country */}
                   <label className="flex flex-col gap-2">
@@ -536,7 +527,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                     >
                       {europeanCountries.map((country) => (
                         <option key={country.code} value={country.code}>
-                          {country.name} ({country.dialCode})
+                          {t(`countries.${country.code}`)} ({country.dialCode})
                         </option>
                       ))}
                     </select>
@@ -569,25 +560,6 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                       {bookingMessage}
                     </p>
                   )}
-
-                  {/* Customer number */}
-                  {/* <div className="h-11 px-5 py-2 rounded-xl border border-zinc-200 flex justify-between items-center">
-                    <span className="text-neutral-400 text-base font-normal font-['Segoe_UI']">Your customer number</span>
-                    <span className="px-1.5 py-0.5 bg-slate-100 rounded text-neutral-700 text-[10px] font-normal font-['Segoe_UI']">
-                      Optional
-                    </span>
-                  </div> */}
-
-                  {/* Info note */}
-                  {/* <div className="flex items-start gap-1.5">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 mt-0.5">
-                      <circle cx="8" cy="8" r="7" stroke="#a1a1aa" strokeWidth="1.2" />
-                      <path d="M8 7v4M8 5.5v.5" stroke="#a1a1aa" strokeWidth="1.2" strokeLinecap="round" />
-                    </svg>
-                    <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">
-                      Please have your customer or order number at hand, if available
-                    </span>
-                  </div> */}
 
                   {/* Buttons */}
                   <div className="flex items-center gap-4">
@@ -627,10 +599,6 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
 
             {moreWaysOpen && (
               <div className="flex flex-col gap-4">
-                {/* <div className="flex flex-col gap-1">
-                  <span className="text-neutral-800 text-base font-semibold font-['Segoe_UI']">FAX</span>
-                  <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">+31-1111-1111-11</span>
-                </div> */}
                 <div className="flex flex-col gap-1">
                   <span className="text-neutral-800 text-base font-semibold font-['Segoe_UI']">{t('help.address')}</span>
                   <div className="flex flex-col gap-1">
@@ -639,9 +607,6 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                     <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">{t('countries.netherlands')}</span>
                   </div>
                 </div>
-                {/* <span className="text-amber-500 text-base font-semibold font-['Segoe_UI'] underline cursor-pointer hover:text-amber-600 transition-colors">
-                  All Contacts
-                </span> */}
               </div>
             )}
           </div>

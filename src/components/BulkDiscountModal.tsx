@@ -368,53 +368,58 @@ export default function BulkDiscountModal({
           </div>
 
           {/* Quantity Selector */}
-          <div className="flex flex-col gap-2">
-            <span className="text-neutral-800 text-sm font-bold">{t("bulkDiscount.quantity")}</span>
-            <div className="h-12 rounded-full outline outline-1 outline-black/10 flex items-center bg-white w-full">
-              <button
-                type="button"
-                onClick={decrement}
-                className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors shrink-0"
-              >
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M2 6h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-              </button>
-              <input
-                type="number"
-                min="1"
-                value={inputValue}
-                onChange={(e) => handleInputChange(e.target.value)}
-                onBlur={handleInputBlur}
-                className="flex-1 text-center text-neutral-800 text-base font-bold focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-transparent"
-              />
-              <button
-                type="button"
-                onClick={increment}
-                className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors shrink-0"
-              >
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-              </button>
+          {/* Quantity Selector */}
+          {allowSingulars && (
+            <div className="flex flex-col gap-2">
+              <span className="text-neutral-800 text-sm font-bold">Quantity</span>
+              <div className="h-12 rounded-full outline outline-1 outline-black/10 flex items-center bg-white w-full">
+                <button
+                  type="button"
+                  onClick={decrement}
+                  className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors shrink-0"
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M2 6h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                </button>
+                <input
+                  type="number"
+                  min="1"
+                  value={inputValue}
+                  onChange={(e) => handleInputChange(e.target.value)}
+                  onBlur={handleInputBlur}
+                  className="flex-1 text-center text-neutral-800 text-base font-bold focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-transparent"
+                />
+                <button
+                  type="button"
+                  onClick={increment}
+                  className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors shrink-0"
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Add to Cart Buttons */}
           <div className="flex flex-col gap-2.5">
             {normalizedPackingGroup && normalizedPackingGroup > 1 ? (
               <>
-                <button
-                  type="button"
-                  id="bulk-modal-add-rolls"
-                  onClick={() => handleConfirm(false)}
-                  className="w-full h-12 px-5 bg-amber-500 rounded-full flex items-center justify-center gap-2.5 text-white font-bold text-base hover:bg-amber-600 active:scale-[0.98] transition-all shadow-sm"
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                  {t("bulkDiscount.rollsStack")}
-                </button>
+                {allowSingulars && (
+                  <button
+                    type="button"
+                    id="bulk-modal-add-rolls"
+                    onClick={() => handleConfirm(false)}
+                    className="w-full h-12 px-5 bg-amber-500 rounded-full flex items-center justify-center gap-2.5 text-white font-bold text-base hover:bg-amber-600 active:scale-[0.98] transition-all shadow-sm"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    Rolls / Stack
+                  </button>
+                )}
                 <button
                   type="button"
                   id="bulk-modal-add-box"

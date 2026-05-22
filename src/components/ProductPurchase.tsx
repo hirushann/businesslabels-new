@@ -69,6 +69,7 @@ type ProductPurchaseProps = {
   } | null;
   componentCount?: number | null;
   isLabelProduct?: boolean | null;
+  properties?: any;
 };
 
 
@@ -177,10 +178,51 @@ export default function ProductPurchase({
   warranty,
   componentCount,
   isLabelProduct,
+  properties,
 }: ProductPurchaseProps) {
   const { addItem, openCart } = useCart();
   const t = useTranslations();
   const wishlist = useWishlist();
+  const locale = useLocale();
+
+  const kernValue = useMemo(() => {
+    if (!properties || typeof properties !== 'object') return null;
+    const kern = properties.kern;
+    if (!kern) return null;
+    if (typeof kern === 'string') {
+      return kern;
+    }
+    if (typeof kern === 'object') {
+      if (Array.isArray(kern)) {
+        for (const item of kern) {
+          if (item && typeof item === 'object') {
+            if ('value' in item && typeof item.value === 'string') {
+              return item.value;
+            }
+          } else if (typeof item === 'string') {
+            return item;
+          }
+        }
+      } else {
+        if ('value' in kern && typeof kern.value === 'string') {
+          return kern.value;
+        }
+      }
+    }
+    return null;
+  }, [properties]);
+
+  const rollsStackLabel = useMemo(() => {
+    if (!kernValue) {
+      return t("product.rollsStack");
+    }
+    const isFanFold = typeof kernValue === "string" && kernValue.toLowerCase() === "fan-fold";
+    if (locale === "nl") {
+      return isFanFold ? "Stapel" : "Rollen";
+    } else {
+      return isFanFold ? "Stack" : "Rolls";
+    }
+  }, [kernValue, locale, t]);
   const normalizedPackingGroup = packingGroup ? Number.parseInt(packingGroup, 10) : null;
   const hasPackingGroup =
     typeof normalizedPackingGroup === "number" &&
@@ -234,6 +276,12 @@ export default function ProductPurchase({
     return () => clearInterval(interval);
   }, []);
 
+  // Sync quantity state when initialQuantity changes
+  useEffect(() => {
+    setQuantity(initialQuantity);
+    setQuantityError(null);
+  }, [initialQuantity]);
+
   const increment = () => {
     setQuantityError(null);
     setQuantity((prev) => {
@@ -259,8 +307,10 @@ export default function ProductPurchase({
         return prev > 1 ? prev - 1 : 1;
       }
 
-      if (prev <= 1) {
-        return 1;
+      const minQty = allowSingulars ? 1 : normalizedPackingGroup;
+
+      if (prev <= minQty) {
+        return minQty;
       }
 
       if (allowSingulars && prev <= normalizedPackingGroup) {
@@ -268,10 +318,10 @@ export default function ProductPurchase({
       }
 
       if (prev <= normalizedPackingGroup) {
-        return 1;
+        return minQty;
       }
 
-      return Math.max(1, Math.floor((prev - 1) / normalizedPackingGroup) * normalizedPackingGroup);
+      return Math.max(minQty, Math.floor((prev - 1) / normalizedPackingGroup) * normalizedPackingGroup);
     });
   };
   const handleQuantityChange = (value: string) => {
@@ -290,7 +340,8 @@ export default function ProductPurchase({
   };
 
   const handleQuantityBlur = () => {
-    if (quantity < 1) {
+    const minQty = allowSingulars ? 1 : (normalizedPackingGroup ?? 1);
+    if (quantity < minQty) {
       setQuantity(initialQuantity);
     }
   };
@@ -376,12 +427,26 @@ export default function ProductPurchase({
     return getUnitPriceForQuantity(quantity);
   }, [quantity, getUnitPriceForQuantity]);
 
-  const handleTierToggle = (tierQty: number, isSelected: boolean) => {
-    if (isSelected) {
-      setQuantity(initialQuantity);
-    } else {
-      setQuantity(tierQty);
-    }
+  const tierLabel = (index: number): string => {
+    const tier = bulkDiscounts[index];
+    const next = bulkDiscounts[index + 1];
+    if (!tier) return "";
+    const tierQty = Number.parseInt(tier.quantity, 10);
+    if (!next) return `${tierQty}+`;
+    const nextQty = Number.parseInt(next.quantity, 10);
+    return `${tierQty}–${nextQty - 1}`;
+  };
+
+  const handleTierClick = (tierQty: number) => {
+    const snapped = normalizedPackingGroup
+      ? Math.ceil(tierQty / normalizedPackingGroup) * normalizedPackingGroup
+      : tierQty;
+    setQuantity(snapped);
+    setQuantityError(null);
+  };
+
+  const handleBaseRowClick = () => {
+    setQuantity(initialQuantity);
     setQuantityError(null);
   };
 
@@ -419,23 +484,28 @@ export default function ProductPurchase({
     const qtyToAdd = customQuantity ?? quantity;
     const normalizedQuantity = Number.isFinite(qtyToAdd) ? Math.floor(qtyToAdd) : 0;
 
-    if (normalizedQuantity < 1) {
-      setQuantityError(t("product.quantityMinError"));
+    const minQty = allowSingulars ? 1 : (normalizedPackingGroup ?? 1);
+    if (normalizedQuantity < minQty) {
+      setQuantityError(
+        allowSingulars
+          ? t("product.quantityMinError")
+          : t("product.quantityLimitErrorMultiple", { limit: normalizedPackingGroup ?? 1 })
+      );
       return null;
     }
     
     if (hasPackingGroup) {
-      const singularQuantityAllowed = Boolean(allowSingulars && normalizedQuantity <= normalizedPackingGroup);
+      const singularQuantityAllowed = Boolean(allowSingulars && normalizedQuantity <= (normalizedPackingGroup ?? 1));
 
       if (
         !singularQuantityAllowed &&
-        normalizedQuantity !== 1 &&
-        normalizedQuantity % normalizedPackingGroup !== 0
+        (allowSingulars ? normalizedQuantity !== 1 : true) &&
+        normalizedQuantity % (normalizedPackingGroup ?? 1) !== 0
       ) {
         setQuantityError(
           allowSingulars
-            ? t("product.quantityLimitErrorSingular", { limit: normalizedPackingGroup })
-            : t("product.quantityLimitErrorMultiple", { limit: normalizedPackingGroup }),
+            ? t("product.quantityLimitErrorSingular", { limit: normalizedPackingGroup ?? 1 })
+            : t("product.quantityLimitErrorMultiple", { limit: normalizedPackingGroup ?? 1 }),
         );
         return null;
       }
@@ -521,8 +591,6 @@ export default function ProductPurchase({
     setIsWarrantyPopoverOpen(false);
     setPendingQuantity(null);
   };
-
-  const locale = useLocale();
 
   const handleAddToWishlist = () => {
     wishlist.addItem({
@@ -654,62 +722,97 @@ export default function ProductPurchase({
       </div>
 
       {hasBulkDiscounts ? (
-        <div className="p-4 bg-[#F8F9FA] border border-[#EDEDED] rounded-2xl">
-          <div className="grid grid-cols-[1.2fr_1fr_1fr] gap-x-4 gap-y-3.5 items-center">
-            {/* Headers */}
-            <div
-              className="text-neutral-800 text-base font-bold leading-5 self-start"
-              style={{ gridRow: `span ${bulkDiscounts.length + 1}` }}
-            >
-              {t("product.bulkDiscounts")}
+        <div className="flex flex-col gap-2">
+          <h3 className="text-neutral-800 text-base font-bold">
+            {t("product.bulkDiscounts")}
+          </h3>
+          <div className="rounded-2xl border border-slate-200 overflow-hidden bg-white">
+            {/* Table header */}
+            <div className="grid grid-cols-3 bg-slate-50 px-4 py-2.5 border-b border-slate-200">
+              <span className="text-neutral-700 text-xs font-semibold uppercase tracking-wide">
+                {t("product.quantity")}
+              </span>
+              <span className="text-neutral-700 text-xs font-semibold uppercase tracking-wide">
+                {locale === "nl" ? "Prijs / stuk" : "Price / unit"}
+              </span>
+              <span className="text-neutral-700 text-xs font-semibold uppercase tracking-wide">
+                {locale === "nl" ? "Besparing" : "Savings"}
+              </span>
             </div>
-            <span className="text-neutral-500 text-sm font-medium leading-4">
-              {t("product.quantity")}
-            </span>
-            <span className="text-neutral-500 text-sm font-medium leading-4">
-              {t("product.discount")}
-            </span>
 
-            {/* Rows */}
-            {bulkDiscounts.map((tier) => {
+            {/* Base row (no discount) */}
+            {(() => {
+              const firstTierQty = bulkDiscounts[0] ? Number.parseInt(bulkDiscounts[0].quantity, 10) : Infinity;
+              const isBaseActive = !activeTier;
+              const baseQtyLabel = bulkDiscounts.length > 0 ? `1–${firstTierQty - 1}` : "1+";
+              return (
+                <button
+                  type="button"
+                  onClick={handleBaseRowClick}
+                  className={`w-full grid grid-cols-3 px-4 py-3 text-left transition-colors border-b border-slate-100 last:border-b-0 cursor-pointer ${
+                    isBaseActive
+                      ? "bg-green-50"
+                      : "hover:bg-slate-50"
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <span className={`text-sm font-medium ${isBaseActive ? "text-neutral-900" : "text-neutral-700"}`}>
+                      {baseQtyLabel}
+                    </span>
+                    {isBaseActive && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-green-600 text-white text-[10px] font-bold uppercase tracking-wide">
+                        {locale === "nl" ? "Actief" : "Active"}
+                      </span>
+                    )}
+                  </span>
+                  <span className={`text-sm font-bold ${isBaseActive ? "text-neutral-900" : "text-neutral-700"}`}>
+                    {formatEuro(price ?? 0)}
+                  </span>
+                  <span className="text-zinc-400 text-sm">–</span>
+                </button>
+              );
+            })()}
+
+            {/* Discount tiers */}
+            {bulkDiscounts.map((tier, index) => {
               const tierQty = Number.parseInt(tier.quantity, 10);
-              const isSelected = activeTier?.quantity === tier.quantity;
+              const isActive = activeTier?.quantity === tier.quantity;
+              const tierUnitPrice = getUnitPriceForQuantity(tierQty) ?? price ?? 0;
+              const savingsPct = Number.parseInt(tier.discount.replace("%", ""), 10);
+              const savingsPerUnit = (price ?? 0) - tierUnitPrice;
 
               return (
-                <div key={`${tier.quantity}-${tier.discount}`} className="contents">
-                  {/* Quantity cell with checkbox */}
-                  <div className="flex items-center">
-                    <label className="flex items-center gap-2.5 cursor-pointer select-none group">
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => handleTierToggle(tierQty, isSelected)}
-                        className="sr-only"
-                      />
-                      <div
-                        className={`w-[18px] h-[18px] rounded-[4px] border flex items-center justify-center transition-all ${
-                          isSelected
-                            ? "bg-green-600 border-green-600 text-white"
-                            : "bg-white border-[#C8C8C8] group-hover:border-zinc-400"
-                        }`}
-                      >
-                        {isSelected && (
-                          <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 12 12">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 6l2 2 4-4" />
-                          </svg>
-                        )}
-                      </div>
-                      <span className="text-neutral-700 text-sm sm:text-base font-normal leading-5">
-                        {tier.quantity}
+                <button
+                  key={`${tier.quantity}-${tier.discount}`}
+                  type="button"
+                  onClick={() => handleTierClick(tierQty)}
+                  className={`w-full grid grid-cols-3 px-4 py-3 text-left transition-all border-b border-slate-100 last:border-b-0 cursor-pointer ${
+                    isActive
+                      ? "bg-green-50"
+                      : "hover:bg-slate-50"
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <span className={`text-sm font-medium ${isActive ? "text-neutral-900" : "text-neutral-700"}`}>
+                      {tierLabel(index)}
+                    </span>
+                    {isActive && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-green-600 text-white text-[10px] font-bold uppercase tracking-wide">
+                        {locale === "nl" ? "Actief" : "Active"}
                       </span>
-                    </label>
-                  </div>
-
-                  {/* Discount cell */}
-                  <span className="text-green-600 text-sm sm:text-base font-semibold leading-5">
-                    {tier.discount}
+                    )}
                   </span>
-                </div>
+                  <span className={`text-sm font-bold ${isActive ? "text-neutral-900" : "text-neutral-700"}`}>
+                    {formatEuro(tierUnitPrice)}
+                  </span>
+                  <span className={`text-sm font-semibold ${isActive ? "text-green-600" : "text-green-500"}`}>
+                    {savingsPct}%{isActive && (
+                      <span className="text-zinc-500 font-normal text-xs ml-1">
+                        (–{formatEuro(savingsPerUnit)}/unit)
+                      </span>
+                    )}
+                  </span>
+                </button>
               );
             })}
           </div>
@@ -730,29 +833,87 @@ export default function ProductPurchase({
           // Label product layout with Rolls/Stack and Box buttons
           <PopoverAnchor asChild>
             <div className="flex flex-col gap-3">
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => handleAddToCart(quantity)}
-                  aria-describedby={quantityError ? "quantity-error" : undefined}
-                  className="w-full sm:flex-1 h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm flex"
-                >
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                  <span className="text-white text-base font-bold whitespace-nowrap">{t("product.rollsStack")}</span>
-                </button>
+              {allowSingulars ? (
+                <>
+                  <div className="flex flex-col sm:flex-row sm:items-end gap-3 w-full">
+                    {/* Quantity selector */}
+                    <div className="h-12 w-full sm:w-32 px-1 rounded-[50px] outline outline-1 outline-offset-[-1px] outline-black/10 flex justify-between items-center bg-white shrink-0">
+                      <button
+                        onClick={decrement}
+                        type="button"
+                        className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
+                      >
+                        <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
+                          <path strokeLinecap="round" d="M2 6h8" />
+                        </svg>
+                      </button>
+                      <div className="flex-1 self-stretch flex justify-center items-center overflow-hidden">
+                        <input
+                          type="number"
+                          min="1"
+                          value={quantity === 0 ? "" : quantity}
+                          onChange={(e) => handleQuantityChange(e.target.value)}
+                          onBlur={handleQuantityBlur}
+                          className="w-full text-center text-neutral-800 text-sm font-semibold focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-transparent"
+                        />
+                      </div>
+                      <button
+                        onClick={increment}
+                        type="button"
+                        className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
+                      >
+                        <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
+                          <path strokeLinecap="round" d="M6 2v8M2 6h8" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleAddToCart(quantity)}
+                      aria-describedby={quantityError ? "quantity-error" : undefined}
+                      className="w-full sm:flex-1 h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm flex"
+                    >
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                      <span className="text-white text-base font-bold whitespace-nowrap">{rollsStackLabel}</span>
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleAddToCart(normalizedPackingGroup!)}
+                    className="w-full h-12 px-4 py-2.5 bg-amber-100 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-amber-300 justify-center items-center gap-2 hover:bg-amber-300 transition-colors flex"
+                  >
+                    <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <span className="text-amber-600 text-base font-bold whitespace-nowrap">
+                      {t("product.box")}{" "}
+                      <span className="text-xs text-amber-600">
+                        ({normalizedPackingGroup ?? 0} {rollsStackLabel})
+                      </span>
+                    </span>
+                  </button>
+                </>
+              ) : (
                 <button
                   type="button"
                   onClick={() => handleAddToCart(normalizedPackingGroup!)}
-                  className="w-full sm:flex-1 h-12 px-4 py-2.5 bg-amber-100 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-amber-300 justify-center items-center gap-2 hover:bg-amber-300 transition-colors flex"
+                  className="w-full h-12 px-4 py-2.5 bg-amber-100 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-amber-300 justify-center items-center gap-2 hover:bg-amber-300 transition-colors flex"
                 >
                   <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
-                  <span className="text-amber-600 text-base font-bold whitespace-nowrap">{t("product.box")} <span className="text-xs text-amber-600">{t("product.boxDesc", { count: normalizedPackingGroup ?? 0 })}</span></span>
+                  <span className="text-amber-600 text-base font-bold whitespace-nowrap">
+                    {t("product.box")}{" "}
+                    <span className="text-xs text-amber-600">
+                      ({normalizedPackingGroup ?? 0} {rollsStackLabel})
+                    </span>
+                  </span>
                 </button>
-              </div>
+              )}
             </div>
           </PopoverAnchor>
         ) : (
@@ -1058,32 +1219,34 @@ export default function ProductPurchase({
         {/* Quantity + Wishlist wrapper */}
         <div className="flex items-center gap-2">
           {/* Compact Quantity selector */}
-          <div className="h-9 px-1 rounded-[50px] outline outline-1 outline-black/10 flex items-center bg-white w-24">
-            <button
-              onClick={decrement}
-              className="w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
-            >
-              <svg className="w-2.5 h-2.5 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 12 12">
-                <path strokeLinecap="round" d="M2 6h8" />
-              </svg>
-            </button>
-            <input
-              type="number"
-              min="1"
-              value={quantity === 0 ? "" : quantity}
-              onChange={(e) => handleQuantityChange(e.target.value)}
-              onBlur={handleQuantityBlur}
-              className="flex-1 min-w-0 text-center text-sm font-semibold text-neutral-800 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-transparent"
-            />
-            <button
-              onClick={increment}
-              className="w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
-            >
-              <svg className="w-2.5 h-2.5 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 12 12">
-                <path strokeLinecap="round" d="M6 2v8M2 6h8" />
-              </svg>
-            </button>
-          </div>
+          {(!isLabelProduct || allowSingulars) && (
+            <div className="h-9 px-1 rounded-[50px] outline outline-1 outline-black/10 flex items-center bg-white w-24">
+              <button
+                onClick={decrement}
+                className="w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <svg className="w-2.5 h-2.5 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 12 12">
+                  <path strokeLinecap="round" d="M2 6h8" />
+                </svg>
+              </button>
+              <input
+                type="number"
+                min="1"
+                value={quantity === 0 ? "" : quantity}
+                onChange={(e) => handleQuantityChange(e.target.value)}
+                onBlur={handleQuantityBlur}
+                className="flex-1 min-w-0 text-center text-sm font-semibold text-neutral-800 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-transparent"
+              />
+              <button
+                onClick={increment}
+                className="w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <svg className="w-2.5 h-2.5 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 12 12">
+                  <path strokeLinecap="round" d="M6 2v8M2 6h8" />
+                </svg>
+              </button>
+            </div>
+          )}
 
           {/* Wishlist Button */}
           <button
@@ -1105,17 +1268,19 @@ export default function ProductPurchase({
       <div>
         {isLabelProduct ? (
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => handleAddToCart(quantity)}
-              aria-describedby={quantityError ? "quantity-error" : undefined}
-              className="flex-1 h-11 px-4 bg-amber-500 rounded-[100px] justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm flex"
-            >
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              <span className="text-white text-sm font-bold whitespace-nowrap">{t("product.rollsStack")}</span>
-            </button>
+            {allowSingulars && (
+              <button
+                type="button"
+                onClick={() => handleAddToCart(quantity)}
+                aria-describedby={quantityError ? "quantity-error" : undefined}
+                className="flex-1 h-11 px-4 bg-amber-500 rounded-[100px] justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm flex"
+              >
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <span className="text-white text-sm font-bold whitespace-nowrap">{rollsStackLabel}</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={() => handleAddToCart(normalizedPackingGroup!)}
@@ -1126,7 +1291,9 @@ export default function ProductPurchase({
               </svg>
               <span className="text-amber-600 text-sm font-bold whitespace-nowrap">
                 {t("product.box")}{" "}
-                <span className="text-[10px] text-amber-600">({normalizedPackingGroup ?? 0})</span>
+                <span className="text-[10px] text-amber-600">
+                  ({normalizedPackingGroup ?? 0} {rollsStackLabel})
+                </span>
               </span>
             </button>
           </div>

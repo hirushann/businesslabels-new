@@ -157,6 +157,7 @@ type ProductDetail = {
   } | null;
   translations?: ProductTranslationEntry[] | null;
   locale_slugs?: Partial<Record<"en" | "nl", string>>;
+  properties?: any;
 };
 
 type ProductTranslation = {
@@ -790,6 +791,7 @@ export default async function SingleProductPage({
               warranty={product?.warranty}
               componentCount={product?.component_products?.length || null}
               isLabelProduct={product?.is_label_product == true || product?.meta?.is_label_product === true}
+              properties={product?.properties}
             />
 
             {/* Consumable Items */}

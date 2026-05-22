@@ -381,11 +381,11 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between gap-2">
               <span className="text-blue-400 text-sm font-normal font-['Segoe_UI'] leading-5">SKU: {product.sku}</span>
-              {unitsPerBox ? (
+              {/* {unitsPerBox ? (
                 <span className="shrink-0 px-2.5 py-1 bg-slate-100 rounded-full text-neutral-700 text-xs font-normal font-['Segoe_UI'] leading-4">
                   {unitsPerBox} per box
                 </span>
-              ) : null}
+              ) : null} */}
             </div>
             <Link href={href || "#"} className="block" onClick={onClick}>
             <h3 className="text-neutral-800 text-xl font-semibold font-['Segoe_UI'] leading-6">{product.name}</h3>
