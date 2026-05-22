@@ -356,6 +356,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
             </div>
           )}
         </div>
+        <Link href={href || "#"} className="absolute inset-0 z-0" onClick={onClick}>
         <Image
           src={imageSrc}
           alt={productName}
@@ -364,6 +365,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
           className="h-full w-auto object-contain mx-auto py-5"
           unoptimized
         />
+        </Link>
         {product.packing_group != null && Number(product.packing_group) > 0 && (
           <div className="absolute bottom-4 right-4 z-10 px-2.5 py-1 bg-white rounded-full flex items-center gap-1.5 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.08)] border border-slate-100">
             <span className="text-neutral-700 text-xs font-normal font-['Segoe_UI'] leading-4">
@@ -384,7 +386,9 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
                 </span>
               ) : null}
             </div>
+            <Link href={href || "#"} className="block" onClick={onClick}>
             <h3 className="text-neutral-800 text-xl font-semibold font-['Segoe_UI'] leading-6">{product.name}</h3>
+            </Link>
           </div>
           {features.length > 0 && (
             <div className="flex flex-col gap-4">
@@ -552,9 +556,9 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
 
   return (
     <>
-      <Link href={href} className="block h-full w-full" onClick={onClick}>
+      {/* <Link href={href} className="block h-full w-full" onClick={onClick}> */}
         {cardContent}
-      </Link>
+      {/* </Link> */}
       {bulkModal}
     </>
   );
