@@ -5,6 +5,7 @@ import ProductCard, { type ProductCardData, type ProductRouteType } from "@/comp
 import ProductCompatibilityDialog from "@/components/ProductCompatibilityDialog";
 import ProductImage from "@/components/ProductImage";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
+import { localePath } from "@/lib/i18n/utils";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations } from 'next-intl/server';
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
@@ -381,11 +382,11 @@ function applyProductTranslation(product: ProductDetail, locale: "en" | "nl"): P
   return out;
 }
 
-function productPathForSlug(slug: string, selectedType: "simple" | "variable" | "group_product" | null): string {
+function productPathForSlug(slug: string, selectedType: "simple" | "variable" | "group_product" | null, locale: "en" | "nl"): string {
   const params = new URLSearchParams();
   if (selectedType) params.set("type", selectedType);
   const qs = params.toString();
-  return `/products/${encodeURIComponent(slug)}${qs ? `?${qs}` : ""}`;
+  return localePath(`/products/${encodeURIComponent(slug)}${qs ? `?${qs}` : ""}`, locale);
 }
 
 async function fetchProductByType(baseUrl: string, type: "simple" | "variable", slug: string, locale: "en" | "nl"): Promise<ProductDetail | null> {
@@ -613,7 +614,7 @@ export default async function SingleProductPage({
             <Breadcrumbs 
               className="text-neutral-900"
               items={[
-                { label: t('common.products'), href: '/products' },
+                { label: t('common.products'), href: localePath('/products', locale) },
                 ...(product.categories && product.categories.length > 0 ? [{ 
                   label: product.categories[0].name || "", 
                   href: `/category/${product.categories[0].slug || product.categories[0].id}` 
@@ -658,7 +659,7 @@ export default async function SingleProductPage({
                     return (
                       <div key={item.id}>
                         <Link
-                          href={item.slug ? productPathForSlug(item.slug, "simple") : "#"}
+                          href={item.slug ? productPathForSlug(item.slug, "simple", locale) : "#"}
                           className="group flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3 text-start transition-colors hover:border-amber-200 hover:bg-amber-50"
                         >
                           {proxiedImage ? (

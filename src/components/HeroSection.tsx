@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import LocaleLink from "@/components/LocaleLink";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Droplet, Loader2, Search, ScrollText, Tags } from "lucide-react";
@@ -247,12 +248,12 @@ export default function HeroSection() {
             </div>
             {/* Buttons */}
             <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-              <Link
+              <LocaleLink
                 href="/products"
                 className="w-full sm:w-auto justify-center px-7 py-4 bg-amber-500 rounded-full flex items-center gap-2.5 text-white text-lg font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors"
               >
                 {t('common.browseProducts')}
-              </Link>
+              </LocaleLink>
               <button
                 type="button"
                 onClick={openHelp}

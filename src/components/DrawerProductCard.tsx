@@ -4,6 +4,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { LinkProps } from 'next/link';
 import type { ReactNode } from 'react';
+import { useLocale } from 'next-intl';
+import { localePath } from '@/lib/i18n/utils';
 
 type DrawerProductCardProps = {
   name: string;
@@ -30,6 +32,7 @@ export default function DrawerProductCard({
   href,
   onCardClick,
 }: DrawerProductCardProps) {
+  const locale = useLocale();
   const cardBody = (
     <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-[2px_6px_20px_0px_rgba(109,109,120,0.06)]">
       <div className="flex gap-4">
@@ -73,8 +76,17 @@ export default function DrawerProductCard({
     return cardBody;
   }
 
+  // Apply locale prefix to pathname-style hrefs
+  const localizedHref: LinkProps['href'] = (() => {
+    if (typeof href === 'string') return localePath(href, locale);
+    if (typeof href === 'object' && 'pathname' in href && typeof href.pathname === 'string') {
+      return { ...href, pathname: localePath(href.pathname, locale) };
+    }
+    return href;
+  })();
+
   return (
-    <Link href={href} onClick={onCardClick} className="block">
+    <Link href={localizedHref} onClick={onCardClick} className="block">
       {cardBody}
     </Link>
   );

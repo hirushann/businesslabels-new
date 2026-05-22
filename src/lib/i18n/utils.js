@@ -53,3 +53,35 @@ export function pickLocale(value, locale) {
   }
   return '';
 }
+
+/**
+ * Build a locale-aware internal path.
+ *
+ * - EN: prepends '/en'  → '/en/products/some-slug'
+ * - NL: returns path as-is → '/products/some-slug'
+ *
+ * @param {string} path   Internal path, must start with '/'
+ * @param {'en' | 'nl'} locale
+ * @returns {string}
+ */
+export function localePath(path, locale) {
+  const normalized = normalizeLocale(locale);
+  if (normalized === 'en') {
+    return '/en' + path;
+  }
+  return path;
+}
+
+/**
+ * Strip any locale prefix from a path.
+ * '/en/products/foo' → '/products/foo'
+ * '/products/foo'   → '/products/foo'
+ *
+ * @param {string} path
+ * @returns {string}
+ */
+export function stripLocalePath(path) {
+  if (path.startsWith('/en/')) return path.slice(3);
+  if (path === '/en') return '/';
+  return path;
+}

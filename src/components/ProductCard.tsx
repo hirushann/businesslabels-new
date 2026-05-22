@@ -14,6 +14,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useLocale } from "next-intl";
+import { localePath } from "@/lib/i18n/utils";
 
 export type ProductRouteType = "simple" | "variable" | "group_product";
 
@@ -478,8 +479,19 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
     return <div>{cardContent}</div>;
   }
 
+  // Apply locale prefix to pathname-style hrefs (e.g. { pathname: '/products/...' })
+  const localizedHref: LinkProps["href"] = (() => {
+    if (typeof href === "string") {
+      return localePath(href, locale);
+    }
+    if (typeof href === "object" && "pathname" in href && typeof href.pathname === "string") {
+      return { ...href, pathname: localePath(href.pathname, locale) };
+    }
+    return href;
+  })();
+
   return (
-    <Link href={href} className="block h-full w-full" onClick={onClick}>
+    <Link href={localizedHref} className="block h-full w-full" onClick={onClick}>
       {cardContent}
     </Link>
   );
