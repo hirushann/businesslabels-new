@@ -78,16 +78,10 @@ export default function DownloadSpecSheetButton({
 
       // Load logo assets asynchronously
       let logoBase64 = "";
-      let footerLogoBase64 = "";
       try {
         logoBase64 = await getBase64ImageFromUrl("/logo.png");
       } catch (err) {
         console.warn("Failed to load header logo:", err);
-      }
-      try {
-        footerLogoBase64 = await getBase64ImageFromUrl("/footerlogo.png");
-      } catch (err) {
-        console.warn("Failed to load footer logo:", err);
       }
 
       let currentY = 38;
@@ -149,7 +143,7 @@ export default function DownloadSpecSheetButton({
           },
           theme: "striped",
         });
-        currentY = (doc as any).lastAutoTable.finalY + 12;
+        currentY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 12;
       }
 
       // Draw Table 2: Specifications
@@ -205,8 +199,8 @@ export default function DownloadSpecSheetButton({
         // --- FOOTER ---
         doc.line(15, 272, 195, 272);
 
-        if (footerLogoBase64) {
-          doc.addImage(footerLogoBase64, "PNG", 15, 275, 31, 6);
+        if (logoBase64) {
+          doc.addImage(logoBase64, "PNG", 15, 275, 31, 6);
         }
 
         doc.setFont("helvetica", "normal");

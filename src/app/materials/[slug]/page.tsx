@@ -152,14 +152,6 @@ function ContactIcon({ type }: { type: "call" | "email" | "whatsapp" }) {
   );
 }
 
-function PdfIcon() {
-  return (
-    <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M14 3H7A2 2 0 0 0 5 5V19A2 2 0 0 0 7 21H17A2 2 0 0 0 19 19V8L14 3Z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M14 3V8H19" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
 
 function FilterIcon() {
   return (
@@ -422,7 +414,6 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
     { label: t("materialSpecs.supplier"), value: material.supplier_label || material.supplier },
     { label: t("materialSpecs.supplierReference"), value: material.supplier_reference },
     { label: t("materialSpecs.certificate"), value: material.certificate && material.certificate !== "none" ? material.certificate : null },
-    { label: t("materialSpecs.pricePerSquareMeter"), value: material.price_per_sq_meter != null ? `\u20ac${material.price_per_sq_meter}` : null },
   ].filter((row): row is { label: string; value: string } => row.value != null && row.value !== "");
 
   const specEntries = material.specifications?.material_specs ?? [];
