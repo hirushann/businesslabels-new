@@ -528,7 +528,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                     >
                       {europeanCountries.map((country) => (
                         <option key={country.code} value={country.code}>
-                          {t(`countries.${country.code}`)} ({country.dialCode})
+                          {country.name} ({country.dialCode})
                         </option>
                       ))}
                     </select>
