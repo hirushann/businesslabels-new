@@ -308,7 +308,7 @@ function CheckoutShell({
                     </div>
  
                     <label className="flex flex-col gap-2">
-                      <span className="text-sm font-semibold text-neutral-700">Snel adres zoeken (Google)</span>
+                      <span className="text-sm font-semibold text-neutral-700">{t('checkout.quickAddressSearch')}</span>
                       <AddressAutocomplete
                         value={form.streetAddress}
                         onChange={(val) => handleChange("streetAddress", val)}
@@ -412,7 +412,7 @@ function CheckoutShell({
                         <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${form.paymentMethod === "bancontact" ? "border-amber-500 bg-amber-500" : "border-slate-300"}`}>
                           {form.paymentMethod === "bancontact" && <div className="h-2 w-2 rounded-full bg-white" />}
                         </div>
-                        <span className="text-base font-semibold text-neutral-800">Bancontact</span>
+                        <span className="text-base font-semibold text-neutral-800">{t('checkout.bancontact')}</span>
                       </label>
  
                       {isLoggedIn && (
@@ -450,39 +450,39 @@ function CheckoutShell({
               <aside className="bg-slate-50 p-8 lg:rounded-br-3xl lg:rounded-tr-3xl">
                 <div className="flex flex-col gap-8">
                   <div className="flex flex-col gap-3">
-                    <span className="text-neutral-600 text-base font-semibold leading-6">Total Price</span>
+                    <span className="text-neutral-600 text-base font-semibold leading-6">{t('checkout.totalPrice')}</span>
                     <span className="text-neutral-800 text-5xl font-bold leading-[56px]">{formatEuro(finalTotal)}</span>
                   </div>
 
-                  <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-5">
+                   <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-5">
                     <div className="flex items-center justify-between text-neutral-700">
-                      <span>Subtotal</span>
+                      <span>{t('checkout.subtotal')}</span>
                       <span className="font-semibold">{formatEuro(totalAmount)}</span>
                     </div>
                     <div className="flex items-center justify-between text-neutral-700">
-                      <span>Delivery</span>
+                      <span>{t('checkout.shipping')}</span>
                       <span className="font-semibold">{formatEuro(shippingAmount)}</span>
                     </div>
                     {paymentFee > 0 && (
                       <div className="flex items-center justify-between text-neutral-700">
-                        <span>Payment Fee (2.5%)</span>
+                        <span>{t('checkout.paymentFeeLabel')}</span>
                         <span className="font-semibold">{formatEuro(paymentFee)}</span>
                       </div>
                     )}
                     <div className="flex items-center justify-between text-neutral-700">
-                      <span>Tax (21% VAT)</span>
+                      <span>{t('checkout.taxVatLabel')}</span>
                       <span className="font-semibold">{formatEuro(taxAmount)}</span>
                     </div>
                     <div className="h-px bg-slate-100" />
                     <div className="flex items-center justify-between text-neutral-800">
-                      <span className="font-semibold">Final Total</span>
+                      <span className="font-semibold">{t('checkout.finalTotal')}</span>
                       <span className="text-xl font-bold">{formatEuro(finalTotal)}</span>
                     </div>
                   </div>
 
                   <div className="flex flex-col gap-4">
                     <div className="flex items-center justify-between">
-                      <h2 className="text-neutral-800 text-2xl font-bold leading-8">Product Information</h2>
+                      <h2 className="text-neutral-800 text-2xl font-bold leading-8">{t('checkout.productInformation')}</h2>
                       <span className="text-amber-500 text-base font-semibold leading-6">({items.length})</span>
                     </div>
 
@@ -511,7 +511,7 @@ function CheckoutShell({
                                     </h3>
                                     <p className="text-blue-400 text-sm leading-5">SKU: {item.sku}</p>
                                     {isWarrantyItem ? (
-                                      <p className="text-xs leading-4 text-neutral-500">Linked warranty</p>
+                                      <p className="text-xs leading-4 text-neutral-500">{t('cart.linkedWarranty')}</p>
                                     ) : null}
                                   </div>
                                   <button
@@ -535,7 +535,7 @@ function CheckoutShell({
 
                                   {isWarrantyItem ? (
                                     <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-neutral-600">
-                                      Qty {item.quantity}
+                                      {t('cart.qty', { count: item.quantity })}
                                     </div>
                                   ) : (
                                     <div className="flex h-10 items-center rounded-full border border-slate-200 bg-white px-1">
@@ -597,10 +597,10 @@ function CheckoutShell({
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        Processing...
+                        {t('checkout.processing')}
                       </>
                     ) : (
-                      `Make Payment - ${formatEuro(finalTotal)}`
+                      t('checkout.makePayment', { amount: formatEuro(finalTotal) })
                     )}
                   </button>
                 </div>
@@ -879,16 +879,16 @@ export default function CheckoutPageClient({
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
           </div>
-          <div className="flex flex-col gap-2">
-            <h1 className="text-3xl font-bold text-neutral-800">Order Placed!</h1>
+           <div className="flex flex-col gap-2">
+            <h1 className="text-3xl font-bold text-neutral-800">{t('checkout.successTitle')}</h1>
             <p className="text-neutral-600 text-lg">
-              Thank you for your order. We&apos;ve sent a confirmation email to <span className="font-semibold text-neutral-800">{form.email}</span>.
+              {t('checkout.successSubtitle', { email: form.email })}
             </p>
           </div>
           
           {orderNumber && (
             <div className="bg-slate-50 rounded-xl px-6 py-4 border border-slate-100">
-              <p className="text-sm text-neutral-500 font-medium uppercase tracking-wider">Order Number</p>
+              <p className="text-sm text-neutral-500 font-medium uppercase tracking-wider">{t('checkout.orderNumberLabel')}</p>
               <p className="text-2xl font-bold text-amber-500">{orderNumber}</p>
             </div>
           )}
@@ -898,13 +898,13 @@ export default function CheckoutPageClient({
               href="/my-account" 
               className="h-12 w-full rounded-full bg-amber-500 px-6 text-base font-semibold text-white transition-colors hover:bg-amber-600 flex items-center justify-center"
             >
-              View My Orders
+              {t('checkout.viewMyOrders')}
             </Link>
             <Link 
               href="/products" 
               className="h-12 w-full rounded-full border border-slate-200 px-6 text-base font-semibold text-neutral-700 transition-colors hover:bg-slate-50 flex items-center justify-center"
             >
-              Continue Shopping
+              {t('common.continueShopping')}
             </Link>
           </div>
         </div>

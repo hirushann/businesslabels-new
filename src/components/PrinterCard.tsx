@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { LinkProps } from "next/link";
+import { useTranslations } from "next-intl";
 
 export type PrinterCardData = {
   id: string | number;
@@ -27,6 +28,7 @@ function normalizeText(value: string | null | undefined): string | null {
 }
 
 export default function PrinterCard({ printer, href }: PrinterCardProps) {
+  const t = useTranslations();
   const printerName = printer.name ?? "";
   const subtitle = normalizeText(printer.subtitle);
   const imageSrc = normalizeText(printer.mainImage) || "https://placehold.co/600x400";
@@ -100,13 +102,13 @@ export default function PrinterCard({ printer, href }: PrinterCardProps) {
                 strokeLinejoin="round"
               />
             </svg>
-            View
+            {t('common.view')}
           </button>
 
           {/* Bookmark / save icon button */}
           <button
             type="button"
-            aria-label="Save printer"
+            aria-label={t('finder.savePrinter')}
             className="w-[38px] h-[38px] flex items-center justify-center rounded-full border border-[#EDF0F4] text-[#666666] hover:border-[#F18800] hover:text-[#F18800] transition-colors duration-150 shrink-0"
           >
             <svg
@@ -140,3 +142,4 @@ export default function PrinterCard({ printer, href }: PrinterCardProps) {
 
   return cardContent;
 }
+

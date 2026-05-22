@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SearchProvider, useSearch } from "@elastic/react-search-ui";
+import { useTranslations } from "next-intl";
 import type { SearchDriverOptions } from "@elastic/search-ui";
 import { CategoryScopedProxyConnector } from "@/lib/categoryScopedConnector";
 import EmptyState from "@/components/EmptyState";
@@ -22,14 +23,7 @@ const PAGE_SIZE = 24;
 
 type PrinterListingSortValue = "latest" | "oldest" | "title_asc" | "title_desc" | "price_asc" | "price_desc";
 
-const LISTING_SORT_OPTIONS: Array<{ value: PrinterListingSortValue; label: string }> = [
-  { value: "latest", label: "Latest" },
-  { value: "oldest", label: "Oldest" },
-  { value: "title_asc", label: "Name: A - Z" },
-  { value: "title_desc", label: "Name: Z - A" },
-  { value: "price_asc", label: "Price: Low to High" },
-  { value: "price_desc", label: "Price: High to Low" },
-];
+const SORT_VALUES: PrinterListingSortValue[] = ["latest", "oldest", "title_asc", "title_desc", "price_asc", "price_desc"];
 
 const LISTING_SORT_TO_SEARCH_UI: Record<PrinterListingSortValue, { field: string; direction: "asc" | "desc" }> = {
   latest: { field: "created_at_timestamp", direction: "desc" },
@@ -75,11 +69,11 @@ const PRINTERS_SEARCH_QUERY = {
 };
 
 function sortValueFromState(sortField?: string, sortDirection?: string): PrinterListingSortValue {
-  const match = LISTING_SORT_OPTIONS.find((option) => {
-    const mapped = LISTING_SORT_TO_SEARCH_UI[option.value];
+  const match = SORT_VALUES.find((value) => {
+    const mapped = LISTING_SORT_TO_SEARCH_UI[value];
     return mapped.field === sortField && mapped.direction === sortDirection;
   });
-  return match?.value ?? "latest";
+  return match ?? "latest";
 }
 
 function PrinterSkeletonGrid({ isSidebarOpen }: { isSidebarOpen: boolean }) {
@@ -93,6 +87,15 @@ function PrinterSkeletonGrid({ isSidebarOpen }: { isSidebarOpen: boolean }) {
 }
 
 function PrintersListingContent({ printers }: { printers: PrinterCardData[] }) {
+  const t = useTranslations();
+  const sortOptions = useMemo(() => [
+    { value: "latest" as const, label: t("sort.latest") },
+    { value: "oldest" as const, label: t("sort.oldest") },
+    { value: "title_asc" as const, label: t("sort.nameAsc") },
+    { value: "title_desc" as const, label: t("sort.nameDesc") },
+    { value: "price_asc" as const, label: t("sort.priceAsc") },
+    { value: "price_desc" as const, label: t("sort.priceDesc") },
+  ], [t]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [accumulatedPrinters, setAccumulatedPrinters] = useState<ReturnType<typeof mapProductListingResult>[]>([]);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
@@ -208,7 +211,7 @@ function PrintersListingContent({ printers }: { printers: PrinterCardData[] }) {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-4 border-b border-gray-100 pb-4">
-        <h2 className="text-4xl font-bold leading-[48px] text-neutral-800">Printer Products</h2>
+        <h2 className="text-4xl font-bold leading-[48px] text-neutral-800">{t("finder.printerProducts")}</h2>
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <button
             type="button"
@@ -224,7 +227,7 @@ function PrintersListingContent({ printers }: { printers: PrinterCardData[] }) {
                 <path d="M5.5 10H14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                 <path d="M8 15H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
-              <span className="text-lg font-semibold font-['Segoe_UI'] leading-6">Filters</span>
+              <span className="text-lg font-semibold font-['Segoe_UI'] leading-6">{t("finder.filters")}</span>
               {activeFilterCount > 0 ? (
                 <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-100 px-1.5 text-xs font-semibold text-amber-600">
                   {activeFilterCount}
@@ -234,13 +237,13 @@ function PrintersListingContent({ printers }: { printers: PrinterCardData[] }) {
           </button>
 
           <label className="flex h-10 items-center gap-3 rounded-[42px] border border-slate-200 px-5 py-2 text-neutral-800">
-            <span className="sr-only">Sort printers</span>
+            <span className="sr-only">{t("sort.sortBy")}</span>
             <select
               value={selectedSort}
               onChange={(e) => handleSortChange(e.target.value as PrinterListingSortValue)}
               className="bg-transparent text-base font-normal font-['Segoe_UI'] leading-5 outline-none"
             >
-              {LISTING_SORT_OPTIONS.map((option) => (
+              {sortOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -256,7 +259,7 @@ function PrintersListingContent({ printers }: { printers: PrinterCardData[] }) {
             <div className="flex flex-col gap-5">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-bold text-neutral-800">Filters</h2>
+                  <h2 className="text-xl font-bold text-neutral-800">{t("finder.filters")}</h2>
                   {activeFilterCount > 0 ? (
                     <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-100 px-1.5 text-xs font-semibold text-amber-600">
                       {activeFilterCount}
@@ -269,7 +272,7 @@ function PrintersListingContent({ printers }: { printers: PrinterCardData[] }) {
                     onClick={clearFilters}
                     className="text-sm font-medium text-amber-500 hover:underline"
                   >
-                    Clear all
+                    {t("finder.clearAll")}
                   </button>
                 ) : null}
               </div>
@@ -280,7 +283,7 @@ function PrintersListingContent({ printers }: { printers: PrinterCardData[] }) {
 
         <div className="min-w-0 flex-1">
           <div className="mb-4 text-sm text-neutral-600">
-            {isLoading && !hasFallbackPrinters ? "Loading printers..." : `${totalResults ?? printers.length} results`}
+            {isLoading && !hasFallbackPrinters ? t("finder.loadingPrinters") : t("search.results", { count: totalResults ?? printers.length })}
           </div>
 
           {error ? (
@@ -288,7 +291,7 @@ function PrintersListingContent({ printers }: { printers: PrinterCardData[] }) {
           ) : isLoading && !hasFallbackPrinters && accumulatedPrinters.length === 0 ? (
             <PrinterSkeletonGrid isSidebarOpen={isSidebarOpen} />
           ) : !hasFallbackPrinters && !hasSearchPrinters ? (
-            <EmptyState title="No printers found" description="Try adjusting the filters to see more printers." />
+            <EmptyState title={t("finder.noPrintersFound")} description={t("finder.noPrintersDescriptionFilters")} />
           ) : (
             <>
               <div
@@ -321,7 +324,7 @@ function PrintersListingContent({ printers }: { printers: PrinterCardData[] }) {
 
               {hasMorePrinters && hasSearchPrinters ? (
                 <div ref={loadMoreRef} className="flex min-h-20 items-center justify-center pt-4 text-sm text-slate-500">
-                  {isFetchingMore || isLoading ? "Loading more printers..." : "Scroll for more printers"}
+                  {isFetchingMore || isLoading ? t("finder.loadingMorePrinters") : t("finder.scrollForMorePrinters")}
                 </div>
               ) : null}
             </>

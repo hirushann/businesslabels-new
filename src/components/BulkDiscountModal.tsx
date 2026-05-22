@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import type { BulkDiscountTier } from "@/components/ProductCard";
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
@@ -85,6 +86,7 @@ export default function BulkDiscountModal({
   packingGroup,
   allowSingulars,
 }: BulkDiscountModalProps) {
+  const t = useTranslations();
   const normalizedPackingGroup = packingGroup && packingGroup > 0 ? packingGroup : null;
   const initialQty = !allowSingulars && normalizedPackingGroup ? normalizedPackingGroup : 1;
 
@@ -110,22 +112,24 @@ export default function BulkDiscountModal({
     return () => { document.body.style.overflow = prev; };
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
-  /* Active tier = highest tier where quantity >= tier.quantity */
-  const activeTier: NormalizedTier | null =
-    [...tiers].reverse().find((t) => quantity >= t.quantity) ?? null;
+  const activeTier = useMemo(() => {
+    if (tiers.length === 0) return null;
+    let match: NormalizedTier | null = null;
+    for (const tier of tiers) {
+      if (quantity >= tier.quantity) {
+        match = tier;
+      }
+    }
+    return match;
+  }, [tiers, quantity]);
 
   const activeUnitPrice = activeTier ? activeTier.unitPrice : price;
-  const totalSavings = activeTier
-    ? (price - activeTier.unitPrice) * quantity
-    : 0;
 
-  /* Next tier (the one right above the active one) */
-  const nextTierIndex = activeTier
-    ? tiers.findIndex((t) => t.quantity === activeTier.quantity) + 1
-    : 0;
-  const nextTier: NormalizedTier | null = tiers[nextTierIndex] ?? null;
+  const nextTier = useMemo(() => {
+    if (tiers.length === 0) return null;
+    return tiers.find((tier) => tier.quantity > quantity) ?? null;
+  }, [tiers, quantity]);
+
   const qtyToNextTier = nextTier ? nextTier.quantity - quantity : null;
 
   /* ─── Quantity helpers ──────────────────────────────────────────────── */
@@ -189,6 +193,7 @@ export default function BulkDiscountModal({
     const tierForQty = [...tiers].reverse().find((t) => qty >= t.quantity) ?? null;
     const finalPrice = tierForQty ? tierForQty.unitPrice : price;
     onConfirm(qty, finalPrice);
+    onClose();
   };
 
   /* ─── Overlay click to close ─────────────────────────────────────────── */
@@ -205,7 +210,13 @@ export default function BulkDiscountModal({
     return `${tier.quantity}–${next.quantity - 1}`;
   };
 
+  const totalSavings = activeTier
+    ? (price - activeTier.unitPrice) * quantity
+    : 0;
+
   /* ─── Render ──────────────────────────────────────────────────────────── */
+  if (!isOpen) return null;
+
   return (
     <div
       ref={overlayRef}
@@ -266,20 +277,20 @@ export default function BulkDiscountModal({
                     {formatEuro(price)}
                   </span>
                 )}
-                <span className="text-zinc-500 text-sm">Excl. TAX</span>
+                <span className="text-zinc-500 text-sm">{t("bulkDiscount.exclTax")}</span>
               </div>
             </div>
           </div>
 
           {/* Bulk Pricing Tiers Table */}
           <div className="flex flex-col gap-2">
-            <h3 className="text-neutral-800 text-base font-bold">Bulk Pricing Tiers</h3>
+            <h3 className="text-neutral-800 text-base font-bold">{t("bulkDiscount.title")}</h3>
             <div className="rounded-2xl border border-slate-200 overflow-hidden">
               {/* Table header */}
               <div className="grid grid-cols-3 bg-slate-50 px-4 py-2.5 border-b border-slate-200">
-                <span className="text-neutral-700 text-xs font-semibold uppercase tracking-wide">Quantity</span>
-                <span className="text-neutral-700 text-xs font-semibold uppercase tracking-wide">Price / unit</span>
-                <span className="text-neutral-700 text-xs font-semibold uppercase tracking-wide">Savings</span>
+                <span className="text-neutral-700 text-xs font-semibold uppercase tracking-wide">{t("bulkDiscount.quantity")}</span>
+                <span className="text-neutral-700 text-xs font-semibold uppercase tracking-wide">{t("bulkDiscount.priceUnit")}</span>
+                <span className="text-neutral-700 text-xs font-semibold uppercase tracking-wide">{t("bulkDiscount.savings")}</span>
               </div>
 
               {/* Base row (no discount) */}
@@ -303,7 +314,7 @@ export default function BulkDiscountModal({
                       </span>
                       {isBaseActive && (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-green-600 text-white text-[10px] font-bold uppercase tracking-wide">
-                          Active
+                          {t("bulkDiscount.active")}
                         </span>
                       )}
                     </span>
@@ -336,7 +347,7 @@ export default function BulkDiscountModal({
                       </span>
                       {isActive && (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-green-600 text-white text-[10px] font-bold uppercase tracking-wide">
-                          Active
+                          {t("bulkDiscount.active")}
                         </span>
                       )}
                     </span>
@@ -418,9 +429,9 @@ export default function BulkDiscountModal({
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
-                  Box
+                  {t("bulkDiscount.box")}
                   <span className="text-xs text-amber-500 font-normal">
-                    ({normalizedPackingGroup} Rolls/Stack)
+                    ({normalizedPackingGroup} {t("bulkDiscount.rollsStack").toLowerCase()})
                   </span>
                 </button>
               </>
@@ -434,7 +445,7 @@ export default function BulkDiscountModal({
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-                Add to Cart
+                {t("bulkDiscount.addToCart")}
               </button>
             )}
           </div>
@@ -449,7 +460,7 @@ export default function BulkDiscountModal({
                 -{activeTier.discountPct}%
               </span>
               <p className="text-green-700 text-sm font-semibold">
-                You&apos;re saving {formatEuro(totalSavings)} with bulk pricing!
+                {t("bulkDiscount.savingAmount", { amount: formatEuro(totalSavings) })}
               </p>
             </div>
           ) : null}
@@ -461,12 +472,13 @@ export default function BulkDiscountModal({
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
               </svg>
               <p className="text-amber-700 text-sm">
-                <span className="font-semibold">Tip:</span> Order{" "}
-                <span className="font-bold">{qtyToNextTier} more</span> to unlock{" "}
-                <span className="font-bold">{formatEuro(nextTier.unitPrice)}</span> pricing and save an extra{" "}
-                <span className="font-bold">
-                  {formatEuro((price - nextTier.unitPrice) * (quantity + qtyToNextTier))}
-                </span>!
+                {t.rich("bulkDiscount.tipMore", {
+                  more: qtyToNextTier,
+                  price: formatEuro(nextTier.unitPrice),
+                  savings: formatEuro((price - nextTier.unitPrice) * (quantity + qtyToNextTier)),
+                  bold: (chunks) => <span className="font-bold">{chunks}</span>,
+                  semibold: (chunks) => <span className="font-semibold">{chunks}</span>,
+                })}
               </p>
             </div>
           ) : null}

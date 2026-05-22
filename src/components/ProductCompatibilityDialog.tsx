@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import {
   Dialog,
@@ -138,6 +139,7 @@ function formatResponseDetails(payload: unknown) {
 }
 
 export default function ProductCompatibilityDialog({ productId }: ProductCompatibilityDialogProps) {
+  const t = useTranslations();
   const [isOpen, setIsOpen] = useState(false);
   const [printers, setPrinters] = useState<PrinterOption[]>([]);
   const [selectedPrinterId, setSelectedPrinterId] = useState('');
@@ -262,21 +264,21 @@ export default function ProductCompatibilityDialog({ productId }: ProductCompati
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <button className="text-amber-500 text-base font-semibold underline text-left">
-          Check Compatibility
+          {t('compatibility.check')}
         </button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg p-6">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-black text-neutral-800">Check Compatibility</DialogTitle>
+          <DialogTitle className="text-2xl font-black text-neutral-800">{t('compatibility.check')}</DialogTitle>
           <DialogDescription>
-            Select your printer model to confirm whether this product is compatible.
+            {t('compatibility.subtitle')}
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
             <label className="text-sm font-bold text-neutral-700" htmlFor="compatibility-printer">
-              Printer model
+              {t('compatibility.printerModel')}
             </label>
             <div className="relative">
               <Input
@@ -295,7 +297,7 @@ export default function ProductCompatibilityDialog({ productId }: ProductCompati
                 onBlur={() => {
                   window.setTimeout(() => setIsPrinterListOpen(false), 120);
                 }}
-                placeholder="Search printer model"
+                placeholder={t('compatibility.searchPlaceholder')}
                 autoComplete="off"
                 className="h-12 rounded-2xl border-slate-200 bg-slate-50 px-4 text-base font-semibold text-neutral-800 placeholder:font-medium focus-visible:border-amber-500 focus-visible:ring-amber-500/20"
               />
@@ -304,7 +306,7 @@ export default function ProductCompatibilityDialog({ productId }: ProductCompati
                   {isLoadingPrinters ? (
                     <div className="flex items-center gap-2 px-4 py-3 text-sm font-semibold text-neutral-500">
                       <Loader2 className="size-4 animate-spin" />
-                      Loading printers
+                      {t('compatibility.loadingPrinters')}
                     </div>
                   ) : printers.length > 0 ? (
                     printers.map((printer) => (
@@ -324,20 +326,20 @@ export default function ProductCompatibilityDialog({ productId }: ProductCompati
                       >
                         <span>{printer.name}</span>
                         {String(printer.id) === selectedPrinterId ? (
-                          <span className="text-xs font-black uppercase tracking-wider text-amber-600">Selected</span>
+                          <span className="text-xs font-black uppercase tracking-wider text-amber-600">{t('compatibility.selected')}</span>
                         ) : null}
                       </button>
                     ))
                   ) : (
                     <div className="px-4 py-3 text-sm font-semibold text-neutral-500">
-                      No printers found.
+                      {t('compatibility.noPrinters')}
                     </div>
                   )}
                 </div>
               ) : null}
             </div>
             {!printerQuery ? (
-              <p className="text-xs font-semibold text-neutral-400">Showing the latest printer models. Type to search.</p>
+              <p className="text-xs font-semibold text-neutral-400">{t('compatibility.hint')}</p>
             ) : null}
             {printerError ? <p className="text-sm font-semibold text-red-600">{printerError}</p> : null}
           </div>
@@ -351,10 +353,10 @@ export default function ProductCompatibilityDialog({ productId }: ProductCompati
             {isChecking ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
-                Checking
+                {t('compatibility.checking')}
               </>
             ) : (
-              'Check Compatibility'
+              t('compatibility.check')
             )}
           </button>
 
@@ -367,7 +369,7 @@ export default function ProductCompatibilityDialog({ productId }: ProductCompati
           {compatibilityResponse ? (
             <div className={`rounded-2xl border p-5 ${compatibilityValue === false ? 'border-red-100 bg-red-50' : 'border-emerald-100 bg-emerald-50'}`}>
               <p className={`text-lg font-black ${compatibilityValue === false ? 'text-red-700' : 'text-emerald-700'}`}>
-                {compatibilityValue === false ? 'Not compatible' : compatibilityValue === true ? 'Compatible' : 'Compatibility result'}
+                {compatibilityValue === false ? t('compatibility.notCompatible') : compatibilityValue === true ? t('compatibility.compatible') : t('compatibility.result')}
               </p>
               <p className={`mt-1 text-sm font-semibold ${compatibilityValue === false ? 'text-red-600' : 'text-emerald-700'}`}>
                 {responseMessage || (selectedPrinter ? `Result for ${selectedPrinter.name}` : 'The compatibility check completed.')}

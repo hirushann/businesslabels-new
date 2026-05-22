@@ -3,6 +3,7 @@ import EmptyState from "@/components/EmptyState";
 import ProductCard from "@/components/ProductCard";
 import { getTranslations } from 'next-intl/server';
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
+import { localePath } from "@/lib/i18n/utils";
 import { mapLaravelProductToCardData, type LaravelProduct } from "@/lib/mappings/product";
 
 function shuffleArray<T>(array: T[]): T[] {
@@ -58,7 +59,7 @@ export default async function PopularProducts() {
             {t('popularProducts.title')}
           </h2>
           <Link
-            href="/products"
+            href={localePath('/products', locale)}
             className="w-fit px-6 py-4 rounded-full border border-amber-500 flex items-center gap-2.5 text-amber-500 text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-50 transition-colors"
           >
             {t('popularProducts.viewAll')}

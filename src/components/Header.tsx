@@ -21,6 +21,7 @@ import AccessoriesMenu from './nav/AccessoriesMenu';
 import ResourcesMenu from './nav/ResourcesMenu';
 import BrandsMenu from './nav/BrandsMenu';
 import { useTranslations } from 'next-intl';
+import { useLocalePath } from '@/hooks/useLocalePath';
 
 type DropdownKey = 'printers' | 'labels' | 'accessories' | 'resources' | 'brands' | null;
 // import { useCart } from '@/context/CartContext';
@@ -38,6 +39,7 @@ const navItems = [
 
 export default function Header() {
   const t = useTranslations();
+  const lp = useLocalePath();
   const { isHelpOpen, openHelp, closeHelp } = useHelp();
   const [headerMembers, setHeaderMembers] = useState<TeamMember[]>([]);
 
@@ -179,7 +181,7 @@ export default function Header() {
 
           {/* Search */}
           <Link
-            href="/products?focus=true"
+            href={lp('/products?focus=true')}
             className="w-96 px-4 py-3 rounded-full border border-slate-100 flex items-center gap-2 overflow-hidden text-left cursor-pointer"
             aria-label={t('header.productsSearchLink')}
           >
@@ -322,7 +324,7 @@ export default function Header() {
         
         {/* Search bar below row on mobile */}
         <Link
-          href="/products?focus=true"
+          href={lp('/products?focus=true')}
           className="w-full px-4 py-2.5 rounded-full border border-slate-100 flex items-center gap-2 overflow-hidden text-left bg-slate-50"
           aria-label={t('header.productsSearchLink')}
         >

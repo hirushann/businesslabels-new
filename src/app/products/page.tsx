@@ -9,6 +9,7 @@ import { getTranslations } from "next-intl/server";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 import { getServerLocale } from "@/lib/i18n";
+import { localePath } from "@/lib/i18n/utils";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations();
@@ -73,7 +74,7 @@ export default async function ProductsPage({
             <Breadcrumbs
               className="text-neutral-900"
               items={[
-                { label: t("common.products"), href: "/products" },
+                { label: t("common.products"), href: localePath("/products", locale) },
                 { label: t("common.allProducts") },
               ]}
             />

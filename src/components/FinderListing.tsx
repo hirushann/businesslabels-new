@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import EmptyState from "@/components/EmptyState";
@@ -18,26 +18,25 @@ type PrintersListingProps = {
   initialQueryString: string;
 };
 
-const FAQ_ITEMS = [
-  {
-    title: "My Label Printer is not listed",
-    body: "We have looked up the specific properties that the media must meet for each printer model and stored them in our system. Based on these specifications, filters are applied to find the right labels that fit your label printer. This makes ordering printer media quick and easy.",
-  },
-  {
-    title: "How does the product finder work",
-    body: "We have looked up the specific properties that the media must meet for each printer model and stored them in our system. Based on these specifications, filters are applied to find the right labels that fit your label printer. This makes ordering printer media quick and easy.",
-  },
-  {
-    title: "Yes, You can also save Favorite Printers",
-    body: 'By clicking the "Save Printer" button, it is saved to your account. This way, you and the other sub-accounts can see which printers have been saved and quickly find the correct labels they need. These printers are saved in the "My Printers" section of the account dashboards.',
-  },
-];
-
 export default function FinderListing({
   initialCatalog,
   initialQueryString,
 }: PrintersListingProps) {
   const t = useTranslations();
+  const faqItems = useMemo(() => [
+    {
+      title: t("finder.faqNotListedTitle"),
+      body: t("finder.faqNotListedBody"),
+    },
+    {
+      title: t("finder.faqHowItWorksTitle"),
+      body: t("finder.faqHowItWorksBody"),
+    },
+    {
+      title: t("finder.faqSavePrintersTitle"),
+      body: t("finder.faqSavePrintersBody"),
+    },
+  ], [t]);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -200,7 +199,7 @@ export default function FinderListing({
           className="text-[#222222] text-3xl font-bold leading-[120%] shrink-0"
           style={{ fontFamily: "Segoe UI, sans-serif" }}
         >
-          Find your printer
+          {t("finder.findYourPrinter")}
         </h2>
 
         <div className="flex items-stretch gap-4 w-full lg:max-w-200">
@@ -235,7 +234,7 @@ export default function FinderListing({
               onKeyDown={(e) => {
                 if (e.key === "Enter") commitSearchNow();
               }}
-              placeholder="Search..."
+              placeholder={t("common.search")}
               className="flex-1 bg-transparent text-sm text-[#222222] placeholder-[#888888] outline-none"
               style={{ fontFamily: "Segoe UI, sans-serif" }}
             />
@@ -248,7 +247,7 @@ export default function FinderListing({
             className="inline-flex items-center justify-center px-5 rounded-full border border-[#F18800] text-[#F18800] font-semibold text-base leading-6 hover:bg-orange-50 transition-colors duration-150 whitespace-nowrap"
             style={{ fontFamily: "Segoe UI, sans-serif" }}
           >
-            Request a New Printer
+            {t("finder.requestNewPrinter")}
           </button>
         </div>
       </div>
@@ -338,10 +337,10 @@ export default function FinderListing({
                     strokeLinecap="round"
                   />
                 </svg>
-                Loading...
+                {t("common.loading")}
               </>
             ) : (
-              "View more Printers"
+              t("finder.viewMorePrinters")
             )}
           </button>
         </div>
@@ -350,7 +349,7 @@ export default function FinderListing({
       {/* ── FAQ / Info cards section ── */}
       <div className="mt-16 -mx-6 px-6 py-20 bg-[#F7F9FA] sm:-mx-10 sm:px-10 lg:-mx-10 lg:px-10">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {FAQ_ITEMS.map((item) => (
+          {faqItems.map((item) => (
             <div
               key={item.title}
               className="bg-white rounded-xl border border-[#EDF0F4] shadow-[0px_2px_4px_0px_rgba(0,0,0,0.10)] p-6 flex flex-col gap-5"
