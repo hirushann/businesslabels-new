@@ -254,7 +254,7 @@ function RegisterContent() {
         const data = (await response.json()) as RegisterDataResponse;
 
         if (!response.ok) {
-          throw new Error(data.message || 'Unable to load registration data.');
+          throw new Error(data.message || t('register.loadDataError'));
         }
 
         const nextOptions = readRegisterDataOptions(data);
@@ -264,7 +264,7 @@ function RegisterContent() {
         }
       } catch {
         if (isActive) {
-          setFormMessage('Unable to load registration data. Please try again.');
+          setFormMessage(t('register.loadDataError'));
         }
       } finally {
         if (isActive) {
@@ -278,7 +278,7 @@ function RegisterContent() {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [t]);
 
   const onAddressSelect = (address: {
     street: string;
@@ -388,7 +388,7 @@ function RegisterContent() {
                 {t('register.registeringText')}...
               </h2>
               <p className="text-base font-semibold text-neutral-500 animate-pulse">
-                {t('register.preparingAccount') || 'Preparing your account...'}
+                {t('register.preparingAccount')}
               </p>
             </div>
           </div>
@@ -524,7 +524,7 @@ function RegisterContent() {
 
                   <div className="md:col-span-1">
                     <Label className="text-sm font-semibold text-neutral-700 mb-2 flex items-center gap-1 ml-4">
-                      Straat en huisnummer <span className="text-red-500">*</span>
+                      {t('register.streetAddress')} <span className="text-red-500">*</span>
                     </Label>
                     <AddressAutocomplete
                       value={streetAddress}
@@ -532,6 +532,7 @@ function RegisterContent() {
                       onAddressSelect={onAddressSelect}
                       className={`h-14 rounded-full border-0 bg-slate-50 pr-5 text-base font-semibold text-neutral-800 placeholder:text-neutral-400 placeholder:font-medium focus-visible:border-sky-400 focus-visible:ring-sky-400/20 sm:text-lg pl-14`}
                       hasError={Boolean(errors.street_address)}
+                      placeholder={t('register.addressAutocompletePlaceholder')}
                     />
                     {errors.street_address?.[0] && <p className="text-sm font-semibold text-red-600 ml-4 mt-1">{errors.street_address[0]}</p>}
                   </div>

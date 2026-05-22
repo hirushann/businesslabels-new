@@ -262,7 +262,7 @@ type ProductCardData = {
   packing_group: number | null;
 };
 
-function ProductCard({ product, href }: { product: ProductCardData; href?: { pathname: string; query?: { type: string } } }) {
+function ProductCard({ product, href, outOfStockLabel }: { product: ProductCardData; href?: { pathname: string; query?: { type: string } }; outOfStockLabel: string }) {
   const imageUrl = toDisplayImageUrl(product.mainImage) || "/images/labelrolls.png";
   const linkHref = href ?? { pathname: `/products/${product.slug}` };
   return (
@@ -270,7 +270,7 @@ function ProductCard({ product, href }: { product: ProductCardData; href?: { pat
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-50">
         <Image src={imageUrl} alt={product.name} fill sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw" className="object-contain p-4 transition-transform duration-300 group-hover:scale-105" unoptimized />
         {!product.inStock && (
-          <span className="absolute left-3 top-3 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-600">Out of stock</span>
+          <span className="absolute left-3 top-3 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-600">{outOfStockLabel}</span>
         )}
       </div>
       <div className="flex flex-1 flex-col gap-2 p-5">
@@ -315,7 +315,7 @@ function MaterialProductsSection({
   currentPage: number;
   lastPage: number;
   materialSlug: string;
-  labels: { noProductsTitle: string; noProductsDescription: string; previous: string; next: string; filters: string; sortNameAsc: string };
+  labels: { noProductsTitle: string; noProductsDescription: string; previous: string; next: string; filters: string; sortNameAsc: string; outOfStock: string };
 }) {
   const visiblePages = buildVisiblePages(currentPage, lastPage);
   return (
@@ -340,7 +340,7 @@ function MaterialProductsSection({
           <>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
               {products.map((product) => (
-                <ProductCard key={product.id} product={product} href={productHref(product)} />
+                <ProductCard key={product.id} product={product} href={productHref(product)} outOfStockLabel={labels.outOfStock} />
               ))}
             </div>
             {lastPage > 1 && (
@@ -589,6 +589,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
           next: t("common.next"),
           filters: t("common.filters"),
           sortNameAsc: t("materialDetail.sortNameAsc"),
+          outOfStock: t("product.outOfStock"),
         }}
       />
 

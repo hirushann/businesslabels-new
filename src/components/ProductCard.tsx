@@ -13,7 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import BulkDiscountModal from "@/components/BulkDiscountModal";
 import { localePath } from "@/lib/i18n/utils";
 
@@ -168,6 +168,7 @@ const truncateWords = (text: string, count: number) => {
 
 export default function ProductCard({ product, href, onClick }: ProductCardProps) {
   const locale = useLocale();
+  const t = useTranslations();
   const { addItem, openCart } = useCart();
   const productName = product.name ?? "";
   const categoryBadge = lastCategoryLabel(product.categories);
@@ -348,7 +349,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <path d="M2 6L5 9L10 3" stroke="white" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <span className="text-white text-xs font-normal font-['Segoe_UI'] leading-4">In Stock</span>
+              <span className="text-white text-xs font-normal font-['Segoe_UI'] leading-4">{t("product.inStock")}</span>
             </div>
           ) : (
             <div className="px-2.5 py-1 rounded-full flex items-center gap-1.5">
@@ -369,7 +370,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
         {product.packing_group != null && Number(product.packing_group) > 0 && (
           <div className="absolute bottom-4 right-4 z-10 px-2.5 py-1 bg-white rounded-full flex items-center gap-1.5 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.08)] border border-slate-100">
             <span className="text-neutral-700 text-xs font-normal font-['Segoe_UI'] leading-4">
-              {product.packing_group} {locale === "nl" ? "per doos" : "per box"}
+              {t("product.perBox", { count: product.packing_group })}
             </span>
           </div>
         )}
@@ -434,9 +435,9 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
                   type="button"
                   onClick={handleAddToCart}
                   className="px-4 py-2.5 bg-amber-500 rounded-full flex items-center gap-2 text-white text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors"
-                  aria-label={`Add ${product.name} to cart`}
+                  aria-label={t("product.addProductToCart", { name: product.name })}
                 >
-                  Add
+                  {t("common.add")}
                   <svg width="22" height="16" viewBox="0 0 22 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M7.33268 14.6663C7.83894 14.6663 8.24935 14.3679 8.24935 13.9997C8.24935 13.6315 7.83894 13.333 7.33268 13.333C6.82642 13.333 6.41602 13.6315 6.41602 13.9997C6.41602 14.3679 6.82642 14.6663 7.33268 14.6663Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                     <path d="M17.4167 14.6663C17.9229 14.6663 18.3333 14.3679 18.3333 13.9997C18.3333 13.6315 17.9229 13.333 17.4167 13.333C16.9104 13.333 16.5 13.6315 16.5 13.9997C16.5 14.3679 16.9104 14.6663 17.4167 14.6663Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -454,8 +455,8 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
                   }}
                 >
                   <PopoverHeader>
-                    <PopoverTitle className="text-base">Choose Warranty</PopoverTitle>
-                    <PopoverDescription>Select a warranty option before adding this item.</PopoverDescription>
+                    <PopoverTitle className="text-base">{t("product.chooseWarranty")}</PopoverTitle>
+                    <PopoverDescription>{t("product.warrantyDescription")}</PopoverDescription>
                   </PopoverHeader>
                   <RadioGroup
                     value={selectedWarrantyOption ? String(selectedWarrantyOption.id) : undefined}
@@ -479,11 +480,11 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
                             <span className="flex items-start justify-between gap-2 font-semibold text-neutral-800">
                               <span>{option.name}</span>
                               <span className={hasExtraPrice ? "text-amber-600" : "text-emerald-600"}>
-                                {hasExtraPrice ? `+${formatEuro(option.price)}` : "No extra cost"}
+                                {hasExtraPrice ? `+${formatEuro(option.price)}` : t("product.noExtraCost")}
                               </span>
                             </span>
                             <span className="text-xs text-neutral-500">
-                              {option.description || (option.durationMonths ? `${option.durationMonths} months coverage` : "Extended coverage")}
+                              {option.description || (option.durationMonths ? t("product.monthsCoverage", { count: option.durationMonths }) : t("product.extendedCoverage"))}
                             </span>
                           </span>
                         </label>
@@ -500,14 +501,14 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
                       }}
                       className="h-9 rounded-full border border-slate-200 px-4 text-sm font-semibold text-neutral-700 transition-colors hover:bg-slate-100"
                     >
-                      Cancel
+                      {t("product.cancel")}
                     </button>
                     <button
                       type="button"
                       onClick={handleConfirmWarrantyAdd}
                       className="h-9 rounded-full bg-amber-500 px-4 text-sm font-semibold text-white transition-colors hover:bg-amber-600"
                     >
-                      Add to Cart
+                      {t("product.addToCart")}
                     </button>
                   </div>
                 </PopoverContent>

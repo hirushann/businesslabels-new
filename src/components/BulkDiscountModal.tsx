@@ -224,7 +224,7 @@ export default function BulkDiscountModal({
       className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
       role="dialog"
       aria-modal="true"
-      aria-label="Bulk Pricing"
+      aria-label={t("bulkDiscount.title")}
     >
       <div
         className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] animate-in zoom-in-95 duration-200"
@@ -234,7 +234,7 @@ export default function BulkDiscountModal({
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close"
+          aria-label={t("common.close")}
           className="absolute top-4 right-4 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 transition-colors text-neutral-500"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">

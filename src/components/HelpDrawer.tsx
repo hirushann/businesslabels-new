@@ -2,6 +2,7 @@
 
 import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface HelpDrawerProps {
   onClose: () => void;
@@ -169,6 +170,7 @@ function CollapseIcon({ open }: { open: boolean }) {
 }
 
 export default function HelpDrawer({ onClose }: HelpDrawerProps) {
+  const t = useTranslations();
   const [callbackOpen, setCallbackOpen] = useState(true);
   const [moreWaysOpen, setMoreWaysOpen] = useState(true);
   const [scheduleOpen, setScheduleOpen] = useState(true);
@@ -289,7 +291,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
 
     if (!normalizedPhoneNumber) {
       setBookingStatus('error');
-      setBookingMessage('Please enter your phone number.');
+      setBookingMessage(t('help.errorPhone'));
       return;
     }
 
@@ -318,7 +320,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
         const message =
           typeof data.message === 'string'
             ? data.message
-            : 'We could not book your callback. Please try again.';
+            : t('help.errorCallback');
 
         throw new Error(message);
       }
@@ -327,12 +329,12 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
       setBookingMessage(
         typeof data.message === 'string'
           ? data.message
-          : 'Your callback request has been sent.'
+          : t('help.successCallback')
       );
       setPhoneNumber('');
     } catch (error) {
       setBookingStatus('error');
-      setBookingMessage(error instanceof Error ? error.message : 'We could not book your callback. Please try again.');
+      setBookingMessage(error instanceof Error ? error.message : t('help.errorCallback'));
     }
   };
 
@@ -344,7 +346,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
 
     if (!normalizedEmail || !normalizedMessage) {
       setContactStatus('error');
-      setContactStatusMessage('Please enter your email address and message.');
+      setContactStatusMessage(t('help.errorEmail'));
       return;
     }
 
@@ -370,7 +372,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
         const message =
           typeof data.message === 'string'
             ? data.message
-            : 'We could not send your message. Please try again.';
+            : t('help.errorMessage');
 
         throw new Error(message);
       }
@@ -379,13 +381,13 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
       setContactStatusMessage(
         typeof data.message === 'string'
           ? data.message
-          : 'Your message has been sent.'
+          : t('help.successMessage')
       );
       setContactEmail('');
       setContactMessage('');
     } catch (error) {
       setContactStatus('error');
-      setContactStatusMessage(error instanceof Error ? error.message : 'We could not send your message. Please try again.');
+      setContactStatusMessage(error instanceof Error ? error.message : t('help.errorMessage'));
     }
   };
 
@@ -402,7 +404,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Need Help"
+        aria-label={t('help.needHelp')}
         className="fixed top-0 right-0 h-full w-[480px] bg-white z-[1000] shadow-2xl flex flex-col overflow-hidden"
         style={{ animation: 'slideInRight 0.28s cubic-bezier(0.16,1,0.3,1) both' }}
       >
@@ -411,11 +413,11 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
           {/* Title + close */}
           <div className="flex justify-between items-start">
             <h2 className="text-neutral-800 text-2xl font-semibold font-['Segoe_UI'] leading-7">
-              Need help?
+              {t('header.needHelp')}
             </h2>
             <button
               onClick={onClose}
-              aria-label="Close"
+              aria-label={t('common.close')}
               className="w-6 h-6 flex items-center justify-center text-zinc-500 hover:text-zinc-800 transition-colors"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -460,7 +462,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                   </svg>
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-neutral-800 text-base font-semibold font-['Segoe_UI'] leading-5">Call</span>
+                  <span className="text-neutral-800 text-base font-semibold font-['Segoe_UI'] leading-5">{t('supportPanel.callUs')}</span>
                   <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI'] leading-5">
                     +31 (0)318 590 465
                   </span>
@@ -479,7 +481,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                   </svg>
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-neutral-800 text-base font-semibold font-['Segoe_UI'] leading-5">Email</span>
+                  <span className="text-neutral-800 text-base font-semibold font-['Segoe_UI'] leading-5">{t('supportPanel.email')}</span>
                   <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI'] leading-5">verkoop@businesslabels.nl</span>
                 </div>
               </a>
@@ -497,7 +499,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
               onClick={() => setCallbackOpen(v => !v)}
             >
               <span className="text-neutral-800 text-lg font-normal font-['Segoe_UI'] leading-6">
-                Request a Call Back from Our Team
+                {t('help.requestCallbackTeam')}
               </span>
               <CollapseIcon open={callbackOpen} />
             </button>
@@ -522,7 +524,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                 <form className="flex flex-col gap-4" onSubmit={handleBookingSubmit}>
                   {/* Phone country */}
                   <label className="flex flex-col gap-2">
-                    <span className="sr-only">Country</span>
+                    <span className="sr-only">{t('register.country')}</span>
                     <select
                       value={selectedCountryCode}
                       onChange={(event) => {
@@ -542,7 +544,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
 
                   {/* Mobile number */}
                   <label className="flex flex-col gap-2">
-                    <span className="sr-only">Your mobile number</span>
+                    <span className="sr-only">{t('help.mobileNumber')}</span>
                     <input
                       type="tel"
                       value={phoneNumber}
@@ -551,7 +553,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                         setBookingStatus('idle');
                         setBookingMessage('');
                       }}
-                      placeholder="Your mobile number"
+                      placeholder={t('help.mobileNumber')}
                       autoComplete="tel"
                       className="h-11 px-5 py-2 rounded-xl border border-zinc-200 outline-none text-neutral-700 text-base font-normal font-['Segoe_UI'] placeholder-neutral-400 focus:border-amber-400 transition-colors w-full"
                     />
@@ -594,14 +596,14 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                       disabled={bookingStatus === 'submitting'}
                       className="w-24 h-12 px-4 py-2.5 bg-amber-500 rounded-full text-white text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors disabled:cursor-not-allowed disabled:opacity-70"
                     >
-                      {bookingStatus === 'submitting' ? 'Booking' : 'Book'}
+                      {bookingStatus === 'submitting' ? t('help.booking') : t('help.book')}
                     </button>
                     <button
                       type="button"
                       onClick={resetBookingForm}
                       className="w-24 h-12 px-4 py-2.5 bg-zinc-500/10 rounded-full text-zinc-500 text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-zinc-500/20 transition-colors"
                     >
-                      Cancel
+                      {t('product.cancel')}
                     </button>
                   </div>
                 </form>
@@ -618,7 +620,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
               onClick={() => setMoreWaysOpen(v => !v)}
             >
               <span className="text-neutral-800 text-lg font-normal font-['Segoe_UI'] leading-6">
-                More Ways to Reach Our Team
+                {t('help.moreWaysTeam')}
               </span>
               <CollapseIcon open={moreWaysOpen} />
             </button>
@@ -630,11 +632,11 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                   <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">+31-1111-1111-11</span>
                 </div> */}
                 <div className="flex flex-col gap-1">
-                  <span className="text-neutral-800 text-base font-semibold font-['Segoe_UI']">ADDRESS</span>
+                  <span className="text-neutral-800 text-base font-semibold font-['Segoe_UI']">{t('help.address')}</span>
                   <div className="flex flex-col gap-1">
                     <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">Lenderinkweg 8,</span>
                     <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">6733 AX Wekerom</span>
-                    <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">Netherlands</span>
+                    <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">{t('countries.netherlands')}</span>
                   </div>
                 </div>
                 {/* <span className="text-amber-500 text-base font-semibold font-['Segoe_UI'] underline cursor-pointer hover:text-amber-600 transition-colors">
@@ -653,7 +655,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
               onClick={() => setScheduleOpen(v => !v)}
             >
               <span className="text-neutral-800 text-lg font-normal font-['Segoe_UI'] leading-6">
-                Check When Our Team Is Available
+                {t('help.checkAvailability')}
               </span>
               <CollapseIcon open={scheduleOpen} />
             </button>
@@ -667,13 +669,13 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                         {day} <span className="text-xs">({formatScheduleDate(date)})</span>
                       </span>
                       <span className={`text-sm font-normal font-['Segoe_UI'] text-right ${active ? 'text-neutral-800' : 'text-zinc-500'}`}>
-                        {hours}
+                        {hours === UNAVAILABLE_LABEL ? t('help.unavailable') : hours}
                       </span>
                     </div>
                   ))}
                 </div>
                 <p className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">
-                  Thank you for your understanding. We respond to inquiries during our working hours only.
+                  {t('help.workingHoursOnly')}
                 </p>
               </div>
             )}
@@ -688,7 +690,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
               onClick={() => setMessageOpen(v => !v)}
             >
               <span className="text-neutral-800 text-lg font-normal font-['Segoe_UI'] leading-6">
-                Drop Us a Message
+                {t('help.dropMessage')}
               </span>
               <CollapseIcon open={messageOpen} />
             </button>
@@ -696,7 +698,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
             {messageOpen && (
               <form className="flex flex-col gap-3" onSubmit={handleContactSubmit}>
                 <p className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">
-                  Please leave a message and we will contact you as soon as possible.
+                  {t('help.leaveMessage')}
                 </p>
                 <input
                   type="email"
@@ -706,7 +708,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                     setContactStatus('idle');
                     setContactStatusMessage('');
                   }}
-                  placeholder="Your Email Address"
+                  placeholder={t('help.emailAddress')}
                   autoComplete="email"
                   className="h-11 px-5 py-2 rounded-xl border border-zinc-200 outline-none text-neutral-700 text-base font-normal font-['Segoe_UI'] placeholder-neutral-400 focus:border-amber-400 transition-colors w-full"
                 />
@@ -717,7 +719,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                     setContactStatus('idle');
                     setContactStatusMessage('');
                   }}
-                  placeholder="Write your message here..."
+                  placeholder={t('help.messagePlaceholder')}
                   rows={4}
                   className="px-3 py-2 rounded-xl border border-zinc-200 outline-none text-neutral-700 text-sm font-normal font-['Segoe_UI'] placeholder-neutral-400 focus:border-amber-400 transition-colors w-full resize-none"
                 />
@@ -737,7 +739,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                     disabled={contactStatus === 'submitting'}
                     className="w-36 h-12 px-4 py-2.5 bg-amber-500 rounded-full text-white text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    {contactStatus === 'submitting' ? 'Sending' : 'Send Message'}
+                    {contactStatus === 'submitting' ? t('help.sending') : t('help.sendMessage')}
                   </button>
                 </div>
               </form>

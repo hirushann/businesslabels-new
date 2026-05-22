@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import Accordion from "@/components/Accordion";
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 import EmptyState from "@/components/EmptyState";
@@ -293,6 +294,7 @@ export default function MaterialsCatalogClient({
   initialMaterials: Material[];
   locale: string;
 }) {
+  const t = useTranslations();
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -639,7 +641,7 @@ export default function MaterialsCatalogClient({
 
               {/* Sort select indicator */}
               <label className="flex h-10 items-center gap-3 rounded-[42px] border border-slate-200 bg-white px-5 py-2 text-neutral-800">
-                <span className="sr-only">Sort materials</span>
+                <span className="sr-only">{t("materialsPage.sortMaterials")}</span>
                 <select
                   value={sort}
                   onChange={(e) => updateQuery({ sort: e.target.value })}

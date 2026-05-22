@@ -111,7 +111,7 @@ export default function HeroSection() {
         });
 
         if (!response.ok) {
-          throw new Error("Printer search failed");
+          throw new Error(t("hero.printerSearchFailed"));
         }
 
         const payload = (await response.json()) as { data?: PrinterSearchResult[]; message?: string };
@@ -120,7 +120,7 @@ export default function HeroSection() {
         if (error instanceof DOMException && error.name === "AbortError") return;
 
         setPrinterResults([]);
-        setPrinterSearchError("We could not search printers right now. Please try again.");
+        setPrinterSearchError(t("hero.printerSearchError"));
       } finally {
         setIsSearchingPrinters(false);
       }
@@ -129,7 +129,7 @@ export default function HeroSection() {
     searchPrinters();
 
     return () => controller.abort();
-  }, [debouncedPrinterQuery]);
+  }, [debouncedPrinterQuery, t]);
 
   useEffect(() => {
     if (!printerId) {
@@ -342,19 +342,19 @@ export default function HeroSection() {
                   showClear
                   value={printerQuery}
                   onChange={(event) => handlePrinterQueryChange(event.currentTarget.value)}
-                  placeholder="Search your printer model..."
+                  placeholder={t('hero.searchPrinterPlaceholder')}
                   className="w-full h-12 px-3 rounded-full"
                 />
                 {printerQuery.trim().length > 0 && printerQuery.trim().length < 3 ? (
                   <p className="text-sm text-muted-foreground">
-                    Type at least 3 characters to search
+                    {t('hero.searchMinChars')}
                   </p>
                 ) : null}
                 <ComboboxContent className="p-0">
                   {isSearchingPrinters ? (
                     <div className="flex items-center gap-2 px-3 py-6 text-sm text-muted-foreground">
                       <Loader2 data-icon="inline-start" className="animate-spin" />
-                      <span>Searching printers...</span>
+                      <span>{t('hero.searchingPrinters')}</span>
                     </div>
                   ) : printerSearchError ? (
                     <div className="px-3 py-6 text-sm text-destructive">
@@ -362,7 +362,7 @@ export default function HeroSection() {
                     </div>
                   ) : (
                     <>
-                      <ComboboxEmpty>No printers found</ComboboxEmpty>
+                      <ComboboxEmpty>{t('hero.noPrintersFound')}</ComboboxEmpty>
                       <ComboboxList>
                         {(printer) => (
                           <ComboboxItem

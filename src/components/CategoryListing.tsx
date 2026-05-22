@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { SearchProvider, useSearch } from "@elastic/react-search-ui";
 import type { SearchDriverOptions } from "@elastic/search-ui";
+import { useTranslations } from "next-intl";
 import { CategoryScopedProxyConnector } from "@/lib/categoryScopedConnector";
 import EmptyState from "@/components/EmptyState";
 import ProductCard from "@/components/ProductCard";
@@ -23,13 +24,13 @@ const PAGE_SIZE = 24;
 
 type CategoryListingSortValue = "latest" | "oldest" | "title_asc" | "title_desc" | "price_asc" | "price_desc";
 
-const LISTING_SORT_OPTIONS: Array<{ value: CategoryListingSortValue; label: string }> = [
-  { value: "latest", label: "Latest" },
-  { value: "oldest", label: "Oldest" },
-  { value: "title_asc", label: "Name: A - Z" },
-  { value: "title_desc", label: "Name: Z - A" },
-  { value: "price_asc", label: "Price: Low to High" },
-  { value: "price_desc", label: "Price: High to Low" },
+const LISTING_SORT_OPTIONS: Array<{ value: CategoryListingSortValue; labelKey: string }> = [
+  { value: "latest", labelKey: "sort.latest" },
+  { value: "oldest", labelKey: "sort.oldest" },
+  { value: "title_asc", labelKey: "sort.nameAsc" },
+  { value: "title_desc", labelKey: "sort.nameDesc" },
+  { value: "price_asc", labelKey: "sort.priceAsc" },
+  { value: "price_desc", labelKey: "sort.priceDesc" },
 ];
 
 const LISTING_SORT_TO_SEARCH_UI: Record<CategoryListingSortValue, { field: string; direction: "asc" | "desc" }> = {
@@ -94,6 +95,7 @@ function CategorySkeletonGrid({ isSidebarOpen }: { isSidebarOpen: boolean }) {
 }
 
 function CategoryListingContent({ products }: { products: CategoryCardData[] }) {
+  const t = useTranslations();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const {
@@ -133,9 +135,9 @@ function CategoryListingContent({ products }: { products: CategoryCardData[] }) 
   const fallbackProducts = !searchHasResolved && !error ? products : [];
   const searchProducts = useMemo(() => {
     return searchHasResolved
-      ? (results ?? []).map((result, resultIndex) => mapProductListingResult(result, resultIndex))
+      ? (results ?? []).map((result, resultIndex) => mapProductListingResult(result, resultIndex, t("product.unnamedProduct")))
       : [];
-  }, [searchHasResolved, results]);
+  }, [searchHasResolved, results, t]);
   
   const [accumulatedProducts, setAccumulatedProducts] = useState<any[]>([]);
 
@@ -222,7 +224,7 @@ function CategoryListingContent({ products }: { products: CategoryCardData[] }) 
                 <path d="M5.5 10H14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                 <path d="M8 15H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
-              <span className="text-lg font-semibold font-['Segoe_UI'] leading-6">Filters</span>
+              <span className="text-lg font-semibold font-['Segoe_UI'] leading-6">{t("common.filters")}</span>
               {activeFilterCount > 0 ? (
                 <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-100 px-1.5 text-xs font-semibold text-amber-600">
                   {activeFilterCount}
@@ -232,7 +234,7 @@ function CategoryListingContent({ products }: { products: CategoryCardData[] }) 
           </button>
 
           <label className="flex h-10 items-center gap-3 rounded-[42px] border border-slate-200 px-5 py-2 text-neutral-800">
-            <span className="sr-only">Sort products</span>
+            <span className="sr-only">{t("search.sortProducts")}</span>
             <select
               value={selectedSort}
               onChange={(e) => handleSortChange(e.target.value as CategoryListingSortValue)}
@@ -240,7 +242,7 @@ function CategoryListingContent({ products }: { products: CategoryCardData[] }) 
             >
               {LISTING_SORT_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
-                  {option.label}
+                  {t(option.labelKey)}
                 </option>
               ))}
             </select>
@@ -254,7 +256,7 @@ function CategoryListingContent({ products }: { products: CategoryCardData[] }) 
             <div className="flex flex-col gap-5">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-bold text-neutral-800">Filters</h2>
+                  <h2 className="text-xl font-bold text-neutral-800">{t("common.filters")}</h2>
                   {activeFilterCount > 0 ? (
                     <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-100 px-1.5 text-xs font-semibold text-amber-600">
                       {activeFilterCount}
@@ -267,7 +269,7 @@ function CategoryListingContent({ products }: { products: CategoryCardData[] }) 
                     onClick={clearFilters}
                     className="text-sm font-medium text-amber-500 hover:underline"
                   >
-                    Clear all
+                    {t("finder.clearAll")}
                   </button>
                 ) : null}
               </div>
@@ -278,7 +280,7 @@ function CategoryListingContent({ products }: { products: CategoryCardData[] }) 
 
         <div className="min-w-0 flex-1">
           <div className="mb-4 text-sm text-neutral-600">
-            {isLoading && !hasFallbackProducts ? "Loading products..." : `${totalResults ?? products.length} results`}
+            {isLoading && !hasFallbackProducts ? t("search.loadingProducts") : t("search.results", { count: totalResults ?? products.length })}
           </div>
 
           {error ? (
@@ -286,7 +288,7 @@ function CategoryListingContent({ products }: { products: CategoryCardData[] }) 
           ) : isLoading && current === 1 && !hasFallbackProducts ? (
             <CategorySkeletonGrid isSidebarOpen={isSidebarOpen} />
           ) : !hasFallbackProducts && !hasSearchProducts && !isLoading ? (
-            <EmptyState title="No products found" description="Try adjusting the filters to see more products." />
+            <EmptyState title={t("common.noProductsFound")} description={t("search.tryAdjustingFilters")} />
           ) : (
             <>
               <div
@@ -327,9 +329,9 @@ function CategoryListingContent({ products }: { products: CategoryCardData[] }) 
               {page < pageCount && hasSearchProducts ? (
                 <div ref={observerTarget} className="h-20 w-full flex justify-center items-center mt-4">
                   {(isLoading || isFetchingMore) ? (
-                    <div className="text-gray-400">Loading more...</div>
+                    <div className="text-gray-400">{t("search.loadingMore")}</div>
                   ) : (
-                    <div className="text-gray-400">Scroll for more...</div>
+                    <div className="text-gray-400">{t("search.scrollForMore")}</div>
                   )}
                 </div>
               ) : null}

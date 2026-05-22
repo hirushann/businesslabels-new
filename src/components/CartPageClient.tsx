@@ -225,7 +225,7 @@ export default function CartPageClient() {
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
               <p className="text-xs text-neutral-500 leading-tight">
-                <strong>Secure Payment.</strong> Your data is protected with 256-bit SSL encryption.
+                <strong>{t('cart.securePaymentTitle')}</strong> {t('cart.securePaymentDescription')}
               </p>
             </div>
           </div>

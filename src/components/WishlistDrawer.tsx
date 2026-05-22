@@ -48,7 +48,7 @@ export default function WishlistDrawer({ onClose }: WishlistDrawerProps) {
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Your wishlist"
+        aria-label={t('wishlist.title')}
         className="fixed top-0 right-0 h-full w-[480px] bg-white z-[1000] shadow-2xl flex flex-col overflow-hidden"
         style={{ animation: 'slideInRight 0.28s cubic-bezier(0.16,1,0.3,1) both' }}
       >
