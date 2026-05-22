@@ -31,9 +31,7 @@ type ProductsListingProps = {
   initialQueryString: string;
   scopeQueryString?: string;
   baselineRangeFilters?: CatalogRangeFilter[];
-<<<<<<< HEAD
   printer?: { title: string; slug: string } | null;
-=======
   // Filter keys to omit from the sidebar.
   hiddenFilterKeys?: CatalogOptionFilterKey[];
   // When provided, the category facet's options are filtered against this
@@ -41,7 +39,6 @@ type ProductsListingProps = {
   // delete can still emit the old slug in ES aggregations; passing the live
   // tree's slugs here keeps the accordion intact but drops the ghost entries.
   validCategorySlugs?: string[];
->>>>>>> hasan
 };
 
 const OPTION_PARAM_KEY: Record<CatalogOptionFilterKey, string> = {
@@ -237,12 +234,9 @@ function CatalogProductsListing({
   initialQueryString,
   scopeQueryString,
   baselineRangeFilters,
-<<<<<<< HEAD
   printer,
-=======
   hiddenFilterKeys,
   validCategorySlugs,
->>>>>>> hasan
 }: ProductsListingProps) {
   const t = useTranslations();
   const locale = useLocale();

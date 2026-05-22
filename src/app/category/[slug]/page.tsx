@@ -9,6 +9,7 @@ import {
   searchCatalogProducts,
 } from "@/lib/search/products";
 import type { CatalogSearchResponse } from "@/lib/search/types";
+import { getServerLocale } from "@/lib/i18n";
 import ReviewsSection from "@/components/ReviewsSection";
 import {
   categoryRouteSlug,
@@ -78,7 +79,6 @@ const emptyCatalogResponse: CatalogSearchResponse = {
   filters: { ranges: [], options: [] },
 };
 
-import { getServerLocale } from "@/lib/i18n";
 
 export default async function CategoryArchivePage({
   params,
@@ -92,11 +92,6 @@ export default async function CategoryArchivePage({
   const t = await getTranslations();
   const locale = await getServerLocale();
   const routeQuery = toUrlSearchParams(rawParams);
-<<<<<<< HEAD
-  const scopeQuery = new URLSearchParams({
-    scope_category: indexedCategorySlugForRoute(slug),
-  });
-=======
 
   // Resolve the category tree first so we can scope the catalog by the
   // looked-up category's ID. `category_ids` on each product includes the full
@@ -123,7 +118,6 @@ export default async function CategoryArchivePage({
     // old slug-based scoping so the page still renders something useful.
     scopeQuery.set("category", indexedCategorySlugForRoute(slug));
   }
->>>>>>> hasan
   const initialSearchQuery = new URLSearchParams(scopeQuery);
 
   routeQuery.forEach((value, key) => {

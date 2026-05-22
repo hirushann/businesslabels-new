@@ -658,7 +658,6 @@ function rangeOrStringFilter(
   };
 }
 
-<<<<<<< HEAD
 function getCompatibleInkCategorySlugs(printerSlug: string): string[] {
   const slug = printerSlug.toLowerCase();
   if (slug.includes("cw-c8000")) {
@@ -762,8 +761,6 @@ export async function getPrinterInfo(printerIds: number[]): Promise<PrinterInfo>
   }
 }
 
-function buildFilters(params: CatalogSearchParams, printerInfo?: PrinterInfo): estypes.QueryDslQueryContainer[] {
-=======
 /**
  * Filters that are always applied to both the main hits query and every facet
  * aggregation. Includes the active-state guard, type and ID-based scoping
@@ -772,8 +769,7 @@ function buildFilters(params: CatalogSearchParams, printerInfo?: PrinterInfo): e
  * counterparts inside a single OR clause, so we keep them in the base rather
  * than try to split them out per facet.
  */
-function buildBaseFilters(params: CatalogSearchParams): estypes.QueryDslQueryContainer[] {
->>>>>>> hasan
+function buildBaseFilters(params: CatalogSearchParams, printerInfo?: PrinterInfo): estypes.QueryDslQueryContainer[] {
   // Slow-delivery products are NOT hidden from listings — they stay visible
   // and simply render without the "In Stock" label (see `mapProductHit`).
   const filters: Array<estypes.QueryDslQueryContainer | null> = [
@@ -849,11 +845,10 @@ function buildBaseFilters(params: CatalogSearchParams): estypes.QueryDslQueryCon
     exactKeywordFilter("slug.keyword", params.slugs),
     exactKeywordFilter("sku.keyword", params.skus),
     exactKeywordFilter("article_number.keyword", params.articleNumbers),
-<<<<<<< HEAD
-    categorySlugFilter(params.categories),
+    // Scope constraint — always AND'd. Comes from the page-level scope (e.g.
+    // category_id scoping via the category tree). Kept separate from the
+    // user-selectable `categories` facet filter so the two never OR together.
     categorySlugFilter(params.scopeCategories),
-=======
->>>>>>> hasan
     termsFilter("category_ids", params.categoryIds),
     termsFilter("material_id", params.materialIds),
     termsFilter("material_taxon_slugs", params.materialCategories),
@@ -906,8 +901,8 @@ function buildFacetFilters(
   return result;
 }
 
-function buildFilters(params: CatalogSearchParams): estypes.QueryDslQueryContainer[] {
-  return [...buildBaseFilters(params), ...Object.values(buildFacetFilters(params))];
+function buildFilters(params: CatalogSearchParams, printerInfo?: PrinterInfo): estypes.QueryDslQueryContainer[] {
+  return [...buildBaseFilters(params, printerInfo), ...Object.values(buildFacetFilters(params))];
 }
 
 function sortClauses(sort: CatalogSortValue): estypes.Sort | undefined {
@@ -924,16 +919,12 @@ function sortClauses(sort: CatalogSortValue): estypes.Sort | undefined {
   return sortOptions[sort];
 }
 
-<<<<<<< HEAD
-function aggregations(excludeCategories: string[] = []): Record<string, estypes.AggregationsAggregationContainer> {
-=======
 function aggregations(
   params: CatalogSearchParams,
 ): Record<string, estypes.AggregationsAggregationContainer> {
   const baseFilters = buildBaseFilters(params);
   const facetFilters = buildFacetFilters(params);
 
->>>>>>> hasan
   const optionAggs = Object.fromEntries(
     OPTION_FILTERS.map((filter) => {
       // For this facet's aggregation, apply base + every OTHER facet's
@@ -981,25 +972,10 @@ function aggregations(
               filter: innerFilter,
               aggs: { facet: innerAgg },
             },
-<<<<<<< HEAD
-          } satisfies estypes.AggregationsAggregationContainer)
-        : ({
-            terms: {
-              field: filter.field,
-              size: 100,
-              order: { _key: "asc" },
-              ...(filter.key === "category" && excludeCategories.length > 0
-                ? { exclude: excludeCategories }
-                : {}),
-            },
-          } satisfies estypes.AggregationsAggregationContainer),
-    ]),
-=======
           },
         } satisfies estypes.AggregationsAggregationContainer,
       ];
     }),
->>>>>>> hasan
   );
 
   const rangeAggs = Object.fromEntries(
@@ -1340,11 +1316,7 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
       ? { min_score: params.search.trim().split(/\s+/).filter(Boolean).length === 2 ? 3.0 : 2.0 } 
       : {}),
     ...(sortClauses(params.sort) ? { sort: sortClauses(params.sort) } : {}),
-<<<<<<< HEAD
-    aggs: aggregations(params.scopeCategories),
-=======
     aggs: aggregations(params),
->>>>>>> hasan
   });
 
   console.log(`[Search] Query locale: ${params.locale}, Total hits: ${totalHitsValue(response.hits.total)}`);
