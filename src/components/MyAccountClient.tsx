@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import AddressAutocomplete from '@/components/AddressAutocomplete';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
+import { useTranslations, useLocale } from 'next-intl';
 
 type Tab = 'dashboard' | 'orders' | 'addresses' | 'details' | 'printers' | 'favourites';
 
@@ -434,27 +435,30 @@ async function requestAccountAddresses() {
   return normalizeAddresses(data);
 }
 
-function formatCustomerSince(user: StoredUser) {
+function formatCustomerSince(user: StoredUser, t: any, locale: string) {
   const dateValue = userString(user, ['created_at', 'createdAt']);
 
   if (!dateValue) {
-    return 'Account details loaded';
+    return t('account.detailsLoaded');
   }
 
   const date = new Date(dateValue);
   if (Number.isNaN(date.getTime())) {
-    return 'Account details loaded';
+    return t('account.detailsLoaded');
   }
 
-  return `Customer since ${date.toLocaleDateString('en-US', {
-    month: 'long',
-    year: 'numeric',
-  })}`;
+  return t('account.customerSince', {
+    date: date.toLocaleDateString(locale === 'nl' ? 'nl-NL' : 'en-US', {
+      month: 'long',
+      year: 'numeric',
+    })
+  });
 }
 
 export default function MyAccountClient() {
+  const t = useTranslations();
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">{t('common.loading')}</div>}>
       <MyAccountContent />
     </Suspense>
   );
@@ -466,6 +470,7 @@ function MyAccountContent() {
   const [activeTab, setActiveTab] = useState<Tab>(() => getValidTab(searchParams.get('tab')) ?? 'dashboard');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const user = useStoredUser();
+  const t = useTranslations();
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -480,12 +485,12 @@ function MyAccountContent() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(typeof data.message === 'string' ? data.message : 'Unable to logout.');
+        throw new Error(typeof data.message === 'string' ? data.message : t('account.logoutError'));
       }
 
-      toast.success('Logged out successfully');
+      toast.success(t('account.logoutSuccess'));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Unable to logout.');
+      toast.error(error instanceof Error ? error.message : t('account.logoutError'));
     } finally {
       localStorage.removeItem('auth_user');
       window.dispatchEvent(new Event('auth-user-updated'));
@@ -496,32 +501,32 @@ function MyAccountContent() {
   };
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: (
+    { id: 'dashboard', label: t('account.dashboard'), icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
       </svg>
     )},
-    { id: 'orders', label: 'Orders', icon: (
+    { id: 'orders', label: t('account.orders'), icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>
       </svg>
     )},
-    { id: 'printers', label: 'My Printers', icon: (
+    { id: 'printers', label: t('account.myPrinters'), icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
       </svg>
     )},
-    { id: 'favourites', label: 'Favourite Products', icon: (
+    { id: 'favourites', label: t('account.favouriteProducts'), icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
       </svg>
     )},
-    { id: 'addresses', label: 'Addresses', icon: (
+    { id: 'addresses', label: t('account.addresses'), icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
       </svg>
     )},
-    { id: 'details', label: 'Account details', icon: (
+    { id: 'details', label: t('account.accountDetails'), icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
       </svg>
@@ -533,11 +538,11 @@ function MyAccountContent() {
       <div className="max-w-360 mx-auto w-full">
         {/* Header Section */}
         <div className="mb-10">
-          <h1 className="text-neutral-800 text-4xl font-bold leading-tight mb-2 uppercase tracking-tight">My Account</h1>
+          <h1 className="text-neutral-800 text-4xl font-bold leading-tight mb-2 uppercase tracking-tight">{t('account.myAccount')}</h1>
           <Breadcrumbs 
             className="text-neutral-900"
             items={[
-              { label: 'My Account' }
+              { label: t('account.myAccount') }
             ]} 
           />
         </div>
@@ -579,7 +584,7 @@ function MyAccountContent() {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>
                 </svg>
-                <span className="text-base">{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
+                <span className="text-base">{isLoggingOut ? t('account.loggingOut') : t('account.logout')}</span>
               </button>
             </div>
           </aside>
@@ -602,6 +607,8 @@ function MyAccountContent() {
 }
 
 function DashboardView({ setActiveTab, user }: { setActiveTab: (tab: Tab) => void; user: StoredUser }) {
+  const t = useTranslations();
+  const locale = useLocale();
   const displayName = userDisplayName(user);
   const email = userString(user, ['email']);
   const avatarUrl = userString(user, ['avatar', 'avatar_url', 'profile_photo_url', 'image']);
@@ -623,8 +630,8 @@ function DashboardView({ setActiveTab, user }: { setActiveTab: (tab: Tab) => voi
   }, []);
 
   const stats = [
-    { label: 'Recent Orders', value: isLoading ? '...' : String(orders.length), sub: 'Lifetime total' },
-    { label: 'Active Printers', value: '3', sub: 'Status: Online' },
+    { label: t('account.recentOrders'), value: isLoading ? '...' : String(orders.length), sub: t('account.lifetimeTotal') },
+    { label: t('account.activePrinters'), value: '3', sub: t('account.statusOnline') },
     // { label: 'Rewards Balance', value: '€ 45.00', sub: '450 pts' },
   ];
 
@@ -636,14 +643,28 @@ function DashboardView({ setActiveTab, user }: { setActiveTab: (tab: Tab) => voi
             <Image src={avatarUrl || "https://placehold.co/128x128"} alt="Profile" fill className="object-cover" />
           </div>
           <div>
-            <h2 className="text-3xl font-black text-neutral-800 tracking-tight">Welcome, {displayName}</h2>
-            <p className="text-neutral-500 font-medium">{email || formatCustomerSince(user)}</p>
+            <h2 className="text-3xl font-black text-neutral-800 tracking-tight">{t('account.welcomeName', { name: displayName })}</h2>
+            <p className="text-neutral-500 font-medium">{email || formatCustomerSince(user, t, locale)}</p>
           </div>
         </div>
         <p className="text-neutral-600 text-lg leading-relaxed max-w-2xl">
-          Your personal label management hub. Track <button onClick={() => setActiveTab('orders')} className="text-amber-500 font-bold hover:underline">orders</button>, 
-          manage <button onClick={() => setActiveTab('printers')} className="text-amber-500 font-bold hover:underline">printers</button>, 
-          and find your <button onClick={() => setActiveTab('favourites')} className="text-amber-500 font-bold hover:underline">favourite supplies</button> in one place.
+          {t.rich('account.dashboardDesc', {
+            ordersLink: () => (
+              <button onClick={() => setActiveTab('orders')} className="text-amber-500 font-bold hover:underline">
+                {t('account.ordersLinkText')}
+              </button>
+            ),
+            printersLink: () => (
+              <button onClick={() => setActiveTab('printers')} className="text-amber-500 font-bold hover:underline">
+                {t('account.printersLinkText')}
+              </button>
+            ),
+            favouritesLink: () => (
+              <button onClick={() => setActiveTab('favourites')} className="text-amber-500 font-bold hover:underline">
+                {t('account.favouritesLinkText')}
+              </button>
+            ),
+          })}
         </p>
       </div>
 
@@ -662,12 +683,12 @@ function DashboardView({ setActiveTab, user }: { setActiveTab: (tab: Tab) => voi
       {/* Recent Orders List Widget */}
       <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between px-1">
-          <h3 className="text-xl font-black text-neutral-800 tracking-tight">Recent Orders</h3>
+          <h3 className="text-xl font-black text-neutral-800 tracking-tight">{t('account.recentOrders')}</h3>
           <button 
             onClick={() => setActiveTab('orders')}
             className="text-amber-500 font-black text-xs uppercase tracking-widest hover:underline"
           >
-            View All Orders
+            {t('account.viewAllOrders')}
           </button>
         </div>
         
@@ -677,7 +698,7 @@ function DashboardView({ setActiveTab, user }: { setActiveTab: (tab: Tab) => voi
           </div>
         ) : orders.length === 0 ? (
           <div className="p-10 rounded-[32px] bg-slate-50 border border-dashed border-slate-200 text-center">
-            <p className="text-neutral-400 font-bold">No orders found yet</p>
+            <p className="text-neutral-400 font-bold">{t('account.noOrdersFoundWidget')}</p>
           </div>
         ) : (
           <div className="flex flex-col gap-3">
@@ -698,7 +719,7 @@ function DashboardView({ setActiveTab, user }: { setActiveTab: (tab: Tab) => voi
                   <div className="hidden sm:flex flex-col items-end">
                     <span className="text-sm font-black text-neutral-800">{order.total}</span>
                     <span className={`text-[10px] font-black uppercase tracking-tight ${orderStatusClass(order.status)} px-2 py-0.5 rounded-full`}>
-                      {order.status}
+                      {t(`account.${order.status.toLowerCase()}`)}
                     </span>
                   </div>
                   <button 
@@ -723,16 +744,16 @@ function DashboardView({ setActiveTab, user }: { setActiveTab: (tab: Tab) => voi
       <div className="mt-4 p-10 rounded-[40px] bg-sky-950 text-white relative overflow-hidden group">
         <div className="relative z-10 flex flex-col gap-6 max-w-lg">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500 rounded-full text-[10px] font-black uppercase tracking-widest w-fit">
-            Gold Partner Service
+            {t('account.expertSupportBadge')}
           </div>
           <div className="flex flex-col gap-2">
-            <h3 className="text-3xl font-black tracking-tight leading-tight">Expert Label Support Always Free</h3>
+            <h3 className="text-3xl font-black tracking-tight leading-tight">{t('account.expertSupportTitle')}</h3>
             <p className="text-sky-100/70 text-lg leading-relaxed">
-              Having trouble with your Epson ColorWorks? Our technicians are ready to assist you with drivers, settings, and media selection.
+              {t('account.expertSupportDesc')}
             </p>
           </div>
           <Link href="/support" className="inline-flex h-12 items-center justify-center rounded-full bg-white px-8 text-sm font-black text-sky-950 hover:bg-amber-500 hover:text-white transition-all w-fit shadow-xl shadow-black/10">
-            Talk to an Expert
+            {t('account.talkToExpert')}
           </Link>
         </div>
         <div className="absolute right-[-40px] bottom-[-40px] opacity-10 rotate-12 transition-transform duration-700 group-hover:rotate-0">
@@ -746,6 +767,7 @@ function DashboardView({ setActiveTab, user }: { setActiveTab: (tab: Tab) => voi
 }
 
 function OrdersView() {
+  const t = useTranslations();
   const [orders, setOrders] = useState<AccountOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
@@ -759,7 +781,7 @@ function OrdersView() {
       setOrders(await requestAccountOrders());
     } catch (error) {
       setOrders([]);
-      setErrorMessage(error instanceof Error ? error.message : 'Unable to load your orders.');
+      setErrorMessage(error instanceof Error ? error.message : t('account.ordersLoadError'));
     } finally {
       setIsLoading(false);
     }
@@ -778,7 +800,7 @@ function OrdersView() {
       } catch (error) {
         if (isMounted) {
           setOrders([]);
-          setErrorMessage(error instanceof Error ? error.message : 'Unable to load your orders.');
+          setErrorMessage(error instanceof Error ? error.message : t('account.ordersLoadError'));
         }
       } finally {
         if (isMounted) {
@@ -792,27 +814,27 @@ function OrdersView() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [t]);
 
   return (
     <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col gap-2">
-        <h2 className="text-3xl font-black text-neutral-800 tracking-tight">Order History</h2>
-        <p className="text-neutral-500 font-medium">Manage and track all your printer and supply orders.</p>
+        <h2 className="text-3xl font-black text-neutral-800 tracking-tight">{t('account.orderHistory')}</h2>
+        <p className="text-neutral-500 font-medium">{t('account.orderHistorySub')}</p>
       </div>
 
       {isLoading ? (
         <OrderSkeleton />
       ) : errorMessage ? (
         <div className="rounded-3xl border border-red-100 bg-red-50 p-8">
-          <h3 className="text-lg font-black text-red-700">Orders could not be loaded</h3>
+          <h3 className="text-lg font-black text-red-700">{t('account.ordersLoadError')}</h3>
           <p className="mt-2 font-medium text-red-600">{errorMessage}</p>
           <button
             type="button"
             onClick={() => void fetchOrders()}
             className="mt-5 rounded-full bg-red-600 px-6 py-2.5 text-sm font-black text-white transition-colors hover:bg-red-700"
           >
-            Try again
+            {t('account.tryAgain')}
           </button>
         </div>
       ) : orders.length === 0 ? (
@@ -822,13 +844,13 @@ function OrdersView() {
               <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><line x1="3" x2="21" y1="6" y2="6"/><path d="m16 10-4 4-4-4"/>
             </svg>
           </div>
-          <h3 className="text-2xl font-black text-neutral-800">No orders found</h3>
-          <p className="mt-2 font-medium text-neutral-400 max-w-sm mx-auto">Your order history is currently empty. Start shopping to see your orders here.</p>
+          <h3 className="text-2xl font-black text-neutral-800">{t('account.noOrdersFound')}</h3>
+          <p className="mt-2 font-medium text-neutral-400 max-w-sm mx-auto">{t('account.noOrdersFoundDesc')}</p>
           <Link
             href="/products"
             className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-sky-950 px-10 text-sm font-black text-white transition-all hover:bg-amber-500 hover:shadow-xl hover:shadow-amber-500/20"
           >
-            Continue Shopping
+            {t('account.continueShopping')}
           </Link>
         </div>
       ) : (
@@ -836,11 +858,11 @@ function OrdersView() {
           <table className="w-full text-left border-collapse min-w-[700px]">
             <thead>
               <tr className="border-b-2 border-slate-100 text-neutral-400">
-                <th className="py-5 font-black text-[11px] uppercase tracking-widest pl-2">Order</th>
-                <th className="py-5 font-black text-[11px] uppercase tracking-widest">Date</th>
-                <th className="py-5 font-black text-[11px] uppercase tracking-widest">Status</th>
-                <th className="py-5 font-black text-[11px] uppercase tracking-widest">Total</th>
-                <th className="py-5 font-black text-[11px] uppercase tracking-widest text-right pr-2">Actions</th>
+                <th className="py-5 font-black text-[11px] uppercase tracking-widest pl-2">{t('account.tableOrder')}</th>
+                <th className="py-5 font-black text-[11px] uppercase tracking-widest">{t('account.tableDate')}</th>
+                <th className="py-5 font-black text-[11px] uppercase tracking-widest">{t('account.tableStatus')}</th>
+                <th className="py-5 font-black text-[11px] uppercase tracking-widest">{t('account.tableTotal')}</th>
+                <th className="py-5 font-black text-[11px] uppercase tracking-widest text-right pr-2">{t('account.tableActions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -850,19 +872,19 @@ function OrdersView() {
                   <td className="py-6 text-neutral-500 font-medium">{order.date}</td>
                   <td className="py-6">
                     <span className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-tight ${orderStatusClass(order.status)}`}>
-                      {order.status}
+                      {t(`account.${order.status.toLowerCase()}`)}
                     </span>
                   </td>
                   <td className="py-6 flex flex-col">
                      <span className="text-neutral-800 font-bold">{order.total}</span>
-                     <span className="text-neutral-400 text-xs font-medium">{order.items === null ? 'Items unavailable' : `${order.items} ${order.items === 1 ? 'item' : 'items'}`}</span>
+                     <span className="text-neutral-400 text-xs font-medium">{order.items === null ? t('account.itemsUnavailable') : `${order.items} ${order.items === 1 ? t('account.itemSingle') : t('account.itemsPlural')}`}</span>
                   </td>
                   <td className="py-6 text-right pr-2">
                     <button 
                       onClick={() => setSelectedOrder(order)}
                       className="text-neutral-400 font-bold text-sm bg-white border border-slate-200 px-5 py-2.5 rounded-full group-hover:bg-amber-500 group-hover:text-white group-hover:border-amber-500 transition-all shadow-sm"
                     >
-                      Details
+                      {t('account.details')}
                     </button>
                   </td>
                 </tr>
@@ -883,8 +905,8 @@ function OrdersView() {
             {/* Header */}
             <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div className="flex flex-col gap-1">
-                <h3 className="text-2xl font-black text-neutral-800 tracking-tight">Order {selectedOrder.id}</h3>
-                <p className="text-sm font-medium text-neutral-500">Placed on {selectedOrder.date}</p>
+                <h3 className="text-2xl font-black text-neutral-800 tracking-tight">{t('account.orderNumber', { number: selectedOrder.id })}</h3>
+                <p className="text-sm font-medium text-neutral-500">{t('account.placedOn', { date: selectedOrder.date })}</p>
               </div>
               <button 
                 onClick={() => setSelectedOrder(null)}
@@ -900,19 +922,19 @@ function OrdersView() {
             <div className="flex-1 overflow-y-auto p-8 flex flex-col gap-8 custom-scrollbar">
               {/* Status Banner */}
               <div className={`p-4 rounded-2xl flex items-center justify-between ${orderStatusClass(selectedOrder.status)}`}>
-                <span className="font-bold text-sm uppercase tracking-widest">Current Status</span>
-                <span className="font-black text-sm uppercase tracking-widest">{selectedOrder.status}</span>
+                <span className="font-bold text-sm uppercase tracking-widest">{t('account.currentStatus')}</span>
+                <span className="font-black text-sm uppercase tracking-widest">{t(`account.${selectedOrder.status.toLowerCase()}`)}</span>
               </div>
 
               {/* Items List */}
               <div className="flex flex-col gap-4">
-                <h4 className="text-xs font-black text-neutral-400 uppercase tracking-widest px-1">Order Items</h4>
+                <h4 className="text-xs font-black text-neutral-400 uppercase tracking-widest px-1">{t('account.orderItems')}</h4>
                 <div className="flex flex-col gap-3">
                   {selectedOrder.items_list?.map((item) => (
                     <div key={item.id} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100">
                       <div className="flex flex-col gap-0.5">
                         <span className="font-bold text-neutral-800">{item.name}</span>
-                        <span className="text-xs font-medium text-neutral-400">Quantity: {item.quantity}</span>
+                        <span className="text-xs font-medium text-neutral-400">{t('account.quantityCount', { count: item.quantity })}</span>
                       </div>
                       <span className="font-black text-neutral-800">{formatEuro(item.total)}</span>
                     </div>
@@ -923,7 +945,7 @@ function OrdersView() {
               {/* Addresses */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="flex flex-col gap-4">
-                  <h4 className="text-xs font-black text-neutral-400 uppercase tracking-widest px-1">Billing Address</h4>
+                  <h4 className="text-xs font-black text-neutral-400 uppercase tracking-widest px-1">{t('account.billingAddress')}</h4>
                   <div className="p-5 rounded-2xl border border-slate-100 bg-white shadow-sm flex flex-col gap-1 text-sm font-medium text-neutral-600">
                     <span className="font-bold text-neutral-800 mb-1 text-base">{selectedOrder.billing_address?.name}</span>
                     {selectedOrder.billing_address?.company && <span>{selectedOrder.billing_address.company}</span>}
@@ -934,7 +956,7 @@ function OrdersView() {
                   </div>
                 </div>
                 <div className="flex flex-col gap-4">
-                  <h4 className="text-xs font-black text-neutral-400 uppercase tracking-widest px-1">Shipping Address</h4>
+                  <h4 className="text-xs font-black text-neutral-400 uppercase tracking-widest px-1">{t('account.shippingAddress')}</h4>
                   <div className="p-5 rounded-2xl border border-slate-100 bg-white shadow-sm flex flex-col gap-1 text-sm font-medium text-neutral-600">
                     <span className="font-bold text-neutral-800 mb-1 text-base">{selectedOrder.shipping_address?.name}</span>
                     {selectedOrder.shipping_address?.company && <span>{selectedOrder.shipping_address.company}</span>}
@@ -949,20 +971,20 @@ function OrdersView() {
               {/* Summary */}
               <div className="flex flex-col gap-3 p-6 rounded-3xl bg-neutral-900 text-white mt-4">
                 <div className="flex justify-between text-sm text-neutral-400 font-bold">
-                  <span>Subtotal</span>
+                  <span>{t('account.subtotal')}</span>
                   <span>{selectedOrder.subtotal}</span>
                 </div>
                 <div className="flex justify-between text-sm text-neutral-400 font-bold">
-                  <span>Shipping</span>
+                  <span>{t('account.shipping')}</span>
                   <span>{selectedOrder.shipping_amount}</span>
                 </div>
                 <div className="flex justify-between text-sm text-neutral-400 font-bold">
-                  <span>Tax</span>
+                  <span>{t('account.tax')}</span>
                   <span>{selectedOrder.tax_amount}</span>
                 </div>
                 <div className="h-px bg-white/10 my-1" />
                 <div className="flex justify-between text-xl font-black">
-                  <span>Total</span>
+                  <span>{t('account.total')}</span>
                   <span className="text-amber-400">{selectedOrder.total}</span>
                 </div>
               </div>
@@ -974,7 +996,7 @@ function OrdersView() {
                 onClick={() => setSelectedOrder(null)}
                 className="w-full h-12 bg-white border border-slate-200 text-neutral-800 font-black text-sm rounded-full hover:bg-slate-50 transition-all shadow-sm"
               >
-                Close Order Details
+                {t('account.closeOrderDetails')}
               </button>
             </div>
           </div>
@@ -999,6 +1021,7 @@ function orderStatusClass(status: string) {
 }
 
 function PrintersView() {
+  const t = useTranslations();
   const printers = [
     { name: 'Epson ColorWorks CW-C6000Ae', serial: 'S2BK-980122', status: 'Online', image: 'https://placehold.co/400x300' },
     { name: 'Epson ColorWorks CW-C3500', serial: 'S2BK-442100', status: 'Online', image: 'https://placehold.co/400x300' },
@@ -1008,14 +1031,14 @@ function PrintersView() {
     <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex justify-between items-end gap-4">
         <div className="flex flex-col gap-2">
-          <h2 className="text-3xl font-black text-neutral-800 tracking-tight">My Printers</h2>
-          <p className="text-neutral-500 font-medium">Monitoring and management for your registered hardware.</p>
+          <h2 className="text-3xl font-black text-neutral-800 tracking-tight">{t('account.myPrinters')}</h2>
+          <p className="text-neutral-500 font-medium">{t('account.hardwareMonitoring')}</p>
         </div>
         <button className="h-11 px-8 bg-sky-950 text-white rounded-full font-bold text-sm hover:bg-amber-500 transition-all flex items-center gap-2 whitespace-nowrap">
            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
              <path d="M5 12h14"/><path d="M12 5v14"/>
            </svg>
-           Register New
+           {t('account.registerNew')}
         </button>
       </div>
 
@@ -1031,19 +1054,19 @@ function PrintersView() {
             <div className="flex flex-col gap-2">
               <h3 className="text-xl font-black text-neutral-800 leading-tight">{printer.name}</h3>
               <div className="flex items-center justify-between">
-                <span className="text-neutral-400 font-bold text-sm tracking-tight">SN: {printer.serial}</span>
-                <button className="text-amber-500 font-black text-xs uppercase tracking-wider hover:underline">View Manual</button>
+                <span className="text-neutral-400 font-bold text-sm tracking-tight">{t('account.serialNumber', { serial: printer.serial })}</span>
+                <button className="text-amber-500 font-black text-xs uppercase tracking-wider hover:underline">{t('account.viewManual')}</button>
               </div>
             </div>
             <div className="h-px bg-slate-100" />
             <div className="grid grid-cols-2 gap-4">
                <button className="flex flex-col gap-1 text-left group/btn">
-                  <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest group-hover/btn:text-amber-500 transition-colors">Supplies</span>
-                  <span className="text-sm font-bold text-neutral-800">Buy Ink & Paper</span>
+                  <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest group-hover/btn:text-amber-500 transition-colors">{t('account.supplies')}</span>
+                  <span className="text-sm font-bold text-neutral-800">{t('account.buyInkPaper')}</span>
                </button>
                <button className="flex flex-col gap-1 text-left group/btn">
-                  <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest group-hover/btn:text-amber-500 transition-colors">Support</span>
-                  <span className="text-sm font-bold text-neutral-800">Troubleshoot</span>
+                  <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest group-hover/btn:text-amber-500 transition-colors">{t('account.support')}</span>
+                  <span className="text-sm font-bold text-neutral-800">{t('account.troubleshoot')}</span>
                </button>
             </div>
           </div>
@@ -1056,6 +1079,7 @@ function PrintersView() {
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 
 function FavouriteProductsView() {
+  const t = useTranslations();
   const favourites: ProductCardData[] = [
     {
       id: 1,
@@ -1092,8 +1116,8 @@ function FavouriteProductsView() {
   return (
     <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col gap-2">
-        <h2 className="text-3xl font-black text-neutral-800 tracking-tight">Favourite Products</h2>
-        <p className="text-neutral-500 font-medium">Your curated list of essential label supplies.</p>
+        <h2 className="text-3xl font-black text-neutral-800 tracking-tight">{t('account.favouriteProducts')}</h2>
+        <p className="text-neutral-500 font-medium">{t('account.favouriteSuppliesDesc')}</p>
       </div>
 
       {favourites.length === 0 ? (
@@ -1101,9 +1125,9 @@ function FavouriteProductsView() {
            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
            </svg>
-           <p className="mt-4 text-neutral-400 font-bold">No favourites saved yet</p>
+           <p className="mt-4 text-neutral-400 font-bold">{t('account.noFavourites')}</p>
            <Link href="/products" className="mt-6 h-11 px-8 bg-amber-500 text-white rounded-full font-black text-sm hover:shadow-lg shadow-amber-500/20 transition-all flex items-center">
-             Browse Supplies
+             {t('account.browseSupplies')}
            </Link>
         </div>
       ) : (
@@ -1123,6 +1147,7 @@ function FavouriteProductsView() {
 
 
 function AddressesView() {
+  const t = useTranslations();
   const [editingAddress, setEditingAddress] = useState<'billing' | 'shipping' | null>(null);
   const [addresses, setAddresses] = useState<AccountAddress[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -1136,7 +1161,7 @@ function AddressesView() {
       setAddresses(await requestAccountAddresses());
     } catch (error) {
       setAddresses([]);
-      setErrorMessage(error instanceof Error ? error.message : 'Unable to load your addresses.');
+      setErrorMessage(error instanceof Error ? error.message : t('account.addressesLoadError'));
     } finally {
       setIsLoading(false);
     }
@@ -1155,7 +1180,7 @@ function AddressesView() {
       } catch (error) {
         if (isMounted) {
           setAddresses([]);
-          setErrorMessage(error instanceof Error ? error.message : 'Unable to load your addresses.');
+          setErrorMessage(error instanceof Error ? error.message : t('account.addressesLoadError'));
         }
       } finally {
         if (isMounted) {
@@ -1169,7 +1194,7 @@ function AddressesView() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [t]);
 
   const billingAddress = addresses.find((address) => address.type?.toLowerCase() === 'billing' || address.type?.toLowerCase().includes('billing'));
   const shippingAddress = addresses.find((address) => address.type?.toLowerCase() === 'shipping' || address.type?.toLowerCase().includes('shipping'));
@@ -1178,45 +1203,45 @@ function AddressesView() {
   return (
     <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col gap-2">
-        <h2 className="text-3xl font-black text-neutral-800 tracking-tight">Addresses</h2>
-        <p className="text-neutral-500 font-medium">Standard shipping and billing profiles for fast checkout.</p>
+        <h2 className="text-3xl font-black text-neutral-800 tracking-tight">{t('account.addresses')}</h2>
+        <p className="text-neutral-500 font-medium">{t('account.addressesSub')}</p>
       </div>
 
       {isLoading ? (
         <div className="flex min-h-64 items-center justify-center rounded-3xl border border-slate-100 bg-slate-50">
           <div className="flex flex-col items-center gap-3 text-neutral-500">
             <div className="size-10 animate-spin rounded-full border-4 border-slate-200 border-t-amber-500" />
-            <p className="font-bold">Loading addresses...</p>
+            <p className="font-bold">{t('account.loadingAddresses')}</p>
           </div>
         </div>
       ) : errorMessage ? (
         <div className="rounded-3xl border border-red-100 bg-red-50 p-8">
-          <h3 className="text-lg font-black text-red-700">Addresses could not be loaded</h3>
+          <h3 className="text-lg font-black text-red-700">{t('account.addressesLoadError')}</h3>
           <p className="mt-2 font-medium text-red-600">{errorMessage}</p>
           <button
             type="button"
             onClick={() => void fetchAddresses()}
             className="mt-5 rounded-full bg-red-600 px-6 py-2.5 text-sm font-black text-white transition-colors hover:bg-red-700"
           >
-            Try again
+            {t('account.tryAgain')}
           </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
           <AddressProfile
-            title="Billing Address"
+            title={t('account.billingAddress')}
             address={billingAddress}
-            emptyLabel="No billing profile saved"
-            actionLabel={billingAddress ? 'Change' : 'Add New'}
+            emptyLabel={t('account.billingAddressEmpty')}
+            actionLabel={billingAddress ? t('account.change') : t('account.addNew')}
             variant="billing"
             onEdit={() => setEditingAddress('billing')}
           />
 
           <AddressProfile
-            title="Shipping Address"
+            title={t('account.shippingAddress')}
             address={shippingAddress}
-            emptyLabel="No shipping profile saved"
-            actionLabel={shippingAddress ? 'Change' : 'Add New'}
+            emptyLabel={t('account.shippingAddressEmpty')}
+            actionLabel={shippingAddress ? t('account.change') : t('account.addNew')}
             variant="shipping"
             onEdit={() => setEditingAddress('shipping')}
           />
@@ -1249,6 +1274,8 @@ function AddressEditModal({
   onSave: () => void;
   address?: AccountAddress;
 }) {
+  const t = useTranslations();
+  const locale = useLocale();
   const isBilling = type === 'billing';
   const inputClasses = "w-full h-14 px-6 rounded-2xl border border-slate-200 focus:border-amber-400 outline-none transition-all text-neutral-800 text-base bg-white focus:ring-[6px] focus:ring-amber-500/5 font-medium";
   const labelClasses = "text-xs font-black text-neutral-500 uppercase tracking-widest mb-2.5 block ml-1";
@@ -1262,6 +1289,10 @@ function AddressEditModal({
   const [city, setCity] = useState(address?.city || '');
   const [phone, setPhone] = useState(address?.phone || '');
   const [isSaving, setIsSaving] = useState(false);
+
+  const typeWord = isBilling 
+    ? (locale === 'nl' ? 'Factuur' : 'Billing') 
+    : (locale === 'nl' ? 'Aflever' : 'Shipping');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1295,13 +1326,13 @@ function AddressEditModal({
       const responseData = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(responseData.message || 'Failed to save address');
+        throw new Error(responseData.message || t('account.addressesLoadError'));
       }
 
-      toast.success(`${isBilling ? 'Billing' : 'Shipping'} address saved`);
+      toast.success(t('account.addressSavedSuccess', { type: typeWord }));
       onSave();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to save address');
+      toast.error(error instanceof Error ? error.message : t('account.addressesLoadError'));
     } finally {
       setIsSaving(false);
     }
@@ -1318,9 +1349,11 @@ function AddressEditModal({
         <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <div className="flex flex-col gap-1">
             <h3 className="text-2xl font-black text-neutral-800 tracking-tight">
-              Edit {isBilling ? 'Billing' : 'Shipping'} Address
+              {t('account.editAddressTitle', { type: typeWord })}
             </h3>
-            <p className="text-sm font-medium text-neutral-500">Please provide your {isBilling ? 'invoice' : 'delivery'} details below.</p>
+            <p className="text-sm font-medium text-neutral-500">
+              {t('account.editAddressDesc', { typeDesc: isBilling ? t('account.invoiceWord') : t('account.deliveryWord') })}
+            </p>
           </div>
           <button 
             onClick={onClose}
@@ -1337,22 +1370,22 @@ function AddressEditModal({
           <form id="address-form-modal" className="flex flex-col gap-6" onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className={labelClasses}>First name</label>
+                <label className={labelClasses}>{t('account.firstName')}</label>
                 <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputClasses} required />
               </div>
               <div>
-                <label className={labelClasses}>Last name</label>
+                <label className={labelClasses}>{t('account.lastName')}</label>
                 <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputClasses} required />
               </div>
             </div>
 
             <div>
-              <label className={labelClasses}>Company Name (Optional)</label>
+              <label className={labelClasses}>{t('account.companyOptional')}</label>
               <input type="text" value={company} onChange={(e) => setCompany(e.target.value)} className={inputClasses} />
             </div>
 
               <div>
-                <label className={labelClasses}>Street address</label>
+                <label className={labelClasses}>{t('account.streetAddress')}</label>
                 <div className="flex flex-col gap-3">
                   <AddressAutocomplete
                     value={street}
@@ -1364,23 +1397,23 @@ function AddressEditModal({
                     }}
                     className={inputClasses}
                   />
-                  <input type="text" placeholder="Apartment, suite, unit, etc. (optional)" value={street2} onChange={(e) => setStreet2(e.target.value)} className={inputClasses} />
+                  <input type="text" placeholder={t('account.apartmentOptional')} value={street2} onChange={(e) => setStreet2(e.target.value)} className={inputClasses} />
                 </div>
               </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="md:col-span-1">
-                <label className={labelClasses}>Postcode</label>
+                <label className={labelClasses}>{t('account.postcode')}</label>
                 <input type="text" value={postcode} onChange={(e) => setPostcode(e.target.value)} className={inputClasses} required />
               </div>
               <div className="md:col-span-2">
-                <label className={labelClasses}>Town / City</label>
+                <label className={labelClasses}>{t('account.townCity')}</label>
                 <input type="text" value={city} onChange={(e) => setCity(e.target.value)} className={inputClasses} required />
               </div>
             </div>
 
             <div>
-              <label className={labelClasses}>Phone</label>
+              <label className={labelClasses}>{t('account.phone')}</label>
               <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClasses} />
             </div>
           </form>
@@ -1394,14 +1427,14 @@ function AddressEditModal({
             disabled={isSaving} 
             className="flex-1 h-14 rounded-full bg-amber-500 px-8 text-base font-black text-white hover:bg-amber-600 transition-all shadow-xl shadow-amber-500/30 uppercase tracking-widest disabled:opacity-50"
           >
-            {isSaving ? 'Saving...' : 'Save Address'}
+            {isSaving ? t('account.saving') : t('account.saveAddress')}
           </button>
           <button 
             type="button" 
             onClick={onClose}
             className="h-14 rounded-full bg-white border border-slate-200 px-8 text-base font-black text-neutral-600 hover:bg-slate-50 transition-all uppercase tracking-widest"
           >
-            Cancel
+            {t('account.cancel')}
           </button>
         </div>
       </div>
@@ -1466,6 +1499,7 @@ function AddressProfile({
 
 
 function AccountDetailsView({ user }: { user: StoredUser }) {
+  const t = useTranslations();
   const inputClasses = "w-full h-14 px-6 rounded-2xl border border-slate-200 focus:border-amber-400 outline-none transition-all text-neutral-800 text-base bg-white focus:ring-[6px] focus:ring-amber-500/5 font-medium";
   const labelClasses = "text-xs font-black text-neutral-500 uppercase tracking-widest mb-2.5 block ml-1";
   
@@ -1493,14 +1527,14 @@ function AccountDetailsView({ user }: { user: StoredUser }) {
       console.log('Profile API Response:', data);
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to update profile');
+        throw new Error(data.message || t('account.profileUpdatedSuccess'));
       }
 
       localStorage.setItem('auth_user', JSON.stringify(data.data || data));
       window.dispatchEvent(new Event('auth-user-updated'));
-      toast.success('Profile updated successfully');
+      toast.success(t('account.profileUpdatedSuccess'));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to update profile');
+      toast.error(error instanceof Error ? error.message : t('account.profileUpdatedSuccess'));
     } finally {
       setIsSaving(false);
     }
@@ -1509,13 +1543,13 @@ function AccountDetailsView({ user }: { user: StoredUser }) {
   return (
     <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col gap-2">
-        <h2 className="text-3xl font-black text-neutral-800 tracking-tight">Account Details</h2>
-        <p className="text-neutral-500 font-medium">Update your identity and contact information.</p>
+        <h2 className="text-3xl font-black text-neutral-800 tracking-tight">{t('account.accountDetails')}</h2>
+        <p className="text-neutral-500 font-medium">{t('account.detailsSub')}</p>
       </div>
       
       <form className="flex flex-col gap-8 max-w-2xl" onSubmit={handleSaveProfile}>
         <div>
-          <label className={labelClasses}>Full name</label>
+          <label className={labelClasses}>{t('account.fullName')}</label>
           <input 
             type="text" 
             value={name} 
@@ -1523,12 +1557,12 @@ function AccountDetailsView({ user }: { user: StoredUser }) {
             className={inputClasses} 
             required
           />
-          <p className="text-xs font-bold text-neutral-400 mt-3 ml-1 italic opacity-60">* This is how your name will appear in reviews and forum posts.</p>
+          <p className="text-xs font-bold text-neutral-400 mt-3 ml-1 italic opacity-60">{t('account.reviewDisclaimer')}</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className={labelClasses}>Email address</label>
+            <label className={labelClasses}>{t('account.emailAddress')}</label>
             <input 
               type="email" 
               value={email} 
@@ -1538,7 +1572,7 @@ function AccountDetailsView({ user }: { user: StoredUser }) {
             />
           </div>
           <div>
-            <label className={labelClasses}>Phone number</label>
+            <label className={labelClasses}>{t('account.phoneNumber')}</label>
             <input 
               type="tel" 
               value={phone} 
@@ -1552,11 +1586,11 @@ function AccountDetailsView({ user }: { user: StoredUser }) {
         <div className="relative pt-6">
           <div className="absolute top-0 left-0 right-0 h-px bg-slate-100" />
           <h3 className="text-xl font-black text-neutral-800 mb-8 mt-2 tracking-tight flex items-center gap-3">
-             Security Settings
+             {t('account.securitySettings')}
              <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
           </h3>
           
-          <p className="text-neutral-500 text-sm mb-6">If you want to change your password, please use the password reset flow or contact support.</p>
+          <p className="text-neutral-500 text-sm mb-6">{t('account.securitySettingsDesc')}</p>
         </div>
 
         <button 
@@ -1564,7 +1598,7 @@ function AccountDetailsView({ user }: { user: StoredUser }) {
           disabled={isSaving}
           className="h-14 rounded-full bg-amber-500 px-12 text-base font-black text-white hover:bg-amber-600 transition-all shadow-xl shadow-amber-500/30 w-fit uppercase tracking-widest mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSaving ? 'Saving...' : 'Save Profile'}
+          {isSaving ? t('account.saving') : t('account.saveProfile')}
         </button>
       </form>
     </div>

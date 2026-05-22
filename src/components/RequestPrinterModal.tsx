@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +30,7 @@ export function RequestPrinterModal({
   open,
   onOpenChange,
 }: RequestPrinterModalProps) {
+  const t = useTranslations();
   const [form, setForm] = useState<FormState>({
     brand: "",
     model: "",
@@ -71,63 +73,62 @@ export function RequestPrinterModal({
             className="text-[#222222] font-bold leading-[120%]"
             style={{ fontSize: "24px" }}
           >
-            Request ICC Profile
+            {t("requestPrinter.title")}
           </DialogTitle>
           <DialogDescription
             className="text-[#444444] font-normal leading-[150%]"
             style={{ fontSize: "16px" }}
           >
-            As soon as we receive the request, we will add your printer to the
-            &ldquo;product finder&rdquo;.
+            {t("requestPrinter.subtitle")}
           </DialogDescription>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {/* Brand */}
-          <FieldGroup label="Brand">
+          <FieldGroup label={t("requestPrinter.brand")}>
             <Input
               name="brand"
               value={form.brand}
               onChange={handleChange}
-              placeholder="Brand name"
+              placeholder={t("requestPrinter.brandPlaceholder")}
               required
               className={inputClass}
             />
           </FieldGroup>
 
           {/* Model */}
-          <FieldGroup label="Model">
+          <FieldGroup label={t("requestPrinter.model")}>
             <Input
               name="model"
               value={form.model}
               onChange={handleChange}
-              placeholder="Model name"
+              placeholder={t("requestPrinter.modelPlaceholder")}
               required
               className={inputClass}
             />
           </FieldGroup>
 
           {/* Email */}
-          <FieldGroup label="Email">
+          <FieldGroup label={t("requestPrinter.email")}>
             <Input
               type="email"
               name="email"
               value={form.email}
               onChange={handleChange}
-              placeholder="Your email address"
+              placeholder={t("requestPrinter.emailPlaceholder")}
               required
               className={inputClass}
             />
           </FieldGroup>
 
           {/* Comments */}
-          <FieldGroup label="Comments">
+          <FieldGroup label={t("requestPrinter.comments")}>
             <Textarea
               name="comments"
               value={form.comments}
               onChange={handleChange}
-              placeholder="Write your message here..."
+              placeholder={t("requestPrinter.commentsPlaceholder")}
               rows={4}
               className={cn(
                 inputClass,
@@ -165,7 +166,7 @@ export function RequestPrinterModal({
                     strokeLinecap="round"
                   />
                 </svg>
-                Sending...
+                {t("requestPrinter.sending")}
               </>
             ) : submitState === "success" ? (
               <>
@@ -183,10 +184,10 @@ export function RequestPrinterModal({
                     strokeLinejoin="round"
                   />
                 </svg>
-                Request sent!
+                {t("requestPrinter.success")}
               </>
             ) : (
-              "Submit Request"
+              t("requestPrinter.submit")
             )}
           </button>
         </form>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Combobox,
   ComboboxContent,
@@ -28,6 +29,7 @@ export function PrinterSelect({
   placeholder = "Choose a printer",
   className,
 }: PrinterSelectProps) {
+  const t = useTranslations();
   const [printers, setPrinters] = useState<PrinterOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +68,7 @@ export function PrinterSelect({
     return (
       <div className={className}>
         <div className="w-full px-5 py-3 rounded-full border border-zinc-200 text-neutral-400 text-base font-normal font-['Segoe_UI']">
-          Loading printers...
+          {t('finder.loadingPrinters')}
         </div>
       </div>
     );
@@ -74,6 +76,7 @@ export function PrinterSelect({
 
   // Convert ID to printer object for display
   const selectedPrinter = value ? printers.find((p) => p.id === value) : null;
+  const displayPlaceholder = placeholder === "Choose a printer" ? t('finder.choosePrinter') : placeholder;
 
   return (
     <div className={className}>
@@ -93,13 +96,13 @@ export function PrinterSelect({
               variant="outline"
               className="w-full justify-between font-normal"
             >
-              {selectedPrinter ? selectedPrinter.name : placeholder}
+              {selectedPrinter ? selectedPrinter.name : displayPlaceholder}
             </Button>
           }
         />
         <ComboboxContent>
-          <ComboboxInput showTrigger={false} placeholder="Search" />
-          <ComboboxEmpty>No printer found.</ComboboxEmpty>
+          <ComboboxInput showTrigger={false} placeholder={t('common.search')} />
+          <ComboboxEmpty>{t('finder.noPrinterFound')}</ComboboxEmpty>
           <ComboboxList>
             {(printer) => (
               <ComboboxItem key={printer.id} value={printer}>
@@ -112,3 +115,4 @@ export function PrinterSelect({
     </div>
   );
 }
+
