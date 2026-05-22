@@ -2,7 +2,13 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+
+interface TeamMember {
+  id: number;
+  name: string;
+  profile_pic_url: string | null;
+}
 import { useCart } from './CartProvider';
 import CartDrawer from './CartDrawer';
 import WishlistDrawer from './WishlistDrawer';
@@ -33,6 +39,49 @@ const navItems = [
 export default function Header() {
   const t = useTranslations();
   const { isHelpOpen, openHelp, closeHelp } = useHelp();
+  const [headerMembers, setHeaderMembers] = useState<TeamMember[]>([]);
+
+  useEffect(() => {
+    let ignore = false;
+    async function loadTeamMembers() {
+      try {
+        const response = await fetch('/api/team-members', {
+          headers: { 'Accept': 'application/json' },
+        });
+        const data = await response.json();
+        const members = Array.isArray(data.data) ? data.data : [];
+        if (!ignore) {
+          const list = members.length > 0 ? members : [
+            { id: 1, name: 'Support Agent 1', profile_pic_url: 'https://randomuser.me/api/portraits/men/32.jpg' },
+            { id: 2, name: 'Support Agent 2', profile_pic_url: 'https://randomuser.me/api/portraits/men/44.jpg' },
+            { id: 3, name: 'Support Agent 3', profile_pic_url: 'https://randomuser.me/api/portraits/men/68.jpg' },
+            { id: 4, name: 'Support Agent 4', profile_pic_url: 'https://randomuser.me/api/portraits/women/12.jpg' },
+            { id: 5, name: 'Support Agent 5', profile_pic_url: 'https://randomuser.me/api/portraits/women/24.jpg' },
+            { id: 6, name: 'Support Agent 6', profile_pic_url: 'https://randomuser.me/api/portraits/women/45.jpg' },
+          ];
+          // Pick 3 random members
+          const shuffled = [...list].sort(() => 0.5 - Math.random());
+          setHeaderMembers(shuffled.slice(0, 3));
+        }
+      } catch (error) {
+        console.error('Error loading team members in header:', error);
+        if (!ignore) {
+          const fallbackList = [
+            { id: 1, name: 'Support Agent 1', profile_pic_url: 'https://randomuser.me/api/portraits/men/32.jpg' },
+            { id: 2, name: 'Support Agent 2', profile_pic_url: 'https://randomuser.me/api/portraits/men/44.jpg' },
+            { id: 3, name: 'Support Agent 3', profile_pic_url: 'https://randomuser.me/api/portraits/men/68.jpg' },
+            { id: 4, name: 'Support Agent 4', profile_pic_url: 'https://randomuser.me/api/portraits/women/12.jpg' },
+            { id: 5, name: 'Support Agent 5', profile_pic_url: 'https://randomuser.me/api/portraits/women/24.jpg' },
+            { id: 6, name: 'Support Agent 6', profile_pic_url: 'https://randomuser.me/api/portraits/women/45.jpg' },
+          ];
+          const shuffled = [...fallbackList].sort(() => 0.5 - Math.random());
+          setHeaderMembers(shuffled.slice(0, 3));
+        }
+      }
+    }
+    loadTeamMembers();
+    return () => { ignore = true; };
+  }, []);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<DropdownKey>(null);
@@ -152,14 +201,27 @@ export default function Header() {
               aria-label={t('header.openHelpDrawer')}
             >
               <div className="flex items-center -space-x-2">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="p-1.5 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 border-2 border-white flex items-center justify-center">
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <circle cx="7" cy="5" r="2.5" fill="white" fillOpacity="0.8" />
-                      <path d="M2 12c0-2.76 2.24-5 5-5s5 2.24 5 5" fill="white" fillOpacity="0.8" />
-                    </svg>
-                  </div>
-                ))}
+                {headerMembers.length > 0 ? (
+                  headerMembers.map((member) => (
+                    <img
+                      key={member.id}
+                      src={member.profile_pic_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=f59e0b&color=fff`}
+                      alt={member.name}
+                      width={28}
+                      height={28}
+                      className="w-7 h-7 rounded-full object-cover border-2 border-white shadow-sm"
+                    />
+                  ))
+                ) : (
+                  [1, 2, 3].map((i) => (
+                    <div key={i} className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 border-2 border-white flex items-center justify-center shadow-sm">
+                      <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
+                        <circle cx="7" cy="5" r="2.5" fill="white" fillOpacity="0.8" />
+                        <path d="M2 12c0-2.76 2.24-5 5-5s5 2.24 5 5" fill="white" fillOpacity="0.8" />
+                      </svg>
+                    </div>
+                  ))
+                )}
               </div>
               <span className="text-neutral-800 text-sm font-semibold leading-5">{t('header.needHelp')}</span>
             </button>

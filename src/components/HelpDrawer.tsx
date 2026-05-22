@@ -186,10 +186,13 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
 
   const selectedCountry = europeanCountries.find((country) => country.code === selectedCountryCode) ?? europeanCountries[0];
   const schedule = getCurrentWeekSchedule(availabilityByDate);
-  const displayMembers = teamMembers.length > 0 ? teamMembers.slice(0, 3) : [
+  const displayMembers = teamMembers.length > 0 ? teamMembers.slice(0, 6) : [
     { id: 1, name: 'Support Agent 1', profile_pic_url: 'https://randomuser.me/api/portraits/men/32.jpg' },
     { id: 2, name: 'Support Agent 2', profile_pic_url: 'https://randomuser.me/api/portraits/men/44.jpg' },
     { id: 3, name: 'Support Agent 3', profile_pic_url: 'https://randomuser.me/api/portraits/men/68.jpg' },
+    { id: 4, name: 'Support Agent 4', profile_pic_url: 'https://randomuser.me/api/portraits/women/12.jpg' },
+    { id: 5, name: 'Support Agent 5', profile_pic_url: 'https://randomuser.me/api/portraits/women/24.jpg' },
+    { id: 6, name: 'Support Agent 6', profile_pic_url: 'https://randomuser.me/api/portraits/women/45.jpg' },
   ];
 
   // Close on Escape
@@ -427,9 +430,9 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
           {/* Avatars + contact cards */}
           <div className="flex flex-col gap-4">
             {/* Avatars */}
-            <div className="flex items-center gap-4 justify-center">
+            <div className="flex items-center justify-center -space-x-4 isolate">
               {displayMembers.map((member) => (
-                <div key={member.id} className="group relative flex justify-center">
+                <div key={member.id} className="group relative flex justify-center z-0 hover:z-30 transition-all duration-200">
                   <img
                     src={member.profile_pic_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=f59e0b&color=fff`}
                     alt={member.name}
