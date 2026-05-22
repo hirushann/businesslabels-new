@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 
 type RangeSliderProps = {
   min: number;
@@ -23,6 +24,7 @@ export default function RangeSlider({
   formatValue = (v) => String(v),
   inputPrefix,
 }: RangeSliderProps) {
+  const t = useTranslations();
   const [localValue, setLocalValue] = useState<[number, number]>(value);
   const trackRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef<"min" | "max" | null>(null);
@@ -126,7 +128,7 @@ export default function RangeSlider({
       {/* Inputs */}
       <div className="flex items-center gap-2">
         <div className="flex-1">
-          <label className="text-xs text-slate-400 mb-1 block">From</label>
+          <label className="text-xs text-slate-400 mb-1 block">{t("filters.from")}</label>
           <div className="h-10 px-3 border border-slate-200 rounded-lg flex items-center bg-white">
             {inputPrefix ? <span className="text-slate-400 mr-1">{inputPrefix}</span> : null}
             <input
@@ -143,9 +145,9 @@ export default function RangeSlider({
             />
           </div>
         </div>
-        <div className="text-slate-400 mt-5">To</div>
+        <div className="text-slate-400 mt-5">{t("filters.to")}</div>
         <div className="flex-1">
-          <label className="text-xs text-slate-400 mb-1 block">To</label>
+          <label className="text-xs text-slate-400 mb-1 block">{t("filters.to")}</label>
           <div className="h-10 px-3 border border-slate-200 rounded-lg flex items-center bg-white">
             {inputPrefix ? <span className="text-slate-400 mr-1">{inputPrefix}</span> : null}
             <input

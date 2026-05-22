@@ -278,7 +278,7 @@ export default function Header() {
       <div className="lg:hidden w-full px-4 py-3 bg-white border-b border-slate-100 flex flex-col gap-3">
         <div className="flex justify-between items-center w-full">
           {/* Left: Hamburger menu button */}
-          <button onClick={() => setIsMobileMenuOpen(true)} className="p-1" aria-label="Open menu">
+          <button onClick={() => setIsMobileMenuOpen(true)} className="p-1" aria-label={t('header.openMenu')}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#404040" strokeWidth="2">
               <line x1="3" y1="12" x2="21" y2="12" />
               <line x1="3" y1="6" x2="21" y2="6" />
@@ -417,11 +417,11 @@ export default function Header() {
           <div className="relative w-80 max-w-[85vw] h-full bg-white shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-200">
             {/* Header */}
             <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-              <span className="text-sky-950 font-bold text-lg">Menu</span>
+              <span className="text-sky-950 font-bold text-lg">{t('header.menu')}</span>
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="p-1 rounded-full hover:bg-slate-200 transition-colors"
-                aria-label="Close menu"
+                aria-label={t('header.closeMenu')}
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#404040" strokeWidth="2">
                   <line x1="18" y1="6" x2="6" y2="18" />

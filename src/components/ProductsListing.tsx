@@ -472,7 +472,7 @@ function CatalogProductsListing({
     })
       .then(async (response) => {
         if (!response.ok) {
-          throw new Error("Catalog search is temporarily unavailable.");
+          throw new Error(t("search.catalogUnavailable"));
         }
         return response.json() as Promise<CatalogSearchResponse>;
       })
@@ -489,7 +489,7 @@ function CatalogProductsListing({
           setError(
             fetchError instanceof Error
               ? fetchError.message
-              : "Catalog search failed.",
+              : t("search.catalogFailed"),
           );
         }
       })
@@ -504,7 +504,7 @@ function CatalogProductsListing({
       window.clearTimeout(loadingTimeoutId);
       controller.abort();
     };
-  }, [scopedCurrentQueryString, hasInitialCatalog, initialCatalog]);
+  }, [scopedCurrentQueryString, hasInitialCatalog, initialCatalog, t, locale]);
 
   useEffect(() => {
     if (listingResetKeyRef.current !== listingResetKey) {
@@ -832,7 +832,7 @@ function CatalogProductsListing({
           </button>
 
           <label className="flex h-10 items-center gap-3 rounded-[42px] border border-slate-200 px-5 py-2 text-neutral-800">
-            <span className="sr-only">Sort products</span>
+            <span className="sr-only">{t("search.sortProducts")}</span>
             <select
               value={selectedSort}
               onChange={(event) =>
@@ -968,7 +968,7 @@ function CatalogProductsListing({
                               }`}
                               aria-pressed={fanFoldSelected}
                             >
-                              <span>Fan-fold</span>
+                              <span>{t("filters.fanFold")}</span>
                               <span
                                 className={
                                   fanFoldSelected

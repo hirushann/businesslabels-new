@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSearch } from "@elastic/react-search-ui";
 import type { Filter, FilterValueRange } from "@elastic/search-ui";
+import { useTranslations } from "next-intl";
 import Accordion from "@/components/Accordion";
 import RangeSlider from "@/components/RangeSlider";
 
@@ -17,7 +18,7 @@ const FALLBACK_MAX_BY_FIELD: Record<RangeFilterField, number> = {
 type RangeFilterField = "price" | "meta_width_mm" | "meta_height_mm" | "meta_kern_mm";
 
 type RangeFilterConfig = {
-  title: string;
+  titleKey: string;
   field: RangeFilterField;
   name: string;
   unitPrefix?: string;
@@ -26,19 +27,19 @@ type RangeFilterConfig = {
 
 const RANGE_FILTERS: RangeFilterConfig[] = [
   {
-    title: "Price",
+    titleKey: "filters.price",
     field: "price",
     name: "price",
     unitPrefix: "€",
   },
   {
-    title: "Width",
+    titleKey: "filters.width",
     field: "meta_width_mm",
     name: "width",
     unitSuffix: "mm",
   },
   {
-    title: "Height",
+    titleKey: "filters.height",
     field: "meta_height_mm",
     name: "height",
     unitSuffix: "mm",
@@ -46,7 +47,7 @@ const RANGE_FILTERS: RangeFilterConfig[] = [
 ];
 
 const KERN_RANGE_FILTER: RangeFilterConfig = {
-  title: "Kern",
+  titleKey: "filters.core",
   field: "meta_kern_mm",
   name: "kern",
   unitSuffix: "mm",
@@ -64,46 +65,46 @@ type PillOption = {
 };
 
 type PillFilterConfig = {
-  title: string;
+  titleKey: string;
   field: string;
   responseKey: "category" | "brand" | "materialCode" | "material" | "finishing" | "glue" | "kern";
 };
 
 const PILL_FILTERS: PillFilterConfig[] = [
   {
-    title: "Category",
+    titleKey: "filters.category",
     field: "search_category_slug",
     responseKey: "category",
   },
   {
-    title: "Brand",
+    titleKey: "filters.brand",
     field: "search_brand_slug",
     responseKey: "brand",
   },
   {
-    title: "Material Code",
+    titleKey: "filters.material_code",
     field: MATERIAL_CODE_FIELD,
     responseKey: "materialCode",
   },
   {
-    title: "Material",
+    titleKey: "filters.material",
     field: MATERIAL_FIELD,
     responseKey: "material",
   },
   {
-    title: "Finishing",
+    titleKey: "filters.finishing",
     field: FINISHING_FIELD,
     responseKey: "finishing",
   },
   {
-    title: "Glue",
+    titleKey: "filters.glue",
     field: GLUE_FIELD,
     responseKey: "glue",
   },
 ];
 
 const KERN_PILL_FILTER: PillFilterConfig = {
-  title: "Kern",
+  titleKey: "filters.core",
   field: "meta_kern_string",
   responseKey: "kern",
 };
@@ -231,6 +232,7 @@ function RangeFilter({
   addFilter?: (name: string, value: string, type?: "any") => void;
   pillConfig?: PillFilterConfig;
 }) {
+  const t = useTranslations();
   const max = sliderMax(rawResponse, config.field);
   const filter = activeFilters.find((activeFilter) => activeFilter.field === config.field);
   const filterRange = filter?.values.find(isPriceRangeFilter);
@@ -248,7 +250,7 @@ function RangeFilter({
   };
 
   return (
-    <Accordion title={config.title} defaultOpen={true} size="compact">
+    <Accordion title={t(config.titleKey)} defaultOpen={true} size="compact">
       <div className="flex flex-col gap-4">
         <RangeSlider
           min={INITIAL_MIN}
@@ -321,6 +323,7 @@ function PillSelectFilter({
   addFilter: (name: string, value: string, type?: "any") => void;
   removeFilter: (name: string, value?: string, type?: "any") => void;
 }) {
+  const t = useTranslations();
   const [showAll, setShowAll] = useState(false);
   const options = pillOptions(rawResponse, config.responseKey);
   const selectedValues = new Set(
@@ -334,9 +337,9 @@ function PillSelectFilter({
   const hasMore = options.length > DISPLAY_LIMIT;
 
   return (
-    <Accordion title={config.title} defaultOpen={true} size="compact">
+    <Accordion title={t(config.titleKey)} defaultOpen={true} size="compact">
       {options.length === 0 ? (
-        <p className="text-sm text-slate-400">No options available</p>
+        <p className="text-sm text-slate-400">{t("filters.noOptionsAvailable")}</p>
       ) : (
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap gap-2">
@@ -376,7 +379,7 @@ function PillSelectFilter({
               onClick={() => setShowAll(!showAll)}
               className="text-sm font-medium text-amber-600 hover:text-amber-700 transition-colors"
             >
-              {showAll ? "Show less" : `Show more (${options.length - DISPLAY_LIMIT} more)`}
+              {showAll ? t("filters.showLess") : t("filters.showMore", { count: options.length - DISPLAY_LIMIT })}
             </button>
           )}
         </div>

@@ -89,7 +89,7 @@ function normalizeResultType(value: unknown): "simple" | "variable" | null {
   return scalar === "simple" || scalar === "variable" ? scalar : null;
 }
 
-function titleForProduct(result: unknown): string {
+function titleForProduct(result: unknown, fallbackTitle: string): string {
   const title = valueAsString(getRaw(result, "title"));
   const name = valueAsString(getRaw(result, "name"));
   const postTitle = valueAsString(getRaw(result, "post_title"));
@@ -97,7 +97,7 @@ function titleForProduct(result: unknown): string {
   if (title?.trim()) return title;
   if (name?.trim()) return name;
   if (postTitle?.trim()) return postTitle;
-  return "Unnamed product";
+  return fallbackTitle;
 }
 
 function imageForProduct(result: unknown): string | null {
@@ -206,6 +206,7 @@ function toDisplayImageUrl(url: string | null): string | null {
 export function mapProductListingResult(
   result: unknown,
   resultIndex: number,
+  fallbackTitle = "Unnamed product",
 ): { id: string; product: ProductCardData; href?: LinkProps["href"] } {
   const normalizedType =
     normalizeResultType(getRaw(result, "product_type")) ?? normalizeResultType(getRaw(result, "type"));
@@ -215,7 +216,7 @@ export function mapProductListingResult(
   const product: ProductCardData = {
     id,
     sku: skuForProduct(result) || "-",
-    name: titleForProduct(result),
+    name: titleForProduct(result, fallbackTitle),
     subtitle: valueAsString(getRaw(result, "subtitle")),
     excerpt: valueAsString(getRaw(result, "excerpt")),
     materialTitle: materialTitleForProduct(result),

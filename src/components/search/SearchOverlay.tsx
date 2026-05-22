@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { SearchProvider, useSearch } from '@elastic/react-search-ui';
 import type { SearchDriverOptions } from '@elastic/search-ui';
 import type { LinkProps } from 'next/link';
+import { useTranslations } from 'next-intl';
 import { apiConnector, SORT_TO_SEARCH_UI, type OverlaySortValue } from './api';
 import { useNextRoutingOptions } from './useNextRouting';
 import { useDebouncedSearchParam } from './useDebouncedSearchParam';
@@ -15,14 +16,14 @@ type SearchOverlayProps = {
   onClose: () => void;
 };
 
-const SORT_OPTIONS: Array<{ value: OverlaySortValue; label: string }> = [
-  { value: 'relevance', label: 'Most Relevant' },
-  { value: 'latest', label: 'Latest' },
-  { value: 'oldest', label: 'Oldest' },
-  { value: 'title_asc', label: 'Name: A - Z' },
-  { value: 'title_desc', label: 'Name: Z - A' },
-  { value: 'price_asc', label: 'Price: Low to High' },
-  { value: 'price_desc', label: 'Price: High to Low' },
+const SORT_OPTIONS: Array<{ value: OverlaySortValue; labelKey: string }> = [
+  { value: 'relevance', labelKey: 'sort.relevance' },
+  { value: 'latest', labelKey: 'sort.latest' },
+  { value: 'oldest', labelKey: 'sort.oldest' },
+  { value: 'title_asc', labelKey: 'sort.nameAsc' },
+  { value: 'title_desc', labelKey: 'sort.nameDesc' },
+  { value: 'price_asc', labelKey: 'sort.priceAsc' },
+  { value: 'price_desc', labelKey: 'sort.priceDesc' },
 ];
 
 const PAGE_SIZE = 24;
@@ -291,6 +292,7 @@ function mapOverlayResult(result: unknown, resultIndex: number): OverlayProductR
 }
 
 function OverlayContent({ onClose }: SearchOverlayProps) {
+  const t = useTranslations();
   const inputRef = useRef<HTMLInputElement>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
@@ -473,7 +475,7 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
                 onChange={(event) => {
                   setInputValue(event.target.value);
                 }}
-                placeholder="Search products..."
+                placeholder={t('search.searchProducts')}
                 className="w-full h-full bg-transparent outline-none text-base text-neutral-800"
                 autoComplete="off"
               />
@@ -492,7 +494,7 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
               >
                 {SORT_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
-                    {option.label}
+                    {t(option.labelKey)}
                   </option>
                 ))}
               </select>
@@ -502,7 +504,7 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
                 onClick={onClose}
                 className="h-10 px-4 border border-slate-300 rounded-md text-sm font-medium text-neutral-700 bg-white hover:bg-slate-50"
               >
-                Close
+                {t('common.close')}
               </button>
             </div>
           </div>
@@ -513,7 +515,7 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
           <aside className="scrollbar-none w-full md:w-96 lg:w-96 border-r border-slate-100 overflow-y-auto p-4 lg:p-6 bg-slate-50/50">
             <div className="flex flex-col gap-6">
               <div className="flex items-center justify-between px-1">
-                <h2 className="text-neutral-800 text-xl font-bold">Filters</h2>
+                <h2 className="text-neutral-800 text-xl font-bold">{t('common.filters')}</h2>
                 {activeFilters.length > 0 && (
                   <button 
                     type="button"
@@ -523,7 +525,7 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
                     }}
                     className="text-amber-500 text-sm font-medium hover:underline"
                   >
-                    Clear all
+                    {t('finder.clearAll')}
                   </button>
                 )}
               </div>
@@ -535,7 +537,7 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
           <div className="flex-1 overflow-y-auto px-4 py-6 lg:px-8">
             <div className="max-w-360 mx-auto">
               <div className="mb-4 text-sm text-neutral-600">
-                {isLoading ? 'Searching...' : `${totalResults || 0} results`}
+                {isLoading ? t('search.searching') : t('search.results', { count: totalResults || 0 })}
               </div>
 
             {error ? (
@@ -548,8 +550,8 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
               </div>
             ) : accumulatedResults.length === 0 ? (
               <EmptyState
-                title="No products found"
-                description="Try a different search term or adjust the filters to see more results."
+                title={t('common.noProductsFound')}
+                description={t('search.tryDifferentSearch')}
               />
             ) : (
               <>
@@ -569,7 +571,7 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
 
                 {hasMoreResults ? (
                   <div ref={loadMoreRef} className="flex min-h-16 items-center justify-center pt-4 text-sm text-slate-500">
-                    {isFetchingMore || isLoading ? 'Loading more products...' : 'Scroll for more products'}
+                    {isFetchingMore || isLoading ? t('search.loadingMoreProducts') : t('search.scrollForMoreProducts')}
                   </div>
                 ) : null}
               </>

@@ -21,6 +21,7 @@ type AddressAutocompleteProps = {
   }) => void;
   className?: string;
   hasError?: boolean;
+  placeholder?: string;
 };
 
 export default function AddressAutocomplete({
@@ -29,6 +30,7 @@ export default function AddressAutocomplete({
   onAddressSelect,
   className,
   hasError,
+  placeholder,
 }: AddressAutocompleteProps) {
   const [inputValue, setInputValue] = useState(value);
   const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -231,7 +233,7 @@ export default function AddressAutocomplete({
           value={inputValue}
           onChange={handleInput}
           className={`${className} w-full pl-12 bg-slate-50 transition-all focus:bg-white`}
-          placeholder="Begin met typen voor suggesties..."
+          placeholder={placeholder}
           onFocus={() => setIsOpen(true)}
           autoComplete="off"
         />

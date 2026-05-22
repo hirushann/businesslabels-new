@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 
 type Review = {
   author_name: string;
@@ -36,6 +37,7 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 export default function ReviewsSlider({ reviews, totalRatings }: ReviewsSliderProps) {
+  const t = useTranslations();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -150,7 +152,7 @@ export default function ReviewsSlider({ reviews, totalRatings }: ReviewsSliderPr
 
             {/* Footer */}
             <div className="flex flex-col gap-1 mt-8">
-              <span className="text-zinc-400 text-xs font-normal">Posted on</span>
+              <span className="text-zinc-400 text-xs font-normal">{t("reviews.postedOn")}</span>
               <img
                 src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg"
                 alt="Google"

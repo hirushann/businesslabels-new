@@ -138,9 +138,9 @@ function PrintersListingContent({ printers }: { printers: PrinterCardData[] }) {
   const fallbackPrinters = !searchHasResolved && !error ? printers : [];
   const searchPrinters = useMemo(() => {
     return searchHasResolved
-      ? (results ?? []).map((result, resultIndex) => mapProductListingResult(result, resultIndex))
+      ? (results ?? []).map((result, resultIndex) => mapProductListingResult(result, resultIndex, t("product.unnamedProduct")))
       : [];
-  }, [results, searchHasResolved]);
+  }, [results, searchHasResolved, t]);
   const hasFallbackPrinters = fallbackPrinters.length > 0;
   const hasSearchPrinters = accumulatedPrinters.length > 0;
   const hasMorePrinters = page < pageCount;

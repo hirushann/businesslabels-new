@@ -325,9 +325,9 @@ function CheckoutShell({
                       <label className="flex flex-col gap-2 md:col-span-1">
                         <span className="text-sm font-semibold text-neutral-700">{t('checkout.country')}</span>
                         <select className={inputClasses()} value={form.country} onChange={(e) => handleChange("country", e.target.value)}>
-                          <option>Netherlands</option>
-                          <option>Belgium</option>
-                          <option>Germany</option>
+                          <option value="Netherlands">{t('countries.netherlands')}</option>
+                          <option value="Belgium">{t('countries.belgium')}</option>
+                          <option value="Germany">{t('countries.germany')}</option>
                         </select>
                       </label>
                       <label className="flex flex-col gap-2 md:col-span-1">

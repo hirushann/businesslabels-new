@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSearch } from "@elastic/react-search-ui";
 import type { Filter, FilterValueRange } from "@elastic/search-ui";
+import { useTranslations } from "next-intl";
 import Accordion from "@/components/Accordion";
 import RangeSlider from "@/components/RangeSlider";
 
@@ -17,7 +18,7 @@ const FALLBACK_MAX_BY_FIELD: Record<RangeFilterField, number> = {
 type RangeFilterField = "price" | "meta_width_mm" | "meta_height_mm" | "meta_kern_mm";
 
 type RangeFilterConfig = {
-  title: string;
+  titleKey: string;
   field: RangeFilterField;
   name: string;
   unitPrefix?: string;
@@ -25,7 +26,7 @@ type RangeFilterConfig = {
 };
 
 type OptionFilterConfig = {
-  title: string;
+  titleKey: string;
   field: string;
   responseKey: "category" | "brand" | "materialCode" | "material" | "finishing" | "glue" | "kern";
 };
@@ -37,20 +38,20 @@ type FilterOption = {
 };
 
 const RANGE_FILTERS: RangeFilterConfig[] = [
-  { title: "Price Range", field: "price", name: "price", unitPrefix: "€" },
-  { title: "Label Width", field: "meta_width_mm", name: "width", unitSuffix: "mm" },
-  { title: "Label Height", field: "meta_height_mm", name: "height", unitSuffix: "mm" },
-  { title: "Core Size", field: "meta_kern_mm", name: "kern", unitSuffix: "mm" },
+  { titleKey: "filters.priceRange", field: "price", name: "price", unitPrefix: "€" },
+  { titleKey: "filters.labelWidth", field: "meta_width_mm", name: "width", unitSuffix: "mm" },
+  { titleKey: "filters.labelHeight", field: "meta_height_mm", name: "height", unitSuffix: "mm" },
+  { titleKey: "filters.coreSize", field: "meta_kern_mm", name: "kern", unitSuffix: "mm" },
 ];
 
 const OPTION_FILTERS: OptionFilterConfig[] = [
-  { title: "Product Type", field: "search_category_slug", responseKey: "category" },
-  { title: "Brand", field: "search_brand_slug", responseKey: "brand" },
-  { title: "Material Code", field: "meta_material_code", responseKey: "materialCode" },
-  { title: "Material Type", field: "meta_material", responseKey: "material" },
-  { title: "Finishing", field: "meta_finishing", responseKey: "finishing" },
-  { title: "Glue", field: "meta_glue", responseKey: "glue" },
-  { title: "Core Type", field: "meta_kern_string", responseKey: "kern" },
+  { titleKey: "filters.productType", field: "search_category_slug", responseKey: "category" },
+  { titleKey: "filters.brand", field: "search_brand_slug", responseKey: "brand" },
+  { titleKey: "filters.material_code", field: "meta_material_code", responseKey: "materialCode" },
+  { titleKey: "filters.materialType", field: "meta_material", responseKey: "material" },
+  { titleKey: "filters.finishing", field: "meta_finishing", responseKey: "finishing" },
+  { titleKey: "filters.glue", field: "meta_glue", responseKey: "glue" },
+  { titleKey: "filters.coreType", field: "meta_kern_string", responseKey: "kern" },
 ];
 
 function isRangeFilter(value: unknown): value is FilterValueRange {
@@ -135,6 +136,7 @@ function ProductRangeFilter({
   removeFilter: (name: string) => void;
   setFilter: (name: string, value: FilterValueRange) => void;
 }) {
+  const t = useTranslations();
   const max = sliderMax(rawResponse, config.field);
   const filter = activeFilters.find((activeFilter) => activeFilter.field === config.field);
   const filterRange = filter?.values.find(isRangeFilter);
@@ -153,7 +155,7 @@ function ProductRangeFilter({
   };
 
   return (
-    <Accordion title={config.title} defaultOpen={true} size="compact" className="bg-white">
+    <Accordion title={t(config.titleKey)} defaultOpen={true} size="compact" className="bg-white">
       <RangeSlider
         min={INITIAL_MIN}
         max={max}
@@ -180,6 +182,7 @@ function ProductOptionFilter({
   addFilter: (name: string, value: string, type?: "any") => void;
   removeFilter: (name: string, value?: string, type?: "any") => void;
 }) {
+  const t = useTranslations();
   const [showAll, setShowAll] = useState(false);
   const options = optionsFor(rawResponse, config.responseKey);
   if (
@@ -200,9 +203,9 @@ function ProductOptionFilter({
   const hasMore = options.length > DISPLAY_LIMIT;
 
   return (
-    <Accordion title={config.title} defaultOpen={true} size="compact" className="bg-white">
+    <Accordion title={t(config.titleKey)} defaultOpen={true} size="compact" className="bg-white">
       {options.length === 0 ? (
-        <p className="text-sm text-slate-400">No options available</p>
+        <p className="text-sm text-slate-400">{t("filters.noOptionsAvailable")}</p>
       ) : (
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap gap-2">
@@ -242,7 +245,7 @@ function ProductOptionFilter({
               onClick={() => setShowAll(!showAll)}
               className="text-sm font-medium text-amber-600 hover:text-amber-700 transition-colors"
             >
-              {showAll ? "Show less" : `Show more (${options.length - DISPLAY_LIMIT} more)`}
+              {showAll ? t("filters.showLess") : t("filters.showMore", { count: options.length - DISPLAY_LIMIT })}
             </button>
           )}
         </div>

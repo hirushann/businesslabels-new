@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useTranslations } from "next-intl";
 
 type IccProfileModalProps = {
   materialTitle?: string;
@@ -27,6 +28,7 @@ const PRINTER_MODELS = [
 ];
 
 export default function IccProfileModal({ materialTitle, isNl = false }: IccProfileModalProps) {
+  const t = useTranslations();
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -159,7 +161,7 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
             <button
               type="button"
               onClick={handleClose}
-              aria-label="Close"
+              aria-label={t("common.close")}
               className="ml-4 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
             >
               <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">

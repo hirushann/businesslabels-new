@@ -173,9 +173,8 @@ function CollapseIcon({ open }: { open: boolean }) {
 }
 
 export default function HelpDrawer({ onClose }: HelpDrawerProps) {
-  const t = useTranslations('helpDrawer');
+  const t = useTranslations();
   const locale = useLocale();
-
   const [callbackOpen, setCallbackOpen] = useState(true);
   const [moreWaysOpen, setMoreWaysOpen] = useState(true);
   const [scheduleOpen, setScheduleOpen] = useState(true);
@@ -299,7 +298,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
 
     if (!normalizedPhoneNumber) {
       setBookingStatus('error');
-      setBookingMessage(t('callback.errorPhoneRequired'));
+      setBookingMessage(t('help.errorPhone'));
       return;
     }
 
@@ -328,7 +327,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
         const message =
           typeof data.message === 'string'
             ? data.message
-            : t('callback.errorBookingFailed');
+            : t('help.errorCallback');
 
         throw new Error(message);
       }
@@ -337,12 +336,12 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
       setBookingMessage(
         typeof data.message === 'string'
           ? data.message
-          : t('callback.successBooking')
+          : t('help.successCallback')
       );
       setPhoneNumber('');
     } catch (error) {
       setBookingStatus('error');
-      setBookingMessage(error instanceof Error ? error.message : t('callback.errorBookingFailed'));
+      setBookingMessage(error instanceof Error ? error.message : t('help.errorCallback'));
     }
   };
 
@@ -354,7 +353,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
 
     if (!normalizedEmail || !normalizedMessage) {
       setContactStatus('error');
-      setContactStatusMessage(t('message.errorRequiredFields'));
+      setContactStatusMessage(t('help.errorEmail'));
       return;
     }
 
@@ -380,7 +379,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
         const message =
           typeof data.message === 'string'
             ? data.message
-            : t('message.errorSendingFailed');
+            : t('help.errorMessage');
 
         throw new Error(message);
       }
@@ -389,13 +388,13 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
       setContactStatusMessage(
         typeof data.message === 'string'
           ? data.message
-          : t('message.successSending')
+          : t('help.successMessage')
       );
       setContactEmail('');
       setContactMessage('');
     } catch (error) {
       setContactStatus('error');
-      setContactStatusMessage(error instanceof Error ? error.message : t('message.errorSendingFailed'));
+      setContactStatusMessage(error instanceof Error ? error.message : t('help.errorMessage'));
     }
   };
 
@@ -412,7 +411,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
       <div
         role="dialog"
         aria-modal="true"
-        aria-label={t('title')}
+        aria-label={t('help.needHelp')}
         className="fixed top-0 right-0 h-full w-[480px] bg-white z-[1000] shadow-2xl flex flex-col overflow-hidden"
         style={{ animation: 'slideInRight 0.28s cubic-bezier(0.16,1,0.3,1) both' }}
       >
@@ -421,11 +420,11 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
           {/* Title + close */}
           <div className="flex justify-between items-start">
             <h2 className="text-neutral-800 text-2xl font-semibold font-['Segoe_UI'] leading-7">
-              {t('title')}
+              {t('header.needHelp')}
             </h2>
             <button
               onClick={onClose}
-              aria-label={t('closeAria')}
+              aria-label={t('common.close')}
               className="w-6 h-6 flex items-center justify-center text-zinc-500 hover:text-zinc-800 transition-colors"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -470,7 +469,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                   </svg>
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-neutral-800 text-base font-semibold font-['Segoe_UI'] leading-5">{t('contact.call')}</span>
+                  <span className="text-neutral-800 text-base font-semibold font-['Segoe_UI'] leading-5">{t('supportPanel.callUs')}</span>
                   <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI'] leading-5">
                     +31 (0)318 590 465
                   </span>
@@ -489,7 +488,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                   </svg>
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-neutral-800 text-base font-semibold font-['Segoe_UI'] leading-5">{t('contact.email')}</span>
+                  <span className="text-neutral-800 text-base font-semibold font-['Segoe_UI'] leading-5">{t('supportPanel.email')}</span>
                   <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI'] leading-5">verkoop@businesslabels.nl</span>
                 </div>
               </a>
@@ -507,7 +506,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
               onClick={() => setCallbackOpen(v => !v)}
             >
               <span className="text-neutral-800 text-lg font-normal font-['Segoe_UI'] leading-6">
-                {t('callback.header')}
+                {t('help.requestCallbackTeam')}
               </span>
               <CollapseIcon open={callbackOpen} />
             </button>
@@ -517,7 +516,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                 <form className="flex flex-col gap-4" onSubmit={handleBookingSubmit}>
                   {/* Phone country */}
                   <label className="flex flex-col gap-2">
-                    <span className="sr-only">{t('callback.countryLabel')}</span>
+                    <span className="sr-only">{t('register.country')}</span>
                     <select
                       value={selectedCountryCode}
                       onChange={(event) => {
@@ -537,7 +536,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
 
                   {/* Mobile number */}
                   <label className="flex flex-col gap-2">
-                    <span className="sr-only">{t('callback.phoneLabel')}</span>
+                    <span className="sr-only">{t('help.mobileNumber')}</span>
                     <input
                       type="tel"
                       value={phoneNumber}
@@ -546,7 +545,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                         setBookingStatus('idle');
                         setBookingMessage('');
                       }}
-                      placeholder={t('callback.phonePlaceholder')}
+                      placeholder={t('help.mobileNumber')}
                       autoComplete="tel"
                       className="h-11 px-5 py-2 rounded-xl border border-zinc-200 outline-none text-neutral-700 text-base font-normal font-['Segoe_UI'] placeholder-neutral-400 focus:border-amber-400 transition-colors w-full"
                     />
@@ -570,14 +569,14 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                       disabled={bookingStatus === 'submitting'}
                       className="w-24 h-12 px-4 py-2.5 bg-amber-500 rounded-full text-white text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors disabled:cursor-not-allowed disabled:opacity-70"
                     >
-                      {bookingStatus === 'submitting' ? t('callback.booking') : t('callback.book')}
+                      {bookingStatus === 'submitting' ? t('help.booking') : t('help.book')}
                     </button>
                     <button
                       type="button"
                       onClick={resetBookingForm}
                       className="w-24 h-12 px-4 py-2.5 bg-zinc-500/10 rounded-full text-zinc-500 text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-zinc-500/20 transition-colors"
                     >
-                      {t('callback.cancel')}
+                      {t('product.cancel')}
                     </button>
                   </div>
                 </form>
@@ -594,7 +593,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
               onClick={() => setMoreWaysOpen(v => !v)}
             >
               <span className="text-neutral-800 text-lg font-normal font-['Segoe_UI'] leading-6">
-                {t('moreWays.header')}
+                {t('help.moreWaysTeam')}
               </span>
               <CollapseIcon open={moreWaysOpen} />
             </button>
@@ -602,11 +601,11 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
             {moreWaysOpen && (
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1">
-                  <span className="text-neutral-800 text-base font-semibold font-['Segoe_UI']">{t('moreWays.addressTitle')}</span>
+                  <span className="text-neutral-800 text-base font-semibold font-['Segoe_UI']">{t('help.address')}</span>
                   <div className="flex flex-col gap-1">
                     <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">Lenderinkweg 8,</span>
                     <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">6733 AX Wekerom</span>
-                    <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">{t('moreWays.netherlands')}</span>
+                    <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">{t('countries.netherlands')}</span>
                   </div>
                 </div>
               </div>
@@ -622,7 +621,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
               onClick={() => setScheduleOpen(v => !v)}
             >
               <span className="text-neutral-800 text-lg font-normal font-['Segoe_UI'] leading-6">
-                {t('schedule.header')}
+                {t('help.checkAvailability')}
               </span>
               <CollapseIcon open={scheduleOpen} />
             </button>
@@ -636,13 +635,13 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                         {day} <span className="text-xs">({formatScheduleDate(date)})</span>
                       </span>
                       <span className={`text-sm font-normal font-['Segoe_UI'] text-right ${active ? 'text-neutral-800' : 'text-zinc-500'}`}>
-                        {hours === UNAVAILABLE_LABEL ? t('schedule.unavailable') : hours}
+                        {hours === UNAVAILABLE_LABEL ? t('help.unavailable') : hours}
                       </span>
                     </div>
                   ))}
                 </div>
                 <p className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">
-                  {t('schedule.footer')}
+                  {t('help.workingHoursOnly')}
                 </p>
               </div>
             )}
@@ -657,7 +656,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
               onClick={() => setMessageOpen(v => !v)}
             >
               <span className="text-neutral-800 text-lg font-normal font-['Segoe_UI'] leading-6">
-                {t('message.header')}
+                {t('help.dropMessage')}
               </span>
               <CollapseIcon open={messageOpen} />
             </button>
@@ -665,7 +664,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
             {messageOpen && (
               <form className="flex flex-col gap-3" onSubmit={handleContactSubmit}>
                 <p className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">
-                  {t('message.description')}
+                  {t('help.leaveMessage')}
                 </p>
                 <input
                   type="email"
@@ -675,7 +674,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                     setContactStatus('idle');
                     setContactStatusMessage('');
                   }}
-                  placeholder={t('message.emailPlaceholder')}
+                  placeholder={t('help.emailAddress')}
                   autoComplete="email"
                   className="h-11 px-5 py-2 rounded-xl border border-zinc-200 outline-none text-neutral-700 text-base font-normal font-['Segoe_UI'] placeholder-neutral-400 focus:border-amber-400 transition-colors w-full"
                 />
@@ -686,7 +685,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                     setContactStatus('idle');
                     setContactStatusMessage('');
                   }}
-                  placeholder={t('message.messagePlaceholder')}
+                  placeholder={t('help.messagePlaceholder')}
                   rows={4}
                   className="px-3 py-2 rounded-xl border border-zinc-200 outline-none text-neutral-700 text-sm font-normal font-['Segoe_UI'] placeholder-neutral-400 focus:border-amber-400 transition-colors w-full resize-none"
                 />
@@ -706,7 +705,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                     disabled={contactStatus === 'submitting'}
                     className="w-36 h-12 px-4 py-2.5 bg-amber-500 rounded-full text-white text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    {contactStatus === 'submitting' ? t('message.sending') : t('message.sendMessage')}
+                    {contactStatus === 'submitting' ? t('help.sending') : t('help.sendMessage')}
                   </button>
                 </div>
               </form>
