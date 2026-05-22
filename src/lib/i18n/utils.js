@@ -61,7 +61,7 @@ export function pickLocale(value, locale) {
  * - NL: returns path as-is → '/products/some-slug'
  *
  * @param {string} path   Internal path, must start with '/'
- * @param {'en' | 'nl'} locale
+ * @param {string} locale
  * @returns {string}
  */
 export function localePath(path, locale) {
