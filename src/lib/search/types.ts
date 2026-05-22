@@ -86,6 +86,7 @@ export type CatalogSearchParams = {
   articleNumbers: string[];
   printerIds: number[];
   categories: string[];
+  scopeCategories: string[];
   categoryIds: number[];
   brands: string[];
   materialIds: number[];

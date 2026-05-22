@@ -53,7 +53,7 @@ export default async function PrinterPage({
   const locale = await getServerLocale();
   const rawParams = await searchParams;
   const routeQuery = toUrlSearchParams(rawParams);
-  const scopeQuery = new URLSearchParams({ category: "labelprinters" });
+  const scopeQuery = new URLSearchParams({ scope_category: "labelprinters" });
   const initialSearchQuery = new URLSearchParams(scopeQuery);
 
   routeQuery.forEach((value, key) => {

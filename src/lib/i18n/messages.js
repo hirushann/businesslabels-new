@@ -46,6 +46,7 @@ export const MESSAGES_V4 = {
       selectPrinter: 'Select your printer model',
       searchPrinters: 'Search printers',
       whatLookingFor: 'What are you looking for?',
+      availableForPrinter: 'Available for your printer',
       labelRolls: 'Label Rolls',
       labelRollsDesc: 'Paper, BOPP, etc.',
       ink: 'Ink',
@@ -76,7 +77,6 @@ export const MESSAGES_V4 = {
       subcategoriesLabel: 'Subcategories',
       productsTitle: 'All {category}',
       productCount: '{count} {count, plural, one {product} other {products}}',
-      subcategoryCount: '{count} {count, plural, one {subcategory} other {subcategories}}',
     },
     whyChoose: {
       title: 'Why Choose Businesslabels',
@@ -807,6 +807,7 @@ export const MESSAGES_V4 = {
       selectPrinter: 'Selecteer je printermodel',
       searchPrinters: 'Zoek printers',
       whatLookingFor: 'Waar ben je naar op zoek?',
+      availableForPrinter: 'Beschikbaar voor je printer',
       labelRolls: 'Labelrollen',
       labelRollsDesc: 'Papier, BOPP, etc.',
       ink: 'Inkt',
@@ -837,7 +838,6 @@ export const MESSAGES_V4 = {
       subcategoriesLabel: 'Subcategorieën',
       productsTitle: 'Alle {category}',
       productCount: '{count} {count, plural, one {product} other {producten}}',
-      subcategoryCount: '{count} {count, plural, one {subcategorie} other {subcategorieën}}',
     },
     whyChoose: {
       title: 'Waarom kiezen voor Businesslabels',

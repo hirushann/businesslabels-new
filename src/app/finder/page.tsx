@@ -149,8 +149,8 @@ function PrinterSummary({
     const hasFanFold = baselineCatalog.filters.options
       .find((f) => f.key === "kern_string")
       ?.options.some((o) => o.value.toLowerCase() === "fan-fold");
-    
-    if (hasFanFold && !cores.some(c => c.toLowerCase() === "fan-fold")) {
+
+    if (hasFanFold && !cores.some((c) => c.toLowerCase() === "fan-fold")) {
       cores.push("Fan-fold");
     }
   }
@@ -179,9 +179,10 @@ function PrinterSummary({
     : undefined;
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-        <div className="min-w-0 flex-1">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <div className="flex flex-col lg:flex-row lg:min-h-64">
+        {/* ── Left: Content (50%) ── */}
+        <div className="flex-1 basis-1/2 p-6 flex flex-col">
           <h1 className="text-3xl font-bold font-['Segoe_UI'] leading-9 text-neutral-800">
             {printer.title}
           </h1>
@@ -189,82 +190,87 @@ function PrinterSummary({
             <p className="mt-2 text-lg text-sky-600">{printer.subtitle}</p>
           ) : null}
 
-          {properties ? (
-            <div className="mt-6 grid grid-cols-1 gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
-              {printMethods.length > 0 ? (
-                <SpecItem
-                  label={t("finder.printTechnology")}
-                  value={
-                    printMethods.includes("TD") && printMethods.includes("TT")
-                      ? "Thermal Direct & Thermal Transfer"
-                      : printMethods.join(", ")
-                  }
-                />
-              ) : null}
-              {cores.length > 0 ? (
-                <SpecItem
-                  label={t("finder.core")}
-                  value={cores.join(", ")}
-                />
-              ) : null}
-              {parsedMinWidth != null && parsedMaxWidth != null ? (
-                <SpecItem
-                  label={t("finder.mediaWidth")}
-                  value={formatMillimeterRange(
-                    parsedMinWidth,
-                    parsedMaxWidth,
-                    t,
-                  )}
-                />
-              ) : widthRange.length > 0 ? (
-                <SpecItem
-                  label={t("finder.mediaWidth")}
-                  value={
-                    numberRangeLabel(widthRange, t) ?? widthRange.join(", ")
-                  }
-                />
-              ) : widths.length > 0 ? (
-                <SpecItem
-                  label={t("finder.mediaWidth")}
-                  value={numberRangeLabel(widths, t) ?? widths.join(", ")}
-                />
-              ) : null}
-              {maxOuterDiameter[0] ? (
-                <SpecItem
-                  label={t("finder.maxOuterDiameter")}
-                  value={withMillimeterUnit(maxOuterDiameter[0])}
-                />
-              ) : null}
-            </div>
-          ) : null}
-
           {printer.content ? (
             <div className="mt-4 rounded-lg bg-slate-50 p-4">
-              <div className="text-sm font-medium text-neutral-500">{t("product.productDescription")}</div>
-              <div 
+              <div className="text-sm font-medium text-neutral-500">
+                {t("product.productDescription")}
+              </div>
+              <div
                 className="mt-2 text-sm leading-relaxed text-neutral-700 font-normal [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
                 dangerouslySetInnerHTML={{ __html: printer.content }}
               />
             </div>
           ) : printer.excerpt ? (
             <div className="mt-4 rounded-lg bg-slate-50 p-4">
-              <div className="text-sm font-medium text-neutral-500">{t("product.productDescription")}</div>
-              <div 
+              <div className="text-sm font-medium text-neutral-500">
+                {t("product.productDescription")}
+              </div>
+              <div
                 className="mt-2 text-sm leading-relaxed text-neutral-700 font-normal [&_p]:mb-2"
                 dangerouslySetInnerHTML={{ __html: printer.excerpt }}
               />
             </div>
           ) : null}
+
+          {properties ? (
+            <div className="mt-2 pt-3">
+              <h3 className="text-xl font-bold text-neutral-800">
+                {t("finder.mediaSpecifications")}
+              </h3>
+              <ul className="mt-4 flex flex-col gap-3">
+                {printMethods.length > 0 ? (
+                  <SpecItem
+                    label={t("finder.printTechnology")}
+                    value={
+                      printMethods.includes("TD") && printMethods.includes("TT")
+                        ? "Thermal Direct & Thermal Transfer"
+                        : printMethods.join(", ")
+                    }
+                  />
+                ) : null}
+                {cores.length > 0 ? (
+                  <SpecItem label={t("finder.core")} value={cores.join(", ")} />
+                ) : null}
+                {parsedMinWidth != null && parsedMaxWidth != null ? (
+                  <SpecItem
+                    label={t("finder.mediaWidth")}
+                    value={formatMillimeterRange(
+                      parsedMinWidth,
+                      parsedMaxWidth,
+                      t,
+                    )}
+                  />
+                ) : widthRange.length > 0 ? (
+                  <SpecItem
+                    label={t("finder.mediaWidth")}
+                    value={
+                      numberRangeLabel(widthRange, t) ?? widthRange.join(", ")
+                    }
+                  />
+                ) : widths.length > 0 ? (
+                  <SpecItem
+                    label={t("finder.mediaWidth")}
+                    value={numberRangeLabel(widths, t) ?? widths.join(", ")}
+                  />
+                ) : null}
+                {maxOuterDiameter[0] ? (
+                  <SpecItem
+                    label={t("finder.maxOuterDiameter")}
+                    value={withMillimeterUnit(maxOuterDiameter[0])}
+                  />
+                ) : null}
+              </ul>
+            </div>
+          ) : null}
         </div>
 
+        {/* ── Right: Image (50%) ── */}
         {imageUrl ? (
-          <div className="relative h-56 w-full shrink-0 lg:w-80">
-            <Image
+          <div className="flex-1 basis-1/2 bg-slate-50 border-t border-slate-100 lg:border-t-0 lg:border-l lg:border-slate-100 flex items-center justify-center p-8 min-h-56 lg:min-h-0">
+            <img
               src={imageUrl}
               alt={printer.title}
-              fill
-              className="object-contain"
-              unoptimized
+              className="w-full h-full max-h-80 object-contain"
             />
           </div>
         ) : null}
@@ -274,11 +280,39 @@ function PrinterSummary({
 }
 
 function SpecItem({ label, value }: { label: string; value: string }) {
+  const cleanLabel = label.endsWith(":") ? label.slice(0, -1) : label;
   return (
-    <div className="rounded-lg bg-slate-50 p-4">
-      <div className="text-sm font-medium text-neutral-500">{label}</div>
-      <div className="mt-1 font-semibold text-blue-600">{value}</div>
-    </div>
+    <li className="flex items-start gap-3">
+      {/* Green checkmark circle icon */}
+      <svg
+        className="mt-0.5 shrink-0"
+        width="22"
+        height="22"
+        viewBox="0 0 22 22"
+        fill="none"
+        aria-hidden="true"
+      >
+        <circle
+          cx="11"
+          cy="11"
+          r="10"
+          stroke="#22c55e"
+          strokeWidth="1.5"
+          fill="none"
+        />
+        <path
+          d="M7 11.5l2.5 2.5 5.5-5.5"
+          stroke="#22c55e"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+      <span className="text-base text-neutral-700">
+        <span className="font-semibold text-neutral-800">{cleanLabel}:</span>{" "}
+        {value}
+      </span>
+    </li>
   );
 }
 
@@ -312,9 +346,14 @@ export default async function FinderPage({
         [printer, initialCatalog, baselineCatalog] = await Promise.all([
           getPrinterById(printerId, locale),
           searchCatalogProducts(parseCatalogSearchParams(query, locale)),
-          searchCatalogProducts(parseCatalogSearchParams(baselineQuery, locale)),
+          searchCatalogProducts(
+            parseCatalogSearchParams(baselineQuery, locale),
+          ),
         ]);
-        console.log("[Finder Page] Server-side printer details loaded:", printer);
+        console.log(
+          "[Finder Page] Server-side printer details loaded:",
+          printer,
+        );
       } catch (error) {
         console.error("Failed to load finder product catalog.", error);
       }
@@ -329,31 +368,22 @@ export default async function FinderPage({
           : "Products";
 
     return (
-      <section className="bg-slate-50 px-4 py-10 sm:px-6 lg:px-10">
-        <div className="mx-auto flex max-w-360 flex-col gap-8">
-          <div className="border-b border-slate-200 pb-5">
-            <Breadcrumbs 
-              items={[
-                { label: t("finder.printerFinder"), href: "/finder" },
-                { label: printer?.title || "Printer" }
-              ]} 
-              className="mb-4"
-            />
-            <h1 className="text-3xl font-bold font-['Segoe_UI'] leading-8 text-neutral-800">
-              {t("finder.compatibleProductsTitle", { type: productTypeLabel })}
-            </h1>
-            {printer ? (
-              <p className="mt-3 text-base text-neutral-600">
-                {t("finder.showingCompatibleProducts", {
-                  filtered: initialCatalog.total,
-                  total: baselineCatalog.total,
-                  printer: printer.title,
-                })}
-              </p>
-            ) : null}
-          </div>
+      <section className="bg-slate-50 px-4 py-4 sm:px-6 lg:px-10">
+        <div className="mx-auto flex max-w-360 flex-col gap-6">
+          <Breadcrumbs
+            items={[
+              { label: t("finder.printerFinder"), href: "/finder" },
+              { label: printer?.title || "Printer" },
+            ]}
+          />
 
-          {printer ? <PrinterSummary printer={printer} baselineCatalog={baselineCatalog} t={t} /> : null}
+          {printer ? (
+            <PrinterSummary
+              printer={printer}
+              baselineCatalog={baselineCatalog}
+              t={t}
+            />
+          ) : null}
 
           <ProductsListing
             initialCatalog={initialCatalog}
@@ -371,10 +401,12 @@ export default async function FinderPage({
   let initialCatalog = emptyPrinterCatalog;
 
   try {
-    initialCatalog = await searchPrinters(parsePrinterSearchParams(query, locale));
+    initialCatalog = await searchPrinters(
+      parsePrinterSearchParams(query, locale),
+    );
     console.log(
       `[Finder Page] Server-side initial catalog loaded (${initialCatalog.printers.length} printers):`,
-      initialCatalog.printers
+      initialCatalog.printers,
     );
   } catch (error) {
     console.error("Failed to load printer catalog.", error);
@@ -426,7 +458,10 @@ export default async function FinderPage({
                 </svg>
                 <span
                   className="text-sm"
-                  style={{ color: "rgba(255,255,255,0.7)", fontFamily: "Segoe UI, sans-serif" }}
+                  style={{
+                    color: "rgba(255,255,255,0.7)",
+                    fontFamily: "Segoe UI, sans-serif",
+                  }}
                 >
                   /
                 </span>
@@ -458,7 +493,9 @@ export default async function FinderPage({
                   fontWeight: 400,
                 }}
               >
-                Find products engineered to match your printer&apos;s needs — from premium media and inks to specialized materials for compatibility, reliability, and performance.
+                Find products engineered to match your printer&apos;s needs —
+                from premium media and inks to specialized materials for
+                compatibility, reliability, and performance.
               </p>
             </div>
           </div>

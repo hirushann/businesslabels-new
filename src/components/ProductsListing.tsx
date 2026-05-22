@@ -32,6 +32,13 @@ type ProductsListingProps = {
   scopeQueryString?: string;
   baselineRangeFilters?: CatalogRangeFilter[];
   printer?: { title: string; slug: string } | null;
+  // Filter keys to omit from the sidebar.
+  hiddenFilterKeys?: CatalogOptionFilterKey[];
+  // When provided, the category facet's options are filtered against this
+  // allowlist of live slugs. Products that weren't reindexed after a taxon
+  // delete can still emit the old slug in ES aggregations; passing the live
+  // tree's slugs here keeps the accordion intact but drops the ghost entries.
+  validCategorySlugs?: string[];
 };
 
 const OPTION_PARAM_KEY: Record<CatalogOptionFilterKey, string> = {
@@ -82,6 +89,7 @@ const KNOWN_FILTER_PARAMS = [
   "article_number",
   "category",
   "category_slug",
+  "scope_category",
   "category_id",
   "brand",
   "material_id",
@@ -227,6 +235,8 @@ function CatalogProductsListing({
   scopeQueryString,
   baselineRangeFilters,
   printer,
+  hiddenFilterKeys,
+  validCategorySlugs,
 }: ProductsListingProps) {
   const t = useTranslations();
   const locale = useLocale();
@@ -249,7 +259,6 @@ function CatalogProductsListing({
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [isPending, startTransition] = useTransition();
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const loadMoreRef = useRef<HTMLDivElement>(null);
   const hasFocusedSearchRef = useRef(false);
 
   const stableRangeFilters = useMemo(
@@ -554,6 +563,11 @@ function CatalogProductsListing({
       catalog.filters.options.map((filter) => [filter.key, filter]),
     );
 
+    const hidden = new Set(hiddenFilterKeys ?? []);
+    const liveCategorySlugs = validCategorySlugs
+      ? new Set(validCategorySlugs)
+      : null;
+
     return FILTER_UI_ORDER.flatMap(
       (
         entry,
@@ -567,11 +581,34 @@ function CatalogProductsListing({
           return filter ? [{ kind: "range" as const, filter }] : [];
         }
 
+        if (hidden.has(entry.key)) return [];
+
         const filter = optionMap.get(entry.key);
-        return filter ? [{ kind: "option" as const, filter }] : [];
+        if (!filter) return [];
+
+        if (entry.key === "category" && liveCategorySlugs) {
+          const liveOptions = filter.options.filter((option) =>
+            liveCategorySlugs.has(option.value),
+          );
+          if (liveOptions.length === 0) return [];
+          return [
+            {
+              kind: "option" as const,
+              filter: { ...filter, options: liveOptions },
+            },
+          ];
+        }
+
+        return [{ kind: "option" as const, filter }];
       },
     );
-  }, [catalog.filters.options, catalog.filters.ranges, stableRangeFilters]);
+  }, [
+    catalog.filters.options,
+    catalog.filters.ranges,
+    stableRangeFilters,
+    hiddenFilterKeys,
+    validCategorySlugs,
+  ]);
 
   const clearFilters = () => {
     setParams((params) => {
@@ -663,27 +700,12 @@ function CatalogProductsListing({
     return () => window.clearTimeout(timeoutId);
   }, [loading]);
 
-  useEffect(() => {
-    const target = loadMoreRef.current;
-    if (!target || !hasMoreProducts) return;
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          loadMoreProducts();
-        }
-      },
-      { rootMargin: "480px 0px", threshold: 0.01 },
-    );
-
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, [hasMoreProducts, loadMoreProducts]);
 
   return (
     <div className="flex flex-col gap-8">
       {printer && (
-        <div className={`grid grid-cols-1 gap-6 ${isEpson ? "md:grid-cols-3" : "sm:grid-cols-2"} max-w-6xl`}>
+        <div className={`grid grid-cols-1 gap-4 ${isEpson ? "md:grid-cols-3" : "sm:grid-cols-2"} max-w-4xl`}>
           {categoryCards.map((card) => {
             const isActive = activeCategory === card.id;
             return (
@@ -691,32 +713,32 @@ function CatalogProductsListing({
                 key={card.id}
                 type="button"
                 onClick={() => handleCategoryClick(card.id)}
-                className={`group flex flex-col overflow-hidden text-left rounded-2xl border bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${
+                className={`group flex flex-col overflow-hidden text-left rounded-xl border p-3 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${
                   isActive
-                    ? "border-amber-500 ring-2 ring-amber-500/20"
-                    : "border-slate-100"
+                    ? "border-amber-500 ring-2 ring-amber-500/10 bg-amber-50/5"
+                    : "border-slate-100 bg-white"
                 }`}
               >
-                <div className="relative h-44 w-full overflow-hidden rounded-xl bg-slate-50">
+                <div className="relative h-24 w-full overflow-hidden rounded-lg bg-slate-50">
                   <Image
                     src={card.image}
                     alt={card.title}
                     fill
-                    sizes="(max-width: 768px) 100vw, 50vw"
+                    sizes="(max-width: 768px) 100vw, 33vw"
                     className="object-contain p-2 transition-transform duration-500 group-hover:scale-105"
                   />
                 </div>
-                <div className="mt-4 flex flex-1 flex-col justify-between w-full">
+                <div className="mt-3 flex flex-1 flex-col justify-between w-full">
                   <div>
-                    <h3 className="text-lg font-bold text-slate-800 flex items-center justify-between">
+                    <h3 className="text-base font-bold text-slate-800 flex items-center justify-between">
                       {card.title}
                       <span
-                        className={`h-2.5 w-2.5 rounded-full transition-all duration-200 ${
+                        className={`h-2 w-2 rounded-full transition-all duration-200 ${
                           isActive ? "bg-amber-500 scale-125" : "bg-slate-200"
                         }`}
                       />
                     </h3>
-                    <p className="mt-1 text-sm text-slate-500 leading-relaxed">
+                    <p className="mt-1 text-xs text-slate-500 leading-normal">
                       {card.desc}
                     </p>
                   </div>
@@ -1106,13 +1128,45 @@ function CatalogProductsListing({
               ) : null}
 
               {hasMoreProducts ? (
-                <div
-                  ref={loadMoreRef}
-                  className="flex min-h-20 items-center justify-center pt-4 text-sm text-slate-500"
-                >
-                  {isFetchingMore || loading
-                    ? t("search.loadingProducts")
-                    : "Scroll for more products"}
+                <div className="mt-10 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={loadMoreProducts}
+                    disabled={isFetchingMore || loading}
+                    className="inline-flex items-center justify-center gap-2 h-[52px] px-8 rounded-full border-[1.5px] border-[#F18800] text-[#F18800] font-semibold text-lg leading-6 hover:bg-orange-50 transition-colors duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
+                    style={{ fontFamily: "Segoe UI, sans-serif" }}
+                  >
+                    {isFetchingMore || loading ? (
+                      <>
+                        <svg
+                          className="animate-spin"
+                          width="20"
+                          height="20"
+                          viewBox="0 0 20 20"
+                          fill="none"
+                          aria-hidden="true"
+                        >
+                          <circle
+                            cx="10"
+                            cy="10"
+                            r="8"
+                            stroke="#F18800"
+                            strokeWidth="2"
+                            strokeOpacity="0.3"
+                          />
+                          <path
+                            d="M10 2a8 8 0 0 1 8 8"
+                            stroke="#F18800"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                        Loading...
+                      </>
+                    ) : (
+                      "View more Products"
+                    )}
+                  </button>
                 </div>
               ) : null}
             </>

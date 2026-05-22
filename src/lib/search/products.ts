@@ -43,6 +43,7 @@ const MAX_PER_PAGE = 60;
 
 const MULTI_VALUE_KEYS = {
   categories: ["category", "category_slug"],
+  scopeCategories: ["scope_category"],
   categoryIds: ["category_id"],
   brands: ["brand"],
   materialIds: ["material_id"],
@@ -241,6 +242,7 @@ export function parseCatalogSearchParams(params: URLSearchParams, locale?: "en" 
   );
 
   const categoryValues = valuesParam(params, MULTI_VALUE_KEYS.categories);
+  const scopeCategoryValues = valuesParam(params, MULTI_VALUE_KEYS.scopeCategories);
   const categoryIdValues = valuesParam(params, MULTI_VALUE_KEYS.categoryIds);
   const materialIdValues = valuesParam(params, MULTI_VALUE_KEYS.materialIds);
   const materialCategoryIdValues = valuesParam(params, MULTI_VALUE_KEYS.materialCategoryIds);
@@ -274,6 +276,7 @@ export function parseCatalogSearchParams(params: URLSearchParams, locale?: "en" 
     articleNumbers: valuesParam(params, EXACT_VALUE_KEYS.articleNumbers),
     printerIds: integerValues(printerIdValues),
     categories: categoryValues,
+    scopeCategories: scopeCategoryValues,
     categoryIds: integerValues(categoryIdValues),
     brands: valuesParam(params, MULTI_VALUE_KEYS.brands),
     materialIds: integerValues(materialIdValues),
@@ -655,31 +658,201 @@ function rangeOrStringFilter(
   };
 }
 
-function buildFilters(params: CatalogSearchParams): estypes.QueryDslQueryContainer[] {
+function getCompatibleInkCategorySlugs(printerSlug: string): string[] {
+  const slug = printerSlug.toLowerCase();
+  if (slug.includes("cw-c8000")) {
+    return ["inkt-cartridges-epson-cw-c8000", "inkt-cartridges-cw-c8000-bk", "inkt-cartridges-cw-c8000-mk"];
+  }
+  if (slug.includes("cw-c4000")) {
+    return ["inkt-epson-cw-c4000"];
+  }
+  if (slug.includes("tm-c3500")) {
+    return ["inkt-cartridges-tm-c3500-nl"];
+  }
+  if (slug.includes("tm-c7500g")) {
+    return ["inkt-cartridges-tm-c7500g-nl"];
+  }
+  if (slug.includes("tm-c7500")) {
+    return ["inkt-cartridges-tm-c7500-nl"];
+  }
+  if (slug.includes("cw-c6000") || slug.includes("cw-c6500")) {
+    return ["inkt-cartridges-cw-c6000-series"];
+  }
+  if (slug.includes("gpc831") || slug.includes("gp-c831")) {
+    return ["inkt-cartridges-gp-c831"];
+  }
+  if (slug.includes("tm-c3400")) {
+    return ["inkt-cartridges-tm-c3400"];
+  }
+  if (slug.includes("cw-d6000") || slug.includes("cw-d6500")) {
+    return ["inkt-cartridges-cw-d6000-series"];
+  }
+  return [];
+}
+
+function getPrinterBrandFromSlug(printerSlug: string): string | null {
+  const slug = printerSlug.toLowerCase();
+  if (slug.startsWith("godex-")) return "Godex";
+  if (slug.startsWith("zebra-")) return "Zebra";
+  if (slug.startsWith("epson-")) return "Epson";
+  if (slug.startsWith("citizen-")) return "Citizen";
+  if (slug.startsWith("tsc-")) return "TSC";
+  if (slug.startsWith("honeywell-")) return "Honeywell";
+  if (slug.startsWith("metapace-")) return "Metapace";
+  if (slug.startsWith("seiko-")) return "Seiko";
+  if (slug.startsWith("primera-") || slug.startsWith("dtm-")) return "Primera";
+  return null;
+}
+
+export type PrinterInfo = {
+  productIds: number[];
+  slugs: string[];
+  titles: string[];
+};
+
+export async function getPrinterInfo(printerIds: number[]): Promise<PrinterInfo> {
+  const result: PrinterInfo = { productIds: [], slugs: [], titles: [] };
+  if (!printerIds || printerIds.length === 0) return result;
+
+  const client = elasticClient();
+  const prefix = process.env.SCOUT_PREFIX?.trim() ?? "";
+  const index = prefix ? `${prefix}catalog_printers` : "catalog_printers";
+
+  try {
+    const response = await client.search<Record<string, unknown>>({
+      index,
+      ignore_unavailable: true,
+      size: printerIds.length,
+      _source: ["product_ids", "slug", "title"],
+      query: {
+        terms: { id: printerIds },
+      },
+    });
+
+    const productIdsSet = new Set<number>();
+    for (const hit of response.hits.hits) {
+      if (hit._source?.product_ids && Array.isArray(hit._source.product_ids)) {
+        for (const pid of hit._source.product_ids) {
+          if (typeof pid === "number" && Number.isFinite(pid)) {
+            productIdsSet.add(pid);
+          }
+        }
+      }
+      
+      const slugVal = hit._source?.slug;
+      if (Array.isArray(slugVal)) {
+        result.slugs.push(...slugVal.filter((s): s is string => typeof s === "string"));
+      } else if (typeof slugVal === "string") {
+        result.slugs.push(slugVal);
+      }
+
+      const titleVal = hit._source?.title;
+      if (Array.isArray(titleVal)) {
+        result.titles.push(...titleVal.filter((t): t is string => typeof t === "string"));
+      } else if (typeof titleVal === "string") {
+        result.titles.push(titleVal);
+      }
+    }
+    result.productIds = Array.from(productIdsSet);
+    return result;
+  } catch (error) {
+    console.error(`[Search] Failed to fetch printer info for printers ${printerIds}:`, error);
+    return result;
+  }
+}
+
+/**
+ * Filters that are always applied to both the main hits query and every facet
+ * aggregation. Includes the active-state guard, type and ID-based scoping
+ * (used by category/printer pages), ranges, and the kern_string /
+ * outer_diameter_string filters — those are combined with their range
+ * counterparts inside a single OR clause, so we keep them in the base rather
+ * than try to split them out per facet.
+ */
+function buildBaseFilters(params: CatalogSearchParams, printerInfo?: PrinterInfo): estypes.QueryDslQueryContainer[] {
   // Slow-delivery products are NOT hidden from listings — they stay visible
   // and simply render without the "In Stock" label (see `mapProductHit`).
   const filters: Array<estypes.QueryDslQueryContainer | null> = [
     { term: { "state.keyword": "active" } },
+    params.printerIds && params.printerIds.length > 0
+      ? {
+          bool: {
+            must_not: [
+              { term: { is_group_product: true } },
+              { term: { "product_type.keyword": "group" } }
+            ]
+          }
+        }
+      : null,
     params.type ? { term: { product_type: params.type } } : null,
     termsFilter("id", params.ids),
-    termsFilter("printer_ids", params.printerIds),
+    params.printerIds && params.printerIds.length > 0
+      ? (() => {
+          const printerShould: estypes.QueryDslQueryContainer[] = [
+            {
+              bool: {
+                should: [
+                  { terms: { printer_ids: params.printerIds } },
+                  ...(printerInfo && printerInfo.productIds.length > 0
+                    ? [{ terms: { id: printerInfo.productIds } }]
+                    : []),
+                ],
+                minimum_should_match: 1,
+              },
+            },
+          ];
+
+          if (printerInfo) {
+            const isEpson = printerInfo.slugs.some(slug => slug.toLowerCase().includes("epson"));
+            if (isEpson) {
+              const inkSlugs = printerInfo.slugs.flatMap(getCompatibleInkCategorySlugs);
+              if (inkSlugs.length > 0) {
+                printerShould.push({
+                  bool: {
+                    must: [
+                      { term: { "category_slugs.keyword": "inkt-cartridges-nl" } },
+                      { terms: { "category_slugs.keyword": inkSlugs } },
+                    ],
+                  },
+                });
+              }
+            } else {
+              const brands = printerInfo.slugs
+                .map(getPrinterBrandFromSlug)
+                .filter((b): b is string => b !== null);
+              
+              if (brands.length > 0) {
+                printerShould.push({
+                  bool: {
+                    must: [
+                      { term: { "category_slugs.keyword": "tt-printlinten-nl" } },
+                      { terms: { "catalog_brand.keyword": [...brands, "Diamondlabels"] } },
+                    ],
+                  },
+                });
+              }
+            }
+          }
+
+          return {
+            bool: {
+              should: printerShould,
+              minimum_should_match: 1,
+            },
+          };
+        })()
+      : null,
     exactKeywordFilter("slug.keyword", params.slugs),
     exactKeywordFilter("sku.keyword", params.skus),
     exactKeywordFilter("article_number.keyword", params.articleNumbers),
-    categorySlugFilter(params.categories),
+    // Scope constraint — always AND'd. Comes from the page-level scope (e.g.
+    // category_id scoping via the category tree). Kept separate from the
+    // user-selectable `categories` facet filter so the two never OR together.
+    categorySlugFilter(params.scopeCategories),
     termsFilter("category_ids", params.categoryIds),
-    termsFilter("catalog_brand.keyword", params.brands),
     termsFilter("material_id", params.materialIds),
     termsFilter("material_taxon_slugs", params.materialCategories),
     termsFilter("material_taxon_ids", params.materialCategoryIds),
-    termsFilter("catalog_material_code.keyword", params.materialCodes),
-    termsFilter("catalog_material.keyword", params.materials),
-    nestedTermsFilter("properties", "properties.afwerking.keyword", params.finishings),
-    nestedTermsFilter("properties", "properties.lijm.keyword", params.glues),
-    nestedTermsFilter("properties", "properties.printmethode.keyword", params.printMethods),
-    nestedTermsFilter("properties", "properties.printer_type.keyword", params.printerTypes),
-    nestedTermsFilter("properties", "properties.detectie.keyword", params.detections),
-    termsFilter("compatible_brands.keyword", params.marks),
     rangeFilter("price", params.priceMin, params.priceMax),
     rangeFilter("property_numbers.breedte", params.widthMin, params.widthMax),
     rangeFilter("property_numbers.hoogte", params.heightMin, params.heightMax),
@@ -697,6 +870,41 @@ function buildFilters(params: CatalogSearchParams): estypes.QueryDslQueryContain
   return filters.filter((filter): filter is estypes.QueryDslQueryContainer => filter !== null);
 }
 
+/**
+ * One filter clause per UI facet key. Used both for the main query (where all
+ * non-null entries are AND-ed in) and per-facet aggregations (where every
+ * entry EXCEPT the facet being aggregated is applied). The latter is the
+ * faceted-search pattern that lets a user switch values within a facet
+ * without first deselecting — each option shows the count it WOULD have if
+ * the user picked it.
+ */
+function buildFacetFilters(
+  params: CatalogSearchParams,
+): Partial<Record<CatalogOptionFilterKey, estypes.QueryDslQueryContainer>> {
+  const entries: Array<[CatalogOptionFilterKey, estypes.QueryDslQueryContainer | null]> = [
+    ["category", categorySlugFilter(params.categories)],
+    ["brand", termsFilter("catalog_brand.keyword", params.brands)],
+    ["material_code", termsFilter("catalog_material_code.keyword", params.materialCodes)],
+    ["material", termsFilter("catalog_material.keyword", params.materials)],
+    ["finishing", nestedTermsFilter("properties", "properties.afwerking.keyword", params.finishings)],
+    ["glue", nestedTermsFilter("properties", "properties.lijm.keyword", params.glues)],
+    ["print_method", nestedTermsFilter("properties", "properties.printmethode.keyword", params.printMethods)],
+    ["printer_type", nestedTermsFilter("properties", "properties.printer_type.keyword", params.printerTypes)],
+    ["detectie", nestedTermsFilter("properties", "properties.detectie.keyword", params.detections)],
+    ["merken", termsFilter("compatible_brands.keyword", params.marks)],
+  ];
+
+  const result: Partial<Record<CatalogOptionFilterKey, estypes.QueryDslQueryContainer>> = {};
+  for (const [key, value] of entries) {
+    if (value !== null) result[key] = value;
+  }
+  return result;
+}
+
+function buildFilters(params: CatalogSearchParams, printerInfo?: PrinterInfo): estypes.QueryDslQueryContainer[] {
+  return [...buildBaseFilters(params, printerInfo), ...Object.values(buildFacetFilters(params))];
+}
+
 function sortClauses(sort: CatalogSortValue): estypes.Sort | undefined {
   const sortOptions: Record<CatalogSortValue, estypes.Sort> = {
     relevance: [{ _score: { order: "desc" } }, { created_at_timestamp: { order: "desc", unmapped_type: "long" } }],
@@ -711,33 +919,63 @@ function sortClauses(sort: CatalogSortValue): estypes.Sort | undefined {
   return sortOptions[sort];
 }
 
-function aggregations(): Record<string, estypes.AggregationsAggregationContainer> {
+function aggregations(
+  params: CatalogSearchParams,
+): Record<string, estypes.AggregationsAggregationContainer> {
+  const baseFilters = buildBaseFilters(params);
+  const facetFilters = buildFacetFilters(params);
+
   const optionAggs = Object.fromEntries(
-    OPTION_FILTERS.map((filter) => [
-      `options_${filter.key}`,
-      filter.nestedPath
-        ? ({
-            nested: {
-              path: filter.nestedPath,
+    OPTION_FILTERS.map((filter) => {
+      // For this facet's aggregation, apply base + every OTHER facet's
+      // filter, but not its own. That way the facet's options reflect what
+      // would be available if the user changed/added a value within it,
+      // instead of collapsing to whatever they just picked.
+      const otherFacetFilters = Object.entries(facetFilters)
+        .filter(([key]) => key !== filter.key)
+        .map(([, clause]) => clause);
+
+      const termsAgg: estypes.AggregationsAggregationContainer = {
+        terms: {
+          field: filter.field,
+          size: 100,
+          order: { _key: "asc" },
+        },
+      };
+
+      const innerAgg: estypes.AggregationsAggregationContainer = filter.nestedPath
+        ? {
+            nested: { path: filter.nestedPath },
+            aggs: { values: termsAgg },
+          }
+        : termsAgg;
+
+      // `global` escapes the parent query scope so we can re-apply *just*
+      // base + other facet filters — the standard ES recipe for showing
+      // counts that ignore the facet's own selection.
+      const textClause = textQuery(params.search);
+      const innerFilter = textClause
+        ? {
+            bool: {
+              must: [textClause],
+              filter: [...baseFilters, ...otherFacetFilters],
             },
-            aggs: {
-              values: {
-                terms: {
-                  field: filter.field,
-                  size: 100,
-                  order: { _key: "asc" },
-                },
-              },
+          }
+        : { bool: { filter: [...baseFilters, ...otherFacetFilters] } };
+
+      return [
+        `options_${filter.key}`,
+        {
+          global: {},
+          aggs: {
+            scoped: {
+              filter: innerFilter,
+              aggs: { facet: innerAgg },
             },
-          } satisfies estypes.AggregationsAggregationContainer)
-        : ({
-            terms: {
-              field: filter.field,
-              size: 100,
-              order: { _key: "asc" },
-            },
-          } satisfies estypes.AggregationsAggregationContainer),
-    ]),
+          },
+        } satisfies estypes.AggregationsAggregationContainer,
+      ];
+    }),
   );
 
   const rangeAggs = Object.fromEntries(
@@ -775,9 +1013,25 @@ function aggregationBuckets(
 ): Array<{ key?: string | number; doc_count?: number }> {
   const agg = aggregationsResult?.[`options_${key}`];
   if (!agg || typeof agg !== "object") return [];
-  const buckets = (agg as { buckets?: unknown; values?: { buckets?: unknown } }).buckets
-    ?? (agg as { values?: { buckets?: unknown } }).values?.buckets;
-  return Array.isArray(buckets) ? (buckets as Array<{ key?: string | number; doc_count?: number }>) : [];
+  // Walk a fixed list of paths down through the wrapper aggregations.
+  // After the faceted-search refactor: agg = global > scoped(filter) >
+  // facet (terms) > [optional nested `values` for nested fields) > buckets.
+  type B = { buckets?: unknown };
+  const root = agg as Record<string, unknown> & B;
+  const scoped = (root as { scoped?: B & Record<string, unknown> }).scoped;
+  const facet = scoped
+    ? (scoped as { facet?: B & Record<string, unknown> }).facet
+    : (root as { facet?: B & Record<string, unknown> }).facet;
+  const values = facet
+    ? (facet as { values?: B }).values
+    : (root as { values?: B }).values;
+
+  for (const candidate of [values, facet, scoped, root]) {
+    if (candidate && Array.isArray(candidate.buckets)) {
+      return candidate.buckets as Array<{ key?: string | number; doc_count?: number }>;
+    }
+  }
+  return [];
 }
 
 function maxAggregation(
@@ -807,7 +1061,10 @@ function buildCatalogFilters(aggregationsResult: Record<string, unknown> | undef
       title: filter.title,
       options: aggregatedOptions,
     };
-  }).filter((filter) => filter.options.length > 0);
+  // Hide facets that can't usefully narrow the result — i.e. zero options
+  // (nothing matches the field at all) or a single option (every remaining
+  // product shares that value, so picking it doesn't change anything).
+  }).filter((filter) => filter.options.length > 1);
 
   return {
     ranges: RANGE_FILTERS.map((filter) => ({
@@ -1033,7 +1290,11 @@ function totalHitsValue(total: estypes.SearchTotalHits | number | undefined): nu
 
 export async function searchCatalogProducts(params: CatalogSearchParams): Promise<CatalogSearchResponse> {
   const client = elasticClient();
-  const filters = buildFilters(params);
+  let printerInfo: PrinterInfo | undefined;
+  if (params.printerIds && params.printerIds.length > 0) {
+    printerInfo = await getPrinterInfo(params.printerIds);
+  }
+  const filters = buildFilters(params, printerInfo);
   const from = (params.page - 1) * params.perPage;
 
   const query: estypes.QueryDslQueryContainer = {
@@ -1055,7 +1316,7 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
       ? { min_score: params.search.trim().split(/\s+/).filter(Boolean).length === 2 ? 3.0 : 2.0 } 
       : {}),
     ...(sortClauses(params.sort) ? { sort: sortClauses(params.sort) } : {}),
-    aggs: aggregations(),
+    aggs: aggregations(params),
   });
 
   console.log(`[Search] Query locale: ${params.locale}, Total hits: ${totalHitsValue(response.hits.total)}`);

@@ -106,6 +106,31 @@ export function findCategoryBySlug(
 }
 
 /**
+ * Walks every node in the tree and returns the set of live category slugs
+ * (current locale). Used to drop stale slugs from the catalog's category
+ * facet — products that weren't reindexed after admin-side deletes can still
+ * surface their old slugs in ES aggregations, and this set is the
+ * source-of-truth for "which slugs still exist."
+ */
+export function flattenCategorySlugs(
+  groups: CategoryGroup[],
+  locale: string,
+): string[] {
+  const slugs: string[] = [];
+  const visit = (nodes: CategoryNode[]) => {
+    for (const node of nodes) {
+      const slug = resolveLocalized(node.slug, locale).trim();
+      if (slug) slugs.push(slug);
+      visit(node.children ?? []);
+    }
+  };
+  for (const group of groups ?? []) {
+    visit(group.categories ?? []);
+  }
+  return slugs;
+}
+
+/**
  * Fetch the full category tree for the active locale. Returns an empty list
  * on any failure so the archive page degrades to a plain product listing
  * rather than erroring.
