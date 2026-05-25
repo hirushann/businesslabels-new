@@ -287,8 +287,11 @@ function specsFromProduct(product: ProductDetail | null): Array<{ label: string;
     { label: "Category", value: categoryNames || missing },
   ];
 
-  const metaRows = Object.entries(meta)
+  const metaRows = Object.entries(product?.properties ?? {})
     .map(([key, value]) => {
+      if(typeof value === "object" || Array.isArray(value)) {
+        value = value?.map(item => item.title).join(", ");
+      }
       const normalizedValue = normalizeDisplayValue(value);
       if (!normalizedValue) {
         return null;
@@ -675,6 +678,8 @@ export default async function SingleProductPage({
     .map((item) => toDisplayImageUrl(item.url))
     .filter((url): url is string => Boolean(url));
   const specs = specsFromProduct(product);
+
+  console.log('Specs:', specs);
 
   console.log("Specs derived from product:", specs);
   const relatedProducts = (product.up_sells ?? []).map(mapUpsellToProductCard);
