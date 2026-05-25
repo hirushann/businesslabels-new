@@ -333,6 +333,25 @@ export function textQuery(search: string): estypes.QueryDslQueryContainer {
   const isPureNumeric = tokens.every(t => /^[0-9]+$/.test(t));
 
   const should: estypes.QueryDslQueryContainer[] = [];
+  const must: estypes.QueryDslQueryContainer[] = [];
+
+  if (isMultiTerm) {
+    must.push({
+      multi_match: {
+        query,
+        fields: [
+          ...skuFields,
+          ...titleFields,
+          ...featureFields,
+          ...brandFields,
+          ...secondaryFields,
+          ...descriptionFields,
+        ],
+        type: "bool_prefix",
+        operator: "and",
+      },
+    });
+  }
 
   // --- TIER 1: SKU Exact Matches (Global Short-Circuit Priority) ---
   skuFields.forEach((field) => {
@@ -514,6 +533,7 @@ export function textQuery(search: string): estypes.QueryDslQueryContainer {
 
   return {
     bool: {
+      ...(must.length > 0 ? { must } : {}),
       should,
       minimum_should_match: 1,
     },

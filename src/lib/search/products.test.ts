@@ -106,6 +106,16 @@ describe('textQuery Accuracy & Precision', () => {
     expect(brandBoost).toBe(50);
     expect(descriptionBoost).toBe(0.05);
   });
+
+  it('should add a must clause with bool_prefix type and operator: "and" for multi-term queries', () => {
+    const query = textQuery('inkt 8500') as estypes.QueryDslQueryContainer;
+    const must = query.bool?.must as estypes.QueryDslQueryContainer[];
+    expect(must).toBeDefined();
+    expect(must.length).toBe(1);
+    expect(must[0].multi_match!.type).toBe('bool_prefix');
+    expect(must[0].multi_match!.operator).toBe('and');
+    expect(must[0].multi_match!.query).toBe('inkt 8500');
+  });
 });
 
 function shouldFindFuzzy(query: estypes.QueryDslQueryContainer) {

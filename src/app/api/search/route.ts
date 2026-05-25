@@ -969,6 +969,25 @@ function buildRelevanceQuery(state: RequestState, _queryConfig: QueryConfig) {
   const isPureNumeric = tokens.every(t => /^[0-9]+$/.test(t));
 
   const should: Record<string, unknown>[] = [];
+  const must: Record<string, unknown>[] = [];
+
+  if (isMultiTerm) {
+    must.push({
+      multi_match: {
+        query: searchTerm,
+        fields: [
+          ...skuFields,
+          ...titleFields,
+          ...featureFields,
+          ...brandFields,
+          ...secondaryFields,
+          ...descriptionFields,
+        ],
+        type: 'bool_prefix',
+        operator: 'and',
+      },
+    });
+  }
 
   // --- TIER 1: SKU Exact Matches ---
   skuFields.forEach((field) => {
@@ -1145,6 +1164,7 @@ function buildRelevanceQuery(state: RequestState, _queryConfig: QueryConfig) {
 
   return {
     bool: {
+      ...(must.length > 0 ? { must } : {}),
       should,
       minimum_should_match: 1,
     },
