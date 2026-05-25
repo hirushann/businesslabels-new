@@ -149,6 +149,8 @@ type ProductDetail = {
   component_products?: ComponentProduct[] | null;
   up_sells?: UpsellProduct[];
   cross_sells?: UpsellProduct[];
+  suitable_printers?: UpsellProduct[];
+  printer_finder_id?: number | null;
   warranty?: {
     is_available?: boolean | null;
     has_options?: boolean | null;
@@ -546,6 +548,98 @@ function productHref(product: ProductCardData): { pathname: string; query?: { ty
   return { pathname: `/products/${product.slug}` };
 }
 
+/** Map a full API product (ProductResource) to the ProductCard shape. */
+function mapApiProductToCard(p: Record<string, unknown>): ProductCardData {
+  const material = p.material as { title?: string | null } | null | undefined;
+  return {
+    id: Number(p.id),
+    name: String((p.title as string) || (p.name as string) || ""),
+    sku: (p.sku as string) ?? null,
+    subtitle: (p.subtitle as string) ?? null,
+    excerpt: (p.excerpt as string) ?? null,
+    materialTitle: material?.title ?? null,
+    price: typeof p.price === "number" ? p.price : Number(p.price) || 0,
+    originalPrice:
+      typeof p.original_price === "number" ? p.original_price : Number(p.original_price) || 0,
+    inStock: p.in_stock === true || Number(p.stock) > 0,
+    mainImage: (p.main_image as string) ?? null,
+    categories: (p.categories as ProductCardData["categories"]) ?? [],
+    slug: (p.slug as string) ?? "",
+    type: p.type === "variable" ? "variable" : "simple",
+  };
+}
+
+/** Fetch products compatible with a product finder printer (Post), by sub-category. */
+async function fetchPrinterProducts(
+  baseUrl: string,
+  printerId: number,
+  productType: "ink" | "labels",
+): Promise<ProductCardData[]> {
+  try {
+    const response = await fetch(`${baseUrl}/api/products/printer-products`, {
+      method: "POST",
+      cache: "no-store",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ printer_id: printerId, product_type: productType, per_page: 12 }),
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const json = (await response.json()) as { products?: { data?: Array<Record<string, unknown>> } };
+    return (json.products?.data ?? []).map(mapApiProductToCard);
+  } catch (error) {
+    console.error(`Failed to fetch printer products (${productType})`, error);
+    return [];
+  }
+}
+
+/** A titled product carousel — used for related / cross-sell / compatibility sections. */
+function ProductCarouselSection({
+  title,
+  products,
+  bgClass = "bg-gray-50",
+  id,
+}: {
+  title: string;
+  products: ProductCardData[];
+  bgClass?: string;
+  id?: string;
+}) {
+  if (products.length === 0) {
+    return null;
+  }
+
+  return (
+    <div id={id} className={`scroll-mt-24 px-4 sm:px-10 py-10 ${bgClass}`}>
+      <div className="mx-auto flex flex-col gap-12">
+        <Carousel opts={{ align: "start", loop: true }} className="w-full">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 px-4 sm:px-10 lg:px-20">
+            <h2 className="text-neutral-800 text-2xl sm:text-3xl md:text-4xl font-bold leading-tight md:leading-[48px]">
+              {title}
+            </h2>
+            <div className="flex items-center gap-6 self-end sm:self-auto">
+              <CarouselPrevious className="static translate-y-0 w-12 h-12 p-3 bg-gray-50 rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-gray-200 hover:bg-white transition-colors" />
+              <CarouselNext className="static translate-y-0 w-12 h-12 p-3 bg-white rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-amber-500 hover:bg-amber-50 transition-colors" />
+            </div>
+          </div>
+          <CarouselContent className="-ml-6 mt-6">
+            {products.map((product) => {
+              const href = productHref(product);
+              return (
+                <CarouselItem key={product.id} className="pl-6 basis-full sm:basis-1/2 lg:basis-1/3">
+                  <ProductCard product={product} href={href ?? undefined} />
+                </CarouselItem>
+              );
+            })}
+          </CarouselContent>
+        </Carousel>
+      </div>
+    </div>
+  );
+}
+
 export default async function SingleProductPage({
   params,
   searchParams,
@@ -584,7 +678,24 @@ export default async function SingleProductPage({
 
   console.log("Specs derived from product:", specs);
   const relatedProducts = (product.up_sells ?? []).map(mapUpsellToProductCard);
+  const suitablePrinters = (product.suitable_printers ?? []).map(mapUpsellToProductCard);
   const showCompatibilityCta = product.is_label_product == true || product.meta?.is_label_product === true;
+
+  // A product linked to a product finder entry (via Printer URL) is a printer:
+  // show its compatible consumables instead of generic up-sells.
+  const printerFinderId = product.printer_finder_id ?? null;
+  const isPrinterProduct = printerFinderId != null;
+  const [printerInkProducts, printerHardwareProducts] =
+    printerFinderId != null && baseUrl
+      ? await Promise.all([
+          fetchPrinterProducts(baseUrl, printerFinderId, "ink"),
+          fetchPrinterProducts(baseUrl, printerFinderId, "labels"),
+        ])
+      : [[] as ProductCardData[], [] as ProductCardData[]];
+
+  // Ink / label products show "Suitable Printers" and skip the generic up-sells block.
+  const hasSuitablePrinters = suitablePrinters.length > 0;
+  const showUpSells = !isPrinterProduct && !hasSuitablePrinters && relatedProducts.length > 0;
 
   const isGroup = normalizeType(product?.type, product?.is_group_product) === "group_product";
   let price = product?.price ?? 0;
@@ -794,58 +905,87 @@ export default async function SingleProductPage({
               properties={product?.properties}
             />
 
-            {/* Consumable Items */}
-            <div className="flex flex-col gap-3">
-              <h3 className="text-gray-800 text-2xl font-semibold" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-                {t('product.consumableItems')}
-              </h3>
-              <div className="grid grid-cols-2 gap-3">
-                {[t('product.hardwares'), t('product.inkMaintenance'), t('product.badgesMedia')].map((item) => (
-                  <button
-                    key={item}
-                    className="px-3 sm:px-4 py-2.5 bg-blue-400/10 rounded-[5px] outline outline-1 outline-offset-[-1px] outline-blue-400/50 text-blue-400 text-xs sm:text-sm md:text-base font-bold text-left hover:bg-blue-400/20 transition-colors"
-                    style={{ fontFamily: "'DM Sans', sans-serif" }}
-                  >
-                    {item}
-                  </button>
-                ))}
+            {/* Consumable Items — image cards (printer products only) */}
+            {isPrinterProduct && (
+              <div className="flex flex-col gap-4">
+                <h3 className="text-[#222222] text-2xl font-bold leading-tight">
+                  {t('product.consumableItems')}
+                </h3>
+                <div className="flex gap-4">
+                  {[
+                    {
+                      label: t('product.inkCartridges'),
+                      image: "/consumables/ink-cartridges.png",
+                      href: "#ink-maintenance",
+                      width: 550,
+                      height: 303,
+                    },
+                    {
+                      label: t('product.maintenanceKits'),
+                      image: "/consumables/maintenance-kits.png",
+                      href: "#hardwares",
+                      width: 340,
+                      height: 273,
+                    },
+                  ].map((card) => (
+                    <a
+                      key={card.label}
+                      href={card.href}
+                      className="flex-1 flex flex-col items-center justify-center gap-4 rounded-xl border border-[#edf0f4] bg-white p-4 drop-shadow-[2px_4px_10px_rgba(109,109,120,0.10)] transition-colors hover:border-amber-300"
+                    >
+                      <span className="flex h-[60px] items-center justify-center">
+                        <Image
+                          src={card.image}
+                          alt={card.label}
+                          width={card.width}
+                          height={card.height}
+                          className="h-[60px] w-auto object-contain"
+                        />
+                      </span>
+                      <span className="text-[#222222] text-base font-semibold">{card.label}</span>
+                    </a>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Related Products Section */}
-      {relatedProducts.length > 0 && (
-        <div className="px-4 sm:px-10 py-10 bg-gray-50">
-          <div className="mx-auto flex flex-col gap-12">
-            <Carousel
-              opts={{
-                align: "start",
-                loop: true,
-              }}
-              className="w-full"
-            >
-              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 px-4 sm:px-10 lg:px-20">
-                <h2 className="text-neutral-800 text-2xl sm:text-3xl md:text-4xl font-bold leading-tight md:leading-[48px]">{t('product.relatedProducts')}</h2>
-                <div className="flex items-center gap-6 self-end sm:self-auto">
-                  <CarouselPrevious className="static translate-y-0 w-12 h-12 p-3 bg-gray-50 rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-gray-200 hover:bg-white transition-colors" />
-                  <CarouselNext className="static translate-y-0 w-12 h-12 p-3 bg-white rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-amber-500 hover:bg-amber-50 transition-colors" />
-                </div>
-              </div>
-              <CarouselContent className="-ml-6 mt-6">
-                {relatedProducts.map((product) => {
-                  const href = productHref(product);
-                  return (
-                    <CarouselItem key={product.id} className="pl-6 basis-full sm:basis-1/2 lg:basis-1/3">
-                      <ProductCard product={product} href={href ?? undefined} />
-                    </CarouselItem>
-                  );
-                })}
-              </CarouselContent>
-            </Carousel>
-          </div>
-        </div>
+      {/* Printer: compatible consumables pulled from the product finder */}
+      {isPrinterProduct && (
+        <>
+          <ProductCarouselSection
+            id="ink-maintenance"
+            title={t('product.inkMaintenance')}
+            products={printerInkProducts}
+            bgClass="bg-gray-50"
+          />
+          <ProductCarouselSection
+            id="hardwares"
+            title={t('product.hardwares')}
+            products={printerHardwareProducts}
+            bgClass="bg-white"
+          />
+        </>
+      )}
+
+      {/* Ink / label: suitable printers (replaces the generic up-sell block) */}
+      {hasSuitablePrinters && (
+        <ProductCarouselSection
+          title={t('product.suitablePrinters')}
+          products={suitablePrinters}
+          bgClass="bg-white"
+        />
+      )}
+
+      {/* Generic up-sells — hidden for printers and ink/label products */}
+      {showUpSells && (
+        <ProductCarouselSection
+          title={t('product.relatedProducts')}
+          products={relatedProducts}
+          bgClass="bg-gray-50"
+        />
       )}
     </div>
   );

@@ -161,6 +161,8 @@
  * @property {ProductVariant[]} [variants]
  * @property {RelatedProductSummary[]} [up_sells]
  * @property {RelatedProductSummary[]} [cross_sells]
+ * @property {RelatedProductSummary[]} [suitable_printers] Printers this ink/label fits; render as the "Suitable printers" block.
+ * @property {number|null} [printer_finder_id] Product finder printer (Post) id linked via Printer URL; used to load compatible consumables.
  */
 
 /**
