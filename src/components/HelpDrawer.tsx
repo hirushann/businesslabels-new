@@ -143,7 +143,7 @@ function getCurrentWeekSchedule(availabilityByDate: Map<string, AvailabilitySlot
   monday.setDate(today.getDate() - daysSinceMonday);
 
   return Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(monday);
+    const date = new Date(today);
     date.setDate(monday.getDate() + index);
 
     const dateKey = toLocalDateKey(date);

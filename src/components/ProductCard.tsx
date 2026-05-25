@@ -427,7 +427,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
                   </span>
                 ) : null}
               </div>
-              <span className="text-zinc-500 text-xs font-normal font-['Segoe_UI'] leading-4">ex. VAT</span>
+              <span className="text-zinc-500 text-xs font-normal font-['Segoe_UI'] leading-4">{t('product.priceExclTax')}</span>
             </div>
             <Popover open={isWarrantyPopoverOpen} onOpenChange={setIsWarrantyPopoverOpen}>
               <PopoverAnchor asChild>
