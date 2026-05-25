@@ -275,6 +275,32 @@ function normalizeDisplayValue(value: unknown): string | null {
   return toTitleCaseFromSlug(normalized);
 }
 
+function normalizePropertyDisplayValue(value: unknown): string | null {
+  if (Array.isArray(value)) {
+    const values = value
+      .map((item) => (item && typeof item === "object" && "title" in item ? item.title : item))
+      .map(normalizeDisplayValue)
+      .filter((item): item is string => Boolean(item));
+
+    return values.length > 0 ? values.join(", ") : null;
+  }
+
+  if (value && typeof value === "object") {
+    if ("title" in value) {
+      return normalizeDisplayValue(value.title);
+    }
+
+    const values = Object.values(value)
+      .map((item) => (item && typeof item === "object" && "title" in item ? item.title : item))
+      .map(normalizeDisplayValue)
+      .filter((item): item is string => Boolean(item));
+
+    return values.length > 0 ? values.join(", ") : null;
+  }
+
+  return normalizeDisplayValue(value);
+}
+
 function specsFromProduct(product: ProductDetail | null): Array<{ label: string; value: string }> {
   const missing = "-";
   const meta = product?.meta ?? {};
@@ -289,10 +315,7 @@ function specsFromProduct(product: ProductDetail | null): Array<{ label: string;
 
   const metaRows = Object.entries(product?.properties ?? {})
     .map(([key, value]) => {
-      if(typeof value === "object" || Array.isArray(value)) {
-        value = value?.map(item => item.title).join(", ");
-      }
-      const normalizedValue = normalizeDisplayValue(value);
+      const normalizedValue = normalizePropertyDisplayValue(value);
       if (!normalizedValue) {
         return null;
       }
