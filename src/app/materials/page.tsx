@@ -42,7 +42,13 @@ type MaterialsResponse = {
   data: Material[];
 };
 
-export default async function MaterialPage() {
+type MaterialsPageSearchParams = Record<string, string | string[] | undefined>;
+
+export default async function MaterialPage({
+  searchParams,
+}: {
+  searchParams?: Promise<MaterialsPageSearchParams>;
+}) {
   const baseUrl = process.env.BBNL_API_BASE_URL;
   const t = await getTranslations();
 
@@ -51,12 +57,20 @@ export default async function MaterialPage() {
   }
 
   const locale = await getServerLocale();
+  const rawParams = (await searchParams) ?? {};
+  const searchRaw = rawParams.search;
+  const search = Array.isArray(searchRaw)
+    ? searchRaw[0] ?? ""
+    : (searchRaw ?? "").trim();
 
   let materials: Material[] = [];
 
   // Fetch all materials from API using per_page=1000 to perform interactive sorting, multi-filtering,
-  // and print method filters natively on client component.
-  const apiUrl = `${baseUrl}/api/materials?per_page=1000`;
+  // and print method filters natively on client component. Forward ?search= to the backend so
+  // deep-linked search URLs hit the database query rather than relying solely on client filtering.
+  const params = new URLSearchParams({ per_page: "1000" });
+  if (search) params.set("search", search);
+  const apiUrl = `${baseUrl}/api/materials?${params.toString()}`;
 
   try {
     const response = await fetch(withLocaleParam(apiUrl, locale), {
