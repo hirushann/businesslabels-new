@@ -384,12 +384,6 @@ function CatalogProductsListing({
           image: "/inkandsupplies.png",
         },
         {
-          id: "tt-printlinten-nl",
-          title: getLocalizedCategoryLabel("lints", locale),
-          desc: getLocalizedCategoryLabel("lintsDesc", locale),
-          image: "/images/thermal_transfer_preview.png",
-        },
-        {
           id: "labels-en-tickets",
           title: getLocalizedCategoryLabel("labels", locale),
           desc: getLocalizedCategoryLabel("labelsDesc", locale),
@@ -705,7 +699,7 @@ function CatalogProductsListing({
   return (
     <div className="flex flex-col gap-8">
       {printer && (
-        <div className={`grid grid-cols-1 gap-4 ${isEpson ? "md:grid-cols-3" : "sm:grid-cols-2"} max-w-4xl`}>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 max-w-4xl">
           {categoryCards.map((card) => {
             const isActive = activeCategory === card.id;
             return (
