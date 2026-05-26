@@ -1,31 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import LocaleLink from "@/components/LocaleLink";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { Droplet, Loader2, Search, ScrollText, Tags } from "lucide-react";
+import { Droplet, Search, ScrollText, Tags } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Combobox,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-} from "@/components/ui/combobox";
+import PrinterModelSelect, { type PrinterSearchResult } from "@/components/PrinterModelSelect";
 import { useHelp } from "./HelpProvider";
 import { useTranslations } from 'next-intl';
-
-type PrinterSearchResult = {
-  id: number;
-  brand: string | null;
-  name: string;
-  model: string | null;
-  slug: string | null;
-  image: string | null;
-};
 
 type CategoryCard = {
   label: string;
@@ -55,10 +38,6 @@ const CATEGORY_CARDS = {
   },
 } satisfies Record<string, CategoryCard>;
 
-function printerLabel(printer: PrinterSearchResult) {
-  return printer.name.trim();
-}
-
 function isEpsonPrinter(printer: PrinterSearchResult | null) {
   return printer?.brand?.toLowerCase().includes("epson") ?? false;
 }
@@ -68,16 +47,9 @@ export default function HeroSection() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { openHelp } = useHelp();
-  const [isComboboxOpen, setIsComboboxOpen] = useState(false);
-  const [printerQuery, setPrinterQuery] = useState("");
-  const [debouncedPrinterQuery, setDebouncedPrinterQuery] = useState("");
-  const [printerResults, setPrinterResults] = useState<PrinterSearchResult[]>([]);
   const [selectedPrinter, setSelectedPrinter] = useState<PrinterSearchResult | null>(null);
-  const [isSearchingPrinters, setIsSearchingPrinters] = useState(false);
-  const [printerSearchError, setPrinterSearchError] = useState<string | null>(null);
 
   const printerId = searchParams.get("printer_id");
-  const canShowPrinterResults = printerQuery.trim().length >= 3;
 
   const categoryCards = useMemo(
     () => (isEpsonPrinter(selectedPrinter)
@@ -85,51 +57,6 @@ export default function HeroSection() {
       : [CATEGORY_CARDS.ribbons, CATEGORY_CARDS.labels]),
     [selectedPrinter],
   );
-
-  useEffect(() => {
-    const timeout = window.setTimeout(() => {
-      setDebouncedPrinterQuery(printerQuery.trim());
-    }, 350);
-
-    return () => window.clearTimeout(timeout);
-  }, [printerQuery]);
-
-  useEffect(() => {
-    if (debouncedPrinterQuery.length < 3) {
-      return;
-    }
-
-    const controller = new AbortController();
-
-    async function searchPrinters() {
-      setIsSearchingPrinters(true);
-      setPrinterSearchError(null);
-
-      try {
-        const response = await fetch(`/api/printers/search?query=${encodeURIComponent(debouncedPrinterQuery)}`, {
-          signal: controller.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error(t("hero.printerSearchFailed"));
-        }
-
-        const payload = (await response.json()) as { data?: PrinterSearchResult[]; message?: string };
-        setPrinterResults(payload.data ?? []);
-      } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") return;
-
-        setPrinterResults([]);
-        setPrinterSearchError(t("hero.printerSearchError"));
-      } finally {
-        setIsSearchingPrinters(false);
-      }
-    }
-
-    searchPrinters();
-
-    return () => controller.abort();
-  }, [debouncedPrinterQuery, t]);
 
   useEffect(() => {
     if (!printerId) {
@@ -158,27 +85,6 @@ export default function HeroSection() {
 
     return () => controller.abort();
   }, [printerId]);
-
-  const handlePrinterSelect = (printer: PrinterSearchResult) => {
-    setSelectedPrinter(printer);
-    setPrinterQuery(printerLabel(printer));
-    setIsComboboxOpen(false);
-  };
-
-  const handlePrinterQueryChange = (value: string) => {
-    setPrinterQuery(value);
-    setIsComboboxOpen(value.trim().length >= 3);
-
-    if (selectedPrinter && value !== printerLabel(selectedPrinter)) {
-      setSelectedPrinter(null);
-    }
-
-    if (value.trim().length < 3) {
-      setPrinterResults([]);
-      setPrinterSearchError(null);
-      setIsSearchingPrinters(false);
-    }
-  };
 
   const handleShowCompatibleProducts = () => {
     if (!selectedPrinter) return;
@@ -320,85 +226,13 @@ export default function HeroSection() {
               <span className="text-neutral-800 text-lg font-semibold font-['Segoe_UI'] leading-5">
                 {t('hero.selectPrinter')}
               </span>
-              <Combobox
-                items={canShowPrinterResults ? printerResults : []}
-                open={isComboboxOpen && canShowPrinterResults}
-                onOpenChange={setIsComboboxOpen}
+              <PrinterModelSelect
+                key={selectedPrinter?.id ?? "empty-printer"}
                 value={selectedPrinter}
-                onValueChange={(printer) => {
-                  if (printer) {
-                    handlePrinterSelect(printer);
-                  } else {
-                    setSelectedPrinter(null);
-                  }
-                }}
-                itemToStringValue={(printer) => printer ? printerLabel(printer) : ""}
-                autoHighlight
-                filter={null}
-              >
-                <ComboboxInput
-                  autoFocus
-                  showTrigger={false}
-                  showClear
-                  value={printerQuery}
-                  onChange={(event) => handlePrinterQueryChange(event.currentTarget.value)}
-                  placeholder={t('hero.searchPrinterPlaceholder')}
-                  className="w-full h-12 px-3 rounded-full"
-                />
-                {printerQuery.trim().length > 0 && printerQuery.trim().length < 3 ? (
-                  <p className="text-sm text-muted-foreground">
-                    {t('hero.searchMinChars')}
-                  </p>
-                ) : null}
-                <ComboboxContent className="p-0">
-                  {isSearchingPrinters ? (
-                    <div className="flex items-center gap-2 px-3 py-6 text-sm text-muted-foreground">
-                      <Loader2 data-icon="inline-start" className="animate-spin" />
-                      <span>{t('hero.searchingPrinters')}</span>
-                    </div>
-                  ) : printerSearchError ? (
-                    <div className="px-3 py-6 text-sm text-destructive">
-                      {printerSearchError}
-                    </div>
-                  ) : (
-                    <>
-                      <ComboboxEmpty>{t('hero.noPrintersFound')}</ComboboxEmpty>
-                      <ComboboxList>
-                        {(printer) => (
-                          <ComboboxItem
-                            key={printer.id}
-                            value={printer}
-                            className="items-start px-3 py-2"
-                          >
-                            {printer.image ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={printer.image}
-                                alt=""
-                                className="size-10 shrink-0 rounded-md border border-border object-contain"
-                              />
-                            ) : (
-                              <div className="flex size-10 shrink-0 items-center justify-center rounded-md border border-border bg-muted">
-                                <Search className="text-muted-foreground" />
-                              </div>
-                            )}
-                            <div className="flex min-w-0 flex-col">
-                              <span className="truncate font-medium">
-                                {printerLabel(printer)}
-                              </span>
-                              {printer.model ? (
-                                <span className="truncate text-xs text-muted-foreground">
-                                  {printer.model}
-                                </span>
-                              ) : null}
-                            </div>
-                          </ComboboxItem>
-                        )}
-                      </ComboboxList>
-                    </>
-                  )}
-                </ComboboxContent>
-              </Combobox>
+                onValueChange={setSelectedPrinter}
+                placeholder={t('hero.searchPrinterPlaceholder')}
+                autoFocus
+              />
             </div>
             {selectedPrinter ? (
               <div className="px-6 flex flex-col gap-4">

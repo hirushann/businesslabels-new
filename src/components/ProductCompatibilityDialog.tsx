@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
+import PrinterModelSelect, { type PrinterSearchResult } from '@/components/PrinterModelSelect';
 import {
   Dialog,
   DialogContent,
@@ -12,262 +13,139 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-
-type PrinterOption = {
-  id: number;
-  name: string;
-};
 
 type ProductCompatibilityDialogProps = {
   productId?: number | string | null;
+  compatiblePrinterIds?: number[];
+  productCategorySlugs?: string[];
+  productMake?: string | null;
 };
 
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+type CompatibilityResult = {
+  compatible: boolean;
+  printerName: string;
+};
+
+function normalizeId(value: number | string | null | undefined) {
+  const number = typeof value === 'number' ? value : Number(value);
+
+  return Number.isFinite(number) ? Math.trunc(number) : null;
 }
 
-function readStringValue(source: Record<string, unknown>, keys: string[]) {
-  for (const key of keys) {
-    const value = source[key];
-
-    if (typeof value === 'string' && value.trim()) {
-      return value.trim();
-    }
-
-    if (typeof value === 'number') {
-      return String(value);
-    }
-  }
-
-  return '';
+function hasId(ids: number[] | undefined, id: number | null) {
+  return id !== null && Array.isArray(ids) && ids.includes(id);
 }
 
-function extractPrinterList(payload: unknown): unknown[] {
-  if (Array.isArray(payload)) {
-    return payload;
+function getCompatibleInkCategorySlugs(printerSlug: string): string[] {
+  const slug = printerSlug.toLowerCase();
+  if (slug.includes("cw-c8000")) {
+    return ["inkt-cartridges-epson-cw-c8000", "inkt-cartridges-cw-c8000-bk", "inkt-cartridges-cw-c8000-mk"];
   }
-
-  if (!isPlainObject(payload)) {
-    return [];
-  }
-
-  if (Array.isArray(payload.data)) {
-    return payload.data;
-  }
-
-  if (isPlainObject(payload.data) && Array.isArray(payload.data.data)) {
-    return payload.data.data;
-  }
-
+  if (slug.includes("cw-c4000")) return ["inkt-epson-cw-c4000"];
+  if (slug.includes("tm-c3500")) return ["inkt-cartridges-tm-c3500-nl"];
+  if (slug.includes("tm-c7500g")) return ["inkt-cartridges-tm-c7500g-nl"];
+  if (slug.includes("tm-c7500")) return ["inkt-cartridges-tm-c7500-nl"];
+  if (slug.includes("cw-c6000") || slug.includes("cw-c6500")) return ["inkt-cartridges-cw-c6000-series"];
+  if (slug.includes("gpc831") || slug.includes("gp-c831")) return ["inkt-cartridges-gp-c831"];
+  if (slug.includes("tm-c3400")) return ["inkt-cartridges-tm-c3400"];
+  if (slug.includes("cw-d6000") || slug.includes("cw-d6500")) return ["inkt-cartridges-cw-d6000-series"];
   return [];
 }
 
-function normalizePrinters(payload: unknown): PrinterOption[] {
-  return extractPrinterList(payload)
-    .filter(isPlainObject)
-    .map((printer) => {
-      const id = Number(printer.id);
-      const name = readStringValue(printer, ['name', 'title', 'model']);
-
-      if (!Number.isFinite(id) || !name) {
-        return null;
-      }
-
-      return { id, name };
-    })
-    .filter((printer): printer is PrinterOption => Boolean(printer));
-}
-
-function getResponseMessage(payload: unknown) {
-  if (typeof payload === 'string') {
-    return payload;
-  }
-
-  if (!isPlainObject(payload)) {
-    return '';
-  }
-
-  return readStringValue(payload, ['message', 'status', 'result', 'compatibility']);
-}
-
-function getCompatibilityValue(payload: unknown) {
-  if (!isPlainObject(payload)) {
-    return null;
-  }
-
-  const directValue = payload.compatible ?? payload.is_compatible ?? payload.compatibility;
-
-  if (typeof directValue === 'boolean') {
-    return directValue;
-  }
-
-  if (typeof directValue === 'string') {
-    const normalized = directValue.toLowerCase();
-
-    if (['true', 'yes', 'compatible', 'success'].includes(normalized)) {
-      return true;
-    }
-
-    if (['false', 'no', 'not compatible', 'incompatible', 'failed'].includes(normalized)) {
-      return false;
-    }
-  }
-
-  if (isPlainObject(payload.data)) {
-    return getCompatibilityValue(payload.data);
-  }
-
+function getPrinterBrandFromSlug(printerSlug: string): string | null {
+  const slug = printerSlug.toLowerCase();
+  if (slug.startsWith("godex-")) return "Godex";
+  if (slug.startsWith("zebra-")) return "Zebra";
+  if (slug.startsWith("epson-")) return "Epson";
+  if (slug.startsWith("citizen-")) return "Citizen";
+  if (slug.startsWith("tsc-")) return "TSC";
+  if (slug.startsWith("honeywell-")) return "Honeywell";
+  if (slug.startsWith("metapace-")) return "Metapace";
+  if (slug.startsWith("seiko-")) return "Seiko";
+  if (slug.startsWith("primera-") || slug.startsWith("dtm-")) return "Primera";
   return null;
 }
 
-function formatResponseDetails(payload: unknown) {
-  if (!isPlainObject(payload)) {
-    return null;
-  }
-  console.log('Formatting response details from payload:', payload);
-
-  const data = isPlainObject(payload.data) ? payload.data : payload;
-  const details = Object.entries(data)
-    .filter(([key, value]) => !['compatible', 'is_compatible', 'compatibility', 'message', 'status'].includes(key) && value != null)
-    .map(([key, value]) => ({
-      label: key.replace(/_/g, ' '),
-      value: typeof value === 'object' ? JSON.stringify(value) : String(value),
-    }));
-
-  return details.length ? details : null;
+function normalizeToken(value: string | null | undefined) {
+  return value?.trim().toLowerCase() ?? "";
 }
 
-export default function ProductCompatibilityDialog({ productId }: ProductCompatibilityDialogProps) {
+function hasFinderFallbackCompatibility(
+  printer: PrinterSearchResult,
+  productCategorySlugs: string[],
+  productMake?: string | null,
+) {
+  const categorySlugs = productCategorySlugs.map((slug) => slug.toLowerCase());
+  const printerSlug = printer.slug ?? "";
+  const printerBrand = getPrinterBrandFromSlug(printerSlug) ?? printer.brand;
+
+  if (normalizeToken(printerBrand) === "epson") {
+    const inkSlugs = getCompatibleInkCategorySlugs(printerSlug);
+
+    return categorySlugs.includes("inkt-cartridges-nl")
+      && inkSlugs.some((slug) => categorySlugs.includes(slug));
+  }
+
+  const compatibleBrands = [printerBrand, "Diamondlabels"].map(normalizeToken);
+
+  return categorySlugs.includes("tt-printlinten-nl")
+    && compatibleBrands.includes(normalizeToken(productMake));
+}
+
+export default function ProductCompatibilityDialog({
+  productId,
+  compatiblePrinterIds = [],
+  productCategorySlugs = [],
+  productMake = null,
+}: ProductCompatibilityDialogProps) {
   const t = useTranslations();
-  const [isOpen, setIsOpen] = useState(false);
-  const [printers, setPrinters] = useState<PrinterOption[]>([]);
-  const [selectedPrinterId, setSelectedPrinterId] = useState('');
-  const [selectedPrinter, setSelectedPrinter] = useState<PrinterOption | null>(null);
-  const [printerQuery, setPrinterQuery] = useState('');
-  const [isPrinterListOpen, setIsPrinterListOpen] = useState(false);
-  const [isLoadingPrinters, setIsLoadingPrinters] = useState(false);
+  const [selectedPrinter, setSelectedPrinter] = useState<PrinterSearchResult | null>(null);
   const [isChecking, setIsChecking] = useState(false);
-  const [printerError, setPrinterError] = useState('');
-  const [checkError, setCheckError] = useState('');
-  const [compatibilityResponse, setCompatibilityResponse] = useState<unknown>(null);
-  const printerInputRef = useRef<HTMLInputElement>(null);
+  const [compatibilityResult, setCompatibilityResult] = useState<CompatibilityResult | null>(null);
 
-  const compatibilityValue = getCompatibilityValue(compatibilityResponse);
-  const responseMessage = getResponseMessage(compatibilityResponse);
-  const responseDetails = formatResponseDetails(compatibilityResponse);
+  const normalizedProductId = normalizeId(productId);
 
-  useEffect(() => {
-    if (!isOpen) return;
+  const handlePrinterChange = (printer: PrinterSearchResult | null) => {
+    setSelectedPrinter(printer);
+    setCompatibilityResult(null);
+  };
 
-    const timeoutId = window.setTimeout(() => {
-      printerInputRef.current?.focus();
-    }, 0);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    let isMounted = true;
-    const controller = new AbortController();
-    const timeoutId = window.setTimeout(() => {
-      async function searchPrinters() {
-        setIsLoadingPrinters(true);
-        setPrinterError('');
-
-        try {
-          const response = await fetch(`/api/printers/search?query=${encodeURIComponent(printerQuery)}`, {
-            headers: {
-              Accept: 'application/json',
-            },
-            signal: controller.signal,
-          });
-          const data = await response.json().catch(() => ({}));
-
-          if (!response.ok) {
-            throw new Error(
-              isPlainObject(data) && typeof data.message === 'string'
-                ? data.message
-                : 'Unable to load printer models.'
-            );
-          }
-
-          if (isMounted) {
-            setPrinters(normalizePrinters(data));
-          }
-        } catch (error) {
-          if (isMounted && (error as { name?: string }).name !== 'AbortError') {
-            setPrinters([]);
-            setPrinterError(error instanceof Error ? error.message : 'Unable to load printer models.');
-          }
-        } finally {
-          if (isMounted) {
-            setIsLoadingPrinters(false);
-          }
-        }
-      }
-
-      void searchPrinters();
-    }, 250);
-
-    return () => {
-      isMounted = false;
-      window.clearTimeout(timeoutId);
-      controller.abort();
-    };
-  }, [isOpen, printerQuery]);
-
-  const handleCheckCompatibility = async () => {
-    if (!productId || !selectedPrinterId || isChecking) {
+  const handleCheckCompatibility = () => {
+    if (!selectedPrinter || normalizedProductId === null || isChecking) {
       return;
     }
 
     setIsChecking(true);
-    setCheckError('');
-    setCompatibilityResponse(null);
+    setCompatibilityResult(null);
 
-    try {
-      const response = await fetch('/api/products/compatibility', {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          product_id: productId,
-          printer_id: selectedPrinterId,
-        }),
+    window.setTimeout(() => {
+      const normalizedPrinterId = normalizeId(selectedPrinter.id);
+      const productMatchedFromPrinter = hasId(selectedPrinter.productIds, normalizedProductId);
+      const printerMatchedFromProduct = hasId(compatiblePrinterIds, normalizedPrinterId);
+      const finderFallbackMatched = hasFinderFallbackCompatibility(
+        selectedPrinter,
+        productCategorySlugs,
+        productMake,
+      );
+
+      setCompatibilityResult({
+        compatible: productMatchedFromPrinter || printerMatchedFromProduct || finderFallbackMatched,
+        printerName: selectedPrinter.name,
       });
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(
-          isPlainObject(data) && typeof data.message === 'string'
-            ? data.message
-            : 'Unable to check compatibility.'
-        );
-      }
-
-      setCompatibilityResponse(data);
-    } catch (error) {
-      setCheckError(error instanceof Error ? error.message : 'Unable to check compatibility.');
-    } finally {
       setIsChecking(false);
-    }
+    }, 0);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog>
       <DialogTrigger asChild>
         <button className="text-amber-500 text-base font-semibold underline text-left">
           {t('compatibility.check')}
         </button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg p-6">
+      <DialogContent
+        className="sm:max-w-lg p-6"
+      >
         <DialogHeader>
           <DialogTitle className="text-2xl font-black text-neutral-800">{t('compatibility.check')}</DialogTitle>
           <DialogDescription>
@@ -280,74 +158,24 @@ export default function ProductCompatibilityDialog({ productId }: ProductCompati
             <label className="text-sm font-bold text-neutral-700" htmlFor="compatibility-printer">
               {t('compatibility.printerModel')}
             </label>
-            <div className="relative">
-              <Input
-                ref={printerInputRef}
-                id="compatibility-printer"
-                value={printerQuery}
-                onChange={(event) => {
-                  setPrinterQuery(event.target.value);
-                  setSelectedPrinterId('');
-                  setSelectedPrinter(null);
-                  setCompatibilityResponse(null);
-                  setCheckError('');
-                  setIsPrinterListOpen(true);
-                }}
-                onFocus={() => setIsPrinterListOpen(true)}
-                onBlur={() => {
-                  window.setTimeout(() => setIsPrinterListOpen(false), 120);
-                }}
-                placeholder={t('compatibility.searchPlaceholder')}
-                autoComplete="off"
-                className="h-12 rounded-2xl border-slate-200 bg-slate-50 px-4 text-base font-semibold text-neutral-800 placeholder:font-medium focus-visible:border-amber-500 focus-visible:ring-amber-500/20"
-              />
-              {isPrinterListOpen ? (
-                <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-[60] max-h-64 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-1 shadow-xl shadow-slate-900/10">
-                  {isLoadingPrinters ? (
-                    <div className="flex items-center gap-2 px-4 py-3 text-sm font-semibold text-neutral-500">
-                      <Loader2 className="size-4 animate-spin" />
-                      {t('compatibility.loadingPrinters')}
-                    </div>
-                  ) : printers.length > 0 ? (
-                    printers.map((printer) => (
-                      <button
-                        key={printer.id}
-                        type="button"
-                        onMouseDown={(event) => event.preventDefault()}
-                        onClick={() => {
-                          setSelectedPrinterId(String(printer.id));
-                          setSelectedPrinter(printer);
-                          setPrinterQuery(printer.name);
-                          setCompatibilityResponse(null);
-                          setCheckError('');
-                          setIsPrinterListOpen(false);
-                        }}
-                        className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-left text-sm font-semibold text-neutral-700 transition-colors hover:bg-amber-50 hover:text-amber-700"
-                      >
-                        <span>{printer.name}</span>
-                        {String(printer.id) === selectedPrinterId ? (
-                          <span className="text-xs font-black uppercase tracking-wider text-amber-600">{t('compatibility.selected')}</span>
-                        ) : null}
-                      </button>
-                    ))
-                  ) : (
-                    <div className="px-4 py-3 text-sm font-semibold text-neutral-500">
-                      {t('compatibility.noPrinters')}
-                    </div>
-                  )}
-                </div>
-              ) : null}
-            </div>
-            {!printerQuery ? (
+            <PrinterModelSelect
+              key={selectedPrinter?.id ?? "empty-printer"}
+              value={selectedPrinter}
+              onValueChange={handlePrinterChange}
+              inputId="compatibility-printer"
+              placeholder={t('compatibility.searchPlaceholder')}
+              className="w-full h-12 rounded-2xl border-slate-200 bg-slate-50 px-4 text-base font-semibold text-neutral-800 placeholder:font-medium focus-visible:border-amber-500 focus-visible:ring-amber-500/20"
+              autoFocus
+            />
+            {!selectedPrinter ? (
               <p className="text-xs font-semibold text-neutral-400">{t('compatibility.hint')}</p>
             ) : null}
-            {printerError ? <p className="text-sm font-semibold text-red-600">{printerError}</p> : null}
           </div>
 
           <button
             type="button"
             onClick={handleCheckCompatibility}
-            disabled={!productId || !selectedPrinterId || isChecking || isLoadingPrinters}
+            disabled={normalizedProductId === null || !selectedPrinter || isChecking}
             className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-amber-500 px-6 text-sm font-black text-white transition-colors hover:bg-amber-600 disabled:pointer-events-none disabled:opacity-60"
           >
             {isChecking ? (
@@ -360,30 +188,14 @@ export default function ProductCompatibilityDialog({ productId }: ProductCompati
             )}
           </button>
 
-          {checkError ? (
-            <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-semibold text-red-700">
-              {checkError}
-            </div>
-          ) : null}
-
-          {compatibilityResponse ? (
-            <div className={`rounded-2xl border p-5 ${compatibilityValue === false ? 'border-red-100 bg-red-50' : 'border-emerald-100 bg-emerald-50'}`}>
-              <p className={`text-lg font-black ${compatibilityValue === false ? 'text-red-700' : 'text-emerald-700'}`}>
-                {compatibilityValue === false ? t('compatibility.notCompatible') : compatibilityValue === true ? t('compatibility.compatible') : t('compatibility.result')}
+          {compatibilityResult ? (
+            <div className={`rounded-2xl border p-5 ${compatibilityResult.compatible ? 'border-emerald-100 bg-emerald-50' : 'border-red-100 bg-red-50'}`}>
+              <p className={`text-lg font-black ${compatibilityResult.compatible ? 'text-emerald-700' : 'text-red-700'}`}>
+                {compatibilityResult.compatible ? t('compatibility.compatible') : t('compatibility.notCompatible')}
               </p>
-              <p className={`mt-1 text-sm font-semibold ${compatibilityValue === false ? 'text-red-600' : 'text-emerald-700'}`}>
-                {responseMessage || (selectedPrinter ? `Result for ${selectedPrinter.name}` : 'The compatibility check completed.')}
+              <p className={`mt-1 text-sm font-semibold ${compatibilityResult.compatible ? 'text-emerald-700' : 'text-red-600'}`}>
+                {t('compatibility.resultForPrinter', { printer: compatibilityResult.printerName })}
               </p>
-              {responseDetails ? (
-                <dl className="mt-4 grid gap-2 text-sm">
-                  {responseDetails.map((detail) => (
-                    <div key={detail.label} className="flex justify-between gap-4 border-t border-white/70 pt-2">
-                      <dt className="font-bold capitalize text-neutral-500">{detail.label}</dt>
-                      <dd className="text-right font-semibold text-neutral-700">{detail.value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              ) : null}
             </div>
           ) : null}
         </div>

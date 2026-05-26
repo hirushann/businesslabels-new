@@ -15,6 +15,7 @@ type PrinterSearchSource = {
   main_image?: unknown;
   thumbnail?: unknown;
   properties?: unknown;
+  product_ids?: unknown;
 };
 
 type PrinterSearchResult = {
@@ -24,6 +25,7 @@ type PrinterSearchResult = {
   model: string | null;
   slug: string | null;
   image: string | null;
+  productIds: number[];
 };
 
 function printerIndexName(): string {
@@ -61,6 +63,14 @@ function numberValue(value: unknown): number | null {
   }
 
   return null;
+}
+
+function numberValues(value: unknown): number[] {
+  const values = Array.isArray(value) ? value : [value];
+
+  return values
+    .map(numberValue)
+    .filter((number): number is number => number !== null);
 }
 
 function nestedStringValue(value: unknown, keys: string[]): string | null {
@@ -121,6 +131,7 @@ function mapPrinterSearchResult(source: PrinterSearchSource): PrinterSearchResul
     model: stringValue(source.subtitle),
     slug,
     image: stringValue(source.image) ?? stringValue(source.main_image) ?? stringValue(source.thumbnail),
+    productIds: numberValues(source.product_ids),
   };
 }
 
@@ -137,6 +148,7 @@ const PRINTER_SOURCE_FIELDS: string[] = [
   "main_image",
   "thumbnail",
   "properties",
+  "product_ids",
 ];
 
 function buildPrinterTextQuery(query: string): estypes.QueryDslQueryContainer {

@@ -18,15 +18,32 @@ async function readResponseBody(response: Response) {
   }
 }
 
+function clearAuthCookies(response: NextResponse) {
+  const cookieOptions = {
+    httpOnly: true,
+    sameSite: 'lax' as const,
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    maxAge: 0,
+  };
+
+  response.cookies.set('auth_token', '', cookieOptions);
+  response.cookies.set('auth_session', '', cookieOptions);
+}
+
 export async function POST(request: NextRequest) {
   const apiBaseUrl = process.env.BBNL_API_BASE_URL;
   const authToken = request.cookies.get('auth_token')?.value;
 
   if (!apiBaseUrl) {
-    return NextResponse.json(
+    const nextResponse = NextResponse.json(
       { message: 'Backend API URL is not configured.' },
       { status: 500 }
     );
+
+    clearAuthCookies(nextResponse);
+
+    return nextResponse;
   }
 
   try {
@@ -42,8 +59,7 @@ export async function POST(request: NextRequest) {
     const data = await readResponseBody(response);
     const nextResponse = NextResponse.json(data, { status: response.status });
 
-    nextResponse.cookies.delete('auth_token');
-    nextResponse.cookies.delete('auth_session');
+    clearAuthCookies(nextResponse);
 
     return nextResponse;
   } catch (error) {
@@ -53,8 +69,7 @@ export async function POST(request: NextRequest) {
       { message: 'Logged out locally.' },
       { status: 200 }
     );
-    nextResponse.cookies.delete('auth_token');
-    nextResponse.cookies.delete('auth_session');
+    clearAuthCookies(nextResponse);
 
     return nextResponse;
   }

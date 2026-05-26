@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import AddressAutocomplete from '@/components/AddressAutocomplete';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
@@ -12,6 +12,7 @@ import { useTranslations, useLocale } from 'next-intl';
 type Tab = 'dashboard' | 'orders' | 'addresses' | 'details' | 'printers' | 'favourites';
 
 type StoredUser = Record<string, unknown>;
+type TranslationFn = (key: string, values?: Record<string, string | number | Date>) => string;
 type OrderStatus = 'completed' | 'processing' | 'pending' | 'cancelled' | 'failed' | string;
 type AccountOrder = {
   id: string;
@@ -121,15 +122,6 @@ function userDisplayName(user: StoredUser) {
   const combinedName = [firstName, lastName].filter(Boolean).join(' ');
 
   return combinedName || userString(user, ['email'], 'Customer');
-}
-
-function splitDisplayName(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-
-  return {
-    firstName: parts[0] ?? '',
-    lastName: parts.slice(1).join(' '),
-  };
 }
 
 function formatEuro(value: number) {
@@ -254,10 +246,16 @@ function extractOrderList(payload: unknown): unknown[] {
 function normalizeOrders(payload: unknown): AccountOrder[] {
   return extractOrderList(payload)
     .filter(isPlainObject)
-    .map((order: any, index) => {
-      const itemsRaw = (order.items ?? order.line_items ?? order.order_items) as any[];
-      const billingRaw = (order.billing_address ?? order.billpayer?.address) as Record<string, unknown>;
-      const shippingRaw = (order.shipping_address ?? order.shipping_address) as Record<string, unknown>;
+    .map((order, index) => {
+      const itemsValue = order.items ?? order.line_items ?? order.order_items;
+      const itemsRaw = Array.isArray(itemsValue) ? itemsValue : [];
+      const billpayer = isPlainObject(order.billpayer) ? order.billpayer : {};
+      const billingRaw = isPlainObject(order.billing_address)
+        ? order.billing_address
+        : isPlainObject(billpayer.address)
+          ? billpayer.address
+          : null;
+      const shippingRaw = isPlainObject(order.shipping_address) ? order.shipping_address : null;
 
       return {
         id: formatOrderId(order),
@@ -268,17 +266,21 @@ function normalizeOrders(payload: unknown): AccountOrder[] {
         subtotal: formatEuro(readNumberValue(order, ['subtotal']) || 0),
         shipping_amount: formatEuro(readNumberValue(order, ['shipping_amount']) || 0),
         tax_amount: formatEuro(readNumberValue(order, ['tax_amount']) || 0),
-        items_list: Array.isArray(itemsRaw) ? itemsRaw.map(item => {
-          const price = readNumberValue(item, ['price', 'unit_price']) || 0;
-          const total = readNumberValue(item, ['total', 'line_total']) || (price * (item.quantity || 1));
+        items_list: itemsRaw.map((item, itemIndex) => {
+          const itemRecord = isPlainObject(item) ? item : {};
+          const product = isPlainObject(itemRecord.product) ? itemRecord.product : {};
+          const quantity = readNumberValue(itemRecord, ['quantity', 'qty']) || 1;
+          const price = readNumberValue(itemRecord, ['price', 'unit_price']) || 0;
+          const total = readNumberValue(itemRecord, ['total', 'line_total']) || (price * quantity);
+
           return {
-            id: item.id,
-            name: item.name || item.product?.name || 'Product',
-            quantity: item.quantity,
+            id: readNumberValue(itemRecord, ['id']) || itemIndex,
+            name: readStringValue(itemRecord, ['name']) || readStringValue(product, ['name']) || 'Product',
+            quantity,
             price: price,
             total: total,
           };
-        }) : [],
+        }),
         billing_address: billingRaw ? normalizeAddress(billingRaw, index) : undefined,
         shipping_address: shippingRaw ? normalizeAddress(shippingRaw, index) : undefined,
       };
@@ -350,9 +352,7 @@ function normalizeAddress(address: Record<string, unknown>, index: number): Acco
   const street2 = readStringValue(address, ['street2', 'address2', 'address_2', 'line2', 'apartment', 'suite']);
   const postcode = readStringValue(address, ['postcode', 'postalcode', 'postal_code', 'zip', 'zip_code']);
   const city = readStringValue(address, ['city', 'town']);
-  const state = readStringValue(address, ['state', 'province', 'region']);
   const country = readStringValue(address, ['country', 'country_name', 'country_id']) || 'Netherlands';
-  const cityLine = [postcode, city, state].filter(Boolean).join(' ');
 
   return {
     id: formatAddressId(address, index),
@@ -435,7 +435,7 @@ async function requestAccountAddresses() {
   return normalizeAddresses(data);
 }
 
-function formatCustomerSince(user: StoredUser, t: any, locale: string) {
+function formatCustomerSince(user: StoredUser, t: TranslationFn, locale: string) {
   const dateValue = userString(user, ['created_at', 'createdAt']);
 
   if (!dateValue) {
@@ -465,7 +465,6 @@ export default function MyAccountClient() {
 }
 
 function MyAccountContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<Tab>(() => getValidTab(searchParams.get('tab')) ?? 'dashboard');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -495,8 +494,7 @@ function MyAccountContent() {
       localStorage.removeItem('auth_user');
       window.dispatchEvent(new Event('auth-user-updated'));
       setIsLoggingOut(false);
-      router.push('/login');
-      router.refresh();
+      window.location.replace('/login');
     }
   };
 
@@ -649,19 +647,19 @@ function DashboardView({ setActiveTab, user }: { setActiveTab: (tab: Tab) => voi
         </div>
         <p className="text-neutral-600 text-lg leading-relaxed max-w-2xl">
           {t.rich('account.dashboardDesc', {
-            ordersLink: () => (
+            ordersLink: (chunks) => (
               <button onClick={() => setActiveTab('orders')} className="text-amber-500 font-bold hover:underline">
-                {t('account.ordersLinkText')}
+                {chunks}
               </button>
             ),
-            printersLink: () => (
+            printersLink: (chunks) => (
               <button onClick={() => setActiveTab('printers')} className="text-amber-500 font-bold hover:underline">
-                {t('account.printersLinkText')}
+                {chunks}
               </button>
             ),
-            favouritesLink: () => (
+            favouritesLink: (chunks) => (
               <button onClick={() => setActiveTab('favourites')} className="text-amber-500 font-bold hover:underline">
-                {t('account.favouritesLinkText')}
+                {chunks}
               </button>
             ),
           })}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 import Accordion from "@/components/Accordion";
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 import EmptyState from "@/components/EmptyState";
+import { useDebouncedSearchParam } from "@/components/search/useDebouncedSearchParam";
 
 type Material = {
   id: number;
@@ -66,7 +67,9 @@ const getLocalizedLabel = (key: string, locale: string) => {
       "no_materials_desc": "Try clearing some filters or selecting another printing method.",
       "previous": "Previous",
       "next": "Next",
-      "all_printers": "All Printing Methods"
+      "all_printers": "All Printing Methods",
+      "search_placeholder": "Search materials by name, code or brand",
+      "no_search_results_desc": "Try a different keyword or clear filters."
     },
     nl: {
       "Inkjet": "Inkjet",
@@ -99,7 +102,9 @@ const getLocalizedLabel = (key: string, locale: string) => {
       "no_materials_desc": "Probeer filters te wissen of selecteer een andere printtechnologie.",
       "previous": "Vorige",
       "next": "Volgende",
-      "all_printers": "Alle printtechnologieën"
+      "all_printers": "Alle printtechnologieën",
+      "search_placeholder": "Zoek materialen op naam, code of merk",
+      "no_search_results_desc": "Probeer een ander zoekwoord of wis de filters."
     }
   };
   const lang = locale === "nl" ? "nl" : "en";
@@ -306,6 +311,7 @@ export default function MaterialsCatalogClient({
   const printMethod = searchParams.get("print_method") || "";
   const sort = searchParams.get("sort") || "name_asc";
   const currentPage = Number(searchParams.get("page") || "1");
+  const searchValue = searchParams.get("search") || "";
 
   const selectedBaseMaterials = useMemo(() => {
     const val = searchParams.get("base_material");
@@ -371,13 +377,49 @@ export default function MaterialsCatalogClient({
       base_material: null,
       finish: null,
       adhesive: null,
+      search: null,
       page: null,
     });
   };
 
+  // Search input wired to URL ?search= via debounce
+  const commitSearch = useCallback(
+    (next: string) => {
+      updateQuery({ search: next || null });
+    },
+    // updateQuery closes over searchParams/router/pathname; safe to omit since
+    // useDebouncedSearchParam stores the latest callback in a ref.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [searchParams, pathname, router],
+  );
+
+  const { inputValue: searchInput, setInputValue: setSearchInput } =
+    useDebouncedSearchParam({
+      value: searchValue,
+      onCommit: commitSearch,
+    });
+
   // Process Materials: Filter, Sort & Paginate
   const processed = useMemo(() => {
     let list = [...initialMaterials];
+
+    // 0. Text search across title, code, brand, subtitle
+    const term = searchValue.trim().toLowerCase();
+    if (term) {
+      list = list.filter((m) => {
+        const haystack = [
+          m.title,
+          m.subtitle,
+          m.code,
+          m.brand,
+          ...(m.categories?.map((c) => c.name) ?? []),
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(term);
+      });
+    }
 
     // 1. Printer Type filter (Inkjet, Thermal Transfer, Thermal Direct)
     // If not selected, show all materials
@@ -421,7 +463,7 @@ export default function MaterialsCatalogClient({
     }
 
     return list;
-  }, [initialMaterials, printMethod, selectedBaseMaterials, selectedFinishes, selectedAdhesives, sort, locale]);
+  }, [initialMaterials, printMethod, selectedBaseMaterials, selectedFinishes, selectedAdhesives, sort, locale, searchValue]);
 
   // Paginated partition
   const perPage = 12;
@@ -471,7 +513,8 @@ export default function MaterialsCatalogClient({
     selectedBaseMaterials.length +
     selectedFinishes.length +
     selectedAdhesives.length +
-    (printMethod ? 1 : 0);
+    (printMethod ? 1 : 0) +
+    (searchValue ? 1 : 0);
 
   // Sync scroll on change
   useEffect(() => {
@@ -589,6 +632,58 @@ export default function MaterialsCatalogClient({
               {getLocalizedLabel("all_materials", locale)}
               {total > 0 && <span className="ml-2.5 text-sm font-normal text-slate-400">({total})</span>}
             </h2>
+          </div>
+
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex min-h-11 w-full items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 lg:max-w-xl">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 16 16"
+                fill="none"
+                className="shrink-0 text-slate-400"
+                aria-hidden="true"
+              >
+                <circle
+                  cx="6.75"
+                  cy="6.75"
+                  r="5.25"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
+                <path
+                  d="M11.5 11.5L14.5 14.5"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(event) => setSearchInput(event.target.value)}
+                placeholder={getLocalizedLabel("search_placeholder", locale)}
+                aria-label={getLocalizedLabel("search_placeholder", locale)}
+                className="h-11 w-full bg-transparent text-base text-neutral-800 outline-none placeholder:text-slate-400"
+              />
+              {searchInput ? (
+                <button
+                  type="button"
+                  onClick={() => setSearchInput("")}
+                  aria-label="Clear search"
+                  className="shrink-0 rounded-full p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                >
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                    <path
+                      d="M3 3l8 8M11 3l-8 8"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </button>
+              ) : null}
+            </div>
 
             <div className="flex flex-wrap items-center gap-3">
               {/* Filters Toggle Button */}
@@ -739,7 +834,11 @@ export default function MaterialsCatalogClient({
             ) : (
               <EmptyState
                 title={getLocalizedLabel("no_materials_found", locale)}
-                description={getLocalizedLabel("no_materials_desc", locale)}
+                description={
+                  searchValue
+                    ? getLocalizedLabel("no_search_results_desc", locale)
+                    : getLocalizedLabel("no_materials_desc", locale)
+                }
                 className="my-10 w-full"
               />
             )}
