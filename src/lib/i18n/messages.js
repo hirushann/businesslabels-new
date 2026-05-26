@@ -986,6 +986,7 @@ export const MESSAGES_V4 = {
       notCompatible: 'Not compatible',
       compatible: 'Compatible',
       result: 'Compatibility result',
+      resultForPrinter: 'Result for {printer}',
     },
     bulkDiscount: {
       title: 'Bulk Pricing Tiers',
@@ -2076,6 +2077,7 @@ export const MESSAGES_V4 = {
       notCompatible: 'Niet compatibel',
       compatible: 'Compatibel',
       result: 'Compatibiliteitsresultaat',
+      resultForPrinter: 'Resultaat voor {printer}',
     },
     bulkDiscount: {
       title: 'Staffelprijzen',

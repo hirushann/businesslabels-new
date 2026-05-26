@@ -6,7 +6,7 @@ import ProductCompatibilityDialog from "@/components/ProductCompatibilityDialog"
 import ProductImage from "@/components/ProductImage";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 import { localePath } from "@/lib/i18n/utils";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { getTranslations } from 'next-intl/server';
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 import {
@@ -151,6 +151,8 @@ type ProductDetail = {
   cross_sells?: UpsellProduct[];
   suitable_printers?: UpsellProduct[];
   printer_finder_id?: number | null;
+  printer_ids?: Array<number | string> | null;
+  product_ids?: Array<number | string> | null;
   warranty?: {
     is_available?: boolean | null;
     has_options?: boolean | null;
@@ -159,7 +161,7 @@ type ProductDetail = {
   } | null;
   translations?: ProductTranslationEntry[] | null;
   locale_slugs?: Partial<Record<"en" | "nl", string>>;
-  properties?: any;
+  properties?: unknown;
 };
 
 type ProductTranslation = {
@@ -257,6 +259,17 @@ function normalizeBoolean(value: unknown): boolean {
   return false;
 }
 
+function normalizeIdList(value: unknown): number[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item) => normalizeNumber(item))
+    .filter((item): item is number => item !== null)
+    .map((item) => Math.trunc(item));
+}
+
 function normalizePackingGroup(value: ProductDetail["packing_group"]): string | null {
   const numberValue = normalizeNumber(value);
   if (numberValue == null) {
@@ -303,7 +316,6 @@ function normalizePropertyDisplayValue(value: unknown): string | null {
 
 function specsFromProduct(product: ProductDetail | null): Array<{ label: string; value: string }> {
   const missing = "-";
-  const meta = product?.meta ?? {};
   const categoryNames = (product?.categories ?? [])
     .map((category) => normalizeDisplayValue(category.name))
     .filter((name): name is string => Boolean(name))
@@ -384,15 +396,16 @@ function applyProductTranslation(product: ProductDetail, locale: "en" | "nl"): P
 
   const apply = (field: TranslatedProductField) => {
     const val = translation[field];
+    const translatedOut = out as unknown as Record<TranslatedProductField, unknown>;
     // If the translation has a non-null, non-empty value, use it.
     // Otherwise, keep the existing value from the product (the default/Dutch value).
     if (val !== null && val !== undefined) {
       if (typeof val === "string") {
         if (val.trim() !== "") {
-          (out as any)[field] = val.trim();
+          translatedOut[field] = val.trim();
         }
       } else {
-        (out as any)[field] = val;
+        translatedOut[field] = val;
       }
     }
   };
@@ -703,6 +716,10 @@ export default async function SingleProductPage({
   const specs = specsFromProduct(product);
 
   console.log('Specs:', specs);
+  const compatiblePrinterIds = normalizeIdList(product.printer_ids ?? product.meta?.printer_ids);
+  const productCategorySlugs = (product.categories ?? [])
+    .map((category) => normalizeValue(category.slug))
+    .filter((slug): slug is string => Boolean(slug));
 
   console.log("Specs derived from product:", specs);
   const relatedProducts = (product.up_sells ?? []).map(mapUpsellToProductCard);
@@ -898,7 +915,12 @@ export default async function SingleProductPage({
                           {t('product.compatibilityDescription')}
                         </p>
                       </div>
-                      <ProductCompatibilityDialog productId={product.id} />
+                      <ProductCompatibilityDialog
+                        productId={product.id}
+                        compatiblePrinterIds={compatiblePrinterIds}
+                        productCategorySlugs={productCategorySlugs}
+                        productMake={normalizeValue(product.make)}
+                      />
                     </div>
                   </div>
                 </div>
