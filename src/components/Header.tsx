@@ -391,7 +391,7 @@ export default function Header() {
             ))}
           </nav>
           <div className="flex items-center gap-4">
-            <Link href="/custom" className="text-amber-500 text-base font-semibold leading-6">
+            <Link href="/custom-made-form" className="text-amber-500 text-base font-semibold leading-6">
               {t('header.customMadeForm')}
             </Link>
             <Link

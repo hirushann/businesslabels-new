@@ -1,8 +1,9 @@
 'use client';
 
 import type { FormEvent } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
+import { ReCAPTCHA, ReCAPTCHARef } from './ui/ReCAPTCHA';
 
 interface HelpDrawerProps {
   onClose: () => void;
@@ -189,6 +190,9 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
   const [contactStatusMessage, setContactStatusMessage] = useState('');
   const [availabilityByDate, setAvailabilityByDate] = useState<Map<string, AvailabilitySlot>>(() => new Map());
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const bookingRecaptchaRef = useRef<ReCAPTCHARef>(null);
+  const contactRecaptchaRef = useRef<ReCAPTCHARef>(null);
+  const recaptchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '';
 
   const selectedCountry = europeanCountries.find((country) => country.code === selectedCountryCode) ?? europeanCountries[0];
   const schedule = getCurrentWeekSchedule(availabilityByDate, locale);
@@ -305,6 +309,19 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
     setBookingStatus('submitting');
     setBookingMessage('');
 
+    let recaptchaToken = null;
+    try {
+      recaptchaToken = await bookingRecaptchaRef.current?.execute('booking') || null;
+    } catch (e) {
+      console.error(e);
+    }
+
+    if (!recaptchaToken) {
+      setBookingStatus('error');
+      setBookingMessage(t('help.errorRecaptcha'));
+      return;
+    }
+
     try {
       const response = await fetch('/api/drawer-booking', {
         method: 'POST',
@@ -318,6 +335,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
           dial_code: selectedCountry.dialCode,
           phone_number: normalizedPhoneNumber,
           full_phone_number: `${selectedCountry.dialCode}${normalizedPhoneNumber.replace(/^0+/, '')}`,
+          recaptcha_token: recaptchaToken,
         }),
       });
 
@@ -360,6 +378,19 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
     setContactStatus('submitting');
     setContactStatusMessage('');
 
+    let recaptchaToken = null;
+    try {
+      recaptchaToken = await contactRecaptchaRef.current?.execute('contact') || null;
+    } catch (e) {
+      console.error(e);
+    }
+
+    if (!recaptchaToken) {
+      setContactStatus('error');
+      setContactStatusMessage(t('help.errorRecaptcha'));
+      return;
+    }
+
     try {
       const response = await fetch('/api/drawer-contact', {
         method: 'POST',
@@ -370,6 +401,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
         body: JSON.stringify({
           email: normalizedEmail,
           message: normalizedMessage,
+          recaptcha_token: recaptchaToken,
         }),
       });
 
@@ -551,6 +583,18 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                     />
                   </label>
 
+                  {recaptchaSiteKey && (
+                    <ReCAPTCHA
+                      ref={bookingRecaptchaRef}
+                      siteKey={recaptchaSiteKey}
+                    />
+                  )}
+                  <p className="text-[11px] text-zinc-500 font-['Segoe_UI'] text-center">
+                    This site is protected by reCAPTCHA and the Google{' '}
+                    <a href="https://policies.google.com/privacy" className="text-amber-500 hover:underline">Privacy Policy</a> and{' '}
+                    <a href="https://policies.google.com/terms" className="text-amber-500 hover:underline">Terms of Service</a> apply.
+                  </p>
+
                   {bookingMessage && (
                     <p
                       role={bookingStatus === 'error' ? 'alert' : 'status'}
@@ -574,7 +618,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                     <button
                       type="button"
                       onClick={resetBookingForm}
-                      className="w-24 h-12 px-4 py-2.5 bg-zinc-500/10 rounded-full text-zinc-500 text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-zinc-500/20 transition-colors"
+                      className="w-auto h-12 px-4 py-2.5 bg-zinc-500/10 rounded-full text-zinc-500 text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-zinc-500/20 transition-colors"
                     >
                       {t('product.cancel')}
                     </button>
@@ -689,6 +733,18 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                   rows={4}
                   className="px-3 py-2 rounded-xl border border-zinc-200 outline-none text-neutral-700 text-sm font-normal font-['Segoe_UI'] placeholder-neutral-400 focus:border-amber-400 transition-colors w-full resize-none"
                 />
+                {recaptchaSiteKey && (
+                  <ReCAPTCHA
+                    ref={contactRecaptchaRef}
+                    siteKey={recaptchaSiteKey}
+                  />
+                )}
+                <p className="text-[11px] text-zinc-500 font-['Segoe_UI'] text-center">
+                  This site is protected by reCAPTCHA and the Google{' '}
+                  <a href="https://policies.google.com/privacy" className="text-amber-500 hover:underline">Privacy Policy</a> and{' '}
+                  <a href="https://policies.google.com/terms" className="text-amber-500 hover:underline">Terms of Service</a> apply.
+                </p>
+
                 {contactStatusMessage && (
                   <p
                     role={contactStatus === 'error' ? 'alert' : 'status'}
@@ -703,7 +759,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                   <button
                     type="submit"
                     disabled={contactStatus === 'submitting'}
-                    className="w-36 h-12 px-4 py-2.5 bg-amber-500 rounded-full text-white text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors disabled:cursor-not-allowed disabled:opacity-70"
+                    className="w-auto h-12 px-4 py-2.5 bg-amber-500 rounded-full text-white text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     {contactStatus === 'submitting' ? t('help.sending') : t('help.sendMessage')}
                   </button>
