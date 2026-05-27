@@ -7,7 +7,7 @@ const columnOne = [
   {
     titleKey: 'menus.resources.softwareTitle',
     descriptionKey: 'menus.resources.softwareDesc',
-    href: '/resources/software',
+    href: '/software',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 18L22 12L16 6" stroke="#F18800" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M8 6L2 12L8 18" stroke="#F18800" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
     ),
@@ -47,14 +47,14 @@ const columnTwo = [
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V7L15 2Z" stroke="#F18800" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M14 2V6C14 6.53043 14.2107 7.03914 14.5858 7.41421C14.9609 7.78929 15.4696 8 16 8H20" stroke="#F18800" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 9H8" stroke="#F18800" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M16 13H8" stroke="#F18800" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M16 17H8" stroke="#F18800" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
     ),
   },
-  {
-    titleKey: 'menus.resources.faqTitle',
-    descriptionKey: 'menus.resources.faqDesc',
-    href: '/resources/faq',
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#F18800" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M9.08997 8.99996C9.32507 8.33163 9.78912 7.76807 10.3999 7.40909C11.0107 7.05012 11.7289 6.9189 12.4271 7.03867C13.1254 7.15844 13.7588 7.52148 14.215 8.06349C14.6713 8.60549 14.921 9.29148 14.92 9.99996C14.92 12 11.92 13 11.92 13" stroke="#F18800" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M12 17H12.01" stroke="#F18800" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-    ),
-  },
+  // {
+  //   titleKey: 'menus.resources.faqTitle',
+  //   descriptionKey: 'menus.resources.faqDesc',
+  //   href: '/resources/faq',
+  //   icon: (
+  //     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#F18800" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M9.08997 8.99996C9.32507 8.33163 9.78912 7.76807 10.3999 7.40909C11.0107 7.05012 11.7289 6.9189 12.4271 7.03867C13.1254 7.15844 13.7588 7.52148 14.215 8.06349C14.6713 8.60549 14.921 9.29148 14.92 9.99996C14.92 12 11.92 13 11.92 13" stroke="#F18800" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M12 17H12.01" stroke="#F18800" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+  //   ),
+  // },
   {
     titleKey: 'menus.resources.sitemapTitle',
     descriptionKey: 'menus.resources.sitemapDesc',
