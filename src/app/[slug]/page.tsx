@@ -30,7 +30,7 @@ async function getPage(slug: string, locale: string): Promise<PageData | null> {
     if (!apiBaseUrl) return null;
 
     const baseUrl = `${apiBaseUrl.replace(/\/$/, "")}/api/pages/slug/${slug}`;
-    const url = withLocaleParam(baseUrl, locale);
+    const url = withLocaleParam(baseUrl, locale as "en" | "nl");
     
     console.log(`[CMS Page Debug] Fetching: ${url}`);
 
