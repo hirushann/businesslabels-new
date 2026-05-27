@@ -177,28 +177,6 @@ export default async function FaqHubPage({
                   dangerouslySetInnerHTML={{ __html: unescapeHtml(content.intro) }}
                 />
               )}
-
-              {totalQuestions > 0 && (
-                <div className="mt-10 flex flex-wrap items-center gap-8">
-                  <div>
-                    <div className="text-4xl font-black tracking-tight text-amber-400">
-                      {totalQuestions}
-                    </div>
-                    <div className="mt-1 text-xs font-bold uppercase tracking-[0.18em] text-white/50">
-                      {t("questionsAnswered")}
-                    </div>
-                  </div>
-                  <div className="h-12 w-px bg-white/15" />
-                  <div>
-                    <div className="text-4xl font-black tracking-tight text-amber-400">
-                      {sections.length}
-                    </div>
-                    <div className="mt-1 text-xs font-bold uppercase tracking-[0.18em] text-white/50">
-                      {t("topics")}
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
 
             {page.hero_image && (
