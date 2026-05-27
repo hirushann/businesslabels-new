@@ -241,6 +241,7 @@ export const MESSAGES_V4 = {
       fallback3Author: 'Priya Sharma',
       fallback3Time: '3 months ago',
       postedOn: 'Posted on',
+      title: 'Over {count} Positive Reviews',
     },
     cta: {
       title: 'Ready to find the perfect labels?',
@@ -1457,6 +1458,7 @@ export const MESSAGES_V4 = {
       fallback3Author: 'Priya Sharma',
       fallback3Time: '3 maanden geleden',
       postedOn: 'Geplaatst op',
+      title: 'Wat klanten zeggen',
     },
     cta: {
       title: 'Klaar om de perfecte labels te vinden?',

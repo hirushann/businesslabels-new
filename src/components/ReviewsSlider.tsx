@@ -75,7 +75,7 @@ export default function ReviewsSlider({ reviews, totalRatings }: ReviewsSliderPr
       {/* Header & Controls */}
       <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-6">
         <h2 className="text-neutral-900 text-3xl md:text-[40px] font-bold font-['Segoe_UI'] leading-tight">
-          Over {totalRatings} Positive Reviews
+          {t('reviews.title', { count: totalRatings })}
         </h2>
         <div className="flex items-center gap-4 self-end sm:self-auto">
           <button
