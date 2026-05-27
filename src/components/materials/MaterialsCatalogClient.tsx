@@ -111,9 +111,24 @@ const getLocalizedLabel = (key: string, locale: string) => {
   return dictionary[lang][key] || key;
 };
 
+/**
+ * Maps any print_method string the API might return to one of three canonical values:
+ * "Inkjet", "Thermal Transfer", or "Thermal Direct".
+ * Returns "" for unknown values so the category-based fallback below can run.
+ */
+function normalizePrintMethod(raw: string): string {
+  const s = raw.toLowerCase().replace(/[\s_-]+/g, "");
+  if (s === "inkjet") return "Inkjet";
+  if (s === "thermaltransfer" || s === "ttr" || s === "tt") return "Thermal Transfer";
+  if (s === "thermaldirect" || s === "dt" || s === "directthermal") return "Thermal Direct";
+  return ""; // unknown — let the category slugs decide
+}
+
 // Dynamic helper to extract attributes when DB values are null
 function deriveMaterialAttributes(material: Material) {
-  let printTech = material.print_method || "";
+  // Normalize whatever the API returns ("dt", "thermal_direct", "TT", …) to a
+  // canonical value so the slug comparison in the filter always matches.
+  let printTech = material.print_method ? normalizePrintMethod(material.print_method) : "";
   if (!printTech && material.categories) {
     const cats = material.categories.map((c) => c.slug.toLowerCase());
     if (cats.includes("inkjet") || cats.some((s) => s.includes("inkjet"))) {
@@ -406,6 +421,33 @@ export default function MaterialsCatalogClient({
       onCommit: commitSearch,
     });
 
+  // ─── DEBUG LOGS ────────────────────────────────────────────────────────────
+  // Remove these once the thermal-direct filtering issue is resolved.
+  useEffect(() => {
+    console.group("🔍 [Materials Debug] Raw API print_method values");
+    console.log(`Total materials received: ${initialMaterials.length}`);
+    const byMethod: Record<string, number> = {};
+    initialMaterials.forEach((m) => {
+      const raw = m.print_method ?? "(null)";
+      const normalized = m.print_method ? normalizePrintMethod(m.print_method) : "(null → category fallback)";
+      const catSlugs = m.categories?.map((c) => c.slug).join(", ") || "(no categories)";
+      const { printTech: resolved } = deriveMaterialAttributes(m);
+      const techSlug = resolved.toLowerCase().replace(/\s+/g, "-");
+      byMethod[techSlug] = (byMethod[techSlug] || 0) + 1;
+      console.log(
+        `[${m.code}] "${m.title}"\n` +
+        `  raw print_method : "${raw}"\n` +
+        `  normalized       : "${normalized}"\n` +
+        `  category slugs   : ${catSlugs}\n` +
+        `  FINAL techSlug   : "${techSlug}"  ← filter compares this to "thermal-direct"`,
+      );
+    });
+    console.log("Count by techSlug:", byMethod);
+    console.groupEnd();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialMaterials]);
+  // ────────────────────────────────────────────────────────────────────────────
+
   // Process Materials: Filter, Sort & Paginate
   const processed = useMemo(() => {
     let list = [...initialMaterials];
@@ -431,11 +473,21 @@ export default function MaterialsCatalogClient({
     // 1. Printer Type filter (Inkjet, Thermal Transfer, Thermal Direct)
     // If not selected, show all materials
     if (printMethod) {
+      const before = list.length;
       list = list.filter((m) => {
         const { printTech } = deriveMaterialAttributes(m);
         const techSlug = printTech.toLowerCase().replace(/\s+/g, "-");
-        return techSlug === printMethod;
+        const match = techSlug === printMethod;
+        if (!match) {
+          console.log(
+            `🔬 [Filter "${printMethod}"] REJECTED "${m.title}" (${m.code}) — techSlug="${techSlug}", raw print_method="${m.print_method ?? "null"}", cats=[${m.categories?.map((c) => c.slug).join(", ")}]`,
+          );
+        }
+        return match;
       });
+      console.log(
+        `🔬 [Filter "${printMethod}"] ${before} → ${list.length} materials after print method filter`,
+      );
     }
 
     // 2. Base Material Filter
