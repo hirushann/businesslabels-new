@@ -255,9 +255,15 @@
 }
 
 .cms-content p {
-  margin-bottom: 1.5rem;
+  /* margin-bottom: 1.5rem; */
   line-height: 1.75;
   color: #404040;
+}
+.cms-content br {
+  display: none;
+}
+.cms-content h4, .cms-content h5, .cms-content h6 {
+  margin-top: 1.5rem;
 }
 
 .cms-content ul {
