@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { estypes } from '@elastic/elasticsearch';
-import { textQuery } from './products';
+import { exactSkuQuery, textQuery } from './products';
 
 describe('textQuery Accuracy & Precision', () => {
   it('should prioritize SKU exact matches with highest boost (100000)', () => {
@@ -34,6 +34,30 @@ describe('textQuery Accuracy & Precision', () => {
     expect(hasTitle).toBe(true);
   });
 
+  it('should build a separate exact SKU lookup query for the preflight search', () => {
+    const query = exactSkuQuery('TM-C3500') as estypes.QueryDslQueryContainer;
+    const should = query.bool?.should as estypes.QueryDslQueryContainer[];
+
+    expect(query.bool?.minimum_should_match).toBe(1);
+    expect(should).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          term: {
+            'sku.keyword': {
+              value: 'TM-C3500',
+              case_insensitive: true,
+            },
+          },
+        }),
+        expect.objectContaining({
+          term: {
+            'sku.normalized': 'tm-c3500',
+          },
+        }),
+      ]),
+    );
+  });
+
   it('should handle complex product codes like TM-C3500 strictly', () => {
     const query = textQuery('TM-C3500') as estypes.QueryDslQueryContainer;
     const should = query.bool?.should as estypes.QueryDslQueryContainer[];
@@ -44,41 +68,60 @@ describe('textQuery Accuracy & Precision', () => {
     expect(hasDescription).toBe(false);
   });
 
-  it('should boost Genuine Brand fields above compatible brands', () => {
-    const query = textQuery('epson') as estypes.QueryDslQueryContainer;
+  it('should prefer exact title phrase and all-token title matches over fuzzy title matches', () => {
+    const query = textQuery('epson printer') as estypes.QueryDslQueryContainer;
     const should = query.bool?.should as estypes.QueryDslQueryContainer[];
-    
-    const brandBoost = should.find((s) => s.multi_match && Array.isArray(s.multi_match.fields) && s.multi_match.fields.includes('catalog_brand'))!.multi_match!.boost;
-    const compatibleBoost = should.find((s) => s.multi_match && Array.isArray(s.multi_match.fields) && s.multi_match.fields.includes('compatible_brands'))!.multi_match!.boost;
-    
-    expect(brandBoost).toBe(50);
-    expect(compatibleBoost).toBe(10);
+
+    const phraseBoost = should.find((s) => s.multi_match && s.multi_match.type === 'phrase')!.multi_match!.boost;
+    const titleAndBoost = should.find((s) => s.multi_match && s.multi_match.type === 'cross_fields')!.multi_match!.boost;
+    const fuzzyBoost = should.find((s) => s.multi_match && s.multi_match.fuzziness === 'AUTO')!.multi_match!.boost;
+
+    expect(phraseBoost).toBe(5000);
+    expect(titleAndBoost).toBe(2500);
+    expect(fuzzyBoost).toBe(50);
+  });
+
+  it('should rank title/model-code matches above partial SKU matches for searches like C4000', () => {
+    const query = textQuery('C4000') as estypes.QueryDslQueryContainer;
+    const should = query.bool?.should as estypes.QueryDslQueryContainer[];
+
+    const titleWildcardBoost = should.find((s) => s.query_string)?.query_string?.boost;
+    const titlePhraseBoost = should.find((s) => s.multi_match && s.multi_match.type === 'phrase')!.multi_match!.boost as number;
+    const titleTokenBoost = should.find((s) => s.multi_match && s.multi_match.type === 'best_fields')!.multi_match!.boost as number;
+    const skuPhraseBoost = (should.find((s) => s.match_phrase)?.match_phrase as Record<string, estypes.QueryDslMatchPhraseQuery>).sku.boost as number;
+    const skuPrefix = should.find((s) => s.multi_match && s.multi_match.type === 'phrase_prefix' && Array.isArray(s.multi_match.fields) && s.multi_match.fields.includes('sku'));
+
+    expect(titleWildcardBoost).toBe(2500);
+    expect(titlePhraseBoost).toBeGreaterThan(skuPhraseBoost);
+    expect(titleTokenBoost).toBeGreaterThan(skuPhraseBoost);
+    expect(skuPhraseBoost).toBe(400);
+    expect(skuPrefix!.multi_match!.boost).toBe(150);
+    expect(skuPrefix!.multi_match!.fields).toEqual(['sku', 'variant_skus']);
   });
 
   it('should require BOTH words for 2-word search (e.g. inkt 8500)', () => {
     const query = textQuery('inkt 8500') as estypes.QueryDslQueryContainer;
     const should = query.bool?.should as estypes.QueryDslQueryContainer[];
-    
-    // Check feature fields and description fields use 'and' operator
-    const featureMatch = should.find((s) => s.multi_match && Array.isArray(s.multi_match.fields) && s.multi_match.fields.includes('subtitle'));
-    expect(featureMatch!.multi_match!.operator).toBe('and');
 
     // Title 'and' match should be present
     const titleAndMatch = should.find((s) => s.multi_match && s.multi_match.type === 'cross_fields' && s.multi_match.operator === 'and');
     expect(titleAndMatch).toBeDefined();
+
+    const looseDescriptionMatch = should.find((s) => s.multi_match && Array.isArray(s.multi_match.fields) && s.multi_match.fields.includes('description'));
+    expect(looseDescriptionMatch).toBeUndefined();
   });
 
-  it('should apply fuzziness only to text tokens, not numeric or product-code tokens', () => {
-    // Numeric tokens should be excluded from fuzzy query
-    const queryNum = textQuery('inkt 8500') as estypes.QueryDslQueryContainer;
-    const fuzzyNum = shouldFindFuzzy(queryNum);
-    expect(fuzzyNum).toBeDefined();
-    expect(fuzzyNum!.multi_match!.query).toBe('inkt');
-    expect(fuzzyNum!.multi_match!.query).not.toContain('8500');
+  it('should apply fuzziness only to text queries, not numeric or product-code queries', () => {
+    const text = textQuery('printer ink') as estypes.QueryDslQueryContainer;
+    const fuzzyText = shouldFindFuzzy(text);
+    expect(fuzzyText).toBeDefined();
+    expect(fuzzyText!.multi_match!.query).toBe('printer ink');
 
-    const queryCode = textQuery('C8000') as estypes.QueryDslQueryContainer;
-    const fuzzyCode = shouldFindFuzzy(queryCode);
-    expect(fuzzyCode).toBeUndefined(); // Product code intent disables fuzzy entirely
+    const queryCode = textQuery('TM-C3500') as estypes.QueryDslQueryContainer;
+    expect(shouldFindFuzzy(queryCode)).toBeUndefined();
+
+    const queryNumeric = textQuery('inkt 8500') as estypes.QueryDslQueryContainer;
+    expect(shouldFindFuzzy(queryNumeric)).toBeUndefined();
   });
 
   it('should allow partial numeric matching (e.g. inkt 8000) using query_string wildcard', () => {
@@ -90,31 +133,31 @@ describe('textQuery Accuracy & Precision', () => {
     expect(wildcardMatch!.query_string!.query).toBe('inkt AND *8000*');
   });
 
-  it('should verify ranking hierarchy: SKU (100k) > Title (5k) > Features (1k) > Brand (50) > Description (0.05)', () => {
+  it('should verify ranking hierarchy: exact SKU (100k) > Title (5k) > partial SKU (400) > Description (1)', () => {
     const query = textQuery('test product') as estypes.QueryDslQueryContainer;
     const should = query.bool?.should as estypes.QueryDslQueryContainer[];
     
     const skuBoost = (should.find((s) => s.term && s.term['sku.keyword'])?.term?.['sku.keyword'] as any).boost;
     const titleBoost = should.find((s) => s.multi_match && s.multi_match.type === 'phrase')!.multi_match!.boost;
-    const featureBoost = should.find((s) => s.multi_match && Array.isArray(s.multi_match.fields) && s.multi_match.fields.includes('subtitle'))!.multi_match!.boost;
-    const brandBoost = should.find((s) => s.multi_match && Array.isArray(s.multi_match.fields) && s.multi_match.fields.includes('catalog_brand'))!.multi_match!.boost;
+    const skuPhraseBoost = (should.find((s) => s.match_phrase)?.match_phrase as Record<string, estypes.QueryDslMatchPhraseQuery>).sku.boost;
     const descriptionBoost = should.find((s) => s.multi_match && Array.isArray(s.multi_match.fields) && s.multi_match.fields.includes('description'))!.multi_match!.boost;
+    const shortDescriptionBoost = should.find((s) => s.multi_match && Array.isArray(s.multi_match.fields) && s.multi_match.fields.includes('short_description'))!.multi_match!.boost;
     
     expect(skuBoost).toBe(100000);
     expect(titleBoost).toBe(5000);
-    expect(featureBoost).toBe(1000);
-    expect(brandBoost).toBe(50);
-    expect(descriptionBoost).toBe(0.05);
+    expect(skuPhraseBoost).toBe(400);
+    expect(descriptionBoost).toBe(1);
+    expect(shortDescriptionBoost).toBe(0.5);
   });
 
-  it('should add a must clause with bool_prefix type and operator: "and" for multi-term queries', () => {
+  it('should keep multi-term matching in should clauses so min_score can reject weak matches', () => {
     const query = textQuery('inkt 8500') as estypes.QueryDslQueryContainer;
     const must = query.bool?.must as estypes.QueryDslQueryContainer[];
-    expect(must).toBeDefined();
-    expect(must.length).toBe(1);
-    expect(must[0].multi_match!.type).toBe('bool_prefix');
-    expect(must[0].multi_match!.operator).toBe('and');
-    expect(must[0].multi_match!.query).toBe('inkt 8500');
+    const should = query.bool?.should as estypes.QueryDslQueryContainer[];
+
+    expect(must).toBeUndefined();
+    expect(should.length).toBeGreaterThan(0);
+    expect(query.bool?.minimum_should_match).toBe(1);
   });
 });
 
