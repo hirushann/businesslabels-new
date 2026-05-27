@@ -295,9 +295,12 @@ function MaterialCard({
 export default function MaterialsCatalogClient({
   initialMaterials,
   locale,
+  defaultPrintMethod = "",
 }: {
   initialMaterials: Material[];
   locale: string;
+  /** When set, the print method is locked to this value via the URL path (e.g. /materials/inkjet). */
+  defaultPrintMethod?: string;
 }) {
   const t = useTranslations();
   const router = useRouter();
@@ -307,8 +310,8 @@ export default function MaterialsCatalogClient({
   // Filters sidebar toggle state (collapsible like category/shop pages)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Sync state from query parameters
-  const printMethod = searchParams.get("print_method") || "";
+  // Effective print method: path-based prop takes priority over URL query param
+  const printMethod = defaultPrintMethod || searchParams.get("print_method") || "";
   const sort = searchParams.get("sort") || "name_asc";
   const currentPage = Number(searchParams.get("page") || "1");
   const searchValue = searchParams.get("search") || "";
@@ -362,16 +365,20 @@ export default function MaterialsCatalogClient({
     updateQuery({ [type]: current.join(",") });
   };
 
-  // Toggle Print Method
+  // Toggle Print Method — navigates to /materials/{method} path URLs
   const togglePrintMethod = (method: string) => {
+    // Resolve the /materials base preserving any locale prefix (e.g. /en/materials)
+    const materialsBase = pathname.replace(/\/materials.*$/, "/materials");
     if (printMethod === method) {
-      updateQuery({ print_method: null });
+      // Deselect: go back to the main materials page
+      router.push(materialsBase);
     } else {
-      updateQuery({ print_method: method });
+      // Navigate to the method-specific page
+      router.push(`${materialsBase}/${method}`);
     }
   };
 
-  // Clear all filters
+  // Clear all filters (query-param filters only; path-based method is cleared by clicking the card)
   const clearAllFilters = () => {
     updateQuery({
       base_material: null,
@@ -509,11 +516,12 @@ export default function MaterialsCatalogClient({
   ];
 
 
+  // Don't count the path-baked print method (defaultPrintMethod) as a user-added filter
   const activeFilterCount =
     selectedBaseMaterials.length +
     selectedFinishes.length +
     selectedAdhesives.length +
-    (printMethod ? 1 : 0) +
+    (!defaultPrintMethod && printMethod ? 1 : 0) +
     (searchValue ? 1 : 0);
 
   // Sync scroll on change
