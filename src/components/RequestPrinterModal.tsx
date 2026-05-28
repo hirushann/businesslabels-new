@@ -39,6 +39,8 @@ export function RequestPrinterModal({
   });
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
 
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
@@ -48,17 +50,42 @@ export function RequestPrinterModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitState("submitting");
+    setErrorMsg(null);
 
-    // Simulate submission — replace with real API call
-    await new Promise((r) => setTimeout(r, 1000));
-    setSubmitState("success");
+    try {
+      const response = await fetch('/api/request-printer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
 
-    // Reset & close after short delay
-    setTimeout(() => {
-      setSubmitState("idle");
-      setForm({ brand: "", model: "", email: "", comments: "" });
-      onOpenChange(false);
-    }, 1500);
+      if (response.ok) {
+        setSubmitState("success");
+
+        // Reset & close after short delay
+        setTimeout(() => {
+          setSubmitState("idle");
+          setForm({ brand: "", model: "", email: "", comments: "" });
+          onOpenChange(false);
+        }, 1500);
+      } else {
+        const data = await response.json().catch(() => ({}));
+        let errorText = data.message || 'Something went wrong. Please try again.';
+        
+        if (data.errors) {
+          const firstErrorKey = Object.keys(data.errors)[0];
+          if (firstErrorKey && data.errors[firstErrorKey][0]) {
+            errorText = data.errors[firstErrorKey][0];
+          }
+        }
+        
+        setErrorMsg(errorText);
+        setSubmitState("error");
+      }
+    } catch (err) {
+      setErrorMsg('A network error occurred. Please try again.');
+      setSubmitState("error");
+    }
   };
 
   return (
@@ -136,6 +163,13 @@ export function RequestPrinterModal({
               )}
             />
           </FieldGroup>
+
+          {/* Error Message */}
+          {errorMsg && submitState === "error" && (
+            <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
+              {errorMsg}
+            </div>
+          )}
 
           {/* Submit */}
           <button

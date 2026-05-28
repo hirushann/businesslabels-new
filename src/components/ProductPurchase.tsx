@@ -684,20 +684,22 @@ export default function ProductPurchase({
       <div className="flex flex-col gap-3">
         <div className="flex justify-between items-center">
           <span className="text-blue-400 text-base font-normal leading-5">{t("product.sku", { sku: displaySku })}</span>
-          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${resolvedInStock ? "bg-[#00A63E]" : "bg-zinc-400"}`}>
-            {resolvedInStock ? (
-              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
-                <circle cx="6" cy="6" r="5" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6l1.5 1.5L8 4" />
-              </svg>
-            ) : (
-              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
-                <circle cx="6" cy="6" r="5" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4l4 4m0-4L4 8" />
-              </svg>
-            )}
-            <span className="text-white text-xs font-semibold leading-none">{stockText}</span>
-          </div>
+          {((stock != null && stock > 0) || deliveryDatesNoStock == null || deliveryDatesNoStock < 10) ? (
+            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${resolvedInStock ? "bg-[#00A63E]" : "bg-zinc-400"}`}>
+              {resolvedInStock ? (
+                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
+                  <circle cx="6" cy="6" r="5" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6l1.5 1.5L8 4" />
+                </svg>
+              ) : (
+                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
+                  <circle cx="6" cy="6" r="5" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4l4 4m0-4L4 8" />
+                </svg>
+              )}
+              <span className="text-white text-xs font-semibold leading-none">{stockText}</span>
+            </div>
+          ) : null}
         </div>
         <div className="flex items-baseline gap-2">
           <span className="text-neutral-800 text-4xl font-bold leading-[48px]">

@@ -70,10 +70,15 @@ export async function POST(request: NextRequest) {
 
     if (!verifyData.success || (verifyData.score !== undefined && verifyData.score < 0.5)) {
       console.error('reCAPTCHA verification failed:', verifyData['error-codes'] || `Score too low: ${verifyData.score}`);
-      return NextResponse.json(
-        { message: 'reCAPTCHA verification failed.' },
-        { status: 400 }
-      );
+      
+      if (process.env.NODE_ENV !== 'development') {
+        return NextResponse.json(
+          { message: 'reCAPTCHA verification failed.' },
+          { status: 400 }
+        );
+      } else {
+        console.warn('Bypassing reCAPTCHA failure in development mode.');
+      }
     }
 
     if (!email || !message) {

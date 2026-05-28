@@ -19,8 +19,8 @@ async function readResponseBody(response: Response) {
 }
 
 /**
- * POST /api/icc-profile-request
- * Proxy endpoint that forwards ICC profile requests to Laravel.
+ * POST /api/request-printer
+ * Proxy endpoint that forwards printer requests to Laravel.
  */
 export async function POST(request: NextRequest) {
   const apiBaseUrl = process.env.BBNL_API_BASE_URL;
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const response = await fetch(backendUrl(apiBaseUrl, '/api/icc-profile-request'), {
+    const response = await fetch(backendUrl(apiBaseUrl, '/api/request-printer'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Error forwarding ICC profile request:', error);
+    console.error('Error forwarding printer request:', error);
 
     return NextResponse.json(
       { message: 'Failed to send request. Please try again later.' },

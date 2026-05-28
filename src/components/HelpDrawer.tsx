@@ -330,11 +330,8 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
           'Accept': 'application/json',
         },
         body: JSON.stringify({
-          country: selectedCountry.name,
-          country_code: selectedCountry.code,
-          dial_code: selectedCountry.dialCode,
           phone_number: normalizedPhoneNumber,
-          full_phone_number: `${selectedCountry.dialCode}${normalizedPhoneNumber.replace(/^0+/, '')}`,
+          full_phone_number: normalizedPhoneNumber,
           recaptcha_token: recaptchaToken,
         }),
       });
@@ -547,24 +544,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
               <div className="flex flex-col gap-4">
                 <form className="flex flex-col gap-4" onSubmit={handleBookingSubmit}>
                   {/* Phone country */}
-                  <label className="flex flex-col gap-2">
-                    <span className="sr-only">{t('register.country')}</span>
-                    <select
-                      value={selectedCountryCode}
-                      onChange={(event) => {
-                        setSelectedCountryCode(event.target.value);
-                        setBookingStatus('idle');
-                        setBookingMessage('');
-                      }}
-                      className="h-11 px-5 py-2 rounded-xl border border-zinc-200 outline-none text-neutral-700 text-base font-normal font-['Segoe_UI'] bg-white focus:border-amber-400 transition-colors w-full"
-                    >
-                      {europeanCountries.map((country) => (
-                        <option key={country.code} value={country.code}>
-                          {country.name} ({country.dialCode})
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+
 
                   {/* Mobile number */}
                   <label className="flex flex-col gap-2">
@@ -611,16 +591,9 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                     <button
                       type="submit"
                       disabled={bookingStatus === 'submitting'}
-                      className="w-24 h-12 px-4 py-2.5 bg-amber-500 rounded-full text-white text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors disabled:cursor-not-allowed disabled:opacity-70"
+                      className="h-12 px-4 py-2.5 bg-amber-500 rounded-full text-white text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors disabled:cursor-not-allowed disabled:opacity-70"
                     >
-                      {bookingStatus === 'submitting' ? t('help.booking') : t('help.book')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={resetBookingForm}
-                      className="w-auto h-12 px-4 py-2.5 bg-zinc-500/10 rounded-full text-zinc-500 text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-zinc-500/20 transition-colors"
-                    >
-                      {t('product.cancel')}
+                      {bookingStatus === 'submitting' ? t('help.submitting') : t('help.requestBtn')}
                     </button>
                   </div>
                 </form>
@@ -684,9 +657,9 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                     </div>
                   ))}
                 </div>
-                <p className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">
+                {/* <p className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">
                   {t('help.workingHoursOnly')}
-                </p>
+                </p> */}
               </div>
             )}
           </div>

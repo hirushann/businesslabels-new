@@ -72,10 +72,16 @@ export async function POST(request: NextRequest) {
 
     if (!verifyData.success || (verifyData.score !== undefined && verifyData.score < 0.5)) {
       console.error('reCAPTCHA verification failed:', verifyData['error-codes'] || `Score too low: ${verifyData.score}`);
-      return NextResponse.json(
-        { message: 'reCAPTCHA verification failed.' },
-        { status: 400 }
-      );
+      
+      // In development, bypass reCAPTCHA failure
+      if (process.env.NODE_ENV !== 'development') {
+        return NextResponse.json(
+          { message: 'reCAPTCHA verification failed.' },
+          { status: 400 }
+        );
+      } else {
+        console.warn('Bypassing reCAPTCHA failure in development mode.');
+      }
     }
 
     if (!phoneNumber) {
@@ -97,11 +103,11 @@ export async function POST(request: NextRequest) {
         'Accept': 'application/json',
       },
       body: JSON.stringify({
-        country: body.country,
-        country_code: body.country_code,
-        dial_code: body.dial_code,
+        country: body.country || 'Unknown',
+        country_code: body.country_code || '',
+        dial_code: body.dial_code || '',
         phone_number: phoneNumber,
-        full_phone_number: body.full_phone_number,
+        full_phone_number: body.full_phone_number || phoneNumber,
       }),
     });
 
