@@ -124,9 +124,45 @@ function CollectionBoxForm() {
   const [city, setCity] = useState<string>('');
   const [extra, setExtra] = useState<string>('');
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>): void {
+  const [submitState, setSubmitState] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    alert(t('alertBoxSuccess'));
+    setSubmitState('submitting');
+    setErrorMsg(null);
+
+    try {
+      const response = await fetch('/api/recycle-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'box',
+          company, phone, email, country, street, postal, city, extra
+        }),
+      });
+
+      if (response.ok) {
+        setSubmitState('success');
+        setCompany(''); setPhone(''); setEmail(''); setCountry('');
+        setStreet(''); setPostal(''); setCity(''); setExtra('');
+        setTimeout(() => setSubmitState('idle'), 3000);
+      } else {
+        const data = await response.json().catch(() => ({}));
+        let errorText = data.message || 'Something went wrong. Please try again.';
+        if (data.errors) {
+          const firstErrorKey = Object.keys(data.errors)[0];
+          if (firstErrorKey && data.errors[firstErrorKey][0]) {
+            errorText = data.errors[firstErrorKey][0];
+          }
+        }
+        setErrorMsg(errorText);
+        setSubmitState('error');
+      }
+    } catch (err) {
+      setErrorMsg('A network error occurred. Please try again.');
+      setSubmitState('error');
+    }
   }
 
   return (
@@ -191,11 +227,26 @@ function CollectionBoxForm() {
           </Field>
         </div>
 
+          {/* Messages */}
+          {submitState === 'success' && (
+            <div className="rounded-xl border border-green-100 bg-green-50 px-4 py-3 text-sm text-green-700 font-semibold font-sans">
+              {t('alertBoxSuccess')}
+            </div>
+          )}
+          {submitState === 'error' && errorMsg && (
+            <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600 font-semibold font-sans">
+              {errorMsg}
+            </div>
+          )}
+
         <button
           type="submit"
-          className="h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] flex justify-center items-center gap-2 hover:bg-amber-600 active:scale-[0.98] transition-all"
+          disabled={submitState === 'submitting' || submitState === 'success'}
+          className="h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] flex justify-center items-center gap-2 hover:bg-amber-600 active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed"
         >
-          <span className="text-white text-base font-semibold font-sans leading-6">{t('btnRequestBox')}</span>
+          <span className="text-white text-base font-semibold font-sans leading-6">
+            {submitState === 'submitting' ? t('btnSubmitting') : t('btnRequestBox')}
+          </span>
         </button>
 
         <div className="flex flex-col sm:flex-row justify-center items-center gap-4 flex-wrap">
@@ -229,9 +280,45 @@ function PickupForm() {
   const [city, setCity] = useState<string>('');
   const [newBox, setNewBox] = useState<boolean>(false);
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>): void {
+  const [submitState, setSubmitState] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    alert(t('alertPickupSuccess'));
+    setSubmitState('submitting');
+    setErrorMsg(null);
+
+    try {
+      const response = await fetch('/api/recycle-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'pickup',
+          company, phone, email, country, street, postal, city, newBox
+        }),
+      });
+
+      if (response.ok) {
+        setSubmitState('success');
+        setCompany(''); setPhone(''); setEmail(''); setCountry('');
+        setStreet(''); setPostal(''); setCity(''); setNewBox(false);
+        setTimeout(() => setSubmitState('idle'), 3000);
+      } else {
+        const data = await response.json().catch(() => ({}));
+        let errorText = data.message || 'Something went wrong. Please try again.';
+        if (data.errors) {
+          const firstErrorKey = Object.keys(data.errors)[0];
+          if (firstErrorKey && data.errors[firstErrorKey][0]) {
+            errorText = data.errors[firstErrorKey][0];
+          }
+        }
+        setErrorMsg(errorText);
+        setSubmitState('error');
+      }
+    } catch (err) {
+      setErrorMsg('A network error occurred. Please try again.');
+      setSubmitState('error');
+    }
   }
 
   return (
@@ -305,11 +392,26 @@ function PickupForm() {
           </label>
         </div>
 
+          {/* Messages */}
+          {submitState === 'success' && (
+            <div className="rounded-xl border border-green-100 bg-green-50 px-4 py-3 text-sm text-green-700 font-semibold font-sans">
+              {t('alertPickupSuccess')}
+            </div>
+          )}
+          {submitState === 'error' && errorMsg && (
+            <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600 font-semibold font-sans">
+              {errorMsg}
+            </div>
+          )}
+
         <button
           type="submit"
-          className="h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] flex justify-center items-center gap-2 hover:bg-amber-600 active:scale-[0.98] transition-all"
+          disabled={submitState === 'submitting' || submitState === 'success'}
+          className="h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] flex justify-center items-center gap-2 hover:bg-amber-600 active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed"
         >
-          <span className="text-white text-base font-semibold font-sans leading-6">{t('btnRequestPickup')}</span>
+          <span className="text-white text-base font-semibold font-sans leading-6">
+            {submitState === 'submitting' ? t('btnSubmitting') : t('btnRequestPickup')}
+          </span>
         </button>
 
         <div className="flex flex-col sm:flex-row justify-center items-center gap-4 flex-wrap">

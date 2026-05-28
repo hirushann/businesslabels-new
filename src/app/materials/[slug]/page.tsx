@@ -440,6 +440,8 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
           specRows={rawSpecRows}
           variant="link"
           downloadLabel={t("materialsPage.downloadSpecSheet")}
+          materialImage={materialImage}
+          description={material.description}
           pdfTitleLabel={t("materialDetail.specSheet")}
           aboutThisMaterialLabel={t("materialDetail.aboutThisMaterial")}
           specificationsLabel={t("materialDetail.specifications")}
@@ -555,6 +557,8 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
                   specRows={rawSpecRows}
                   variant="button"
                   downloadLabel={t("materialsPage.downloadSpecSheet")}
+                  materialImage={materialImage}
+                  description={material.description}
                   pdfTitleLabel={t("materialDetail.specSheet")}
                   aboutThisMaterialLabel={t("materialDetail.aboutThisMaterial")}
                   specificationsLabel={t("materialDetail.specifications")}

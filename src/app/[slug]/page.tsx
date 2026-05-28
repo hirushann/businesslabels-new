@@ -5,6 +5,8 @@ import { getTranslations } from "next-intl/server";
 import { unescapeHtml } from "@/lib/utils";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
+import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
+
 type PageData = {
   id: number;
   title: string;
@@ -22,17 +24,27 @@ type PageData = {
   updated_at: string;
 };
 
-async function getPage(slug: string): Promise<PageData | null> {
+async function getPage(slug: string, locale: string): Promise<PageData | null> {
   try {
     const apiBaseUrl = process.env.BBNL_API_BASE_URL;
     if (!apiBaseUrl) return null;
 
-    const res = await fetch(`${apiBaseUrl.replace(/\/$/, "")}/api/pages/slug/${slug}`, {
+    const baseUrl = `${apiBaseUrl.replace(/\/$/, "")}/api/pages/slug/${slug}`;
+    const url = withLocaleParam(baseUrl, locale as "en" | "nl");
+    
+    console.log(`[CMS Page Debug] Fetching: ${url}`);
+
+    const res = await fetch(url, {
       next: { revalidate: 60 },
     });
 
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.log(`[CMS Page Debug] Failed to fetch. Status: ${res.status}`);
+      return null;
+    }
     const json = await res.json();
+    console.log(`[CMS Page Debug] API Response for "${slug}":`, JSON.stringify(json.data, null, 2));
+    
     return json.data;
   } catch (error) {
     console.error("Error fetching page:", error);
@@ -42,7 +54,8 @@ async function getPage(slug: string): Promise<PageData | null> {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const page = await getPage(slug);
+  const locale = await getServerLocale();
+  const page = await getPage(slug, locale);
 
   if (!page) {
     const t = await getTranslations();
@@ -57,8 +70,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function DynamicCMSPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  const locale = await getServerLocale();
   const t = await getTranslations();
-  const page = await getPage(slug);
+  const page = await getPage(slug, locale);
 
   if (!page) {
     notFound();

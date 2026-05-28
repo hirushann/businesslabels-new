@@ -13,6 +13,8 @@ interface DownloadSpecSheetButtonProps {
   specRows: { label: string; value: string }[];
   variant: "link" | "button";
   downloadLabel: string;
+  materialImage?: string;
+  description?: string;
 
   // Localized text for PDF
   pdfTitleLabel: string;          // "PRODUCTSPECIFICATIE"
@@ -46,6 +48,8 @@ export default function DownloadSpecSheetButton({
   specRows,
   variant,
   downloadLabel,
+  materialImage,
+  description,
   pdfTitleLabel,
   aboutThisMaterialLabel,
   specificationsLabel,
@@ -84,13 +88,44 @@ export default function DownloadSpecSheetButton({
         console.warn("Failed to load header logo:", err);
       }
 
-      let currentY = 38;
+      let materialImageBase64 = "";
+      if (materialImage) {
+        try {
+          // If the image starts with /, it's local. If it's absolute, proxy it or fetch directly.
+          materialImageBase64 = await getBase64ImageFromUrl(materialImage);
+        } catch (err) {
+          console.warn("Failed to load material image for PDF:", err);
+        }
+      }
 
-      // Draw Material Title
+      let currentY = 38;
+      
+      // We will place the image on the right. Max width 70mm, Max height 70mm.
+      let imgDrawH = 0;
+      if (materialImageBase64) {
+        try {
+          const imgProps = doc.getImageProperties(materialImageBase64);
+          const ratio = imgProps.width / imgProps.height;
+          let drawW = 70;
+          let drawH = 70 / ratio;
+          if (drawH > 70) {
+            drawH = 70;
+            drawW = 70 * ratio;
+          }
+          imgDrawH = drawH;
+          const imgX = 195 - drawW; // Right align to margin
+          doc.addImage(materialImageBase64, imgProps.fileType || "PNG", imgX, currentY, drawW, drawH);
+        } catch (err) {
+          console.warn("Failed to draw material image:", err);
+        }
+      }
+
+      // Draw Material Title (limit width so it doesn't overlap image)
+      const textMaxWidth = materialImageBase64 ? 100 : 180;
       doc.setFont("helvetica", "bold");
       doc.setFontSize(20);
       doc.setTextColor(16, 24, 40); // Dark neutral (#101828)
-      const titleLines = doc.splitTextToSize(materialTitle, 180);
+      const titleLines = doc.splitTextToSize(materialTitle, textMaxWidth);
       doc.text(titleLines, 15, currentY);
       currentY += titleLines.length * 8;
 
@@ -108,11 +143,34 @@ export default function DownloadSpecSheetButton({
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
         doc.setTextColor(107, 114, 128); // Gray-500
-        const subtitleLines = doc.splitTextToSize(materialSubtitle, 180);
+        const subtitleLines = doc.splitTextToSize(materialSubtitle, textMaxWidth);
         doc.text(subtitleLines, 15, currentY);
         currentY += subtitleLines.length * 5;
       }
-      currentY += 8;
+      currentY += 4;
+
+      // Draw Description (wrap next to the image)
+      let descriptionEndY = currentY;
+      if (description) {
+        const stripHtml = (html: string) => {
+          const tmp = document.createElement("DIV");
+          tmp.innerHTML = html;
+          return tmp.textContent || tmp.innerText || "";
+        };
+        const cleanDesc = stripHtml(description).replace(/\s+/g, " ").trim();
+        if (cleanDesc) {
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(9.5);
+          doc.setTextColor(75, 85, 99); // Gray-600
+          const descLines = doc.splitTextToSize(cleanDesc, textMaxWidth);
+          doc.text(descLines, 15, currentY);
+          descriptionEndY = currentY + descLines.length * 4.5;
+        }
+      }
+
+      // Now ensure we are below BOTH the left column (title/desc) and right column (image) before tables
+      const contentStartY = Math.max(descriptionEndY, 38 + imgDrawH) + 8;
+      currentY = contentStartY;
 
       // Draw Table 1: Over dit materiaal
       if (aboutRows.length > 0) {

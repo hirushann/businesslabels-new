@@ -298,62 +298,36 @@ export function textQuery(search: string): estypes.QueryDslQueryContainer {
   const query = search.trim();
   if (!query) return { match_all: {} };
 
-  // Tiered boosts
   const BOOST_SKU_EXACT = 100000;
-  const BOOST_SKU_PREFIX = 10000;
   const BOOST_TITLE_PHRASE = 5000;
-  const BOOST_TITLE_AND = 2000;
-  const BOOST_FEATURE_SECTION = 1000;
-  const BOOST_TITLE_PARTIAL = 100;
-  const BOOST_BRAND_GENUINE = 50; // Higher than compatible
-  const BOOST_SECONDARY = 10;
-  const BOOST_DESCRIPTION = 0.05; // Extremely low to require other matches
+  const BOOST_TITLE_AND = 2500;
+  const BOOST_TITLE_TOKEN = 750;
+  const BOOST_SKU_PHRASE = 400;
+  const BOOST_SKU_PREFIX = 150;
+  const BOOST_TITLE_FUZZY = 50;
+  const BOOST_DESCRIPTION = 1;
+  const BOOST_SHORT_DESCRIPTION = 0.5;
 
-  const skuFields = ["sku", "article_number", "variant_skus"];
+  const skuFields = ["sku", "variant_skus"];
   const titleFields = ["name", "title", "post_title"];
-  const featureFields = ["subtitle", "catalog_material", "catalog_material_code", "excerpt"];
-  const brandFields = ["catalog_brand"];
-  const secondaryFields = [
-    "compatible_brands",
-    "properties.printmethode",
-    "properties.afwerking",
-    "properties.lijm",
-    "properties.detectie",
-    "slug",
-  ];
   const descriptionFields = ["description", "content", "product_information"];
+  const shortDescriptionFields = ["short_description", "excerpt", "subtitle"];
 
   const tokens = query.split(/\s+/).filter(Boolean);
   const isMultiTerm = tokens.length > 1;
-  
-  // Pattern for product codes like C8000, CW-C8000, TM-C3500, D6000
+
+  // Pattern for product/model codes like C4000, CW-C4000, TM-C3500, D6000.
+  // These searches should be precise: no SKU fuzziness and no description fallback.
   const productCodeRegex = /^[A-Z]{1,4}-?[0-9]{2,}[A-Z0-9]*$|^[A-Z]{2,}-[A-Z][0-9]{2,}[A-Z0-9]*$/i;
-  const isProductCodeIntent = tokens.every(t => productCodeRegex.test(t));
+  const isProductCodeIntent = tokens.every((token) => productCodeRegex.test(token)) || /[-0-9]/.test(query);
   const hasNumericToken = tokens.some((t) => /[0-9]{2,}/.test(t));
-  const isPureNumeric = tokens.every(t => /^[0-9]+$/.test(t));
 
   const should: estypes.QueryDslQueryContainer[] = [];
-  const must: estypes.QueryDslQueryContainer[] = [];
 
-  if (isMultiTerm) {
-    must.push({
-      multi_match: {
-        query,
-        fields: [
-          ...skuFields,
-          ...titleFields,
-          ...featureFields,
-          ...brandFields,
-          ...secondaryFields,
-          ...descriptionFields,
-        ],
-        type: "bool_prefix",
-        operator: "and",
-      },
-    });
-  }
-
-  // --- TIER 1: SKU Exact Matches (Global Short-Circuit Priority) ---
+  // Exact SKU is intentionally dominant because customers often search by
+  // product codes. Partial SKU/code hits stay below strong title matches:
+  // a query like "beer labels" should rank a full title hit above a SKU that
+  // merely contains part of the query or a printer-code fragment.
   skuFields.forEach((field) => {
     should.push({
       term: {
@@ -366,17 +340,26 @@ export function textQuery(search: string): estypes.QueryDslQueryContainer {
     });
   });
 
-  // --- TIER 2: SKU Partial/Prefix Matches ---
+  should.push({
+    match_phrase: {
+      sku: {
+        query,
+        boost: BOOST_SKU_PHRASE,
+      },
+    },
+  });
+
   should.push({
     multi_match: {
       query,
-      fields: skuFields.map((f) => `${f}^20`),
+      fields: skuFields,
       type: "phrase_prefix",
       boost: BOOST_SKU_PREFIX,
     },
   });
 
-  // --- TIER 3: Title/Name Matches ---
+  // Title/name carries very high weight because catalog searches are usually
+  // for model names. Exact phrases and all-token title matches beat fuzzy text.
   should.push({
     multi_match: {
       query,
@@ -386,129 +369,71 @@ export function textQuery(search: string): estypes.QueryDslQueryContainer {
     },
   });
 
-  // 3b. Phrase Prefix for Titles (e.g. "Eps" -> "Epson")
   should.push({
     multi_match: {
       query,
       fields: titleFields,
       type: "phrase_prefix",
-      boost: BOOST_TITLE_PHRASE * 0.4,
+      boost: BOOST_TITLE_AND,
     },
   });
 
-  if (isMultiTerm) {
+  should.push({
+    multi_match: {
+      query,
+      fields: titleFields,
+      type: "cross_fields",
+      operator: "and",
+      boost: BOOST_TITLE_AND,
+    },
+  });
+
+  should.push({
+    multi_match: {
+      query,
+      fields: titleFields,
+      type: "best_fields",
+      operator: isMultiTerm || isProductCodeIntent ? "and" : "or",
+      minimum_should_match: isMultiTerm ? "100%" : undefined,
+      boost: BOOST_TITLE_TOKEN,
+    },
+  });
+
+  if (hasNumericToken) {
+    const wildcardQuery = tokens
+      .map((token) => (/[0-9]{2,}/.test(token) ? `*${token}*` : token))
+      .join(" AND ");
     should.push({
-      multi_match: {
-        query,
+      query_string: {
+        query: wildcardQuery,
         fields: titleFields,
-        type: "cross_fields",
-        operator: "and",
         boost: BOOST_TITLE_AND,
+        default_operator: "AND",
+        analyze_wildcard: true,
       },
     });
+  }
 
-    // 3c. Partial Word Match for Numeric Tokens (e.g. "8000" matching "C8000")
-    if (hasNumericToken && !isProductCodeIntent) {
-      const wildcardQuery = tokens
-        .map((t) => (/[0-9]{2,}/.test(t) ? `*${t}*` : t))
-        .join(" AND ");
+  if (!isProductCodeIntent) {
+    // Fuzziness is limited to non-numeric title terms; never use it for SKU
+    // or model-code searches where a one-character change means another product.
+    const fuzzyQuery = tokens.filter((token) => !/[0-9-]/.test(token)).join(" ");
+    if (fuzzyQuery) {
       should.push({
-        query_string: {
-          query: wildcardQuery,
+        multi_match: {
+          query: fuzzyQuery,
           fields: titleFields,
-          boost: BOOST_TITLE_AND * 0.5,
-          default_operator: "AND",
-          analyze_wildcard: true,
+          type: "best_fields",
+          fuzziness: "AUTO",
+          prefix_length: 2,
+          boost: BOOST_TITLE_FUZZY,
         },
       });
     }
-  } else {
-    // For single words, allow edge n-gram style wildcard matching for brands and titles
-    if (query.length >= 1) {
-      const wildcardFields = [...titleFields, ...brandFields];
-      wildcardFields.forEach((field) => {
-        should.push({
-          wildcard: {
-            [`${field}.keyword`]: {
-              value: `${query.toLowerCase()}*`,
-              boost: BOOST_TITLE_PARTIAL * 2,
-              case_insensitive: true,
-            },
-          },
-        });
-      });
-    }
-  }
 
-  // --- TIER 4: Feature Section (Subtitle, Material, Excerpt) ---
-  should.push({
-    multi_match: {
-      query,
-      fields: featureFields,
-      type: "best_fields",
-      operator: isMultiTerm ? "and" : "or",
-      boost: BOOST_FEATURE_SECTION,
-    },
-  });
-
-  // --- TIER 5: Brand & Secondary ---
-  // Genuine brand match gets higher priority
-  should.push({
-    multi_match: {
-      query,
-      fields: brandFields,
-      type: "best_fields",
-      boost: BOOST_BRAND_GENUINE,
-    },
-  });
-
-  // --- TIER 6: Secondary & Description (STRICT) ---
-  const useFuzzy = !isProductCodeIntent; // Allow fuzzy for text parts of the query
-
-  if (!isProductCodeIntent) {
-    // Dynamic minimum_should_match for text searches
-    // "2<67%" means if 2 terms, 100% must match. If 3+, 67% (2 out of 3) must match.
-    const minShouldMatch = "2<67%";
-
-    should.push({
-      multi_match: {
-        query,
-        fields: titleFields,
-        type: "best_fields",
-        operator: "or",
-        minimum_should_match: minShouldMatch,
-        boost: BOOST_TITLE_PARTIAL,
-      },
-    });
-
-    should.push({
-      multi_match: {
-        query,
-        fields: secondaryFields,
-        type: "best_fields",
-        operator: "and",
-        boost: BOOST_SECONDARY,
-      },
-    });
-
-    if (useFuzzy) {
-      // Filter out numeric tokens from the fuzzy query to prevent "7500" matching "7501"
-      const fuzzyQuery = tokens.filter(t => !/[0-9]/.test(t)).join(" ");
-      if (fuzzyQuery) {
-        should.push({
-          multi_match: {
-            query: fuzzyQuery,
-            fields: [...titleFields, "catalog_brand"],
-            type: "best_fields",
-            fuzziness: "AUTO",
-            prefix_length: 2,
-            boost: BOOST_SECONDARY * 0.5,
-          },
-        });
-      }
-    }
-
-    // Description fallback only for non-product-code queries
+    // Descriptions are intentionally weak, all-token fallbacks. They should
+    // help break ties for real text searches, not flood results because a
+    // common printer-related word appears in long product copy.
     should.push({
       multi_match: {
         query,
@@ -518,26 +443,73 @@ export function textQuery(search: string): estypes.QueryDslQueryContainer {
         boost: BOOST_DESCRIPTION,
       },
     });
-  } else {
-    // For product codes, we only allow very strict Title matching as a fallback to SKU
+
     should.push({
       multi_match: {
         query,
-        fields: titleFields,
-        type: "phrase_prefix",
-        boost: BOOST_TITLE_PARTIAL,
+        fields: shortDescriptionFields,
+        type: "cross_fields",
+        operator: "and",
+        boost: BOOST_SHORT_DESCRIPTION,
       },
     });
   }
 
-
   return {
     bool: {
-      ...(must.length > 0 ? { must } : {}),
       should,
       minimum_should_match: 1,
     },
   };
+}
+
+export function exactSkuQuery(search: string): estypes.QueryDslQueryContainer {
+  const query = search.trim();
+
+  return {
+    bool: {
+      minimum_should_match: 1,
+      should: [
+        {
+          term: {
+            "sku.keyword": {
+              value: query,
+              case_insensitive: true,
+            },
+          },
+        },
+        {
+          term: {
+            "variant_skus.keyword": {
+              value: query,
+              case_insensitive: true,
+            },
+          },
+        },
+        {
+          term: {
+            "sku.normalized": query.toLowerCase(),
+          },
+        },
+        {
+          term: {
+            "variant_skus.normalized": query.toLowerCase(),
+          },
+        },
+      ],
+    },
+  };
+}
+
+function searchMinScore(search: string): number | undefined {
+  const query = search.trim();
+  if (!query) return undefined;
+
+  const tokens = query.split(/\s+/).filter(Boolean);
+  const productCodeRegex = /^[A-Z]{1,4}-?[0-9]{2,}[A-Z0-9]*$|^[A-Z]{2,}-[A-Z][0-9]{2,}[A-Z0-9]*$/i;
+  const isProductCodeIntent = tokens.every((token) => productCodeRegex.test(token)) || /[-0-9]/.test(query);
+
+  return isProductCodeIntent ? 100 : 25;
 }
 
 
@@ -1308,6 +1280,72 @@ function totalHitsValue(total: estypes.SearchTotalHits | number | undefined): nu
   return total?.value ?? 0;
 }
 
+async function applyProductConfigOverrides(products: CatalogProductResult[], locale?: "en" | "nl"): Promise<void> {
+  if (products.length === 0) return;
+
+  try {
+    const backendUrl = process.env.BBNL_API_BASE_URL;
+    if (!backendUrl) return;
+
+    const slugs = products
+      .map((p) => p.product.slug)
+      .filter((slug): slug is string => typeof slug === "string" && slug.length > 0);
+
+    if (slugs.length === 0) return;
+
+    const queryParams = new URLSearchParams();
+    slugs.forEach((slug) => queryParams.append("slug[]", slug));
+    queryParams.append("per_page", slugs.length.toString());
+    if (locale) {
+      queryParams.append("lang", locale);
+    }
+
+    const url = `${backendUrl}/api/products?${queryParams.toString()}`;
+    const res = await fetch(url, {
+      headers: { Accept: "application/json" },
+      next: { revalidate: 300 },
+    });
+
+    if (!res.ok) return;
+
+    const json = await res.json();
+    if (!json || !Array.isArray(json.data)) return;
+
+    const productConfigMap = new Map<
+      string,
+      {
+        packingGroup: number | null;
+        allowSingulars: LaravelProduct["allow_singulars"];
+        discounts: LaravelProduct["discounts"];
+      }
+    >();
+
+    (json.data as LaravelProduct[]).forEach((p) => {
+      if (!p?.slug) return;
+
+      const resolvedSlug = typeof p.slug === "string" ? p.slug : (p.slug.en || p.slug.nl || "");
+      if (!resolvedSlug) return;
+
+      productConfigMap.set(resolvedSlug, {
+        packingGroup: p.packing_group != null ? Number(p.packing_group) : null,
+        allowSingulars: p.allow_singulars ?? null,
+        discounts: p.discounts ?? null,
+      });
+    });
+
+    products.forEach((p) => {
+      if (!p.product.slug || !productConfigMap.has(p.product.slug)) return;
+
+      const productConfig = productConfigMap.get(p.product.slug);
+      p.product.packing_group = productConfig?.packingGroup ?? null;
+      p.product.allow_singulars = productConfig?.allowSingulars ?? null;
+      p.product.discounts = productConfig?.discounts ?? null;
+    });
+  } catch (err) {
+    console.error("[Search] Failed to fetch packing_group overrides:", err);
+  }
+}
+
 export async function searchCatalogProducts(params: CatalogSearchParams): Promise<CatalogSearchResponse> {
   const client = elasticClient();
   let printerInfo: PrinterInfo | undefined;
@@ -1316,6 +1354,38 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
   }
   const filters = buildFilters(params, printerInfo);
   const from = (params.page - 1) * params.perPage;
+  const trimmedSearch = params.search.trim();
+
+  if (trimmedSearch) {
+    const exactSkuResponse = await client.search<ProductSource>({
+      index: catalogIndexForType(params.type),
+      ignore_unavailable: true,
+      size: 1,
+      track_total_hits: true,
+      _source: RESULT_SOURCE_FIELDS as unknown as string[],
+      query: {
+        bool: {
+          must: [exactSkuQuery(trimmedSearch)],
+          filter: filters,
+        },
+      },
+      aggs: aggregations(params),
+    });
+
+    if (exactSkuResponse.hits.hits.length > 0) {
+      const products = exactSkuResponse.hits.hits.map((hit, index) => mapProductHit(hit, index, params.locale));
+      await applyProductConfigOverrides(products, params.locale);
+
+      return {
+        products,
+        total: 1,
+        currentPage: 1,
+        lastPage: 1,
+        perPage: params.perPage,
+        filters: buildCatalogFilters(exactSkuResponse.aggregations as Record<string, unknown> | undefined),
+      };
+    }
+  }
 
   const query: estypes.QueryDslQueryContainer = {
     bool: {
@@ -1332,9 +1402,7 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
     track_total_hits: true,
     _source: RESULT_SOURCE_FIELDS as unknown as string[],
     query,
-    ...(params.search && params.search.trim().split(/\s+/).filter(Boolean).length >= 2 
-      ? { min_score: params.search.trim().split(/\s+/).filter(Boolean).length === 2 ? 3.0 : 2.0 } 
-      : {}),
+    ...(searchMinScore(params.search) ? { min_score: searchMinScore(params.search) } : {}),
     ...(sortClauses(params.sort) ? { sort: sortClauses(params.sort) } : {}),
     aggs: aggregations(params),
   });
@@ -1392,61 +1460,7 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
   const products = response.hits.hits.map((hit, index) => mapProductHit(hit, index, params.locale));
 
   // Secondary fetch to Laravel database to resolve correct packing_group values
-  if (products.length > 0) {
-    try {
-      const backendUrl = process.env.BBNL_API_BASE_URL;
-      if (backendUrl) {
-        const slugs = products
-          .map((p) => p.product.slug)
-          .filter((slug): slug is string => typeof slug === "string" && slug.length > 0);
-          
-        if (slugs.length > 0) {
-          const queryParams = new URLSearchParams();
-          slugs.forEach((slug) => queryParams.append("slug[]", slug));
-          queryParams.append("per_page", slugs.length.toString());
-          if (params.locale) {
-            queryParams.append("lang", params.locale);
-          }
-          
-          const url = `${backendUrl}/api/products?${queryParams.toString()}`;
-          const res = await fetch(url, {
-            headers: { "Accept": "application/json" },
-            next: { revalidate: 300 }
-          });
-          
-          if (res.ok) {
-            const json = await res.json();
-            if (json && Array.isArray(json.data)) {
-              const productConfigMap = new Map<string, { packingGroup: number | null; allowSingulars: LaravelProduct["allow_singulars"]; discounts: LaravelProduct["discounts"] }>();
-              (json.data as LaravelProduct[]).forEach((p) => {
-                if (p && p.slug) {
-                  const resolvedSlug = typeof p.slug === "string" ? p.slug : (p.slug.en || p.slug.nl || "");
-                  if (resolvedSlug) {
-                    productConfigMap.set(resolvedSlug, {
-                      packingGroup: p.packing_group != null ? Number(p.packing_group) : null,
-                      allowSingulars: p.allow_singulars ?? null,
-                      discounts: p.discounts ?? null,
-                    });
-                  }
-                }
-              });
-              
-              products.forEach((p) => {
-                if (p.product.slug && productConfigMap.has(p.product.slug)) {
-                  const productConfig = productConfigMap.get(p.product.slug);
-                  p.product.packing_group = productConfig?.packingGroup ?? null;
-                  p.product.allow_singulars = productConfig?.allowSingulars ?? null;
-                  p.product.discounts = productConfig?.discounts ?? null;
-                }
-              });
-            }
-          }
-        }
-      }
-    } catch (err) {
-      console.error("[Search] Failed to fetch packing_group overrides:", err);
-    }
-  }
+  await applyProductConfigOverrides(products, params.locale);
 
   return {
     products,

@@ -111,9 +111,24 @@ const getLocalizedLabel = (key: string, locale: string) => {
   return dictionary[lang][key] || key;
 };
 
+/**
+ * Maps any print_method string the API might return to one of three canonical values:
+ * "Inkjet", "Thermal Transfer", or "Thermal Direct".
+ * Returns "" for unknown values so the category-based fallback below can run.
+ */
+function normalizePrintMethod(raw: string): string {
+  const s = raw.toLowerCase().replace(/[\s_-]+/g, "");
+  if (s === "inkjet") return "Inkjet";
+  if (s === "thermaltransfer" || s === "ttr" || s === "tt") return "Thermal Transfer";
+  if (s === "thermaldirect" || s === "dt" || s === "directthermal") return "Thermal Direct";
+  return ""; // unknown — let the category slugs decide
+}
+
 // Dynamic helper to extract attributes when DB values are null
 function deriveMaterialAttributes(material: Material) {
-  let printTech = material.print_method || "";
+  // Normalize whatever the API returns ("dt", "thermal_direct", "TT", …) to a
+  // canonical value so the slug comparison in the filter always matches.
+  let printTech = material.print_method ? normalizePrintMethod(material.print_method) : "";
   if (!printTech && material.categories) {
     const cats = material.categories.map((c) => c.slug.toLowerCase());
     if (cats.includes("inkjet") || cats.some((s) => s.includes("inkjet"))) {
@@ -210,14 +225,14 @@ function MaterialCard({
   const isTtr = printTech === "Thermal Transfer";
 
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_4px_20px_rgba(109,109,120,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(109,109,120,0.12)]">
-      <div className="relative h-60 w-full overflow-hidden bg-slate-50">
+    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_4px_20px_rgba(109,109,120,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(109,109,120,0.12)]">
+      <Link href={`/materials/${material.slug}`} className="relative block h-60 w-full overflow-hidden bg-slate-50">
         <Image
           src={cardImage}
           alt={material.title}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          className="object-contain p-4 transition-transform duration-500 hover:scale-105"
+          className="object-contain p-4 transition-transform duration-500 group-hover:scale-105"
         />
         <span
           className={`absolute left-4 top-4 rounded-full px-3 py-1.5 text-xs font-semibold text-white shadow-sm flex items-center gap-1.5 ${isInkjet
@@ -232,19 +247,21 @@ function MaterialCard({
           </svg>
           {getLocalizedLabel(printTech, locale)}
         </span>
-      </div>
+      </Link>
 
       <div className="flex flex-1 flex-col p-5">
         <div className="flex-1">
           <div className="mb-3 flex items-center gap-2">
-            <span className="inline-block rounded-md bg-amber-50 px-2 py-1 text-xs font-bold uppercase tracking-wide text-amber-700 border border-amber-100">
+            <Link href={`/materials/${material.slug}`} className="inline-block rounded-md bg-amber-50 px-2 py-1 text-xs font-bold uppercase tracking-wide text-amber-700 border border-amber-100 hover:bg-amber-100 transition-colors">
               {material.code}
-            </span>
+            </Link>
             <span className="text-xs text-slate-400 font-medium">{material.brand || "Diamondlabels"}</span>
           </div>
 
-          <h3 className="mb-2 text-lg font-bold leading-snug text-slate-800 line-clamp-1">
-            {material.title}
+          <h3 className="mb-2 text-lg font-bold leading-snug line-clamp-1">
+            <Link href={`/materials/${material.slug}`} className="text-slate-800 hover:text-amber-600 transition-colors">
+              {material.title}
+            </Link>
           </h3>
 
           <p className="mb-4 text-sm leading-relaxed text-slate-500 line-clamp-2">
@@ -295,9 +312,12 @@ function MaterialCard({
 export default function MaterialsCatalogClient({
   initialMaterials,
   locale,
+  defaultPrintMethod = "",
 }: {
   initialMaterials: Material[];
   locale: string;
+  /** When set, the print method is locked to this value via the URL path (e.g. /materials/inkjet). */
+  defaultPrintMethod?: string;
 }) {
   const t = useTranslations();
   const router = useRouter();
@@ -307,8 +327,8 @@ export default function MaterialsCatalogClient({
   // Filters sidebar toggle state (collapsible like category/shop pages)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Sync state from query parameters
-  const printMethod = searchParams.get("print_method") || "";
+  // Effective print method: path-based prop takes priority over URL query param
+  const printMethod = defaultPrintMethod || searchParams.get("print_method") || "";
   const sort = searchParams.get("sort") || "name_asc";
   const currentPage = Number(searchParams.get("page") || "1");
   const searchValue = searchParams.get("search") || "";
@@ -362,16 +382,20 @@ export default function MaterialsCatalogClient({
     updateQuery({ [type]: current.join(",") });
   };
 
-  // Toggle Print Method
+  // Toggle Print Method — navigates to /materials/{method} path URLs
   const togglePrintMethod = (method: string) => {
+    // Resolve the /materials base preserving any locale prefix (e.g. /en/materials)
+    const materialsBase = pathname.replace(/\/materials.*$/, "/materials");
     if (printMethod === method) {
-      updateQuery({ print_method: null });
+      // Deselect: go back to the main materials page
+      router.push(materialsBase);
     } else {
-      updateQuery({ print_method: method });
+      // Navigate to the method-specific page
+      router.push(`${materialsBase}/${method}`);
     }
   };
 
-  // Clear all filters
+  // Clear all filters (query-param filters only; path-based method is cleared by clicking the card)
   const clearAllFilters = () => {
     updateQuery({
       base_material: null,
@@ -399,6 +423,33 @@ export default function MaterialsCatalogClient({
       onCommit: commitSearch,
     });
 
+  // ─── DEBUG LOGS ────────────────────────────────────────────────────────────
+  // Remove these once the thermal-direct filtering issue is resolved.
+  useEffect(() => {
+    console.group("🔍 [Materials Debug] Raw API print_method values");
+    console.log(`Total materials received: ${initialMaterials.length}`);
+    const byMethod: Record<string, number> = {};
+    initialMaterials.forEach((m) => {
+      const raw = m.print_method ?? "(null)";
+      const normalized = m.print_method ? normalizePrintMethod(m.print_method) : "(null → category fallback)";
+      const catSlugs = m.categories?.map((c) => c.slug).join(", ") || "(no categories)";
+      const { printTech: resolved } = deriveMaterialAttributes(m);
+      const techSlug = resolved.toLowerCase().replace(/\s+/g, "-");
+      byMethod[techSlug] = (byMethod[techSlug] || 0) + 1;
+      console.log(
+        `[${m.code}] "${m.title}"\n` +
+        `  raw print_method : "${raw}"\n` +
+        `  normalized       : "${normalized}"\n` +
+        `  category slugs   : ${catSlugs}\n` +
+        `  FINAL techSlug   : "${techSlug}"  ← filter compares this to "thermal-direct"`,
+      );
+    });
+    console.log("Count by techSlug:", byMethod);
+    console.groupEnd();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialMaterials]);
+  // ────────────────────────────────────────────────────────────────────────────
+
   // Process Materials: Filter, Sort & Paginate
   const processed = useMemo(() => {
     let list = [...initialMaterials];
@@ -424,11 +475,21 @@ export default function MaterialsCatalogClient({
     // 1. Printer Type filter (Inkjet, Thermal Transfer, Thermal Direct)
     // If not selected, show all materials
     if (printMethod) {
+      const before = list.length;
       list = list.filter((m) => {
         const { printTech } = deriveMaterialAttributes(m);
         const techSlug = printTech.toLowerCase().replace(/\s+/g, "-");
-        return techSlug === printMethod;
+        const match = techSlug === printMethod;
+        if (!match) {
+          console.log(
+            `🔬 [Filter "${printMethod}"] REJECTED "${m.title}" (${m.code}) — techSlug="${techSlug}", raw print_method="${m.print_method ?? "null"}", cats=[${m.categories?.map((c) => c.slug).join(", ")}]`,
+          );
+        }
+        return match;
       });
+      console.log(
+        `🔬 [Filter "${printMethod}"] ${before} → ${list.length} materials after print method filter`,
+      );
     }
 
     // 2. Base Material Filter
@@ -509,11 +570,12 @@ export default function MaterialsCatalogClient({
   ];
 
 
+  // Don't count the path-baked print method (defaultPrintMethod) as a user-added filter
   const activeFilterCount =
     selectedBaseMaterials.length +
     selectedFinishes.length +
     selectedAdhesives.length +
-    (printMethod ? 1 : 0) +
+    (!defaultPrintMethod && printMethod ? 1 : 0) +
     (searchValue ? 1 : 0);
 
   // Sync scroll on change
