@@ -305,6 +305,7 @@ export function textQuery(search: string): estypes.QueryDslQueryContainer {
   const BOOST_SKU_PHRASE = 400;
   const BOOST_SKU_PREFIX = 150;
   const BOOST_TITLE_FUZZY = 50;
+  const BOOST_FUZZY_PER_TOKEN = 150;
   const BOOST_DESCRIPTION = 1;
   const BOOST_SHORT_DESCRIPTION = 0.5;
 
@@ -427,6 +428,54 @@ export function textQuery(search: string): estypes.QueryDslQueryContainer {
           fuzziness: "AUTO",
           prefix_length: 2,
           boost: BOOST_TITLE_FUZZY,
+        },
+      });
+    }
+
+    if (isMultiTerm) {
+      const searchFields = [
+        ...titleFields,
+        "catalog_brand",
+        "compatible_brands",
+        ...descriptionFields,
+        ...shortDescriptionFields,
+      ];
+      const prefixFields = [
+        ...titleFields,
+        "catalog_brand",
+        "compatible_brands",
+      ];
+
+      const tokenClauses = tokens.map((token) => ({
+        bool: {
+          minimum_should_match: 1,
+          should: [
+            {
+              multi_match: {
+                query: token,
+                fields: searchFields,
+                type: "best_fields",
+                fuzziness: "AUTO",
+                prefix_length: 2,
+                boost: 1.0,
+              },
+            },
+            {
+              multi_match: {
+                query: token,
+                fields: prefixFields,
+                type: "phrase_prefix",
+                boost: 1.5,
+              },
+            },
+          ],
+        },
+      }));
+
+      should.push({
+        bool: {
+          must: tokenClauses,
+          boost: BOOST_FUZZY_PER_TOKEN,
         },
       });
     }
