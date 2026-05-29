@@ -1163,6 +1163,7 @@ export const MESSAGES_V4 = {
       compatible: 'Compatible',
       result: 'Compatibility result',
       resultForPrinter: 'Result for {printer}',
+      seeFittingLabels: 'See labels that fit your printer.',
     },
     bulkDiscount: {
       title: 'Bulk Pricing Tiers',
@@ -2430,6 +2431,7 @@ export const MESSAGES_V4 = {
       compatible: 'Compatibel',
       result: 'Compatibiliteitsresultaat',
       resultForPrinter: 'Resultaat voor {printer}',
+      seeFittingLabels: 'Bekijk labels die op jouw printer passen.',
     },
     bulkDiscount: {
       title: 'Staffelprijzen',

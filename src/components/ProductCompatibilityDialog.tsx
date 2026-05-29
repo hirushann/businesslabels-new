@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dialog';
 import { useCart } from '@/components/CartProvider';
 import { toDisplayImageUrl } from '@/lib/utils/imageProxy';
+import LocaleLink from '@/components/LocaleLink';
 
 type ProductCompatibilityDialogProps = {
   productId?: number | string | null;
@@ -250,6 +251,18 @@ export default function ProductCompatibilityDialog({
                   {t('compatibility.resultForPrinter', { printer: compatibilityResult.printerName })}
                 </p>
               </div>
+
+              {!compatibilityResult.compatible && selectedPrinter?.id && (
+                <div className="mt-2 text-left">
+                  <LocaleLink
+                    href={`/finder?printer_id=${selectedPrinter.id}`}
+                    onClick={() => setOpen(false)}
+                    className="inline-block text-amber-500 hover:text-amber-600 font-bold text-sm underline transition-colors cursor-pointer"
+                  >
+                    {t('compatibility.seeFittingLabels')}
+                  </LocaleLink>
+                </div>
+              )}
 
               {compatibilityResult.compatible && (
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-md hover:border-amber-200 transition-all duration-200">
