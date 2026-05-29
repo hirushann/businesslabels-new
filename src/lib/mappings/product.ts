@@ -46,6 +46,9 @@ export type LaravelProduct = {
   discounts?: Array<{ discount?: string | number | null; quantity?: string | number | null }> | string | null;
   packing_group?: number | string | null;
   allow_singulars?: string | number | boolean | null;
+  is_label?: boolean | null;
+  is_label_product?: boolean | null;
+  is_group_product?: boolean | null;
 };
 
 function getProductTranslation(
@@ -115,5 +118,8 @@ export function mapLaravelProductToCardData(product: LaravelProduct, locale: str
     discounts: product.discounts ?? null,
     packing_group: product.packing_group ? Number(product.packing_group) : null,
     allow_singulars: product.allow_singulars ?? null,
+    is_label: product.is_label ?? product.is_label_product ?? null,
+    is_label_product: product.is_label_product ?? null,
+    is_group_product: product.is_group_product ?? null,
   };
 }

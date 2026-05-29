@@ -65,6 +65,8 @@ const PRINTERS_SEARCH_QUERY = {
     material: { raw: {} },
     material_title: { raw: {} },
     category_slugs: { raw: {} },
+    is_group_product: { raw: {} },
+    is_label_product: { raw: {} },
   },
 };
 
