@@ -519,6 +519,20 @@ function termsFilter(field: string, values: Array<string | number>): estypes.Que
   return values.length ? { terms: { [field]: values } } : null;
 }
 
+function materialIdsFilter(values: number[]): estypes.QueryDslQueryContainer | null {
+  if (values.length === 0) return null;
+
+  return {
+    bool: {
+      minimum_should_match: 1,
+      should: [
+        { terms: { material_ids: values } },
+        { terms: { material_id: values } },
+      ],
+    },
+  };
+}
+
 function nestedTermsFilter(
   path: string,
   field: string,
@@ -847,7 +861,7 @@ function buildBaseFilters(params: CatalogSearchParams, printerInfo?: PrinterInfo
     // user-selectable `categories` facet filter so the two never OR together.
     categorySlugFilter(params.scopeCategories),
     termsFilter("category_ids", params.categoryIds),
-    termsFilter("material_id", params.materialIds),
+    materialIdsFilter(params.materialIds),
     termsFilter("material_taxon_slugs", params.materialCategories),
     termsFilter("material_taxon_ids", params.materialCategoryIds),
     rangeFilter("price", params.priceMin, params.priceMax),

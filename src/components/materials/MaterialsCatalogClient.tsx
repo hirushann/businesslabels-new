@@ -9,29 +9,7 @@ import Accordion from "@/components/Accordion";
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 import EmptyState from "@/components/EmptyState";
 import { useDebouncedSearchParam } from "@/components/search/useDebouncedSearchParam";
-
-type Material = {
-  id: number;
-  title: string;
-  subtitle: string;
-  slug: string;
-  code: string;
-  brand: string;
-  status: string;
-  categories: {
-    id: number;
-    name: string;
-    slug: string;
-  }[];
-  specifications: {
-    material_specs?: { label: string; value: string }[];
-  } | null;
-  print_method: string | null;
-  base_material: string | null;
-  finish: string | null;
-  adhesive: string | null;
-  main_image?: string;
-};
+import type { Material, MaterialSearchResponse } from "@/lib/search/materials";
 
 // Inline helper for labels
 const getLocalizedLabel = (key: string, locale: string) => {
@@ -141,8 +119,10 @@ function deriveMaterialAttributes(material: Material) {
       printTech = "Thermal Transfer";
     } else if (
       cats.includes("thermal-direct") ||
+      cats.includes("td") ||
+      cats.includes("thermisch-direct") ||
       cats.includes("dt") ||
-      cats.some((s) => s.includes("thermal-direct"))
+      cats.some((s) => s.includes("thermal-direct") || s.endsWith("-td") || s.includes("thermische"))
     ) {
       printTech = "Thermal Direct";
     } else {
@@ -310,11 +290,13 @@ function MaterialCard({
 }
 
 export default function MaterialsCatalogClient({
-  initialMaterials,
+  initialCatalog,
+  initialQueryString,
   locale,
   defaultPrintMethod = "",
 }: {
-  initialMaterials: Material[];
+  initialCatalog: MaterialSearchResponse;
+  initialQueryString: string;
   locale: string;
   /** When set, the print method is locked to this value via the URL path (e.g. /materials/inkjet). */
   defaultPrintMethod?: string;
@@ -326,11 +308,13 @@ export default function MaterialsCatalogClient({
 
   // Filters sidebar toggle state (collapsible like category/shop pages)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [catalog, setCatalog] = useState(initialCatalog);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Effective print method: path-based prop takes priority over URL query param
   const printMethod = defaultPrintMethod || searchParams.get("print_method") || "";
   const sort = searchParams.get("sort") || "name_asc";
-  const currentPage = Number(searchParams.get("page") || "1");
   const searchValue = searchParams.get("search") || "";
 
   const selectedBaseMaterials = useMemo(() => {
@@ -423,117 +407,65 @@ export default function MaterialsCatalogClient({
       onCommit: commitSearch,
     });
 
-  // ─── DEBUG LOGS ────────────────────────────────────────────────────────────
-  // Remove these once the thermal-direct filtering issue is resolved.
+  const scopedQueryString = useMemo(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (defaultPrintMethod) {
+      params.set("print_method", defaultPrintMethod);
+    }
+    return params.toString();
+  }, [defaultPrintMethod, searchParams]);
+
   useEffect(() => {
-    console.group("🔍 [Materials Debug] Raw API print_method values");
-    console.log(`Total materials received: ${initialMaterials.length}`);
-    const byMethod: Record<string, number> = {};
-    initialMaterials.forEach((m) => {
-      const raw = m.print_method ?? "(null)";
-      const normalized = m.print_method ? normalizePrintMethod(m.print_method) : "(null → category fallback)";
-      const catSlugs = m.categories?.map((c) => c.slug).join(", ") || "(no categories)";
-      const { printTech: resolved } = deriveMaterialAttributes(m);
-      const techSlug = resolved.toLowerCase().replace(/\s+/g, "-");
-      byMethod[techSlug] = (byMethod[techSlug] || 0) + 1;
-      console.log(
-        `[${m.code}] "${m.title}"\n` +
-        `  raw print_method : "${raw}"\n` +
-        `  normalized       : "${normalized}"\n` +
-        `  category slugs   : ${catSlugs}\n` +
-        `  FINAL techSlug   : "${techSlug}"  ← filter compares this to "thermal-direct"`,
-      );
-    });
-    console.log("Count by techSlug:", byMethod);
-    console.groupEnd();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialMaterials]);
-  // ────────────────────────────────────────────────────────────────────────────
+    if (scopedQueryString === initialQueryString) {
+      const timeoutId = window.setTimeout(() => {
+        setCatalog(initialCatalog);
+        setError(null);
+        setLoading(false);
+      }, 0);
 
-  // Process Materials: Filter, Sort & Paginate
-  const processed = useMemo(() => {
-    let list = [...initialMaterials];
-
-    // 0. Text search across title, code, brand, subtitle
-    const term = searchValue.trim().toLowerCase();
-    if (term) {
-      list = list.filter((m) => {
-        const haystack = [
-          m.title,
-          m.subtitle,
-          m.code,
-          m.brand,
-          ...(m.categories?.map((c) => c.name) ?? []),
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
-        return haystack.includes(term);
-      });
+      return () => window.clearTimeout(timeoutId);
     }
 
-    // 1. Printer Type filter (Inkjet, Thermal Transfer, Thermal Direct)
-    // If not selected, show all materials
-    if (printMethod) {
-      const before = list.length;
-      list = list.filter((m) => {
-        const { printTech } = deriveMaterialAttributes(m);
-        const techSlug = printTech.toLowerCase().replace(/\s+/g, "-");
-        const match = techSlug === printMethod;
-        if (!match) {
-          console.log(
-            `🔬 [Filter "${printMethod}"] REJECTED "${m.title}" (${m.code}) — techSlug="${techSlug}", raw print_method="${m.print_method ?? "null"}", cats=[${m.categories?.map((c) => c.slug).join(", ")}]`,
-          );
+    const controller = new AbortController();
+    let isCurrent = true;
+    const loadingTimeoutId = window.setTimeout(() => {
+      setLoading(true);
+      setError(null);
+    }, 0);
+
+    const params = new URLSearchParams(scopedQueryString);
+    params.set("locale", locale);
+
+    fetch(`/api/materials?${params.toString()}`, { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error("Material search is temporarily unavailable.");
         }
-        return match;
+        return response.json() as Promise<MaterialSearchResponse>;
+      })
+      .then((nextCatalog) => {
+        if (isCurrent) setCatalog(nextCatalog);
+      })
+      .catch((fetchError) => {
+        if (isCurrent && (fetchError as { name?: string }).name !== "AbortError") {
+          setError(fetchError instanceof Error ? fetchError.message : "Material search failed.");
+        }
+      })
+      .finally(() => {
+        if (isCurrent) setLoading(false);
       });
-      console.log(
-        `🔬 [Filter "${printMethod}"] ${before} → ${list.length} materials after print method filter`,
-      );
-    }
 
-    // 2. Base Material Filter
-    if (selectedBaseMaterials.length > 0) {
-      list = list.filter((m) => {
-        const { baseMat } = deriveMaterialAttributes(m);
-        return selectedBaseMaterials.includes(baseMat.toLowerCase());
-      });
-    }
+    return () => {
+      isCurrent = false;
+      window.clearTimeout(loadingTimeoutId);
+      controller.abort();
+    };
+  }, [initialCatalog, initialQueryString, locale, scopedQueryString]);
 
-    // 3. Finish Filter
-    if (selectedFinishes.length > 0) {
-      list = list.filter((m) => {
-        const { finish } = deriveMaterialAttributes(m);
-        return selectedFinishes.includes(finish.toLowerCase());
-      });
-    }
-
-    // 4. Adhesive Filter
-    if (selectedAdhesives.length > 0) {
-      list = list.filter((m) => {
-        const { adhesive } = deriveMaterialAttributes(m);
-        return selectedAdhesives.includes(adhesive.toLowerCase());
-      });
-    }
-
-    // 5. Sorting (Name: A to Z, Name: Z to A)
-    if (sort === "name_desc") {
-      list.sort((a, b) => b.title.localeCompare(a.title, locale));
-    } else {
-      list.sort((a, b) => a.title.localeCompare(b.title, locale));
-    }
-
-    return list;
-  }, [initialMaterials, printMethod, selectedBaseMaterials, selectedFinishes, selectedAdhesives, sort, locale, searchValue]);
-
-  // Paginated partition
-  const perPage = 12;
-  const total = processed.length;
-  const lastPage = Math.ceil(total / perPage);
-  const activePage = Math.max(1, Math.min(currentPage, lastPage));
-  const paginatedMaterials = useMemo(() => {
-    return processed.slice((activePage - 1) * perPage, activePage * perPage);
-  }, [processed, activePage, perPage]);
+  const total = catalog.total;
+  const lastPage = catalog.lastPage;
+  const activePage = catalog.currentPage;
+  const paginatedMaterials = catalog.materials;
 
   // Filter choices
   const filterSections = [
@@ -884,13 +816,28 @@ export default function MaterialsCatalogClient({
 
           {/* Grid listing */}
           <div className="min-w-0 flex-1 flex flex-col gap-8">
+            {error ? (
+              <div className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                {error}
+              </div>
+            ) : null}
+
             {paginatedMaterials.length > 0 ? (
               <div
-                className={`grid grid-cols-1 gap-6 sm:grid-cols-2 ${isSidebarOpen ? "xl:grid-cols-3" : "xl:grid-cols-4"
+                className={`grid grid-cols-1 gap-6 transition-opacity sm:grid-cols-2 ${loading ? "opacity-60" : "opacity-100"} ${isSidebarOpen ? "xl:grid-cols-3" : "xl:grid-cols-4"
                   }`}
               >
                 {paginatedMaterials.map((material) => (
                   <MaterialCard key={material.id} material={material} locale={locale} />
+                ))}
+              </div>
+            ) : loading ? (
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
+                {Array.from({ length: 8 }, (_, index) => (
+                  <div
+                    key={index}
+                    className="h-[520px] animate-pulse rounded-2xl border border-slate-100 bg-white shadow-[0_4px_20px_rgba(109,109,120,0.05)]"
+                  />
                 ))}
               </div>
             ) : (
