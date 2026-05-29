@@ -35,6 +35,7 @@ export const MESSAGES_V4 = {
       view: 'View',
       add: 'Add',
       loading: 'Loading...',
+      viewMoreProducts: 'View more Products',
     },
     validation: {
       required: "{field} is required",
@@ -1306,6 +1307,7 @@ export const MESSAGES_V4 = {
       view: 'Tonen',
       add: 'Toevoegen',
       loading: 'Laden...',
+      viewMoreProducts: 'Meer producten bekijken',
     },
     validation: {
       required: "{field} is verplicht",
