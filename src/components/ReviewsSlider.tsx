@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
-import Image from "next/image";
 import { useTranslations } from "next-intl";
 
 type Review = {
@@ -10,6 +9,7 @@ type Review = {
   relative_time_description: string;
   rating: number;
   text: string;
+  source?: string;
 };
 
 type ReviewsSliderProps = {
