@@ -277,6 +277,9 @@ function mapOverlayResult(result: unknown, resultIndex: number): OverlayProductR
     type: normalizedType,
     packing_group: valueAsNumber(getRaw(result, 'packing_group')) ?? valueAsNumber(getMetaValue(result, '_packing_group')),
     allow_singulars: firstScalar(getRaw(result, 'allow_singulars')) ?? firstScalar(getMetaValue(result, '_allow_singulars')),
+    is_label: valueAsBoolean(getRaw(result, 'is_label')) || valueAsBoolean(getRaw(result, 'is_label_product')) || valueAsBoolean(getMetaValue(result, 'is_label_product')) || null,
+    is_label_product: valueAsBoolean(getRaw(result, 'is_label_product')) || valueAsBoolean(getMetaValue(result, 'is_label_product')) || null,
+    is_group_product: valueAsBoolean(getRaw(result, 'is_group_product')) || valueAsBoolean(getMetaValue(result, 'is_group_product')) || null,
   };
   const href =
     slug && normalizedType
@@ -651,6 +654,8 @@ export default function SearchOverlay({ onClose }: SearchOverlayProps) {
           material_title: { raw: {} },
           packing_group: { raw: {} },
           allow_singulars: { raw: {} },
+          is_group_product: { raw: {} },
+          is_label_product: { raw: {} },
         },
       },
     }),

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import ElasticsearchAPIConnector from '@elastic/search-ui-elasticsearch-connector';
 import type { QueryConfig, RequestState, ResponseState } from '@elastic/search-ui';
+import { getServerLocale } from '@/lib/i18n/server';
 
 function elasticHost(): string {
   const url = process.env.ELASTICSEARCH_URL;
@@ -1237,6 +1238,15 @@ export async function POST(request: NextRequest) {
       loadSearchStats(host, index, connectionHeaders, categorySlug, brandSlug),
     ]);
 
+    let locale: string = 'en';
+    try {
+      locale = await getServerLocale();
+    } catch {}
+
+    if (response.results && response.results.length > 0) {
+      await injectProductOverrides(response.results, locale);
+    }
+
     const responseWithPriceMetadata: ResponseState = {
       ...response,
       rawResponse: {
@@ -1259,5 +1269,88 @@ export async function POST(request: NextRequest) {
       error,
     });
     return normalizeError('Search backend is temporarily unavailable.', 503);
+  }
+}
+
+async function injectProductOverrides(results: any[], locale?: string) {
+  if (!results || results.length === 0) return;
+
+  try {
+    const backendUrl = process.env.BBNL_API_BASE_URL;
+    if (!backendUrl) return;
+
+    const slugs = results
+      .map((r) => {
+        const entry = r.slug;
+        const val = entry && typeof entry === 'object' ? entry.raw : undefined;
+        return typeof val === 'string' ? val : undefined;
+      })
+      .filter((slug): slug is string => typeof slug === 'string' && slug.length > 0);
+
+    if (slugs.length === 0) return;
+
+    const queryParams = new URLSearchParams();
+    slugs.forEach((slug) => queryParams.append("slug[]", slug));
+    queryParams.append("per_page", slugs.length.toString());
+    if (locale) {
+      queryParams.append("lang", locale);
+    }
+
+    const url = `${backendUrl}/api/products?${queryParams.toString()}`;
+    const res = await fetch(url, {
+      headers: { Accept: "application/json" },
+      next: { revalidate: 300 },
+    });
+
+    if (!res.ok) return;
+
+    const json = await res.json();
+    if (!json || !Array.isArray(json.data)) return;
+
+    const productConfigMap = new Map<
+      string,
+      {
+        isLabelProduct: boolean | null;
+        isGroupProduct: boolean | null;
+        packingGroup: number | null;
+        allowSingulars: any;
+        discounts: any;
+      }
+    >();
+
+    json.data.forEach((p: any) => {
+      if (!p?.slug) return;
+
+      const resolvedSlug = typeof p.slug === "string" ? p.slug : (p.slug.en || p.slug.nl || "");
+      if (!resolvedSlug) return;
+
+      productConfigMap.set(resolvedSlug, {
+        isLabelProduct: p.is_label_product ?? p.is_label ?? null,
+        isGroupProduct: p.is_group_product ?? null,
+        packingGroup: p.packing_group != null ? Number(p.packing_group) : null,
+        allowSingulars: p.allow_singulars ?? null,
+        discounts: p.discounts ?? null,
+      });
+    });
+
+    results.forEach((r) => {
+      const slugEntry = r.slug;
+      const slug = slugEntry && typeof slugEntry === 'object' ? slugEntry.raw : undefined;
+      if (typeof slug !== 'string' || !productConfigMap.has(slug)) return;
+
+      const config = productConfigMap.get(slug);
+      if (config) {
+        r.is_label_product = { raw: config.isLabelProduct };
+        r.is_label = { raw: config.isLabelProduct };
+        r.is_group_product = { raw: config.isGroupProduct };
+        r.packing_group = { raw: config.packingGroup };
+        r.allow_singulars = { raw: config.allowSingulars };
+        if (config.discounts) {
+          r.discounts = { raw: typeof config.discounts === 'object' ? JSON.stringify(config.discounts) : config.discounts };
+        }
+      }
+    });
+  } catch (err) {
+    console.error("[Search API] Failed to fetch product overrides:", err);
   }
 }

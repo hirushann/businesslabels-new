@@ -1385,6 +1385,8 @@ async function applyProductConfigOverrides(products: CatalogProductResult[], loc
         packingGroup: number | null;
         allowSingulars: LaravelProduct["allow_singulars"];
         discounts: LaravelProduct["discounts"];
+        isLabelProduct: boolean | null;
+        isGroupProduct: boolean | null;
       }
     >();
 
@@ -1398,6 +1400,8 @@ async function applyProductConfigOverrides(products: CatalogProductResult[], loc
         packingGroup: p.packing_group != null ? Number(p.packing_group) : null,
         allowSingulars: p.allow_singulars ?? null,
         discounts: p.discounts ?? null,
+        isLabelProduct: p.is_label_product ?? p.is_label ?? null,
+        isGroupProduct: p.is_group_product ?? null,
       });
     });
 
@@ -1408,6 +1412,9 @@ async function applyProductConfigOverrides(products: CatalogProductResult[], loc
       p.product.packing_group = productConfig?.packingGroup ?? null;
       p.product.allow_singulars = productConfig?.allowSingulars ?? null;
       p.product.discounts = productConfig?.discounts ?? null;
+      p.product.is_label_product = productConfig?.isLabelProduct ?? null;
+      p.product.is_label = productConfig?.isLabelProduct ?? null;
+      p.product.is_group_product = productConfig?.isGroupProduct ?? null;
     });
   } catch (err) {
     console.error("[Search] Failed to fetch packing_group overrides:", err);

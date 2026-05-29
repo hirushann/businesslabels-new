@@ -64,6 +64,9 @@ export type ProductCardData = {
   warranty?: ProductWarrantyData | null;
   discount?: number | 0;
   discounts?: BulkDiscountTier[] | string | null;
+  is_label?: boolean | null;
+  is_label_product?: boolean | null;
+  is_group_product?: boolean | null;
 };
 
 type ProductCardProps = {
@@ -302,7 +305,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
   };
 
   const cardContent = (
-    // console.log("Rendering ProductCard for:", product)
+    console.log("Rendering ProductCard for:", product),
     <div className="mx-auto h-full w-full max-w-88 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] border border-slate-100 flex flex-col overflow-hidden hover:shadow-lg transition-shadow">
       <div className="relative h-56 bg-slate-100 overflow-hidden">
         <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
@@ -367,7 +370,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
           unoptimized
         />
         </Link>
-        {product.packing_group != null && Number(product.packing_group) > 0 && (
+        {product.is_label_product === true && product.packing_group != null && Number(product.packing_group) > 0 && (
           <div className="absolute bottom-4 right-4 z-10 px-2.5 py-1 bg-white rounded-full flex items-center gap-1.5 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.08)] border border-slate-100">
             <span className="text-neutral-700 text-xs font-normal font-['Segoe_UI'] leading-4">
               {t("product.perBox", { count: product.packing_group })}
