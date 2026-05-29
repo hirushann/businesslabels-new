@@ -889,6 +889,7 @@ export const MESSAGES_V4 = {
       searchProducts: 'Search products',
       filters: 'Filters',
       clearFilters: 'Clear Filters',
+      clearAll: 'Clear all',
       activeFilters: '{count} active {count, plural, one {filter} other {filters}}',
       sortBy: 'Sort by',
       inStock: 'In Stock',
@@ -909,6 +910,8 @@ export const MESSAGES_V4 = {
       scrollForMoreProducts: 'Scroll for more products',
       catalogUnavailable: 'Catalog search is temporarily unavailable.',
       catalogFailed: 'Catalog search failed.',
+      didYouMean: 'Did you mean:',
+      viewMoreProducts: 'View more Products',
     },
     filters: {
       price: 'Price',
@@ -2157,6 +2160,7 @@ export const MESSAGES_V4 = {
       searchProducts: 'Zoek producten',
       filters: 'Filters',
       clearFilters: 'Filters wissen',
+      clearAll: 'Alles wissen',
       activeFilters: '{count} actieve {count, plural, one {filter} other {filters}}',
       sortBy: 'Sorteren op',
       inStock: 'Op voorraad',
@@ -2177,6 +2181,8 @@ export const MESSAGES_V4 = {
       scrollForMoreProducts: 'Scroll voor meer producten',
       catalogUnavailable: 'Cataloguszoekfunctie is tijdelijk niet beschikbaar.',
       catalogFailed: 'Catalogus zoeken mislukt.',
+      didYouMean: 'Bedoelde je:',
+      viewMoreProducts: 'Bekijk meer producten',
     },
     filters: {
       price: 'Prijs',
