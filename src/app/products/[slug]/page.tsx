@@ -912,7 +912,7 @@ export default async function SingleProductPage({
                       <div className="flex flex-col gap-2">
                         <h3 className="text-neutral-700 text-xl sm:text-2xl font-bold leading-7">{t('product.doesThisFitMyPrinter')}</h3>
                         <p className="text-neutral-700 text-base font-normal leading-6">
-                          {t('product.compatibilityDescription')}
+                        {t('product.compatibilityDescription')}
                         </p>
                       </div>
                       <ProductCompatibilityDialog
@@ -920,6 +920,14 @@ export default async function SingleProductPage({
                         compatiblePrinterIds={compatiblePrinterIds}
                         productCategorySlugs={productCategorySlugs}
                         productMake={normalizeValue(product.make)}
+                        productName={productName}
+                        productImage={product.main_image}
+                        productSku={product.sku}
+                        productSlug={product.slug}
+                        productType={normalizeType(product.type) || (product.is_group_product || (product.component_products?.length ?? 0) > 0 ? "group_product" : null)}
+                        productPrice={price}
+                        packingGroup={product.packing_group != null ? Number(product.packing_group) : null}
+                        allowSingulars={normalizeBoolean(product.allow_singulars)}
                       />
                     </div>
                   </div>
