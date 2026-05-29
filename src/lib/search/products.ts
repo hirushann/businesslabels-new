@@ -653,22 +653,27 @@ function rangeOrStringFilter(
 function getCompatibleInkCategorySlugs(printerSlug: string): string[] {
   const slug = printerSlug.toLowerCase();
   if (slug.includes("cw-c8000")) {
-    return ["inkt-cartridges-epson-cw-c8000", "inkt-cartridges-cw-c8000-bk", "inkt-cartridges-cw-c8000-mk"];
+    return [
+      "inkt-cartridges-epson-cw-c8000",
+      "inkt-cartridges-cw-c8000-bk",
+      "inkt-cartridges-cw-c8000-mk",
+      "maintenance-box-tm-c7500"
+    ];
   }
   if (slug.includes("cw-c4000")) {
-    return ["inkt-epson-cw-c4000"];
+    return ["inkt-epson-cw-c4000", "maintenance-box-epson-cw-c4000"];
   }
   if (slug.includes("tm-c3500")) {
-    return ["inkt-cartridges-tm-c3500-nl"];
+    return ["inkt-cartridges-tm-c3500-nl", "maintenance-box-tm-c3500"];
   }
   if (slug.includes("tm-c7500g")) {
-    return ["inkt-cartridges-tm-c7500g-nl"];
+    return ["inkt-cartridges-tm-c7500g-nl", "maintenance-box-tm-c7500"];
   }
   if (slug.includes("tm-c7500")) {
-    return ["inkt-cartridges-tm-c7500-nl"];
+    return ["inkt-cartridges-tm-c7500-nl", "maintenance-box-tm-c7500"];
   }
   if (slug.includes("cw-c6000") || slug.includes("cw-c6500")) {
-    return ["inkt-cartridges-cw-c6000-series"];
+    return ["inkt-cartridges-cw-c6000-series", "maintenance-box-cw-c6000-series"];
   }
   if (slug.includes("gpc831") || slug.includes("gp-c831")) {
     return ["inkt-cartridges-gp-c831"];
@@ -677,7 +682,7 @@ function getCompatibleInkCategorySlugs(printerSlug: string): string[] {
     return ["inkt-cartridges-tm-c3400"];
   }
   if (slug.includes("cw-d6000") || slug.includes("cw-d6500")) {
-    return ["inkt-cartridges-cw-d6000-series"];
+    return ["inkt-cartridges-cw-d6000-series", "maintenance-box-cw-c6000-series"];
   }
   return [];
 }
@@ -802,7 +807,7 @@ function buildBaseFilters(params: CatalogSearchParams, printerInfo?: PrinterInfo
                 printerShould.push({
                   bool: {
                     must: [
-                      { term: { "category_slugs.keyword": "inkt-cartridges-nl" } },
+                      { terms: { "category_slugs.keyword": ["inkt-cartridges-nl", "maintenance-boxen-nl"] } },
                       { terms: { "category_slugs.keyword": inkSlugs } },
                     ],
                   },
@@ -1351,6 +1356,14 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
   let printerInfo: PrinterInfo | undefined;
   if (params.printerIds && params.printerIds.length > 0) {
     printerInfo = await getPrinterInfo(params.printerIds);
+  }
+  if (printerInfo) {
+    const isEpson = printerInfo.slugs.some(slug => slug.toLowerCase().includes("epson"));
+    if (isEpson && params.categories.includes("inkt-cartridges-nl")) {
+      if (!params.categories.includes("maintenance-boxen-nl")) {
+        params.categories.push("maintenance-boxen-nl");
+      }
+    }
   }
   const filters = buildFilters(params, printerInfo);
   const from = (params.page - 1) * params.perPage;

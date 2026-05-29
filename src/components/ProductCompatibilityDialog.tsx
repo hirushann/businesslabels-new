@@ -51,16 +51,37 @@ function hasId(ids: number[] | undefined, id: number | null) {
 function getCompatibleInkCategorySlugs(printerSlug: string): string[] {
   const slug = printerSlug.toLowerCase();
   if (slug.includes("cw-c8000")) {
-    return ["inkt-cartridges-epson-cw-c8000", "inkt-cartridges-cw-c8000-bk", "inkt-cartridges-cw-c8000-mk"];
+    return [
+      "inkt-cartridges-epson-cw-c8000",
+      "inkt-cartridges-cw-c8000-bk",
+      "inkt-cartridges-cw-c8000-mk",
+      "maintenance-box-tm-c7500"
+    ];
   }
-  if (slug.includes("cw-c4000")) return ["inkt-epson-cw-c4000"];
-  if (slug.includes("tm-c3500")) return ["inkt-cartridges-tm-c3500-nl"];
-  if (slug.includes("tm-c7500g")) return ["inkt-cartridges-tm-c7500g-nl"];
-  if (slug.includes("tm-c7500")) return ["inkt-cartridges-tm-c7500-nl"];
-  if (slug.includes("cw-c6000") || slug.includes("cw-c6500")) return ["inkt-cartridges-cw-c6000-series"];
-  if (slug.includes("gpc831") || slug.includes("gp-c831")) return ["inkt-cartridges-gp-c831"];
-  if (slug.includes("tm-c3400")) return ["inkt-cartridges-tm-c3400"];
-  if (slug.includes("cw-d6000") || slug.includes("cw-d6500")) return ["inkt-cartridges-cw-d6000-series"];
+  if (slug.includes("cw-c4000")) {
+    return ["inkt-epson-cw-c4000", "maintenance-box-epson-cw-c4000"];
+  }
+  if (slug.includes("tm-c3500")) {
+    return ["inkt-cartridges-tm-c3500-nl", "maintenance-box-tm-c3500"];
+  }
+  if (slug.includes("tm-c7500g")) {
+    return ["inkt-cartridges-tm-c7500g-nl", "maintenance-box-tm-c7500"];
+  }
+  if (slug.includes("tm-c7500")) {
+    return ["inkt-cartridges-tm-c7500-nl", "maintenance-box-tm-c7500"];
+  }
+  if (slug.includes("cw-c6000") || slug.includes("cw-c6500")) {
+    return ["inkt-cartridges-cw-c6000-series", "maintenance-box-cw-c6000-series"];
+  }
+  if (slug.includes("gpc831") || slug.includes("gp-c831")) {
+    return ["inkt-cartridges-gp-c831"];
+  }
+  if (slug.includes("tm-c3400")) {
+    return ["inkt-cartridges-tm-c3400"];
+  }
+  if (slug.includes("cw-d6000") || slug.includes("cw-d6500")) {
+    return ["inkt-cartridges-cw-d6000-series", "maintenance-box-cw-c6000-series"];
+  }
   return [];
 }
 
@@ -94,7 +115,7 @@ function hasFinderFallbackCompatibility(
   if (normalizeToken(printerBrand) === "epson") {
     const inkSlugs = getCompatibleInkCategorySlugs(printerSlug);
 
-    return categorySlugs.includes("inkt-cartridges-nl")
+    return (categorySlugs.includes("inkt-cartridges-nl") || categorySlugs.includes("maintenance-boxen-nl"))
       && inkSlugs.some((slug) => categorySlugs.includes(slug));
   }
 

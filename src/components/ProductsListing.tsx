@@ -320,10 +320,16 @@ function CatalogProductsListing({
     () => new URLSearchParams(displayQueryString),
     [displayQueryString],
   );
-  const scopedCurrentQueryString = useMemo(
-    () => mergeQueryStrings(scopeQueryString, displayQueryString),
-    [scopeQueryString, displayQueryString],
-  );
+  const isEpson = printer?.slug?.toLowerCase().includes("epson") || printer?.title?.toLowerCase().includes("epson");
+  const scopedCurrentQueryString = useMemo(() => {
+    let queryStr = displayQueryString;
+    const params = new URLSearchParams(queryStr);
+    if (isEpson && params.get("category") === "inkt-cartridges-nl") {
+      params.set("category", "inkt-cartridges-nl,maintenance-boxen-nl");
+      queryStr = params.toString();
+    }
+    return mergeQueryStrings(scopeQueryString, queryStr);
+  }, [scopeQueryString, displayQueryString, isEpson]);
   const listingResetKey = useMemo(() => {
     const params = new URLSearchParams(scopedCurrentQueryString);
     params.delete("page");
@@ -344,7 +350,7 @@ function CatalogProductsListing({
   );
   const hasInitialCatalog =
     scopedCurrentQueryString === initialSortedQueryString;
-
+ 
   useEffect(() => {
     if (
       optimisticQueryString === null ||
@@ -353,11 +359,11 @@ function CatalogProductsListing({
       const timeoutId = window.setTimeout(() => {
         setOptimisticQueryString(null);
       }, 0);
-
+ 
       return () => window.clearTimeout(timeoutId);
     }
   }, [currentQueryString, optimisticQueryString]);
-
+ 
   const setParams = useCallback(
     (updater: (params: URLSearchParams) => void) => {
       const next = new URLSearchParams(displayQueryString);
@@ -371,8 +377,7 @@ function CatalogProductsListing({
     },
     [displayQueryString, pathname, router],
   );
-
-  const isEpson = printer?.slug?.toLowerCase().includes("epson") || printer?.title?.toLowerCase().includes("epson");
+ 
   const activeCategory = displayParams.get("category") || "";
 
   const categoryCards = isEpson
