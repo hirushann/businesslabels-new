@@ -173,7 +173,7 @@ describe('textQuery Accuracy & Precision', () => {
     mustClauses.forEach((clause) => {
       expect(clause.bool).toBeDefined();
       expect(clause.bool?.minimum_should_match).toBe(1);
-      expect(clause.bool?.should?.length).toBe(2);
+      expect((clause.bool?.should as any[]).length).toBe(2);
     });
   });
 });

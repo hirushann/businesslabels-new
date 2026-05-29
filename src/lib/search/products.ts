@@ -446,7 +446,7 @@ export function textQuery(search: string): estypes.QueryDslQueryContainer {
         "compatible_brands",
       ];
 
-      const tokenClauses = tokens.map((token) => ({
+      const tokenClauses: estypes.QueryDslQueryContainer[] = tokens.map((token) => ({
         bool: {
           minimum_should_match: 1,
           should: [
