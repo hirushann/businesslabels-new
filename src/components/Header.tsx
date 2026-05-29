@@ -37,7 +37,7 @@ const navItems = [
   { labelKey: 'header.nav.support', fallbackLabel: 'Support', href: '/support', dropdownKey: null },
 ];
 
-export default function Header() {
+export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolean }) {
   const t = useTranslations();
   const lp = useLocalePath();
   const { isHelpOpen, openHelp, closeHelp } = useHelp();
@@ -84,6 +84,33 @@ export default function Header() {
     loadTeamMembers();
     return () => { ignore = true; };
   }, []);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(hasAuthToken);
+
+  useEffect(() => {
+    const checkAuth = () => {
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('auth_user');
+        setIsAuthenticated(!!stored);
+      }
+    };
+
+    checkAuth();
+
+    window.addEventListener('storage', checkAuth);
+    window.addEventListener('auth-user-updated', checkAuth);
+
+    return () => {
+      window.removeEventListener('storage', checkAuth);
+      window.removeEventListener('auth-user-updated', checkAuth);
+    };
+  }, []);
+
+  useEffect(() => {
+    setIsAuthenticated(hasAuthToken);
+  }, [hasAuthToken]);
+
+  const accountHref = isAuthenticated === false ? '/login?redirect=/my-account' : '/my-account';
+
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<DropdownKey>(null);
@@ -230,7 +257,7 @@ export default function Header() {
             {/* Language */}
             <LanguageSwitcher />
             {/* User */}
-            <Link href="/my-account" aria-label={t('header.accountLink')}>
+            <Link href={accountHref} aria-label={t('header.accountLink')}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="cursor-pointer">
                 <circle cx="12" cy="8" r="4" stroke="#404040" strokeWidth="1.5" />
                 <path d="M4 20c0-4.42 3.58-8 8-8s8 3.58 8 8" stroke="#404040" strokeWidth="1.5" strokeLinecap="round" />
@@ -301,7 +328,7 @@ export default function Header() {
           {/* Right: Cart, Wishlist, Language */}
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
-            <Link href="/my-account" aria-label={t('header.accountLink')}>
+            <Link href={accountHref} aria-label={t('header.accountLink')}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                 <circle cx="12" cy="8" r="4" stroke="#404040" strokeWidth="2" />
                 <path d="M4 20c0-4.42 3.58-8 8-8s8 3.58 8 8" stroke="#404040" strokeWidth="2" strokeLinecap="round" />

@@ -352,7 +352,7 @@ export default async function FinderPage({
         ]);
         console.log(
           "[Finder Page] Server-side printer details loaded:",
-          printer,
+          { params: rawParams, printer }
         );
       } catch (error) {
         console.error("Failed to load finder product catalog.", error);
@@ -481,7 +481,7 @@ export default async function FinderPage({
                   lineHeight: "120%",
                 }}
               >
-                Product Finder
+                {t("finder.productFinder")}
               </h1>
               {/* Description */}
               <p
@@ -493,9 +493,7 @@ export default async function FinderPage({
                   fontWeight: 400,
                 }}
               >
-                Find products engineered to match your printer&apos;s needs —
-                from premium media and inks to specialized materials for
-                compatibility, reliability, and performance.
+                {t("finder.heroDescription")}
               </p>
             </div>
           </div>

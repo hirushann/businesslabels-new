@@ -9,29 +9,7 @@ import Accordion from "@/components/Accordion";
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 import EmptyState from "@/components/EmptyState";
 import { useDebouncedSearchParam } from "@/components/search/useDebouncedSearchParam";
-
-type Material = {
-  id: number;
-  title: string;
-  subtitle: string;
-  slug: string;
-  code: string;
-  brand: string;
-  status: string;
-  categories: {
-    id: number;
-    name: string;
-    slug: string;
-  }[];
-  specifications: {
-    material_specs?: { label: string; value: string }[];
-  } | null;
-  print_method: string | null;
-  base_material: string | null;
-  finish: string | null;
-  adhesive: string | null;
-  main_image?: string;
-};
+import type { Material, MaterialSearchResponse } from "@/lib/search/materials";
 
 // Inline helper for labels
 const getLocalizedLabel = (key: string, locale: string) => {
@@ -125,34 +103,49 @@ function normalizePrintMethod(raw: string): string {
 }
 
 // Dynamic helper to extract attributes when DB values are null
-function deriveMaterialAttributes(material: Material) {
+function deriveMaterialAttributes(material: Material, currentPrintMethod?: string) {
   // Normalize whatever the API returns ("dt", "thermal_direct", "TT", …) to a
   // canonical value so the slug comparison in the filter always matches.
   let printTech = material.print_method ? normalizePrintMethod(material.print_method) : "";
-  if (!printTech && material.categories) {
+  let printTechs: string[] = printTech ? [printTech] : [];
+
+  if (printTechs.length === 0 && material.categories) {
     const cats = material.categories.map((c) => c.slug.toLowerCase());
-    if (cats.includes("inkjet") || cats.some((s) => s.includes("inkjet"))) {
+    const hasInkjet = cats.includes("inkjet") || cats.some((s) => s.includes("inkjet"));
+    const hasTT = cats.includes("thermal-transfer") || cats.includes("ttr") || cats.some((s) => s.includes("thermal-transfer"));
+    const hasTD = cats.includes("thermal-direct") || cats.includes("td") || cats.includes("thermisch-direct") || cats.includes("dt") || cats.some((s) => s.includes("thermal-direct") || s.endsWith("-td") || s.includes("thermische"));
+
+    if (hasInkjet) printTechs.push("Inkjet");
+    if (hasTT) printTechs.push("Thermal Transfer");
+    if (hasTD) printTechs.push("Thermal Direct");
+
+    if (printTechs.length === 0) {
+      printTechs.push("Inkjet");
+    }
+  }
+
+  // Preserve printTech for any single-value backward compatibility references
+  if (!printTech) {
+    if (currentPrintMethod === "inkjet" && printTechs.includes("Inkjet")) {
       printTech = "Inkjet";
-    } else if (
-      cats.includes("thermal-transfer") ||
-      cats.includes("ttr") ||
-      cats.some((s) => s.includes("thermal-transfer"))
-    ) {
+    } else if (currentPrintMethod === "thermal-transfer" && printTechs.includes("Thermal Transfer")) {
       printTech = "Thermal Transfer";
-    } else if (
-      cats.includes("thermal-direct") ||
-      cats.includes("dt") ||
-      cats.some((s) => s.includes("thermal-direct"))
-    ) {
+    } else if (currentPrintMethod === "thermal-direct" && printTechs.includes("Thermal Direct")) {
       printTech = "Thermal Direct";
     } else {
-      printTech = "Inkjet";
+      printTech = printTechs[0] || "Inkjet";
     }
   }
 
   let baseMat = material.base_material || "";
   if (!baseMat && material.categories) {
     const cats = material.categories.map((c) => c.slug.toLowerCase());
+    const contentText = [
+      material.title,
+      material.subtitle,
+      material.code,
+    ].filter(Boolean).join(" ").toLowerCase();
+
     if (cats.some((s) => s.includes("papier") || s.includes("paper"))) {
       baseMat = "Paper";
     } else if (cats.some((s) => s.includes("pe") || s.includes("polyethylene"))) {
@@ -162,7 +155,30 @@ function deriveMaterialAttributes(material: Material) {
     } else if (cats.some((s) => s.includes("po") || s.includes("polyolefin"))) {
       baseMat = "PO (polyolefin)";
     } else {
-      baseMat = "Paper";
+      const isSynthetic = cats.some((s) => s.includes("kunststof") || s.includes("synthetic") || s.includes("plastic"));
+      if (isSynthetic) {
+        if (/\b(pe|polyethylene|polyethyleen)\b/i.test(contentText) || /-pe\b/i.test(contentText)) {
+          baseMat = "PE (polyethylene)";
+        } else if (/\b(pp|polypropylene|polypropyleen)\b/i.test(contentText) || /-pp\b/i.test(contentText)) {
+          baseMat = "PP (polypropylene)";
+        } else if (/\b(po|polyolefin|polyolefine)\b/i.test(contentText) || /-po\b/i.test(contentText)) {
+          baseMat = "PO (polyolefin)";
+        } else {
+          baseMat = "PE (polyethylene)"; // Default fallback for synthetic
+        }
+      } else {
+        if (/\b(pe|polyethylene|polyethyleen)\b/i.test(contentText) || /-pe\b/i.test(contentText)) {
+          baseMat = "PE (polyethylene)";
+        } else if (/\b(pp|polypropylene|polypropyleen)\b/i.test(contentText) || /-pp\b/i.test(contentText)) {
+          baseMat = "PP (polypropylene)";
+        } else if (/\b(po|polyolefin|polyolefine)\b/i.test(contentText) || /-po\b/i.test(contentText)) {
+          baseMat = "PO (polyolefin)";
+        } else if (/\b(papier|paper)\b/i.test(contentText)) {
+          baseMat = "Paper";
+        } else {
+          baseMat = "Paper";
+        }
+      }
     }
   }
 
@@ -208,58 +224,69 @@ function deriveMaterialAttributes(material: Material) {
   if (!weight) weight = "165 g/m²";
   if (!thickness) thickness = "169 µm";
 
-  return { printTech, baseMat, finish, adhesive, weight, thickness };
+  return { printTech, printTechs, baseMat, finish, adhesive, weight, thickness };
 }
 
 function MaterialCard({
   material,
   locale,
+  printMethod,
 }: {
   material: Material;
   locale: string;
+  printMethod?: string;
 }) {
-  const { printTech, baseMat, finish, adhesive, weight, thickness } = deriveMaterialAttributes(material);
+  const { printTechs, baseMat, finish, adhesive, weight, thickness } = deriveMaterialAttributes(material, printMethod);
   const cardImage = toDisplayImageUrl(material.main_image) || "/images/labelrolls.png";
 
-  const isInkjet = printTech === "Inkjet";
-  const isTtr = printTech === "Thermal Transfer";
-
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_4px_20px_rgba(109,109,120,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(109,109,120,0.12)]">
-      <div className="relative h-60 w-full overflow-hidden bg-slate-50">
+    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_4px_20px_rgba(109,109,120,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(109,109,120,0.12)]">
+      <Link href={`/materials/${material.slug}`} className="relative block h-60 w-full overflow-hidden bg-slate-50">
         <Image
           src={cardImage}
           alt={material.title}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          className="object-contain p-4 transition-transform duration-500 hover:scale-105"
+          className="object-contain p-4 transition-transform duration-500 group-hover:scale-105"
         />
-        <span
-          className={`absolute left-4 top-4 rounded-full px-3 py-1.5 text-xs font-semibold text-white shadow-sm flex items-center gap-1.5 ${isInkjet
-            ? "bg-amber-500"
-            : isTtr
-              ? "bg-slate-700"
-              : "bg-emerald-600"
-            }`}
-        >
-          <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.867 48.867 0 00-14.326 0C3.768 7.44 3 8.375 3 9.456V15.75a2.25 2.25 0 002.25 2.25h1.091M9 9h6m-6 3h6" />
-          </svg>
-          {getLocalizedLabel(printTech, locale)}
-        </span>
-      </div>
+        <div className="absolute left-4 top-4 flex flex-wrap gap-2 z-10">
+          {printTechs.map((tech) => {
+            const isInkjet = tech === "Inkjet";
+            const isTtr = tech === "Thermal Transfer";
+            return (
+              <span
+                key={tech}
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold text-white shadow-sm flex items-center gap-1.5 ${
+                  isInkjet
+                    ? "bg-amber-500"
+                    : isTtr
+                      ? "bg-slate-700"
+                      : "bg-emerald-600"
+                }`}
+              >
+                <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.867 48.867 0 00-14.326 0C3.768 7.44 3 8.375 3 9.456V15.75a2.25 2.25 0 002.25 2.25h1.091M9 9h6m-6 3h6" />
+                </svg>
+                {getLocalizedLabel(tech, locale)}
+              </span>
+            );
+          })}
+        </div>
+      </Link>
 
       <div className="flex flex-1 flex-col p-5">
         <div className="flex-1">
           <div className="mb-3 flex items-center gap-2">
-            <span className="inline-block rounded-md bg-amber-50 px-2 py-1 text-xs font-bold uppercase tracking-wide text-amber-700 border border-amber-100">
+            <Link href={`/materials/${material.slug}`} className="inline-block rounded-md bg-amber-50 px-2 py-1 text-xs font-bold uppercase tracking-wide text-amber-700 border border-amber-100 hover:bg-amber-100 transition-colors">
               {material.code}
-            </span>
+            </Link>
             <span className="text-xs text-slate-400 font-medium">{material.brand || "Diamondlabels"}</span>
           </div>
 
-          <h3 className="mb-2 text-lg font-bold leading-snug text-slate-800 line-clamp-1">
-            {material.title}
+          <h3 className="mb-2 text-lg font-bold leading-snug line-clamp-1">
+            <Link href={`/materials/${material.slug}`} className="text-slate-800 hover:text-amber-600 transition-colors">
+              {material.title}
+            </Link>
           </h3>
 
           <p className="mb-4 text-sm leading-relaxed text-slate-500 line-clamp-2">
@@ -308,11 +335,13 @@ function MaterialCard({
 }
 
 export default function MaterialsCatalogClient({
-  initialMaterials,
+  initialCatalog,
+  initialQueryString,
   locale,
   defaultPrintMethod = "",
 }: {
-  initialMaterials: Material[];
+  initialCatalog: MaterialSearchResponse;
+  initialQueryString: string;
   locale: string;
   /** When set, the print method is locked to this value via the URL path (e.g. /materials/inkjet). */
   defaultPrintMethod?: string;
@@ -324,11 +353,13 @@ export default function MaterialsCatalogClient({
 
   // Filters sidebar toggle state (collapsible like category/shop pages)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [catalog, setCatalog] = useState(initialCatalog);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Effective print method: path-based prop takes priority over URL query param
   const printMethod = defaultPrintMethod || searchParams.get("print_method") || "";
   const sort = searchParams.get("sort") || "name_asc";
-  const currentPage = Number(searchParams.get("page") || "1");
   const searchValue = searchParams.get("search") || "";
 
   const selectedBaseMaterials = useMemo(() => {
@@ -421,117 +452,65 @@ export default function MaterialsCatalogClient({
       onCommit: commitSearch,
     });
 
-  // ─── DEBUG LOGS ────────────────────────────────────────────────────────────
-  // Remove these once the thermal-direct filtering issue is resolved.
+  const scopedQueryString = useMemo(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (defaultPrintMethod) {
+      params.set("print_method", defaultPrintMethod);
+    }
+    return params.toString();
+  }, [defaultPrintMethod, searchParams]);
+
   useEffect(() => {
-    console.group("🔍 [Materials Debug] Raw API print_method values");
-    console.log(`Total materials received: ${initialMaterials.length}`);
-    const byMethod: Record<string, number> = {};
-    initialMaterials.forEach((m) => {
-      const raw = m.print_method ?? "(null)";
-      const normalized = m.print_method ? normalizePrintMethod(m.print_method) : "(null → category fallback)";
-      const catSlugs = m.categories?.map((c) => c.slug).join(", ") || "(no categories)";
-      const { printTech: resolved } = deriveMaterialAttributes(m);
-      const techSlug = resolved.toLowerCase().replace(/\s+/g, "-");
-      byMethod[techSlug] = (byMethod[techSlug] || 0) + 1;
-      console.log(
-        `[${m.code}] "${m.title}"\n` +
-        `  raw print_method : "${raw}"\n` +
-        `  normalized       : "${normalized}"\n` +
-        `  category slugs   : ${catSlugs}\n` +
-        `  FINAL techSlug   : "${techSlug}"  ← filter compares this to "thermal-direct"`,
-      );
-    });
-    console.log("Count by techSlug:", byMethod);
-    console.groupEnd();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialMaterials]);
-  // ────────────────────────────────────────────────────────────────────────────
+    if (scopedQueryString === initialQueryString) {
+      const timeoutId = window.setTimeout(() => {
+        setCatalog(initialCatalog);
+        setError(null);
+        setLoading(false);
+      }, 0);
 
-  // Process Materials: Filter, Sort & Paginate
-  const processed = useMemo(() => {
-    let list = [...initialMaterials];
-
-    // 0. Text search across title, code, brand, subtitle
-    const term = searchValue.trim().toLowerCase();
-    if (term) {
-      list = list.filter((m) => {
-        const haystack = [
-          m.title,
-          m.subtitle,
-          m.code,
-          m.brand,
-          ...(m.categories?.map((c) => c.name) ?? []),
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
-        return haystack.includes(term);
-      });
+      return () => window.clearTimeout(timeoutId);
     }
 
-    // 1. Printer Type filter (Inkjet, Thermal Transfer, Thermal Direct)
-    // If not selected, show all materials
-    if (printMethod) {
-      const before = list.length;
-      list = list.filter((m) => {
-        const { printTech } = deriveMaterialAttributes(m);
-        const techSlug = printTech.toLowerCase().replace(/\s+/g, "-");
-        const match = techSlug === printMethod;
-        if (!match) {
-          console.log(
-            `🔬 [Filter "${printMethod}"] REJECTED "${m.title}" (${m.code}) — techSlug="${techSlug}", raw print_method="${m.print_method ?? "null"}", cats=[${m.categories?.map((c) => c.slug).join(", ")}]`,
-          );
+    const controller = new AbortController();
+    let isCurrent = true;
+    const loadingTimeoutId = window.setTimeout(() => {
+      setLoading(true);
+      setError(null);
+    }, 0);
+
+    const params = new URLSearchParams(scopedQueryString);
+    params.set("locale", locale);
+
+    fetch(`/api/materials?${params.toString()}`, { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error("Material search is temporarily unavailable.");
         }
-        return match;
+        return response.json() as Promise<MaterialSearchResponse>;
+      })
+      .then((nextCatalog) => {
+        if (isCurrent) setCatalog(nextCatalog);
+      })
+      .catch((fetchError) => {
+        if (isCurrent && (fetchError as { name?: string }).name !== "AbortError") {
+          setError(fetchError instanceof Error ? fetchError.message : "Material search failed.");
+        }
+      })
+      .finally(() => {
+        if (isCurrent) setLoading(false);
       });
-      console.log(
-        `🔬 [Filter "${printMethod}"] ${before} → ${list.length} materials after print method filter`,
-      );
-    }
 
-    // 2. Base Material Filter
-    if (selectedBaseMaterials.length > 0) {
-      list = list.filter((m) => {
-        const { baseMat } = deriveMaterialAttributes(m);
-        return selectedBaseMaterials.includes(baseMat.toLowerCase());
-      });
-    }
+    return () => {
+      isCurrent = false;
+      window.clearTimeout(loadingTimeoutId);
+      controller.abort();
+    };
+  }, [initialCatalog, initialQueryString, locale, scopedQueryString]);
 
-    // 3. Finish Filter
-    if (selectedFinishes.length > 0) {
-      list = list.filter((m) => {
-        const { finish } = deriveMaterialAttributes(m);
-        return selectedFinishes.includes(finish.toLowerCase());
-      });
-    }
-
-    // 4. Adhesive Filter
-    if (selectedAdhesives.length > 0) {
-      list = list.filter((m) => {
-        const { adhesive } = deriveMaterialAttributes(m);
-        return selectedAdhesives.includes(adhesive.toLowerCase());
-      });
-    }
-
-    // 5. Sorting (Name: A to Z, Name: Z to A)
-    if (sort === "name_desc") {
-      list.sort((a, b) => b.title.localeCompare(a.title, locale));
-    } else {
-      list.sort((a, b) => a.title.localeCompare(b.title, locale));
-    }
-
-    return list;
-  }, [initialMaterials, printMethod, selectedBaseMaterials, selectedFinishes, selectedAdhesives, sort, locale, searchValue]);
-
-  // Paginated partition
-  const perPage = 12;
-  const total = processed.length;
-  const lastPage = Math.ceil(total / perPage);
-  const activePage = Math.max(1, Math.min(currentPage, lastPage));
-  const paginatedMaterials = useMemo(() => {
-    return processed.slice((activePage - 1) * perPage, activePage * perPage);
-  }, [processed, activePage, perPage]);
+  const total = catalog.total;
+  const lastPage = catalog.lastPage;
+  const activePage = catalog.currentPage;
+  const paginatedMaterials = catalog.materials;
 
   // Filter choices
   const filterSections = [
@@ -882,13 +861,33 @@ export default function MaterialsCatalogClient({
 
           {/* Grid listing */}
           <div className="min-w-0 flex-1 flex flex-col gap-8">
+            {error ? (
+              <div className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                {error}
+              </div>
+            ) : null}
+
             {paginatedMaterials.length > 0 ? (
               <div
-                className={`grid grid-cols-1 gap-6 sm:grid-cols-2 ${isSidebarOpen ? "xl:grid-cols-3" : "xl:grid-cols-4"
+                className={`grid grid-cols-1 gap-6 transition-opacity sm:grid-cols-2 ${loading ? "opacity-60" : "opacity-100"} ${isSidebarOpen ? "xl:grid-cols-3" : "xl:grid-cols-4"
                   }`}
               >
                 {paginatedMaterials.map((material) => (
-                  <MaterialCard key={material.id} material={material} locale={locale} />
+                  <MaterialCard
+                    key={material.id}
+                    material={material}
+                    locale={locale}
+                    printMethod={printMethod}
+                  />
+                ))}
+              </div>
+            ) : loading ? (
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
+                {Array.from({ length: 8 }, (_, index) => (
+                  <div
+                    key={index}
+                    className="h-[520px] animate-pulse rounded-2xl border border-slate-100 bg-white shadow-[0_4px_20px_rgba(109,109,120,0.05)]"
+                  />
                 ))}
               </div>
             ) : (

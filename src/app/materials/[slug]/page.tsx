@@ -7,10 +7,13 @@ import { getTranslations } from "next-intl/server";
 import Accordion from "@/components/Accordion";
 import CTABanner from "@/components/CTABanner";
 import IccProfileModal from "@/components/materials/IccProfileModal";
+import ProductsListing from "@/components/ProductsListing";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 import DownloadSpecSheetButton from "@/components/materials/DownloadSpecSheetButton";
+import { parseCatalogSearchParams, searchCatalogProducts } from "@/lib/search/products";
+import type { CatalogSearchResponse } from "@/lib/search/types";
 
 type MaterialProduct = {
   id: number;
@@ -79,24 +82,27 @@ type MaterialPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-// Pagination helper
-function buildVisiblePages(currentPage: number, lastPage: number): Array<number | "ellipsis"> {
-  if (lastPage <= 1) return [1];
-  const pages = new Set<number>();
-  pages.add(1);
-  pages.add(lastPage);
-  const start = Math.max(1, currentPage - 3);
-  const end = Math.min(lastPage, currentPage + 3);
-  for (let page = start; page <= end; page += 1) pages.add(page);
-  const sortedPages = [...pages].sort((a, b) => a - b);
-  const visible: Array<number | "ellipsis"> = [];
-  for (let i = 0; i < sortedPages.length; i += 1) {
-    const page = sortedPages[i];
-    const prev = sortedPages[i - 1];
-    if (prev && page - prev > 1) visible.push("ellipsis");
-    visible.push(page);
-  }
-  return visible;
+const emptyCatalogResponse: CatalogSearchResponse = {
+  products: [],
+  total: 0,
+  currentPage: 1,
+  lastPage: 1,
+  perPage: 12,
+  filters: { ranges: [], options: [] },
+};
+
+function toUrlSearchParams(query: Record<string, string | string[] | undefined>): URLSearchParams {
+  const params = new URLSearchParams();
+
+  Object.entries(query).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      value.forEach((item) => params.append(key, item));
+    } else if (value !== undefined) {
+      params.append(key, value);
+    }
+  });
+
+  return params;
 }
 
 // Data fetching
@@ -152,16 +158,6 @@ function ContactIcon({ type }: { type: "call" | "email" | "whatsapp" }) {
   );
 }
 
-
-function FilterIcon() {
-  return (
-    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <path d="M3 5H17" stroke="#52525B" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M5.5 10H14.5" stroke="#52525B" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M8 15H12" stroke="#52525B" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
 
 function DetailTable({ rows }: { rows: { label: string; value: ReactNode }[] }) {
   return (
@@ -236,126 +232,29 @@ function HelpPanel({
   );
 }
 
-type ProductCardData = {
-  id: number;
-  sku: string;
-  name: string;
-  subtitle: string | null;
-  excerpt: string | null;
-  materialTitle: string | null;
-  price: number;
-  originalPrice: number | null;
-  inStock: boolean;
-  mainImage: string | null;
-  categories: { id: number; name: string; slug: string }[];
-  slug: string;
-  type: string | null;
-  createdAt: number;
-  packing_group: number | null;
-};
-
-function ProductCard({ product, href, outOfStockLabel }: { product: ProductCardData; href?: { pathname: string; query?: { type: string } }; outOfStockLabel: string }) {
-  const imageUrl = toDisplayImageUrl(product.mainImage) || "/images/labelrolls.png";
-  const linkHref = href ?? { pathname: `/products/${product.slug}` };
-  return (
-    <Link href={linkHref} className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] transition-shadow hover:shadow-md">
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-50">
-        <Image src={imageUrl} alt={product.name} fill sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw" className="object-contain p-4 transition-transform duration-300 group-hover:scale-105" unoptimized />
-        {!product.inStock && (
-          <span className="absolute left-3 top-3 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-600">{outOfStockLabel}</span>
-        )}
-      </div>
-      <div className="flex flex-1 flex-col gap-2 p-5">
-        <p className="text-base font-semibold leading-6 text-neutral-800 transition-colors group-hover:text-amber-600">{product.name}</p>
-        {product.subtitle && <p className="text-sm leading-5 text-neutral-500">{product.subtitle}</p>}
-        {Number(product.price) > 0 && (
-          <p className="mt-auto pt-2 text-base font-bold text-neutral-900">
-            €{Number(product.price).toFixed(2)}
-          </p>
-        )}
-      </div>
-    </Link>
-  );
-}
-
-function EmptyState({ title, description }: { title: string; description: string }) {
-  return (
-    <div className="flex flex-col items-center gap-3 py-16 text-center">
-      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
-        <svg className="h-7 w-7 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-          <rect x="3" y="3" width="18" height="18" rx="3" />
-          <path d="M9 9h6M9 13h4" />
-        </svg>
-      </div>
-      <p className="text-base font-semibold text-neutral-700">{title}</p>
-      <p className="max-w-xs text-sm text-neutral-500">{description}</p>
-    </div>
-  );
-}
-
-function productHref(product: ProductCardData): { pathname: string; query?: { type: "simple" | "variable" | "group_product" } } | undefined {
-  if (!product.slug) return undefined;
-  if (product.type) return { pathname: `/products/${product.slug}`, query: { type: product.type as "simple" | "variable" | "group_product" } };
-  return { pathname: `/products/${product.slug}` };
-}
-
 function MaterialProductsSection({
-  title, products, currentPage, lastPage, materialSlug, labels,
+  title,
+  initialCatalog,
+  baselineCatalog,
+  initialQueryString,
+  scopeQueryString,
 }: {
   title: string;
-  products: ProductCardData[];
-  currentPage: number;
-  lastPage: number;
-  materialSlug: string;
-  labels: { noProductsTitle: string; noProductsDescription: string; previous: string; next: string; filters: string; sortNameAsc: string; outOfStock: string };
+  initialCatalog: CatalogSearchResponse;
+  baselineCatalog: CatalogSearchResponse;
+  initialQueryString: string;
+  scopeQueryString: string;
 }) {
-  const visiblePages = buildVisiblePages(currentPage, lastPage);
   return (
     <section className="bg-gray-50 px-4 py-24 sm:px-6 lg:px-10">
       <div className="mx-auto flex max-w-300 flex-col gap-8">
         <h2 className="text-4xl font-bold leading-12 text-neutral-800">{title}</h2>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <button type="button" className="inline-flex h-10 w-fit items-center gap-2 rounded-[42px] border border-slate-200 px-5 text-neutral-800 transition-colors hover:bg-slate-50">
-            <FilterIcon />
-            <span className="text-base font-semibold leading-6">{labels.filters}</span>
-          </button>
-          <label className="flex h-10 w-fit items-center gap-3 rounded-[42px] border border-slate-200 px-5 text-neutral-800">
-            <span className="sr-only">{labels.sortNameAsc}</span>
-            <select defaultValue="name_asc" disabled className="bg-transparent text-base leading-5 outline-none disabled:opacity-100">
-              <option value="name_asc">{labels.sortNameAsc}</option>
-            </select>
-          </label>
-        </div>
-        {products.length === 0 ? (
-          <EmptyState title={labels.noProductsTitle} description={labels.noProductsDescription} />
-        ) : (
-          <>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product} href={productHref(product)} outOfStockLabel={labels.outOfStock} />
-              ))}
-            </div>
-            {lastPage > 1 && (
-              <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-                <Link href={{ pathname: `/materials/${materialSlug}`, query: { page: Math.max(1, currentPage - 1) } }} className={`rounded-[50px] border border-slate-100 bg-white px-6 py-2.5 text-base font-medium text-neutral-800 transition-colors hover:bg-slate-50 ${currentPage <= 1 ? "pointer-events-none opacity-50" : ""}`}>
-                  {labels.previous}
-                </Link>
-                {visiblePages.map((item, index) =>
-                  item === "ellipsis" ? (
-                    <span key={`ellipsis-${index}`} className="px-2 text-sm font-semibold text-zinc-500">...</span>
-                  ) : (
-                    <Link key={item} href={{ pathname: `/materials/${materialSlug}`, query: { page: item } }} className={`flex h-10 min-w-10 items-center justify-center rounded-[50px] border border-slate-100 px-3 text-sm font-semibold transition-colors ${item === currentPage ? "border-amber-500 bg-amber-500 text-white" : "bg-white text-neutral-700 hover:bg-slate-50"}`} aria-current={item === currentPage ? "page" : undefined}>
-                      {item}
-                    </Link>
-                  ),
-                )}
-                <Link href={{ pathname: `/materials/${materialSlug}`, query: { page: Math.min(lastPage, currentPage + 1) } }} className={`rounded-[50px] border border-slate-100 bg-white px-6 py-2.5 text-base font-semibold text-neutral-800 transition-colors hover:bg-slate-50 ${currentPage >= lastPage ? "pointer-events-none opacity-50" : ""}`}>
-                  {labels.next}
-                </Link>
-              </div>
-            )}
-          </>
-        )}
+        <ProductsListing
+          initialCatalog={initialCatalog}
+          initialQueryString={initialQueryString}
+          scopeQueryString={scopeQueryString}
+          baselineRangeFilters={baselineCatalog.filters.ranges}
+        />
       </div>
     </section>
   );
@@ -373,31 +272,28 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
 
   const isNl = locale === "nl";
   const category = material.categories?.[0] ?? null;
+  const routeQuery = toUrlSearchParams(query);
+  const scopeQuery = new URLSearchParams({
+    material_id: String(material.id),
+    per_page: "12",
+  });
+  const initialSearchQuery = new URLSearchParams(scopeQuery);
 
-  const products: ProductCardData[] = (material.products || []).map((product) => ({
-    id: product.id,
-    sku: product.sku || "",
-    name: product.name,
-    subtitle: product.subtitle,
-    excerpt: product.excerpt,
-    materialTitle: null,
-    price: product.price ? Number(product.price) : 0,
-    originalPrice: null,
-    inStock: product.in_stock,
-    mainImage: product.main_image,
-    categories: [],
-    slug: product.slug,
-    type: null,
-    createdAt: Date.parse(product.updated_at),
-    packing_group: product.packing_group || null,
-  }));
+  routeQuery.forEach((value, key) => {
+    initialSearchQuery.append(key, value);
+  });
 
-  const requestedPage = Array.isArray(query.page) ? query.page[0] : query.page;
-  const normalizedPage = Number.parseInt(requestedPage ?? "1", 10);
-  const currentPage = Number.isFinite(normalizedPage) && normalizedPage > 0 ? normalizedPage : 1;
-  const perPage = 9;
-  const lastPage = Math.ceil(products.length / perPage) || 1;
-  const paginatedProducts = products.slice((currentPage - 1) * perPage, currentPage * perPage);
+  let initialCatalog = emptyCatalogResponse;
+  let baselineCatalog = emptyCatalogResponse;
+
+  try {
+    [initialCatalog, baselineCatalog] = await Promise.all([
+      searchCatalogProducts(parseCatalogSearchParams(initialSearchQuery, locale)),
+      searchCatalogProducts(parseCatalogSearchParams(scopeQuery, locale)),
+    ]);
+  } catch (error) {
+    console.error("Failed to load material products from Elasticsearch.", error);
+  }
 
   const materialImage =
     toDisplayImageUrl(material.main_image) ||
@@ -440,6 +336,8 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
           specRows={rawSpecRows}
           variant="link"
           downloadLabel={t("materialsPage.downloadSpecSheet")}
+          materialImage={materialImage}
+          description={material.description}
           pdfTitleLabel={t("materialDetail.specSheet")}
           aboutThisMaterialLabel={t("materialDetail.aboutThisMaterial")}
           specificationsLabel={t("materialDetail.specifications")}
@@ -555,6 +453,8 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
                   specRows={rawSpecRows}
                   variant="button"
                   downloadLabel={t("materialsPage.downloadSpecSheet")}
+                  materialImage={materialImage}
+                  description={material.description}
                   pdfTitleLabel={t("materialDetail.specSheet")}
                   aboutThisMaterialLabel={t("materialDetail.aboutThisMaterial")}
                   specificationsLabel={t("materialDetail.specifications")}
@@ -569,19 +469,10 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
 
       <MaterialProductsSection
         title={t("materialsPage.productsFromThisMaterial")}
-        products={paginatedProducts}
-        currentPage={currentPage}
-        lastPage={lastPage}
-        materialSlug={slug}
-        labels={{
-          noProductsTitle: t("common.noProductsFound"),
-          noProductsDescription: t("materialsPage.noProductsForMaterial"),
-          previous: t("common.previous"),
-          next: t("common.next"),
-          filters: t("common.filters"),
-          sortNameAsc: t("materialDetail.sortNameAsc"),
-          outOfStock: t("product.outOfStock"),
-        }}
+        initialCatalog={initialCatalog}
+        baselineCatalog={baselineCatalog}
+        initialQueryString={routeQuery.toString()}
+        scopeQueryString={scopeQuery.toString()}
       />
 
       <CTABanner />

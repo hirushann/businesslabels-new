@@ -320,10 +320,16 @@ function CatalogProductsListing({
     () => new URLSearchParams(displayQueryString),
     [displayQueryString],
   );
-  const scopedCurrentQueryString = useMemo(
-    () => mergeQueryStrings(scopeQueryString, displayQueryString),
-    [scopeQueryString, displayQueryString],
-  );
+  const isEpson = printer?.slug?.toLowerCase().includes("epson") || printer?.title?.toLowerCase().includes("epson");
+  const scopedCurrentQueryString = useMemo(() => {
+    let queryStr = displayQueryString;
+    const params = new URLSearchParams(queryStr);
+    if (isEpson && params.get("category") === "inkt-cartridges-nl") {
+      params.set("category", "inkt-cartridges-nl,maintenance-boxen-nl");
+      queryStr = params.toString();
+    }
+    return mergeQueryStrings(scopeQueryString, queryStr);
+  }, [scopeQueryString, displayQueryString, isEpson]);
   const listingResetKey = useMemo(() => {
     const params = new URLSearchParams(scopedCurrentQueryString);
     params.delete("page");
@@ -344,7 +350,7 @@ function CatalogProductsListing({
   );
   const hasInitialCatalog =
     scopedCurrentQueryString === initialSortedQueryString;
-
+ 
   useEffect(() => {
     if (
       optimisticQueryString === null ||
@@ -353,11 +359,11 @@ function CatalogProductsListing({
       const timeoutId = window.setTimeout(() => {
         setOptimisticQueryString(null);
       }, 0);
-
+ 
       return () => window.clearTimeout(timeoutId);
     }
   }, [currentQueryString, optimisticQueryString]);
-
+ 
   const setParams = useCallback(
     (updater: (params: URLSearchParams) => void) => {
       const next = new URLSearchParams(displayQueryString);
@@ -371,8 +377,7 @@ function CatalogProductsListing({
     },
     [displayQueryString, pathname, router],
   );
-
-  const isEpson = printer?.slug?.toLowerCase().includes("epson") || printer?.title?.toLowerCase().includes("epson");
+ 
   const activeCategory = displayParams.get("category") || "";
 
   const categoryCards = isEpson
@@ -853,7 +858,7 @@ function CatalogProductsListing({
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <h2 className="text-xl font-bold text-neutral-800">
-                    Filters
+                    {t("search.filters")}
                   </h2>
                   {activeFilterCount > 0 ? (
                     <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-100 px-1.5 text-xs font-semibold text-amber-600">
@@ -867,7 +872,7 @@ function CatalogProductsListing({
                     onClick={clearFilters}
                     className="text-sm font-medium text-amber-500 hover:underline"
                   >
-                    Clear all
+                    {t("search.clearAll")}
                   </button>
                 ) : null}
               </div>
@@ -1054,8 +1059,10 @@ function CatalogProductsListing({
                             className="text-sm font-medium text-amber-600 hover:text-amber-700 transition-colors"
                           >
                             {showAll
-                              ? "Show less"
-                              : `Show more (${filter.options.length - DISPLAY_LIMIT} more)`}
+                              ? t("filters.showLess")
+                              : t("filters.showMore", {
+                                  count: filter.options.length - DISPLAY_LIMIT,
+                                })}
                           </button>
                         )}
                       </div>
@@ -1081,7 +1088,7 @@ function CatalogProductsListing({
           searchValue ? (
             <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
               <p className="text-sm text-blue-800">
-                Did you mean:{" "}
+                {t("search.didYouMean")}{" "}
                 <button
                   type="button"
                   onClick={() => setSearchInput(catalog.suggestion!)}
@@ -1155,10 +1162,10 @@ function CatalogProductsListing({
                             strokeLinecap="round"
                           />
                         </svg>
-                        Loading...
+                        {t("search.loadingMore")}
                       </>
                     ) : (
-                      "View more Products"
+                      t("search.viewMoreProducts")
                     )}
                   </button>
                 </div>

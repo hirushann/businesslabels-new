@@ -49,7 +49,7 @@ export default function LanguageSwitcher() {
 
     // Build the target URL: EN gets /en prefix, NL gets clean path
     const cleanPath = stripLocalePath(pathname);
-    const targetPath = normalized === 'en' ? '/en' + cleanPath : cleanPath;
+    const targetPath = (normalized === 'en' ? '/en' + cleanPath : cleanPath) + window.location.search;
     window.location.href = targetPath;
   };
 

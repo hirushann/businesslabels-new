@@ -159,6 +159,23 @@ describe('textQuery Accuracy & Precision', () => {
     expect(should.length).toBeGreaterThan(0);
     expect(query.bool?.minimum_should_match).toBe(1);
   });
+
+  it('should construct a per-token fuzzy-prefix query for multi-term queries to handle partial search typos', () => {
+    const query = textQuery('epson colow') as estypes.QueryDslQueryContainer;
+    const should = query.bool?.should as estypes.QueryDslQueryContainer[];
+
+    const perTokenClause = should.find((s) => s.bool && s.bool.must && s.bool.boost === 150);
+    expect(perTokenClause).toBeDefined();
+
+    const mustClauses = perTokenClause!.bool!.must as estypes.QueryDslQueryContainer[];
+    expect(mustClauses.length).toBe(2);
+
+    mustClauses.forEach((clause) => {
+      expect(clause.bool).toBeDefined();
+      expect(clause.bool?.minimum_should_match).toBe(1);
+      expect((clause.bool?.should as any[]).length).toBe(2);
+    });
+  });
 });
 
 function shouldFindFuzzy(query: estypes.QueryDslQueryContainer) {

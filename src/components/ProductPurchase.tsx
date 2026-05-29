@@ -402,7 +402,7 @@ export default function ProductPurchase({
 
   const activeDiscountPercent = useMemo(() => {
     if (!activeTier) return 0;
-    const pct = Number.parseInt(activeTier.discount.replace("%", ""), 10);
+    const pct = Number.parseFloat(activeTier.discount.replace("%", ""));
     return Number.isFinite(pct) ? pct : 0;
   }, [activeTier]);
 
@@ -415,7 +415,7 @@ export default function ProductPurchase({
       .find((tier) => qty >= Number.parseInt(tier.quantity, 10));
 
     if (matchingTier) {
-      const pct = Number.parseInt(matchingTier.discount.replace("%", ""), 10);
+      const pct = Number.parseFloat(matchingTier.discount.replace("%", ""));
       if (Number.isFinite(pct) && pct > 0) {
         return price * (1 - pct / 100);
       }
@@ -684,20 +684,22 @@ export default function ProductPurchase({
       <div className="flex flex-col gap-3">
         <div className="flex justify-between items-center">
           <span className="text-blue-400 text-base font-normal leading-5">{t("product.sku", { sku: displaySku })}</span>
-          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${resolvedInStock ? "bg-[#00A63E]" : "bg-zinc-400"}`}>
-            {resolvedInStock ? (
-              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
-                <circle cx="6" cy="6" r="5" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6l1.5 1.5L8 4" />
-              </svg>
-            ) : (
-              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
-                <circle cx="6" cy="6" r="5" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4l4 4m0-4L4 8" />
-              </svg>
-            )}
-            <span className="text-white text-xs font-semibold leading-none">{stockText}</span>
-          </div>
+          {((stock != null && stock > 0) || deliveryDatesNoStock == null || deliveryDatesNoStock < 10) ? (
+            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${resolvedInStock ? "bg-[#00A63E]" : "bg-zinc-400"}`}>
+              {resolvedInStock ? (
+                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
+                  <circle cx="6" cy="6" r="5" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6l1.5 1.5L8 4" />
+                </svg>
+              ) : (
+                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
+                  <circle cx="6" cy="6" r="5" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4l4 4m0-4L4 8" />
+                </svg>
+              )}
+              <span className="text-white text-xs font-semibold leading-none">{stockText}</span>
+            </div>
+          ) : null}
         </div>
         <div className="flex items-baseline gap-2">
           <span className="text-neutral-800 text-4xl font-bold leading-[48px]">
@@ -778,7 +780,7 @@ export default function ProductPurchase({
               const tierQty = Number.parseInt(tier.quantity, 10);
               const isActive = activeTier?.quantity === tier.quantity;
               const tierUnitPrice = getUnitPriceForQuantity(tierQty) ?? price ?? 0;
-              const savingsPct = Number.parseInt(tier.discount.replace("%", ""), 10);
+              const savingsPct = Number.parseFloat(tier.discount.replace("%", ""));
               const savingsPerUnit = (price ?? 0) - tierUnitPrice;
 
               return (

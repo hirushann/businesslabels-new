@@ -9,6 +9,8 @@ import { getServerLocale } from "@/lib/i18n/server";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from '@/lib/i18n/getMessages';
 
+import { cookies } from "next/headers";
+
 export const metadata = {
   title: "Businesslabels — Labels for Epson ColorWorks Printers",
   description:
@@ -18,6 +20,8 @@ export const metadata = {
 export default async function RootLayout({ children }) {
   const locale = await getServerLocale();
   const messages = await getMessages(locale);
+  const cookieStore = await cookies();
+  const hasAuthToken = !!(cookieStore.get("auth_token")?.value || cookieStore.get("auth_session")?.value);
 
   return (
     <html lang={locale} className="font-sans" suppressHydrationWarning>
@@ -26,7 +30,7 @@ export default async function RootLayout({ children }) {
           <CartProvider>
             <WishlistProvider>
               <HelpProvider>
-                <Header />
+                <Header hasAuthToken={hasAuthToken} />
                 <main className="flex-1">{children}</main>
                 <Footer />
               </HelpProvider>

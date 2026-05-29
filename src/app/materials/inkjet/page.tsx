@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import ReviewsSection from "@/components/ReviewsSection";
-import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
+import { getServerLocale } from "@/lib/i18n/server";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import MaterialsCatalogClient from "@/components/materials/MaterialsCatalogClient";
+import { parseMaterialSearchParams, searchMaterials } from "@/lib/search/materials";
+import type { MaterialSearchResponse } from "@/lib/search/materials";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations();
@@ -14,59 +16,46 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-type Material = {
-  id: number;
-  title: string;
-  subtitle: string;
-  slug: string;
-  code: string;
-  brand: string;
-  status: string;
-  categories: { id: number; name: string; slug: string }[];
-  specifications: { material_specs?: { label: string; value: string }[] } | null;
-  print_method: string | null;
-  base_material: string | null;
-  finish: string | null;
-  adhesive: string | null;
-  main_image?: string;
+type SearchParams = Record<string, string | string[] | undefined>;
+
+const emptyMaterialsResponse: MaterialSearchResponse = {
+  materials: [],
+  total: 0,
+  currentPage: 1,
+  lastPage: 1,
+  perPage: 12,
 };
 
-type MaterialsResponse = { data: Material[] };
-type SearchParams = Record<string, string | string[] | undefined>;
+function toUrlSearchParams(query: SearchParams): URLSearchParams {
+  const params = new URLSearchParams();
+
+  Object.entries(query).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      value.forEach((item) => params.append(key, item));
+    } else if (value !== undefined) {
+      params.append(key, value);
+    }
+  });
+
+  return params;
+}
 
 export default async function InkjetMaterialsPage({
   searchParams,
 }: {
   searchParams?: Promise<SearchParams>;
 }) {
-  const baseUrl = process.env.BBNL_API_BASE_URL;
   const t = await getTranslations();
-
-  if (!baseUrl) throw new Error("BBNL_API_BASE_URL is not configured");
-
   const locale = await getServerLocale();
   const rawParams = (await searchParams) ?? {};
-  const searchRaw = rawParams.search;
-  const search = Array.isArray(searchRaw)
-    ? searchRaw[0] ?? ""
-    : (searchRaw ?? "").trim();
-
-  let materials: Material[] = [];
-
-  const params = new URLSearchParams({ per_page: "1000" });
-  if (search) params.set("search", search);
-  const apiUrl = `${baseUrl}/api/materials?${params.toString()}`;
+  const routeQuery = toUrlSearchParams(rawParams);
+  routeQuery.set("print_method", "inkjet");
+  let initialCatalog = emptyMaterialsResponse;
 
   try {
-    const response = await fetch(withLocaleParam(apiUrl, locale), { cache: "no-store" });
-    if (response.ok) {
-      const json = (await response.json()) as MaterialsResponse;
-      materials = json.data || [];
-    } else {
-      console.error(`Failed to fetch materials: ${response.status}`);
-    }
+    initialCatalog = await searchMaterials(parseMaterialSearchParams(routeQuery, locale));
   } catch (error) {
-    console.error("Error fetching materials:", error);
+    console.error("Failed to load inkjet material catalog.", error);
   }
 
   const isNl = locale === "nl";
@@ -119,7 +108,8 @@ export default async function InkjetMaterialsPage({
 
             {/* Interactive Materials Catalog — pre-filtered to Inkjet */}
             <MaterialsCatalogClient
-              initialMaterials={materials}
+              initialCatalog={initialCatalog}
+              initialQueryString={routeQuery.toString()}
               locale={locale}
               defaultPrintMethod="inkjet"
             />

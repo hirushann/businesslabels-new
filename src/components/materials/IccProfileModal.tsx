@@ -116,8 +116,17 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
       if (res.ok) {
         setSubmitted(true);
       } else {
-        const data = (await res.json()) as { message?: string };
-        setErrors({ submit: data.message ?? (isNl ? 'Er is iets misgegaan. Probeer het opnieuw.' : 'Something went wrong. Please try again.') });
+        const data = (await res.json()) as { message?: string; errors?: Record<string, string[]> };
+        let errorText = data.message ?? (isNl ? 'Er is iets misgegaan. Probeer het opnieuw.' : 'Something went wrong. Please try again.');
+        
+        if (data.errors) {
+          const firstErrorKey = Object.keys(data.errors)[0];
+          if (firstErrorKey && data.errors[firstErrorKey][0]) {
+            errorText = data.errors[firstErrorKey][0];
+          }
+        }
+
+        setErrors({ submit: errorText });
       }
     } catch {
       setErrors({ submit: isNl ? 'Verbindingsfout. Controleer uw internetverbinding.' : 'Connection error. Please check your internet connection.' });
