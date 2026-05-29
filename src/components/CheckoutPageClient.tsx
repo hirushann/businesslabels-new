@@ -280,22 +280,22 @@ function CheckoutShell({
  
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <label className="flex flex-col gap-2">
-                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.firstName')}</span>
+                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.firstName')} <span className="text-red-500">*</span></span>
                         <input className={inputClasses(Boolean(errors.firstName))} value={form.firstName} onChange={(e) => handleChange("firstName", e.target.value)} />
                         {errors.firstName && <span className="text-xs text-red-500 font-medium">{errors.firstName}</span>}
                       </label>
                       <label className="flex flex-col gap-2">
-                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.lastName')}</span>
+                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.lastName')} <span className="text-red-500">*</span></span>
                         <input className={inputClasses(Boolean(errors.lastName))} value={form.lastName} onChange={(e) => handleChange("lastName", e.target.value)} />
                         {errors.lastName && <span className="text-xs text-red-500 font-medium">{errors.lastName}</span>}
                       </label>
                       <label className="flex flex-col gap-2">
-                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.email')}</span>
+                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.email')} <span className="text-red-500">*</span></span>
                         <input className={inputClasses(Boolean(errors.email))} value={form.email} onChange={(e) => handleChange("email", e.target.value)} />
                         {errors.email && <span className="text-xs text-red-500 font-medium">{errors.email}</span>}
                       </label>
                       <label className="flex flex-col gap-2">
-                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.mobileNumber')}</span>
+                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.mobileNumber')} <span className="text-red-500">*</span></span>
                         <input className={inputClasses(Boolean(errors.mobileNumber))} value={form.mobileNumber} onChange={(e) => handleChange("mobileNumber", e.target.value)} />
                         {errors.mobileNumber && <span className="text-xs text-red-500 font-medium">{errors.mobileNumber}</span>}
                       </label>
@@ -316,7 +316,7 @@ function CheckoutShell({
                         className={inputClasses(Boolean(errors.streetAddress))}
                         hasError={Boolean(errors.streetAddress)}
                       />
-                      <span className="text-sm font-semibold text-neutral-700">{t('checkout.streetAddress')}</span>
+                      <span className="text-sm font-semibold text-neutral-700">{t('checkout.streetAddress')} <span className="text-red-500">*</span></span>
                       <input className={inputClasses(Boolean(errors.streetAddress))} value={form.streetAddress} onChange={(e) => handleChange("streetAddress", e.target.value)} />
                       {errors.streetAddress && <span className="text-xs text-red-500 font-medium">{errors.streetAddress}</span>}
                     </label>
@@ -331,17 +331,17 @@ function CheckoutShell({
                         </select>
                       </label>
                       <label className="flex flex-col gap-2 md:col-span-1">
-                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.city')}</span>
+                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.city')} <span className="text-red-500">*</span></span>
                         <input className={inputClasses(Boolean(errors.city))} value={form.city} onChange={(e) => handleChange("city", e.target.value)} />
                         {errors.city && <span className="text-xs text-red-500 font-medium">{errors.city}</span>}
                       </label>
                       <label className="flex flex-col gap-2 md:col-span-1">
-                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.state')}</span>
+                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.state')} <span className="text-red-500">*</span></span>
                         <input className={inputClasses(Boolean(errors.state))} value={form.state} onChange={(e) => handleChange("state", e.target.value)} />
                         {errors.state && <span className="text-xs text-red-500 font-medium">{errors.state}</span>}
                       </label>
                       <label className="flex flex-col gap-2 md:col-span-1">
-                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.postcode')}</span>
+                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.postcode')} <span className="text-red-500">*</span></span>
                         <input className={inputClasses(Boolean(errors.postcode))} value={form.postcode} onChange={(e) => handleChange("postcode", e.target.value)} />
                         {errors.postcode && <span className="text-xs text-red-500 font-medium">{errors.postcode}</span>}
                       </label>
@@ -350,7 +350,7 @@ function CheckoutShell({
  
                   <div className="flex flex-col gap-5">
                     <div className="flex flex-col gap-1">
-                      <h2 className="text-neutral-800 text-2xl font-bold leading-8">{t('checkout.paymentMethod')}</h2>
+                      <h2 className="text-neutral-800 text-2xl font-bold leading-8">{t('checkout.paymentMethod')} <span className="text-red-500">*</span></h2>
                       <p className="text-neutral-600 text-sm leading-5">
                         {t('checkout.paymentMethodDesc')}
                       </p>
