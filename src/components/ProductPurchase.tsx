@@ -402,7 +402,7 @@ export default function ProductPurchase({
 
   const activeDiscountPercent = useMemo(() => {
     if (!activeTier) return 0;
-    const pct = Number.parseInt(activeTier.discount.replace("%", ""), 10);
+    const pct = Number.parseFloat(activeTier.discount.replace("%", ""));
     return Number.isFinite(pct) ? pct : 0;
   }, [activeTier]);
 
@@ -415,7 +415,7 @@ export default function ProductPurchase({
       .find((tier) => qty >= Number.parseInt(tier.quantity, 10));
 
     if (matchingTier) {
-      const pct = Number.parseInt(matchingTier.discount.replace("%", ""), 10);
+      const pct = Number.parseFloat(matchingTier.discount.replace("%", ""));
       if (Number.isFinite(pct) && pct > 0) {
         return price * (1 - pct / 100);
       }
@@ -780,7 +780,7 @@ export default function ProductPurchase({
               const tierQty = Number.parseInt(tier.quantity, 10);
               const isActive = activeTier?.quantity === tier.quantity;
               const tierUnitPrice = getUnitPriceForQuantity(tierQty) ?? price ?? 0;
-              const savingsPct = Number.parseInt(tier.discount.replace("%", ""), 10);
+              const savingsPct = Number.parseFloat(tier.discount.replace("%", ""));
               const savingsPerUnit = (price ?? 0) - tierUnitPrice;
 
               return (
