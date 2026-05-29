@@ -314,7 +314,57 @@ function normalizePropertyDisplayValue(value: unknown): string | null {
   return normalizeDisplayValue(value);
 }
 
-function specsFromProduct(product: ProductDetail | null): Array<{ label: string; value: string }> {
+function getSpecLabel(key: string, locale: "en" | "nl", t: any): string {
+  const cleanKey = key.toLowerCase().trim();
+
+  const mapping: Record<string, string> = {
+    sku: "SKU",
+    category: t.has("filters.category") ? t("filters.category") : (locale === "nl" ? "Categorie" : "Category"),
+    breedte: t.has("filters.width") ? t("filters.width") : (locale === "nl" ? "Breedte" : "Width"),
+    hoogte: t.has("filters.height") ? t("filters.height") : (locale === "nl" ? "Hoogte" : "Height"),
+    afwerking: t.has("filters.finishing") ? t("filters.finishing") : (locale === "nl" ? "Afwerking" : "Finishing"),
+    lijm: t.has("filters.glue") ? t("filters.glue") : (locale === "nl" ? "Lijm" : "Glue"),
+    materiaal: t.has("filters.material") ? t("filters.material") : (locale === "nl" ? "Materiaal" : "Material"),
+    kern: t.has("filters.core") ? t("filters.core") : (locale === "nl" ? "Kern" : "Core"),
+    "buiten-diameter": t.has("filters.outer_diameter") ? t("filters.outer_diameter") : (locale === "nl" ? "Buitendiameter" : "Outer Diameter"),
+    buitendiameter: t.has("filters.outer_diameter") ? t("filters.outer_diameter") : (locale === "nl" ? "Buitendiameter" : "Outer Diameter"),
+    "max-buiten-dia": locale === "nl" ? "Max buiten dia" : "Max outer diameter",
+    max_buiten_dia: locale === "nl" ? "Max buiten dia" : "Max outer diameter",
+    "buiten-dia": locale === "nl" ? "Buiten dia" : "Outer diameter",
+    buiten_dia: locale === "nl" ? "Buiten dia" : "Outer diameter",
+    printmethode: t.has("filters.print_method") ? t("filters.print_method") : (locale === "nl" ? "Drukmethode" : "Print Method"),
+    printer_type: t.has("filters.printer_type") ? t("filters.printer_type") : (locale === "nl" ? "Printer Type" : "Printer Type"),
+    detectie: t.has("filters.detectie") ? t("filters.detectie") : (locale === "nl" ? "Detectie" : "Detection"),
+    "compatibele-merken": t.has("filters.merken") ? t("filters.merken") : (locale === "nl" ? "Compatibele merken" : "Compatible Brands"),
+    compatibele_merken: t.has("filters.merken") ? t("filters.merken") : (locale === "nl" ? "Compatibele merken" : "Compatible Brands"),
+    brand: t.has("filters.brand") ? t("filters.brand") : (locale === "nl" ? "Merk" : "Brand"),
+    merk: t.has("filters.brand") ? t("filters.brand") : (locale === "nl" ? "Merk" : "Brand"),
+    kleur: locale === "nl" ? "Kleur" : "Color",
+    vorm: locale === "nl" ? "Vorm" : "Shape",
+    perforatie: locale === "nl" ? "Perforatie" : "Perforation",
+    "aantal-banen": locale === "nl" ? "Aantal banen" : "Number of lanes",
+    aantal_banen: locale === "nl" ? "Aantal banen" : "Number of lanes",
+    verpakkingseenheid: locale === "nl" ? "Verpakkingseenheid" : "Packaging unit",
+    "lijm-temperatuur": locale === "nl" ? "Lijm temperatuur" : "Glue temperature",
+    lijm_temperatuur: locale === "nl" ? "Lijm temperatuur" : "Glue temperature",
+  };
+
+  if (mapping[cleanKey]) {
+    return mapping[cleanKey];
+  }
+
+  return toTitleCaseFromSlug(key);
+}
+
+function appendUnitIfMissing(value: string, unit: string = "mm"): string {
+  const trimmed = value.trim();
+  if (trimmed.toLowerCase().endsWith(unit.toLowerCase())) {
+    return trimmed;
+  }
+  return `${trimmed} ${unit}`;
+}
+
+function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t: any): Array<{ label: string; value: string }> {
   const missing = "-";
   const categoryNames = (product?.categories ?? [])
     .map((category) => normalizeDisplayValue(category.name))
@@ -322,7 +372,7 @@ function specsFromProduct(product: ProductDetail | null): Array<{ label: string;
     .join(", ");
   const specRows: Array<{ label: string; value: string }> = [
     { label: "SKU", value: normalizeDisplayValue(product?.sku) || missing },
-    { label: "Category", value: categoryNames || missing },
+    { label: getSpecLabel("category", locale, t), value: categoryNames || missing },
   ];
 
   const metaRows = Object.entries(product?.properties ?? {})
@@ -332,9 +382,24 @@ function specsFromProduct(product: ProductDetail | null): Array<{ label: string;
         return null;
       }
 
+      const cleanKey = key.toLowerCase().trim();
+      const needsMmSuffix = [
+        "breedte",
+        "hoogte",
+        "kern",
+        "buiten-diameter",
+        "buitendiameter",
+        "max-buiten-dia",
+        "max_buiten_dia",
+        "buiten-dia",
+        "buiten_dia"
+      ].includes(cleanKey);
+
+      const finalValue = needsMmSuffix ? appendUnitIfMissing(normalizedValue, "mm") : normalizedValue;
+
       return {
-        label: toTitleCaseFromSlug(key),
-        value: normalizedValue,
+        label: getSpecLabel(key, locale, t),
+        value: finalValue,
       };
     })
     .filter((entry): entry is { label: string; value: string } => Boolean(entry));
@@ -713,7 +778,7 @@ export default async function SingleProductPage({
   const galleryImages = (product.gallery_images ?? [])
     .map((item) => toDisplayImageUrl(item.url))
     .filter((url): url is string => Boolean(url));
-  const specs = specsFromProduct(product);
+  const specs = specsFromProduct(product, locale, t);
 
   console.log('Specs:', specs);
   const compatiblePrinterIds = normalizeIdList(product.printer_ids ?? product.meta?.printer_ids);
