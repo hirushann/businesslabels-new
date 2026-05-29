@@ -103,36 +103,49 @@ function normalizePrintMethod(raw: string): string {
 }
 
 // Dynamic helper to extract attributes when DB values are null
-function deriveMaterialAttributes(material: Material) {
+function deriveMaterialAttributes(material: Material, currentPrintMethod?: string) {
   // Normalize whatever the API returns ("dt", "thermal_direct", "TT", …) to a
   // canonical value so the slug comparison in the filter always matches.
   let printTech = material.print_method ? normalizePrintMethod(material.print_method) : "";
-  if (!printTech && material.categories) {
+  let printTechs: string[] = printTech ? [printTech] : [];
+
+  if (printTechs.length === 0 && material.categories) {
     const cats = material.categories.map((c) => c.slug.toLowerCase());
-    if (cats.includes("inkjet") || cats.some((s) => s.includes("inkjet"))) {
+    const hasInkjet = cats.includes("inkjet") || cats.some((s) => s.includes("inkjet"));
+    const hasTT = cats.includes("thermal-transfer") || cats.includes("ttr") || cats.some((s) => s.includes("thermal-transfer"));
+    const hasTD = cats.includes("thermal-direct") || cats.includes("td") || cats.includes("thermisch-direct") || cats.includes("dt") || cats.some((s) => s.includes("thermal-direct") || s.endsWith("-td") || s.includes("thermische"));
+
+    if (hasInkjet) printTechs.push("Inkjet");
+    if (hasTT) printTechs.push("Thermal Transfer");
+    if (hasTD) printTechs.push("Thermal Direct");
+
+    if (printTechs.length === 0) {
+      printTechs.push("Inkjet");
+    }
+  }
+
+  // Preserve printTech for any single-value backward compatibility references
+  if (!printTech) {
+    if (currentPrintMethod === "inkjet" && printTechs.includes("Inkjet")) {
       printTech = "Inkjet";
-    } else if (
-      cats.includes("thermal-transfer") ||
-      cats.includes("ttr") ||
-      cats.some((s) => s.includes("thermal-transfer"))
-    ) {
+    } else if (currentPrintMethod === "thermal-transfer" && printTechs.includes("Thermal Transfer")) {
       printTech = "Thermal Transfer";
-    } else if (
-      cats.includes("thermal-direct") ||
-      cats.includes("td") ||
-      cats.includes("thermisch-direct") ||
-      cats.includes("dt") ||
-      cats.some((s) => s.includes("thermal-direct") || s.endsWith("-td") || s.includes("thermische"))
-    ) {
+    } else if (currentPrintMethod === "thermal-direct" && printTechs.includes("Thermal Direct")) {
       printTech = "Thermal Direct";
     } else {
-      printTech = "Inkjet";
+      printTech = printTechs[0] || "Inkjet";
     }
   }
 
   let baseMat = material.base_material || "";
   if (!baseMat && material.categories) {
     const cats = material.categories.map((c) => c.slug.toLowerCase());
+    const contentText = [
+      material.title,
+      material.subtitle,
+      material.code,
+    ].filter(Boolean).join(" ").toLowerCase();
+
     if (cats.some((s) => s.includes("papier") || s.includes("paper"))) {
       baseMat = "Paper";
     } else if (cats.some((s) => s.includes("pe") || s.includes("polyethylene"))) {
@@ -142,7 +155,30 @@ function deriveMaterialAttributes(material: Material) {
     } else if (cats.some((s) => s.includes("po") || s.includes("polyolefin"))) {
       baseMat = "PO (polyolefin)";
     } else {
-      baseMat = "Paper";
+      const isSynthetic = cats.some((s) => s.includes("kunststof") || s.includes("synthetic") || s.includes("plastic"));
+      if (isSynthetic) {
+        if (/\b(pe|polyethylene|polyethyleen)\b/i.test(contentText) || /-pe\b/i.test(contentText)) {
+          baseMat = "PE (polyethylene)";
+        } else if (/\b(pp|polypropylene|polypropyleen)\b/i.test(contentText) || /-pp\b/i.test(contentText)) {
+          baseMat = "PP (polypropylene)";
+        } else if (/\b(po|polyolefin|polyolefine)\b/i.test(contentText) || /-po\b/i.test(contentText)) {
+          baseMat = "PO (polyolefin)";
+        } else {
+          baseMat = "PE (polyethylene)"; // Default fallback for synthetic
+        }
+      } else {
+        if (/\b(pe|polyethylene|polyethyleen)\b/i.test(contentText) || /-pe\b/i.test(contentText)) {
+          baseMat = "PE (polyethylene)";
+        } else if (/\b(pp|polypropylene|polypropyleen)\b/i.test(contentText) || /-pp\b/i.test(contentText)) {
+          baseMat = "PP (polypropylene)";
+        } else if (/\b(po|polyolefin|polyolefine)\b/i.test(contentText) || /-po\b/i.test(contentText)) {
+          baseMat = "PO (polyolefin)";
+        } else if (/\b(papier|paper)\b/i.test(contentText)) {
+          baseMat = "Paper";
+        } else {
+          baseMat = "Paper";
+        }
+      }
     }
   }
 
@@ -188,21 +224,20 @@ function deriveMaterialAttributes(material: Material) {
   if (!weight) weight = "165 g/m²";
   if (!thickness) thickness = "169 µm";
 
-  return { printTech, baseMat, finish, adhesive, weight, thickness };
+  return { printTech, printTechs, baseMat, finish, adhesive, weight, thickness };
 }
 
 function MaterialCard({
   material,
   locale,
+  printMethod,
 }: {
   material: Material;
   locale: string;
+  printMethod?: string;
 }) {
-  const { printTech, baseMat, finish, adhesive, weight, thickness } = deriveMaterialAttributes(material);
+  const { printTechs, baseMat, finish, adhesive, weight, thickness } = deriveMaterialAttributes(material, printMethod);
   const cardImage = toDisplayImageUrl(material.main_image) || "/images/labelrolls.png";
-
-  const isInkjet = printTech === "Inkjet";
-  const isTtr = printTech === "Thermal Transfer";
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_4px_20px_rgba(109,109,120,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(109,109,120,0.12)]">
@@ -214,19 +249,29 @@ function MaterialCard({
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           className="object-contain p-4 transition-transform duration-500 group-hover:scale-105"
         />
-        <span
-          className={`absolute left-4 top-4 rounded-full px-3 py-1.5 text-xs font-semibold text-white shadow-sm flex items-center gap-1.5 ${isInkjet
-            ? "bg-amber-500"
-            : isTtr
-              ? "bg-slate-700"
-              : "bg-emerald-600"
-            }`}
-        >
-          <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.867 48.867 0 00-14.326 0C3.768 7.44 3 8.375 3 9.456V15.75a2.25 2.25 0 002.25 2.25h1.091M9 9h6m-6 3h6" />
-          </svg>
-          {getLocalizedLabel(printTech, locale)}
-        </span>
+        <div className="absolute left-4 top-4 flex flex-wrap gap-2 z-10">
+          {printTechs.map((tech) => {
+            const isInkjet = tech === "Inkjet";
+            const isTtr = tech === "Thermal Transfer";
+            return (
+              <span
+                key={tech}
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold text-white shadow-sm flex items-center gap-1.5 ${
+                  isInkjet
+                    ? "bg-amber-500"
+                    : isTtr
+                      ? "bg-slate-700"
+                      : "bg-emerald-600"
+                }`}
+              >
+                <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.867 48.867 0 00-14.326 0C3.768 7.44 3 8.375 3 9.456V15.75a2.25 2.25 0 002.25 2.25h1.091M9 9h6m-6 3h6" />
+                </svg>
+                {getLocalizedLabel(tech, locale)}
+              </span>
+            );
+          })}
+        </div>
       </Link>
 
       <div className="flex flex-1 flex-col p-5">
@@ -828,7 +873,12 @@ export default function MaterialsCatalogClient({
                   }`}
               >
                 {paginatedMaterials.map((material) => (
-                  <MaterialCard key={material.id} material={material} locale={locale} />
+                  <MaterialCard
+                    key={material.id}
+                    material={material}
+                    locale={locale}
+                    printMethod={printMethod}
+                  />
                 ))}
               </div>
             ) : loading ? (
