@@ -19,7 +19,8 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
-
+import type { ReactNode } from "react";
+import LocaleLink from "@/components/LocaleLink";
 export async function generateMetadata({
   params,
   searchParams,
@@ -347,6 +348,10 @@ function getSpecLabel(key: string, locale: "en" | "nl", t: any): string {
     verpakkingseenheid: locale === "nl" ? "Verpakkingseenheid" : "Packaging unit",
     "lijm-temperatuur": locale === "nl" ? "Lijm temperatuur" : "Glue temperature",
     lijm_temperatuur: locale === "nl" ? "Lijm temperatuur" : "Glue temperature",
+    "material-code": t.has("filters.material_code") ? t("filters.material_code") : (locale === "nl" ? "Materiaalcode" : "Material Code"),
+    "materiaal-code": t.has("filters.material_code") ? t("filters.material_code") : (locale === "nl" ? "Materiaalcode" : "Material Code"),
+    material_code: t.has("filters.material_code") ? t("filters.material_code") : (locale === "nl" ? "Materiaalcode" : "Material Code"),
+    materiaal_code: t.has("filters.material_code") ? t("filters.material_code") : (locale === "nl" ? "Materiaalcode" : "Material Code"),
   };
 
   if (mapping[cleanKey]) {
@@ -364,19 +369,19 @@ function appendUnitIfMissing(value: string, unit: string = "mm"): string {
   return `${trimmed} ${unit}`;
 }
 
-function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t: any): Array<{ label: string; value: string }> {
+function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t: any): Array<{ label: string; value: ReactNode }> {
   const missing = "-";
   const categoryNames = (product?.categories ?? [])
     .map((category) => normalizeDisplayValue(category.name))
     .filter((name): name is string => Boolean(name))
     .join(", ");
-  const specRows: Array<{ label: string; value: string }> = [
+  const specRows: Array<{ label: string; value: ReactNode }> = [
     { label: "SKU", value: normalizeDisplayValue(product?.sku) || missing },
     { label: getSpecLabel("category", locale, t), value: categoryNames || missing },
   ];
 
   const metaRows = Object.entries(product?.properties ?? {})
-    .map(([key, value]) => {
+    .map(([key, value]): { label: string; value: ReactNode } | null => {
       const normalizedValue = normalizePropertyDisplayValue(value);
       if (!normalizedValue) {
         return null;
@@ -395,14 +400,31 @@ function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t:
         "buiten_dia"
       ].includes(cleanKey);
 
-      const finalValue = needsMmSuffix ? appendUnitIfMissing(normalizedValue, "mm") : normalizedValue;
+      let finalValue: ReactNode = normalizedValue;
+      if (
+        cleanKey === "material_code" ||
+        cleanKey === "materiaal_code" ||
+        cleanKey === "material-code" ||
+        cleanKey === "materiaal-code"
+      ) {
+        finalValue = (
+          <LocaleLink
+            href={`/materials/${encodeURIComponent(normalizedValue)}`}
+            className="text-amber-500 hover:text-amber-600 underline font-semibold transition-colors cursor-pointer"
+          >
+            {normalizedValue}
+          </LocaleLink>
+        );
+      } else if (needsMmSuffix) {
+        finalValue = appendUnitIfMissing(normalizedValue, "mm");
+      }
 
       return {
         label: getSpecLabel(key, locale, t),
         value: finalValue,
       };
     })
-    .filter((entry): entry is { label: string; value: string } => Boolean(entry));
+    .filter((entry): entry is { label: string; value: ReactNode } => entry !== null);
 
   return [...specRows, ...metaRows];
 }
