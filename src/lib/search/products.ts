@@ -172,6 +172,7 @@ const RESULT_SOURCE_FIELDS = [
   "properties",
   "is_group_product",
   "translations",
+  "material_translations",
   "packing_group",
   "allow_singulars",
 ] as const;
@@ -1286,9 +1287,17 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number, loc
   const slug = stringValue(source.slug) ?? stringValue(source.post_name);
   const frontendPath = stringValue(source.frontend_path);
   
-  const title = getLocalizedValue(source.title, locale) ?? getLocalizedValue(source.name, locale) ?? getLocalizedValue(source.post_title, locale) ?? "Unnamed product";
-  const subtitle = getLocalizedValue(source.subtitle, locale);
-  const excerpt = getLocalizedValue(source.excerpt, locale);
+  const translations = source.translations as Record<string, Record<string, string>> | undefined;
+  const materialTranslations = source.material_translations as Record<string, Record<string, string>> | undefined;
+
+  const tTitle = (locale && translations?.name?.[locale]) || (locale && translations?.title?.[locale]);
+  const title = tTitle ?? getLocalizedValue(source.title, locale) ?? getLocalizedValue(source.name, locale) ?? getLocalizedValue(source.post_title, locale) ?? "Unnamed product";
+  
+  const tSubtitle = locale && translations?.subtitle?.[locale];
+  const subtitle = tSubtitle ?? getLocalizedValue(source.subtitle, locale);
+  
+  const tExcerpt = (locale && translations?.excerpt?.[locale]) || (locale && translations?.short_description?.[locale]);
+  const excerpt = tExcerpt ?? getLocalizedValue(source.excerpt, locale);
 
   const warranty = warrantyFromSource(source);
 
@@ -1318,7 +1327,7 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number, loc
     name: title,
     subtitle,
     excerpt,
-    materialTitle: stringValue(source.catalog_material) ?? stringValue(source.catalog_material_code),
+    materialTitle: (locale && materialTranslations?.title?.[locale]) ?? stringValue(source.catalog_material) ?? stringValue(source.catalog_material_code),
     price,
     originalPrice,
     discount: discount ?? 0,

@@ -203,23 +203,54 @@ function toDisplayImageUrl(url: string | null): string | null {
   return `/api/media-proxy?url=${encodeURIComponent(url)}`;
 }
 
+function localizedString(result: unknown, field: string, locale?: string): string | null {
+  if (!locale) return null;
+  const translations = getRaw(result, "translations");
+  if (Array.isArray(translations)) {
+    for (const t of translations) {
+       const locObj = (t as Record<string, any>)[locale];
+       if (locObj && typeof locObj[field] === "string" && locObj[field] !== "") {
+          return locObj[field];
+       }
+    }
+  }
+  return null;
+}
+
+function localizedMaterialTitle(result: unknown, locale?: string): string | null {
+  if (!locale) return null;
+  const translations = getRaw(result, "material_translations");
+  if (Array.isArray(translations)) {
+    for (const t of translations) {
+       const locObj = (t as Record<string, any>)[locale];
+       if (locObj && typeof locObj["title"] === "string" && locObj["title"] !== "") {
+          return locObj["title"];
+       }
+    }
+  }
+  return null;
+}
+
 export function mapProductListingResult(
   result: unknown,
   resultIndex: number,
   fallbackTitle = "Unnamed product",
+  locale?: string,
 ): { id: string; product: ProductCardData; href?: LinkProps["href"] } {
   const normalizedType =
     normalizeResultType(getRaw(result, "product_type")) ?? normalizeResultType(getRaw(result, "type"));
-  const slug = valueAsString(getRaw(result, "slug")) ?? valueAsString(getRaw(result, "post_name"));
+  const slug = localizedString(result, "slug", locale) ?? valueAsString(getRaw(result, "slug")) ?? valueAsString(getRaw(result, "post_name"));
   const id = valueAsString(getRaw(result, "id")) ?? valueAsString(getRaw(result, "ID")) ?? `result-${resultIndex}`;
+
+  const name = localizedString(result, "title", locale) ?? localizedString(result, "name", locale) ?? titleForProduct(result, fallbackTitle);
 
   const product: ProductCardData = {
     id,
     sku: skuForProduct(result) || "-",
-    name: titleForProduct(result, fallbackTitle),
-    subtitle: valueAsString(getRaw(result, "subtitle")),
-    excerpt: valueAsString(getRaw(result, "excerpt")),
-    materialTitle: materialTitleForProduct(result),
+    name,
+    subtitle: localizedString(result, "subtitle", locale) ?? valueAsString(getRaw(result, "subtitle")),
+    excerpt: localizedString(result, "excerpt", locale) ?? valueAsString(getRaw(result, "excerpt")),
+    materialTitle: localizedMaterialTitle(result, locale) ?? materialTitleForProduct(result),
     price: valueAsNumber(getRaw(result, "price")),
     originalPrice: valueAsNumber(getRaw(result, "original_price")),
     inStock: valueAsBoolean(getRaw(result, "in_stock")),

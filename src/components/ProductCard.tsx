@@ -82,7 +82,8 @@ function normalizeText(value: string | null | undefined): string | null {
 }
 
 function featureLines(product: ProductCardData): string[] {
-  return [product.subtitle, product.materialTitle, product.excerpt]
+  // return [product.subtitle, product.materialTitle, product.excerpt]
+  return [product.subtitle, product.materialTitle]
     .map((value) => normalizeText(value))
     .filter((value): value is string => Boolean(value))
     .slice(0, 3);

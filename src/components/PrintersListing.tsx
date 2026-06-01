@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SearchProvider, useSearch } from "@elastic/react-search-ui";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import type { SearchDriverOptions } from "@elastic/search-ui";
 import { CategoryScopedProxyConnector } from "@/lib/categoryScopedConnector";
 import EmptyState from "@/components/EmptyState";
@@ -67,6 +67,8 @@ const PRINTERS_SEARCH_QUERY = {
     category_slugs: { raw: {} },
     is_group_product: { raw: {} },
     is_label_product: { raw: {} },
+    translations: { raw: {} },
+    material_translations: { raw: {} },
   },
 };
 
@@ -90,6 +92,7 @@ function PrinterSkeletonGrid({ isSidebarOpen }: { isSidebarOpen: boolean }) {
 
 function PrintersListingContent({ printers }: { printers: PrinterCardData[] }) {
   const t = useTranslations();
+  const locale = useLocale();
   const sortOptions = useMemo(() => [
     { value: "latest" as const, label: t("sort.latest") },
     { value: "oldest" as const, label: t("sort.oldest") },
@@ -140,9 +143,9 @@ function PrintersListingContent({ printers }: { printers: PrinterCardData[] }) {
   const fallbackPrinters = !searchHasResolved && !error ? printers : [];
   const searchPrinters = useMemo(() => {
     return searchHasResolved
-      ? (results ?? []).map((result, resultIndex) => mapProductListingResult(result, resultIndex, t("product.unnamedProduct")))
+      ? (results ?? []).map((result, resultIndex) => mapProductListingResult(result, resultIndex, t("product.unnamedProduct"), locale))
       : [];
-  }, [results, searchHasResolved, t]);
+  }, [results, searchHasResolved, t, locale]);
   const hasFallbackPrinters = fallbackPrinters.length > 0;
   const hasSearchPrinters = accumulatedPrinters.length > 0;
   const hasMorePrinters = page < pageCount;

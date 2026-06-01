@@ -3,7 +3,7 @@
 import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { SearchProvider, useSearch } from "@elastic/react-search-ui";
 import type { SearchDriverOptions } from "@elastic/search-ui";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { CategoryScopedProxyConnector } from "@/lib/categoryScopedConnector";
 import EmptyState from "@/components/EmptyState";
 import ProductCard from "@/components/ProductCard";
@@ -75,6 +75,8 @@ const CATEGORY_SEARCH_QUERY = {
     category_slugs: { raw: {} },
     is_group_product: { raw: {} },
     is_label_product: { raw: {} },
+    translations: { raw: {} },
+    material_translations: { raw: {} },
   },
 };
 
@@ -98,6 +100,7 @@ function CategorySkeletonGrid({ isSidebarOpen }: { isSidebarOpen: boolean }) {
 
 function CategoryListingContent({ products }: { products: CategoryCardData[] }) {
   const t = useTranslations();
+  const locale = useLocale();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const {
@@ -137,9 +140,9 @@ function CategoryListingContent({ products }: { products: CategoryCardData[] }) 
   const fallbackProducts = !searchHasResolved && !error ? products : [];
   const searchProducts = useMemo(() => {
     return searchHasResolved
-      ? (results ?? []).map((result, resultIndex) => mapProductListingResult(result, resultIndex, t("product.unnamedProduct")))
+      ? (results ?? []).map((result, resultIndex) => mapProductListingResult(result, resultIndex, t("product.unnamedProduct"), locale))
       : [];
-  }, [searchHasResolved, results, t]);
+  }, [searchHasResolved, results, t, locale]);
   
   const [accumulatedProducts, setAccumulatedProducts] = useState<any[]>([]);
 
