@@ -12,7 +12,8 @@ import type { CatalogSearchResponse } from "@/lib/search/types";
 import { getServerLocale } from "@/lib/i18n";
 import ReviewsSection from "@/components/ReviewsSection";
 import {
-  categoryRouteSlug,
+  categoryPublicPath,
+  categoryPublicPathFromSlug,
   fetchCategoryGroups,
   findCategoryBySlug,
   flattenCategorySlugs,
@@ -139,12 +140,13 @@ export default async function CategoryArchivePage({
   const categoryTitle = currentCategory
     ? resolveLocalized(currentCategory.name, locale)
     : categoryTitleForSlug(slug);
+  const currentPublicPath = categoryPublicPathFromSlug(slug);
 
   const breadcrumbItems = [
     { label: t("common.products"), href: "/products" },
-    ...ancestors.map((ancestor) => ({
+    ...ancestors.map((ancestor, index) => ({
       label: resolveLocalized(ancestor.name, locale),
-      href: `/category/${encodeURIComponent(categoryRouteSlug(ancestor, locale))}`,
+      href: categoryPublicPath(ancestor, ancestors.slice(0, index), locale),
     })),
     { label: categoryTitle },
   ];
@@ -174,7 +176,14 @@ export default async function CategoryArchivePage({
               products. Drilling into one re-renders this section for the
               next level down; the deepest level renders nothing here. */}
           {hasSubcategories ? (
-            <CategorySubnav subcategories={subcategories} locale={locale} />
+            <CategorySubnav
+              subcategories={subcategories}
+              ancestors={[...ancestors, currentCategory].filter(
+                (category): category is CategoryNode => Boolean(category),
+              )}
+              locale={locale}
+              parentPublicPath={currentPublicPath}
+            />
           ) : null}
 
           {/* Products for the currently selected category. The heading only

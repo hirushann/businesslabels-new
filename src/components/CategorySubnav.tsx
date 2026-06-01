@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import {
   type CategoryNode,
+  categoryPublicPath,
   categoryRouteSlug,
   resolveLocalized,
 } from "@/lib/categories/tree";
@@ -9,7 +10,9 @@ import {
 type CategorySubnavProps = {
   /** Direct children of the category the visitor is currently browsing. */
   subcategories: CategoryNode[];
+  ancestors: CategoryNode[];
   locale: string;
+  parentPublicPath?: string | null;
 };
 
 /**
@@ -20,7 +23,9 @@ type CategorySubnavProps = {
  */
 export default async function CategorySubnav({
   subcategories,
+  ancestors,
   locale,
+  parentPublicPath,
 }: CategorySubnavProps) {
   if (!subcategories.length) return null;
 
@@ -37,11 +42,14 @@ export default async function CategorySubnav({
         // including products in any deeper descendants, since `count` from
         // the backend aggregates by ancestor chain.
         const meta = t("categoryArchive.productCount", { count: category.count });
+        const href = parentPublicPath
+          ? `${parentPublicPath}/${encodeURIComponent(categoryRouteSlug(category, locale))}`
+          : categoryPublicPath(category, ancestors, locale);
 
         return (
           <Link
             key={category.id}
-            href={`/category/${encodeURIComponent(categoryRouteSlug(category, locale))}`}
+            href={href}
             className="group flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] transition-colors hover:border-amber-400 hover:bg-amber-50"
           >
             <span className="flex min-w-0 flex-col gap-1">

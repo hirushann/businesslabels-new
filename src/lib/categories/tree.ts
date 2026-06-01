@@ -61,6 +61,46 @@ export function categoryRouteSlug(category: CategoryNode, locale: string): strin
   return resolveLocalized(category.name, locale).trim();
 }
 
+const publicCategoryPathBySlug: Record<string, string> = {
+  labelprinters: "/product-category/labelprinters",
+  "color-labelprinters": "/product-category/labelprinters/color-labelprinters",
+  "color-label-printers": "/product-category/labelprinters/color-labelprinters",
+  "kleuren-labelprinters-nl": "/product-category/labelprinters/color-labelprinters",
+  "thermal-labelprinters": "/product-category/labelprinters/thermal-labelprinters",
+  "thermal-label-printers": "/product-category/labelprinters/thermal-labelprinters",
+  "thermische-labelprinters-nl": "/product-category/labelprinters/thermal-labelprinters",
+  starterkits: "/product-category/labelprinters/starterkits",
+  consumables: "/product-category/labelprinters/consumables",
+  "verbruiksmaterialen-nl": "/product-category/labelprinters/consumables",
+};
+
+export function categoryPublicPathFromSlug(slug: string): string | null {
+  return publicCategoryPathBySlug[slug] ?? null;
+}
+
+export function categoryPublicPath(
+  category: CategoryNode,
+  ancestors: CategoryNode[],
+  locale: string,
+): string {
+  const chain = [...ancestors, category];
+  const slugs = chain.map((node) => categoryRouteSlug(node, locale));
+
+  for (let index = slugs.length - 1; index >= 0; index -= 1) {
+    const publicPath = publicCategoryPathBySlug[slugs[index]];
+    if (publicPath) {
+      const childPath = slugs
+        .slice(index + 1)
+        .map((slug) => encodeURIComponent(slug))
+        .join("/");
+
+      return childPath ? `${publicPath}/${childPath}` : publicPath;
+    }
+  }
+
+  return `/category/${encodeURIComponent(categoryRouteSlug(category, locale))}`;
+}
+
 function categoryMatchesSlug(
   category: CategoryNode,
   slug: string,

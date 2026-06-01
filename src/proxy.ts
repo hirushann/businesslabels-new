@@ -3,13 +3,25 @@ import type { NextRequest } from 'next/server';
 
 const LOCALE_COOKIE = 'NEXT_LOCALE';
 const EN_PREFIX = '/en';
-const LABEL_PRINTERS_PUBLIC_PATH = '/product-category/labelprinters';
-const LABEL_PRINTERS_INTERNAL_PATH = '/printers';
+const PUBLIC_PATH_REWRITES: Record<string, string> = {
+  '/product-category/labelprinters': '/printers',
+  '/product-category/labelprinters/color-labelprinters': '/category/kleuren-labelprinters-nl',
+  '/product-category/labelprinters/thermal-labelprinters': '/category/thermische-labelprinters-nl',
+  '/product-category/labelprinters/starterkits': '/category/starterkits',
+  '/product-category/labelprinters/consumables': '/category/verbruiksmaterialen-nl',
+};
+const LABEL_PRINTERS_PUBLIC_PREFIX = '/product-category/labelprinters/';
 
 function mapPublicPathToInternalPath(pathname: string) {
-  return pathname === LABEL_PRINTERS_PUBLIC_PATH
-    ? LABEL_PRINTERS_INTERNAL_PATH
-    : pathname;
+  const exactRewrite = PUBLIC_PATH_REWRITES[pathname];
+  if (exactRewrite) return exactRewrite;
+
+  if (pathname.startsWith(LABEL_PRINTERS_PUBLIC_PREFIX)) {
+    const categorySlug = pathname.split('/').filter(Boolean).at(-1);
+    return categorySlug ? `/category/${categorySlug}` : pathname;
+  }
+
+  return pathname;
 }
 
 /**
