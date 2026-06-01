@@ -28,7 +28,9 @@ export type LaravelProduct = {
   title?: string | null;
   name?: string | LocalizedString | null;
   subtitle?: string | LocalizedString | null;
+  subtitle_locales?: LocalizedString | null;
   excerpt?: string | LocalizedString | null;
+  excerpt_locales?: LocalizedString | null;
   price?: number | null;
   original_price?: number | null;
   stock?: number | null;
@@ -83,10 +85,10 @@ export function mapLaravelProductToCardData(product: LaravelProduct, locale: str
   const rawSlug = translation?.slug || product.slug;
   const slug = typeof rawSlug === "string" ? rawSlug : getLocalizedValue(rawSlug, locale);
 
-  const rawSubtitle = translation?.subtitle || product.subtitle;
+  const rawSubtitle = product.subtitle_locales || translation?.subtitle || product.subtitle;
   const subtitle = typeof rawSubtitle === "string" ? rawSubtitle : getLocalizedValue(rawSubtitle, locale);
 
-  const rawExcerpt = translation?.excerpt || product.excerpt;
+  const rawExcerpt = product.excerpt_locales || translation?.excerpt || product.excerpt;
   const excerpt = typeof rawExcerpt === "string" ? rawExcerpt : getLocalizedValue(rawExcerpt, locale);
 
   const materialTitle = product.material

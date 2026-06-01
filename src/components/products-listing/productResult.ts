@@ -205,12 +205,37 @@ function toDisplayImageUrl(url: string | null): string | null {
 
 function localizedString(result: unknown, field: string, locale?: string): string | null {
   if (!locale) return null;
-  const translations = getRaw(result, "translations");
+
+  // 1. Check for explicitly indexed localized fields (e.g., subtitle_en, excerpt_nl)
+  const explicitField = getRaw(result, `${field}_${locale}`);
+  if (typeof explicitField === "string" && explicitField.trim() !== "") {
+    return explicitField;
+  }
+
+  // 2. Sometimes App Search returns stringified JSON for objects/arrays
+  let translations = getRaw(result, "translations");
+  if (typeof translations === "string") {
+    try {
+      translations = JSON.parse(translations);
+    } catch (e) {}
+  }
+
   if (Array.isArray(translations)) {
-    for (const t of translations) {
+    for (let t of translations) {
+       if (typeof t === "string") {
+         try { t = JSON.parse(t); } catch(e) {}
+       }
+       if (!t || typeof t !== "object") continue;
+
+       // Structure 1: { "en": { "language": "en", "subtitle": "..." } }
        const locObj = (t as Record<string, any>)[locale];
-       if (locObj && typeof locObj[field] === "string" && locObj[field] !== "") {
+       if (locObj && typeof locObj[field] === "string" && locObj[field].trim() !== "") {
           return locObj[field];
+       }
+
+       // Structure 2: { "language": "en", "subtitle": "..." }
+       if ((t as Record<string, any>).language === locale && typeof (t as Record<string, any>)[field] === "string" && (t as Record<string, any>)[field].trim() !== "") {
+          return (t as Record<string, any>)[field];
        }
     }
   }

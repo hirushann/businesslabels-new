@@ -140,7 +140,11 @@ const RESULT_SOURCE_FIELDS = [
   "article_number",
   "sku",
   "subtitle",
+  "subtitle_en",
+  "subtitle_nl",
   "excerpt",
+  "excerpt_en",
+  "excerpt_nl",
   "price",
   "original_price",
   "discount",
@@ -1291,13 +1295,16 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number, loc
   const materialTranslations = source.material_translations as Record<string, Record<string, string>> | undefined;
 
   const tTitle = (locale && translations?.name?.[locale]) || (locale && translations?.title?.[locale]);
-  const title = tTitle ?? getLocalizedValue(source.title, locale) ?? getLocalizedValue(source.name, locale) ?? getLocalizedValue(source.post_title, locale) ?? "Unnamed product";
+  const explicitTitle = locale ? (source[`title_${locale}`] ?? source[`name_${locale}`]) : undefined;
+  const title = tTitle ?? getLocalizedValue(explicitTitle ?? source.title, locale) ?? getLocalizedValue(source.name, locale) ?? getLocalizedValue(source.post_title, locale) ?? "Unnamed product";
   
   const tSubtitle = locale && translations?.subtitle?.[locale];
-  const subtitle = tSubtitle ?? getLocalizedValue(source.subtitle, locale);
+  const explicitSubtitle = locale ? source[`subtitle_${locale}`] : undefined;
+  const subtitle = tSubtitle ?? getLocalizedValue(explicitSubtitle ?? source.subtitle, locale);
   
   const tExcerpt = (locale && translations?.excerpt?.[locale]) || (locale && translations?.short_description?.[locale]);
-  const excerpt = tExcerpt ?? getLocalizedValue(source.excerpt, locale);
+  const explicitExcerpt = locale ? source[`excerpt_${locale}`] : undefined;
+  const excerpt = tExcerpt ?? getLocalizedValue(explicitExcerpt ?? source.excerpt, locale);
 
   const warranty = warrantyFromSource(source);
 
