@@ -3,6 +3,14 @@ import type { NextRequest } from 'next/server';
 
 const LOCALE_COOKIE = 'NEXT_LOCALE';
 const EN_PREFIX = '/en';
+const LABEL_PRINTERS_PUBLIC_PATH = '/product-category/labelprinters';
+const LABEL_PRINTERS_INTERNAL_PATH = '/printers';
+
+function mapPublicPathToInternalPath(pathname: string) {
+  return pathname === LABEL_PRINTERS_PUBLIC_PATH
+    ? LABEL_PRINTERS_INTERNAL_PATH
+    : pathname;
+}
 
 /**
  * Locale-prefix routing:
@@ -20,7 +28,8 @@ export function proxy(request: NextRequest) {
   if (pathname.startsWith(EN_PREFIX + '/') || pathname === EN_PREFIX) {
     // Strip the /en prefix and rewrite internally; the browser keeps /en/...
     const stripped = pathname.slice(EN_PREFIX.length) || '/';
-    const rewriteUrl = new URL(stripped + search, request.url);
+    const internalPath = mapPublicPathToInternalPath(stripped);
+    const rewriteUrl = new URL(internalPath + search, request.url);
     const response = NextResponse.rewrite(rewriteUrl);
     // Ensure the EN cookie is set so server components read the right locale
     response.cookies.set(LOCALE_COOKIE, 'en', { path: '/', sameSite: 'lax', maxAge: 60 * 60 * 24 * 365 });
@@ -32,6 +41,12 @@ export function proxy(request: NextRequest) {
     // EN user visiting a non-prefixed path → redirect to /en prefix
     const redirectUrl = new URL(EN_PREFIX + pathname + search, request.url);
     return NextResponse.redirect(redirectUrl);
+  }
+
+  const internalPath = mapPublicPathToInternalPath(pathname);
+  if (internalPath !== pathname) {
+    const rewriteUrl = new URL(internalPath + search, request.url);
+    return NextResponse.rewrite(rewriteUrl);
   }
 
   // ── Auth guard (/my-account) ─────────────────────────────────────────────────
