@@ -306,7 +306,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
   };
 
   // Apply locale prefix to pathname-style hrefs (e.g. { pathname: '/product/...' })
-  const localizedHref: LinkProps["href"] = (() => {
+  const localizedHref: LinkProps["href"] | undefined = (() => {
     if (typeof href === "string") {
       return localePath(href, locale);
     }
