@@ -166,7 +166,7 @@ function CollectionBoxForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="p-10 flex flex-col gap-8">
+    <form onSubmit={handleSubmit} className="p-5 sm:p-10 flex flex-col gap-8">
       <div className="flex flex-col gap-2">
         <h2 className="text-neutral-800 text-2xl font-semibold font-sans leading-7">
           {t('boxFormTitle')}
@@ -322,7 +322,7 @@ function PickupForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="p-10 flex flex-col gap-8">
+    <form onSubmit={handleSubmit} className="p-5 sm:p-10 flex flex-col gap-8">
       <div className="flex flex-col gap-2">
         <h2 className="text-neutral-800 text-2xl font-semibold font-sans leading-7">
           {t('pickupFormTitle')}
@@ -562,21 +562,21 @@ export default function RecyclePageClient() {
             <button
               type="button"
               onClick={() => setActiveTab('box')}
-              className={`relative flex-1 p-6 flex justify-center items-center gap-3 transition-colors ${activeTab === 'box' ? 'bg-amber-500/5' : 'bg-white hover:bg-gray-50'
+              className={`relative flex-1 p-3 sm:p-6 flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-3 transition-colors ${activeTab === 'box' ? 'bg-amber-500/5' : 'bg-white hover:bg-gray-50'
                 }`}
             >
               <div
-                className={`size-12 px-3 pt-3 rounded-lg shadow-sm outline outline-1 outline-offset-[-1px] outline-gray-100 flex justify-start items-start transition-colors ${activeTab === 'box' ? 'bg-amber-500' : 'bg-white'
+                className={`size-10 sm:size-12 shrink-0 rounded-lg shadow-sm outline outline-1 outline-offset-[-1px] outline-gray-100 flex justify-center items-center transition-colors ${activeTab === 'box' ? 'bg-amber-500' : 'bg-white'
                   }`}
               >
                 {/* <IconBox className={activeTab === 'box' ? 'text-white' : 'text-zinc-500'} /> */}
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 21.7319C11.304 21.9074 11.6489 21.9998 12 21.9998C12.3511 21.9998 12.696 21.9074 13 21.7319L20 17.7319C20.3037 17.5565 20.556 17.3043 20.7315 17.0007C20.9071 16.697 20.9996 16.3526 21 16.0019V8.00186C20.9996 7.65113 20.9071 7.30667 20.7315 7.00302C20.556 6.69937 20.3037 6.44722 20 6.27186L13 2.27186C12.696 2.09632 12.3511 2.00391 12 2.00391C11.6489 2.00391 11.304 2.09632 11 2.27186L4 6.27186C3.69626 6.44722 3.44398 6.69937 3.26846 7.00302C3.09294 7.30667 3.00036 7.65113 3 8.00186V16.0019C3.00036 16.3526 3.09294 16.697 3.26846 17.0007C3.44398 17.3043 3.69626 17.5565 4 17.7319L11 21.7319Z" stroke={activeTab === "box" ? "white" : "#888888"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M12 22V12" stroke={activeTab === "box" ? "white" : "#888888"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M3.29004 7L12 12L20.71 7" stroke={activeTab === "box" ? "white" : "#888888"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M7.5 4.26953L16.5 9.41953" stroke={activeTab === "box" ? "white" : "#888888"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 21.7319C11.304 21.9074 11.6489 21.9998 12 21.9998C12.3511 21.9998 12.696 21.9074 13 21.7319L20 17.7319C20.3037 17.5565 20.556 17.3043 20.7315 17.0007C20.9071 16.697 20.9996 16.3526 21 16.0019V8.00186C20.9996 7.65113 20.9071 7.30667 20.7315 7.00302C20.556 6.69937 20.3037 6.44722 20 6.27186L13 2.27186C12.696 2.09632 12.3511 2.00391 12 2.00391C11.6489 2.00391 11.304 2.09632 11 2.27186L4 6.27186C3.69626 6.44722 3.44398 6.69937 3.26846 7.00302C3.09294 7.30667 3.00036 7.65113 3 8.00186V16.0019C3.00036 16.3526 3.09294 16.697 3.26846 17.0007C3.44398 17.3043 3.69626 17.5565 4 17.7319L11 21.7319Z" stroke={activeTab === "box" ? "white" : "#888888"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M12 22V12" stroke={activeTab === "box" ? "white" : "#888888"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M3.29004 7L12 12L20.71 7" stroke={activeTab === "box" ? "white" : "#888888"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M7.5 4.26953L16.5 9.41953" stroke={activeTab === "box" ? "white" : "#888888"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </div>
-              <div className="flex flex-col items-start gap-0.5">
-                <span className={`text-xl font-semibold font-sans leading-6 ${activeTab === 'box' ? 'text-neutral-800' : 'text-neutral-600'}`}>
+              <div className="flex flex-col items-center sm:items-start gap-0.5">
+                <span className={`text-sm sm:text-xl font-semibold font-sans leading-tight sm:leading-6 text-center sm:text-left ${activeTab === 'box' ? 'text-neutral-800' : 'text-neutral-600'}`}>
                   {t('tabRequestBoxTitle')}
                 </span>
-                <span className="text-sm font-sans leading-5 text-zinc-500">{t('tabRequestBoxDesc')}</span>
+                <span className="hidden sm:block text-sm font-sans leading-5 text-zinc-500">{t('tabRequestBoxDesc')}</span>
               </div>
               {activeTab === 'box' && (
                 <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-amber-500" />
@@ -587,20 +587,20 @@ export default function RecyclePageClient() {
             <button
               type="button"
               onClick={() => setActiveTab('pickup')}
-              className={`relative flex-1 p-6 border-l border-gray-200 flex justify-center items-center gap-3 transition-colors ${activeTab === 'pickup' ? 'bg-amber-500/5' : 'bg-white hover:bg-gray-50'
+              className={`relative flex-1 p-3 sm:p-6 border-l border-gray-200 flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-3 transition-colors ${activeTab === 'pickup' ? 'bg-amber-500/5' : 'bg-white hover:bg-gray-50'
                 }`}
             >
               <div
-                className={`size-12 px-3 pt-3 rounded-lg shadow-sm outline outline-1 outline-offset-[-1px] outline-gray-100 flex justify-start items-start transition-colors ${activeTab === 'pickup' ? 'bg-amber-500' : 'bg-white'
+                className={`size-10 sm:size-12 shrink-0 rounded-lg shadow-sm outline outline-1 outline-offset-[-1px] outline-gray-100 flex justify-center items-center transition-colors ${activeTab === 'pickup' ? 'bg-amber-500' : 'bg-white'
                   }`}
               >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 18V6C14 5.46957 13.7893 4.96086 13.4142 4.58579C13.0391 4.21071 12.5304 4 12 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V17C2 17.2652 2.10536 17.5196 2.29289 17.7071C2.48043 17.8946 2.73478 18 3 18H5" stroke={activeTab === "pickup" ? "white" : "#888888"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M15 18H9" stroke={activeTab === "pickup" ? "white" : "#888888"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M19 18H21C21.2652 18 21.5196 17.8946 21.7071 17.7071C21.8946 17.5196 22 17.2652 22 17V13.35C21.9996 13.1231 21.922 12.903 21.78 12.726L18.3 8.376C18.2065 8.25888 18.0878 8.16428 17.9528 8.0992C17.8178 8.03412 17.6699 8.00021 17.52 8H14" stroke={activeTab === "pickup" ? "white" : "#888888"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M17 20C18.1046 20 19 19.1046 19 18C19 16.8954 18.1046 16 17 16C15.8954 16 15 16.8954 15 18C15 19.1046 15.8954 20 17 20Z" stroke={activeTab === "pickup" ? "white" : "#888888"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M7 20C8.10457 20 9 19.1046 9 18C9 16.8954 8.10457 16 7 16C5.89543 16 5 16.8954 5 18C5 19.1046 5.89543 20 7 20Z" stroke={activeTab === "pickup" ? "white" : "#888888"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 18V6C14 5.46957 13.7893 4.96086 13.4142 4.58579C13.0391 4.21071 12.5304 4 12 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V17C2 17.2652 2.10536 17.5196 2.29289 17.7071C2.48043 17.8946 2.73478 18 3 18H5" stroke={activeTab === "pickup" ? "white" : "#888888"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M15 18H9" stroke={activeTab === "pickup" ? "white" : "#888888"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M19 18H21C21.2652 18 21.5196 17.8946 21.7071 17.7071C21.8946 17.5196 22 17.2652 22 17V13.35C21.9996 13.1231 21.922 12.903 21.78 12.726L18.3 8.376C18.2065 8.25888 18.0878 8.16428 17.9528 8.0992C17.8178 8.03412 17.6699 8.00021 17.52 8H14" stroke={activeTab === "pickup" ? "white" : "#888888"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M17 20C18.1046 20 19 19.1046 19 18C19 16.8954 18.1046 16 17 16C15.8954 16 15 16.8954 15 18C15 19.1046 15.8954 20 17 20Z" stroke={activeTab === "pickup" ? "white" : "#888888"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M7 20C8.10457 20 9 19.1046 9 18C9 16.8954 8.10457 16 7 16C5.89543 16 5 16.8954 5 18C5 19.1046 5.89543 20 7 20Z" stroke={activeTab === "pickup" ? "white" : "#888888"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </div>
-              <div className="flex flex-col items-start gap-0.5">
-                <span className={`text-xl font-semibold font-sans leading-6 ${activeTab === 'pickup' ? 'text-neutral-800' : 'text-neutral-600'}`}>
+              <div className="flex flex-col items-center sm:items-start gap-0.5">
+                <span className={`text-sm sm:text-xl font-semibold font-sans leading-tight sm:leading-6 text-center sm:text-left ${activeTab === 'pickup' ? 'text-neutral-800' : 'text-neutral-600'}`}>
                   {t('tabRequestPickupTitle')}
                 </span>
-                <span className="text-sm font-sans leading-5 text-zinc-500">{t('tabRequestPickupDesc')}</span>
+                <span className="hidden sm:block text-sm font-sans leading-5 text-zinc-500">{t('tabRequestPickupDesc')}</span>
               </div>
               {activeTab === 'pickup' && (
                 <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-amber-500" />

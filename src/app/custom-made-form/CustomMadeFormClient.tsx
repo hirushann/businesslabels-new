@@ -167,7 +167,7 @@ export default function CustomMadeFormClient() {
   }
 
   return (
-    <div className="w-full max-w-[1440px] mx-auto py-8 flex flex-col gap-4">
+    <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col gap-4">
       {/* Page header */}
       <div className="flex flex-col gap-4">
         <div className="h-4 flex items-center gap-2">
@@ -175,8 +175,8 @@ export default function CustomMadeFormClient() {
           <span className="text-zinc-500 text-sm font-sans leading-5">/</span>
           <span className="text-neutral-700 text-sm font-semibold font-sans leading-5">{t('breadcrumb')}</span>
         </div>
-        <h1 className="text-neutral-800 text-4xl font-bold font-sans leading-[48px]">{t('title')}</h1>
-        <p className="max-w-[1003px] text-neutral-700 text-lg font-sans leading-6">
+        <h1 className="text-neutral-800 text-2xl sm:text-3xl lg:text-4xl font-bold font-sans leading-tight sm:leading-[48px]">{t('title')}</h1>
+        <p className="max-w-full lg:max-w-[1003px] text-neutral-700 text-base sm:text-lg font-sans leading-6">
           {t('description')}
         </p>
       </div>
@@ -186,12 +186,13 @@ export default function CustomMadeFormClient() {
         {/* ── Form card ── */}
         <div className="flex-1 min-w-0 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] outline outline-1 outline-offset-[-1px] outline-gray-100 flex flex-col overflow-hidden">
           {/* Step indicator */}
-          <div className="px-6 py-4 bg-white shadow-[2px_6px_20px_0px_rgba(17,17,17,0.04)] outline outline-1 outline-offset-[-1px] outline-gray-100">
+          <div className="px-3 sm:px-6 py-4 bg-white shadow-[2px_6px_20px_0px_rgba(17,17,17,0.04)] outline outline-1 outline-offset-[-1px] outline-gray-100">
             <div className="relative flex justify-between items-center">
-              <div className="absolute h-0.5 bg-gray-200 rounded-full left-[48px] right-[48px] top-[15px]" />
+              {/* track */}
+              <div className="absolute h-0.5 bg-gray-200 rounded-full left-4 right-4 sm:left-[48px] sm:right-[48px] top-[15px]" />
               <div
                 className="absolute h-0.5 bg-amber-500 rounded-full top-[15px] transition-all duration-500"
-                style={{ left: '48px', width: `calc((100% - 96px) * ${(currentStep - 1) / 4})` }}
+                style={{ left: '1rem', right: '1rem', width: `calc((100% - 2rem) * ${(currentStep - 1) / 4})` }}
               />
               {STEPS.map((step, i) => {
                 const stepNum = i + 1;
@@ -199,20 +200,20 @@ export default function CustomMadeFormClient() {
                 const isActive = stepNum === currentStep;
 
                 return (
-                  <div key={step} className="w-24 flex flex-col items-center gap-2 z-10">
-                    <div className={`size-8 rounded-full flex justify-center items-center transition-colors ${isCompleted ? 'bg-amber-500' : isActive ? 'bg-white outline outline-2 outline-offset-[-2px] outline-amber-500' : 'bg-gray-100'
+                  <div key={step} className="flex-1 flex flex-col items-center gap-1.5 z-10">
+                    <div className={`size-7 sm:size-8 rounded-full flex justify-center items-center transition-colors ${isCompleted ? 'bg-amber-500' : isActive ? 'bg-white outline outline-2 outline-offset-[-2px] outline-amber-500' : 'bg-gray-100'
                       }`}>
                       {isCompleted ? (
-                        <svg className="size-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <svg className="size-4 sm:size-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
                       ) : (
-                        <span className={`text-lg font-semibold font-sans ${isActive ? 'text-amber-500' : 'text-zinc-500'}`}>
+                        <span className={`text-sm sm:text-lg font-semibold font-sans ${isActive ? 'text-amber-500' : 'text-zinc-500'}`}>
                           {stepNum}
                         </span>
                       )}
                     </div>
-                    <span className={`text-sm font-semibold font-sans ${isActive || isCompleted ? 'text-amber-500' : 'text-zinc-500'}`}>
+                    <span className={`hidden sm:block text-xs sm:text-sm font-semibold font-sans text-center leading-none ${isActive || isCompleted ? 'text-amber-500' : 'text-zinc-500'}`}>
                       {step === 'Contact' ? t('stepContact') : t('step' + step as any)}
                     </span>
                   </div>
@@ -231,7 +232,7 @@ export default function CustomMadeFormClient() {
                 <h2 className="text-neutral-800 text-2xl font-semibold font-sans leading-7">{t('selectShape')}</h2>
                 <p className="text-neutral-700 text-sm font-sans leading-5">{t('selectShapeDesc')}</p>
               </div>
-              <div className="flex gap-4 flex-wrap sm:flex-nowrap">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                 {SHAPES.map((s) => {
                   const active = selectedShape === s.id;
                   return (
@@ -239,7 +240,7 @@ export default function CustomMadeFormClient() {
                       key={s.id}
                       type="button"
                       onClick={() => setSelectedShape(s.id)}
-                      className={`flex-1 min-w-[120px] px-3 py-4 relative rounded-lg outline outline-1 outline-offset-[-1px] flex flex-col items-center gap-3 transition-all ${active ? 'bg-orange-50 outline-amber-500' : 'bg-slate-50 outline-gray-100'
+                      className={`w-full px-2 sm:px-3 py-4 relative rounded-lg outline outline-1 outline-offset-[-1px] flex flex-col items-center gap-3 transition-all ${active ? 'bg-orange-50 outline-amber-500' : 'bg-slate-50 outline-gray-100'
                         }`}
                     >
                       <span className={`absolute right-3 top-3 size-4 rounded-full border flex-shrink-0 ${active ? 'bg-amber-500 border-amber-500' : 'bg-white border-gray-300'}`} />
@@ -494,7 +495,7 @@ export default function CustomMadeFormClient() {
         </div>
 
         {/* ── Sidebar ── */}
-        <div className="w-full lg:w-96 flex flex-col gap-6 lg:sticky lg:top-6">
+        <div className="w-full lg:w-96 flex flex-col gap-6 lg:sticky lg:top-24">
           {/* Overview card */}
           <div className="bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-gray-100 overflow-hidden">
             <div className="p-4 bg-gray-100 outline outline-1 outline-offset-[-1px] outline-gray-200">

@@ -748,8 +748,8 @@ function CatalogProductsListing({
         </div>
       )}
 
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex min-h-11 w-full items-center gap-3 rounded-lg border border-slate-200 px-3 lg:max-w-xl">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex min-h-11 w-full items-center gap-3 rounded-lg border border-slate-200 px-3">
           <svg
             width="18"
             height="18"
@@ -781,7 +781,7 @@ function CatalogProductsListing({
           />
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between lg:justify-end">
+        <div className="flex shrink-0 items-center gap-3">
           <button
             type="button"
             onClick={() => setIsSidebarOpen((currentValue) => !currentValue)}
@@ -830,7 +830,7 @@ function CatalogProductsListing({
             </span>
           </button>
 
-          <label className="flex h-10 items-center gap-3 rounded-[42px] border border-slate-200 px-5 py-2 text-neutral-800">
+          <label className="flex h-10 shrink-0 items-center gap-3 rounded-[42px] border border-slate-200 px-5 py-2 text-neutral-800">
             <span className="sr-only">{t("search.sortProducts")}</span>
             <select
               value={selectedSort}
