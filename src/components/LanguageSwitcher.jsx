@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
 import { useLocale as useIntlLocale, useTranslations } from 'next-intl';
 import { LOCALES, LOCALE_LABELS, normalizeLocale } from '@/lib/i18n/config';
 import { writeLocaleCookieClient, stripLocalePath } from '@/lib/i18n/utils';
@@ -39,9 +38,8 @@ const FLAG_BY_LOCALE = {
 export default function LanguageSwitcher() {
   const locale = useIntlLocale();
   const t = useTranslations();
-  const router = useRouter();
-  const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
   const containerRef = useRef(null);
 
   const setLocale = (nextLocale) => {
@@ -49,16 +47,17 @@ export default function LanguageSwitcher() {
     if (normalized === locale) return;
 
     writeLocaleCookieClient(normalized);
+    setIsNavigating(true);
 
     // Build the target URL: EN gets /en prefix, NL gets clean path
-    const cleanPath = stripLocalePath(pathname);
+    const currentPath = window.location.pathname;
+    const cleanPath = stripLocalePath(currentPath);
     const translatedPath =
-      getLocalizedPrinterCategoryPathForPath(pathname, normalized) ??
-      getLocalizedLabelCategoryPathForPath(pathname, normalized) ??
-      getLocalizedAccessoryCategoryPathForPath(pathname, normalized);
+      getLocalizedPrinterCategoryPathForPath(currentPath, normalized) ??
+      getLocalizedLabelCategoryPathForPath(currentPath, normalized) ??
+      getLocalizedAccessoryCategoryPathForPath(currentPath, normalized);
     const targetPath = (translatedPath ?? (normalized === 'en' ? '/en' + cleanPath : cleanPath)) + window.location.search + window.location.hash;
-    router.push(targetPath);
-    router.refresh();
+    window.location.assign(targetPath);
   };
 
   useEffect(() => {
@@ -87,7 +86,8 @@ export default function LanguageSwitcher() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1 cursor-pointer"
+        disabled={isNavigating}
+        className="flex items-center gap-1 cursor-pointer disabled:cursor-wait disabled:opacity-70"
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={t('common.languageChangeLabel', { language: activeLabel })}
@@ -115,12 +115,13 @@ export default function LanguageSwitcher() {
                 <button
                   type="button"
                   role="option"
+                  disabled={isNavigating}
                   aria-selected={isActive}
                   onClick={() => {
                     setLocale(code);
                     setOpen(false);
                   }}
-                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-slate-50 ${
+                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-slate-50 disabled:cursor-wait disabled:opacity-70 ${
                     isActive ? 'font-semibold text-sky-950' : 'text-neutral-700'
                   }`}
                 >
