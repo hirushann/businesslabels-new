@@ -1348,13 +1348,17 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number, loc
     ...(warranty !== undefined ? { warranty } : {})
   };
 
-  const href: LinkProps["href"] | undefined = frontendPath
+  let href: LinkProps["href"] | undefined = frontendPath
     ? frontendPath
     : slug && type
-      ? { pathname: `/products/${slug}`, query: { type } }
+      ? { pathname: `/product/${slug}`, query: { type } }
       : slug
-        ? `/products/${slug}`
+        ? `/product/${slug}`
         : undefined;
+
+  if (typeof href === 'string' && href.startsWith('/products/')) {
+    href = '/product/' + href.slice('/products/'.length);
+  }
 
   return { id: resultKey, product, href };
 }

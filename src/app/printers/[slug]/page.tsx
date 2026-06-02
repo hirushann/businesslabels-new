@@ -164,7 +164,7 @@ function HelpPanel({
 
       <div className="flex flex-col gap-3">
         <Link
-          href="/products"
+          href="/product"
           className="flex h-12 items-center justify-center rounded-full bg-amber-500 px-4 text-lg font-semibold leading-6 text-white transition-colors hover:bg-amber-600"
         >
           {labels.availableProduct}
@@ -331,12 +331,12 @@ function productHref(product: ProductCardData): { pathname: string; query?: { ty
 
   if (product.type) {
     return {
-      pathname: `/products/${product.slug}`,
+      pathname: `/product/${product.slug}`,
       query: { type: product.type },
     };
   }
 
-  return { pathname: `/products/${product.slug}` };
+  return { pathname: `/product/${product.slug}` };
 }
 
 function RelatedProductsSection({ title, products }: { title: string; products: ProductCardData[] }) {

@@ -143,7 +143,7 @@ export default async function CategoryArchivePage({
   const currentPublicPath = categoryPublicPathFromSlug(slug);
 
   const breadcrumbItems = [
-    { label: t("common.products"), href: "/products" },
+    { label: t("common.products"), href: "/product" },
     ...ancestors.map((ancestor, index) => ({
       label: resolveLocalized(ancestor.name, locale),
       href: categoryPublicPath(ancestor, ancestors.slice(0, index), locale),

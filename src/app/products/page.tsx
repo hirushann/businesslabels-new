@@ -74,7 +74,7 @@ export default async function ProductsPage({
             <Breadcrumbs
               className="text-neutral-900"
               items={[
-                { label: t("common.products"), href: localePath("/products", locale) },
+                { label: t("common.products"), href: localePath("/product", locale) },
                 { label: t("common.allProducts") },
               ]}
             />

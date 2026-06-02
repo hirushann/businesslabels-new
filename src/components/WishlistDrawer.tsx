@@ -90,8 +90,8 @@ export default function WishlistDrawer({ onClose }: WishlistDrawerProps) {
                 const hasPrice = typeof item.price === 'number' && Number.isFinite(item.price);
                 const href = item.slug
                   ? item.type
-                    ? { pathname: `/products/${item.slug}`, query: { type: item.type } }
-                    : { pathname: `/products/${item.slug}` }
+                    ? { pathname: `/product/${item.slug}`, query: { type: item.type } }
+                    : { pathname: `/product/${item.slug}` }
                   : undefined;
 
                 return (

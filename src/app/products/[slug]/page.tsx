@@ -515,7 +515,7 @@ function productPathForSlug(slug: string, selectedType: "simple" | "variable" | 
   const params = new URLSearchParams();
   if (selectedType) params.set("type", selectedType);
   const qs = params.toString();
-  return localePath(`/products/${encodeURIComponent(slug)}${qs ? `?${qs}` : ""}`, locale);
+  return localePath(`/product/${encodeURIComponent(slug)}${qs ? `?${qs}` : ""}`, locale);
 }
 
 async function fetchProductByType(baseUrl: string, type: "simple" | "variable", slug: string, locale: "en" | "nl"): Promise<ProductDetail | null> {
@@ -666,12 +666,12 @@ function productHref(product: ProductCardData): { pathname: string; query?: { ty
 
   if (product.type === "simple" || product.type === "variable") {
     return {
-      pathname: `/products/${product.slug}`,
+      pathname: `/product/${product.slug}`,
       query: { type: product.type },
     };
   }
 
-  return { pathname: `/products/${product.slug}` };
+  return { pathname: `/product/${product.slug}` };
 }
 
 /** Map a full API product (ProductResource) to the ProductCard shape. */
@@ -858,7 +858,7 @@ export default async function SingleProductPage({
             <Breadcrumbs 
               className="text-neutral-900"
               items={[
-                { label: t('common.products'), href: localePath('/products', locale) },
+                { label: t('common.products'), href: localePath('/product', locale) },
                 ...(product.categories && product.categories.length > 0 ? [{ 
                   label: product.categories[0].name || "", 
                   href: `/category/${product.categories[0].slug || product.categories[0].id}` 

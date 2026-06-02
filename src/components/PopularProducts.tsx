@@ -59,7 +59,7 @@ export default async function PopularProducts() {
             {t('popularProducts.title')}
           </h2>
           <Link
-            href={localePath('/products', locale)}
+            href={localePath('/product', locale)}
             className="w-fit px-6 py-4 rounded-full border border-amber-500 flex items-center gap-2.5 text-amber-500 text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-50 transition-colors"
           >
             {t('popularProducts.viewAll')}
@@ -80,8 +80,8 @@ export default async function PopularProducts() {
 
               const href = cardProduct.slug
                 ? (cardProduct.type === "simple" || cardProduct.type === "variable")
-                  ? { pathname: `/products/${cardProduct.slug}`, query: { type: cardProduct.type } }
-                  : { pathname: `/products/${cardProduct.slug}` }
+                  ? { pathname: `/product/${cardProduct.slug}`, query: { type: cardProduct.type } }
+                  : { pathname: `/product/${cardProduct.slug}` }
                 : undefined;
 
               return <ProductCard key={cardProduct.sku} product={cardProduct} href={href} />;

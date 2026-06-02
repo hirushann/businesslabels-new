@@ -318,9 +318,9 @@ function PrintersListingContent({ printers }: { printers: PrinterCardData[] }) {
                         product={product}
                         href={
                           product.slug && product.type
-                            ? { pathname: `/products/${product.slug}`, query: { type: product.type } }
+                            ? { pathname: `/product/${product.slug}`, query: { type: product.type } }
                             : product.slug
-                              ? `/products/${product.slug}`
+                              ? `/product/${product.slug}`
                               : undefined
                         }
                       />

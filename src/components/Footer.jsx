@@ -51,9 +51,9 @@ const footerLinks = {
     { nameKey: 'footer.links.specialLabels', href: '/category/specials' },
   ],
   printers: [
-    { name: 'ZX1600i', href: '/products/zx1600i' },
-    { name: 'EZ6350i', href: '/products/ez6350i' },
-    { name: 'HD830i', href: '/products/hd830i' },
+    { name: 'ZX1600i', href: '/product/zx1600i' },
+    { name: 'EZ6350i', href: '/product/ez6350i' },
+    { name: 'HD830i', href: '/product/hd830i' },
     { nameKey: 'footer.links.compareModels', href: '#' },
   ],
   support: [
@@ -140,7 +140,7 @@ export default function Footer() {
             {Object.entries(footerLinks).map(([section, links]) => (
               <div key={section} className="flex flex-col gap-5">
                 <Link 
-                  href={section === 'products' ? '/products' : '#'} 
+                  href={section === 'products' ? '/product' : '#'} 
                   className={`text-white text-lg font-semibold font-['Segoe_UI'] leading-6 ${section === 'products' ? 'hover:text-amber-500 transition-colors' : 'pointer-events-none'}`}
                 >
                   {t(`footer.columns.${section}`)}

@@ -28,7 +28,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/materials/inkjet',
     '/materials/thermal-direct',
     '/materials/thermal-transfer',
-    '/products',
+    '/product',
     '/categories',
     '/printers',
     '/blogs',

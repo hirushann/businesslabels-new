@@ -8,7 +8,7 @@ import { localePath } from '@/lib/i18n/utils';
  *
  * Usage:
  *   const lp = useLocalePath();
- *   <Link href={lp('/products')}>...</Link>
+ *   <Link href={lp('/product')}>...</Link>
  *
  * @returns {(path: string) => string}
  */

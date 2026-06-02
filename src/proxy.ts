@@ -21,6 +21,14 @@ function mapPublicPathToInternalPath(pathname: string) {
     return categorySlug ? `/category/${categorySlug}` : pathname;
   }
 
+  if (pathname.startsWith('/product/')) {
+    return `/products/${pathname.slice('/product/'.length)}`;
+  }
+
+  if (pathname === '/product') {
+    return '/products';
+  }
+
   return pathname;
 }
 
