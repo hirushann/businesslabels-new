@@ -30,6 +30,7 @@ type ProductsListingProps = {
   initialCatalog: CatalogSearchResponse;
   initialQueryString: string;
   scopeQueryString?: string;
+  // Deprecated: filter bounds now come from the currently scoped ES result set.
   baselineRangeFilters?: CatalogRangeFilter[];
   printer?: { title: string; slug: string } | null;
   // Filter keys to omit from the sidebar.
@@ -178,6 +179,10 @@ function formatRangeValue(
   return `${unitPrefix ?? ""}${value}${unitSuffix ? ` ${unitSuffix}` : ""}`;
 }
 
+function hasUsableRange(filter: CatalogRangeFilter): boolean {
+  return Number.isFinite(filter.min) && Number.isFinite(filter.max) && Math.round(filter.max) > Math.round(filter.min);
+}
+
 function normalizeSortValue(
   value: string | null,
   hasSearch: boolean,
@@ -233,7 +238,6 @@ function CatalogProductsListing({
   initialCatalog,
   initialQueryString,
   scopeQueryString,
-  baselineRangeFilters,
   printer,
   hiddenFilterKeys,
   validCategorySlugs,
@@ -260,22 +264,6 @@ function CatalogProductsListing({
   const [isPending, startTransition] = useTransition();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const hasFocusedSearchRef = useRef(false);
-
-  const stableRangeFilters = useMemo(
-    () =>
-      baselineRangeFilters?.length
-        ? baselineRangeFilters
-        : initialCatalog.filters.ranges,
-    [baselineRangeFilters, initialCatalog.filters.ranges],
-  );
-
-  const absoluteRangeMaxes = useMemo<Partial<Record<CatalogRangeKey, number>>>(
-    () =>
-      Object.fromEntries(
-        stableRangeFilters.map((filter) => [filter.key, filter.max]),
-      ),
-    [stableRangeFilters],
-  );
 
   useEffect(() => {
     if (!hasFocusedSearchRef.current || searchParams.get("focus") === "true") {
@@ -536,8 +524,7 @@ function CatalogProductsListing({
       count += valuesFor(displayParams, OPTION_PARAM_KEY[filter.key]).length;
     });
 
-    stableRangeFilters.forEach((filter) => {
-      const rangeKeys = RANGE_PARAM_KEYS[filter.key];
+    Object.values(RANGE_PARAM_KEYS).forEach((rangeKeys) => {
       if (
         displayParams.has(rangeKeys.min) ||
         displayParams.has(rangeKeys.max)
@@ -549,14 +536,11 @@ function CatalogProductsListing({
     if (displayParams.has("type") || displayParams.has("product_type"))
       count += 1;
     return count;
-  }, [catalog.filters.options, stableRangeFilters, displayParams]);
+  }, [catalog.filters.options, displayParams]);
 
   const orderedFilters = useMemo(() => {
     const rangeMap = new Map(
       catalog.filters.ranges.map((filter) => [filter.key, filter]),
-    );
-    const stableRangeMap = new Map(
-      stableRangeFilters.map((filter) => [filter.key, filter]),
     );
     const optionMap = new Map(
       catalog.filters.options.map((filter) => [filter.key, filter]),
@@ -575,9 +559,8 @@ function CatalogProductsListing({
         | { kind: "option"; filter: CatalogOptionFilter }
       > => {
         if (entry.kind === "range") {
-          const filter =
-            rangeMap.get(entry.key) ?? stableRangeMap.get(entry.key);
-          return filter ? [{ kind: "range" as const, filter }] : [];
+          const filter = rangeMap.get(entry.key);
+          return filter && hasUsableRange(filter) ? [{ kind: "range" as const, filter }] : [];
         }
 
         if (hidden.has(entry.key)) return [];
@@ -604,7 +587,6 @@ function CatalogProductsListing({
   }, [
     catalog.filters.options,
     catalog.filters.ranges,
-    stableRangeFilters,
     hiddenFilterKeys,
     validCategorySlugs,
   ]);
@@ -659,11 +641,12 @@ function CatalogProductsListing({
   const setRange = (
     key: keyof typeof RANGE_PARAM_KEYS,
     range: [number, number],
+    min: number,
     max: number,
   ) => {
     setParams((params) => {
       const rangeKeys = RANGE_PARAM_KEYS[key];
-      if (range[0] <= 0) {
+      if (range[0] <= min) {
         params.delete(rangeKeys.min);
       } else {
         params.set(rangeKeys.min, String(range[0]));
@@ -884,17 +867,16 @@ function CatalogProductsListing({
                   if (entry.kind === "range") {
                     const filter = entry.filter;
                     const keys = RANGE_PARAM_KEYS[filter.key];
-                    // Use absolute max from initial catalog for consistent UI bounds
-                    const absoluteMax =
-                      absoluteRangeMaxes[filter.key] ?? filter.max;
+                    const min = filter.min;
+                    const max = filter.max;
                     const value: [number, number] = [
-                      Math.min(
-                        numberFor(displayParams, keys.min) ?? 0,
-                        absoluteMax,
+                      Math.max(
+                        min,
+                        Math.min(numberFor(displayParams, keys.min) ?? min, max),
                       ),
-                      Math.min(
-                        numberFor(displayParams, keys.max) ?? absoluteMax,
-                        absoluteMax,
+                      Math.max(
+                        min,
+                        Math.min(numberFor(displayParams, keys.max) ?? max, max),
                       ),
                     ];
 
@@ -937,12 +919,12 @@ function CatalogProductsListing({
                       >
                         <div className="flex flex-col gap-3">
                           <RangeSlider
-                            min={0}
-                            max={absoluteMax}
+                            min={min}
+                            max={max}
                             value={value}
                             onChange={() => {}}
                             onAfterChange={(range) =>
-                              setRange(filter.key, range, absoluteMax)
+                              setRange(filter.key, range, min, max)
                             }
                             formatValue={(rangeValue) =>
                               formatRangeValue(
