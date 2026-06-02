@@ -1,54 +1,64 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE, LOCALE_HEADER } from '@/lib/i18n/config';
 
-const LOCALE_COOKIE = 'NEXT_LOCALE';
 const EN_PREFIX = '/en';
+const COOKIE_OPTIONS = { path: '/', sameSite: 'lax' as const, maxAge: LOCALE_COOKIE_MAX_AGE };
+
+function requestHeadersWithLocale(request: NextRequest, locale: 'en' | 'nl') {
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set(LOCALE_HEADER, locale);
+  return requestHeaders;
+}
+
+function persistLocale(response: NextResponse, locale: 'en' | 'nl') {
+  response.cookies.set(LOCALE_COOKIE, locale, COOKIE_OPTIONS);
+  return response;
+}
 
 /**
  * Locale-prefix routing:
- * - /en/* → rewrite internally to /* + set NEXT_LOCALE=en cookie
- * - /* with NEXT_LOCALE=en cookie → redirect to /en/*
- * - /* with NEXT_LOCALE=nl (or no cookie) → serve as-is
+ * - /en/* → English, rewrite internally to /* + persist NEXT_LOCALE=en
+ * - /* → Dutch, persist NEXT_LOCALE=nl
  *
- * Auth guard for /my-account/* is applied after locale routing.
+ * The URL shape is the source of truth so refreshes cannot be pulled back to
+ * English by a stale cookie after the user switches to Dutch.
  */
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
-  const localeCookie = request.cookies.get(LOCALE_COOKIE)?.value;
   const hasEnglishPrefix = pathname.startsWith(EN_PREFIX + '/') || pathname === EN_PREFIX;
+  const locale = hasEnglishPrefix ? 'en' : 'nl';
+  const cleanPathname = hasEnglishPrefix ? (pathname.slice(EN_PREFIX.length) || '/') : pathname;
 
   // ── Locale routing ──────────────────────────────────────────────────────────
 
-  if (hasEnglishPrefix) {
-    // Strip the /en prefix and rewrite internally; the browser keeps /en/...
-    const stripped = pathname.slice(EN_PREFIX.length) || '/';
-    const rewriteUrl = new URL(stripped + search, request.url);
-    const response = NextResponse.rewrite(rewriteUrl);
-    // Ensure the EN cookie is set so server components read the right locale
-    response.cookies.set(LOCALE_COOKIE, 'en', { path: '/', sameSite: 'lax', maxAge: 60 * 60 * 24 * 365 });
-    return response;
-  }
-
-  if (localeCookie === 'en') {
-    // EN user visiting a non-prefixed path → redirect to /en prefix
-    const redirectUrl = new URL(EN_PREFIX + pathname + search, request.url);
-    return NextResponse.redirect(redirectUrl);
-  }
-
   // ── Auth guard (/my-account) ─────────────────────────────────────────────────
 
-  if (pathname.startsWith('/my-account')) {
+  if (cleanPathname.startsWith('/my-account')) {
     const authToken = request.cookies.get('auth_token')?.value;
     const authSession = request.cookies.get('auth_session')?.value;
 
     if (!authToken && !authSession) {
-      const loginUrl = new URL('/login', request.url);
+      const loginPath = hasEnglishPrefix ? `${EN_PREFIX}/login` : '/login';
+      const loginUrl = new URL(loginPath, request.url);
       loginUrl.searchParams.set('redirect', pathname + search);
-      return NextResponse.redirect(loginUrl);
+      return persistLocale(NextResponse.redirect(loginUrl), locale);
     }
   }
 
-  return NextResponse.next();
+  if (hasEnglishPrefix) {
+    // Strip the /en prefix and rewrite internally; the browser keeps /en/...
+    const rewriteUrl = new URL(cleanPathname + search, request.url);
+    const response = NextResponse.rewrite(rewriteUrl, {
+      request: { headers: requestHeadersWithLocale(request, 'en') },
+    });
+    return persistLocale(response, 'en');
+  }
+
+  const response = NextResponse.next({
+    request: { headers: requestHeadersWithLocale(request, 'nl') },
+  });
+  return persistLocale(response, 'nl');
 }
 
 export const config = {

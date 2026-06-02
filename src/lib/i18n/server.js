@@ -1,13 +1,19 @@
 import 'server-only';
 
-import { cookies } from 'next/headers';
-import { LOCALE_COOKIE, normalizeLocale } from './config';
+import { cookies, headers } from 'next/headers';
+import { LOCALE_COOKIE, LOCALE_HEADER, normalizeLocale } from './config';
 
 /**
  * Read the active locale from the request cookie. Server Components only.
  * @returns {Promise<'en' | 'nl'>}
  */
 export async function getServerLocale() {
+  const requestHeaders = await headers();
+  const proxiedLocale = requestHeaders.get(LOCALE_HEADER);
+  if (proxiedLocale) {
+    return normalizeLocale(proxiedLocale);
+  }
+
   const store = await cookies();
   return normalizeLocale(store.get(LOCALE_COOKIE)?.value);
 }
