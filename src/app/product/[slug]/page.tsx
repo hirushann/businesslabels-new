@@ -870,7 +870,7 @@ export default async function SingleProductPage({
         </div>
         <div className="max-w-360 mx-auto flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
           {/* LEFT: Images + Description + Specs */}
-          <div className="w-full lg:flex-1 flex flex-col gap-8 lg:gap-12">
+          <div className="w-full lg:flex-1 min-w-0 flex flex-col gap-8 lg:gap-12">
             {/* Title & Description */}
             <div className="flex flex-col gap-4">
               {productName ? (
