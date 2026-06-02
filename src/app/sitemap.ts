@@ -1,16 +1,21 @@
 import { MetadataRoute } from 'next';
-import { LOCALES } from '@/lib/i18n/config';
+import { getPrinterCategoryPath } from '@/lib/routes/printerCategories';
 
 // Define the API base URL
 const baseUrl = process.env.BBNL_API_BASE_URL || 'http://localhost:8000';
 const frontendUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://businesslabels.nl';
 
-async function fetchApi(path: string) {
+type SitemapApiItem = {
+  slug?: string;
+  updated_at?: string;
+};
+
+async function fetchApi<T extends SitemapApiItem>(path: string): Promise<T[]> {
   try {
     const res = await fetch(`${baseUrl}${path}`, { next: { revalidate: 3600 } });
     if (!res.ok) return [];
-    const json = await res.json();
-    return json.data || [];
+    const json = (await res.json()) as { data?: T[] };
+    return Array.isArray(json.data) ? json.data : [];
   } catch (e) {
     console.error(`Failed to fetch ${path} for sitemap:`, e);
     return [];
@@ -30,7 +35,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/materials/thermal-transfer',
     '/products',
     '/categories',
-    '/printers',
+    getPrinterCategoryPath('nl'),
     '/blogs',
     '/brand',
     '/finder',
@@ -51,16 +56,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Fetch dynamic content
   const [materials, products, categories, printers, blogs, brands] = await Promise.all([
-    fetchApi('/api/materials?per_page=1000'),
-    fetchApi('/api/products?per_page=1000'),
-    fetchApi('/api/categories?per_page=1000'),
-    fetchApi('/api/printers?per_page=1000'),
-    fetchApi('/api/blogs?per_page=1000'),
-    fetchApi('/api/brands?per_page=1000'), // Assuming brands endpoint exists
+    fetchApi<SitemapApiItem>('/api/materials?per_page=1000'),
+    fetchApi<SitemapApiItem>('/api/products?per_page=1000'),
+    fetchApi<SitemapApiItem>('/api/categories?per_page=1000'),
+    fetchApi<SitemapApiItem>('/api/printers?per_page=1000'),
+    fetchApi<SitemapApiItem>('/api/blogs?per_page=1000'),
+    fetchApi<SitemapApiItem>('/api/brands?per_page=1000'), // Assuming brands endpoint exists
   ]);
 
   // Add Materials
-  materials.forEach((material: any) => {
+  materials.forEach((material) => {
     if (material.slug) {
       sitemapEntries.push({
         url: `${frontendUrl}/materials/${material.slug}`,
@@ -72,7 +77,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   });
 
   // Add Products
-  products.forEach((product: any) => {
+  products.forEach((product) => {
     if (product.slug) {
       sitemapEntries.push({
         url: `${frontendUrl}/products/${product.slug}`,
@@ -84,7 +89,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   });
 
   // Add Categories
-  categories.forEach((category: any) => {
+  categories.forEach((category) => {
     if (category.slug) {
       sitemapEntries.push({
         url: `${frontendUrl}/category/${category.slug}`,
@@ -96,7 +101,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   });
 
   // Add Printers
-  printers.forEach((printer: any) => {
+  printers.forEach((printer) => {
     if (printer.slug) {
       sitemapEntries.push({
         url: `${frontendUrl}/printers/${printer.slug}`,
@@ -108,7 +113,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   });
 
   // Add Blogs
-  blogs.forEach((blog: any) => {
+  blogs.forEach((blog) => {
     if (blog.slug) {
       sitemapEntries.push({
         url: `${frontendUrl}/blogs/${blog.slug}`,
@@ -120,7 +125,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   });
 
   // Add Brands
-  brands.forEach((brand: any) => {
+  brands.forEach((brand) => {
     if (brand.slug) {
       sitemapEntries.push({
         url: `${frontendUrl}/brand/${brand.slug}`,

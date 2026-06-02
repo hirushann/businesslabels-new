@@ -145,6 +145,69 @@ export function findCategoryBySlug(
   return null;
 }
 
+function decodeSegment(segment: string): string {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
+}
+
+function betterCategoryLookup(
+  current: CategoryLookup | null,
+  candidate: CategoryLookup,
+): CategoryLookup {
+  if (!current) return candidate;
+  return candidate.category.count > current.category.count ? candidate : current;
+}
+
+/**
+ * Resolve a catch-all category URL by its full localized hierarchy.
+ *
+ * Slugs are not globally unique (`accessoires`, `shipping-labels`, and a few
+ * translated label roots can collide), so live product-category routes should
+ * prefer path resolution over last-segment lookup. If duplicate translated
+ * paths still exist, the category with the larger aggregated count wins.
+ */
+export function findCategoryByPath(
+  groups: CategoryGroup[],
+  segments: string[],
+  locale: string,
+): CategoryLookup | null {
+  const targetSegments = segments.map(decodeSegment).filter((segment) => segment.trim().length > 0);
+  if (!targetSegments.length) return null;
+
+  const visit = (
+    nodes: CategoryNode[],
+    index: number,
+    ancestors: CategoryNode[],
+  ): CategoryLookup | null => {
+    let best: CategoryLookup | null = null;
+
+    for (const node of nodes) {
+      if (!categoryMatchesSlug(node, targetSegments[index], locale)) continue;
+
+      if (index === targetSegments.length - 1) {
+        best = betterCategoryLookup(best, { category: node, ancestors });
+        continue;
+      }
+
+      const deeper = visit(node.children ?? [], index + 1, [...ancestors, node]);
+      if (deeper) best = betterCategoryLookup(best, deeper);
+    }
+
+    return best;
+  };
+
+  let best: CategoryLookup | null = null;
+  for (const group of groups ?? []) {
+    const found = visit(group.categories ?? [], 0, []);
+    if (found) best = betterCategoryLookup(best, found);
+  }
+
+  return best;
+}
+
 /**
  * Walks every node in the tree and returns the set of live category slugs
  * (current locale). Used to drop stale slugs from the catalog's category
