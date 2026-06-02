@@ -74,7 +74,7 @@ export default function AccessoriesMenu() {
           </div>
 
           {/* Right column: featured card */}
-          <div className="w-full lg:w-72 self-stretch p-4 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-gray-100 inline-flex flex-col justify-start items-start gap-5 overflow-hidden">
+          {/* <div className="w-full lg:w-72 self-stretch p-4 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-gray-100 inline-flex flex-col justify-start items-start gap-5 overflow-hidden">
             <div className="self-stretch h-40 relative rounded-lg overflow-hidden bg-gray-100">
               <Image
                 src="https://placehold.co/246x153"
@@ -109,7 +109,7 @@ export default function AccessoriesMenu() {
                 </Link>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
 
