@@ -434,7 +434,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
               {t('header.customMadeForm')}
             </Link>
             <Link
-              href="/finder"
+              href={lp('/printers')}
               className="px-4 py-2 bg-amber-500 rounded-full flex items-center gap-2 text-white text-base font-semibold hover:bg-amber-600 transition-colors"
             >
               {t('header.productFinder')}
@@ -511,7 +511,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
               </Link>
               
               <Link
-                href="/finder"
+                href={lp('/printers')}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="px-4 py-3 bg-amber-500 text-white font-semibold text-base rounded-full flex justify-center items-center gap-2 mt-4 hover:bg-amber-600 transition-colors"
               >

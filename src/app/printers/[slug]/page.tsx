@@ -1,23 +1,52 @@
 import type { Metadata } from "next";
-import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import Accordion from "@/components/Accordion";
-import CTABanner from "@/components/CTABanner";
-import ProductCard, { type ProductCardData } from "@/components/ProductCard";
-import { getPrinterProducts } from "@/lib/api/compatibility";
+import ProductsListing from "@/components/ProductsListing";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import {
+  parseCatalogSearchParams,
+  searchCatalogProducts,
+} from "@/lib/search/products";
+import type { CatalogSearchResponse } from "@/lib/search/types";
+import type { FinderPrinterDetails } from "@/lib/search/printers";
 import type { Printer } from "@/lib/types/printer";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 type PrinterResponse = {
   data: Printer;
 };
 
+type PrinterPageSearchParams = Record<string, string | string[] | undefined>;
+
 type PrinterPageProps = {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<PrinterPageSearchParams>;
 };
+
+type TranslationFn = Awaited<ReturnType<typeof getTranslations>>;
+
+const emptyProductCatalog: CatalogSearchResponse = {
+  products: [],
+  total: 0,
+  currentPage: 1,
+  lastPage: 1,
+  perPage: 24,
+  filters: { ranges: [], options: [] },
+};
+
+function toUrlSearchParams(query: PrinterPageSearchParams): URLSearchParams {
+  const params = new URLSearchParams();
+
+  Object.entries(query).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      value.forEach((item) => params.append(key, item));
+    } else if (value !== undefined) {
+      params.append(key, value);
+    }
+  });
+
+  return params;
+}
 
 async function getPrinter(slug: string): Promise<Printer | null> {
   const baseUrl = process.env.BBNL_API_BASE_URL;
@@ -25,9 +54,10 @@ async function getPrinter(slug: string): Promise<Printer | null> {
 
   try {
     const locale = await getServerLocale();
-    const response = await fetch(withLocaleParam(`${baseUrl}/api/printers/slug/${slug}`, locale), {
-      cache: "no-store",
-    });
+    const response = await fetch(
+      withLocaleParam(`${baseUrl}/api/printers/slug/${slug}`, locale),
+      { cache: "no-store" },
+    );
 
     if (!response.ok) return null;
 
@@ -39,7 +69,24 @@ async function getPrinter(slug: string): Promise<Printer | null> {
   }
 }
 
-export async function generateMetadata({ params }: PrinterPageProps): Promise<Metadata> {
+function toFinderPrinter(printer: Printer): FinderPrinterDetails {
+  return {
+    id: printer.id,
+    title: printer.title ?? "",
+    subtitle: printer.subtitle,
+    slug: printer.slug ?? "",
+    image: printer.image ?? printer.thumbnail,
+    properties: printer.properties as Record<string, string[]>,
+    excerpt: printer.excerpt,
+    content: printer.content,
+    created_at: printer.created_at,
+    updated_at: printer.updated_at,
+  };
+}
+
+export async function generateMetadata({
+  params,
+}: Pick<PrinterPageProps, "params">): Promise<Metadata> {
   const { slug } = await params;
   const printer = await getPrinter(slug);
 
@@ -55,465 +102,316 @@ export async function generateMetadata({ params }: PrinterPageProps): Promise<Me
   };
 }
 
-function ContactIcon({ type }: { type: "call" | "email" | "whatsapp" }) {
-  if (type === "call") {
-    return (
-      <svg className="h-4 w-4 text-amber-500" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path
-          d="M22 16.92V20A2 2 0 0 1 19.82 22A19.8 19.8 0 0 1 3.08 5.18A2 2 0 0 1 5.06 3H8.15A2 2 0 0 1 10.15 4.72C10.28 5.68 10.5 6.62 10.82 7.52A2 2 0 0 1 10.37 9.63L9.06 10.94A16 16 0 0 0 13.06 14.94L14.37 13.63A2 2 0 0 1 16.48 13.18C17.38 13.5 18.32 13.72 19.28 13.85A2 2 0 0 1 22 16.92Z"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    );
+function toDisplayImageUrl(url: string | null | undefined): string | null {
+  if (!url?.trim()) return null;
+  const trimmed = url.trim();
+  if (
+    trimmed.startsWith("/") ||
+    trimmed.startsWith("data:") ||
+    trimmed.startsWith("blob:")
+  ) {
+    return trimmed;
+  }
+  return `/api/media-proxy?url=${encodeURIComponent(trimmed)}`;
+}
+
+function flattenPropertyValues(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return typeof value === "string" || typeof value === "number"
+      ? [String(value)]
+      : [];
   }
 
-  if (type === "email") {
-    return (
-      <svg className="h-4 w-4 text-amber-500" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path
-          d="M4 6H20V18H4V6Z"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M4 7L12 13L20 7"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    );
+  return value.flatMap((item) => flattenPropertyValues(item));
+}
+
+function firstProperty(
+  properties: Record<string, unknown> | undefined,
+  keys: string[],
+): string[] {
+  if (!properties) return [];
+
+  for (const key of keys) {
+    const value = flattenPropertyValues(properties[key]);
+    if (value.length) return value;
   }
+
+  return [];
+}
+
+function numericParts(value: string): number[] {
+  return Array.from(value.matchAll(/\d+(?:[,.]\d+)?/g))
+    .map((match) => Number(match[0].replace(",", ".")))
+    .filter((number) => Number.isFinite(number));
+}
+
+function formatMillimeterRange(
+  min: number,
+  max: number,
+  t: TranslationFn,
+): string {
+  return `${t("finder.min")} ${min} mm, ${t("finder.max")} ${max} mm`;
+}
+
+function numberRangeLabel(values: string[], t: TranslationFn): string | null {
+  const numbers = values
+    .flatMap(numericParts)
+    .filter((value) => Number.isFinite(value));
+
+  if (numbers.length < 2) return null;
+
+  return formatMillimeterRange(Math.min(...numbers), Math.max(...numbers), t);
+}
+
+function withMillimeterUnit(value: string): string {
+  if (value.toLowerCase() === "fan-fold") return "Fan-fold";
+  return /\bmm\b/i.test(value) ? value : `${value} mm`;
+}
+
+function SpecItem({ label, value }: { label: string; value: string }) {
+  const cleanLabel = label.endsWith(":") ? label.slice(0, -1) : label;
 
   return (
-    <svg className="h-4 w-4 text-amber-500" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M5 19L6.2 15.6A7 7 0 1 1 8.4 17.8L5 19Z"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M9.5 9.5C10.2 12 12 13.8 14.5 14.5"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-      />
-    </svg>
+    <li className="flex items-start gap-3">
+      <svg
+        className="mt-0.5 shrink-0"
+        width="22"
+        height="22"
+        viewBox="0 0 22 22"
+        fill="none"
+        aria-hidden="true"
+      >
+        <circle
+          cx="11"
+          cy="11"
+          r="10"
+          stroke="#22c55e"
+          strokeWidth="1.5"
+          fill="none"
+        />
+        <path
+          d="M7 11.5l2.5 2.5 5.5-5.5"
+          stroke="#22c55e"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+      <span className="text-base text-neutral-700">
+        <span className="font-semibold text-neutral-800">{cleanLabel}:</span>{" "}
+        {value}
+      </span>
+    </li>
   );
 }
 
-function HelpPanel({
-  labels,
-  printerCode,
+function PrinterSummary({
+  printer,
+  baselineCatalog,
+  t,
 }: {
-  labels: {
-    title: string;
-    callUs: string;
-    email: string;
-    whatsapp: string;
-    availableProduct: string;
-    customMade: string;
-  };
-  printerCode?: string;
+  printer: FinderPrinterDetails;
+  baselineCatalog?: CatalogSearchResponse;
+  t: TranslationFn;
 }) {
-  const actions = [
-    {
-      label: labels.callUs,
-      type: "call" as const,
-      href: "tel:0031318590465",
-    },
-    {
-      label: labels.email,
-      type: "email" as const,
-      href: "mailto:verkoop@businesslabels.nl?&subject=Business%20Labels&body=" + encodeURIComponent(printerCode ?? ""),
-    },
-    {
-      label: labels.whatsapp,
-      type: "whatsapp" as const,
-      href: "https://wa.me/31318590212?text=" + encodeURIComponent(printerCode ?? ""),
-    },
-  ];
+  const imageUrl = toDisplayImageUrl(printer.image);
+  const properties = printer.properties;
+  const printMethods = firstProperty(properties, ["printmethode", "druktype"]);
+  const cores = firstProperty(properties, ["kern"]).map(withMillimeterUnit);
+
+  if (baselineCatalog) {
+    const hasFanFold = baselineCatalog.filters.options
+      .find((filter) => filter.key === "kern_string")
+      ?.options.some((option) => option.value.toLowerCase() === "fan-fold");
+
+    if (hasFanFold && !cores.some((core) => core.toLowerCase() === "fan-fold")) {
+      cores.push("Fan-fold");
+    }
+  }
+
+  const minWidths = firstProperty(properties, [
+    "label-breedte-min",
+    "label_breedte_min",
+  ]);
+  const maxWidths = firstProperty(properties, [
+    "label-breedte-max",
+    "label_breedte_max",
+  ]);
+  const widthRange = firstProperty(properties, [
+    "label-breedte",
+    "label_breedte",
+  ]);
+  const widths = firstProperty(properties, ["breedte", "width"]);
+  const maxOuterDiameter = firstProperty(properties, [
+    "max-buiten-diameter",
+    "max_buiten_diameter",
+  ]);
+  const parsedMinWidth = minWidths[0]
+    ? numericParts(minWidths[0])[0]
+    : undefined;
+  const parsedMaxWidth = maxWidths[0]
+    ? numericParts(maxWidths[0])[0]
+    : undefined;
 
   return (
-    <aside className="flex w-full flex-col gap-6 lg:sticky lg:top-24 lg:w-96">
-      <div className="flex flex-col gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)]">
-        <h2 className="text-lg font-bold leading-5 text-neutral-700">{labels.title}</h2>
-        <div className="grid grid-cols-3 gap-4">
-          {actions.map((action) => (
-            <Link
-              key={action.label}
-              href={action.href}
-              className="flex flex-col items-center justify-center gap-3 rounded-xl border border-gray-100 bg-slate-100/30 p-3 text-center transition-colors hover:border-amber-200 hover:bg-orange-50"
-            >
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-50 shadow-sm">
-                <ContactIcon type={action.type} />
-              </span>
-              <span className="text-base font-semibold leading-5 text-neutral-800">{action.label}</span>
-            </Link>
-          ))}
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex flex-col lg:min-h-64 lg:flex-row">
+        <div className="flex flex-1 basis-1/2 flex-col p-6">
+          <h1 className="font-['Segoe_UI'] text-3xl font-bold leading-9 text-neutral-800">
+            {printer.title}
+          </h1>
+          {printer.subtitle ? (
+            <p className="mt-2 text-lg text-sky-600">{printer.subtitle}</p>
+          ) : null}
+
+          {printer.content ? (
+            <div className="mt-4 rounded-lg bg-slate-50 p-4">
+              <div className="text-sm font-medium text-neutral-500">
+                {t("product.productDescription")}
+              </div>
+              <div
+                className="mt-2 text-sm font-normal leading-relaxed text-neutral-700 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5"
+                dangerouslySetInnerHTML={{ __html: printer.content }}
+              />
+            </div>
+          ) : printer.excerpt ? (
+            <div className="mt-4 rounded-lg bg-slate-50 p-4">
+              <div className="text-sm font-medium text-neutral-500">
+                {t("product.productDescription")}
+              </div>
+              <div
+                className="mt-2 text-sm font-normal leading-relaxed text-neutral-700 [&_p]:mb-2"
+                dangerouslySetInnerHTML={{ __html: printer.excerpt }}
+              />
+            </div>
+          ) : null}
+
+          {properties ? (
+            <div className="mt-2 pt-3">
+              <h3 className="text-xl font-bold text-neutral-800">
+                {t("finder.mediaSpecifications")}
+              </h3>
+              <ul className="mt-4 flex flex-col gap-3">
+                {printMethods.length > 0 ? (
+                  <SpecItem
+                    label={t("finder.printTechnology")}
+                    value={
+                      printMethods.includes("TD") && printMethods.includes("TT")
+                        ? "Thermal Direct & Thermal Transfer"
+                        : printMethods.join(", ")
+                    }
+                  />
+                ) : null}
+                {cores.length > 0 ? (
+                  <SpecItem label={t("finder.core")} value={cores.join(", ")} />
+                ) : null}
+                {parsedMinWidth != null && parsedMaxWidth != null ? (
+                  <SpecItem
+                    label={t("finder.mediaWidth")}
+                    value={formatMillimeterRange(
+                      parsedMinWidth,
+                      parsedMaxWidth,
+                      t,
+                    )}
+                  />
+                ) : widthRange.length > 0 ? (
+                  <SpecItem
+                    label={t("finder.mediaWidth")}
+                    value={
+                      numberRangeLabel(widthRange, t) ?? widthRange.join(", ")
+                    }
+                  />
+                ) : widths.length > 0 ? (
+                  <SpecItem
+                    label={t("finder.mediaWidth")}
+                    value={numberRangeLabel(widths, t) ?? widths.join(", ")}
+                  />
+                ) : null}
+                {maxOuterDiameter[0] ? (
+                  <SpecItem
+                    label={t("finder.maxOuterDiameter")}
+                    value={withMillimeterUnit(maxOuterDiameter[0])}
+                  />
+                ) : null}
+              </ul>
+            </div>
+          ) : null}
         </div>
-      </div>
 
-      <div className="flex flex-col gap-3">
-        <Link
-          href="/products"
-          className="flex h-12 items-center justify-center rounded-full bg-amber-500 px-4 text-lg font-semibold leading-6 text-white transition-colors hover:bg-amber-600"
-        >
-          {labels.availableProduct}
-        </Link>
-        <Link
-          href="/custom"
-          className="flex h-12 items-center justify-center rounded-full border border-amber-500 bg-amber-500/20 px-4 text-lg font-semibold leading-6 text-amber-500 transition-colors hover:bg-amber-500/30"
-        >
-          {labels.customMade}
-        </Link>
-      </div>
-    </aside>
-  );
-}
-
-function CompatibilityPropertiesCard({ 
-  printer, 
-  labels 
-}: { 
-  printer: Printer; 
-  labels: {
-    title: string;
-    printMethod: string;
-    core: string;
-    width: string;
-    maxOuterDiameter: string;
-    td: string;
-    tt: string;
-  };
-}) {
-  const props = printer.properties;
-  
-  // Format print methods
-  const printMethods = props.printmethode || props.druktype || [];
-  const printMethodDisplay = printMethods.map(method => {
-    if (method === 'TD') return labels.td;
-    if (method === 'TT') return labels.tt;
-    return method;
-  }).join(', ');
-  
-  // Format width range
-  const minWidth = props['label-breedte-min']?.[0] || 
-                   (props.breedte && Math.min(...props.breedte.map(Number)).toString());
-  const maxWidth = props['label-breedte-max']?.[0] || 
-                   (props.breedte && Math.max(...props.breedte.map(Number)).toString());
-  const widthDisplay = minWidth && maxWidth ? `${minWidth} - ${maxWidth} mm` : 'N/A';
-  
-  // Format core diameters
-  const cores = props.kern || [];
-  const coreDisplay = cores.join(', ') + (cores.length > 0 ? ' mm' : '');
-  
-  // Format max outer diameter
-  const maxOuterDiameter = props['max-buiten-diameter']?.[0] || props.max_buiten_diameter;
-  const maxOuterDiameterDisplay = maxOuterDiameter ? `${maxOuterDiameter} mm` : 'N/A';
-
-  return (
-    <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-6">
-      <h3 className="mb-4 text-lg font-bold leading-6 text-neutral-800">{labels.title}</h3>
-      <div className="grid gap-3">
-        <div className="flex items-start justify-between gap-4">
-          <span className="text-sm leading-5 text-neutral-700">{labels.printMethod}:</span>
-          <span className="text-right text-sm font-semibold leading-5 text-neutral-800">
-            {printMethodDisplay || 'N/A'}
-          </span>
-        </div>
-        <div className="flex items-start justify-between gap-4">
-          <span className="text-sm leading-5 text-neutral-700">{labels.width}:</span>
-          <span className="text-right text-sm font-semibold leading-5 text-neutral-800">
-            {widthDisplay}
-          </span>
-        </div>
-        <div className="flex items-start justify-between gap-4">
-          <span className="text-sm leading-5 text-neutral-700">{labels.core}:</span>
-          <span className="text-right text-sm font-semibold leading-5 text-neutral-800">
-            {coreDisplay || 'N/A'}
-          </span>
-        </div>
-        <div className="flex items-start justify-between gap-4">
-          <span className="text-sm leading-5 text-neutral-700">{labels.maxOuterDiameter}:</span>
-          <span className="text-right text-sm font-semibold leading-5 text-neutral-800">
-            {maxOuterDiameterDisplay}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SpecsTable({ printer, labels }: { printer: Printer; labels: Record<string, string> }) {
-  const props = printer.properties;
-  
-  const specs: Array<{ label: string; value: string }> = [];
-  
-  // Print method
-  const printMethods = props.printmethode || props.druktype || [];
-  if (printMethods.length > 0) {
-    specs.push({ 
-      label: labels.printMethod, 
-      value: printMethods.map(m => {
-        if (m === 'TD') return labels.td || 'Thermal Direct';
-        if (m === 'TT') return labels.tt || 'Thermal Transfer';
-        return m;
-      }).join(', ')
-    });
-  }
-  
-  // Width range
-  const minWidth = props['label-breedte-min']?.[0];
-  const maxWidth = props['label-breedte-max']?.[0];
-  if (minWidth && maxWidth) {
-    specs.push({ label: labels.width, value: `${minWidth} - ${maxWidth} mm` });
-  } else if (props.breedte && props.breedte.length > 0) {
-    const widths = props.breedte.map(Number);
-    specs.push({ label: labels.width, value: `${Math.min(...widths)} - ${Math.max(...widths)} mm` });
-  }
-  
-  // Cores
-  if (props.kern && props.kern.length > 0) {
-    specs.push({ label: labels.core, value: props.kern.join(', ') + ' mm' });
-  }
-  
-  // Outer diameters
-  if (props['buiten-diameter'] && props['buiten-diameter'].length > 0) {
-    specs.push({ label: labels.outerDiameter, value: props['buiten-diameter'].join(', ') + ' mm' });
-  }
-  
-  // Max outer diameter
-  const maxOD = props['max-buiten-diameter']?.[0] || props.max_buiten_diameter;
-  if (maxOD) {
-    specs.push({ label: labels.maxOuterDiameter, value: `${maxOD} mm` });
-  }
-  
-  // Detection methods
-  if (props.detectie && props.detectie.length > 0) {
-    specs.push({ label: labels.detection, value: props.detectie.join(', ') });
-  }
-  
-  // Label types
-  if (props.labeltype && props.labeltype.length > 0) {
-    specs.push({ label: labels.labelType, value: props.labeltype.join(', ') });
-  }
-
-  return (
-    <div className="overflow-hidden rounded-lg">
-      {specs.map((spec, index) => (
-        <div
-          key={spec.label}
-          className={`flex items-center justify-between gap-6 px-6 py-3 ${
-            index % 2 === 0 ? "border-x border-black/10 bg-white/50" : "bg-transparent"
-          }`}
-        >
-          <span className="text-base leading-6 text-neutral-700">{spec.label}</span>
-          <span className="text-right text-base font-semibold leading-6 text-neutral-700">{spec.value}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function productHref(product: ProductCardData): { pathname: string; query?: { type: "simple" | "variable" | "group_product" } } | undefined {
-  if (!product.slug) {
-    return undefined;
-  }
-
-  if (product.type) {
-    return {
-      pathname: `/products/${product.slug}`,
-      query: { type: product.type },
-    };
-  }
-
-  return { pathname: `/products/${product.slug}` };
-}
-
-function RelatedProductsSection({ title, products }: { title: string; products: ProductCardData[] }) {
-  return (
-    <section className="px-4 py-24 odd:bg-gray-50 even:bg-white sm:px-6 lg:px-10">
-      <div className="mx-auto flex max-w-300 flex-col gap-12">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-4xl font-bold leading-12 text-neutral-800">{title}</h2>
-          <div className="flex items-center gap-6">
-            <button
-              type="button"
-              className="flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-white text-neutral-700 shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)]"
-              aria-label={`Previous ${title}`}
-            >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              className="flex h-12 w-12 items-center justify-center rounded-full border border-amber-500 bg-white text-amber-500 shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)]"
-              aria-label={`Next ${title}`}
-            >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
+        {imageUrl ? (
+          <div className="flex min-h-56 flex-1 basis-1/2 items-center justify-center border-t border-slate-100 bg-slate-50 p-8 lg:min-h-0 lg:border-l lg:border-t-0 lg:border-slate-100">
+            <img
+              src={imageUrl}
+              alt={printer.title}
+              className="h-full max-h-80 w-full object-contain"
+            />
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} href={productHref(product)} />
-          ))}
-        </div>
+        ) : null}
       </div>
-    </section>
+    </div>
   );
 }
 
-export default async function PrinterDetailPage({ params }: PrinterPageProps) {
+export default async function PrinterFinderDetailPage({
+  params,
+  searchParams,
+}: PrinterPageProps) {
   const { slug } = await params;
   const t = await getTranslations();
-  const printer = await getPrinter(slug);
+  const locale = await getServerLocale();
+  const apiPrinter = await getPrinter(slug);
 
-  if (!printer) {
+  if (!apiPrinter) {
     notFound();
   }
 
-  // Fetch compatible products
-  let compatibleProducts: ProductCardData[] = [];
+  const printer = toFinderPrinter(apiPrinter);
+  const routeQuery = toUrlSearchParams(await searchParams);
+  const printerId = String(printer.id);
+  routeQuery.delete("printer_id");
+
+  const scopedQuery = new URLSearchParams(routeQuery);
+  scopedQuery.set("printer_id", printerId);
+
+  const baselineQuery = new URLSearchParams();
+  baselineQuery.set("printer_id", printerId);
+
+  let initialCatalog = emptyProductCatalog;
+  let baselineCatalog = emptyProductCatalog;
+
   try {
-    const result = await getPrinterProducts(printer.id, {
-      productType: 'labels',
-      perPage: 12,
-    });
-    
-    // Map products to ProductCardData format
-    compatibleProducts = result.products.data.map((product) => {
-      const locale = 'nl'; // TODO: Get from server locale
-      return {
-        id: product.id,
-        sku: product.sku || '',
-        name: typeof product.name === 'string' ? product.name : product.name[locale as keyof typeof product.name],
-        slug: typeof product.slug === 'string' ? product.slug : product.slug[locale as keyof typeof product.slug],
-        price: product.price,
-        originalPrice: product.original_price || undefined,
-        image: product.main_image || undefined,
-        inStock: product.in_stock,
-        type: product.type as 'simple' | 'variable' | 'group_product',
-      };
-    });
+    [initialCatalog, baselineCatalog] = await Promise.all([
+      searchCatalogProducts(parseCatalogSearchParams(scopedQuery, locale)),
+      searchCatalogProducts(parseCatalogSearchParams(baselineQuery, locale)),
+    ]);
   } catch (error) {
-    console.error("Error fetching compatible products:", error);
-    // Continue without compatible products
+    console.error("Failed to load printer finder product catalog.", error);
   }
 
-  const printerImage = printer.image || `https://placehold.co/1200x800?text=${encodeURIComponent(printer.title || 'Printer')}`;
-
   return (
-    <div className="bg-white">
-      <section className="px-4 py-10 sm:px-6 lg:px-10">
-        <div className="mx-auto flex max-w-300 flex-col gap-4">
-          <Breadcrumbs 
-            className="text-neutral-900"
-            items={[
-              { label: t("common.printers"), href: "/printers" },
-              { label: printer.title || 'Printer' }
-            ]} 
-          />
-
-          <div className="flex flex-col gap-12 lg:flex-row lg:items-start">
-            <div className="flex min-w-0 flex-1 flex-col gap-12">
-              <div className="flex flex-col gap-4">
-                <h1 className="text-3xl font-bold leading-10 text-neutral-800">{printer.title}</h1>
-                {printer.subtitle && (
-                  <p className="text-lg leading-7 text-neutral-700">{printer.subtitle}</p>
-                )}
-                <div className="relative min-h-80 overflow-hidden rounded-xl bg-gray-100 sm:min-h-[509px]">
-                  <Image
-                    src={printerImage}
-                    alt={t("printersPage.printerAlt", { title: printer.title || 'Printer' })}
-                    fill
-                    priority
-                    sizes="(max-width: 1024px) 100vw, 732px"
-                    className="object-cover"
-                    unoptimized
-                  />
-                </div>
-              </div>
-
-              {/* Compatibility Properties Card */}
-              <CompatibilityPropertiesCard 
-                printer={printer} 
-                labels={{
-                  title: t("printer.compatibilityTitle"),
-                  printMethod: t("printer.printMethod"),
-                  core: t("printer.core"),
-                  width: t("printer.width"),
-                  maxOuterDiameter: t("printer.maxOuterDiameter"),
-                  td: t("printer.thermalDirect"),
-                  tt: t("printer.thermalTransfer"),
-                }}
-              />
-
-              <div className="flex flex-col gap-6">
-                {printer.content && (
-                  <Accordion title={t("product.productDescription")}>
-                    <div 
-                      className="text-base leading-6 text-neutral-700"
-                      dangerouslySetInnerHTML={{ __html: printer.content }}
-                    />
-                  </Accordion>
-                )}
-
-                <Accordion title={t("product.productSpecifications")}>
-                  <SpecsTable
-                    printer={printer}
-                    labels={{
-                      printMethod: t("printer.printMethod"),
-                      width: t("printer.width"),
-                      core: t("printer.core"),
-                      outerDiameter: t("printer.outerDiameter"),
-                      maxOuterDiameter: t("printer.maxOuterDiameter"),
-                      detection: t("printer.detection"),
-                      labelType: t("printer.labelType"),
-                      td: t("printer.thermalDirect"),
-                      tt: t("printer.thermalTransfer"),
-                    }}
-                  />
-                </Accordion>
-              </div>
-            </div>
-
-            <HelpPanel
-              labels={{
-                title: t("supportPanel.title"),
-                callUs: t("supportPanel.callUs"),
-                email: t("supportPanel.email"),
-                whatsapp: t("supportPanel.whatsapp"),
-                availableProduct: t("supportPanel.availableProduct"),
-                customMade: t("supportPanel.customMade"),
-              }}
-              printerCode={printer.title || ""}
-            />
-          </div>
-        </div>
-      </section>
-
-      {compatibleProducts.length > 0 && (
-        <RelatedProductsSection 
-          title={t("printer.compatibleProducts")} 
-          products={compatibleProducts} 
+    <section className="bg-slate-50 px-4 py-4 sm:px-6 lg:px-10">
+      <div className="mx-auto flex max-w-360 flex-col gap-6">
+        <Breadcrumbs
+          items={[
+            { label: t("finder.printerFinder"), href: "/printers" },
+            { label: printer.title || "Printer" },
+          ]}
         />
-      )}
 
-      <CTABanner />
-    </div>
+        <PrinterSummary
+          printer={printer}
+          baselineCatalog={baselineCatalog}
+          t={t}
+        />
+
+        <ProductsListing
+          initialCatalog={initialCatalog}
+          initialQueryString={routeQuery.toString()}
+          scopeQueryString={baselineQuery.toString()}
+          baselineRangeFilters={baselineCatalog.filters.ranges}
+          printer={printer}
+        />
+      </div>
+    </section>
   );
 }

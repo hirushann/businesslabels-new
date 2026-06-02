@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import EmptyState from "@/components/EmptyState";
 import PrinterCard from "@/components/PrinterCard";
 import { useDebouncedSearchParam } from "@/components/search/useDebouncedSearchParam";
 import { RequestPrinterModal } from "@/components/RequestPrinterModal";
+import { getPrinterPath } from "@/lib/routes/printers";
 import type {
   PrinterCardData,
   PrinterSearchResponse,
@@ -23,6 +24,7 @@ export default function FinderListing({
   initialQueryString,
 }: PrintersListingProps) {
   const t = useTranslations();
+  const locale = useLocale();
   const faqItems = useMemo(() => [
     {
       title: t("finder.faqNotListedTitle"),
@@ -287,7 +289,7 @@ export default function FinderListing({
             <PrinterCard
               key={printer.id}
               printer={printer}
-              href={`/finder?printer_id=${printer.id}`}
+              href={getPrinterPath(locale, printer.slug)}
             />
           ))}
 

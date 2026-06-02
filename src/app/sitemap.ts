@@ -38,7 +38,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getPrinterCategoryPath('nl'),
     '/blogs',
     '/brand',
-    '/finder',
+    '/printers',
     '/custom-made-form',
   ];
 
