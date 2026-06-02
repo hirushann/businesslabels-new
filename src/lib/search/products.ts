@@ -10,6 +10,7 @@ import {
   type CatalogOptionFilterKey,
   type CatalogProductResult,
   type CatalogProductType,
+  type CatalogRangeFilter,
   type CatalogRangeKey,
   type CatalogSearchParams,
   type CatalogSearchResponse,
@@ -834,7 +835,11 @@ export async function getPrinterInfo(printerIds: number[]): Promise<PrinterInfo>
  * counterparts inside a single OR clause, so we keep them in the base rather
  * than try to split them out per facet.
  */
-function buildBaseFilters(params: CatalogSearchParams, printerInfo?: PrinterInfo): estypes.QueryDslQueryContainer[] {
+function buildBaseFilters(
+  params: CatalogSearchParams,
+  printerInfo?: PrinterInfo,
+  omittedRangeKey?: CatalogRangeKey,
+): estypes.QueryDslQueryContainer[] {
   // Slow-delivery products are NOT hidden from listings — they stay visible
   // and simply render without the "In Stock" label (see `mapProductHit`).
   const filters: Array<estypes.QueryDslQueryContainer | null> = [
@@ -918,30 +923,31 @@ function buildBaseFilters(params: CatalogSearchParams, printerInfo?: PrinterInfo
     materialIdsFilter(params.materialIds),
     termsFilter("material_taxon_slugs", params.materialCategories),
     termsFilter("material_taxon_ids", params.materialCategoryIds),
-    rangeFilter("price", params.priceMin, params.priceMax),
-    rangeFilter("property_numbers.breedte", params.widthMin, params.widthMax),
-    rangeFilter("property_numbers.hoogte", params.heightMin, params.heightMax),
-    rangeOrStringFilter("property_numbers.kern", params.coreMin, params.coreMax, "properties.kern.keyword", params.kernStrings, "properties"),
-    rangeOrStringFilter(
-      "property_numbers.buiten-diameter",
-      params.outerDiameterMin,
-      params.outerDiameterMax,
-      "properties.buiten-diameter.keyword",
-      params.outerDiameterStrings,
-      "properties",
-    ),
+    omittedRangeKey === "price" ? null : rangeFilter("price", params.priceMin, params.priceMax),
+    omittedRangeKey === "width" ? null : rangeFilter("property_numbers.breedte", params.widthMin, params.widthMax),
+    omittedRangeKey === "height" ? null : rangeFilter("property_numbers.hoogte", params.heightMin, params.heightMax),
+    omittedRangeKey === "core"
+      ? null
+      : rangeOrStringFilter("property_numbers.kern", params.coreMin, params.coreMax, "properties.kern.keyword", params.kernStrings, "properties"),
+    omittedRangeKey === "outer_diameter"
+      ? null
+      : rangeOrStringFilter(
+          "property_numbers.buiten-diameter",
+          params.outerDiameterMin,
+          params.outerDiameterMax,
+          "properties.buiten-diameter.keyword",
+          params.outerDiameterStrings,
+          "properties",
+        ),
   ];
 
   return filters.filter((filter): filter is estypes.QueryDslQueryContainer => filter !== null);
 }
 
 /**
- * One filter clause per UI facet key. Used both for the main query (where all
- * non-null entries are AND-ed in) and per-facet aggregations (where every
- * entry EXCEPT the facet being aggregated is applied). The latter is the
- * faceted-search pattern that lets a user switch values within a facet
- * without first deselecting — each option shows the count it WOULD have if
- * the user picked it.
+ * One filter clause per UI facet key. Used for the main query and scoped
+ * option aggregations, where active selections should remain visible as part
+ * of the current result set.
  */
 function buildFacetFilters(
   params: CatalogSearchParams,
@@ -966,8 +972,12 @@ function buildFacetFilters(
   return result;
 }
 
-function buildFilters(params: CatalogSearchParams, printerInfo?: PrinterInfo): estypes.QueryDslQueryContainer[] {
-  return [...buildBaseFilters(params, printerInfo), ...Object.values(buildFacetFilters(params))];
+function buildFilters(
+  params: CatalogSearchParams,
+  printerInfo?: PrinterInfo,
+  omittedRangeKey?: CatalogRangeKey,
+): estypes.QueryDslQueryContainer[] {
+  return [...buildBaseFilters(params, printerInfo, omittedRangeKey), ...Object.values(buildFacetFilters(params))];
 }
 
 function sortClauses(sort: CatalogSortValue): estypes.Sort | undefined {
@@ -986,20 +996,12 @@ function sortClauses(sort: CatalogSortValue): estypes.Sort | undefined {
 
 function aggregations(
   params: CatalogSearchParams,
+  printerInfo?: PrinterInfo,
 ): Record<string, estypes.AggregationsAggregationContainer> {
-  const baseFilters = buildBaseFilters(params);
-  const facetFilters = buildFacetFilters(params);
+  const filters = buildFilters(params, printerInfo);
 
   const optionAggs = Object.fromEntries(
     OPTION_FILTERS.map((filter) => {
-      // For this facet's aggregation, apply base + every OTHER facet's
-      // filter, but not its own. That way the facet's options reflect what
-      // would be available if the user changed/added a value within it,
-      // instead of collapsing to whatever they just picked.
-      const otherFacetFilters = Object.entries(facetFilters)
-        .filter(([key]) => key !== filter.key)
-        .map(([, clause]) => clause);
-
       const termsAgg: estypes.AggregationsAggregationContainer = {
         terms: {
           field: filter.field,
@@ -1015,29 +1017,16 @@ function aggregations(
           }
         : termsAgg;
 
-      // `global` escapes the parent query scope so we can re-apply *just*
-      // base + other facet filters — the standard ES recipe for showing
-      // counts that ignore the facet's own selection.
-      const textClause = textQuery(params.search);
-      const innerFilter = textClause
-        ? {
-            bool: {
-              must: [textClause],
-              filter: [...baseFilters, ...otherFacetFilters],
-            },
-          }
-        : { bool: { filter: [...baseFilters, ...otherFacetFilters] } };
-
       return [
         `options_${filter.key}`,
         {
-          global: {},
-          aggs: {
-            scoped: {
-              filter: innerFilter,
-              aggs: { facet: innerAgg },
+          filter: {
+            bool: {
+              must: [textQuery(params.search)],
+              filter: filters,
             },
           },
+          aggs: { facet: innerAgg },
         } satisfies estypes.AggregationsAggregationContainer,
       ];
     }),
@@ -1045,10 +1034,25 @@ function aggregations(
 
   const rangeAggs = Object.fromEntries(
     RANGE_FILTERS.map((filter) => [
-      `max_${filter.key}`,
+      `stats_${filter.key}`,
       {
-        max: {
-          field: filter.field,
+        global: {},
+        aggs: {
+          scoped: {
+            filter: {
+              bool: {
+                must: [textQuery(params.search)],
+                filter: buildFilters(params, printerInfo, filter.key),
+              },
+            },
+            aggs: {
+              stats: {
+                stats: {
+                  field: filter.field,
+                },
+              },
+            },
+          },
         },
       } satisfies estypes.AggregationsAggregationContainer,
     ]),
@@ -1103,13 +1107,44 @@ function maxAggregation(
   aggregationsResult: Record<string, unknown> | undefined,
   key: string,
 ): number | null {
-  const agg = aggregationsResult?.[`max_${key}`];
-  const value = agg && typeof agg === "object" ? (agg as { value?: unknown }).value : null;
+  const statsAgg = aggregationsResult?.[`stats_${key}`];
+  const legacyMaxAgg = aggregationsResult?.[`max_${key}`];
+  const value =
+    statsAgg && typeof statsAgg === "object"
+      ? statsAggregationValue(statsAgg as Record<string, unknown>, "max")
+      : legacyMaxAgg && typeof legacyMaxAgg === "object"
+        ? (legacyMaxAgg as { value?: unknown }).value
+        : null;
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
-function buildCatalogFilters(aggregationsResult: Record<string, unknown> | undefined): CatalogFilters {
+function minAggregation(
+  aggregationsResult: Record<string, unknown> | undefined,
+  key: string,
+): number | null {
+  const agg = aggregationsResult?.[`stats_${key}`];
+  const value = agg && typeof agg === "object" ? statsAggregationValue(agg as Record<string, unknown>, "min") : null;
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function statsAggregationValue(agg: Record<string, unknown>, key: "min" | "max"): unknown {
+  const scoped = agg.scoped;
+  if (scoped && typeof scoped === "object") {
+    const stats = (scoped as { stats?: unknown }).stats;
+    if (stats && typeof stats === "object") {
+      return (stats as Record<string, unknown>)[key];
+    }
+  }
+
+  return agg[key];
+}
+
+export function buildCatalogFilters(
+  aggregationsResult: Record<string, unknown> | undefined,
+  params?: CatalogSearchParams,
+): CatalogFilters {
   const options = OPTION_FILTERS.map((filter) => {
+    const activeValues = params ? params[filter.paramValues] : [];
     const aggregatedOptions = aggregationBuckets(aggregationsResult, filter.key)
       .map((bucket) => {
         const value = typeof bucket.key === "string" ? bucket.key : String(bucket.key ?? "");
@@ -1121,26 +1156,65 @@ function buildCatalogFilters(aggregationsResult: Record<string, unknown> | undef
       })
       .filter((option) => option.value.trim() !== "");
 
+    const existingValues = new Set(aggregatedOptions.map((option) => option.value));
+    activeValues.forEach((value) => {
+      if (!existingValues.has(value)) {
+        aggregatedOptions.push({
+          value,
+          label: labelFromCode(value),
+          count: 0,
+        });
+      }
+    });
+
     return {
       key: filter.key,
       title: filter.title,
       options: aggregatedOptions,
+      activeValues,
     };
-  // Hide facets that can't usefully narrow the result — i.e. zero options
-  // (nothing matches the field at all) or a single option (every remaining
-  // product shares that value, so picking it doesn't change anything).
-  }).filter((filter) => filter.options.length > 1);
+  }).filter((filter) => {
+    if (filter.activeValues.length > 0) return true;
+    return filter.key === "category" ? filter.options.length > 0 : filter.options.length > 1;
+  });
 
   return {
-    ranges: RANGE_FILTERS.map((filter) => ({
+    ranges: RANGE_FILTERS.map((filter): CatalogRangeFilter | null => {
+      const min = minAggregation(aggregationsResult, filter.key);
+      const max = maxAggregation(aggregationsResult, filter.key);
+      const normalizedMin = min === null ? null : Math.floor(min);
+      const normalizedMax = max === null ? null : Math.ceil(max);
+      const displayMin = min === null ? null : Math.round(min);
+      const displayMax = max === null ? null : Math.round(max);
+
+      if (
+        normalizedMin === null ||
+        normalizedMax === null ||
+        displayMin === null ||
+        displayMax === null ||
+        normalizedMax <= normalizedMin ||
+        displayMax <= displayMin
+      ) {
+        return null;
+      }
+
+      const rangeFilter: CatalogRangeFilter = {
+        key: filter.key,
+        title: filter.title,
+        min: normalizedMin,
+        max: normalizedMax,
+      };
+
+      if (filter.unitPrefix) rangeFilter.unitPrefix = filter.unitPrefix;
+      if (filter.unitSuffix) rangeFilter.unitSuffix = filter.unitSuffix;
+
+      return rangeFilter;
+    }).filter((filter): filter is CatalogRangeFilter => filter !== null),
+    options: options.map((filter) => ({
       key: filter.key,
       title: filter.title,
-      min: 0,
-      max: Math.ceil(maxAggregation(aggregationsResult, filter.key) ?? 0),
-      unitPrefix: filter.unitPrefix,
-      unitSuffix: filter.unitSuffix,
-    })).filter((filter) => filter.max > 0),
-    options,
+      options: filter.options,
+    })),
   };
 }
 
@@ -1472,7 +1546,7 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
           filter: filters,
         },
       },
-      aggs: aggregations(params),
+      aggs: aggregations(params, printerInfo),
     });
 
     if (exactSkuResponse.hits.hits.length > 0) {
@@ -1485,7 +1559,7 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
         currentPage: 1,
         lastPage: 1,
         perPage: params.perPage,
-        filters: buildCatalogFilters(exactSkuResponse.aggregations as Record<string, unknown> | undefined),
+        filters: buildCatalogFilters(exactSkuResponse.aggregations as Record<string, unknown> | undefined, params),
       };
     }
   }
@@ -1507,7 +1581,7 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
     query,
     ...(searchMinScore(params.search) ? { min_score: searchMinScore(params.search) } : {}),
     ...(sortClauses(params.sort) ? { sort: sortClauses(params.sort) } : {}),
-    aggs: aggregations(params),
+    aggs: aggregations(params, printerInfo),
   });
 
   console.log(`[Search] Query locale: ${params.locale}, Total hits: ${totalHitsValue(response.hits.total)}`);
@@ -1571,7 +1645,7 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
     currentPage: Math.min(params.page, lastPage),
     lastPage,
     perPage: params.perPage,
-    filters: buildCatalogFilters(response.aggregations as Record<string, unknown> | undefined),
+    filters: buildCatalogFilters(response.aggregations as Record<string, unknown> | undefined, params),
     ...(suggestion ? { suggestion } : {}),
   };
 }
