@@ -3,34 +3,6 @@ import type { NextRequest } from 'next/server';
 
 const LOCALE_COOKIE = 'NEXT_LOCALE';
 const EN_PREFIX = '/en';
-const PUBLIC_PATH_REWRITES: Record<string, string> = {
-  '/product-category/labelprinters': '/printers',
-  '/product-category/labelprinters/color-labelprinters': '/category/kleuren-labelprinters-nl',
-  '/product-category/labelprinters/thermal-labelprinters': '/category/thermische-labelprinters-nl',
-  '/product-category/labelprinters/starterkits': '/category/starterkits',
-  '/product-category/labelprinters/consumables': '/category/verbruiksmaterialen-nl',
-};
-const LABEL_PRINTERS_PUBLIC_PREFIX = '/product-category/labelprinters/';
-
-function mapPublicPathToInternalPath(pathname: string) {
-  const exactRewrite = PUBLIC_PATH_REWRITES[pathname];
-  if (exactRewrite) return exactRewrite;
-
-  if (pathname.startsWith(LABEL_PRINTERS_PUBLIC_PREFIX)) {
-    const categorySlug = pathname.split('/').filter(Boolean).at(-1);
-    return categorySlug ? `/category/${categorySlug}` : pathname;
-  }
-
-  if (pathname.startsWith('/product/')) {
-    return `/products/${pathname.slice('/product/'.length)}`;
-  }
-
-  if (pathname === '/product') {
-    return '/products';
-  }
-
-  return pathname;
-}
 
 /**
  * Locale-prefix routing:
@@ -42,31 +14,25 @@ function mapPublicPathToInternalPath(pathname: string) {
  */
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
+  const localeCookie = request.cookies.get(LOCALE_COOKIE)?.value;
+  const hasEnglishPrefix = pathname.startsWith(EN_PREFIX + '/') || pathname === EN_PREFIX;
 
   // ── Locale routing ──────────────────────────────────────────────────────────
 
-  if (pathname.startsWith(EN_PREFIX + '/') || pathname === EN_PREFIX) {
+  if (hasEnglishPrefix) {
     // Strip the /en prefix and rewrite internally; the browser keeps /en/...
     const stripped = pathname.slice(EN_PREFIX.length) || '/';
-    const internalPath = mapPublicPathToInternalPath(stripped);
-    const rewriteUrl = new URL(internalPath + search, request.url);
+    const rewriteUrl = new URL(stripped + search, request.url);
     const response = NextResponse.rewrite(rewriteUrl);
     // Ensure the EN cookie is set so server components read the right locale
     response.cookies.set(LOCALE_COOKIE, 'en', { path: '/', sameSite: 'lax', maxAge: 60 * 60 * 24 * 365 });
     return response;
   }
 
-  const localeCookie = request.cookies.get(LOCALE_COOKIE)?.value;
   if (localeCookie === 'en') {
     // EN user visiting a non-prefixed path → redirect to /en prefix
     const redirectUrl = new URL(EN_PREFIX + pathname + search, request.url);
     return NextResponse.redirect(redirectUrl);
-  }
-
-  const internalPath = mapPublicPathToInternalPath(pathname);
-  if (internalPath !== pathname) {
-    const rewriteUrl = new URL(internalPath + search, request.url);
-    return NextResponse.rewrite(rewriteUrl);
   }
 
   // ── Auth guard (/my-account) ─────────────────────────────────────────────────

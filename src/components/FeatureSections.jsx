@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { useLocalePath } from '@/hooks/useLocalePath';
 
 const sections = [
   {
@@ -30,6 +31,7 @@ const sections = [
 
 export default function FeatureSections() {
   const t = useTranslations();
+  const localePath = useLocalePath();
   
   return (
     <section className="w-full px-4 md:px-8 lg:px-10 py-16 lg:py-24 bg-slate-50 flex flex-col gap-16 lg:gap-24">
@@ -76,7 +78,7 @@ export default function FeatureSections() {
                 </div>
               </div>
               <Link
-                href={section.href}
+                href={localePath(section.href)}
                 className="px-7 py-4 bg-amber-500 rounded-full inline-flex items-center gap-2.5 text-white text-base sm:text-lg font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors self-start"
               >
                 {t(`features.${section.key}Cta`)}

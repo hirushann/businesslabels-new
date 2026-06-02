@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import PrinterModelSelect, { type PrinterSearchResult } from "@/components/PrinterModelSelect";
 import { useHelp } from "./HelpProvider";
 import { useTranslations } from 'next-intl';
+import { useLocalePath } from "@/hooks/useLocalePath";
 
 type CategoryCard = {
   label: string;
@@ -45,6 +46,7 @@ function isEpsonPrinter(printer: PrinterSearchResult | null) {
 export default function HeroSection() {
   const t = useTranslations();
   const router = useRouter();
+  const localePath = useLocalePath();
   const searchParams = useSearchParams();
   const { openHelp } = useHelp();
   const [selectedPrinter, setSelectedPrinter] = useState<PrinterSearchResult | null>(null);
@@ -91,7 +93,7 @@ export default function HeroSection() {
 
     const params = new URLSearchParams({ printer_id: String(selectedPrinter.id) });
 
-    router.push(`/finder?${params.toString()}`);
+    router.push(localePath(`/printers?${params.toString()}`));
   };
 
   return (

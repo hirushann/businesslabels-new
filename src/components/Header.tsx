@@ -20,8 +20,11 @@ import LabelsMenu from './nav/LabelsMenu';
 import AccessoriesMenu from './nav/AccessoriesMenu';
 import ResourcesMenu from './nav/ResourcesMenu';
 import BrandsMenu from './nav/BrandsMenu';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useLocalePath } from '@/hooks/useLocalePath';
+import { getAccessoryCategoryPath } from '@/lib/routes/accessoryCategories';
+import { getLabelCategoryPath } from '@/lib/routes/labelCategories';
+import { getPrinterCategoryPath } from '@/lib/routes/printerCategories';
 
 type DropdownKey = 'printers' | 'labels' | 'accessories' | 'resources' | 'brands' | null;
 // import { useCart } from '@/context/CartContext';
@@ -39,6 +42,7 @@ const navItems = [
 
 export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolean }) {
   const t = useTranslations();
+  const locale = useLocale();
   const lp = useLocalePath();
   const { isHelpOpen, openHelp, closeHelp } = useHelp();
   const [headerMembers, setHeaderMembers] = useState<TeamMember[]>([]);
@@ -84,13 +88,13 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
     loadTeamMembers();
     return () => { ignore = true; };
   }, []);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(hasAuthToken);
+  const [clientAuthState, setClientAuthState] = useState<boolean | null>(null);
 
   useEffect(() => {
     const checkAuth = () => {
       if (typeof window !== 'undefined') {
         const stored = localStorage.getItem('auth_user');
-        setIsAuthenticated(!!stored);
+        setClientAuthState(!!stored);
       }
     };
 
@@ -105,10 +109,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
     };
   }, []);
 
-  useEffect(() => {
-    setIsAuthenticated(hasAuthToken);
-  }, [hasAuthToken]);
-
+  const isAuthenticated = clientAuthState ?? hasAuthToken;
   const accountHref = isAuthenticated === false ? '/login?redirect=/my-account' : '/my-account';
 
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
@@ -134,6 +135,9 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
     resources: <ResourcesMenu />,
     brands: <BrandsMenu />,
   };
+  const printerCategoryHref = getPrinterCategoryPath(locale);
+  const labelCategoryHref = getLabelCategoryPath(locale);
+  const accessoryCategoryHref = getAccessoryCategoryPath(locale);
 
   return (
     <header className="w-full left-0 top-0 z-50 flex flex-col items-center">
@@ -375,7 +379,15 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                 onMouseLeave={handleMouseLeave}
               >
                 <Link
-                  href={item.href}
+                  href={
+                    item.dropdownKey === 'printers'
+                      ? printerCategoryHref
+                      : item.dropdownKey === 'labels'
+                        ? labelCategoryHref
+                        : item.dropdownKey === 'accessories'
+                          ? accessoryCategoryHref
+                        : item.href
+                  }
                   className={`flex items-end gap-2 relative ${
                     item.active
                       ? 'text-sky-950 font-semibold'
@@ -422,7 +434,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
               {t('header.customMadeForm')}
             </Link>
             <Link
-              href="/finder"
+              href={lp('/printers')}
               className="px-4 py-2 bg-amber-500 rounded-full flex items-center gap-2 text-white text-base font-semibold hover:bg-amber-600 transition-colors"
             >
               {t('header.productFinder')}
@@ -462,7 +474,15 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
               {navItems.map((item) => (
                 <Link
                   key={item.href}
-                  href={item.href}
+                  href={
+                    item.dropdownKey === 'printers'
+                      ? printerCategoryHref
+                      : item.dropdownKey === 'labels'
+                        ? labelCategoryHref
+                        : item.dropdownKey === 'accessories'
+                          ? accessoryCategoryHref
+                        : item.href
+                  }
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`px-4 py-3 rounded-lg flex justify-between items-center ${
                     item.active
@@ -491,7 +511,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
               </Link>
               
               <Link
-                href="/finder"
+                href={lp('/printers')}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="px-4 py-3 bg-amber-500 text-white font-semibold text-base rounded-full flex justify-center items-center gap-2 mt-4 hover:bg-amber-600 transition-colors"
               >

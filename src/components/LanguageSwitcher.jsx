@@ -5,6 +5,9 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useLocale as useIntlLocale, useTranslations } from 'next-intl';
 import { LOCALES, LOCALE_LABELS, normalizeLocale } from '@/lib/i18n/config';
 import { writeLocaleCookieClient, stripLocalePath } from '@/lib/i18n/utils';
+import { getLocalizedAccessoryCategoryPathForPath } from '@/lib/routes/accessoryCategories';
+import { getLocalizedLabelCategoryPathForPath } from '@/lib/routes/labelCategories';
+import { getLocalizedPrinterCategoryPathForPath } from '@/lib/routes/printerCategories';
 
 function FlagEN({ className }) {
   return (
@@ -49,8 +52,13 @@ export default function LanguageSwitcher() {
 
     // Build the target URL: EN gets /en prefix, NL gets clean path
     const cleanPath = stripLocalePath(pathname);
-    const targetPath = (normalized === 'en' ? '/en' + cleanPath : cleanPath) + window.location.search;
-    window.location.href = targetPath;
+    const translatedPath =
+      getLocalizedPrinterCategoryPathForPath(pathname, normalized) ??
+      getLocalizedLabelCategoryPathForPath(pathname, normalized) ??
+      getLocalizedAccessoryCategoryPathForPath(pathname, normalized);
+    const targetPath = (translatedPath ?? (normalized === 'en' ? '/en' + cleanPath : cleanPath)) + window.location.search + window.location.hash;
+    router.push(targetPath);
+    router.refresh();
   };
 
   useEffect(() => {

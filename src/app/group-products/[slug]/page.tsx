@@ -1,4 +1,4 @@
-import SingleProductPage, { generateMetadata as baseMetadata } from "../../products/[slug]/page";
+import SingleProductPage, { generateMetadata as baseMetadata } from "../../product/[slug]/page";
 
 type PageProps = {
   params: Promise<{ slug: string }>;

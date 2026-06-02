@@ -12,14 +12,27 @@ import type { CatalogSearchResponse } from "@/lib/search/types";
 import { getServerLocale } from "@/lib/i18n";
 import ReviewsSection from "@/components/ReviewsSection";
 import {
-  categoryPublicPath,
-  categoryPublicPathFromSlug,
+  categoryRouteSlug,
   fetchCategoryGroups,
+  findCategoryByPath,
   findCategoryBySlug,
   flattenCategorySlugs,
   resolveLocalized,
   type CategoryNode,
 } from "@/lib/categories/tree";
+import { localePath } from "@/lib/i18n/utils";
+import {
+  getAccessoryCategoryPath,
+  getAccessoryCategoryRouteSegments,
+  getAccessoryVirtualGroupForSegments,
+} from "@/lib/routes/accessoryCategories";
+import {
+  getLabelCategoryLookupSegments,
+  getLabelCategoryLookupSegmentsForSegments,
+  getLabelCategoryPath,
+  getLabelVirtualGroupForSegments,
+} from "@/lib/routes/labelCategories";
+import { getPrinterCategoryLookupSlug } from "@/lib/routes/printerCategories";
 
 function slugToTitle(slug: string): string {
   return slug
@@ -47,6 +60,10 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
+  return generateCategoryArchiveMetadata(slug);
+}
+
+export async function generateCategoryArchiveMetadata(slug: string): Promise<Metadata> {
   const title = `${categoryTitleForSlug(slug)} - Businesslabels`;
 
   return {
@@ -80,19 +97,67 @@ const emptyCatalogResponse: CatalogSearchResponse = {
   filters: { ranges: [], options: [] },
 };
 
+type CategoryArchiveRouteMode = "legacy" | "productCategory";
 
-export default async function CategoryArchivePage({
-  params,
-  searchParams,
+function liveProductCategoryPath(locale: string, segments: string[]): string {
+  const basePath = locale === "nl" ? "/product-categorie" : "/product-category";
+  const encodedSegments = segments.map((segment) => encodeURIComponent(segment));
+  return localePath(`${basePath}/${encodedSegments.join("/")}`, locale);
+}
+
+function lastSegment(segments: string[]): string {
+  return segments.at(-1) ?? "";
+}
+
+function visibleSubcategories({
+  currentCategory,
+  children,
+  locale,
+  virtualChildSlugs,
 }: {
-  params: Promise<{ slug: string }>;
+  currentCategory?: CategoryNode;
+  children: CategoryNode[];
+  locale: string;
+  virtualChildSlugs: Set<string> | null;
+}): CategoryNode[] {
+  const currentSlug = currentCategory ? categoryRouteSlug(currentCategory, locale) : "";
+
+  return children.filter((child) => {
+    const childSlug = categoryRouteSlug(child, locale);
+    if (child.count <= 0) return false;
+    if (virtualChildSlugs) return virtualChildSlugs.has(childSlug);
+    if (currentSlug === "labelprinters" && (childSlug === "accessoires" || childSlug === "accessories-1")) {
+      return false;
+    }
+    return true;
+  });
+}
+
+export async function renderCategoryArchivePage({
+  slug,
+  routeSegments,
+  searchParams,
+  routeMode = "legacy",
+}: {
+  slug: string;
+  routeSegments?: string[];
   searchParams: Promise<CategoryPageSearchParams>;
+  routeMode?: CategoryArchiveRouteMode;
 }) {
-  const { slug } = await params;
   const rawParams = await searchParams;
   const t = await getTranslations();
   const locale = await getServerLocale();
+  const categoryLookupSlug = routeMode === "productCategory"
+    ? getPrinterCategoryLookupSlug(slug, locale)
+    : slug;
+  const categoryLookupSegments = routeMode === "productCategory" && routeSegments?.length
+    ? getLabelCategoryLookupSegmentsForSegments(routeSegments, locale) ?? [
+      ...routeSegments.slice(0, -1),
+      getPrinterCategoryLookupSlug(routeSegments.at(-1) ?? slug, locale),
+    ]
+    : undefined;
   const routeQuery = toUrlSearchParams(rawParams);
+
 
   // Resolve the category tree first so we can scope the catalog by the
   // looked-up category's ID. `category_ids` on each product includes the full
@@ -102,22 +167,69 @@ export default async function CategoryArchivePage({
   try {
     categoryGroups = await fetchCategoryGroups(locale);
   } catch (error) {
-    console.error(`Failed to load category tree for slug '${slug}'.`, error);
+    console.error(`Failed to load category tree for slug '${categoryLookupSlug}'.`, error);
   }
 
-  const lookup = findCategoryBySlug(categoryGroups, slug, locale);
+  const virtualAccessoryGroup = routeMode === "productCategory" && routeSegments?.length
+    ? getAccessoryVirtualGroupForSegments(routeSegments, locale)
+    : null;
+  const virtualLabelGroup = routeMode === "productCategory" && routeSegments?.length
+    ? getLabelVirtualGroupForSegments(routeSegments, locale)
+    : null;
+  const virtualAccessoryParentSegments = virtualAccessoryGroup
+    ? getAccessoryCategoryRouteSegments(locale, virtualAccessoryGroup.parentKey)
+    : null;
+  const virtualLabelParentSegments = virtualLabelGroup
+    ? getLabelCategoryLookupSegments(locale, virtualLabelGroup.parentKey)
+    : null;
+
+  const lookup = virtualAccessoryParentSegments
+    ? findCategoryByPath(categoryGroups, virtualAccessoryParentSegments, locale)
+    : virtualLabelParentSegments
+    ? findCategoryByPath(categoryGroups, virtualLabelParentSegments, locale)
+    : categoryLookupSegments
+    ? findCategoryByPath(categoryGroups, categoryLookupSegments, locale)
+      ?? findCategoryBySlug(categoryGroups, categoryLookupSlug, locale)
+    : findCategoryBySlug(categoryGroups, categoryLookupSlug, locale);
   const currentCategory = lookup?.category;
   const ancestors = lookup?.ancestors ?? [];
-  const subcategories: CategoryNode[] = currentCategory?.children ?? [];
+  const virtualChildSlugs = virtualAccessoryGroup
+    ? new Set(
+        virtualAccessoryGroup.childKeys.map((key) =>
+          lastSegment(getAccessoryCategoryRouteSegments(locale, key)),
+        ),
+      )
+    : virtualLabelGroup
+    ? new Set(
+        virtualLabelGroup.childKeys.map((key) =>
+          lastSegment(getLabelCategoryLookupSegments(locale, key)),
+        ),
+      )
+    : null;
+  const virtualLabelSubcategories = virtualLabelGroup
+    ? virtualLabelGroup.childKeys
+        .map((key) => findCategoryByPath(categoryGroups, getLabelCategoryLookupSegments(locale, key), locale)?.category)
+        .filter((category): category is CategoryNode => Boolean(category))
+    : null;
+  const subcategories = visibleSubcategories({
+    currentCategory,
+    children: virtualLabelSubcategories ?? currentCategory?.children ?? [],
+    locale,
+    virtualChildSlugs,
+  });
   const hasSubcategories = subcategories.length > 0;
 
   const scopeQuery = new URLSearchParams();
-  if (currentCategory) {
+  if (virtualChildSlugs && subcategories.length > 0) {
+    subcategories.forEach((subcategory) => {
+      scopeQuery.append("category_id", String(subcategory.id));
+    });
+  } else if (currentCategory) {
     scopeQuery.set("category_id", String(currentCategory.id));
   } else {
     // Fallback when the slug isn't in the tree (stale cache, etc.) — keep the
     // old slug-based scoping so the page still renders something useful.
-    scopeQuery.set("category", indexedCategorySlugForRoute(slug));
+    scopeQuery.set("category", indexedCategorySlugForRoute(categoryLookupSlug));
   }
   const initialSearchQuery = new URLSearchParams(scopeQuery);
 
@@ -134,20 +246,69 @@ export default async function CategoryArchivePage({
       searchCatalogProducts(parseCatalogSearchParams(scopeQuery, locale)),
     ]);
   } catch (error) {
-    console.error(`Failed to load category catalog for slug '${slug}'.`, error);
+    console.error(`Failed to load category catalog for slug '${categoryLookupSlug}'.`, error);
   }
 
-  const categoryTitle = currentCategory
+  const categoryTitle = virtualAccessoryGroup
+    ? virtualAccessoryGroup.title[locale as "en" | "nl"] ?? virtualAccessoryGroup.title.en
+    : virtualLabelGroup
+    ? virtualLabelGroup.title[locale as "en" | "nl"] ?? virtualLabelGroup.title.en
+    : currentCategory
     ? resolveLocalized(currentCategory.name, locale)
-    : categoryTitleForSlug(slug);
-  const currentPublicPath = categoryPublicPathFromSlug(slug);
+    : categoryTitleForSlug(categoryLookupSlug);
+  const currentSegments = currentCategory
+    ? [...ancestors, currentCategory].map((category) => categoryRouteSlug(category, locale))
+    : [categoryLookupSlug];
+
+  const hrefForCategory =
+    routeMode === "productCategory"
+      ? (category: CategoryNode) => {
+          if (virtualAccessoryGroup) {
+            const childKey = virtualAccessoryGroup.childKeys.find((key) => {
+              return lastSegment(getAccessoryCategoryRouteSegments(locale, key)) === categoryRouteSlug(category, locale);
+            });
+
+            if (childKey) return getAccessoryCategoryPath(locale, childKey);
+          }
+
+          if (virtualLabelGroup) {
+            const childKey = virtualLabelGroup.childKeys.find((key) => {
+              return lastSegment(getLabelCategoryLookupSegments(locale, key)) === categoryRouteSlug(category, locale);
+            });
+
+            if (childKey) return getLabelCategoryPath(locale, childKey);
+          }
+
+          return liveProductCategoryPath(locale, [
+            ...currentSegments,
+            categoryRouteSlug(category, locale),
+          ]);
+        }
+      : undefined;
 
   const breadcrumbItems = [
-    { label: t("common.products"), href: "/product" },
-    ...ancestors.map((ancestor, index) => ({
-      label: resolveLocalized(ancestor.name, locale),
-      href: categoryPublicPath(ancestor, ancestors.slice(0, index), locale),
-    })),
+    { label: t("common.products"), href: "/products" },
+    ...ancestors.map((ancestor, index) => {
+      const ancestorSlug = categoryRouteSlug(ancestor, locale);
+      const href =
+        routeMode === "productCategory"
+          ? liveProductCategoryPath(
+              locale,
+              ancestors.slice(0, index + 1).map((item) => categoryRouteSlug(item, locale)),
+            )
+          : `/category/${encodeURIComponent(ancestorSlug)}`;
+
+      return {
+        label: resolveLocalized(ancestor.name, locale),
+        href,
+      };
+    }),
+    ...((virtualAccessoryGroup || virtualLabelGroup) && currentCategory
+      ? [{
+          label: resolveLocalized(currentCategory.name, locale),
+          href: virtualAccessoryGroup ? getAccessoryCategoryPath(locale) : getLabelCategoryPath(locale),
+        }]
+      : []),
     { label: categoryTitle },
   ];
 
@@ -178,11 +339,9 @@ export default async function CategoryArchivePage({
           {hasSubcategories ? (
             <CategorySubnav
               subcategories={subcategories}
-              ancestors={[...ancestors, currentCategory].filter(
-                (category): category is CategoryNode => Boolean(category),
-              )}
+              ancestors={ancestors}
               locale={locale}
-              parentPublicPath={currentPublicPath}
+              hrefForCategory={hrefForCategory}
             />
           ) : null}
 
@@ -222,4 +381,16 @@ export default async function CategoryArchivePage({
       <ReviewsSection />
     </div>
   );
+}
+
+export default async function CategoryArchivePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<CategoryPageSearchParams>;
+}) {
+  const { slug } = await params;
+
+  return renderCategoryArchivePage({ slug, searchParams });
 }

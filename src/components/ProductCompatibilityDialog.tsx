@@ -2,10 +2,12 @@
 
 import { useState } from 'react';
 import { Loader2, ShoppingCart } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import Image from 'next/image';
+import Link from 'next/link';
 
 import PrinterModelSelect, { type PrinterSearchResult } from '@/components/PrinterModelSelect';
+import type { ProductRouteType } from '@/components/ProductCard';
 import {
   Dialog,
   DialogContent,
@@ -16,7 +18,7 @@ import {
 } from '@/components/ui/dialog';
 import { useCart } from '@/components/CartProvider';
 import { toDisplayImageUrl } from '@/lib/utils/imageProxy';
-import LocaleLink from '@/components/LocaleLink';
+import { getPrinterPath } from '@/lib/routes/printers';
 
 type ProductCompatibilityDialogProps = {
   productId?: number | string | null;
@@ -42,6 +44,14 @@ function normalizeId(value: number | string | null | undefined) {
   const number = typeof value === 'number' ? value : Number(value);
 
   return Number.isFinite(number) ? Math.trunc(number) : null;
+}
+
+function normalizeProductRouteType(value: string | null | undefined): ProductRouteType | null {
+  if (value === "simple" || value === "variable" || value === "group_product") {
+    return value;
+  }
+
+  return null;
 }
 
 function hasId(ids: number[] | undefined, id: number | null) {
@@ -149,6 +159,7 @@ export default function ProductCompatibilityDialog({
   allowSingulars = null,
 }: ProductCompatibilityDialogProps) {
   const t = useTranslations();
+  const locale = useLocale();
   const { addItem, openCart } = useCart();
   const [open, setOpen] = useState(false);
   const [selectedPrinter, setSelectedPrinter] = useState<PrinterSearchResult | null>(null);
@@ -195,7 +206,7 @@ export default function ProductCompatibilityDialog({
       {
         id: productId ?? productSku ?? "",
         slug: productSlug,
-        type: productType as any,
+        type: normalizeProductRouteType(productType),
         name: productName ?? "",
         sku: productSku ?? "",
         price: productPrice,
@@ -218,17 +229,18 @@ export default function ProductCompatibilityDialog({
         </button>
       </DialogTrigger>
       <DialogContent
-        className="sm:max-w-lg p-6"
+        className="max-h-[calc(100vh-2rem)] w-[min(calc(100vw-2rem),40rem)] max-w-none overflow-y-auto overflow-x-hidden p-0"
       >
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-black text-neutral-800">{t('compatibility.check')}</DialogTitle>
-          <DialogDescription>
+        <div className="flex w-full min-w-0 flex-col gap-5 p-5 sm:p-6">
+        <DialogHeader className="min-w-0 pr-10">
+          <DialogTitle className="text-2xl font-black leading-tight text-neutral-800 sm:text-3xl">{t('compatibility.check')}</DialogTitle>
+          <DialogDescription className="text-base leading-6 text-neutral-600">
             {t('compatibility.subtitle')}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-5">
-          <div className="flex flex-col gap-2">
+        <div className="flex w-full min-w-0 flex-col gap-5">
+          <div className="flex w-full min-w-0 flex-col gap-2">
             <label className="text-sm font-bold text-neutral-700" htmlFor="compatibility-printer">
               {t('compatibility.printerModel')}
             </label>
@@ -238,7 +250,7 @@ export default function ProductCompatibilityDialog({
               onValueChange={handlePrinterChange}
               inputId="compatibility-printer"
               placeholder={t('compatibility.searchPlaceholder')}
-              className="w-full h-12 rounded-2xl border-slate-200 bg-slate-50 px-4 text-base font-semibold text-neutral-800 placeholder:font-medium focus-visible:border-amber-500 focus-visible:ring-amber-500/20"
+              className="h-12 w-full min-w-0 rounded-2xl border-slate-200 bg-slate-50 px-4 text-base font-semibold text-neutral-800 placeholder:font-medium focus-visible:border-amber-500 focus-visible:ring-amber-500/20"
               autoFocus
             />
             {!selectedPrinter ? (
@@ -250,7 +262,7 @@ export default function ProductCompatibilityDialog({
             type="button"
             onClick={handleCheckCompatibility}
             disabled={normalizedProductId === null || !selectedPrinter || isChecking}
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-amber-500 px-6 text-sm font-black text-white transition-colors hover:bg-amber-600 disabled:pointer-events-none disabled:opacity-60"
+            className="inline-flex h-12 w-full min-w-0 items-center justify-center gap-2 rounded-full bg-amber-500 px-6 text-sm font-black text-white transition-colors hover:bg-amber-600 disabled:pointer-events-none disabled:opacity-60"
           >
             {isChecking ? (
               <>
@@ -263,33 +275,33 @@ export default function ProductCompatibilityDialog({
           </button>
 
           {compatibilityResult ? (
-            <div className="flex flex-col gap-4">
-              <div className={`rounded-2xl border p-5 ${compatibilityResult.compatible ? 'border-emerald-100 bg-emerald-50' : 'border-red-100 bg-red-50'}`}>
+            <div className="flex w-full min-w-0 flex-col gap-4">
+              <div className={`w-full min-w-0 rounded-2xl border p-4 sm:p-5 ${compatibilityResult.compatible ? 'border-emerald-100 bg-emerald-50' : 'border-red-100 bg-red-50'}`}>
                 <p className={`text-lg font-black ${compatibilityResult.compatible ? 'text-emerald-700' : 'text-red-700'}`}>
                   {compatibilityResult.compatible ? t('compatibility.compatible') : t('compatibility.notCompatible')}
                 </p>
-                <p className={`mt-1 text-sm font-semibold ${compatibilityResult.compatible ? 'text-emerald-700' : 'text-red-600'}`}>
+                <p className={`mt-1 break-words text-sm font-semibold ${compatibilityResult.compatible ? 'text-emerald-700' : 'text-red-600'}`}>
                   {t('compatibility.resultForPrinter', { printer: compatibilityResult.printerName })}
                 </p>
               </div>
 
               {!compatibilityResult.compatible && selectedPrinter?.id && (
                 <div className="mt-2 text-left">
-                  <LocaleLink
-                    href={`/finder?printer_id=${selectedPrinter.id}`}
+                  <Link
+                    href={getPrinterPath(locale, selectedPrinter.slug)}
                     onClick={() => setOpen(false)}
                     className="inline-block text-amber-500 hover:text-amber-600 font-bold text-sm underline transition-colors cursor-pointer"
                   >
                     {t('compatibility.seeFittingLabels')}
-                  </LocaleLink>
+                  </Link>
                 </div>
               )}
 
               {compatibilityResult.compatible && (
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-md hover:border-amber-200 transition-all duration-200">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="flex w-full min-w-0 flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:border-amber-200 hover:shadow-md sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
                     {productImage ? (
-                      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white flex items-center justify-center p-1">
+                      <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white p-1">
                         <Image
                           src={toDisplayImageUrl(productImage) || ""}
                           alt={productName ?? ""}
@@ -307,8 +319,8 @@ export default function ProductCompatibilityDialog({
                         </svg>
                       </div>
                     )}
-                    <div className="flex-1 min-w-0 flex flex-col gap-1">
-                      <h4 className="font-bold text-neutral-800 text-sm truncate leading-snug">
+                    <div className="flex min-w-0 flex-1 flex-col gap-1">
+                      <h4 className="line-clamp-2 text-sm font-bold leading-snug text-neutral-800">
                         {productName}
                       </h4>
                       {productSku && (
@@ -326,7 +338,7 @@ export default function ProductCompatibilityDialog({
                   <button
                     type="button"
                     onClick={handleAddToCart}
-                    className="w-full sm:w-auto h-10 px-5 inline-flex items-center justify-center gap-2 rounded-full bg-amber-500 hover:bg-amber-600 text-xs font-black text-white shadow-sm hover:shadow-md active:scale-95 transition-all duration-200 whitespace-nowrap cursor-pointer"
+                    className="inline-flex h-10 w-full shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-full bg-amber-500 px-5 text-xs font-black text-white shadow-sm transition-all duration-200 hover:bg-amber-600 hover:shadow-md active:scale-95 sm:w-auto"
                   >
                     <ShoppingCart className="size-3.5" />
                     {t('product.addToCart')}
@@ -336,6 +348,7 @@ export default function ProductCompatibilityDialog({
             </div>
           ) : null}
 
+        </div>
         </div>
       </DialogContent>
     </Dialog>

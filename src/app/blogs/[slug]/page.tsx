@@ -5,6 +5,8 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { unescapeHtml } from "@/lib/utils";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { getServerLocale } from "@/lib/i18n";
+import { localePath } from "@/lib/i18n/utils";
 
 type PostData = {
   id: number;
@@ -58,6 +60,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function SingleBlogPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const t = await getTranslations();
+  const locale = await getServerLocale();
   const post = await getPost(slug);
 
   if (!post) {
@@ -375,7 +378,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
             </p>
           </div>
           <div className="inline-flex items-center gap-4">
-            <Link href="/finder" className="flex h-12 items-center justify-center gap-2.5 rounded-[50px] bg-amber-500 px-7 py-4 transition-colors hover:bg-amber-600">
+            <Link href={localePath("/printers", locale)} className="flex h-12 items-center justify-center gap-2.5 rounded-[50px] bg-amber-500 px-7 py-4 transition-colors hover:bg-amber-600">
               <span className="text-center text-lg font-semibold leading-6 text-white">{t("header.productFinder")}</span>
             </Link>
             <Link href="/custom" className="flex h-12 items-center justify-center gap-2.5 rounded-[50px] bg-white/10 px-7 py-4 border border-white/20 backdrop-blur-[5px] transition-colors hover:bg-white/20">
