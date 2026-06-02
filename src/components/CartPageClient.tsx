@@ -53,7 +53,7 @@ export default function CartPageClient() {
           />
           <div className="mt-8 flex justify-center">
             <Link
-              href="/products"
+              href="/product"
               className="h-12 px-8 py-3 rounded-full bg-amber-500 text-white font-semibold hover:bg-amber-600 transition-colors"
             >
               {t('common.browseProducts')}
@@ -83,7 +83,7 @@ export default function CartPageClient() {
           <div className="flex flex-col divide-y divide-slate-100">
             {items.map((item) => {
               const isWarranty = item.itemKind === 'warranty';
-              const href = item.slug ? `/products/${item.slug}${item.type ? `?type=${item.type}` : ''}` : undefined;
+              const href = item.slug ? `/product/${item.slug}${item.type ? `?type=${item.type}` : ''}` : undefined;
 
               return (
                 <div key={item.key} className="grid grid-cols-1 md:grid-cols-12 gap-6 p-6 md:p-8 items-center relative group">
@@ -213,7 +213,7 @@ export default function CartPageClient() {
                 {t('cart.checkout')}
               </Link>
               <Link
-                href="/products"
+                href="/product"
                 className="h-12 w-full rounded-full border border-slate-200 text-neutral-600 font-semibold flex items-center justify-center hover:bg-slate-50 transition-all"
               >
                 {t('common.continueShopping')}

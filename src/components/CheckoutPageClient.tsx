@@ -237,7 +237,7 @@ function CheckoutShell({
               />
               <div className="mt-8 flex justify-center">
                 <Link
-                  href="/products"
+                  href="/product"
                   className="inline-flex h-12 items-center justify-center rounded-full bg-amber-500 px-6 text-base font-semibold text-white transition-colors hover:bg-amber-600"
                 >
                   {t('common.browseProducts')}
@@ -253,7 +253,7 @@ function CheckoutShell({
               >
                 <div className="flex flex-col gap-8">
                   <Link
-                    href="/products"
+                    href="/product"
                     className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-700 transition-colors hover:text-amber-500"
                   >
                     <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -492,8 +492,8 @@ function CheckoutShell({
                         const isWarrantyItem = item.itemKind === "warranty";
                         const href = item.slug
                           ? item.type
-                            ? { pathname: `/products/${item.slug}`, query: { type: item.type } }
-                            : { pathname: `/products/${item.slug}` }
+                            ? { pathname: `/product/${item.slug}`, query: { type: item.type } }
+                            : { pathname: `/product/${item.slug}` }
                           : undefined;
 
                         const cardContent = (
@@ -901,7 +901,7 @@ export default function CheckoutPageClient({
               {t('checkout.viewMyOrders')}
             </Link>
             <Link 
-              href="/products" 
+              href="/product" 
               className="h-12 w-full rounded-full border border-slate-200 px-6 text-base font-semibold text-neutral-700 transition-colors hover:bg-slate-50 flex items-center justify-center"
             >
               {t('common.continueShopping')}
@@ -923,7 +923,7 @@ export default function CheckoutPageClient({
       form={form}
       errors={errors}
       handleChange={handleChange}
-      browseHref={isDemoMode ? "/category/demo" : "/products"}
+      browseHref={isDemoMode ? "/category/demo" : "/product"}
       isPending={isPending}
       onAddressSelect={(address) => {
         setForm((prev) => {

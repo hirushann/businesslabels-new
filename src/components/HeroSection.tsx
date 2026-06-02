@@ -157,7 +157,7 @@ export default function HeroSection() {
             {/* Buttons */}
             <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
               <LocaleLink
-                href="/products"
+                href="/product"
                 className="w-full sm:w-auto justify-center px-7 py-4 bg-amber-500 rounded-full flex items-center gap-2.5 text-white text-lg font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors"
               >
                 {t('common.browseProducts')}

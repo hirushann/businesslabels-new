@@ -292,9 +292,9 @@ export function mapProductListingResult(
 
   const href =
     slug && normalizedType
-      ? { pathname: `/products/${slug}`, query: { type: normalizedType } }
+      ? { pathname: `/product/${slug}`, query: { type: normalizedType } }
       : slug
-        ? `/products/${slug}`
+        ? `/product/${slug}`
         : undefined;
 
   return { id, product, href };

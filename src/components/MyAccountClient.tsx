@@ -845,7 +845,7 @@ function OrdersView() {
           <h3 className="text-2xl font-black text-neutral-800">{t('account.noOrdersFound')}</h3>
           <p className="mt-2 font-medium text-neutral-400 max-w-sm mx-auto">{t('account.noOrdersFoundDesc')}</p>
           <Link
-            href="/products"
+            href="/product"
             className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-sky-950 px-10 text-sm font-black text-white transition-all hover:bg-amber-500 hover:shadow-xl hover:shadow-amber-500/20"
           >
             {t('account.continueShopping')}
@@ -1124,7 +1124,7 @@ function FavouriteProductsView() {
              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
            </svg>
            <p className="mt-4 text-neutral-400 font-bold">{t('account.noFavourites')}</p>
-           <Link href="/products" className="mt-6 h-11 px-8 bg-amber-500 text-white rounded-full font-black text-sm hover:shadow-lg shadow-amber-500/20 transition-all flex items-center">
+           <Link href="/product" className="mt-6 h-11 px-8 bg-amber-500 text-white rounded-full font-black text-sm hover:shadow-lg shadow-amber-500/20 transition-all flex items-center">
              {t('account.browseSupplies')}
            </Link>
         </div>
@@ -1134,7 +1134,7 @@ function FavouriteProductsView() {
             <ProductCard 
               key={product.sku} 
               product={product} 
-              href={product.slug ? `/products/${product.slug}` : undefined}
+              href={product.slug ? `/product/${product.slug}` : undefined}
             />
           ))}
         </div>

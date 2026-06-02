@@ -305,6 +305,17 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
     addProductWithWarranty(null, quantity, unitPrice);
   };
 
+  // Apply locale prefix to pathname-style hrefs (e.g. { pathname: '/product/...' })
+  const localizedHref: LinkProps["href"] = (() => {
+    if (typeof href === "string") {
+      return localePath(href, locale);
+    }
+    if (typeof href === "object" && "pathname" in href && typeof href.pathname === "string") {
+      return { ...href, pathname: localePath(href.pathname, locale) };
+    }
+    return href;
+  })();
+
   const cardContent = (
     console.log("Rendering ProductCard for:", product),
     <div className="mx-auto h-full w-full max-w-88 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] border border-slate-100 flex flex-col overflow-hidden hover:shadow-lg transition-shadow">
@@ -361,7 +372,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
             </div>
           )}
         </div>
-        <Link href={href || "#"} className="absolute inset-0 z-0" onClick={onClick}>
+        <Link href={localizedHref || "#"} className="absolute inset-0 z-0" onClick={onClick}>
         <Image
           src={imageSrc}
           alt={productName}
@@ -391,7 +402,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
                 </span>
               ) : null} */}
             </div>
-            <Link href={href || "#"} className="block" onClick={onClick}>
+            <Link href={localizedHref || "#"} className="block" onClick={onClick}>
             <h3 className="text-neutral-800 text-xl font-semibold font-['Segoe_UI'] leading-6">{product.name}</h3>
             </Link>
           </div>
@@ -548,16 +559,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
     );
   }
 
-  // Apply locale prefix to pathname-style hrefs (e.g. { pathname: '/products/...' })
-  const localizedHref: LinkProps["href"] = (() => {
-    if (typeof href === "string") {
-      return localePath(href, locale);
-    }
-    if (typeof href === "object" && "pathname" in href && typeof href.pathname === "string") {
-      return { ...href, pathname: localePath(href.pathname, locale) };
-    }
-    return href;
-  })();
+  
 
   return (
     <>

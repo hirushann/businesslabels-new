@@ -284,11 +284,11 @@ function mapOverlayResult(result: unknown, resultIndex: number): OverlayProductR
   const href =
     slug && normalizedType
       ? {
-          pathname: `/products/${slug}`,
+          pathname: `/product/${slug}`,
           query: { type: normalizedType },
         }
       : slug
-        ? `/products/${slug}`
+        ? `/product/${slug}`
         : undefined;
 
   return { id, product, href };

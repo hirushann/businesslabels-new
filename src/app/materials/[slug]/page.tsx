@@ -407,7 +407,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
             {/* Right sidebar */}
             <aside className="flex w-full flex-col gap-6 lg:sticky lg:top-24 lg:w-96">
               <SidebarCard title={t("materialDetail.availableStockItemsTitle")} description={t("materialDetail.availableStockItemsDesc")}>
-                <Link href="/products" className="flex h-12 items-center justify-center rounded-full bg-amber-500 px-4 text-base font-semibold leading-6 text-white transition-colors hover:bg-amber-600">
+                <Link href="/product" className="flex h-12 items-center justify-center rounded-full bg-amber-500 px-4 text-base font-semibold leading-6 text-white transition-colors hover:bg-amber-600">
                   {t("materialDetail.viewStockItems")}
                 </Link>
               </SidebarCard>

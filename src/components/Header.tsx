@@ -212,7 +212,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
 
           {/* Search */}
           <Link
-            href={lp('/products?focus=true')}
+            href={lp('/product?focus=true')}
             className="w-96 px-4 py-3 rounded-full border border-slate-100 flex items-center gap-2 overflow-hidden text-left cursor-pointer"
             aria-label={t('header.productsSearchLink')}
           >
@@ -355,7 +355,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
         
         {/* Search bar below row on mobile */}
         <Link
-          href={lp('/products?focus=true')}
+          href={lp('/product?focus=true')}
           className="w-full px-4 py-2.5 rounded-full border border-slate-100 flex items-center gap-2 overflow-hidden text-left bg-slate-50"
           aria-label={t('header.productsSearchLink')}
         >

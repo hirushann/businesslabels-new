@@ -101,8 +101,8 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                 const isWarrantyItem = item.itemKind === 'warranty';
                 const href = item.slug
                   ? item.type
-                    ? { pathname: `/products/${item.slug}`, query: { type: item.type } }
-                    : { pathname: `/products/${item.slug}` }
+                    ? { pathname: `/product/${item.slug}`, query: { type: item.type } }
+                    : { pathname: `/product/${item.slug}` }
                   : undefined;
 
                 return (

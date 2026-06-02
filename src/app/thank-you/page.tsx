@@ -98,7 +98,7 @@ export default function ThankYouPage() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
             <Link
-              href="/products"
+              href="/product"
               className="inline-flex h-12 items-center justify-center rounded-full bg-amber-500 px-8 text-base font-semibold text-white transition-colors hover:bg-amber-600"
             >
               {t("thankYou.continueShopping")}

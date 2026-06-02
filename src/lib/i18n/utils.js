@@ -58,7 +58,7 @@ export function pickLocale(value, locale) {
  * Build a locale-aware internal path.
  *
  * - EN: prepends '/en'  → '/en/products/some-slug'
- * - NL: returns path as-is → '/products/some-slug'
+ * - NL: returns path as-is → '/product/some-slug'
  *
  * @param {string} path   Internal path, must start with '/'
  * @param {string} locale
@@ -74,8 +74,8 @@ export function localePath(path, locale) {
 
 /**
  * Strip any locale prefix from a path.
- * '/en/products/foo' → '/products/foo'
- * '/products/foo'   → '/products/foo'
+ * '/en/products/foo' → '/product/foo'
+ * '/product/foo'   → '/product/foo'
  *
  * @param {string} path
  * @returns {string}
