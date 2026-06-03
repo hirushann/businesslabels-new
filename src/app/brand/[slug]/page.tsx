@@ -14,6 +14,7 @@ const BRAND_TITLES: Record<string, string> = {
   epson: "Epson",
   sii: "Seiko",
   godex: "Godex",
+  "diamondlabels-nl": "Diamondlabels",
   diamondlabels: "Diamondlabels",
   expo_badge: "ExpoBadge",
   zebra: "Zebra",
@@ -86,6 +87,7 @@ export default async function BrandArchivePage({
   const locale = await getServerLocale();
   const t = await getTranslations();
   const routeQuery = toUrlSearchParams(rawParams);
+  routeQuery.delete("brand");
   
   // Scope the search to the exact brand name in ES
   const scopeQuery = new URLSearchParams({
@@ -139,6 +141,7 @@ export default async function BrandArchivePage({
             initialQueryString={routeQuery.toString()}
             scopeQueryString={scopeQuery.toString()}
             baselineRangeFilters={baselineCatalog.filters.ranges}
+            hiddenFilterKeys={["brand"]}
           />
         </div>
       </div>

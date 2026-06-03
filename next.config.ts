@@ -41,6 +41,16 @@ const nextConfig: NextConfig = {
         destination: '/en/product/:slug*',
         permanent: true,
       },
+      {
+        source: '/brand/diamondlabels',
+        destination: '/brand/diamondlabels-nl',
+        permanent: true,
+      },
+      {
+        source: '/en/brand/diamondlabels',
+        destination: '/en/brand/diamondlabels-nl',
+        permanent: true,
+      },
     ];
   },
 };

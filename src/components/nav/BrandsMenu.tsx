@@ -21,7 +21,7 @@ const brands = [
   },
   {
     name: 'diamondlabels',
-    href: '/brand/diamondlabels',
+    href: '/brand/diamondlabels-nl',
     logo: '/brands/diamondlabels.png',
   },
   {
@@ -61,4 +61,3 @@ export default function BrandsMenu() {
     </div>
   );
 }
-

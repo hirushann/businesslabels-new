@@ -156,6 +156,17 @@ function mergeQueryStrings(
   return paramsToString(params);
 }
 
+function sanitizeOptionParams(
+  queryString: string,
+  hiddenFilterKeys?: CatalogOptionFilterKey[],
+): string {
+  if (!hiddenFilterKeys?.length) return queryString;
+
+  const params = new URLSearchParams(queryString);
+  hiddenFilterKeys.forEach((key) => params.delete(OPTION_PARAM_KEY[key]));
+  return paramsToString(params);
+}
+
 function valuesFor(params: URLSearchParams, key: string): string[] {
   return params
     .getAll(key)
@@ -303,7 +314,11 @@ function CatalogProductsListing({
     () => paramsToString(new URLSearchParams(searchParams.toString())),
     [searchParams],
   );
-  const displayQueryString = optimisticQueryString ?? currentQueryString;
+  const rawDisplayQueryString = optimisticQueryString ?? currentQueryString;
+  const displayQueryString = useMemo(
+    () => sanitizeOptionParams(rawDisplayQueryString, hiddenFilterKeys),
+    [hiddenFilterKeys, rawDisplayQueryString],
+  );
   const displayParams = useMemo(
     () => new URLSearchParams(displayQueryString),
     [displayQueryString],
