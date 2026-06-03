@@ -10,6 +10,10 @@ type SitemapApiItem = {
   updated_at?: string;
 };
 
+function publicBrandSlug(slug: string): string {
+  return slug === 'diamondlabels' ? 'diamondlabels-nl' : slug;
+}
+
 async function fetchApi<T extends SitemapApiItem>(path: string): Promise<T[]> {
   try {
     const res = await fetch(`${baseUrl}${path}`, { next: { revalidate: 3600 } });
@@ -128,7 +132,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   brands.forEach((brand) => {
     if (brand.slug) {
       sitemapEntries.push({
-        url: `${frontendUrl}/brand/${brand.slug}`,
+        url: `${frontendUrl}/brand/${publicBrandSlug(brand.slug)}`,
         lastModified: new Date(),
         changeFrequency: 'weekly',
         priority: 0.7,
