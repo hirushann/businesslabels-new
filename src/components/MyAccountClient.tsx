@@ -532,11 +532,11 @@ function MyAccountContent() {
   ];
 
   return (
-    <div className="bg-slate-50 min-h-screen py-12 px-6 font-['Segoe_UI']">
+    <div className="bg-slate-50 min-h-screen py-6 sm:py-12 px-4 sm:px-6 font-['Segoe_UI']">
       <div className="max-w-360 mx-auto w-full">
         {/* Header Section */}
         <div className="mb-10">
-          <h1 className="text-neutral-800 text-4xl font-bold leading-tight mb-2 uppercase tracking-tight">{t('account.myAccount')}</h1>
+          <h1 className="text-2xl sm:text-4xl font-bold leading-tight mb-2 uppercase tracking-tight text-neutral-800">{t('account.myAccount')}</h1>
           <Breadcrumbs 
             className="text-neutral-900"
             items={[
@@ -545,9 +545,42 @@ function MyAccountContent() {
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-10 items-start">
-          {/* Sidebar */}
-          <aside className="bg-white rounded-[32px] border border-slate-200 p-6 shadow-[2px_12px_44px_0px_rgba(109,109,120,0.06)] sticky top-24">
+        <div className="flex flex-col lg:grid lg:grid-cols-[280px_1fr] gap-6 lg:gap-10 items-start">
+          {/* Mobile/Tablet Horizontal Pill Nav */}
+          <nav className="lg:hidden w-full overflow-x-auto pb-2 -mb-2">
+            <div className="flex items-center gap-2 min-w-max">
+              {menuItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id as Tab)}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${
+                    activeTab === item.id
+                      ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20'
+                      : 'bg-white text-neutral-600 border border-slate-200 hover:border-amber-300 hover:text-amber-600'
+                  }`}
+                >
+                  <span className={activeTab === item.id ? 'text-white' : 'text-neutral-400'}>
+                    {item.icon}
+                  </span>
+                  {item.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap bg-white border border-red-100 text-red-500 hover:bg-red-50 transition-all disabled:opacity-60"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>
+                </svg>
+                {isLoggingOut ? t('account.loggingOut') : t('account.logout')}
+              </button>
+            </div>
+          </nav>
+
+          {/* Desktop Sidebar */}
+          <aside className="hidden lg:block bg-white rounded-[32px] border border-slate-200 p-6 shadow-[2px_12px_44px_0px_rgba(109,109,120,0.06)] sticky top-24">
             <div className="flex flex-col gap-1.5">
               {menuItems.map((item) => (
                 <button
@@ -588,7 +621,7 @@ function MyAccountContent() {
           </aside>
 
           {/* Content Area */}
-          <main className="bg-white rounded-[40px] border border-slate-200 p-10 lg:p-14 shadow-[2px_12px_44px_0px_rgba(109,109,120,0.06)] min-h-[700px]">
+          <main className="w-full bg-white rounded-2xl sm:rounded-[40px] border border-slate-200 p-5 sm:p-8 lg:p-14 shadow-[2px_12px_44px_0px_rgba(109,109,120,0.06)] min-h-[500px] lg:min-h-[700px]">
              <div className="max-w-4xl mx-auto">
                 {activeTab === 'dashboard' && <DashboardView setActiveTab={setActiveTab} user={user} />}
                 {activeTab === 'orders' && <OrdersView />}
@@ -641,7 +674,7 @@ function DashboardView({ setActiveTab, user }: { setActiveTab: (tab: Tab) => voi
             <Image src={avatarUrl || "https://placehold.co/128x128"} alt="Profile" fill className="object-cover" />
           </div>
           <div>
-            <h2 className="text-3xl font-black text-neutral-800 tracking-tight">{t('account.welcomeName', { name: displayName })}</h2>
+            <h2 className="text-xl sm:text-3xl font-black text-neutral-800 tracking-tight">{t('account.welcomeName', { name: displayName })}</h2>
             <p className="text-neutral-500 font-medium">{email || formatCustomerSince(user, t, locale)}</p>
           </div>
         </div>
@@ -739,13 +772,13 @@ function DashboardView({ setActiveTab, user }: { setActiveTab: (tab: Tab) => voi
         )}
       </div>
 
-      <div className="mt-4 p-10 rounded-[40px] bg-sky-950 text-white relative overflow-hidden group">
+      <div className="mt-4 p-6 sm:p-10 rounded-2xl sm:rounded-[40px] bg-sky-950 text-white relative overflow-hidden group">
         <div className="relative z-10 flex flex-col gap-6 max-w-lg">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500 rounded-full text-[10px] font-black uppercase tracking-widest w-fit">
             {t('account.expertSupportBadge')}
           </div>
           <div className="flex flex-col gap-2">
-            <h3 className="text-3xl font-black tracking-tight leading-tight">{t('account.expertSupportTitle')}</h3>
+            <h3 className="text-xl sm:text-3xl font-black tracking-tight leading-tight">{t('account.expertSupportTitle')}</h3>
             <p className="text-sky-100/70 text-lg leading-relaxed">
               {t('account.expertSupportDesc')}
             </p>

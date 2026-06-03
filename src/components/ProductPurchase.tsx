@@ -180,7 +180,7 @@ export default function ProductPurchase({
   isLabelProduct,
   properties,
 }: ProductPurchaseProps) {
-  const { addItem, openCart } = useCart();
+  const { addItem, openCart, isCartOpen } = useCart();
   const t = useTranslations();
   const wishlist = useWishlist();
   const locale = useLocale();
@@ -1203,7 +1203,7 @@ export default function ProductPurchase({
 
     {/* Mobile/Tablet Sticky Bottom Bar */}
     <div className={`lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] px-4 py-3 pb-safe flex flex-col gap-3 transition-transform duration-300 ${
-      isStickyVisible ? "translate-y-0" : "translate-y-full"
+      isStickyVisible && !isCartOpen ? "translate-y-0" : "translate-y-full"
     }`}>
       {/* Row 1: Price, Quantity Selector, Wishlist */}
       <div className="flex items-center justify-between gap-4">

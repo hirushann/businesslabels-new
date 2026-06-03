@@ -57,10 +57,10 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
         role="dialog"
         aria-modal="true"
         aria-label={t('cart.dialogLabel')}
-        className="fixed top-0 right-0 h-full w-[480px] bg-white z-[10001] shadow-2xl flex flex-col overflow-hidden"
+        className="fixed top-0 right-0 h-full w-full sm:w-[480px] bg-white z-[10001] shadow-2xl flex flex-col overflow-hidden"
         style={{ animation: 'slideInRight 0.28s cubic-bezier(0.16,1,0.3,1) both' }}
       >
-        <div className="shrink-0 p-6 bg-slate-100 border-b border-slate-200 flex flex-col gap-5">
+        <div className="shrink-0 px-4 sm:px-6 py-4 sm:py-6 bg-slate-100 border-b border-slate-200 flex flex-col gap-4 sm:gap-5">
           <div className="flex items-start justify-between">
             <div className="flex flex-col gap-1">
               <h2 className="text-neutral-800 text-2xl font-semibold font-['Segoe_UI'] leading-7">
@@ -84,7 +84,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-6">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6">
           {items.length === 0 ? (
             <EmptyState
               title={t('cart.emptyTitle')}
@@ -169,7 +169,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
           )}
         </div>
 
-        <div className="shrink-0 border-t border-slate-200 bg-white px-6 py-5 flex flex-col gap-4">
+        <div className="shrink-0 border-t border-slate-200 bg-white px-4 sm:px-6 py-4 sm:py-5 flex flex-col gap-3 sm:gap-4">
           <div className="flex items-end justify-between gap-4">
             <div className="flex flex-col gap-1">
               <span className="text-neutral-600 text-sm font-normal font-['Segoe_UI'] leading-5">

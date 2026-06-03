@@ -978,10 +978,10 @@ export default async function SingleProductPage({
                   {specs.map((spec, i) => (
                     <div
                       key={spec.label}
-                      className={`flex px-6 py-3 justify-between items-center rounded-md ${i % 2 === 0 ? "bg-white/50" : ""}`}
+                      className={`flex px-6 py-3 justify-between items-start gap-4 rounded-md ${i % 2 === 0 ? "bg-white/50" : ""}`}
                     >
-                      <span className="text-neutral-500 text-base font-normal">{spec.label}</span>
-                      <span className="text-neutral-700 text-base font-semibold">{spec.value}</span>
+                      <span className="shrink-0 text-neutral-500 text-base font-normal">{spec.label}</span>
+                      <span className="min-w-0 text-right text-neutral-700 text-base font-semibold break-words">{spec.value}</span>
                     </div>
                   ))}
                 </div>
