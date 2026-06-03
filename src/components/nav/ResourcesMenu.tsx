@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
+import { localePath } from '@/lib/i18n/utils';
 
 const columnOne = [
   {
@@ -65,52 +66,56 @@ const columnTwo = [
   },
 ];
 
-function MenuColumn({ items, t }: { items: typeof columnOne; t: (key: string) => string }) {
+function MenuColumn({ items, t, locale }: { items: typeof columnOne; t: (key: string) => string; locale: string }) {
   return (
-    <div className="flex-1 inline-flex flex-col justify-start items-start gap-6">
-      {items.map((item, i) => (
-        <div key={item.titleKey} className="w-full">
+    <div className="flex-1 w-full flex flex-col">
+      {items.map((item, i) => {
+        const href = item.href === '/sitemap.xml' ? item.href : localePath(item.href, locale);
+        return (
           <Link
-            href={item.href}
-            className="self-stretch inline-flex justify-start items-center gap-3 group"
+            key={item.titleKey}
+            href={href}
+            className={`w-full flex items-center gap-5 group py-5 first:pt-1 last:pb-1 \${i !== items.length - 1 ? 'border-b border-slate-100' : ''}`}
           >
-            <div className="w-11 h-11 px-2.5 pt-2.5 bg-white rounded-md shadow-[0px_0.857px_1.714px_-0.857px_rgba(0,0,0,0.10),0px_0.857px_2.571px_0px_rgba(0,0,0,0.10)] inline-flex flex-col justify-start items-start flex-shrink-0">
+            <div className="w-[56px] h-[56px] bg-white rounded-[14px] border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.03)] flex items-center justify-center flex-shrink-0 group-hover:border-amber-200 group-hover:shadow-[0_4px_12px_rgba(241,136,0,0.1)] transition-all">
               {item.icon}
             </div>
-            <div className="flex-1 inline-flex flex-col justify-start items-start gap-1.5">
-              <div className="self-stretch text-neutral-800 text-xl font-semibold font-['Segoe_UI'] leading-6 group-hover:text-amber-500 transition-colors">
+            <div className="flex-1 flex flex-col justify-start items-start gap-1">
+              <div className="text-neutral-800 text-[20px] font-semibold font-['Segoe_UI'] group-hover:text-amber-500 transition-colors">
                 {t(item.titleKey)}
               </div>
-              <div className="self-stretch text-neutral-700 text-sm font-normal font-['Segoe_UI'] leading-5">
+              <div className="text-neutral-500 text-[15px] font-normal font-['Segoe_UI']">
                 {t(item.descriptionKey)}
               </div>
             </div>
             <svg
-              className="w-4 h-4 text-zinc-500 flex-shrink-0 rotate-[-90deg]"
-              viewBox="0 0 16 16"
+              className="w-5 h-5 text-neutral-400 flex-shrink-0 group-hover:translate-x-1 group-hover:text-amber-500 transition-all"
+              viewBox="0 0 24 24"
               fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="m9 18 6-6-6-6"/>
             </svg>
           </Link>
-          {i < items.length - 1 && (
-            <div className="self-stretch h-0 outline outline-1 outline-offset-[-0.50px] outline-gray-100 mt-6" />
-          )}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
 
 export default function ResourcesMenu() {
   const t = useTranslations();
+  const locale = useLocale();
 
   return (
     <div className="w-[90vw] max-w-[832px] inline-flex flex-col justify-start items-start">
       <div className="self-stretch p-6 bg-white rounded-xl shadow-[0px_10px_20px_0px_rgba(80,100,121,0.15)] flex flex-col justify-start items-center gap-10">
         <div className="w-full flex flex-col lg:flex-row justify-start items-start gap-6">
-          <MenuColumn items={columnOne} t={t} />
-          <MenuColumn items={columnTwo} t={t} />
+          <MenuColumn items={columnOne} t={t} locale={locale} />
+          <MenuColumn items={columnTwo} t={t} locale={locale} />
         </div>
       </div>
     </div>

@@ -1270,6 +1270,43 @@ export const MESSAGES_V4 = {
         VA: 'Vatican City',
       },
     },
+    software: {
+      title: 'Software',
+      intro: 'To create the most beautiful and smart labels, you often need to use special software to work efficiently. Because a label is often functionally very different from a traditional A4 paper, the needs and ways to create them are also different.',
+      logical: {
+        title: 'Logical Labels',
+        desc: 'Often there is a need to print variable data on a label, from a simple best-before date to complex database connections and logical calculations. NiceLabel is the most user-friendly and modern package for this.'
+      },
+      graphical: {
+        title: 'Graphical Labels',
+        desc: 'Sometimes you just want to print a striking and breathtaking label. With modern full-color label printers, you can print the most beautiful labels on demand. You just need to create a stunning design.'
+      },
+      products: {
+        nicelabel: {
+          title: 'NiceLabel',
+          desc: 'The complete software solution for barcode and RFID label design and printing.',
+          buy: 'Buy NiceLabel',
+          choiceHelper: 'Choice Helper',
+          customApp: 'Custom Application'
+        },
+        affinity: {
+          title: 'Affinity Designer',
+          desc: 'The fastest, smoothest, most precise vector graphic design software available.',
+          info: 'Information',
+          buy: 'Buy Affinity Designer'
+        },
+        nicelabelSe: {
+          title: 'NiceLabel SE for Epson',
+          desc: 'A free version of NiceLabel designed specifically for Epson ColorWorks printers.',
+          download: 'Free Download'
+        },
+        godex: {
+          title: 'GoDEX Software',
+          desc: 'Free GoLabel software that comes with all GoDEX barcode printers.',
+          overview: 'Software Overview'
+        }
+      }
+    },
   },
   nl: {
     common: {
@@ -2542,5 +2579,43 @@ export const MESSAGES_V4 = {
         VA: 'Vaticaanstad',
       },
     },
+    software: {
+      title: 'Software',
+      intro: 'Om de mooiste en slimste labels te maken moet je vaak gebruik maken van speciale software om efficiënt te kunnen werken. Omdat een label functioneel vaak enorm verschild met een traditioneel A4 papiertje zijn de behoeften en manieren om deze te creëren ook anders.',
+      logical: {
+        title: 'Logische labels',
+        desc: 'Vaak is er een behoefte om variabele data te printen op een label, dit kan uiteen lopen van een THT datum tot complexe database connecties en logische berekeningen. Voor deze toepassingen verkopen wij NiceLabel.'
+      },
+      graphical: {
+        title: 'Grafische labels',
+        desc: 'Soms wil je gewoon een opvallend en adembenemend label printen. Met de nieuwe full color labelprinters die nu op de markt zijn, ben je in staat om op afroep de mooiste labels te printen.'
+      },
+      products: {
+        nicelabel: {
+          title: 'NiceLabel',
+          desc: 'De complete softwareoplossing voor het ontwerpen en afdrukken van barcode- en RFID-labels.',
+          buy: 'NiceLabel Kopen',
+          choiceHelper: 'Keuze hulp',
+          customApp: 'Maatwerk applicatie'
+        },
+        affinity: {
+          title: 'Affinity Designer',
+          desc: 'De snelste, soepelste en meest nauwkeurige software voor vector grafisch ontwerp.',
+          info: 'Informatie',
+          buy: 'Affinity Kopen'
+        },
+        nicelabelSe: {
+          title: 'NiceLabel SE for Epson',
+          desc: 'Een gratis versie van NiceLabel speciaal ontworpen voor Epson ColorWorks-printers.',
+          download: 'Gratis downloaden'
+        },
+        godex: {
+          title: 'GoDEX software',
+          desc: 'Gratis GoLabel-software die bij alle GoDEX-barcodeprinters wordt geleverd.',
+          overview: 'Overzicht software'
+        }
+      }
+    },
   },
 };
+
