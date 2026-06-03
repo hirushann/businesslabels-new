@@ -125,7 +125,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
   };
 
   const handleMouseLeave = () => {
-    closeTimer.current = setTimeout(() => setActiveDropdown(null), 120);
+    closeTimer.current = setTimeout(() => setActiveDropdown(null), 200);
   };
 
   const dropdownMap: Record<string, React.ReactNode> = {
@@ -413,7 +413,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                 {/* Dropdown panel */}
                 {item.dropdownKey && activeDropdown === item.dropdownKey && (
                   <div
-                    className={`absolute top-full pt-3 z-50 ${
+                    className={`absolute top-full z-50 ${
                       index <= 2 ? 'left-0' : 
                       index >= 5 ? 'right-0' : 
                       'left-1/2 -translate-x-1/2'
@@ -421,6 +421,8 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                     onMouseEnter={() => handleMouseEnter(item.dropdownKey ?? null)}
                     onMouseLeave={handleMouseLeave}
                   >
+                    {/* Transparent bridge covering the gap between nav bar and dropdown panel */}
+                    <div className="h-3 w-full pointer-events-auto" />
                     <div className="animate-in fade-in slide-in-from-top-2 duration-200">
                       {dropdownMap[item.dropdownKey]}
                     </div>
