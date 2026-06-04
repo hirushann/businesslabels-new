@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  getAccessoryCategoryLookupSegmentsForSegments,
   getAccessoryCategoryPath,
   getAccessoryVirtualGroupForSegments,
   getLocalizedAccessoryCategoryPathForPath,
@@ -84,5 +85,14 @@ describe("getAccessoryCategoryPath", () => {
         "en",
       )?.childKeys,
     ).toEqual(["cutters", "wifiBluetooth", "cwC4000"]);
+  });
+
+  it("uses Dutch source segments for category tree lookup", () => {
+    expect(
+      getAccessoryCategoryLookupSegmentsForSegments(
+        ["labelprinters", "accessories-1", "miscellaneous", "maintenance"],
+        "en",
+      ),
+    ).toEqual(["labelprinters", "accessoires", "diversen", "onderhoud"]);
   });
 });

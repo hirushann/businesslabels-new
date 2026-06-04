@@ -144,3 +144,16 @@ export function getAccessoryCategoryRouteSegments(
   const cleanPath = stripLocalePath(accessoryCategoryRoutes[normalizedLocale][category]);
   return cleanPath.split("/").filter(Boolean).slice(1);
 }
+
+export function getAccessoryCategoryLookupSegmentsForSegments(
+  segments: string[],
+  locale: string,
+): string[] | null {
+  const normalizedLocale = normalizeLocale(locale);
+  const cleanPath = normalizePath(`/${segments.map(decodeSegment).join("/")}`);
+  const category = (Object.keys(accessoryCategoryRoutes[normalizedLocale]) as AccessoryCategoryKey[]).find((key) => {
+    return cleanPath === normalizePath(`/${getAccessoryCategoryRouteSegments(normalizedLocale, key).join("/")}`);
+  });
+
+  return category ? getAccessoryCategoryRouteSegments("nl", category) : null;
+}

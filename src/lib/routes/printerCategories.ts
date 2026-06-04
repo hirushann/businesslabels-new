@@ -42,11 +42,10 @@ export function getPrinterCategoryPath(
   return localePath(printerCategoryRoutes[normalizedLocale][category], normalizedLocale);
 }
 
-export function getPrinterCategoryLookupSlug(slug: string, locale: string): string {
+export function getPrinterCategoryLookupSlug(slug: string): string {
   const decodedSlug = decodeURIComponent(slug);
   const category = getPrinterCategoryKeyBySlug(decodedSlug);
-  const normalizedLocale = normalizeLocale(locale);
-  return category ? lastPathSegment(printerCategoryRoutes[normalizedLocale][category]) : decodedSlug;
+  return category ? lastPathSegment(printerCategoryRoutes.nl[category]) : decodedSlug;
 }
 
 export function getPrinterCategoryKeyBySlug(slug: string): PrinterCategoryKey | null {

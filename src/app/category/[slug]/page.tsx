@@ -12,17 +12,20 @@ import type { CatalogSearchResponse } from "@/lib/search/types";
 import { getServerLocale } from "@/lib/i18n";
 import ReviewsSection from "@/components/ReviewsSection";
 import {
+  CATEGORY_SOURCE_LOCALE,
+  categoryName,
   categoryRouteSlug,
+  categorySlug,
   fetchCategoryGroups,
   findCategoryByPath,
   findCategoryBySlug,
   flattenCategorySlugs,
-  resolveLocalized,
   type CategoryNode,
 } from "@/lib/categories/tree";
 import { localePath } from "@/lib/i18n/utils";
 import {
   getAccessoryCategoryPath,
+  getAccessoryCategoryLookupSegmentsForSegments,
   getAccessoryCategoryRouteSegments,
   getAccessoryVirtualGroupForSegments,
 } from "@/lib/routes/accessoryCategories";
@@ -112,18 +115,18 @@ function lastSegment(segments: string[]): string {
 function visibleSubcategories({
   currentCategory,
   children,
-  locale,
+  sourceLocale,
   virtualChildSlugs,
 }: {
   currentCategory?: CategoryNode;
   children: CategoryNode[];
-  locale: string;
+  sourceLocale: string;
   virtualChildSlugs: Set<string> | null;
 }): CategoryNode[] {
-  const currentSlug = currentCategory ? categoryRouteSlug(currentCategory, locale) : "";
+  const currentSlug = currentCategory ? categoryRouteSlug(currentCategory, sourceLocale) : "";
 
   return children.filter((child) => {
-    const childSlug = categoryRouteSlug(child, locale);
+    const childSlug = categoryRouteSlug(child, sourceLocale);
     if (child.count <= 0) return false;
     if (virtualChildSlugs) return virtualChildSlugs.has(childSlug);
     if (currentSlug === "labelprinters" && (childSlug === "accessoires" || childSlug === "accessories-1")) {
@@ -147,14 +150,17 @@ export async function renderCategoryArchivePage({
   const rawParams = await searchParams;
   const t = await getTranslations();
   const locale = await getServerLocale();
+  const categorySourceLocale = CATEGORY_SOURCE_LOCALE;
   const categoryLookupSlug = routeMode === "productCategory"
-    ? getPrinterCategoryLookupSlug(slug, locale)
+    ? getPrinterCategoryLookupSlug(slug)
     : slug;
   const categoryLookupSegments = routeMode === "productCategory" && routeSegments?.length
-    ? getLabelCategoryLookupSegmentsForSegments(routeSegments, locale) ?? [
-      ...routeSegments.slice(0, -1),
-      getPrinterCategoryLookupSlug(routeSegments.at(-1) ?? slug, locale),
-    ]
+    ? getLabelCategoryLookupSegmentsForSegments(routeSegments, locale)
+      ?? getAccessoryCategoryLookupSegmentsForSegments(routeSegments, locale)
+      ?? [
+        ...routeSegments.slice(0, -1),
+        getPrinterCategoryLookupSlug(routeSegments.at(-1) ?? slug),
+      ]
     : undefined;
   const routeQuery = toUrlSearchParams(rawParams);
 
@@ -165,7 +171,7 @@ export async function renderCategoryArchivePage({
   // direct products and every descendant's — without double-counting.
   let categoryGroups: Awaited<ReturnType<typeof fetchCategoryGroups>> = [];
   try {
-    categoryGroups = await fetchCategoryGroups(locale);
+    categoryGroups = await fetchCategoryGroups();
   } catch (error) {
     console.error(`Failed to load category tree for slug '${categoryLookupSlug}'.`, error);
   }
@@ -177,44 +183,44 @@ export async function renderCategoryArchivePage({
     ? getLabelVirtualGroupForSegments(routeSegments, locale)
     : null;
   const virtualAccessoryParentSegments = virtualAccessoryGroup
-    ? getAccessoryCategoryRouteSegments(locale, virtualAccessoryGroup.parentKey)
+    ? getAccessoryCategoryRouteSegments(categorySourceLocale, virtualAccessoryGroup.parentKey)
     : null;
   const virtualLabelParentSegments = virtualLabelGroup
-    ? getLabelCategoryLookupSegments(locale, virtualLabelGroup.parentKey)
+    ? getLabelCategoryLookupSegments(categorySourceLocale, virtualLabelGroup.parentKey)
     : null;
 
   const lookup = virtualAccessoryParentSegments
-    ? findCategoryByPath(categoryGroups, virtualAccessoryParentSegments, locale)
+    ? findCategoryByPath(categoryGroups, virtualAccessoryParentSegments, categorySourceLocale)
     : virtualLabelParentSegments
-    ? findCategoryByPath(categoryGroups, virtualLabelParentSegments, locale)
+    ? findCategoryByPath(categoryGroups, virtualLabelParentSegments, categorySourceLocale)
     : categoryLookupSegments
-    ? findCategoryByPath(categoryGroups, categoryLookupSegments, locale)
-      ?? findCategoryBySlug(categoryGroups, categoryLookupSlug, locale)
-    : findCategoryBySlug(categoryGroups, categoryLookupSlug, locale);
+    ? findCategoryByPath(categoryGroups, categoryLookupSegments, categorySourceLocale)
+      ?? findCategoryBySlug(categoryGroups, categoryLookupSlug, categorySourceLocale)
+    : findCategoryBySlug(categoryGroups, categoryLookupSlug, categorySourceLocale);
   const currentCategory = lookup?.category;
   const ancestors = lookup?.ancestors ?? [];
   const virtualChildSlugs = virtualAccessoryGroup
     ? new Set(
         virtualAccessoryGroup.childKeys.map((key) =>
-          lastSegment(getAccessoryCategoryRouteSegments(locale, key)),
+          lastSegment(getAccessoryCategoryRouteSegments(categorySourceLocale, key)),
         ),
       )
     : virtualLabelGroup
     ? new Set(
         virtualLabelGroup.childKeys.map((key) =>
-          lastSegment(getLabelCategoryLookupSegments(locale, key)),
+          lastSegment(getLabelCategoryLookupSegments(categorySourceLocale, key)),
         ),
       )
     : null;
   const virtualLabelSubcategories = virtualLabelGroup
     ? virtualLabelGroup.childKeys
-        .map((key) => findCategoryByPath(categoryGroups, getLabelCategoryLookupSegments(locale, key), locale)?.category)
+        .map((key) => findCategoryByPath(categoryGroups, getLabelCategoryLookupSegments(categorySourceLocale, key), categorySourceLocale)?.category)
         .filter((category): category is CategoryNode => Boolean(category))
     : null;
   const subcategories = visibleSubcategories({
     currentCategory,
     children: virtualLabelSubcategories ?? currentCategory?.children ?? [],
-    locale,
+    sourceLocale: categorySourceLocale,
     virtualChildSlugs,
   });
   const hasSubcategories = subcategories.length > 0;
@@ -254,7 +260,7 @@ export async function renderCategoryArchivePage({
     : virtualLabelGroup
     ? virtualLabelGroup.title[locale as "en" | "nl"] ?? virtualLabelGroup.title.en
     : currentCategory
-    ? resolveLocalized(currentCategory.name, locale)
+    ? categoryName(currentCategory, locale)
     : categoryTitleForSlug(categoryLookupSlug);
   const currentSegments = currentCategory
     ? [...ancestors, currentCategory].map((category) => categoryRouteSlug(category, locale))
@@ -265,7 +271,7 @@ export async function renderCategoryArchivePage({
       ? (category: CategoryNode) => {
           if (virtualAccessoryGroup) {
             const childKey = virtualAccessoryGroup.childKeys.find((key) => {
-              return lastSegment(getAccessoryCategoryRouteSegments(locale, key)) === categoryRouteSlug(category, locale);
+              return lastSegment(getAccessoryCategoryRouteSegments(categorySourceLocale, key)) === categoryRouteSlug(category, categorySourceLocale);
             });
 
             if (childKey) return getAccessoryCategoryPath(locale, childKey);
@@ -273,7 +279,7 @@ export async function renderCategoryArchivePage({
 
           if (virtualLabelGroup) {
             const childKey = virtualLabelGroup.childKeys.find((key) => {
-              return lastSegment(getLabelCategoryLookupSegments(locale, key)) === categoryRouteSlug(category, locale);
+              return lastSegment(getLabelCategoryLookupSegments(categorySourceLocale, key)) === categoryRouteSlug(category, categorySourceLocale);
             });
 
             if (childKey) return getLabelCategoryPath(locale, childKey);
@@ -299,13 +305,13 @@ export async function renderCategoryArchivePage({
           : `/category/${encodeURIComponent(ancestorSlug)}`;
 
       return {
-        label: resolveLocalized(ancestor.name, locale),
+        label: categoryName(ancestor, locale),
         href,
       };
     }),
     ...((virtualAccessoryGroup || virtualLabelGroup) && currentCategory
       ? [{
-          label: resolveLocalized(currentCategory.name, locale),
+          label: categoryName(currentCategory, locale),
           href: virtualAccessoryGroup ? getAccessoryCategoryPath(locale) : getLabelCategoryPath(locale),
         }]
       : []),
@@ -367,11 +373,11 @@ export async function renderCategoryArchivePage({
                     // more subcategories. Leaf categories produce an empty
                     // list and the facet auto-hides.
                     subcategories
-                        .map((child) => resolveLocalized(child.slug, locale).trim())
+                        .map((child) => categorySlug(child, categorySourceLocale))
                         .filter((s) => s.length > 0)
                   : // Lookup failed; fall back to the whole tree so the
                     // sidebar still offers something to filter by.
-                    flattenCategorySlugs(categoryGroups, locale)
+                    flattenCategorySlugs(categoryGroups, categorySourceLocale)
               }
             />
           </div>

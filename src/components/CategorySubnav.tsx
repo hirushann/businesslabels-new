@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import {
+  categoryName,
   type CategoryNode,
   categoryPublicPath,
-  resolveLocalized,
 } from "@/lib/categories/tree";
 
 type CategorySubnavProps = {
@@ -36,7 +36,7 @@ export default async function CategorySubnav({
       className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4"
     >
       {subcategories.map((category) => {
-        const name = resolveLocalized(category.name, locale);
+        const name = categoryName(category, locale);
         // The card always shows the product count for the (sub)category —
         // including products in any deeper descendants, since `count` from
         // the backend aggregates by ancestor chain.

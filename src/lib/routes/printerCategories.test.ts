@@ -38,18 +38,18 @@ describe("getPrinterCategoryPath", () => {
     );
   });
 
-  it("uses English slugs for printer category lookup", () => {
-    expect(getPrinterCategoryLookupSlug("color-labelprinters", "en")).toBe("color-labelprinters");
-    expect(getPrinterCategoryLookupSlug("thermal-labelprinters", "en")).toBe("thermal-labelprinters");
-    expect(getPrinterCategoryLookupSlug("starterkits", "en")).toBe("starterkits-2");
-    expect(getPrinterCategoryLookupSlug("starterkits-2", "en")).toBe("starterkits-2");
-    expect(getPrinterCategoryLookupSlug("consumables", "en")).toBe("consumables");
+  it("uses Dutch source slugs for printer category lookup", () => {
+    expect(getPrinterCategoryLookupSlug("color-labelprinters")).toBe("kleuren-labelprinters-nl");
+    expect(getPrinterCategoryLookupSlug("thermal-labelprinters")).toBe("thermische-labelprinters-nl");
+    expect(getPrinterCategoryLookupSlug("starterkits")).toBe("starterkits");
+    expect(getPrinterCategoryLookupSlug("starterkits-2")).toBe("starterkits");
+    expect(getPrinterCategoryLookupSlug("consumables")).toBe("verbruiksmaterialen-nl");
   });
 
   it("uses Dutch slugs for Dutch printer category lookup", () => {
-    expect(getPrinterCategoryLookupSlug("kleuren-labelprinters-nl", "nl")).toBe("kleuren-labelprinters-nl");
-    expect(getPrinterCategoryLookupSlug("thermische-labelprinters-nl", "nl")).toBe("thermische-labelprinters-nl");
-    expect(getPrinterCategoryLookupSlug("verbruiksmaterialen-nl", "nl")).toBe("verbruiksmaterialen-nl");
+    expect(getPrinterCategoryLookupSlug("kleuren-labelprinters-nl")).toBe("kleuren-labelprinters-nl");
+    expect(getPrinterCategoryLookupSlug("thermische-labelprinters-nl")).toBe("thermische-labelprinters-nl");
+    expect(getPrinterCategoryLookupSlug("verbruiksmaterialen-nl")).toBe("verbruiksmaterialen-nl");
   });
 
   it("translates live printer category paths when switching languages", () => {

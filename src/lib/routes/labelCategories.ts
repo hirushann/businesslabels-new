@@ -34,12 +34,6 @@ const labelCategoryRoutes: Record<"en" | "nl", Record<LabelCategoryKey, string>>
   },
 };
 
-const labelCategoryLookupRoutes: Partial<Record<"en" | "nl", Partial<Record<LabelCategoryKey, string>>>> = {
-  en: {
-    jewelryLabels: "/product-category/labels-en-tickets-en/thermal-transfer-printer-media/juweliersetiketten-thermische-overdracht-printer-media",
-  },
-};
-
 const legacyLabelCategoryRoutes: Partial<Record<LabelCategoryKey, string[]>> = {
   root: ["/category/labels-en-tickets", "/category/labels-en-tickets-en"],
   inkjet: ["/category/inkjet-printer-media"],
@@ -133,12 +127,10 @@ export function getLabelCategoryRouteSegments(
 }
 
 export function getLabelCategoryLookupSegments(
-  locale: string,
+  _locale: string,
   category: LabelCategoryKey,
 ): string[] {
-  const normalizedLocale = normalizeLocale(locale);
-  const lookupRoute = labelCategoryLookupRoutes[normalizedLocale]?.[category];
-  return routeSegments(lookupRoute ?? labelCategoryRoutes[normalizedLocale][category]);
+  return routeSegments(labelCategoryRoutes.nl[category]);
 }
 
 export function getLabelCategoryLookupSegmentsForSegments(
