@@ -11,8 +11,17 @@
  * @see Laravel: App\Http\Resources\Api\CategoryResource
  */
 
-/** Localized fields arrive resolved to a string, but stay defensive. */
+/** Localized fields may arrive as strings or older `{ en, nl }` objects. */
 export type LocalizedValue = string | { en?: string; nl?: string } | null | undefined;
+
+export type CategoryTranslation = {
+  name?: string | null;
+  slug?: string | null;
+  meta_title?: string | null;
+  meta_description?: string | null;
+};
+
+export type CategoryTranslations = Partial<Record<"en" | "nl", CategoryTranslation>>;
 
 export type CategoryNode = {
   id: number;
@@ -20,8 +29,11 @@ export type CategoryNode = {
   slug: LocalizedValue;
   meta_title?: LocalizedValue;
   meta_description?: LocalizedValue;
+  translations?: CategoryTranslations | null;
   parent_id: number | null;
   count: number;
+  image?: string | null;
+  main_image?: string | null;
   children?: CategoryNode[];
 };
 
@@ -29,6 +41,7 @@ export type CategoryGroup = {
   id: number;
   name: LocalizedValue;
   slug: LocalizedValue;
+  translations?: CategoryTranslations | null;
   count: number;
   categories: CategoryNode[];
 };
@@ -39,10 +52,35 @@ export type CategoryLookup = {
   ancestors: CategoryNode[];
 };
 
+export const CATEGORY_SOURCE_LOCALE = "nl";
+
 export function resolveLocalized(value: LocalizedValue, locale: string): string {
   if (value == null) return "";
   if (typeof value === "string") return value;
   return value[locale as "en" | "nl"] ?? value.en ?? value.nl ?? "";
+}
+
+function resolveCategoryTranslation(
+  category: Pick<CategoryNode, "translations">,
+  locale: string,
+  field: keyof CategoryTranslation,
+): string {
+  const value = category.translations?.[locale as "en" | "nl"]?.[field];
+  return typeof value === "string" ? value : "";
+}
+
+export function categoryName(category: CategoryNode, locale: string): string {
+  return (
+    resolveCategoryTranslation(category, locale, "name").trim() ||
+    resolveLocalized(category.name, locale).trim()
+  );
+}
+
+export function categorySlug(category: CategoryNode, locale: string): string {
+  return (
+    resolveCategoryTranslation(category, locale, "slug").trim() ||
+    resolveLocalized(category.slug, locale).trim()
+  );
 }
 
 function normalize(value: string): string {
@@ -56,9 +94,9 @@ function normalize(value: string): string {
  * interchangeable as the visitor drills down.
  */
 export function categoryRouteSlug(category: CategoryNode, locale: string): string {
-  const slug = resolveLocalized(category.slug, locale).trim();
+  const slug = categorySlug(category, locale);
   if (slug) return slug;
-  return resolveLocalized(category.name, locale).trim();
+  return categoryName(category, locale);
 }
 
 const publicCategoryPathBySlug: Record<string, string> = {
@@ -109,8 +147,8 @@ function categoryMatchesSlug(
   const target = normalize(slug);
   if (!target) return false;
   return (
-    normalize(resolveLocalized(category.slug, locale)) === target ||
-    normalize(resolveLocalized(category.name, locale)) === target
+    normalize(categorySlug(category, locale)) === target ||
+    normalize(categoryName(category, locale)) === target
   );
 }
 
@@ -222,7 +260,7 @@ export function flattenCategorySlugs(
   const slugs: string[] = [];
   const visit = (nodes: CategoryNode[]) => {
     for (const node of nodes) {
-      const slug = resolveLocalized(node.slug, locale).trim();
+      const slug = categorySlug(node, locale);
       if (slug) slugs.push(slug);
       visit(node.children ?? []);
     }
@@ -234,16 +272,15 @@ export function flattenCategorySlugs(
 }
 
 /**
- * Fetch the full category tree for the active locale. Returns an empty list
- * on any failure so the archive page degrades to a plain product listing
- * rather than erroring.
+ * Fetch the stored NL category tree. Translated names/slugs are included under
+ * each node's `translations`, so this endpoint no longer needs a `lang` query.
  */
-export async function fetchCategoryGroups(locale: string): Promise<CategoryGroup[]> {
+export async function fetchCategoryGroups(): Promise<CategoryGroup[]> {
   const baseUrl = process.env.BBNL_API_BASE_URL;
   if (!baseUrl) return [];
 
   try {
-    const url = `${baseUrl}/api/categories?lang=${encodeURIComponent(locale)}`;
+    const url = `${baseUrl}/api/categories`;
     const response = await fetch(url, { next: { revalidate: 300 } });
     if (!response.ok) return [];
 

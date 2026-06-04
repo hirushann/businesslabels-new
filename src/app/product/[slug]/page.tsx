@@ -21,6 +21,7 @@ import Image from "next/image";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import type { ReactNode } from "react";
 import LocaleLink from "@/components/LocaleLink";
+import { localizeProductSpecValue } from "@/lib/products/specValues";
 export async function generateMetadata({
   params,
   searchParams,
@@ -195,6 +196,11 @@ type TranslatedProductField =
   | "meta_description"
   | "product_information";
 
+type TranslationLookup = {
+  (key: string, values?: Record<string, unknown>): string;
+  has: (key: string) => boolean;
+};
+
 const PRODUCT_LOCALES = ["en", "nl"] as const;
 
 function normalizeType(raw: string | string[] | undefined, isGroupProduct?: boolean | null): "simple" | "variable" | "group_product" | null {
@@ -315,7 +321,7 @@ function normalizePropertyDisplayValue(value: unknown): string | null {
   return normalizeDisplayValue(value);
 }
 
-function getSpecLabel(key: string, locale: "en" | "nl", t: any): string {
+function getSpecLabel(key: string, locale: "en" | "nl", t: TranslationLookup): string {
   const cleanKey = key.toLowerCase().trim();
 
   const mapping: Record<string, string> = {
@@ -369,7 +375,7 @@ function appendUnitIfMissing(value: string, unit: string = "mm"): string {
   return `${trimmed} ${unit}`;
 }
 
-function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t: any): Array<{ label: string; value: ReactNode }> {
+function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t: TranslationLookup): Array<{ label: string; value: ReactNode }> {
   const missing = "-";
   const categoryNames = (product?.categories ?? [])
     .map((category) => normalizeDisplayValue(category.name))
@@ -400,7 +406,8 @@ function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t:
         "buiten_dia"
       ].includes(cleanKey);
 
-      let finalValue: ReactNode = normalizedValue;
+      const localizedValue = localizeProductSpecValue(cleanKey, normalizedValue, locale);
+      let finalValue: ReactNode = localizedValue;
       if (
         cleanKey === "material_code" ||
         cleanKey === "materiaal_code" ||
@@ -416,7 +423,7 @@ function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t:
           </LocaleLink>
         );
       } else if (needsMmSuffix) {
-        finalValue = appendUnitIfMissing(normalizedValue, "mm");
+        finalValue = appendUnitIfMissing(localizedValue, "mm");
       }
 
       return {
@@ -804,7 +811,7 @@ export default async function SingleProductPage({
   const galleryImages = (product.gallery_images ?? [])
     .map((item) => toDisplayImageUrl(item.url))
     .filter((url): url is string => Boolean(url));
-  const specs = specsFromProduct(product, locale, t);
+  const specs = specsFromProduct(product, locale, t as any);
 
   console.log('Specs:', specs);
   const compatiblePrinterIds = normalizeIdList(product.printer_ids ?? product.meta?.printer_ids);

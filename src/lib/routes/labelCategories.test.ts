@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  getLabelCategoryLookupSegments,
   getLabelCategoryPath,
   getLabelVirtualGroupForSegments,
   getLocalizedLabelCategoryPathForPath,
@@ -108,4 +109,18 @@ describe("getLabelCategoryPath", () => {
       )?.childKeys,
     ).toEqual(["visitorBadges", "shippingLabels", "jewelryLabels"]);
   });
+
+  it("uses Dutch source segments for category tree lookup", () => {
+    expect(getLabelCategoryLookupSegments("en", "root")).toEqual(["labels-en-tickets"]);
+    expect(getLabelCategoryLookupSegments("en", "thermalDirect")).toEqual([
+      "labels-en-tickets",
+      "thermal-direct",
+    ]);
+    expect(getLabelCategoryLookupSegments("en", "shippingLabels")).toEqual([
+      "labels-en-tickets",
+      "thermal-direct",
+      "verzendetiketten",
+    ]);
+  });
+
 });

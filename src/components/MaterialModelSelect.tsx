@@ -12,24 +12,15 @@ import {
   PopoverContent,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import type { Material } from "@/lib/search/materials";
 
-export type PrinterSearchResult = {
-  id: number;
-  brand: string | null;
-  name: string;
-  model: string | null;
-  slug: string | null;
-  image: string | null;
-  productIds?: number[];
-};
-
-export function printerLabel(printer: PrinterSearchResult) {
-  return printer.name.trim();
+export function materialLabel(material: Material) {
+  return `${material.code} - ${material.title}`.trim();
 }
 
-type PrinterModelSelectProps = {
-  value: PrinterSearchResult | null;
-  onValueChange: (printer: PrinterSearchResult | null) => void;
+type MaterialModelSelectProps = {
+  value: Material | null;
+  onValueChange: (material: Material | null) => void;
   onTextChange?: (text: string) => void;
   placeholder?: string;
   className?: string;
@@ -37,7 +28,7 @@ type PrinterModelSelectProps = {
   autoFocus?: boolean;
 };
 
-export default function PrinterModelSelect({
+export default function MaterialModelSelect({
   value,
   onValueChange,
   onTextChange,
@@ -45,97 +36,97 @@ export default function PrinterModelSelect({
   className = "w-full h-12 px-3 rounded-full",
   inputId,
   autoFocus = false,
-}: PrinterModelSelectProps) {
+}: MaterialModelSelectProps) {
   const t = useTranslations();
   const [isOpen, setIsOpen] = useState(false);
-  const [printerQuery, setPrinterQuery] = useState(() => value ? printerLabel(value) : "");
-  const [debouncedPrinterQuery, setDebouncedPrinterQuery] = useState("");
-  const [printerResults, setPrinterResults] = useState<PrinterSearchResult[]>([]);
-  const [isSearchingPrinters, setIsSearchingPrinters] = useState(false);
-  const [printerSearchError, setPrinterSearchError] = useState<string | null>(null);
+  const [materialQuery, setMaterialQuery] = useState(() => value ? materialLabel(value) : "");
+  const [debouncedMaterialQuery, setDebouncedMaterialQuery] = useState("");
+  const [materialResults, setMaterialResults] = useState<Material[]>([]);
+  const [isSearchingMaterials, setIsSearchingMaterials] = useState(false);
+  const [materialSearchError, setMaterialSearchError] = useState<string | null>(null);
 
-  const canShowPrinterResults = printerQuery.trim().length >= 3;
+  const canShowMaterialResults = materialQuery.trim().length >= 3;
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
-      setDebouncedPrinterQuery(printerQuery.trim());
+      setDebouncedMaterialQuery(materialQuery.trim());
     }, 350);
 
     return () => window.clearTimeout(timeout);
-  }, [printerQuery]);
+  }, [materialQuery]);
 
   useEffect(() => {
-    if (debouncedPrinterQuery.length < 3) {
+    if (debouncedMaterialQuery.length < 3) {
       return;
     }
 
     const controller = new AbortController();
 
-    async function searchPrinters() {
-      setIsSearchingPrinters(true);
-      setPrinterSearchError(null);
+    async function searchMaterials() {
+      setIsSearchingMaterials(true);
+      setMaterialSearchError(null);
 
       try {
-        const response = await fetch(`/api/printers/search?query=${encodeURIComponent(debouncedPrinterQuery)}`, {
+        const response = await fetch(`/api/materials?q=${encodeURIComponent(debouncedMaterialQuery)}`, {
           signal: controller.signal,
         });
 
         if (!response.ok) {
-          throw new Error(t("hero.printerSearchFailed"));
+          throw new Error("Failed to search materials");
         }
 
-        const payload = (await response.json()) as { data?: PrinterSearchResult[]; message?: string };
-        setPrinterResults(payload.data ?? []);
+        const payload = (await response.json()) as { materials?: Material[]; message?: string };
+        setMaterialResults(payload.materials ?? []);
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") return;
 
-        setPrinterResults([]);
-        setPrinterSearchError(t("hero.printerSearchError"));
+        setMaterialResults([]);
+        setMaterialSearchError("Error searching materials");
       } finally {
-        setIsSearchingPrinters(false);
+        setIsSearchingMaterials(false);
       }
     }
 
-    searchPrinters();
+    searchMaterials();
 
     return () => controller.abort();
-  }, [debouncedPrinterQuery, t]);
+  }, [debouncedMaterialQuery]);
 
-  const handlePrinterQueryChange = (nextValue: string) => {
-    setPrinterQuery(nextValue);
+  const handleMaterialQueryChange = (nextValue: string) => {
+    setMaterialQuery(nextValue);
     onTextChange?.(nextValue);
     setIsOpen(nextValue.trim().length >= 3);
 
-    if (value && nextValue !== printerLabel(value)) {
+    if (value && nextValue !== materialLabel(value)) {
       onValueChange(null);
     }
 
     if (nextValue.trim().length < 3) {
-      setPrinterResults([]);
-      setPrinterSearchError(null);
-      setIsSearchingPrinters(false);
+      setMaterialResults([]);
+      setMaterialSearchError(null);
+      setIsSearchingMaterials(false);
     }
   };
 
-  const handlePrinterSelect = (printer: PrinterSearchResult) => {
-    onValueChange(printer);
-    setPrinterQuery(printerLabel(printer));
-    onTextChange?.(printerLabel(printer));
+  const handleMaterialSelect = (material: Material) => {
+    onValueChange(material);
+    setMaterialQuery(materialLabel(material));
+    onTextChange?.(materialLabel(material));
     setIsOpen(false);
   };
 
   const handleClear = () => {
     onValueChange(null);
-    setPrinterQuery("");
+    setMaterialQuery("");
     onTextChange?.("");
-    setPrinterResults([]);
-    setPrinterSearchError(null);
+    setMaterialResults([]);
+    setMaterialSearchError(null);
     setIsOpen(false);
   };
 
   return (
     <Popover
-      open={isOpen && canShowPrinterResults}
+      open={isOpen && canShowMaterialResults}
       onOpenChange={setIsOpen}
     >
       <PopoverAnchor asChild>
@@ -143,14 +134,14 @@ export default function PrinterModelSelect({
           <Input
             id={inputId}
             autoFocus={autoFocus}
-            value={printerQuery}
-            onChange={(event) => handlePrinterQueryChange(event.currentTarget.value)}
-            onFocus={() => setIsOpen(!value && printerQuery.trim().length >= 3)}
-            placeholder={placeholder ?? t("hero.searchPrinterPlaceholder")}
+            value={materialQuery}
+            onChange={(event) => handleMaterialQueryChange(event.currentTarget.value)}
+            onFocus={() => setIsOpen(!value && materialQuery.trim().length >= 3)}
+            placeholder={placeholder ?? "Search material code"}
             autoComplete="off"
             className={cn(className, "pr-10")}
           />
-          {printerQuery ? (
+          {materialQuery ? (
             <Button
               type="button"
               variant="ghost"
@@ -164,8 +155,8 @@ export default function PrinterModelSelect({
           ) : null}
         </div>
       </PopoverAnchor>
-      {printerQuery.trim().length > 0 && printerQuery.trim().length < 3 ? (
-        <p className="text-sm text-muted-foreground">
+      {materialQuery.trim().length > 0 && materialQuery.trim().length < 3 ? (
+        <p className="text-sm text-muted-foreground mt-2">
           {t("hero.searchMinChars")}
         </p>
       ) : null}
@@ -174,33 +165,33 @@ export default function PrinterModelSelect({
         className="w-[var(--radix-popper-anchor-width)] gap-0 p-0"
         onOpenAutoFocus={(event) => event.preventDefault()}
       >
-        {isSearchingPrinters ? (
+        {isSearchingMaterials ? (
           <div className="flex items-center gap-2 px-3 py-6 text-sm text-muted-foreground">
             <Loader2 data-icon="inline-start" className="animate-spin" />
-            <span>{t("hero.searchingPrinters")}</span>
+            <span>Searching...</span>
           </div>
-        ) : printerSearchError ? (
+        ) : materialSearchError ? (
           <div className="px-3 py-6 text-sm text-destructive">
-            {printerSearchError}
+            {materialSearchError}
           </div>
-        ) : printerResults.length === 0 ? (
+        ) : materialResults.length === 0 ? (
           <div className="py-6 text-center text-sm text-muted-foreground">
-            {t("hero.noPrintersFound")}
+            No materials found
           </div>
         ) : (
           <div className="max-h-72 overflow-y-auto p-1">
-            {printerResults.map((printer) => (
+            {materialResults.map((material) => (
               <button
-                key={printer.id}
+                key={material.id}
                 type="button"
                 onMouseDown={(event) => event.preventDefault()}
-                onClick={() => handlePrinterSelect(printer)}
+                onClick={() => handleMaterialSelect(material)}
                 className="flex w-full items-start gap-2 rounded-md px-3 py-2 text-left text-sm outline-none hover:bg-muted focus-visible:bg-muted"
               >
-                {printer.image ? (
+                {material.main_image ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={printer.image}
+                    src={material.main_image}
                     alt=""
                     className="size-10 shrink-0 rounded-md border border-border object-contain"
                   />
@@ -211,15 +202,13 @@ export default function PrinterModelSelect({
                 )}
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="truncate font-medium">
-                    {printerLabel(printer)}
+                    {material.code}
                   </span>
-                  {printer.model ? (
-                    <span className="truncate text-xs text-muted-foreground">
-                      {printer.model}
-                    </span>
-                  ) : null}
+                  <span className="truncate text-xs text-muted-foreground">
+                    {material.title}
+                  </span>
                 </span>
-                {value?.id === printer.id ? (
+                {value?.id === material.id ? (
                   <Check className="mt-1 text-primary" />
                 ) : null}
               </button>

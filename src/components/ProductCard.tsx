@@ -16,6 +16,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import BulkDiscountModal from "@/components/BulkDiscountModal";
 import { localePath } from "@/lib/i18n/utils";
+import { localizeProductSpecValue } from "@/lib/products/specValues";
 
 export type ProductRouteType = "simple" | "variable" | "group_product";
 
@@ -82,9 +83,16 @@ function normalizeText(value: string | null | undefined): string | null {
   return trimmed || null;
 }
 
-function featureLines(product: ProductCardData): string[] {
-  // return [product.subtitle, product.materialTitle, product.excerpt]
-  return [product.subtitle, product.materialTitle, product.excerpt]
+function normalizeProductLocale(locale: string): "en" | "nl" {
+  return locale === "nl" ? "nl" : "en";
+}
+
+function featureLines(product: ProductCardData, locale: "en" | "nl"): string[] {
+  const materialTitle = product.materialTitle
+    ? localizeProductSpecValue("material", product.materialTitle, locale)
+    : product.materialTitle;
+
+  return [product.subtitle, materialTitle, product.excerpt]
     .map((value) => normalizeText(value))
     .filter((value): value is string => Boolean(value))
     .slice(0, 3);
@@ -173,11 +181,12 @@ const truncateWords = (text: string, count: number) => {
 
 export default function ProductCard({ product, href, onClick }: ProductCardProps) {
   const locale = useLocale();
+  const productLocale = normalizeProductLocale(locale);
   const t = useTranslations();
   const { addItem, openCart } = useCart();
   const productName = product.name ?? "";
   const categoryBadge = lastCategoryLabel(product.categories);
-  const features = featureLines(product);
+  const features = featureLines(product, productLocale);
   const hasPrice = typeof product.price === "number" && Number.isFinite(product.price);
   const hasOriginalPrice =
     typeof product.originalPrice === "number" &&
@@ -201,9 +210,6 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
 
   const normalizedPackingGroup = normalizePositiveInteger(product.packing_group);
   const addQuantity = normalizeBoolean(product.allow_singulars) ? 1 : normalizedPackingGroup ?? 1;
-  // Units per box (roll/stack count) — shown when the product is packed in
-  // multiples, so shoppers see the box quantity at a glance.
-  const unitsPerBox = normalizedPackingGroup && normalizedPackingGroup > 1 ? normalizedPackingGroup : null;
   const normalizedWarranty = useMemo(() => normalizeWarrantyOptions(product.warranty), [product.warranty]);
   const defaultWarrantyOption = normalizedWarranty.options.find(
     (option) => option.id === normalizedWarranty.defaultOptionId,
@@ -414,11 +420,6 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between gap-2">
               <span className="text-blue-400 text-sm font-normal font-['Segoe_UI'] leading-5">SKU: {product.sku}</span>
-              {/* {unitsPerBox ? (
-                <span className="shrink-0 px-2.5 py-1 bg-slate-100 rounded-full text-neutral-700 text-xs font-normal font-['Segoe_UI'] leading-4">
-                  {unitsPerBox} per box
-                </span>
-              ) : null} */}
             </div>
             <Link href={localizedHref || "#"} className="block" onClick={onClick}>
             <h3 className="text-neutral-800 text-xl font-semibold font-['Segoe_UI'] leading-6">{product.name}</h3>

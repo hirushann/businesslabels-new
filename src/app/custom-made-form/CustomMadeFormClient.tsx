@@ -3,6 +3,8 @@
 import { useState, ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
+import PrinterModelSelect from '@/components/PrinterModelSelect';
+import MaterialModelSelect from '@/components/MaterialModelSelect';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -294,21 +296,18 @@ export default function CustomMadeFormClient() {
                 <p className="text-neutral-700 text-sm font-sans leading-5">{t("selectPrinterDesc")}</p>
               </div>
               <div className="flex flex-col gap-4">
-                <div className="h-11 px-5 py-3 rounded-[38px] outline outline-1 outline-offset-[-1px] outline-zinc-500/30 flex items-center gap-2 bg-white">
-                  <svg className="size-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth={1.5}>
-                    <circle cx="6.5" cy="6.5" r="4.5" />
-                    <path strokeLinecap="round" d="m13 13-3-3" />
-                  </svg>
-                  <input
-                    id="printer-search"
-                    type="text"
-                    value={printerQuery}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPrinterQuery(e.target.value)}
-                    placeholder={t("searchPrinter")}
-                    disabled={unknownPrinter}
-                    className="flex-1 text-zinc-500 text-sm font-sans leading-5 bg-transparent outline-none disabled:opacity-50"
-                  />
-                </div>
+                <PrinterModelSelect
+                  value={null}
+                  onValueChange={(printer) => {
+                    if (printer) {
+                      setPrinterQuery(printer.name);
+                    }
+                  }}
+                  onTextChange={setPrinterQuery}
+                  placeholder={t("searchPrinter")}
+                  className="h-11 outline outline-1 outline-offset-[-1px] outline-zinc-500/30 bg-white"
+                  inputId="printer-search"
+                />
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     id="unknown-printer"
@@ -347,20 +346,18 @@ export default function CustomMadeFormClient() {
                   <label htmlFor="material-code" className="text-neutral-700 text-base font-semibold font-sans">
                     {t('materialCode')}
                   </label>
-                  <div className="h-11 px-5 py-3 rounded-[38px] outline outline-1 outline-offset-[-1px] outline-zinc-500/30 flex items-center gap-2 bg-white">
-                    <svg className="size-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth={1.5}>
-                      <circle cx="6.5" cy="6.5" r="4.5" />
-                      <path strokeLinecap="round" d="m13 13-3-3" />
-                    </svg>
-                    <input
-                      id="material-code"
-                      type="text"
-                      value={materialCode}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMaterialCode(e.target.value)}
-                      placeholder={t('searchMaterialCode')}
-                      className="flex-1 text-zinc-500 text-sm font-sans leading-5 bg-transparent outline-none"
-                    />
-                  </div>
+                  <MaterialModelSelect
+                    value={null}
+                    onValueChange={(material) => {
+                      if (material) {
+                        setMaterialCode(material.code);
+                      }
+                    }}
+                    onTextChange={setMaterialCode}
+                    placeholder={t('searchMaterialCode')}
+                    className="h-11 outline outline-1 outline-offset-[-1px] outline-zinc-500/30 bg-white"
+                    inputId="material-code"
+                  />
                   <p className="text-zinc-500 text-sm font-sans leading-5">
                     {t('materialCodeHint')}
                   </p>
