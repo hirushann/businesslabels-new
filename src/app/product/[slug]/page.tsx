@@ -807,7 +807,7 @@ export default async function SingleProductPage({
   const galleryImages = (product.gallery_images ?? [])
     .map((item) => toDisplayImageUrl(item.url))
     .filter((url): url is string => Boolean(url));
-  const specs = specsFromProduct(product, locale, t);
+  const specs = specsFromProduct(product, locale, t as any);
 
   console.log('Specs:', specs);
   const compatiblePrinterIds = normalizeIdList(product.printer_ids ?? product.meta?.printer_ids);

@@ -1,10 +1,12 @@
 import Link from "next/link";
+import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import {
   categoryName,
   type CategoryNode,
   categoryPublicPath,
 } from "@/lib/categories/tree";
+import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 
 type CategorySubnavProps = {
   /** Direct children of the category the visitor is currently browsing. */
@@ -33,43 +35,52 @@ export default async function CategorySubnav({
   return (
     <nav
       aria-label={t("categoryArchive.subcategoriesLabel")}
-      className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4"
+      className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4"
     >
       {subcategories.map((category) => {
         const name = categoryName(category, locale);
-        // The card always shows the product count for the (sub)category —
-        // including products in any deeper descendants, since `count` from
-        // the backend aggregates by ancestor chain.
-        const meta = t("categoryArchive.productCount", { count: category.count });
         const href = categoryPublicPath(category, ancestors, locale);
+        const imageUrl = toDisplayImageUrl(category.image || category.main_image);
 
         return (
           <Link
             key={category.id}
             href={hrefForCategory?.(category) ?? href}
-            className="group flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] transition-colors hover:border-amber-400 hover:bg-amber-50"
+            className="group flex flex-col items-center justify-center gap-6 rounded-xl border border-[#EDF0F4] bg-white px-4 py-6 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.1)] transition-colors hover:border-amber-400 hover:bg-amber-50 h-[280px]"
           >
-            <span className="flex min-w-0 flex-col gap-1">
-              <span className="truncate text-base font-semibold leading-5 text-neutral-800 group-hover:text-amber-600">
+            <div className="relative flex h-40 w-40 shrink-0 items-center justify-center">
+              {imageUrl ? (
+                <Image
+                  src={imageUrl}
+                  alt={name}
+                  className="object-contain"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 160px"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center rounded-xl bg-slate-50 text-slate-300">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="h-12 w-12"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
+                    />
+                  </svg>
+                </div>
+              )}
+            </div>
+            <div className="w-full text-center px-2">
+              <span className="block text-xl font-bold leading-[1.2] text-[#222222] transition-colors group-hover:text-amber-600 line-clamp-2">
                 {name}
               </span>
-              <span className="text-xs leading-4 text-neutral-500">{meta}</span>
-            </span>
-            <svg
-              className="h-4 w-4 shrink-0 text-zinc-400 transition-colors group-hover:text-amber-500"
-              viewBox="0 0 18 18"
-              fill="none"
-              aria-hidden="true"
-            >
-              <path
-                d="M6.75 3.94501L11.3025 8.49751L6.75 13.05"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeMiterlimit="10"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            </div>
           </Link>
         );
       })}

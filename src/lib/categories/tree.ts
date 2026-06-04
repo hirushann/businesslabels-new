@@ -32,6 +32,8 @@ export type CategoryNode = {
   translations?: CategoryTranslations | null;
   parent_id: number | null;
   count: number;
+  image?: string | null;
+  main_image?: string | null;
   children?: CategoryNode[];
 };
 
