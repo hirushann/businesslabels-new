@@ -11,6 +11,7 @@ import type { ProductCardData } from "@/components/ProductCard";
 
 import ProductListingFilters from "@/components/products-listing/ProductListingFilters";
 import { mapProductListingResult } from "@/components/products-listing/productResult";
+import ProductPaginationSwitcher from "@/components/ProductPaginationSwitcher";
 
 export type CategoryCardData = ProductCardData;
 
@@ -148,10 +149,8 @@ function CategoryListingContent({ products }: { products: CategoryCardData[] }) 
       : [];
   }, [searchHasResolved, results, t, locale]);
   
-  const [accumulatedProducts, setAccumulatedProducts] = useState<any[]>([]);
-
   const hasFallbackProducts = fallbackProducts.length > 0;
-  const hasSearchProducts = accumulatedProducts.length > 0 || searchProducts.length > 0;
+  const hasSearchProducts = searchProducts.length > 0;
 
   const handleSortChange = (value: CategoryListingSortValue) => {
     const mapped = LISTING_SORT_TO_SEARCH_UI[value];
@@ -163,57 +162,6 @@ function CategoryListingContent({ products }: { products: CategoryCardData[] }) 
     activeFilters.forEach((filter) => removeFilter(filter.field));
     setCurrent(1);
   };
-
-  useEffect(() => {
-    if (isLoading) {
-      if (current === 1) {
-        setAccumulatedProducts([]);
-      }
-      return;
-    }
-
-    if (current === 1) {
-      setAccumulatedProducts(searchProducts);
-    } else if (searchProducts.length > 0) {
-      setAccumulatedProducts(prev => {
-        const existingIds = new Set(prev.map(p => p.id));
-        const newProducts = searchProducts.filter(p => !existingIds.has(p.id));
-        return [...prev, ...newProducts];
-      });
-    }
-  }, [searchProducts, current, isLoading]);
-
-  const observerTarget = useRef<HTMLDivElement>(null);
-  const [isFetchingMore, setIsFetchingMore] = useState(false);
-
-  const loadMore = useCallback(() => {
-    if (isLoading || isFetchingMore || page >= pageCount) return;
-    setIsFetchingMore(true);
-    setCurrent(page + 1);
-  }, [isLoading, isFetchingMore, page, pageCount, setCurrent]);
-
-  useEffect(() => {
-    if (!isLoading) {
-      setIsFetchingMore(false);
-    }
-  }, [isLoading]);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          loadMore();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current);
-    }
-
-    return () => observer.disconnect();
-  }, [loadMore]);
 
   return (
     <div className="flex flex-col gap-8">
@@ -306,7 +254,7 @@ function CategoryListingContent({ products }: { products: CategoryCardData[] }) 
                 }`}
               >
                 {hasSearchProducts
-                  ? accumulatedProducts.map(({ id, product, href }, index) => (
+                  ? searchProducts.map(({ id, product, href }, index) => (
                       <ProductCard key={`search-${id}-${index}`} product={product} href={href} />
                     ))
                   : fallbackProducts.map((product, index) => (
@@ -325,24 +273,17 @@ function CategoryListingContent({ products }: { products: CategoryCardData[] }) 
                       />
                     ))}
 
-                {isLoading && (current ?? 1) > 1 && Array.from({ length: isSidebarOpen ? 3 : 4 }).map((_, i) => (
-                  <div key={`loading-skeleton-${i}`} className="flex flex-col gap-4 w-full bg-white border border-gray-100/50 rounded-2xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] animate-pulse">
-                    <div className="w-full aspect-[4/3] bg-slate-100 rounded-xl mb-2"></div>
-                    <div className="w-2/3 h-5 bg-slate-100 rounded-full mt-2"></div>
-                    <div className="w-1/2 h-5 bg-slate-100 rounded-full"></div>
-                    <div className="w-1/3 h-5 bg-slate-100 rounded-full mt-1"></div>
-                  </div>
-                ))}
               </div>
 
-              {page < pageCount && hasSearchProducts ? (
-                <div ref={observerTarget} className="h-20 w-full flex justify-center items-center mt-4">
-                  {(isLoading || isFetchingMore) ? (
-                    <div className="text-gray-400">{t("search.loadingMore")}</div>
-                  ) : (
-                    <div className="text-gray-400">{t("search.scrollForMore")}</div>
-                  )}
-                </div>
+              {hasSearchProducts && pageCount > 1 ? (
+                <ProductPaginationSwitcher
+                  currentPage={page}
+                  pageCount={pageCount}
+                  onPageChange={(p) => {
+                    setCurrent(p);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                />
               ) : null}
             </>
           )}

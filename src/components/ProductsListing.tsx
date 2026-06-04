@@ -15,6 +15,7 @@ import EmptyState from "@/components/EmptyState";
 import ProductCard from "@/components/ProductCard";
 import RangeSlider from "@/components/RangeSlider";
 import Image from "next/image";
+import ProductPaginationSwitcher from "@/components/ProductPaginationSwitcher";
 import { useDebouncedSearchParam } from "@/components/search/useDebouncedSearchParam";
 import type {
   CatalogOptionFilter,
@@ -268,9 +269,6 @@ function CatalogProductsListing({
   const [optimisticQueryString, setOptimisticQueryString] = useState<
     string | null
   >(null);
-  const [visibleProducts, setVisibleProducts] = useState<
-    CatalogProductResult[]
-  >(initialCatalog.products);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [isPending, startTransition] = useTransition();
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -509,28 +507,8 @@ function CatalogProductsListing({
   }, [scopedCurrentQueryString, hasInitialCatalog, initialCatalog, t, locale]);
 
   useEffect(() => {
-    if (listingResetKeyRef.current !== listingResetKey) {
-      setVisibleProducts([]);
-    }
-  }, [listingResetKey]);
-
-  useEffect(() => {
-    const shouldReplace =
-      listingResetKeyRef.current !== listingResetKey ||
-      catalog.currentPage <= 1;
-    listingResetKeyRef.current = listingResetKey;
-
-    setVisibleProducts((currentProducts) => {
-      if (shouldReplace) {
-        return catalog.products;
-      }
-
-      const existingIds = new Set(currentProducts.map((item) => item.id));
-      const nextProducts = catalog.products.filter(
-        (item) => !existingIds.has(item.id),
-      );
-      return [...currentProducts, ...nextProducts];
-    });
+    // This effect is intentionally empty as we no longer maintain visibleProducts state.
+    // It's kept temporarily empty to match the diff cleanly.
   }, [catalog.currentPage, catalog.products, listingResetKey]);
 
   const activeFilterCount = useMemo(() => {
@@ -677,15 +655,13 @@ function CatalogProductsListing({
   };
 
   const loading = isLoading || isPending;
-  const products = visibleProducts;
+  const products = catalog.products;
   const hasMoreProducts =
-    catalog.currentPage < catalog.lastPage && products.length < catalog.total;
+    catalog.currentPage < catalog.lastPage;
 
   const loadMoreProducts = useCallback(() => {
-    if (loading || isFetchingMore || !hasMoreProducts) return;
-    setIsFetchingMore(true);
-    setPage(catalog.currentPage + 1);
-  }, [catalog.currentPage, hasMoreProducts, isFetchingMore, loading]); // eslint-disable-line react-hooks/exhaustive-deps
+    // This is no longer used for infinite scrolling but kept empty to avoid refactoring issues.
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (loading) return;
@@ -1125,47 +1101,15 @@ function CatalogProductsListing({
                 <ProductSkeletonGrid isSidebarOpen={isSidebarOpen} />
               ) : null}
 
-              {hasMoreProducts ? (
-                <div className="mt-10 flex justify-center">
-                  <button
-                    type="button"
-                    onClick={loadMoreProducts}
-                    disabled={isFetchingMore || loading}
-                    className="inline-flex items-center justify-center gap-2 h-[52px] px-8 rounded-full border-[1.5px] border-[#F18800] text-[#F18800] font-semibold text-lg leading-6 hover:bg-orange-50 transition-colors duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
-                    style={{ fontFamily: "Segoe UI, sans-serif" }}
-                  >
-                    {isFetchingMore || loading ? (
-                      <>
-                        <svg
-                          className="animate-spin"
-                          width="20"
-                          height="20"
-                          viewBox="0 0 20 20"
-                          fill="none"
-                          aria-hidden="true"
-                        >
-                          <circle
-                            cx="10"
-                            cy="10"
-                            r="8"
-                            stroke="#F18800"
-                            strokeWidth="2"
-                            strokeOpacity="0.3"
-                          />
-                          <path
-                            d="M10 2a8 8 0 0 1 8 8"
-                            stroke="#F18800"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                        {t("search.loadingMore")}
-                      </>
-                    ) : (
-                      t("search.viewMoreProducts")
-                    )}
-                  </button>
-                </div>
+              {catalog.lastPage > 1 ? (
+                <ProductPaginationSwitcher
+                  currentPage={catalog.currentPage}
+                  pageCount={catalog.lastPage}
+                  onPageChange={(p) => {
+                    setPage(p);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                />
               ) : null}
             </>
           )}
