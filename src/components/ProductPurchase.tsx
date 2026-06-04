@@ -690,9 +690,16 @@ export default function ProductPurchase({
           {((stock != null && stock > 0) || deliveryDatesNoStock == null || deliveryDatesNoStock < 10) ? (
             <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${resolvedInStock ? "bg-[#00A63E]" : "bg-zinc-400"}`}>
               {resolvedInStock ? (
-                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
-                  <circle cx="6" cy="6" r="5" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6l1.5 1.5L8 4" />
+                <svg className="w-3 h-3 text-white" fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12">
+                  <g clipPath="url(#clip0_1768_8264)">
+                    <path d="M10.9013 4.99975C11.1296 6.1204 10.9669 7.28546 10.4402 8.30065C9.91352 9.31583 9.05473 10.1198 8.00704 10.5784C6.95935 11.037 5.7861 11.1226 4.68293 10.8209C3.57977 10.5192 2.61338 9.84845 1.94492 8.92046C1.27646 7.99247 0.946343 6.86337 1.00961 5.72144C1.07289 4.57952 1.52572 3.4938 2.29261 2.64534C3.05949 1.79688 4.09407 1.23697 5.22381 1.05898C6.35356 0.880989 7.51017 1.09568 8.50078 1.66725" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M4.5 5.5L6 7L11 2" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+                  </g>
+                  <defs>
+                    <clipPath id="clip0_1768_8264">
+                      <rect width="12" height="12" fill="white"/>
+                    </clipPath>
+                  </defs>
                 </svg>
               ) : (
                 <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">

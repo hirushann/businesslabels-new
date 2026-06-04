@@ -385,8 +385,16 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
               filtered out of listings, never flagged. */}
           {product.inStock ? (
             <div className="px-2.5 py-1 bg-green-600 rounded-full flex items-center gap-1.5">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M2 6L5 9L10 3" stroke="white" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g clipPath="url(#clip0_1768_8264)">
+                  <path d="M10.9013 4.99975C11.1296 6.1204 10.9669 7.28546 10.4402 8.30065C9.91352 9.31583 9.05473 10.1198 8.00704 10.5784C6.95935 11.037 5.7861 11.1226 4.68293 10.8209C3.57977 10.5192 2.61338 9.84845 1.94492 8.92046C1.27646 7.99247 0.946343 6.86337 1.00961 5.72144C1.07289 4.57952 1.52572 3.4938 2.29261 2.64534C3.05949 1.79688 4.09407 1.23697 5.22381 1.05898C6.35356 0.880989 7.51017 1.09568 8.50078 1.66725" stroke="white" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M4.5 5.5L6 7L11 2" stroke="white" strokeLinecap="round" strokeLinejoin="round"/>
+                </g>
+                <defs>
+                  <clipPath id="clip0_1768_8264">
+                    <rect width="12" height="12" fill="white"/>
+                  </clipPath>
+                </defs>
               </svg>
               <span className="text-white text-xs font-normal font-['Segoe_UI'] leading-4">{t("product.inStock")}</span>
             </div>
