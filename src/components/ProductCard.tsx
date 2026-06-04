@@ -67,6 +67,7 @@ export type ProductCardData = {
   is_label?: boolean | null;
   is_label_product?: boolean | null;
   is_group_product?: boolean | null;
+  properties?: Record<string, unknown> | null;
 };
 
 type ProductCardProps = {
@@ -183,6 +184,21 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
     Number.isFinite(product.originalPrice) &&
     (!hasPrice || (hasPrice && (product.price !== undefined && product.price !== null) && product.originalPrice > product.price));
   const imageSrc = normalizeText(product.mainImage) || "https://placehold.co/600x400?text=" + encodeURIComponent(productName);
+  
+  const properties = product.properties as Record<string, unknown> | null;
+  const kernValue = properties?.kern;
+  const rollsStackLabel = useMemo(() => {
+    if (!kernValue) {
+      return t("product.rollsStack");
+    }
+    const isFanFold = typeof kernValue === "string" && kernValue.toLowerCase() === "fan-fold";
+    if (locale === "nl") {
+      return isFanFold ? "Stapel" : "Rollen";
+    } else {
+      return isFanFold ? "Stack" : "Rolls";
+    }
+  }, [kernValue, locale, t]);
+
   const normalizedPackingGroup = normalizePositiveInteger(product.packing_group);
   const addQuantity = normalizeBoolean(product.allow_singulars) ? 1 : normalizedPackingGroup ?? 1;
   // Units per box (roll/stack count) — shown when the product is packed in
@@ -232,6 +248,8 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
         name: product.name,
         sku: product.sku,
         price: finalPrice,
+        basePrice: product.price,
+        discounts: product.discounts,
         mainImage: product.mainImage ?? null,
         packingGroup: normalizedPackingGroup,
         allowSingulars: normalizeBoolean(product.allow_singulars),
@@ -547,6 +565,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
       discounts={product.discounts}
       packingGroup={normalizedPackingGroup}
       allowSingulars={normalizeBoolean(product.allow_singulars)}
+      rollsStackLabel={rollsStackLabel}
     />
   ) : null;
 

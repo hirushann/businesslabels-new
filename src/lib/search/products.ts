@@ -180,6 +180,7 @@ const RESULT_SOURCE_FIELDS = [
   "material_translations",
   "packing_group",
   "allow_singulars",
+  "discounts",
 ] as const;
 
 type ProductSource = Record<string, unknown>;
@@ -1419,6 +1420,8 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number, loc
     categories: categoriesFromSource(source),
     slug,
     type,
+    properties: source.properties as Record<string, unknown> | null,
+    discounts: source.discounts as ProductCardData["discounts"],
     ...(warranty !== undefined ? { warranty } : {})
   };
 

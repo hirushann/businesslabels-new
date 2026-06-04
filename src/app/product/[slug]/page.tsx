@@ -692,6 +692,10 @@ function mapApiProductToCard(p: Record<string, unknown>): ProductCardData {
     categories: (p.categories as ProductCardData["categories"]) ?? [],
     slug: (p.slug as string) ?? "",
     type: p.type === "variable" ? "variable" : "simple",
+    properties: p.properties as Record<string, unknown> | undefined,
+    packing_group: p.packing_group ? Number(p.packing_group) : null,
+    allow_singulars: p.allow_singulars as boolean | null | undefined,
+    discounts: p.discounts as ProductCardData["discounts"],
   };
 }
 

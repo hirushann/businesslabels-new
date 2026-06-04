@@ -101,7 +101,7 @@ function normalizeDiscountNumber(value: string | number | null | undefined): str
   return Number.isInteger(numericValue) ? String(numericValue) : String(numericValue);
 }
 
-function normalizeBulkDiscounts(discounts: ProductDiscountInput | undefined): BulkDiscount[] {
+function normalizeBulkDiscounts(discounts: ProductDiscountInput | undefined, minimumQuantity: number = 1): BulkDiscount[] {
   const parsedDiscounts = typeof discounts === "string"
     ? (() => {
         try {
@@ -137,6 +137,7 @@ function normalizeBulkDiscounts(discounts: ProductDiscountInput | undefined): Bu
       };
     })
     .filter((discount): discount is BulkDiscount => Boolean(discount))
+    .filter((discount) => Number(discount.quantity) >= minimumQuantity)
     .sort((a, b) => Number(a.quantity) - Number(b.quantity));
 }
 
@@ -381,7 +382,11 @@ export default function ProductPurchase({
         ? normalizedPackingGroup
         : 1;
   const normalizedWarranty = useMemo(() => normalizeWarrantyOptions(warranty), [warranty]);
-  const bulkDiscounts = useMemo(() => normalizeBulkDiscounts(discounts), [discounts]);
+  const minimumQuantity = (!allowSingulars && normalizedPackingGroup) ? normalizedPackingGroup : 1;
+
+  const bulkDiscounts = useMemo(() => {
+    return normalizeBulkDiscounts(discounts, minimumQuantity);
+  }, [discounts, minimumQuantity]);
   const hasBulkDiscounts = bulkDiscounts.length > 0;
   const hasWarrantyOptions = normalizedWarranty.options.length > 0;
   const defaultWarrantyOption = normalizedWarranty.options.find(
@@ -445,10 +450,6 @@ export default function ProductPurchase({
     setQuantityError(null);
   };
 
-  const handleBaseRowClick = () => {
-    setQuantity(initialQuantity);
-    setQuantityError(null);
-  };
 
   // Calculate delivery message
   const deliveryInfo = useMemo(() => {
@@ -525,6 +526,8 @@ export default function ProductPurchase({
         name: displayName,
         sku: displaySku,
         price: itemPrice,
+        basePrice: price,
+        discounts: discounts,
         mainImage,
         componentCount,
         packingGroup: normalizedPackingGroup,
@@ -742,39 +745,6 @@ export default function ProductPurchase({
               </span>
             </div>
 
-            {/* Base row (no discount) */}
-            {(() => {
-              const firstTierQty = bulkDiscounts[0] ? Number.parseInt(bulkDiscounts[0].quantity, 10) : Infinity;
-              const isBaseActive = !activeTier;
-              const baseQtyLabel = bulkDiscounts.length > 0 ? `1–${firstTierQty - 1}` : "1+";
-              return (
-                <button
-                  type="button"
-                  onClick={handleBaseRowClick}
-                  className={`w-full grid grid-cols-3 px-4 py-3 text-left transition-colors border-b border-slate-100 last:border-b-0 cursor-pointer ${
-                    isBaseActive
-                      ? "bg-green-50"
-                      : "hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="flex items-center gap-2">
-                    <span className={`text-sm font-medium ${isBaseActive ? "text-neutral-900" : "text-neutral-700"}`}>
-                      {baseQtyLabel}
-                    </span>
-                    {isBaseActive && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-green-600 text-white text-[10px] font-bold uppercase tracking-wide">
-                        {locale === "nl" ? "Actief" : "Active"}
-                      </span>
-                    )}
-                  </span>
-                  <span className={`text-sm font-bold ${isBaseActive ? "text-neutral-900" : "text-neutral-700"}`}>
-                    {formatEuro(price ?? 0)}
-                  </span>
-                  <span className="text-zinc-400 text-sm">–</span>
-                </button>
-              );
-            })()}
-
             {/* Discount tiers */}
             {bulkDiscounts.map((tier, index) => {
               const tierQty = Number.parseInt(tier.quantity, 10);
@@ -885,7 +855,7 @@ export default function ProductPurchase({
 
                   <button
                     type="button"
-                    onClick={() => handleAddToCart(normalizedPackingGroup!)}
+                    onClick={() => handleAddToCart(Math.max(1, Math.ceil(quantity / (normalizedPackingGroup || 1))) * (normalizedPackingGroup || 1))}
                     className="w-full h-12 px-4 py-2.5 bg-amber-100 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-amber-300 justify-center items-center gap-2 hover:bg-amber-300 transition-colors flex"
                   >
                     <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -900,21 +870,55 @@ export default function ProductPurchase({
                   </button>
                 </>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => handleAddToCart(normalizedPackingGroup!)}
-                  className="w-full h-12 px-4 py-2.5 bg-amber-100 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-amber-300 justify-center items-center gap-2 hover:bg-amber-300 transition-colors flex"
-                >
-                  <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                  <span className="text-amber-600 text-base font-bold whitespace-nowrap">
-                    {t("product.box")}{" "}
-                    <span className="text-xs text-amber-600">
-                      ({normalizedPackingGroup ?? 0} {rollsStackLabel})
+                <div className="flex flex-col sm:flex-row sm:items-end gap-3 w-full">
+                  {/* Quantity selector */}
+                  <div className="h-12 w-full sm:w-32 px-1 rounded-[50px] outline outline-1 outline-offset-[-1px] outline-black/10 flex justify-between items-center bg-white shrink-0">
+                    <button
+                      onClick={decrement}
+                      type="button"
+                      className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
+                    >
+                      <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
+                        <path strokeLinecap="round" d="M2 6h8" />
+                      </svg>
+                    </button>
+                    <div className="flex-1 self-stretch flex justify-center items-center overflow-hidden">
+                      <input
+                        type="number"
+                        min="1"
+                        value={quantity === 0 ? "" : quantity}
+                        onChange={(e) => handleQuantityChange(e.target.value)}
+                        onBlur={handleQuantityBlur}
+                        className="w-full text-center text-neutral-800 text-sm font-semibold focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-transparent"
+                      />
+                    </div>
+                    <button
+                      onClick={increment}
+                      type="button"
+                      className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
+                    >
+                      <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
+                        <path strokeLinecap="round" d="M6 2v8M2 6h8" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleAddToCart(Math.max(1, Math.ceil(quantity / (normalizedPackingGroup || 1))) * (normalizedPackingGroup || 1))}
+                    className="w-full sm:flex-1 h-12 px-4 py-2.5 bg-amber-100 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-amber-300 justify-center items-center gap-2 hover:bg-amber-300 transition-colors flex"
+                  >
+                    <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <span className="text-amber-600 text-base font-bold whitespace-nowrap">
+                      {t("product.box")}{" "}
+                      <span className="text-xs text-amber-600">
+                        ({normalizedPackingGroup ?? 0} {rollsStackLabel})
+                      </span>
                     </span>
-                  </span>
-                </button>
+                  </button>
+                </div>
               )}
             </div>
           </PopoverAnchor>
@@ -1285,7 +1289,7 @@ export default function ProductPurchase({
             )}
             <button
               type="button"
-              onClick={() => handleAddToCart(normalizedPackingGroup!)}
+              onClick={() => handleAddToCart(Math.max(1, Math.ceil(quantity / (normalizedPackingGroup || 1))) * (normalizedPackingGroup || 1))}
               className="flex-1 h-11 px-4 bg-amber-100 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-amber-300 justify-center items-center gap-2 hover:bg-amber-300 transition-colors flex"
             >
               <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">

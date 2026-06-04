@@ -229,6 +229,19 @@
 }
 
 /* CMS Content Fallback Styles */
+.cms-content {
+  font-family: 'Segoe UI', 'Segoe UI Variable', Inter, system-ui, -apple-system, sans-serif;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  overflow: visible;
+}
+
+.cms-content div, .cms-content p, .cms-content span {
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
 .cms-content h1 {
   font-size: 2.25rem;
   font-weight: 900;
@@ -236,6 +249,7 @@
   margin-bottom: 1rem;
   text-transform: uppercase;
   color: #171717;
+  font-family: 'Segoe UI', 'Segoe UI Variable', Inter, system-ui, -apple-system, sans-serif;
 }
 
 .cms-content h2 {
@@ -244,6 +258,7 @@
   margin-top: 1.75rem;
   margin-bottom: 0.75rem;
   color: #262626;
+  font-family: 'Segoe UI', 'Segoe UI Variable', Inter, system-ui, -apple-system, sans-serif;
 }
 
 .cms-content h3 {
@@ -252,18 +267,35 @@
   margin-top: 1.5rem;
   margin-bottom: 0.5rem;
   color: #404040;
+  font-family: 'Segoe UI', 'Segoe UI Variable', Inter, system-ui, -apple-system, sans-serif;
 }
 
 .cms-content p {
   /* margin-bottom: 1.5rem; */
   line-height: 1.75;
   color: #404040;
+  font-family: 'Segoe UI', 'Segoe UI Variable', Inter, system-ui, -apple-system, sans-serif;
+  white-space: normal;
 }
 .cms-content br {
   display: none;
 }
+
+/* Hide empty <p> tags injected by the Quill WYSIWYG editor */
+.cms-content p:empty {
+  display: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cms-content p:has(> br:only-child) {
+  display: none;
+  margin: 0;
+  padding: 0;
+}
 .cms-content h4, .cms-content h5, .cms-content h6 {
   margin-top: 1.5rem;
+  font-family: 'Segoe UI', 'Segoe UI Variable', Inter, system-ui, -apple-system, sans-serif;
 }
 
 .cms-content ul {

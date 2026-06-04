@@ -20,6 +20,8 @@ export type CartItem = {
   itemKind?: "product" | "warranty";
   linkedToKey?: string | null;
   componentCount?: number | null;
+  basePrice?: number | null;
+  discounts?: string | any[] | null;
   warranty?: {
     optionId: number;
     durationMonths?: number | null;
@@ -103,6 +105,46 @@ function previousQuantityForItem(item: CartItem): number {
   return Math.max(packingGroup, Math.floor((item.quantity - 1) / packingGroup) * packingGroup);
 }
 
+function calculateUnitPrice(item: CartItem): number | null | undefined {
+  if (item.itemKind === "warranty") return item.price;
+  const priceToUse = item.basePrice ?? item.price;
+  if (typeof priceToUse !== "number") return item.price;
+  if (!item.discounts) return priceToUse;
+
+  let parsedDiscounts: any[] = [];
+  if (typeof item.discounts === "string") {
+    try {
+      parsedDiscounts = JSON.parse(item.discounts);
+    } catch {
+      return priceToUse;
+    }
+  } else if (Array.isArray(item.discounts)) {
+    parsedDiscounts = item.discounts;
+  }
+
+  if (!Array.isArray(parsedDiscounts) || parsedDiscounts.length === 0) return priceToUse;
+
+  const bulkDiscounts = parsedDiscounts
+    .map((d) => {
+      const q = Number(d?.quantity);
+      const p = Number(d?.discount);
+      if (Number.isFinite(q) && q > 0 && Number.isFinite(p) && p > 0) {
+        return { quantity: q, discountPct: p };
+      }
+      return null;
+    })
+    .filter((d): d is { quantity: number; discountPct: number } => d !== null)
+    .sort((a, b) => a.quantity - b.quantity);
+
+  const activeTier = [...bulkDiscounts].reverse().find((tier) => item.quantity >= tier.quantity);
+
+  if (activeTier) {
+    return priceToUse * (1 - activeTier.discountPct / 100);
+  }
+
+  return priceToUse;
+}
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -144,16 +186,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const existingItem = currentItems.find((currentItem) => currentItem.key === key);
 
       if (existingItem) {
-        return currentItems.map((currentItem) =>
-          currentItem.key === key
-            ? {
-                ...currentItem,
-                packingGroup: item.packingGroup ?? currentItem.packingGroup,
-                allowSingulars: item.allowSingulars ?? currentItem.allowSingulars,
-                quantity: currentItem.quantity + normalizedQuantity,
-              }
-            : currentItem,
-        );
+        return currentItems.map((currentItem) => {
+          if (currentItem.key === key) {
+            const updatedItem = {
+              ...currentItem,
+              packingGroup: item.packingGroup ?? currentItem.packingGroup,
+              allowSingulars: item.allowSingulars ?? currentItem.allowSingulars,
+              quantity: currentItem.quantity + normalizedQuantity,
+            };
+            return {
+              ...updatedItem,
+              price: calculateUnitPrice(updatedItem) ?? updatedItem.price,
+            };
+          }
+          return currentItem;
+        });
       }
 
       return [
@@ -193,11 +240,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         const nextQuantity = nextQuantityForItem(item);
 
         if (item.key === key) {
-          return { ...item, quantity: nextQuantity };
+          const updatedItem = { ...item, quantity: nextQuantity };
+          return { ...updatedItem, price: calculateUnitPrice(updatedItem) ?? updatedItem.price };
         }
 
         if (target.itemKind !== "warranty" && item.linkedToKey === key) {
-          return { ...item, quantity: nextQuantity };
+          const updatedItem = { ...item, quantity: nextQuantity };
+          return { ...updatedItem, price: calculateUnitPrice(updatedItem) ?? updatedItem.price };
         }
 
         return item;
@@ -216,17 +265,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         const previousQuantity = previousQuantityForItem(item);
 
         if (item.key === key) {
-          return {
-            ...item,
-            quantity: previousQuantity,
-          };
+          const updatedItem = { ...item, quantity: previousQuantity };
+          return { ...updatedItem, price: calculateUnitPrice(updatedItem) ?? updatedItem.price };
         }
 
         if (target.itemKind !== "warranty" && item.linkedToKey === key) {
-          return {
-            ...item,
-            quantity: previousQuantity,
-          };
+          const updatedItem = { ...item, quantity: previousQuantity };
+          return { ...updatedItem, price: calculateUnitPrice(updatedItem) ?? updatedItem.price };
         }
 
         return item;

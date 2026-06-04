@@ -7,6 +7,26 @@ import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 
+/** Strip empty/whitespace-only <p> tags and HTML comments injected by the Quill WYSIWYG editor. */
+function cleanCmsContent(html: string): string {
+  // Remove HTML comments
+  let result = html.replace(/<!--[\s\S]*?-->/g, "");
+
+  // Remove p tags that contain only whitespace, spaces, &nbsp;, \u00a0, or <br>
+  // Run multiple passes until fully stable
+  let prev = "";
+  while (prev !== result) {
+    prev = result;
+    result = result
+      .replace(/<p>[ \t\n\r\u00a0]*<\/p>/g, "")
+      .replace(/<p>\s*<\/p>/g, "")
+      .replace(/<p>(&nbsp;|&#160;|\u00a0|\s)*<\/p>/g, "")
+      .replace(/<p>\s*(<br\s*\/?>\s*)*<\/p>/gi, "");
+  }
+
+  return result;
+}
+
 type PageData = {
   id: number;
   title: string;
@@ -107,9 +127,9 @@ export default async function DynamicCMSPage({ params }: { params: Promise<{ slu
         </header>
 
         {/* Page Content */}
-        <article 
-          className="cms-content prose prose-neutral max-w-none prose-headings:text-neutral-800 prose-headings:font-black prose-headings:uppercase prose-headings:tracking-tight prose-p:text-neutral-700 prose-p:text-lg prose-p:leading-8 prose-a:text-amber-600 hover:prose-a:text-amber-700 prose-img:rounded-2xl prose-strong:text-neutral-900"
-          dangerouslySetInnerHTML={{ __html: unescapeHtml(page.content) }}
+        <article
+          className="cms-content"
+          dangerouslySetInnerHTML={{ __html: cleanCmsContent(unescapeHtml(page.content)) }}
         />
       </div>
     </div>
