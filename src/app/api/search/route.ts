@@ -1046,22 +1046,6 @@ function buildRelevanceQuery(state: RequestState, _queryConfig: QueryConfig) {
       },
     });
 
-    // 3c. Partial Word Match for Numeric Tokens
-    if (hasNumericToken && !isProductCodeIntent) {
-      const wildcardQuery = tokens
-        .map((t) => (/[0-9]{2,}/.test(t) ? `*${t}*` : t))
-        .join(' AND ');
-      should.push({
-        query_string: {
-          query: wildcardQuery,
-          fields: titleFields,
-          boost: BOOST_TITLE_AND * 0.5,
-          default_operator: 'AND',
-          analyze_wildcard: true,
-        },
-      });
-    }
-  } else {
     // For single words, allow edge n-gram style wildcard matching for brands and titles
     if (searchTerm.trim().length >= 1) {
       const wildcardFields = [...titleFields, ...brandFields];
@@ -1077,6 +1061,23 @@ function buildRelevanceQuery(state: RequestState, _queryConfig: QueryConfig) {
         });
       });
     }
+  }
+
+  // Allow partial substring matching ONLY on SKU fields to find products like "C31CH83562" when searching "83562"
+  if (searchTerm.trim().length >= 3) {
+    skuFields.forEach((field) => {
+      if (!field.includes('*')) {
+        should.push({
+          wildcard: {
+            [`${field}.keyword`]: {
+              value: `*${searchTerm.trim().toLowerCase()}*`,
+              boost: BOOST_SKU_PREFIX * 0.5,
+              case_insensitive: true,
+            },
+          },
+        });
+      }
+    });
   }
 
   // --- TIER 4: Feature Section ---

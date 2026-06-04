@@ -423,16 +423,12 @@ function CatalogProductsListing({
     });
   };
 
-  const isOnlyNumbers = (str: string) => /^\d+$/.test(str);
 
   const commitSearch = useCallback(
     (nextSearch: string) => {
       setParams((params) => {
         params.delete("q");
         if (nextSearch) {
-          if (isOnlyNumbers(nextSearch)) {
-            nextSearch = `*${nextSearch}*`;
-          }
           params.set("search", nextSearch);
         } else {
           params.delete("search");
@@ -502,7 +498,6 @@ function CatalogProductsListing({
     return () => {
       isCurrent = false;
       window.clearTimeout(loadingTimeoutId);
-      controller.abort();
     };
   }, [scopedCurrentQueryString, hasInitialCatalog, initialCatalog, t, locale]);
 
