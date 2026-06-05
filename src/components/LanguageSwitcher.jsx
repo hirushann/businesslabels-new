@@ -52,6 +52,16 @@ export default function LanguageSwitcher() {
     // Build the target URL: EN gets /en prefix, NL gets clean path
     const currentPath = window.location.pathname;
     const cleanPath = stripLocalePath(currentPath);
+    const alternateHref = document
+      .querySelector(`link[rel="alternate"][hreflang="${normalized}"]`)
+      ?.getAttribute('href');
+
+    if (alternateHref) {
+      const alternateUrl = new URL(alternateHref, window.location.origin);
+      window.location.assign(`${alternateUrl.pathname}${alternateUrl.search}${window.location.hash}`);
+      return;
+    }
+
     const translatedPath =
       getLocalizedPrinterCategoryPathForPath(currentPath, normalized) ??
       getLocalizedLabelCategoryPathForPath(currentPath, normalized) ??

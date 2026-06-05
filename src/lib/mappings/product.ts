@@ -10,6 +10,11 @@ type LaravelCategory = {
   id?: number;
   name?: string | LocalizedString | null;
   slug?: string | LocalizedString | null;
+  name_en?: string | null;
+  name_nl?: string | null;
+  slug_en?: string | null;
+  slug_nl?: string | null;
+  translations?: Array<Record<string, { name?: string | null; slug?: string | null }> | { language?: string; name?: string | null; slug?: string | null }> | null;
 };
 
 type LaravelProductTranslation = {
@@ -51,6 +56,7 @@ export type LaravelProduct = {
   is_label?: boolean | null;
   is_label_product?: boolean | null;
   is_group_product?: boolean | null;
+  properties?: Record<string, unknown> | null;
 };
 
 function getProductTranslation(
@@ -79,7 +85,7 @@ function getLocalizedValue(value: string | LocalizedString | null | undefined, l
 export function mapLaravelProductToCardData(product: LaravelProduct, locale: string = "en"): ProductCardData {
   const translation = getProductTranslation(product.translations, locale);
 
-  const rawName = translation?.name || translation?.title || product.name || product.title || "Unnamed Product";
+  const rawName = translation?.title || translation?.name || product.title || product.name || "Unnamed Product";
   const name = typeof rawName === "string" ? rawName : getLocalizedValue(rawName, locale) || "Unnamed Product";
 
   const rawSlug = translation?.slug || product.slug;
@@ -98,7 +104,12 @@ export function mapLaravelProductToCardData(product: LaravelProduct, locale: str
   const categories = (product.categories ?? []).map((cat) => ({
     id: cat.id,
     name: typeof cat.name === "string" ? cat.name : getLocalizedValue(cat.name, locale),
-    slug: typeof cat.slug === "string" ? cat.slug : getLocalizedValue(cat.slug, locale)
+    slug: typeof cat.slug === "string" ? cat.slug : getLocalizedValue(cat.slug, locale),
+    name_en: cat.name_en ?? (typeof cat.name === "object" ? cat.name?.en ?? null : null),
+    name_nl: cat.name_nl ?? (typeof cat.name === "object" ? cat.name?.nl ?? null : null),
+    slug_en: cat.slug_en ?? (typeof cat.slug === "object" ? cat.slug?.en ?? null : null),
+    slug_nl: cat.slug_nl ?? (typeof cat.slug === "object" ? cat.slug?.nl ?? null : null),
+    translations: cat.translations ?? null,
   }));
 
   return {
@@ -114,7 +125,9 @@ export function mapLaravelProductToCardData(product: LaravelProduct, locale: str
     mainImage: toDisplayImageUrl(product.main_image),
     categories,
     slug,
-    type: (product.type === "simple" || product.type === "variable") ? product.type : null,
+    type: product.type === "group"
+      ? "group_product"
+      : (product.type === "simple" || product.type === "variable" || product.type === "group_product") ? product.type : null,
     warranty: product.warranty ?? null,
     discount: product.discount ?? 0,
     discounts: product.discounts ?? null,
@@ -123,5 +136,7 @@ export function mapLaravelProductToCardData(product: LaravelProduct, locale: str
     is_label: product.is_label ?? product.is_label_product ?? null,
     is_label_product: product.is_label_product ?? null,
     is_group_product: product.is_group_product ?? null,
+    properties: product.properties ?? null,
+    translations: product.translations ?? null,
   };
 }

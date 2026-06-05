@@ -1,6 +1,6 @@
 import type { estypes } from "@elastic/elasticsearch";
 import type { LinkProps } from "next/link";
-import type { ProductCardData, ProductRouteType, ProductWarrantyData } from "@/components/ProductCard";
+import type { ProductCardCategory, ProductCardData, ProductRouteType, ProductWarrantyData } from "@/components/ProductCard";
 import { catalogIndexForType, elasticClient } from "@/lib/search/client";
 import type { LaravelProduct } from "@/lib/mappings/product";
 import { isDeliverableInStock } from "@/lib/utils/delivery";
@@ -134,9 +134,15 @@ const RESULT_SOURCE_FIELDS = [
   "product_type",
   "type",
   "title",
+  "title_en",
+  "title_nl",
   "name",
+  "name_en",
+  "name_nl",
   "post_title",
   "slug",
+  "slug_en",
+  "slug_nl",
   "post_name",
   "article_number",
   "sku",
@@ -161,6 +167,8 @@ const RESULT_SOURCE_FIELDS = [
   "images",
   "categories",
   "category_slugs",
+  "category_titles_en",
+  "category_titles_nl",
   "frontend_path",
   "catalog_brand",
   "catalog_material_code",
@@ -1257,6 +1265,84 @@ function getLocalizedValue(value: unknown, locale?: "en" | "nl"): string | null 
   return stringValue(value);
 }
 
+function localizedTranslationField(
+  translations: unknown,
+  locale: "en" | "nl" | undefined,
+  fields: string[],
+): string | null {
+  if (!locale || !translations) return null;
+
+  let parsed = translations;
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      return null;
+    }
+  }
+
+  const fieldValue = (record: Record<string, unknown> | null | undefined): string | null => {
+    if (!record) return null;
+    for (const field of fields) {
+      const value = record[field];
+      if (typeof value === "string" && value.trim() !== "") {
+        return value;
+      }
+    }
+    return null;
+  };
+
+  if (Array.isArray(parsed)) {
+    for (const entry of parsed) {
+      let item = entry;
+      if (typeof item === "string") {
+        try {
+          item = JSON.parse(item);
+        } catch {
+          continue;
+        }
+      }
+
+      if (!item || typeof item !== "object") continue;
+      const record = item as Record<string, unknown>;
+      const keyed = record[locale];
+      if (keyed && typeof keyed === "object") {
+        const value = fieldValue(keyed as Record<string, unknown>);
+        if (value) return value;
+      }
+
+      if (record.language === locale) {
+        const value = fieldValue(record);
+        if (value) return value;
+      }
+    }
+
+    return null;
+  }
+
+  if (parsed && typeof parsed === "object") {
+    const record = parsed as Record<string, unknown>;
+
+    for (const field of fields) {
+      const localizedByField = record[field];
+      if (localizedByField && typeof localizedByField === "object") {
+        const value = (localizedByField as Record<string, unknown>)[locale];
+        if (typeof value === "string" && value.trim() !== "") {
+          return value;
+        }
+      }
+    }
+
+    const localizedEntry = record[locale];
+    if (localizedEntry && typeof localizedEntry === "object") {
+      const value = fieldValue(localizedEntry as Record<string, unknown>);
+      if (value) return value;
+    }
+  }
+
+  return null;
+}
+
 function numberValue(value: unknown): number | null {
   const scalar = firstScalar(value);
   if (typeof scalar === "number") return scalar;
@@ -1277,6 +1363,7 @@ function booleanValue(value: unknown): boolean {
 
 function productType(value: unknown): ProductRouteType | null {
   const type = stringValue(value);
+  if (type === "group") return "group_product";
   return type === "simple" || type === "variable" || type === "group_product" ? type : null;
 }
 
@@ -1319,12 +1406,12 @@ function warrantyFromSource(source: ProductSource): ProductWarrantyData | null |
   };
 }
 
-function categoriesFromSource(source: ProductSource): Array<{ id?: number; name?: string | null; slug?: string | null }> {
+function categoriesFromSource(source: ProductSource): ProductCardCategory[] {
   const categories = source.categories;
   if (Array.isArray(categories)) {
-    const normalized: Array<{ id?: number; name?: string | null; slug?: string | null }> = [];
+    const normalized: ProductCardCategory[] = [];
 
-    categories.forEach((category) => {
+    categories.forEach((category, index) => {
       if (typeof category === "string") {
         normalized.push({ name: category, slug: category });
         return;
@@ -1334,8 +1421,15 @@ function categoriesFromSource(source: ProductSource): Array<{ id?: number; name?
         const record = category as Record<string, unknown>;
         normalized.push({
           id: numberValue(record.id) ?? numberValue(record.term_id) ?? undefined,
-          name: stringValue(record.name),
-          slug: stringValue(record.slug) ?? stringValue(record.post_name) ?? undefined,
+          name: Array.isArray(record.name) ? record.name.filter((item): item is string => typeof item === "string") : stringValue(record.name),
+          slug: Array.isArray(record.slug) ? record.slug.filter((item): item is string => typeof item === "string") : stringValue(record.slug) ?? stringValue(record.post_name) ?? undefined,
+          name_en: stringValue(record.name_en),
+          name_nl: stringValue(record.name_nl),
+          ...(stringValue(record.name_en) ? {} : { name_en: Array.isArray(source.category_titles_en) ? stringValue(source.category_titles_en[index]) : null }),
+          ...(stringValue(record.name_nl) ? {} : { name_nl: Array.isArray(source.category_titles_nl) ? stringValue(source.category_titles_nl[index]) : null }),
+          slug_en: stringValue(record.slug_en),
+          slug_nl: stringValue(record.slug_nl),
+          translations: record.translations as ProductCardCategory["translations"],
         });
       }
     });
@@ -1363,21 +1457,24 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number, loc
   if (!type && booleanValue(source.is_group_product)) {
     type = "group_product";
   }
-  const slug = stringValue(source.slug) ?? stringValue(source.post_name);
   const frontendPath = stringValue(source.frontend_path);
   
-  const translations = source.translations as Record<string, Record<string, string>> | undefined;
+  const translations = source.translations;
   const materialTranslations = source.material_translations as Record<string, Record<string, string>> | undefined;
 
-  const tTitle = (locale && translations?.name?.[locale]) || (locale && translations?.title?.[locale]);
+  const translatedSlug = localizedTranslationField(translations, locale, ["slug"]);
+  const explicitSlug = locale ? source[`slug_${locale}`] : undefined;
+  const slug = translatedSlug ?? getLocalizedValue(explicitSlug ?? source.slug, locale) ?? stringValue(source.post_name);
+
+  const tTitle = localizedTranslationField(translations, locale, ["title", "name"]);
   const explicitTitle = locale ? (source[`title_${locale}`] ?? source[`name_${locale}`]) : undefined;
   const title = tTitle ?? getLocalizedValue(explicitTitle ?? source.title, locale) ?? getLocalizedValue(source.name, locale) ?? getLocalizedValue(source.post_title, locale) ?? "Unnamed product";
   
-  const tSubtitle = locale && translations?.subtitle?.[locale];
+  const tSubtitle = localizedTranslationField(translations, locale, ["subtitle"]);
   const explicitSubtitle = locale ? source[`subtitle_${locale}`] : undefined;
   const subtitle = tSubtitle ?? getLocalizedValue(explicitSubtitle ?? source.subtitle, locale);
   
-  const tExcerpt = (locale && translations?.excerpt?.[locale]) || (locale && translations?.short_description?.[locale]);
+  const tExcerpt = localizedTranslationField(translations, locale, ["excerpt", "short_description"]);
   const explicitExcerpt = locale ? source[`excerpt_${locale}`] : undefined;
   const excerpt = tExcerpt ?? getLocalizedValue(explicitExcerpt ?? source.excerpt, locale);
 
@@ -1422,6 +1519,7 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number, loc
     type,
     properties: source.properties as Record<string, unknown> | null,
     discounts: source.discounts as ProductCardData["discounts"],
+    translations: source.translations as ProductCardData["translations"],
     ...(warranty !== undefined ? { warranty } : {})
   };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect, useRef, useCallback } from "react";
+import { useMemo, useState } from "react";
 import { SearchProvider, useSearch } from "@elastic/react-search-ui";
 import type { SearchDriverOptions } from "@elastic/search-ui";
 import { useTranslations, useLocale } from "next-intl";
@@ -42,6 +42,14 @@ const LISTING_SORT_TO_SEARCH_UI: Record<CategoryListingSortValue, { field: strin
   price_asc: { field: "price", direction: "asc" },
   price_desc: { field: "price", direction: "desc" },
 };
+
+function categoryNameText(name: unknown): string {
+  if (typeof name === "string") return name;
+  if (Array.isArray(name)) {
+    return name.find((item): item is string => typeof item === "string" && item.trim() !== "") ?? "";
+  }
+  return "";
+}
 
 const CATEGORY_SEARCH_QUERY = {
   search_fields: {
@@ -263,7 +271,7 @@ function CategoryListingContent({ products }: { products: CategoryCardData[] }) 
                         product={product}
                         href={(() => {
                           if (!product.slug) return undefined;
-                          const isPrinter = product.categories?.some(c => c.slug === "labelprinters" || c.name?.toLowerCase().includes("printer"));
+                          const isPrinter = product.categories?.some(c => c.slug === "labelprinters" || categoryNameText(c.name).toLowerCase().includes("printer"));
                           const prefix = isPrinter ? "printers" : "product";
                           
                           return product.type
