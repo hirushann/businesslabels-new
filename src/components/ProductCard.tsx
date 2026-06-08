@@ -46,6 +46,32 @@ export type BulkDiscountTier = {
   discount?: string | number | null;
 };
 
+export type ProductCardTranslation = {
+  language?: string | null;
+  name?: string | null;
+  title?: string | null;
+  subtitle?: string | null;
+  slug?: string | null;
+  excerpt?: string | null;
+};
+
+export type ProductCardTranslations =
+  | Array<Record<string, ProductCardTranslation | null> | ProductCardTranslation | string>
+  | Record<string, Record<string, string | null> | string | null>
+  | string
+  | null;
+
+export type ProductCardCategory = {
+  id?: number;
+  name?: string | string[] | null;
+  slug?: string | string[] | null;
+  name_en?: string | null;
+  name_nl?: string | null;
+  slug_en?: string | null;
+  slug_nl?: string | null;
+  translations?: ProductCardTranslations;
+};
+
 export type ProductCardData = {
   id: string | number;
   sku: string;
@@ -57,7 +83,7 @@ export type ProductCardData = {
   originalPrice?: number | null;
   inStock: boolean;
   mainImage?: string | null;
-  categories?: Array<{ id?: number; name?: string | null; slug?: string | null }>;
+  categories?: ProductCardCategory[];
   slug?: string | null;
   type?: ProductRouteType | null;
   packing_group?: number | null;
@@ -69,6 +95,7 @@ export type ProductCardData = {
   is_label_product?: boolean | null;
   is_group_product?: boolean | null;
   properties?: Record<string, unknown> | null;
+  translations?: ProductCardTranslations;
 };
 
 type ProductCardProps = {
@@ -85,6 +112,80 @@ function normalizeText(value: string | null | undefined): string | null {
 
 function normalizeProductLocale(locale: string): "en" | "nl" {
   return locale === "nl" ? "nl" : "en";
+}
+
+function localizedProductField(
+  translations: ProductCardData["translations"],
+  locale: "en" | "nl",
+  fields: Array<keyof ProductCardTranslation>,
+): string | null {
+  if (!translations) return null;
+
+  let parsed: NonNullable<ProductCardData["translations"]> = translations;
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed) as NonNullable<ProductCardData["translations"]>;
+    } catch {
+      return null;
+    }
+  }
+
+  const valueFromRecord = (record: Record<string, unknown> | null | undefined): string | null => {
+    if (!record) return null;
+    for (const field of fields) {
+      const value = record[field];
+      if (typeof value === "string" && value.trim() !== "") {
+        return value;
+      }
+    }
+    return null;
+  };
+
+  if (Array.isArray(parsed)) {
+    for (const entry of parsed) {
+      let item = entry;
+      if (typeof item === "string") {
+        try {
+          item = JSON.parse(item) as ProductCardTranslation;
+        } catch {
+          continue;
+        }
+      }
+
+      if (!item || typeof item !== "object") continue;
+      const keyed = (item as Record<string, ProductCardTranslation | null>)[locale];
+      const keyedValue = valueFromRecord(keyed as Record<string, unknown> | null);
+      if (keyedValue) return keyedValue;
+
+      const direct = item as ProductCardTranslation;
+      if (direct.language === locale) {
+        const directValue = valueFromRecord(direct as Record<string, unknown>);
+        if (directValue) return directValue;
+      }
+    }
+  }
+
+  if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+    const record = parsed as Record<string, Record<string, string | null> | string | null>;
+
+    for (const field of fields) {
+      const localizedByField = record[field];
+      if (localizedByField && typeof localizedByField === "object") {
+        const value = localizedByField[locale];
+        if (typeof value === "string" && value.trim() !== "") {
+          return value;
+        }
+      }
+    }
+
+    const localizedEntry = record[locale];
+    if (localizedEntry && typeof localizedEntry === "object") {
+      const value = valueFromRecord(localizedEntry);
+      if (value) return value;
+    }
+  }
+
+  return null;
 }
 
 function featureLines(product: ProductCardData, locale: "en" | "nl"): string[] {
@@ -168,9 +269,38 @@ function normalizeWarrantyOptions(warranty: ProductWarrantyData | null | undefin
   };
 }
 
-export function lastCategoryLabel(categories: ProductCardData["categories"]): string | null {
-  const label = categories?.[categories.length - 1]?.name?.trim();
-  return label || null;
+function localizedCategoryValue(
+  category: NonNullable<ProductCardData["categories"]>[number],
+  locale: "en" | "nl",
+  field: "name" | "slug",
+): string | null {
+  const explicit = category[`${field}_${locale}`];
+  if (typeof explicit === "string" && explicit.trim() !== "") {
+    return explicit;
+  }
+
+  const translated = localizedProductField(category.translations, locale, [field]);
+  if (translated) return translated;
+
+  const value = category[field];
+  if (typeof value === "string" && value.trim() !== "") {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    const strings = value.filter((item): item is string => typeof item === "string" && item.trim() !== "");
+    if (strings.length === 0) return null;
+    return locale === "nl" ? strings[1] ?? strings[0] : strings[0];
+  }
+
+  return null;
+}
+
+export function lastCategoryLabel(categories: ProductCardData["categories"], locale: "en" | "nl" = "nl"): string | null {
+  const category = categories?.[categories.length - 1];
+  if (!category) return null;
+
+  return localizedCategoryValue(category, locale, "name");
 }
 
 const truncateWords = (text: string, count: number) => {
@@ -179,13 +309,39 @@ const truncateWords = (text: string, count: number) => {
   return words.slice(0, count).join(' ') + ' .....';
 };
 
+function productHrefWithSlug(href: LinkProps["href"] | undefined, slug: string | null): LinkProps["href"] | undefined {
+  if (!slug) return href;
+
+  const productPath = `/product/${slug}`;
+
+  if (!href) {
+    return productPath;
+  }
+
+  if (typeof href === "string") {
+    return href
+      .replace(/^\/products\/[^/?#]+/, productPath)
+      .replace(/^\/product\/[^/?#]+/, productPath);
+  }
+
+  if (typeof href === "object" && "pathname" in href && typeof href.pathname === "string") {
+    const pathname = href.pathname
+      .replace(/^\/products\/[^/?#]+/, productPath)
+      .replace(/^\/product\/[^/?#]+/, productPath);
+    return { ...href, pathname };
+  }
+
+  return href;
+}
+
 export default function ProductCard({ product, href, onClick }: ProductCardProps) {
   const locale = useLocale();
   const productLocale = normalizeProductLocale(locale);
   const t = useTranslations();
   const { addItem, openCart } = useCart();
-  const productName = product.name ?? "";
-  const categoryBadge = lastCategoryLabel(product.categories);
+  const productName = localizedProductField(product.translations, productLocale, ["title", "name"]) ?? product.name ?? "";
+  const productSlug = localizedProductField(product.translations, productLocale, ["slug"]) ?? product.slug ?? null;
+  const categoryBadge = lastCategoryLabel(product.categories, productLocale);
   const features = featureLines(product, productLocale);
   const hasPrice = typeof product.price === "number" && Number.isFinite(product.price);
   const hasOriginalPrice =
@@ -249,9 +405,9 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
     addItem(
       {
         id: product.id,
-        slug: product.slug,
+        slug: productSlug,
         type: product.type,
-        name: product.name,
+        name: productName,
         sku: product.sku,
         price: finalPrice,
         basePrice: product.price,
@@ -269,7 +425,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
         : 0;
 
     if (selectedOption && warrantyPrice > 0) {
-      const parentKey = buildCartItemKey({ id: product.id, slug: product.slug, type: product.type });
+      const parentKey = buildCartItemKey({ id: product.id, slug: productSlug, type: product.type });
       const warrantyName = selectedOption.name || `${productName} Extended Warranty`;
 
       addItem(
@@ -331,13 +487,14 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
 
   // Apply locale prefix to pathname-style hrefs (e.g. { pathname: '/product/...' })
   const localizedHref: LinkProps["href"] | undefined = (() => {
-    if (typeof href === "string") {
-      return localePath(href, locale);
+    const sluggedHref = productHrefWithSlug(href, productSlug);
+    if (typeof sluggedHref === "string") {
+      return localePath(sluggedHref, locale);
     }
-    if (typeof href === "object" && "pathname" in href && typeof href.pathname === "string") {
-      return { ...href, pathname: localePath(href.pathname, locale) };
+    if (typeof sluggedHref === "object" && "pathname" in sluggedHref && typeof sluggedHref.pathname === "string") {
+      return { ...sluggedHref, pathname: localePath(sluggedHref.pathname, locale) };
     }
-    return href;
+    return sluggedHref;
   })();
 
   const cardContent = (
@@ -430,7 +587,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
               <span className="text-blue-400 text-sm font-normal font-['Segoe_UI'] leading-5">SKU: {product.sku}</span>
             </div>
             <Link href={localizedHref || "#"} className="block" onClick={onClick}>
-            <h3 className="text-neutral-800 text-xl font-semibold font-['Segoe_UI'] leading-6">{product.name}</h3>
+            <h3 className="text-neutral-800 text-xl font-semibold font-['Segoe_UI'] leading-6">{productName}</h3>
             </Link>
           </div>
           {features.length > 0 && (
@@ -477,7 +634,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
                   type="button"
                   onClick={handleAddToCart}
                   className="px-4 py-2.5 bg-amber-500 rounded-full flex items-center gap-2 text-white text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors"
-                  aria-label={t("product.addProductToCart", { name: product.name })}
+                  aria-label={t("product.addProductToCart", { name: productName })}
                 >
                   {t("common.add")}
                   <svg width="22" height="16" viewBox="0 0 22 16" fill="none" xmlns="http://www.w3.org/2000/svg">

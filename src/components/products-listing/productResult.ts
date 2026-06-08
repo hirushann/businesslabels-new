@@ -1,7 +1,7 @@
 "use client";
 
 import type { LinkProps } from "next/link";
-import type { ProductCardData } from "@/components/ProductCard";
+import type { ProductCardCategory, ProductCardData } from "@/components/ProductCard";
 
 function getRaw(result: unknown, field: string): unknown {
   const entry = (result as Record<string, { raw?: unknown }>)?.[field];
@@ -84,9 +84,10 @@ function valueAsBoolean(value: unknown): boolean {
   return false;
 }
 
-function normalizeResultType(value: unknown): "simple" | "variable" | null {
+function normalizeResultType(value: unknown): "simple" | "variable" | "group_product" | null {
   const scalar = valueAsString(value);
-  return scalar === "simple" || scalar === "variable" ? scalar : null;
+  if (scalar === "group") return "group_product";
+  return scalar === "simple" || scalar === "variable" || scalar === "group_product" ? scalar : null;
 }
 
 function titleForProduct(result: unknown, fallbackTitle: string): string {
@@ -131,23 +132,35 @@ function imageForProduct(result: unknown): string | null {
   return null;
 }
 
-function categoriesForProduct(result: unknown): Array<{ id?: number; name?: string | null; slug?: string | null }> {
+function categoriesForProduct(result: unknown): ProductCardCategory[] {
   const categories = getRaw(result, "categories");
   if (Array.isArray(categories)) {
-    const normalizedCategories: Array<{ id?: number; name?: string | null; slug?: string | null }> = [];
+    const normalizedCategories: ProductCardCategory[] = [];
 
-    categories.forEach((category) => {
+    const categoryTitlesEn = getRaw(result, "category_titles_en");
+    const categoryTitlesNl = getRaw(result, "category_titles_nl");
+
+    categories.forEach((category, index) => {
       if (typeof category === "string") {
         normalizedCategories.push({ name: category });
         return;
       }
 
       if (typeof category === "object" && category !== null) {
-        const record = category as { id?: unknown; term_id?: unknown; name?: unknown; slug?: unknown };
+        const record = category as Record<string, unknown>;
         const id = valueAsNumber(record.id) ?? valueAsNumber(record.term_id) ?? undefined;
-        const name = valueAsString(record.name);
-        const slug = valueAsString(record.slug);
-        normalizedCategories.push({ id, name, slug });
+        const name = Array.isArray(record.name) ? record.name.filter((item): item is string => typeof item === "string") : valueAsString(record.name);
+        const slug = Array.isArray(record.slug) ? record.slug.filter((item): item is string => typeof item === "string") : valueAsString(record.slug);
+        normalizedCategories.push({
+          id,
+          name,
+          slug,
+          name_en: valueAsString(record.name_en) ?? (Array.isArray(categoryTitlesEn) ? valueAsString(categoryTitlesEn[index]) : null),
+          name_nl: valueAsString(record.name_nl) ?? (Array.isArray(categoryTitlesNl) ? valueAsString(categoryTitlesNl[index]) : null),
+          slug_en: valueAsString(record.slug_en),
+          slug_nl: valueAsString(record.slug_nl),
+          translations: record.translations as ProductCardCategory["translations"],
+        });
       }
     });
 
@@ -160,7 +173,7 @@ function categoriesForProduct(result: unknown): Array<{ id?: number; name?: stri
 
   if (!Array.isArray(productCategories)) return [];
 
-  const normalizedCategories: Array<{ id?: number; name?: string | null; slug?: string | null }> = [];
+  const normalizedCategories: ProductCardCategory[] = [];
 
   productCategories.forEach((category) => {
     if (typeof category === "string") {
@@ -169,11 +182,20 @@ function categoriesForProduct(result: unknown): Array<{ id?: number; name?: stri
     }
 
     if (typeof category === "object" && category !== null) {
-      const record = category as { id?: unknown; term_id?: unknown; name?: unknown; slug?: unknown };
+      const record = category as Record<string, unknown>;
       const id = valueAsNumber(record.id) ?? valueAsNumber(record.term_id) ?? undefined;
-      const name = valueAsString(record.name);
-      const slug = valueAsString(record.slug);
-      normalizedCategories.push({ id, name, slug });
+      const name = Array.isArray(record.name) ? record.name.filter((item): item is string => typeof item === "string") : valueAsString(record.name);
+      const slug = Array.isArray(record.slug) ? record.slug.filter((item): item is string => typeof item === "string") : valueAsString(record.slug);
+      normalizedCategories.push({
+        id,
+        name,
+        slug,
+        name_en: valueAsString(record.name_en),
+        name_nl: valueAsString(record.name_nl),
+        slug_en: valueAsString(record.slug_en),
+        slug_nl: valueAsString(record.slug_nl),
+        translations: record.translations as ProductCardCategory["translations"],
+      });
     }
   });
 
@@ -217,25 +239,36 @@ function localizedString(result: unknown, field: string, locale?: string): strin
   if (typeof translations === "string") {
     try {
       translations = JSON.parse(translations);
-    } catch (e) {}
+    } catch {
+      translations = null;
+    }
   }
 
   if (Array.isArray(translations)) {
     for (let t of translations) {
        if (typeof t === "string") {
-         try { t = JSON.parse(t); } catch(e) {}
+         try {
+           t = JSON.parse(t);
+         } catch {
+           continue;
+         }
        }
        if (!t || typeof t !== "object") continue;
+       const record = t as Record<string, unknown>;
 
        // Structure 1: { "en": { "language": "en", "subtitle": "..." } }
-       const locObj = (t as Record<string, any>)[locale];
-       if (locObj && typeof locObj[field] === "string" && locObj[field].trim() !== "") {
-          return locObj[field];
+       const locObj = record[locale];
+       if (locObj && typeof locObj === "object") {
+         const localizedValue = (locObj as Record<string, unknown>)[field];
+         if (typeof localizedValue === "string" && localizedValue.trim() !== "") {
+            return localizedValue;
+         }
        }
 
        // Structure 2: { "language": "en", "subtitle": "..." }
-       if ((t as Record<string, any>).language === locale && typeof (t as Record<string, any>)[field] === "string" && (t as Record<string, any>)[field].trim() !== "") {
-          return (t as Record<string, any>)[field];
+       const directValue = record[field];
+       if (record.language === locale && typeof directValue === "string" && directValue.trim() !== "") {
+          return directValue;
        }
     }
   }
@@ -247,9 +280,13 @@ function localizedMaterialTitle(result: unknown, locale?: string): string | null
   const translations = getRaw(result, "material_translations");
   if (Array.isArray(translations)) {
     for (const t of translations) {
-       const locObj = (t as Record<string, any>)[locale];
-       if (locObj && typeof locObj["title"] === "string" && locObj["title"] !== "") {
-          return locObj["title"];
+       if (!t || typeof t !== "object") continue;
+       const locObj = (t as Record<string, unknown>)[locale];
+       if (locObj && typeof locObj === "object") {
+         const title = (locObj as Record<string, unknown>).title;
+         if (typeof title === "string" && title !== "") {
+            return title;
+         }
        }
     }
   }
@@ -288,6 +325,7 @@ export function mapProductListingResult(
     is_label: valueAsBoolean(getRaw(result, "is_label")) || valueAsBoolean(getRaw(result, "is_label_product")) || valueAsBoolean(getMetaValue(result, "is_label_product")) || null,
     is_label_product: valueAsBoolean(getRaw(result, "is_label_product")) || valueAsBoolean(getMetaValue(result, "is_label_product")) || null,
     is_group_product: valueAsBoolean(getRaw(result, "is_group_product")) || valueAsBoolean(getMetaValue(result, "is_group_product")) || null,
+    translations: getRaw(result, "translations") as ProductCardData["translations"],
   };
 
   const href =

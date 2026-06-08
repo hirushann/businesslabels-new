@@ -4,12 +4,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { SearchProvider, useSearch } from '@elastic/react-search-ui';
 import type { SearchDriverOptions } from '@elastic/search-ui';
 import type { LinkProps } from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { apiConnector, SORT_TO_SEARCH_UI, type OverlaySortValue } from './api';
 import { useNextRoutingOptions } from './useNextRouting';
 import { useDebouncedSearchParam } from './useDebouncedSearchParam';
 import EmptyState from '@/components/EmptyState';
-import ProductCard, { type ProductCardData } from '@/components/ProductCard';
+import ProductCard, { type ProductCardCategory, type ProductCardData } from '@/components/ProductCard';
 import SearchFilters from './SearchFilters';
 
 type SearchOverlayProps = {
@@ -113,9 +113,12 @@ function valueAsBoolean(value: unknown): boolean {
   return false;
 }
 
-function normalizeResultType(value: unknown): 'simple' | 'variable' | null {
+function normalizeResultType(value: unknown): 'simple' | 'variable' | 'group_product' | null {
   const scalar = valueAsString(value);
-  if (scalar === 'simple' || scalar === 'variable') {
+  if (scalar === 'group') {
+    return 'group_product';
+  }
+  if (scalar === 'simple' || scalar === 'variable' || scalar === 'group_product') {
     return scalar;
   }
 
@@ -168,25 +171,38 @@ function imageForProduct(result: unknown): string | null {
   return null;
 }
 
-function categoriesForProduct(result: unknown): Array<{ id?: number; name?: string | null }> {
+function categoriesForProduct(result: unknown): ProductCardCategory[] {
   const categories = getRaw(result, 'categories');
   if (Array.isArray(categories)) {
+    const categoryTitlesEn = getRaw(result, 'category_titles_en');
+    const categoryTitlesNl = getRaw(result, 'category_titles_nl');
+
     return categories
-      .map((category) => {
+      .map((category, index): ProductCardCategory | null => {
         if (typeof category === 'string') {
           return { name: category };
         }
 
         if (typeof category === 'object' && category !== null) {
-          const record = category as { id?: unknown; term_id?: unknown; name?: unknown };
+          const record = category as Record<string, unknown>;
           const id = valueAsNumber(record.id) ?? valueAsNumber(record.term_id) ?? undefined;
-          const name = valueAsString(record.name);
-          return { id, name };
+          const name = Array.isArray(record.name) ? record.name.filter((item): item is string => typeof item === 'string') : valueAsString(record.name);
+          const slug = Array.isArray(record.slug) ? record.slug.filter((item): item is string => typeof item === 'string') : valueAsString(record.slug);
+          return {
+            id,
+            name,
+            slug,
+            name_en: valueAsString(record.name_en) ?? (Array.isArray(categoryTitlesEn) ? valueAsString(categoryTitlesEn[index]) : null),
+            name_nl: valueAsString(record.name_nl) ?? (Array.isArray(categoryTitlesNl) ? valueAsString(categoryTitlesNl[index]) : null),
+            slug_en: valueAsString(record.slug_en),
+            slug_nl: valueAsString(record.slug_nl),
+            translations: record.translations as ProductCardCategory['translations'],
+          };
         }
 
         return null;
       })
-      .filter((category) => category !== null) as Array<{ id?: number; name?: string | null }>;
+      .filter((category): category is ProductCardCategory => category !== null);
   }
 
   const terms = getRaw(result, 'terms');
@@ -196,21 +212,31 @@ function categoriesForProduct(result: unknown): Array<{ id?: number; name?: stri
   if (!Array.isArray(productCategories)) return [];
 
   return productCategories
-    .map((category) => {
+      .map((category): ProductCardCategory | null => {
       if (typeof category === 'string') {
         return { name: category };
       }
 
       if (typeof category === 'object' && category !== null) {
-        const record = category as { id?: unknown; term_id?: unknown; name?: unknown };
+        const record = category as Record<string, unknown>;
         const id = valueAsNumber(record.id) ?? valueAsNumber(record.term_id) ?? undefined;
-        const name = valueAsString(record.name);
-        return { id, name };
+        const name = Array.isArray(record.name) ? record.name.filter((item): item is string => typeof item === 'string') : valueAsString(record.name);
+        const slug = Array.isArray(record.slug) ? record.slug.filter((item): item is string => typeof item === 'string') : valueAsString(record.slug);
+        return {
+          id,
+          name,
+          slug,
+          name_en: valueAsString(record.name_en),
+          name_nl: valueAsString(record.name_nl),
+          slug_en: valueAsString(record.slug_en),
+          slug_nl: valueAsString(record.slug_nl),
+          translations: record.translations as ProductCardCategory['translations'],
+        };
       }
 
       return null;
     })
-    .filter((category) => category !== null) as Array<{ id?: number; name?: string | null }>;
+    .filter((category): category is ProductCardCategory => category !== null);
 }
 
 function materialTitleForProduct(result: unknown): string | null {
@@ -255,16 +281,19 @@ type OverlayProductResult = {
   href?: LinkProps["href"];
 };
 
-function mapOverlayResult(result: unknown, resultIndex: number): OverlayProductResult {
+function mapOverlayResult(result: unknown, resultIndex: number, locale: string): OverlayProductResult {
   const normalizedType = normalizeResultType(getRaw(result, 'product_type')) ?? normalizeResultType(getRaw(result, 'type'));
-  const slug = valueAsString(getRaw(result, 'slug')) ?? valueAsString(getRaw(result, 'post_name'));
+  const productLocale = locale === 'nl' ? 'nl' : 'en';
+  const localizedSlug = valueAsString(getRaw(result, `slug_${productLocale}`));
+  const localizedTitle = valueAsString(getRaw(result, `title_${productLocale}`)) ?? valueAsString(getRaw(result, `name_${productLocale}`));
+  const slug = localizedSlug ?? valueAsString(getRaw(result, 'slug')) ?? valueAsString(getRaw(result, 'post_name'));
   const image = toDisplayImageUrl(imageForProduct(result));
   const sku = skuForProduct(result);
   const id = valueAsString(getRaw(result, 'id')) ?? valueAsString(getRaw(result, 'ID')) ?? `result-${resultIndex}`;
   const product: ProductCardData = {
     id,
     sku: sku || '-',
-    name: titleForProduct(result),
+    name: localizedTitle ?? titleForProduct(result),
     subtitle: valueAsString(getRaw(result, 'subtitle')),
     excerpt: valueAsString(getRaw(result, 'excerpt')),
     materialTitle: materialTitleForProduct(result),
@@ -280,6 +309,7 @@ function mapOverlayResult(result: unknown, resultIndex: number): OverlayProductR
     is_label: valueAsBoolean(getRaw(result, 'is_label')) || valueAsBoolean(getRaw(result, 'is_label_product')) || valueAsBoolean(getMetaValue(result, 'is_label_product')) || null,
     is_label_product: valueAsBoolean(getRaw(result, 'is_label_product')) || valueAsBoolean(getMetaValue(result, 'is_label_product')) || null,
     is_group_product: valueAsBoolean(getRaw(result, 'is_group_product')) || valueAsBoolean(getMetaValue(result, 'is_group_product')) || null,
+    translations: getRaw(result, 'translations') as ProductCardData['translations'],
   };
   const href =
     slug && normalizedType
@@ -296,6 +326,7 @@ function mapOverlayResult(result: unknown, resultIndex: number): OverlayProductR
 
 function OverlayContent({ onClose }: SearchOverlayProps) {
   const t = useTranslations();
+  const locale = useLocale();
   const inputRef = useRef<HTMLInputElement>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
@@ -354,8 +385,8 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
   const page = current || 1;
   const pageCount = totalPages || 1;
   const searchResults = useMemo(
-    () => (results ?? []).map((result, resultIndex) => mapOverlayResult(result, resultIndex)),
-    [results],
+    () => (results ?? []).map((result, resultIndex) => mapOverlayResult(result, resultIndex, locale)),
+    [locale, results],
   );
   const hasMoreResults = page < pageCount;
 
@@ -631,9 +662,15 @@ export default function SearchOverlay({ onClose }: SearchOverlayProps) {
           product_type: { raw: {} },
           type: { raw: {} },
           title: { raw: {} },
+          title_en: { raw: {} },
+          title_nl: { raw: {} },
           name: { raw: {} },
+          name_en: { raw: {} },
+          name_nl: { raw: {} },
           post_title: { raw: {} },
           slug: { raw: {} },
+          slug_en: { raw: {} },
+          slug_nl: { raw: {} },
           post_name: { raw: {} },
           article_number: { raw: {} },
           sku: { raw: {} },
@@ -652,7 +689,10 @@ export default function SearchOverlay({ onClose }: SearchOverlayProps) {
           thumbnail: { raw: {} },
           images: { raw: {} },
           categories: { raw: {} },
+          category_titles_en: { raw: {} },
+          category_titles_nl: { raw: {} },
           terms: { raw: {} },
+          translations: { raw: {} },
           meta: { raw: {} },
           material: { raw: {} },
           material_title: { raw: {} },

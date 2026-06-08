@@ -6,7 +6,7 @@ import ProductCompatibilityDialog from "@/components/ProductCompatibilityDialog"
 import ProductImage from "@/components/ProductImage";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 import { localePath } from "@/lib/i18n/utils";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getTranslations } from 'next-intl/server';
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 import {
@@ -22,6 +22,7 @@ import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import type { ReactNode } from "react";
 import LocaleLink from "@/components/LocaleLink";
 import { localizeProductSpecValue } from "@/lib/products/specValues";
+import { mapLaravelProductToCardData, type LaravelProduct } from "@/lib/mappings/product";
 export async function generateMetadata({
   params,
   searchParams,
@@ -48,10 +49,20 @@ export async function generateMetadata({
   const title = product.meta_title || `${product.title || product.name} — Businesslabels`;
   const description = product.meta_description || product.description || product.excerpt || "Premium product from Businesslabels";
   const mainImage = product.main_image || "";
+  const productType = productRouteType(product, selectedType);
+  const localeSlugs = getProductLocaleSlugs(product);
+  const canonicalSlug = localeSlugs[locale] ?? product.slug ?? slug;
 
   return {
     title,
     description,
+    alternates: {
+      canonical: productPathForSlug(canonicalSlug, productType, locale),
+      languages: {
+        en: productPathForSlug(localeSlugs.en ?? canonicalSlug, productType, "en"),
+        nl: productPathForSlug(localeSlugs.nl ?? canonicalSlug, productType, "nl"),
+      },
+    },
     openGraph: {
       title,
       description,
@@ -197,7 +208,7 @@ type TranslatedProductField =
   | "product_information";
 
 type TranslationLookup = {
-  (key: string, values?: Record<string, unknown>): string;
+  (key: string, values?: Record<string, string | number | Date>): string;
   has: (key: string) => boolean;
 };
 
@@ -525,6 +536,14 @@ function productPathForSlug(slug: string, selectedType: "simple" | "variable" | 
   return localePath(`/product/${encodeURIComponent(slug)}${qs ? `?${qs}` : ""}`, locale);
 }
 
+function productRouteType(
+  product: ProductDetail,
+  selectedType: "simple" | "variable" | "group_product" | null,
+): "simple" | "variable" | "group_product" | null {
+  return normalizeType(product.type, product.is_group_product) ??
+    (product.is_group_product || (product.component_products?.length ?? 0) > 0 ? "group_product" : selectedType);
+}
+
 async function fetchProductByType(baseUrl: string, type: "simple" | "variable", slug: string, locale: "en" | "nl"): Promise<ProductDetail | null> {
   try {
     const response = await fetch(withLocaleParam(`${baseUrl}/api/products/${type}/slug/${encodeURIComponent(slug)}`, locale), {
@@ -648,20 +667,10 @@ function toTitleCaseFromSlug(raw: string): string {
     .join(" ");
 }
 
-function mapUpsellToProductCard(upsell: UpsellProduct): ProductCardData {
+function mapUpsellToProductCard(upsell: UpsellProduct, locale: "en" | "nl"): ProductCardData {
   return {
-    id: upsell.id,
-    name: upsell.title,
-    sku: upsell.sku,
-    subtitle: null,
-    excerpt: null,
-    materialTitle: null,
-    price: upsell.price,
-    originalPrice: upsell.original_price,
+    ...mapLaravelProductToCardData(upsell as unknown as LaravelProduct, locale),
     inStock: true,
-    mainImage: upsell.main_image,
-    categories: [],
-    slug: upsell.slug,
     type: "simple",
   };
 }
@@ -682,28 +691,8 @@ function productHref(product: ProductCardData): { pathname: string; query?: { ty
 }
 
 /** Map a full API product (ProductResource) to the ProductCard shape. */
-function mapApiProductToCard(p: Record<string, unknown>): ProductCardData {
-  const material = p.material as { title?: string | null } | null | undefined;
-  return {
-    id: Number(p.id),
-    name: String((p.title as string) || (p.name as string) || ""),
-    sku: (p.sku as string) ?? null,
-    subtitle: (p.subtitle as string) ?? null,
-    excerpt: (p.excerpt as string) ?? null,
-    materialTitle: material?.title ?? null,
-    price: typeof p.price === "number" ? p.price : Number(p.price) || 0,
-    originalPrice:
-      typeof p.original_price === "number" ? p.original_price : Number(p.original_price) || 0,
-    inStock: p.in_stock === true || Number(p.stock) > 0,
-    mainImage: (p.main_image as string) ?? null,
-    categories: (p.categories as ProductCardData["categories"]) ?? [],
-    slug: (p.slug as string) ?? "",
-    type: p.type === "variable" ? "variable" : "simple",
-    properties: p.properties as Record<string, unknown> | undefined,
-    packing_group: p.packing_group ? Number(p.packing_group) : null,
-    allow_singulars: p.allow_singulars as boolean | null | undefined,
-    discounts: p.discounts as ProductCardData["discounts"],
-  };
+function mapApiProductToCard(p: Record<string, unknown>, locale: "en" | "nl"): ProductCardData {
+  return mapLaravelProductToCardData(p as LaravelProduct, locale);
 }
 
 /** Fetch products compatible with a product finder printer (Post), by sub-category. */
@@ -711,9 +700,10 @@ async function fetchPrinterProducts(
   baseUrl: string,
   printerId: number,
   productType: "ink" | "labels",
+  locale: "en" | "nl",
 ): Promise<ProductCardData[]> {
   try {
-    const response = await fetch(`${baseUrl}/api/products/printer-products`, {
+    const response = await fetch(withLocaleParam(`${baseUrl}/api/products/printer-products`, locale), {
       method: "POST",
       cache: "no-store",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -725,7 +715,7 @@ async function fetchPrinterProducts(
     }
 
     const json = (await response.json()) as { products?: { data?: Array<Record<string, unknown>> } };
-    return (json.products?.data ?? []).map(mapApiProductToCard);
+    return (json.products?.data ?? []).map((product) => mapApiProductToCard(product, locale));
   } catch (error) {
     console.error(`Failed to fetch printer products (${productType})`, error);
     return [];
@@ -801,6 +791,11 @@ export default async function SingleProductPage({
     notFound();
   }
 
+  const canonicalSlug = product.locale_slugs?.[locale] ?? product.slug;
+  if (canonicalSlug && decodeURIComponent(slug) !== canonicalSlug) {
+    redirect(productPathForSlug(canonicalSlug, productRouteType(product, selectedType), locale));
+  }
+
   console.log("[SingleProductPage] Full product details:", JSON.stringify(product, null, 2));
 
   const productName = product.title || product.name || "";
@@ -811,7 +806,7 @@ export default async function SingleProductPage({
   const galleryImages = (product.gallery_images ?? [])
     .map((item) => toDisplayImageUrl(item.url))
     .filter((url): url is string => Boolean(url));
-  const specs = specsFromProduct(product, locale, t as any);
+  const specs = specsFromProduct(product, locale, t);
 
   console.log('Specs:', specs);
   const compatiblePrinterIds = normalizeIdList(product.printer_ids ?? product.meta?.printer_ids);
@@ -820,8 +815,8 @@ export default async function SingleProductPage({
     .filter((slug): slug is string => Boolean(slug));
 
   console.log("Specs derived from product:", specs);
-  const relatedProducts = (product.up_sells ?? []).map(mapUpsellToProductCard);
-  const suitablePrinters = (product.suitable_printers ?? []).map(mapUpsellToProductCard);
+  const relatedProducts = (product.up_sells ?? []).map((upsell) => mapUpsellToProductCard(upsell, locale));
+  const suitablePrinters = (product.suitable_printers ?? []).map((upsell) => mapUpsellToProductCard(upsell, locale));
   const showCompatibilityCta = product.is_label_product == true || product.meta?.is_label_product === true;
 
   // A product linked to a product finder entry (via Printer URL) is a printer:
@@ -831,8 +826,8 @@ export default async function SingleProductPage({
   const [printerInkProducts, printerHardwareProducts] =
     printerFinderId != null && baseUrl
       ? await Promise.all([
-          fetchPrinterProducts(baseUrl, printerFinderId, "ink"),
-          fetchPrinterProducts(baseUrl, printerFinderId, "labels"),
+          fetchPrinterProducts(baseUrl, printerFinderId, "ink", locale),
+          fetchPrinterProducts(baseUrl, printerFinderId, "labels", locale),
         ])
       : [[] as ProductCardData[], [] as ProductCardData[]];
 
