@@ -10,6 +10,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from '@/lib/i18n/getMessages';
 
 import { cookies } from "next/headers";
+import { ScrollToTop } from "@/components/ScrollToTop";
 
 export const metadata = {
   title: "Businesslabels — Labels for Epson ColorWorks Printers",
@@ -26,6 +27,7 @@ export default async function RootLayout({ children }) {
   return (
     <html lang={locale} className="font-sans" suppressHydrationWarning>
       <body className="bg-white min-h-screen flex flex-col" suppressHydrationWarning>
+        <ScrollToTop />
         <NextIntlClientProvider locale={locale} messages={messages}>
           <CartProvider>
             <WishlistProvider>

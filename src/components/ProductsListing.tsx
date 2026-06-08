@@ -275,7 +275,7 @@ function CatalogProductsListing({
   const hasFocusedSearchRef = useRef(false);
 
   useEffect(() => {
-    if (!hasFocusedSearchRef.current || searchParams.get("focus") === "true") {
+    if (searchParams.get("focus") === "true" && !hasFocusedSearchRef.current) {
       hasFocusedSearchRef.current = true;
       searchInputRef.current?.focus();
     }
