@@ -36,6 +36,10 @@ export const MESSAGES_V4 = {
       add: 'Add',
       loading: 'Loading...',
       viewMoreProducts: 'View more Products',
+      pagination: {
+        previous: 'Previous',
+        next: 'Next',
+      },
     },
     validation: {
       required: "{field} is required",
