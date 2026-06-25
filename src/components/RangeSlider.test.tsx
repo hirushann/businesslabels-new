@@ -148,14 +148,54 @@ describe("RangeSlider Component", () => {
       });
     }
 
-    fireEvent.mouseDown(minThumb);
-    fireEvent(window, new MouseEvent("mousemove", { clientX: 200 }));
+    fireEvent.pointerDown(minThumb, { pointerId: 1, pointerType: "mouse" });
+    fireEvent(window, new MouseEvent("pointermove", { clientX: 200 }));
 
     const fromInput = screen.getAllByRole("spinbutton")[0] as HTMLInputElement;
     expect(fromInput.value).toBe("200");
 
-    fireEvent(window, new MouseEvent("mouseup"));
+    fireEvent(window, new MouseEvent("pointerup"));
     expect(onAfterChangeMock).toHaveBeenCalledWith([200, 800]);
+  });
+
+  it("supports dragging thumbs with touch pointer events", () => {
+    const onChangeMock = vi.fn();
+    const onAfterChangeMock = vi.fn();
+
+    const { container } = render(
+      <RangeSlider
+        min={0}
+        max={800}
+        value={[25, 800]}
+        onChange={onChangeMock}
+        onAfterChange={onAfterChangeMock}
+      />
+    );
+
+    const minThumb = container.querySelectorAll("button[type='button']")[0];
+    const track = container.querySelector(".bg-slate-200");
+    if (track) {
+      track.getBoundingClientRect = () => ({
+        left: 100,
+        right: 500,
+        top: 0,
+        bottom: 0,
+        width: 400,
+        height: 4,
+        x: 100,
+        y: 0,
+        toJSON: () => {},
+      });
+    }
+
+    fireEvent.pointerDown(minThumb, { pointerId: 7, pointerType: "touch" });
+    fireEvent(window, new MouseEvent("pointermove", { clientX: 250 }));
+
+    const fromInput = screen.getAllByRole("spinbutton")[0] as HTMLInputElement;
+    expect(fromInput.value).toBe("300");
+
+    fireEvent(window, new MouseEvent("pointerup"));
+    expect(onAfterChangeMock).toHaveBeenCalledWith([300, 800]);
   });
 
   it("supports visual capping and absoluteMax boundaries", () => {
@@ -246,10 +286,10 @@ describe("RangeSlider Component", () => {
       });
     }
 
-    fireEvent.mouseDown(maxThumb);
+    fireEvent.pointerDown(maxThumb, { pointerId: 1, pointerType: "mouse" });
     // Drag to 50% position (clientX = 300)
-    fireEvent(window, new MouseEvent("mousemove", { clientX: 300 }));
+    fireEvent(window, new MouseEvent("pointermove", { clientX: 300 }));
     expect(toInput.value).toBe("400"); // 50% of visual max (800) is 400
-    fireEvent(window, new MouseEvent("mouseup"));
+    fireEvent(window, new MouseEvent("pointerup"));
   });
 });

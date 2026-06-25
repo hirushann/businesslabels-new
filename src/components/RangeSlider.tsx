@@ -56,7 +56,7 @@ export default function RangeSlider({
     return Math.round(rawValue / step) * step;
   }
 
-  function handleMouseMove(e: MouseEvent) {
+  function handlePointerMove(e: PointerEvent) {
     if (!isDragging.current) return;
     const newValue = calculateValue(e.clientX);
     if (newValue === null) return;
@@ -76,20 +76,23 @@ export default function RangeSlider({
     });
   }
 
-  function handleMouseUp() {
+  function stopDragging() {
     if (isDragging.current && onAfterChange) {
       onAfterChange(latestValue.current);
     }
     isDragging.current = null;
-    window.removeEventListener("mousemove", handleMouseMove);
-    window.removeEventListener("mouseup", handleMouseUp);
+    window.removeEventListener("pointermove", handlePointerMove);
+    window.removeEventListener("pointerup", stopDragging);
+    window.removeEventListener("pointercancel", stopDragging);
   }
 
-  function handleMouseDown(type: "min" | "max", e: React.MouseEvent) {
+  function handlePointerDown(type: "min" | "max", e: React.PointerEvent<HTMLButtonElement>) {
     e.preventDefault();
+    e.currentTarget.setPointerCapture?.(e.pointerId);
     isDragging.current = type;
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", stopDragging);
+    window.addEventListener("pointercancel", stopDragging);
   }
 
   const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -168,15 +171,15 @@ export default function RangeSlider({
         {/* Thumbs */}
         <button
           type="button"
-          onMouseDown={(e) => handleMouseDown("min", e)}
+          onPointerDown={(e) => handlePointerDown("min", e)}
           className="absolute w-5 h-5 bg-white border-2 border-slate-900 rounded-full -ml-2.5 z-10 hover:scale-110 transition-transform cursor-pointer focus:outline-none"
-          style={{ left: `${minPos}%` }}
+          style={{ left: `${minPos}%`, touchAction: "none" }}
         />
         <button
           type="button"
-          onMouseDown={(e) => handleMouseDown("max", e)}
+          onPointerDown={(e) => handlePointerDown("max", e)}
           className="absolute w-5 h-5 bg-white border-2 border-slate-900 rounded-full -ml-2.5 z-10 hover:scale-110 transition-transform cursor-pointer focus:outline-none"
-          style={{ left: `${maxPos}%` }}
+          style={{ left: `${maxPos}%`, touchAction: "none" }}
         />
       </div>
 
@@ -223,4 +226,3 @@ export default function RangeSlider({
     </div>
   );
 }
-
