@@ -1,17 +1,11 @@
 'use client';
 
-<<<<<<< HEAD
 import { useState, useEffect, ReactNode } from 'react';
-import { useTranslations } from 'next-intl';
-import Link from 'next/link';
 import Image from 'next/image';
 import { Sparkles, FileText, ShieldCheck, Shield, Eye, Star, ChevronRight } from 'lucide-react';
-=======
-import { useState, ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { toast } from 'sonner';
->>>>>>> 9290e54e569bc9e1659071234447699108fd2a9a
 import PrinterModelSelect from '@/components/PrinterModelSelect';
 import MaterialModelSelect from '@/components/MaterialModelSelect';
 import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogHeader, DialogDescription, DialogClose } from '@/components/ui/dialog';
