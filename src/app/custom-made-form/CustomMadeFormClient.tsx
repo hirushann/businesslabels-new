@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, ReactNode } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import PrinterModelSelect from '@/components/PrinterModelSelect';
 import MaterialModelSelect from '@/components/MaterialModelSelect';
 
@@ -69,6 +70,7 @@ const STEPS: string[] = ['Shape', 'Size', 'Printer', 'Material', 'Contact'];
 
 export default function CustomMadeFormClient() {
   const t = useTranslations('customForm');
+  const locale = useLocale() === 'nl' ? 'nl' : 'en';
 
   const SHAPES = getShapes(t);
   const MATERIALS = getMaterials(t);
@@ -89,6 +91,21 @@ export default function CustomMadeFormClient() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+
+  function resetForm() {
+    setSelectedShape(null);
+    setDiameter('');
+    setPrinterQuery('');
+    setUnknownPrinter(false);
+    setMaterialCode('');
+    setUnsureMaterial(false);
+    setSelectedMaterial(null);
+    setCompany('');
+    setName('');
+    setEmail('');
+    setPhone('');
+    setComments('');
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -120,11 +137,14 @@ export default function CustomMadeFormClient() {
           email,
           phone,
           comments,
+          locale,
         }),
       });
 
       if (response.ok) {
+        resetForm();
         setSubmitStatus('success');
+        toast.success(t('successMessage'));
       } else {
         const data = await response.json().catch(() => ({}));
         setSubmitStatus('error');
@@ -441,6 +461,7 @@ export default function CustomMadeFormClient() {
                       value={email}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                       placeholder={t('yourEmail')}
+                      required
                       className="h-11 px-5 py-3 rounded-[38px] outline outline-1 outline-offset-[-1px] outline-zinc-200 text-neutral-700 text-base font-sans w-full bg-white focus:outline-amber-500 focus:outline-2 transition-all"
                     />
                   </div>

@@ -3,6 +3,7 @@
 import type { FormEvent } from 'react';
 import { useEffect, useState, useRef } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
+import { toast } from 'sonner';
 import { ReCAPTCHA, ReCAPTCHARef } from './ui/ReCAPTCHA';
 
 interface HelpDrawerProps {
@@ -82,7 +83,6 @@ const WORKING_HOURS = '08:00 - 17:30';
 const UNAVAILABLE_LABEL = 'Unavailable';
 const BUSINESS_START_TIME = '08:00';
 const BUSINESS_END_TIME = '17:30';
-
 function toLocalDateKey(date: Date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -176,6 +176,7 @@ function CollapseIcon({ open }: { open: boolean }) {
 export default function HelpDrawer({ onClose }: HelpDrawerProps) {
   const t = useTranslations();
   const locale = useLocale();
+  const formLocale = locale === 'nl' ? 'nl' : 'en';
   const [callbackOpen, setCallbackOpen] = useState(true);
   const [moreWaysOpen, setMoreWaysOpen] = useState(true);
   const [scheduleOpen, setScheduleOpen] = useState(true);
@@ -193,6 +194,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
   const bookingRecaptchaRef = useRef<ReCAPTCHARef>(null);
   const contactRecaptchaRef = useRef<ReCAPTCHARef>(null);
   const recaptchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '';
+  const shouldBypassRecaptcha = process.env.NODE_ENV === 'development' && !recaptchaSiteKey;
 
   const selectedCountry = europeanCountries.find((country) => country.code === selectedCountryCode) ?? europeanCountries[0];
   const schedule = getCurrentWeekSchedule(availabilityByDate, locale);
@@ -309,11 +311,13 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
     setBookingStatus('submitting');
     setBookingMessage('');
 
-    let recaptchaToken = null;
-    try {
-      recaptchaToken = await bookingRecaptchaRef.current?.execute('booking') || null;
-    } catch (e) {
-      console.error(e);
+    let recaptchaToken = shouldBypassRecaptcha ? 'development-recaptcha-bypass' : null;
+    if (!recaptchaToken) {
+      try {
+        recaptchaToken = await bookingRecaptchaRef.current?.execute('booking') || null;
+      } catch (e) {
+        console.error(e);
+      }
     }
 
     if (!recaptchaToken) {
@@ -332,6 +336,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
         body: JSON.stringify({
           phone_number: normalizedPhoneNumber,
           full_phone_number: normalizedPhoneNumber,
+          locale: formLocale,
           recaptcha_token: recaptchaToken,
         }),
       });
@@ -353,6 +358,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
           ? data.message
           : t('help.successCallback')
       );
+      toast.success(typeof data.message === 'string' ? data.message : t('help.successCallback'));
       setPhoneNumber('');
     } catch (error) {
       setBookingStatus('error');
@@ -375,11 +381,13 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
     setContactStatus('submitting');
     setContactStatusMessage('');
 
-    let recaptchaToken = null;
-    try {
-      recaptchaToken = await contactRecaptchaRef.current?.execute('contact') || null;
-    } catch (e) {
-      console.error(e);
+    let recaptchaToken = shouldBypassRecaptcha ? 'development-recaptcha-bypass' : null;
+    if (!recaptchaToken) {
+      try {
+        recaptchaToken = await contactRecaptchaRef.current?.execute('contact') || null;
+      } catch (e) {
+        console.error(e);
+      }
     }
 
     if (!recaptchaToken) {
@@ -398,6 +406,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
         body: JSON.stringify({
           email: normalizedEmail,
           message: normalizedMessage,
+          locale: formLocale,
           recaptcha_token: recaptchaToken,
         }),
       });
@@ -419,6 +428,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
           ? data.message
           : t('help.successMessage')
       );
+      toast.success(typeof data.message === 'string' ? data.message : t('help.successMessage'));
       setContactEmail('');
       setContactMessage('');
     } catch (error) {
@@ -562,7 +572,6 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                       className="h-11 px-5 py-2 rounded-xl border border-zinc-200 outline-none text-neutral-700 text-base font-normal font-['Segoe_UI'] placeholder-neutral-400 focus:border-amber-400 transition-colors w-full"
                     />
                   </label>
-
                   {recaptchaSiteKey && (
                     <ReCAPTCHA
                       ref={bookingRecaptchaRef}
@@ -693,6 +702,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                   }}
                   placeholder={t('help.emailAddress')}
                   autoComplete="email"
+                  required
                   className="h-11 px-5 py-2 rounded-xl border border-zinc-200 outline-none text-neutral-700 text-base font-normal font-['Segoe_UI'] placeholder-neutral-400 focus:border-amber-400 transition-colors w-full"
                 />
                 <textarea

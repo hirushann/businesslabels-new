@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, ReactNode } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -22,6 +23,7 @@ interface InputProps {
   placeholder: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  required?: boolean;
 }
 
 interface Step {
@@ -94,7 +96,7 @@ function Field({ label, id, optional, children }: FieldProps) {
   );
 }
 
-function Input({ id, type = 'text', placeholder, value, onChange }: InputProps) {
+function Input({ id, type = 'text', placeholder, value, onChange, required = false }: InputProps) {
   return (
     <input
       id={id}
@@ -102,6 +104,7 @@ function Input({ id, type = 'text', placeholder, value, onChange }: InputProps) 
       value={value}
       onChange={onChange}
       placeholder={placeholder}
+      required={required}
       className="h-12 px-5 py-3 rounded-[38px] outline outline-1 outline-offset-[-1px] outline-zinc-200 text-neutral-700 text-base font-sans w-full bg-white focus:outline-blue-400 focus:outline-2 transition-all"
     />
   );
@@ -115,6 +118,7 @@ const COUNTRIES: string[] = ['Netherlands', 'Belgium', 'Luxembourg', 'Germany'];
 
 function CollectionBoxForm() {
   const t = useTranslations('recycle');
+  const locale = useLocale() === 'nl' ? 'nl' : 'en';
   const [company, setCompany] = useState<string>('');
   const [phone, setPhone] = useState<string>('');
   const [email, setEmail] = useState<string>('');
@@ -138,12 +142,13 @@ function CollectionBoxForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'box',
-          company, phone, email, country, street, postal, city, extra
+          company, phone, email, country, street, postal, city, extra, locale
         }),
       });
 
       if (response.ok) {
         setSubmitState('success');
+        toast.success(t('alertBoxSuccess'));
         setCompany(''); setPhone(''); setEmail(''); setCountry('');
         setStreet(''); setPostal(''); setCity(''); setExtra('');
         setTimeout(() => setSubmitState('idle'), 3000);
@@ -187,7 +192,7 @@ function CollectionBoxForm() {
               <Input id="box-phone" type="tel" placeholder={t('formPhonePlaceholder')} value={phone} onChange={(e) => setPhone(e.target.value)} />
             </Field>
             <Field label={t('formEmail')} id="box-email">
-              <Input id="box-email" type="email" placeholder={t('formEmailPlaceholder')} value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input id="box-email" type="email" placeholder={t('formEmailPlaceholder')} value={email} onChange={(e) => setEmail(e.target.value)} required />
             </Field>
           </div>
 
@@ -271,6 +276,7 @@ function CollectionBoxForm() {
 
 function PickupForm() {
   const t = useTranslations('recycle');
+  const locale = useLocale() === 'nl' ? 'nl' : 'en';
   const [company, setCompany] = useState<string>('');
   const [phone, setPhone] = useState<string>('');
   const [email, setEmail] = useState<string>('');
@@ -294,12 +300,13 @@ function PickupForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'pickup',
-          company, phone, email, country, street, postal, city, newBox
+          company, phone, email, country, street, postal, city, newBox, locale
         }),
       });
 
       if (response.ok) {
         setSubmitState('success');
+        toast.success(t('alertPickupSuccess'));
         setCompany(''); setPhone(''); setEmail(''); setCountry('');
         setStreet(''); setPostal(''); setCity(''); setNewBox(false);
         setTimeout(() => setSubmitState('idle'), 3000);
@@ -343,7 +350,7 @@ function PickupForm() {
               <Input id="pickup-phone" type="tel" placeholder={t('formPhonePlaceholder')} value={phone} onChange={(e) => setPhone(e.target.value)} />
             </Field>
             <Field label={t('formEmail')} id="pickup-email">
-              <Input id="pickup-email" type="email" placeholder={t('formEmailPlaceholder')} value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input id="pickup-email" type="email" placeholder={t('formEmailPlaceholder')} value={email} onChange={(e) => setEmail(e.target.value)} required />
             </Field>
           </div>
 

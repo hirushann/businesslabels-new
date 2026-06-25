@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +32,7 @@ export function RequestPrinterModal({
   onOpenChange,
 }: RequestPrinterModalProps) {
   const t = useTranslations();
+  const locale = useLocale() === "nl" ? "nl" : "en";
   const [form, setForm] = useState<FormState>({
     brand: "",
     model: "",
@@ -56,11 +58,12 @@ export function RequestPrinterModal({
       const response = await fetch('/api/request-printer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, locale }),
       });
 
       if (response.ok) {
         setSubmitState("success");
+        toast.success(t("requestPrinter.success"));
 
         // Reset & close after short delay
         setTimeout(() => {

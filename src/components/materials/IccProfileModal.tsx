@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { toast } from "sonner";
 
 type IccProfileModalProps = {
   materialTitle?: string;
@@ -29,9 +30,11 @@ const PRINTER_MODELS = [
 
 export default function IccProfileModal({ materialTitle, isNl = false }: IccProfileModalProps) {
   const t = useTranslations();
+  const currentLocale = useLocale() === "nl" ? "nl" : "en";
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState("");
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   const [form, setForm] = useState({
@@ -77,6 +80,7 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
   const handleClose = () => {
     setIsOpen(false);
     setSubmitted(false);
+    setSubmittedEmail("");
     setErrors({});
     setForm({ printerModel: "", email: "", companyName: "", phone: "" });
   };
@@ -110,11 +114,16 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
           companyName: form.companyName,
           phone: form.phone,
           materialTitle,
+          locale: currentLocale,
         }),
       });
 
       if (res.ok) {
+        const email = form.email;
+        setSubmittedEmail(email);
         setSubmitted(true);
+        toast.success(isNl ? "Aanvraag verstuurd!" : "Request sent!");
+        setForm({ printerModel: "", email: "", companyName: "", phone: "" });
       } else {
         const data = (await res.json()) as { message?: string; errors?: Record<string, string[]> };
         let errorText = data.message ?? (isNl ? 'Er is iets misgegaan. Probeer het opnieuw.' : 'Something went wrong. Please try again.');
@@ -194,8 +203,8 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
                   </p>
                   <p className="mt-1 text-sm text-slate-500">
                     {isNl
-                      ? `We sturen het ICC-profiel naar ${form.email}.`
-                      : `We'll send the ICC profile to ${form.email}.`}
+                      ? `We sturen het ICC-profiel naar ${submittedEmail}.`
+                      : `We'll send the ICC profile to ${submittedEmail}.`}
                   </p>
                 </div>
                 <button
