@@ -8,7 +8,7 @@ import { useLocalePath } from '@/hooks/useLocalePath';
 const sections = [
   {
     key: 'section1',
-    href: '/printers',
+    href: '/product-category/labelprinters',
     image: '/find_the_right_printer.jpeg',
     imageLeft: false,
     bullets: 3,

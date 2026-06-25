@@ -880,7 +880,7 @@ export default async function SingleProductPage({
             {/* Title & Description */}
             <div className="flex flex-col gap-4">
               {productName ? (
-                <h1 className="text-neutral-800 text-3xl font-bold leading-10">
+                <h1 className="text-[#222222] text-[32px] font-bold leading-10">
                   {productName}
                 </h1>
               ) : null}

@@ -428,6 +428,7 @@ export async function searchPrinters(params: PrinterSearchParams): Promise<Print
         "excerpt",
         "image",
         "main_image",
+        "sku",
         "properties",
         "price",
         "original_price",
@@ -518,7 +519,7 @@ export async function searchPrinters(params: PrinterSearchParams): Promise<Print
 
       return {
         id: String(source.id),
-        sku: "",
+        sku: source.sku ? String(source.sku) : "",
         name,
         subtitle,
         excerpt,

@@ -265,7 +265,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                 </defs>
               </svg>
               <a href="tel:+31318590465" className="text-slate-100 text-sm font-semibold leading-5 hover:text-white transition-colors">
-                  +31 (0)318 590 465
+                  +31 318 590 465
               </a>
             </div>
             <div className="flex items-end gap-2">

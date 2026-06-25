@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import {
   ChevronRight,
   BookOpen,
@@ -35,7 +35,7 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-const KNOWLEDGE_ARTICLES = [
+const KNOWLEDGE_ARTICLES_NL = [
   {
     title: "Labels+Kleur = Geweldig!",
     description: "Waarom zelf kleurenlabels printen geweldig is! We gaan je hier alles over uitleggen. Welke opties zijn er, waar moet je op letten en de verschillen die je kan maken als je labels zelf in kleur print.",
@@ -206,8 +206,181 @@ const KNOWLEDGE_ARTICLES = [
   },
 ];
 
+const KNOWLEDGE_ARTICLES_EN = [
+  {
+    title: "Labels+Color = Awesome!",
+    description: "Why printing color labels yourself is awesome! We'll explain everything here. What options are there, what to look out for, and the difference you can make when you print labels in color yourself.",
+    href: "/waarom-zelf-kleurenlabels-printen-geweldig-is",
+    icon: Palette,
+  },
+  {
+    title: "Why Epson?",
+    description: "We have been a proud Epson ColorWorks partner since 2014, but for us, it goes further than that. Because we 'breathe' color at Businesslabels, you'll see a lot of Epson around our company.",
+    href: "/waarom-epson-colorworks",
+    icon: Printer,
+  },
+  {
+    title: "Cheap ink, yes or no?",
+    description: "Cheap ink sounds very tempting, because printing with an inkjet printer is mostly expensive due to the ink. But is that really true? What is correct and what is not. And why is it wise or unwise?",
+    href: "/goedkope-inkt-blijkt-kostbaar",
+    icon: Droplet,
+  },
+  {
+    title: "ICC profiles for color",
+    description: "Getting the right color from your printer is quite a challenge. But with Epson's support for ICC profiles, this becomes much easier. What an ICC profile is, how you use it and more.",
+    href: "/epson-colorworks-icm-kleurprofielen/",
+    icon: Palette,
+  },
+  {
+    title: "Epson CoverPlus",
+    description: "All Epson ColorWorks label printers come with a 1-year warranty as standard. But what if you are looking for more certainty? In those cases, Epson offers the CoverPlus packages. Read how it works and what it covers here.",
+    href: "/epson-coverplus",
+    icon: ShieldCheck,
+  },
+  {
+    title: "Printer problems?",
+    description: "Problems printing your labels? Businesslabels offers free support for its customers! During office hours, our support team is ready to help you remotely quickly and efficiently.",
+    href: "/support/",
+    icon: LifeBuoy,
+  },
+  {
+    title: "Make visitor badges",
+    description: "Making visitor badges is not difficult. These can easily be printed in color yourself, both in advance and live. With ExpoBadge products and Epson TM-C3500 color label printers.",
+    href: "/badge-maken/",
+    icon: IdCard,
+  },
+  {
+    title: "The new Epson CW-C4000",
+    description: "In January 2022, Epson announced the new Epson CW-C4000. What will this new printer offer us? What possibilities does this Epson CW-C4000 have? Businesslabels found out.",
+    href: "/epson-cw-c4000-printer-preview/",
+    icon: Printer,
+  },
+  {
+    title: "Epson label printers",
+    description: "Businesslabels offers the Epson label printers from the Colorworks series for printing labels in color. Why should you choose an Epson label printer and what should you look out for?",
+    href: "/epson-colorworks-labelprinters/",
+    icon: Printer,
+  },
+  {
+    title: "Epson news",
+    description: "Read the Epson press release regarding the announcement of the Epson CW-C4000 here. Epson launches a new Epson ColorWorks printer. Read the what and why here.",
+    href: "/news-cw-c4000-announced-epson/",
+    icon: Newspaper,
+  },
+  {
+    title: "Print your own badges",
+    description: "Is your event planned soon and do you want to print your own badges? You can with Diamondlabels' ExpoBadges! Thanks to the ExpoBadges, you can easily and quickly print labels.",
+    href: "/zelf-uw-badges-bedrukken-tijdens-uw-evenement/",
+    icon: IdCard,
+  },
+  {
+    title: "Printing shipping labels",
+    description: "Are you looking for shipping labels? Then Businesslabels is the right partner for you. Almost every parcel service and other logistics organizations use shipping labels for sending packages.",
+    href: "/verzend-etiketten/",
+    icon: Package,
+  },
+  {
+    title: "Beer labels",
+    description: "Brewing beer requires a lot of attention, patience, and passion. Brewing beer often starts as a hobby and then grows into something more. When the hobby turns into commercial beer brewing, the bottles hit the store shelves.",
+    href: "/bierfles-labels-printen/",
+    icon: Beer,
+  },
+  {
+    title: "Printing GHS labels",
+    description: "Does your company package chemical products? Or do you work a lot with chemical substances? Then you are often required to use approved GHS labels. Read how to print them here.",
+    href: "/ghs-labels/",
+    icon: FlaskConical,
+  },
+  {
+    title: "Shipping labels without problems",
+    description: "Things sometimes go wrong when printing shipping labels. Problems with print quality? Or want to know which shipping label you need? Businesslabels explains!",
+    href: "/probleemloos-verzendlabels-printen/",
+    icon: PackageCheck,
+  },
+  {
+    title: "Card printer for events",
+    description: "Are you organizing an event and need a card printer to provide all your guests with a badge? Businesslabels has the badge printer you are looking for! The ExpoBadge printers.",
+    href: "/een-kaartprinter-op-uw-eigen-evenement/",
+    icon: Ticket,
+  },
+  {
+    title: "Nicelabel, custom software",
+    description: "For automating label printing processes or 'just' easily printing labels, Businesslabels can help by offering complete custom solutions. NiceLabel is used for this.",
+    href: "/wijnetiketten-printen/",
+    icon: Settings,
+  },
+  {
+    title: "Why print in color yourself?",
+    description: "A color label printer is being used more every day. Where previously labels were mostly pre-printed by the printer, they are increasingly being printed in-house.",
+    href: "/kleurenlabelprinter/",
+    icon: Palette,
+  },
+  {
+    title: "Printing beer labels, how?",
+    description: "You can easily print beer labels yourself. Even if you work with returnable bottles, this is no effort thanks to the special DIA600B from Diamondlabels. But how do you go about it? Where do you start and what do you need? We take you through all the steps to achieve the most beautiful beer labels that you print completely in-house in high quality.",
+    href: "/labelsoftware-keuze-hulp/",
+    icon: Beer,
+  },
+  {
+    title: "The Diamondlabels banderole!",
+    description: "Diamondlabels introduces the new Diamondlabels banderole. With the latest techniques and through innovative use of production processes, Diamondlabels has managed to create a new type of banderole. This means you are no longer bound to a length, but are 100% flexible. Use the banderole as a wrap around your gift packaging and offer full personalization through any channel.",
+    href: "/de-innovatieve-diamondlabels-banderol/",
+    icon: Tag,
+  },
+  {
+    title: "Designing and printing labels",
+    description: "You have an Epson color label printer and maybe even your labels already, and then the question arises: what are you going to print on the labels? How do you create a fitting design, what software do you need or not, and what are the differences. Plenty of questions that we explain as clearly as possible here.",
+    href: "/labelsoftware-keuze-hulp/",
+    icon: PenTool,
+  },
+  {
+    title: "Need advice?",
+    description: "Businesslabels advises (potential) customers and users daily on the purchase of labels and label printers. Naturally, Businesslabels is also happy to help you find a suitable solution. Please feel free to contact us for advice. We are happy to help you find the right printer, software, and/or label materials for your application!",
+    href: "/contact-us/",
+    icon: Headset,
+  },
+  {
+    title: "Everything about the Epson CW-C6000 series",
+    description: "The Epson CW-C6000 series includes color label printers suitable for printing high-quality labels and tickets in color. Bringing together color management and many other tools from the various Epson divisions has made this series a true all-rounder.",
+    href: "/epson_c6000-series/",
+    icon: Printer,
+  },
+  {
+    title: "CLP labeling for chemical substances",
+    description: "CLP labels are intended for packaging containing chemical substances and are equipped with mandatory features. CLP labels must comply with a complete set of guidelines and obligations. Read how you can easily and affordably print these yourself here.",
+    href: "/clp-labeling/",
+    icon: FlaskConical,
+  },
+  {
+    title: "Label rewinders and unwinders",
+    description: "Various types of techniques and solutions exist for winding and unwinding label rolls. Every technique has its own pros and cons. Which technique and type fits best depends on a number of factors. Read more here about what suits which application.",
+    href: "/label-rewinders-en-unwinders/",
+    icon: RotateCw,
+  },
+  {
+    title: "Luxury wine labels",
+    description: "A personalized wine bottle is ideal as a (promotional) gift. But a wine label needs more appeal than just a nice print. How do you print wine labels that give a real luxury feel? Businesslabels is happy to tell you how and what you need for this.",
+    href: "/wijnetiketten-printen/",
+    icon: Wine,
+  },
+  {
+    title: "Label applicators",
+    description: "Label printed and rolled up again, but then pasting all day long. If pasting the labels becomes too labor-intensive, a label applicator can be the long-awaited solution. What is a label applicator and what does it do? Businesslabels is happy to explain.",
+    href: "/label-applicatoren/",
+    icon: Factory,
+  },
+  {
+    title: "FSC® certification",
+    description: "We are proud of our FSC® certification, FSC-C016391. Look for our FSC-certified products. By purchasing products with this label, you contribute to the protection of the world's forests.",
+    href: "/fsc-certificering/",
+    icon: Leaf,
+  },
+];
+
 export default async function KnowledgeBaseArchive() {
   const t = await getTranslations();
+  const locale = await getLocale();
+  const articles = locale === 'en' ? KNOWLEDGE_ARTICLES_EN : KNOWLEDGE_ARTICLES_NL;
 
   return (
     <div className="relative min-h-screen bg-[#fafbfe]">
@@ -232,7 +405,7 @@ export default async function KnowledgeBaseArchive() {
           </div>
 
           <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
-            {KNOWLEDGE_ARTICLES.map((article, index) => {
+            {articles.map((article, index) => {
               const IconComponent = article.icon || BookOpen;
               return (
                 <Link

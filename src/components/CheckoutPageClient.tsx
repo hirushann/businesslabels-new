@@ -631,7 +631,7 @@ function CheckoutShell({
                                     <h3 className="truncate text-neutral-800 text-base font-semibold leading-6">
                                       {item.name}
                                     </h3>
-                                    <p className="text-blue-400 text-sm leading-5">SKU: {item.sku}</p>
+                                    <p className="text-[#479EF5] text-sm leading-5">SKU: {item.sku}</p>
                                     {isWarrantyItem ? (
                                       <p className="text-xs leading-4 text-neutral-500">{t('cart.linkedWarranty')}</p>
                                     ) : null}

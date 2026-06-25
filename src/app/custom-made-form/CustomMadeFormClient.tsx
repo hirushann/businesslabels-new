@@ -1,11 +1,14 @@
 'use client';
 
-import { useState, ReactNode } from 'react';
+import { useState, useEffect, ReactNode } from 'react';
+import Image from 'next/image';
+import { Sparkles, FileText, ShieldCheck, Shield, Eye, Star, ChevronRight } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import PrinterModelSelect from '@/components/PrinterModelSelect';
 import MaterialModelSelect from '@/components/MaterialModelSelect';
+import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogHeader, DialogDescription, DialogClose } from '@/components/ui/dialog';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -20,6 +23,7 @@ interface Material {
   id: string;
   label: string;
   sub: string;
+  image?: string;
 }
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -86,11 +90,45 @@ export default function CustomMadeFormClient() {
   const [name, setName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [phone, setPhone] = useState<string>('');
+  const [quantity, setQuantity] = useState<string>('');
   const [comments, setComments] = useState<string>('');
+  const [hoveredMaterialId, setHoveredMaterialId] = useState<string | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('customMadeFormDraft');
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        if (data.selectedShape !== undefined) setSelectedShape(data.selectedShape);
+        if (data.diameter !== undefined) setDiameter(data.diameter);
+        if (data.printerQuery !== undefined) setPrinterQuery(data.printerQuery);
+        if (data.unknownPrinter !== undefined) setUnknownPrinter(data.unknownPrinter);
+        if (data.materialCode !== undefined) setMaterialCode(data.materialCode);
+        if (data.unsureMaterial !== undefined) setUnsureMaterial(data.unsureMaterial);
+        if (data.selectedMaterial !== undefined) setSelectedMaterial(data.selectedMaterial);
+        if (data.company !== undefined) setCompany(data.company);
+        if (data.name !== undefined) setName(data.name);
+        if (data.email !== undefined) setEmail(data.email);
+        if (data.phone !== undefined) setPhone(data.phone);
+        if (data.quantity !== undefined) setQuantity(data.quantity);
+        if (data.comments !== undefined) setComments(data.comments);
+      } catch(e) { console.error('Failed to parse saved form data', e); }
+    }
+    setIsLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    const data = {
+      selectedShape, diameter, printerQuery, unknownPrinter, materialCode, unsureMaterial, selectedMaterial, company, name, email, phone, quantity, comments
+    };
+    localStorage.setItem('customMadeFormDraft', JSON.stringify(data));
+  }, [isLoaded, selectedShape, diameter, printerQuery, unknownPrinter, materialCode, unsureMaterial, selectedMaterial, company, name, email, phone, quantity, comments]);
 
   function resetForm() {
     setSelectedShape(null);
@@ -136,6 +174,7 @@ export default function CustomMadeFormClient() {
           name,
           email,
           phone,
+          quantity,
           comments,
           locale,
         }),
@@ -174,6 +213,7 @@ export default function CustomMadeFormClient() {
   if (selectedShape && diameter) currentStep = 3;
   if (selectedShape && diameter && (printerQuery || unknownPrinter)) currentStep = 4;
   if (selectedShape && diameter && (printerQuery || unknownPrinter) && (selectedMaterial || unsureMaterial || materialCode)) currentStep = 5;
+  if (submitStatus === 'success') currentStep = 6;
 
   let dimW = '';
   let dimH = '';
@@ -246,6 +286,30 @@ export default function CustomMadeFormClient() {
 
           <div className="h-px bg-gray-100" />
 
+          {submitStatus === 'success' ? (
+            <div className="p-12 sm:p-20 flex flex-col items-center justify-center text-center gap-6 min-h-[500px]">
+              <div className="w-24 h-24 bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-2 outline outline-4 outline-green-50/50">
+                <svg className="w-12 h-12" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div className="flex flex-col gap-3 items-center">
+                <h2 className="text-3xl font-bold text-neutral-800 font-sans">{t('requestSent')}</h2>
+                <p className="text-neutral-600 text-lg max-w-[400px] font-sans leading-relaxed">{t('successMessage')}</p>
+              </div>
+              <div className="mt-8 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => setSubmitStatus('idle')}
+                  className="w-full sm:w-auto h-12 px-8 py-2.5 bg-amber-500 rounded-[100px] flex justify-center items-center gap-2 hover:bg-amber-600 active:scale-[0.98] transition-all shadow-sm hover:shadow"
+                >
+                  <span className="text-white text-base font-semibold font-sans leading-6">
+                    {t('submitAnotherRequest')}
+                  </span>
+                </button>
+              </div>
+            </div>
+          ) : (
           <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-6">
             {/* ── Step 1: Shape ── */}
             <section className="flex flex-col gap-4">
@@ -410,11 +474,107 @@ export default function CustomMadeFormClient() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-neutral-700 text-base font-sans">{t('forgotMaterialCode')}</span>
-                <Link href="/materials">
-                  <button type="button" className="text-amber-500 text-base font-semibold font-sans underline hover:text-amber-600 transition-colors">
-                    {t('seeMaterialOverview')}
-                  </button>
-                </Link>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <button type="button" className="text-amber-500 text-base font-semibold font-sans underline hover:text-amber-600 transition-colors">
+                      {t('seeMaterialOverview')}
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-5xl sm:max-w-5xl w-[95vw] p-0 overflow-hidden flex flex-col sm:flex-row bg-white border-0 shadow-2xl rounded-2xl">
+                    {/* Left side cover image */}
+                    <div className="hidden sm:block sm:w-2/5 relative bg-neutral-900 transition-all duration-500">
+                      {hoveredMaterialId ? (
+                        <Image
+                          key={hoveredMaterialId}
+                          src={MATERIALS.find(m => m.id === hoveredMaterialId)?.image || "/images/labelrolls.png"}
+                          alt="Material preview"
+                          fill
+                          className="object-cover opacity-80 animate-in fade-in zoom-in-105 duration-700 transition-all mix-blend-luminosity"
+                        />
+                      ) : (
+                        <Image
+                          src="/images/labelrolls.png"
+                          alt="Materials"
+                          fill
+                          className="object-cover opacity-60 mix-blend-luminosity transition-all duration-700"
+                        />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-neutral-900 via-neutral-900/60 to-transparent transition-opacity duration-500" />
+                      <div className="absolute bottom-0 left-0 p-8">
+                        <DialogTitle className="text-3xl font-extrabold text-white font-heading mb-2">
+                          {t('materialLbl') || 'Materials'}
+                        </DialogTitle>
+                        <DialogDescription className="text-white/80 text-base leading-relaxed">
+                          {t('materialHint') || 'Discover our high-quality materials and choose the perfect finish for your labels.'}
+                        </DialogDescription>
+                      </div>
+                    </div>
+
+                    {/* Right side content */}
+                    <div className="w-full sm:w-3/5 p-6 sm:p-8 flex flex-col max-h-[85vh]">
+                      {/* Mobile header since left side is hidden on mobile */}
+                      <div className="sm:hidden mb-6 text-left">
+                        <DialogTitle className="text-2xl font-bold text-neutral-800 font-heading">
+                          {t('materialLbl') || 'Materials'}
+                        </DialogTitle>
+                        <DialogDescription className="text-neutral-600 mt-1">
+                          {t('materialHint') || 'Here is an overview of the materials we offer.'}
+                        </DialogDescription>
+                      </div>
+
+                      <div className="flex-1 overflow-y-auto pr-2 -mr-2 space-y-3 pb-4">
+                        {MATERIALS.map((mat) => {
+                          const active = selectedMaterial === mat.id;
+                          
+                          let Icon = FileText;
+                          if (mat.id === 'gloss-paper') Icon = Sparkles;
+                          else if (mat.id === 'matte-paper') Icon = FileText;
+                          else if (mat.id === 'gloss-polyester') Icon = ShieldCheck;
+                          else if (mat.id === 'matte-polyester') Icon = Shield;
+                          else if (mat.id === 'transparent') Icon = Eye;
+                          else if (mat.id === 'silver-polyester') Icon = Star;
+
+                          return (
+                            <DialogClose asChild key={mat.id}>
+                              <button
+                                type="button"
+                                onMouseEnter={() => setHoveredMaterialId(mat.id)}
+                                onMouseLeave={() => setHoveredMaterialId(null)}
+                                onClick={() => {
+                                  setSelectedMaterial(mat.id);
+                                  setUnsureMaterial(false);
+                                  setMaterialCode('');
+                                }}
+                                className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-300 group flex items-start gap-4 ${
+                                  active 
+                                    ? 'border-amber-500 bg-amber-50/50 shadow-md shadow-amber-500/10' 
+                                    : 'border-transparent bg-neutral-50 hover:bg-white hover:border-amber-200 hover:shadow-lg hover:shadow-neutral-200/50'
+                                }`}
+                              >
+                                <div className={`p-3 rounded-xl flex-shrink-0 transition-colors ${
+                                  active ? 'bg-amber-500 text-white shadow-md' : 'bg-white text-neutral-400 group-hover:text-amber-500 group-hover:bg-amber-50 shadow-sm border border-neutral-100'
+                                }`}>
+                                  <Icon className="size-6" strokeWidth={1.5} />
+                                </div>
+                                <div className="flex-1 min-w-0 py-1">
+                                  <h3 className="font-bold text-neutral-800 text-lg mb-1 group-hover:text-amber-600 transition-colors">
+                                    {mat.label}
+                                  </h3>
+                                  <p className="text-sm text-neutral-500 leading-relaxed line-clamp-2">
+                                    {mat.sub}
+                                  </p>
+                                </div>
+                                <div className={`py-3 flex-shrink-0 transition-transform duration-300 ${active ? 'translate-x-0 opacity-100 text-amber-500' : '-translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 text-amber-400'}`}>
+                                  <ChevronRight className="size-5" strokeWidth={2.5} />
+                                </div>
+                              </button>
+                            </DialogClose>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
             </section>
 
@@ -478,6 +638,17 @@ export default function CustomMadeFormClient() {
                   </div>
                 </div>
                 <div className="flex flex-col gap-2">
+                  <label htmlFor="quantity" className="text-neutral-800 text-lg font-semibold font-sans leading-5">{t('quantityOrConsumption')}</label>
+                  <input
+                    id="quantity"
+                    type="text"
+                    value={quantity}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuantity(e.target.value)}
+                    placeholder={t('quantityOrConsumptionPlaceholder')}
+                    className="h-11 px-5 py-3 rounded-[38px] outline outline-1 outline-offset-[-1px] outline-zinc-200 text-neutral-700 text-base font-sans w-full bg-white focus:outline-amber-500 focus:outline-2 transition-all"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
                   <label htmlFor="comments" className="text-neutral-800 text-lg font-semibold font-sans leading-5">{t('comments')}</label>
                   <textarea
                     id="comments"
@@ -490,18 +661,13 @@ export default function CustomMadeFormClient() {
                 </div>
                 <button
                   type="submit"
-                  disabled={isSubmitting || submitStatus === 'success'}
+                  disabled={isSubmitting}
                   className="h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] flex justify-center items-center gap-2 hover:bg-amber-600 disabled:opacity-50 active:scale-[0.98] transition-all"
                 >
                   <span className="text-white text-base font-semibold font-sans leading-6">
-                    {isSubmitting ? t('submitting') : submitStatus === 'success' ? t('requestSent') : t('submitRequest')}
+                    {isSubmitting ? t('submitting') : t('submitRequest')}
                   </span>
                 </button>
-                {submitStatus === 'success' && (
-                  <div className="p-4 bg-green-50 text-green-700 text-sm rounded-xl outline outline-1 outline-offset-[-1px] outline-green-200">
-                    {t('successMessage')}
-                  </div>
-                )}
                 {submitStatus === 'error' && (
                   <div className="p-4 bg-red-50 text-red-700 text-sm rounded-xl outline outline-1 outline-offset-[-1px] outline-red-200">
                     {errorMessage}
@@ -510,6 +676,7 @@ export default function CustomMadeFormClient() {
               </div>
             </section>
           </form>
+          )}
         </div>
 
         {/* ── Sidebar ── */}

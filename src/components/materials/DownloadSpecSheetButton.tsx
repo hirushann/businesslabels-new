@@ -265,7 +265,7 @@ export default function DownloadSpecSheetButton({
         doc.setFontSize(7.5);
         doc.setTextColor(107, 114, 128); // Gray-500
         doc.text(
-          "T: +31 (0)318 590 465   |   E: verkoop@businesslabels.nl   |   W: businesslabels.nl",
+          "T: +31 318 590 465   |   E: verkoop@businesslabels.nl   |   W: businesslabels.nl",
           195,
           279,
           { align: "right" }

@@ -1053,10 +1053,16 @@ function orderStatusClass(status: string) {
 
 function PrintersView() {
   const t = useTranslations();
-  const printers = [
-    { name: 'Epson ColorWorks CW-C6000Ae', serial: 'S2BK-980122', status: 'Online', image: 'https://placehold.co/400x300' },
-    { name: 'Epson ColorWorks CW-C3500', serial: 'S2BK-442100', status: 'Online', image: 'https://placehold.co/400x300' },
-  ];
+  const [printers, setPrinters] = useState<PrinterCardData[]>([]);
+
+  useEffect(() => {
+    const loadFavorites = () => {
+      setPrinters(JSON.parse(localStorage.getItem('favorite_printers') || '[]'));
+    };
+    loadFavorites();
+    window.addEventListener('favorites-updated', loadFavorites);
+    return () => window.removeEventListener('favorites-updated', loadFavorites);
+  }, []);
 
   return (
     <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -1065,49 +1071,68 @@ function PrintersView() {
           <h2 className="text-3xl font-black text-neutral-800 tracking-tight">{t('account.myPrinters')}</h2>
           <p className="text-neutral-500 font-medium">{t('account.hardwareMonitoring')}</p>
         </div>
-        <button className="h-11 px-8 bg-sky-950 text-white rounded-full font-bold text-sm hover:bg-amber-500 transition-all flex items-center gap-2 whitespace-nowrap">
+        <Link href="/product-finder" className="h-11 px-8 bg-sky-950 text-white rounded-full font-bold text-sm hover:bg-amber-500 transition-all flex items-center gap-2 whitespace-nowrap">
            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
              <path d="M5 12h14"/><path d="M12 5v14"/>
            </svg>
-           {t('account.registerNew')}
-        </button>
+           {t('account.findMorePrinters')}
+        </Link>
       </div>
 
+      {printers.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 bg-slate-50 rounded-[40px] border-2 border-dashed border-slate-200">
+           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+             <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+           </svg>
+           <p className="mt-4 text-neutral-400 font-bold">{t('account.noSavedPrinters')}</p>
+        </div>
+      ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {printers.map((printer) => (
-          <div key={printer.serial} className="group p-8 rounded-[32px] border border-slate-200 bg-white hover:border-amber-400 hover:shadow-xl hover:shadow-amber-500/5 transition-all flex flex-col gap-6">
+          <div key={printer.id} className="group p-8 rounded-[32px] border border-slate-200 bg-white hover:border-amber-400 hover:shadow-xl hover:shadow-amber-500/5 transition-all flex flex-col gap-6">
             <div className="relative h-48 bg-slate-100 rounded-2xl overflow-hidden p-6 group-hover:scale-[1.02] transition-transform">
-               <Image src={printer.image} alt={printer.name} fill className="object-contain" />
-               <div className="absolute top-4 right-4 px-3 py-1 bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest rounded-full">
-                 {printer.status}
-               </div>
+               <Image src={printer.mainImage || "https://placehold.co/400x300"} alt={printer.name} fill className="object-contain" unoptimized />
             </div>
             <div className="flex flex-col gap-2">
               <h3 className="text-xl font-black text-neutral-800 leading-tight">{printer.name}</h3>
               <div className="flex items-center justify-between">
-                <span className="text-neutral-400 font-bold text-sm tracking-tight">{t('account.serialNumber', { serial: printer.serial })}</span>
-                <button className="text-amber-500 font-black text-xs uppercase tracking-wider hover:underline">{t('account.viewManual')}</button>
+                {printer.sku ? (
+                  <span className="text-neutral-400 font-bold text-sm tracking-tight">{t('account.skuNumber', { sku: printer.sku })}</span>
+                ) : (
+                  <span />
+                )}
+                <Link href={printer.slug ? `/materials/${printer.slug}` : "#"} className="text-amber-500 font-black text-xs uppercase tracking-wider hover:underline">{t('account.viewPrinter')}</Link>
               </div>
             </div>
             <div className="h-px bg-slate-100" />
             <div className="grid grid-cols-2 gap-4">
-               <button className="flex flex-col gap-1 text-left group/btn">
-                  <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest group-hover/btn:text-amber-500 transition-colors">{t('account.supplies')}</span>
-                  <span className="text-sm font-bold text-neutral-800">{t('account.buyInkPaper')}</span>
+               <button 
+                onClick={() => {
+                   const favorites = JSON.parse(localStorage.getItem('favorite_printers') || '[]');
+                   const updated = favorites.filter((p: PrinterCardData) => p.id !== printer.id);
+                   localStorage.setItem('favorite_printers', JSON.stringify(updated));
+                   setPrinters(updated);
+                   window.dispatchEvent(new Event('favorites-updated'));
+                }}
+                className="flex flex-col gap-1 text-left group/btn">
+                  <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest group-hover/btn:text-red-500 transition-colors">Actie</span>
+                  <span className="text-sm font-bold text-neutral-800 group-hover/btn:text-red-500 transition-colors">{t('account.removeFromFavorites')}</span>
                </button>
-               <button className="flex flex-col gap-1 text-left group/btn">
-                  <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest group-hover/btn:text-amber-500 transition-colors">{t('account.support')}</span>
-                  <span className="text-sm font-bold text-neutral-800">{t('account.troubleshoot')}</span>
-               </button>
+               <Link href={printer.slug ? `/materials/${printer.slug}` : "#"} className="flex flex-col gap-1 text-left group/btn">
+                  <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest group-hover/btn:text-amber-500 transition-colors">{t('account.supplies', { fallback: 'Supplies' })}</span>
+                  <span className="text-sm font-bold text-neutral-800">{t('account.buyLabels')}</span>
+               </Link>
             </div>
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 }
 
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
+import { PrinterCardData } from './PrintersListing';
 
 function FavouriteProductsView() {
   const t = useTranslations();

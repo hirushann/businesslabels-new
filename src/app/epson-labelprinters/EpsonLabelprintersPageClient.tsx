@@ -199,7 +199,7 @@ export default function EpsonLabelprintersPageClient() {
             </p>
           </div>
 
-          <div className="mt-16 grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-16 grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
             
             {/* 1 */}
             <div className="flex flex-col">
@@ -339,7 +339,7 @@ export default function EpsonLabelprintersPageClient() {
             </p>
           </div>
 
-          <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
             
             {/* RTB */}
             <div className="flex flex-col items-center rounded-3xl bg-neutral-50 p-8 text-center ring-1 ring-neutral-100">

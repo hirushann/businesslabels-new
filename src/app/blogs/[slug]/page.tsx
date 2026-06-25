@@ -247,7 +247,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
               <div className="flex w-full flex-col items-start gap-4 p-4 shadow-sm">
                 <div className="flex w-full flex-col items-start gap-4">
                   <div className="flex w-full flex-col items-start gap-2">
-                    <span className="text-sm font-normal leading-5 text-blue-400">SKU: EP-C3500</span>
+                    <span className="text-sm font-normal leading-5 text-[#479EF5]">SKU: EP-C3500</span>
                     <h3 className="line-clamp-1 text-xl font-semibold leading-6 text-neutral-800">
                       CW-C4000 ink cartridge Black (BK)
                     </h3>
@@ -322,7 +322,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
               <div className="flex w-full flex-col items-start gap-4 p-4">
                 <div className="flex w-full flex-col items-start gap-4">
                   <div className="flex w-full flex-col items-start gap-2">
-                    <span className="text-sm font-normal leading-5 text-blue-400">DIA055</span>
+                    <span className="text-sm font-normal leading-5 text-[#479EF5]">DIA055</span>
                     <h3 className="line-clamp-1 text-xl font-semibold leading-6 text-neutral-800">
                       Matte Paper permanent adhesive.
                     </h3>
