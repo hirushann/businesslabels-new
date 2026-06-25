@@ -1,11 +1,11 @@
 "use client";
-
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
 type RangeSliderProps = {
   min: number;
   max: number;
+  absoluteMax?: number;
   step?: number;
   value: [number, number];
   onChange: (value: [number, number]) => void;
@@ -17,6 +17,7 @@ type RangeSliderProps = {
 export default function RangeSlider({
   min,
   max,
+  absoluteMax,
   step = 1,
   value,
   onChange,
@@ -25,66 +26,121 @@ export default function RangeSlider({
   inputPrefix,
 }: RangeSliderProps) {
   const t = useTranslations();
-  const [localValue, setLocalValue] = useState<[number, number]>(value);
   const trackRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef<"min" | "max" | null>(null);
   const latestValue = useRef<[number, number]>(value);
+  const [prevValue, setPrevValue] = useState<[number, number]>(value);
+  const [localValue, setLocalValue] = useState<[number, number]>(value);
+  const [minInput, setMinInput] = useState<string>(String(value[0]));
+  const [maxInput, setMaxInput] = useState<string>(
+    String(value[1] >= (absoluteMax ?? max) ? max : value[1])
+  );
 
-  useEffect(() => {
+  if (value[0] !== prevValue[0] || value[1] !== prevValue[1]) {
+    setPrevValue(value);
     setLocalValue(value);
+    setMinInput(String(value[0]));
+    setMaxInput(String(value[1] >= (absoluteMax ?? max) ? max : value[1]));
     latestValue.current = value;
-  }, [value]);
+  }
 
-  const calculateValue = useCallback(
-    (clientX: number) => {
-      if (!trackRef.current) return null;
-      const rect = trackRef.current.getBoundingClientRect();
-      const percentage = Math.min(Math.max(0, (clientX - rect.left) / rect.width), 1);
-      const rawValue = min + percentage * (max - min);
-      return Math.round(rawValue / step) * step;
-    },
-    [min, max, step]
-  );
+  function calculateValue(clientX: number) {
+    if (!trackRef.current) return null;
+    const rect = trackRef.current.getBoundingClientRect();
+    const percentage = Math.min(Math.max(0, (clientX - rect.left) / rect.width), 1);
+    const rawValue = min + percentage * (max - min);
+    return Math.round(rawValue / step) * step;
+  }
 
-  const handleMouseDown = (type: "min" | "max") => (e: React.MouseEvent) => {
-    e.preventDefault();
-    isDragging.current = type;
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
-  };
+  function handleMouseMove(e: MouseEvent) {
+    if (!isDragging.current) return;
+    const newValue = calculateValue(e.clientX);
+    if (newValue === null) return;
 
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
-      if (!isDragging.current) return;
-      const newValue = calculateValue(e.clientX);
-      if (newValue === null) return;
+    setLocalValue((prev) => {
+      let next: [number, number];
+      if (isDragging.current === "min") {
+        next = [Math.min(newValue, prev[1]), prev[1]];
+        setMinInput(String(next[0]));
+      } else {
+        next = [prev[0], Math.max(newValue, prev[0])];
+        setMaxInput(String(next[1] >= (absoluteMax ?? max) ? max : next[1]));
+      }
+      latestValue.current = next;
+      onChange(next);
+      return next;
+    });
+  }
 
-      setLocalValue((prev) => {
-        let next: [number, number];
-        if (isDragging.current === "min") {
-          next = [Math.min(newValue, prev[1]), prev[1]];
-        } else {
-          next = [prev[0], Math.max(newValue, prev[0])];
-        }
-        latestValue.current = next;
-        onChange(next);
-        return next;
-      });
-    },
-    [calculateValue, onChange]
-  );
-
-  const handleMouseUp = useCallback(() => {
+  function handleMouseUp() {
     if (isDragging.current && onAfterChange) {
       onAfterChange(latestValue.current);
     }
     isDragging.current = null;
     window.removeEventListener("mousemove", handleMouseMove);
     window.removeEventListener("mouseup", handleMouseUp);
-  }, [handleMouseMove, onAfterChange]);
+  }
 
-  const minPos = ((localValue[0] - min) / (max - min)) * 100;
-  const maxPos = ((localValue[1] - min) / (max - min)) * 100;
+  function handleMouseDown(type: "min" | "max", e: React.MouseEvent) {
+    e.preventDefault();
+    isDragging.current = type;
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  }
+
+  const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setMinInput(e.target.value);
+  };
+
+  const handleMaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setMaxInput(e.target.value);
+  };
+
+  const validateAndApply = () => {
+    let minVal = minInput.trim() === "" ? min : Number(minInput);
+    let maxVal = maxInput.trim() === "" ? max : Number(maxInput);
+
+    if (isNaN(minVal)) minVal = min;
+    if (isNaN(maxVal)) maxVal = max;
+
+    const absMax = absoluteMax ?? max;
+
+    // Clamp values to absolute bounds [min, absoluteMax]
+    minVal = Math.max(min, Math.min(absMax, minVal));
+    maxVal = Math.max(min, Math.min(absMax, maxVal));
+
+    if (minVal > maxVal) {
+      minVal = maxVal;
+    }
+
+    const next: [number, number] = [minVal, maxVal];
+    setLocalValue(next);
+    setMinInput(String(minVal));
+    setMaxInput(String(maxVal >= absMax ? max : maxVal));
+
+    if (next[0] !== value[0] || next[1] !== value[1]) {
+      onChange(next);
+      onAfterChange?.(next);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      validateAndApply();
+    }
+  };
+
+  const handleBlur = () => {
+    validateAndApply();
+  };
+
+  const getPercentage = (v: number) => {
+    const clamped = Math.min(Math.max(v, min), max);
+    return (clamped - min) / (max - min);
+  };
+
+  const minPos = getPercentage(localValue[0]) * 100;
+  const maxPos = getPercentage(localValue[1]) * 100;
 
   return (
     <div className="flex flex-col gap-4 select-none">
@@ -107,13 +163,13 @@ export default function RangeSlider({
         {/* Thumbs */}
         <button
           type="button"
-          onMouseDown={handleMouseDown("min")}
+          onMouseDown={(e) => handleMouseDown("min", e)}
           className="absolute w-5 h-5 bg-white border-2 border-slate-900 rounded-full -ml-2.5 z-10 hover:scale-110 transition-transform cursor-pointer focus:outline-none"
           style={{ left: `${minPos}%` }}
         />
         <button
           type="button"
-          onMouseDown={handleMouseDown("max")}
+          onMouseDown={(e) => handleMouseDown("max", e)}
           className="absolute w-5 h-5 bg-white border-2 border-slate-900 rounded-full -ml-2.5 z-10 hover:scale-110 transition-transform cursor-pointer focus:outline-none"
           style={{ left: `${maxPos}%` }}
         />
@@ -122,7 +178,7 @@ export default function RangeSlider({
       {/* Min/Max Labels */}
       <div className="flex justify-between text-xs text-slate-400 -mt-4">
         <span>{formatValue(min)}</span>
-        <span>{formatValue(max)}</span>
+        <span>{absoluteMax && absoluteMax > max ? `${formatValue(max)}+` : formatValue(max)}</span>
       </div>
 
       {/* Inputs */}
@@ -133,33 +189,27 @@ export default function RangeSlider({
             {inputPrefix ? <span className="text-slate-400 mr-1">{inputPrefix}</span> : null}
             <input
               type="number"
-              value={localValue[0]}
-              onChange={(e) => {
-                const v = Math.max(min, Math.min(localValue[1], Number(e.target.value)));
-                const next: [number, number] = [v, localValue[1]];
-                setLocalValue(next);
-                onChange(next);
-                onAfterChange?.(next);
-              }}
+              value={minInput}
+              onChange={handleMinChange}
+              onBlur={handleBlur}
+              onKeyDown={handleKeyDown}
               className="w-full bg-transparent outline-none text-sm font-medium text-slate-900"
             />
           </div>
         </div>
         <div className="text-slate-400 mt-5">{t("filters.to")}</div>
         <div className="flex-1">
-          <label className="text-xs text-slate-400 mb-1 block">{t("filters.to")}</label>
+          <label className="text-xs text-slate-400 mb-1 block">
+            {t("filters.to")} {absoluteMax && absoluteMax > max ? `(${formatValue(absoluteMax)})` : ""}
+          </label>
           <div className="h-10 px-3 border border-slate-200 rounded-lg flex items-center bg-white">
             {inputPrefix ? <span className="text-slate-400 mr-1">{inputPrefix}</span> : null}
             <input
               type="number"
-              value={localValue[1]}
-              onChange={(e) => {
-                const v = Math.min(max, Math.max(localValue[0], Number(e.target.value)));
-                const next: [number, number] = [localValue[0], v];
-                setLocalValue(next);
-                onChange(next);
-                onAfterChange?.(next);
-              }}
+              value={maxInput}
+              onChange={handleMaxChange}
+              onBlur={handleBlur}
+              onKeyDown={handleKeyDown}
               className="w-full bg-transparent outline-none text-sm font-medium text-slate-900"
             />
           </div>
@@ -168,3 +218,4 @@ export default function RangeSlider({
     </div>
   );
 }
+

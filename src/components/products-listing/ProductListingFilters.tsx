@@ -137,21 +137,31 @@ function ProductRangeFilter({
   setFilter: (name: string, value: FilterValueRange) => void;
 }) {
   const t = useTranslations();
-  const max = sliderMax(rawResponse, config.field);
+  const rawMax = sliderMax(rawResponse, config.field);
+  const isHeight = config.field === "meta_height_mm";
+  const max = isHeight ? Math.min(rawMax, 800) : rawMax;
+  const absoluteMax = isHeight ? rawMax : undefined;
+
   const filter = activeFilters.find((activeFilter) => activeFilter.field === config.field);
   const filterRange = filter?.values.find(isRangeFilter);
+  const filterMax = absoluteMax ?? max;
   const range: [number, number] = [
-    Math.min(numericValue(filterRange?.from) ?? INITIAL_MIN, max),
-    Math.min(numericValue(filterRange?.to) ?? max, max),
+    Math.min(numericValue(filterRange?.from) ?? INITIAL_MIN, filterMax),
+    Math.min(numericValue(filterRange?.to) ?? filterMax, filterMax),
   ];
 
   const handleAfterChange = (newRange: [number, number]) => {
-    if (newRange[0] === INITIAL_MIN && newRange[1] === max) {
+    const isUnbounded = newRange[1] === max || newRange[1] >= filterMax;
+    if (newRange[0] === INITIAL_MIN && isUnbounded) {
       removeFilter(config.field);
       return;
     }
 
-    setFilter(config.field, { name: config.name, from: newRange[0], to: newRange[1] });
+    const filterValue: FilterValueRange = { name: config.name, from: newRange[0] };
+    if (!isUnbounded) {
+      filterValue.to = newRange[1];
+    }
+    setFilter(config.field, filterValue);
   };
 
   return (
@@ -159,6 +169,7 @@ function ProductRangeFilter({
       <RangeSlider
         min={INITIAL_MIN}
         max={max}
+        absoluteMax={absoluteMax}
         value={range}
         onChange={() => {}}
         onAfterChange={handleAfterChange}

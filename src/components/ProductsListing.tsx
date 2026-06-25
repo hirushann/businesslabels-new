@@ -641,6 +641,7 @@ function CatalogProductsListing({
     range: [number, number],
     min: number,
     max: number,
+    absoluteMax?: number,
   ) => {
     setParams((params) => {
       const rangeKeys = RANGE_PARAM_KEYS[key];
@@ -650,7 +651,8 @@ function CatalogProductsListing({
         params.set(rangeKeys.min, String(range[0]));
       }
 
-      if (range[1] >= max) {
+      const limit = absoluteMax ?? max;
+      if (range[1] === max || range[1] >= limit) {
         params.delete(rangeKeys.max);
       } else {
         params.set(rangeKeys.max, String(range[1]));
@@ -848,15 +850,20 @@ function CatalogProductsListing({
                     const filter = entry.filter;
                     const keys = RANGE_PARAM_KEYS[filter.key];
                     const min = filter.min;
-                    const max = filter.max;
+                    const rawMax = filter.max;
+                    const isHeight = filter.key === "height";
+                    const visualMax = isHeight ? Math.min(rawMax, 800) : rawMax;
+                    const absoluteMax = isHeight ? rawMax : undefined;
+                    const filterMax = absoluteMax ?? visualMax;
+
                     const value: [number, number] = [
                       Math.max(
                         min,
-                        Math.min(numberFor(displayParams, keys.min) ?? min, max),
+                        Math.min(numberFor(displayParams, keys.min) ?? min, filterMax),
                       ),
                       Math.max(
                         min,
-                        Math.min(numberFor(displayParams, keys.max) ?? max, max),
+                        Math.min(numberFor(displayParams, keys.max) ?? filterMax, filterMax),
                       ),
                     ];
 
@@ -873,7 +880,7 @@ function CatalogProductsListing({
                           OPTION_PARAM_KEY[fanFoldFilterKey],
                         ).some(
                           (selectedValue) =>
-                            selectedValue.toLowerCase() === "fan-fold",
+                             selectedValue.toLowerCase() === "fan-fold",
                         )
                       : false;
 
@@ -900,11 +907,12 @@ function CatalogProductsListing({
                         <div className="flex flex-col gap-3">
                           <RangeSlider
                             min={min}
-                            max={max}
+                            max={visualMax}
+                            absoluteMax={absoluteMax}
                             value={value}
                             onChange={() => {}}
                             onAfterChange={(range) =>
-                              setRange(filter.key, range, min, max)
+                              setRange(filter.key, range, min, visualMax, absoluteMax)
                             }
                             formatValue={(rangeValue) =>
                               formatRangeValue(
