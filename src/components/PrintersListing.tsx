@@ -86,7 +86,7 @@ function sortValueFromState(sortField?: string, sortDirection?: string): Printer
 
 function PrinterSkeletonGrid({ isSidebarOpen }: { isSidebarOpen: boolean }) {
   return (
-    <div className={`grid grid-cols-1 gap-6 sm:grid-cols-2 ${isSidebarOpen ? "xl:grid-cols-3" : "xl:grid-cols-4"}`}>
+    <div className={`grid grid-cols-1 gap-6 sm:grid-cols-2 ${isSidebarOpen ? "xl:grid-cols-3" : "lg:grid-cols-3"}`}>
       {Array.from({ length: 8 }, (_, index) => (
         <div key={index} className="h-[520px] rounded-xl bg-slate-100 animate-pulse" />
       ))}
@@ -305,7 +305,7 @@ function PrintersListingContent({ printers }: { printers: PrinterCardData[] }) {
             <>
               <div
                 className={`grid grid-cols-1 gap-6 sm:grid-cols-2 ${
-                  isSidebarOpen ? "xl:grid-cols-3" : "xl:grid-cols-4"
+                  isSidebarOpen ? "xl:grid-cols-3" : "lg:grid-cols-3"
                 }`}
               >
                 {hasSearchPrinters

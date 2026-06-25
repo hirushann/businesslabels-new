@@ -198,7 +198,7 @@ function HelpPanel({
     {
       label: labels.callUs,
       type: "call" as const,
-      href: "tel:0031318590465",
+      href: "tel:+31318590465",
     },
     {
       label: labels.email,

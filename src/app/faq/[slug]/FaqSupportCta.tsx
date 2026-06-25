@@ -61,7 +61,7 @@ export function FaqSupportCta({ title, text }: { title: string; text: string }) 
           <div className="lg:col-span-5">
             <div className="grid gap-4 sm:grid-cols-2">
               <a
-                href="tel:0031318590465"
+                href="tel:+31318590465"
                 className="group flex flex-col gap-3 rounded-2xl bg-white/5 p-6 ring-1 ring-white/10 backdrop-blur transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/10 hover:ring-amber-400/50"
               >
                 <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-500/15 text-amber-400 ring-1 ring-amber-400/30">
