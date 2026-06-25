@@ -162,7 +162,7 @@ describe("RangeSlider Component", () => {
     const onChangeMock = vi.fn();
     const onAfterChangeMock = vi.fn();
 
-    const { container } = render(
+    const { container, rerender } = render(
       <RangeSlider
         min={0}
         max={800}
@@ -192,6 +192,40 @@ describe("RangeSlider Component", () => {
     expect(toInput.value).toBe("5000");
     expect(onChangeMock).toHaveBeenCalledWith([25, 5000]);
     expect(onAfterChangeMock).toHaveBeenCalledWith([25, 5000]);
+
+    // Rerender to simulate parent state update to [25, 5000]
+    rerender(
+      <RangeSlider
+        min={0}
+        max={800}
+        absoluteMax={140000}
+        value={[25, 5000]}
+        onChange={onChangeMock}
+        onAfterChange={onAfterChangeMock}
+      />
+    );
+
+    // Verify manual input allows entering absoluteMax (e.g. 140000) and preserves it
+    fireEvent.change(toInput, { target: { value: "140000" } });
+    fireEvent.blur(toInput);
+
+    expect(toInput.value).toBe("140000");
+    expect(onChangeMock).toHaveBeenLastCalledWith([25, 140000]);
+    expect(onAfterChangeMock).toHaveBeenLastCalledWith([25, 140000]);
+
+    // Rerender with props echoing the update: value [25, 140000]
+    rerender(
+      <RangeSlider
+        min={0}
+        max={800}
+        absoluteMax={140000}
+        value={[25, 140000]}
+        onChange={onChangeMock}
+        onAfterChange={onAfterChangeMock}
+      />
+    );
+    // It should keep the typed value "140000" instead of resetting to "800"
+    expect(toInput.value).toBe("140000");
 
     // Verify dragging the thumb clamps it to max (800)
     const thumbs = container.querySelectorAll("button[type='button']");

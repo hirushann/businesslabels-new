@@ -39,8 +39,12 @@ export default function RangeSlider({
   if (value[0] !== prevValue[0] || value[1] !== prevValue[1]) {
     setPrevValue(value);
     setLocalValue(value);
-    setMinInput(String(value[0]));
-    setMaxInput(String(value[1] >= (absoluteMax ?? max) ? max : value[1]));
+    if (value[0] !== latestValue.current[0]) {
+      setMinInput(String(value[0]));
+    }
+    if (value[1] !== latestValue.current[1]) {
+      setMaxInput(String(value[1] >= (absoluteMax ?? max) ? max : value[1]));
+    }
     latestValue.current = value;
   }
 
@@ -116,7 +120,8 @@ export default function RangeSlider({
     const next: [number, number] = [minVal, maxVal];
     setLocalValue(next);
     setMinInput(String(minVal));
-    setMaxInput(String(maxVal >= absMax ? max : maxVal));
+    setMaxInput(String(maxVal));
+    latestValue.current = next;
 
     if (next[0] !== value[0] || next[1] !== value[1]) {
       onChange(next);
