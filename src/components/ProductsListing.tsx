@@ -4,7 +4,6 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
   useTransition,
 } from "react";
@@ -16,11 +15,9 @@ import ProductCard from "@/components/ProductCard";
 import RangeSlider from "@/components/RangeSlider";
 import Image from "next/image";
 import ProductPaginationSwitcher from "@/components/ProductPaginationSwitcher";
-import { useDebouncedSearchParam } from "@/components/search/useDebouncedSearchParam";
 import type {
   CatalogOptionFilter,
   CatalogOptionFilterKey,
-  CatalogProductResult,
   CatalogRangeFilter,
   CatalogRangeKey,
   CatalogSearchResponse,
@@ -269,17 +266,7 @@ function CatalogProductsListing({
   const [optimisticQueryString, setOptimisticQueryString] = useState<
     string | null
   >(null);
-  const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const hasFocusedSearchRef = useRef(false);
-
-  useEffect(() => {
-    if (searchParams.get("focus") === "true" && !hasFocusedSearchRef.current) {
-      hasFocusedSearchRef.current = true;
-      searchInputRef.current?.focus();
-    }
-  }, [searchParams]);
 
   const SORT_OPTIONS: Array<{ value: CatalogSortValue; label: string }> = [
     { value: "relevance", label: t("sort.relevance") },
@@ -336,7 +323,6 @@ function CatalogProductsListing({
     params.delete("page");
     return paramsToString(params);
   }, [scopedCurrentQueryString]);
-  const listingResetKeyRef = useRef(listingResetKey);
   const initialSortedQueryString = useMemo(
     () => mergeQueryStrings(scopeQueryString, initialQueryString),
     [scopeQueryString, initialQueryString],
@@ -422,28 +408,6 @@ function CatalogProductsListing({
       params.set("page", "1");
     });
   };
-
-
-  const commitSearch = useCallback(
-    (nextSearch: string) => {
-      setParams((params) => {
-        params.delete("q");
-        if (nextSearch) {
-          params.set("search", nextSearch);
-        } else {
-          params.delete("search");
-        }
-        params.set("page", "1");
-      });
-    },
-    [setParams],
-  );
-
-  const { inputValue: searchInput, setInputValue: setSearchInput } =
-    useDebouncedSearchParam({
-      value: searchValue,
-      onCommit: commitSearch,
-    });
 
   useEffect(() => {
     if (hasInitialCatalog) {
@@ -583,7 +547,14 @@ function CatalogProductsListing({
     setParams((params) => {
       KNOWN_FILTER_PARAMS.forEach((key) => params.delete(key));
     });
-    setSearchInput("");
+  };
+
+  const applySearchSuggestion = (suggestion: string) => {
+    setParams((params) => {
+      params.delete("q");
+      params.set("search", suggestion);
+      params.set("page", "1");
+    });
   };
 
   const setSort = (value: CatalogSortValue) => {
@@ -651,24 +622,6 @@ function CatalogProductsListing({
 
   const loading = isLoading || isPending;
   const products = catalog.products;
-  const hasMoreProducts =
-    catalog.currentPage < catalog.lastPage;
-
-  const loadMoreProducts = useCallback(() => {
-    // This is no longer used for infinite scrolling but kept empty to avoid refactoring issues.
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (loading) return;
-
-    const timeoutId = window.setTimeout(() => {
-      setIsFetchingMore(false);
-    }, 0);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [loading]);
-
-
 
   return (
     <div className="flex flex-col gap-8">
@@ -718,38 +671,6 @@ function CatalogProductsListing({
       )}
 
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex min-h-11 w-full items-center gap-3 rounded-lg border border-slate-200 px-3">
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 16 16"
-            fill="none"
-            className="shrink-0"
-            aria-hidden="true"
-          >
-            <circle
-              cx="6.75"
-              cy="6.75"
-              r="5.25"
-              stroke="currentColor"
-              strokeWidth="1.5"
-            />
-            <path
-              d="M11.5 11.5L14.5 14.5"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-          </svg>
-          <input
-            ref={searchInputRef}
-            value={searchInput}
-            onChange={(event) => setSearchInput(event.target.value)}
-            placeholder={t("search.searchProducts")}
-            className="h-11 w-full bg-transparent text-base text-neutral-800 outline-none"
-          />
-        </div>
-
         <div className="flex shrink-0 items-center gap-3">
           <button
             type="button"
@@ -1059,7 +980,7 @@ function CatalogProductsListing({
                 {t("search.didYouMean")}{" "}
                 <button
                   type="button"
-                  onClick={() => setSearchInput(catalog.suggestion!)}
+                  onClick={() => applySearchSuggestion(catalog.suggestion!)}
                   className="font-semibold text-blue-600 underline hover:text-blue-700"
                 >
                   {catalog.suggestion}

@@ -2,7 +2,9 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import type { FormEvent } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 interface TeamMember {
   id: number;
@@ -25,6 +27,7 @@ import { useLocalePath } from '@/hooks/useLocalePath';
 import { getAccessoryCategoryPath } from '@/lib/routes/accessoryCategories';
 import { getLabelCategoryPath } from '@/lib/routes/labelCategories';
 import { getPrinterCategoryPath } from '@/lib/routes/printerCategories';
+import { useDebouncedSearchParam } from '@/components/search/useDebouncedSearchParam';
 
 type DropdownKey = 'printers' | 'labels' | 'accessories' | 'resources' | 'brands' | null;
 // import { useCart } from '@/context/CartContext';
@@ -44,6 +47,9 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
   const t = useTranslations();
   const locale = useLocale();
   const lp = useLocalePath();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { isHelpOpen, openHelp, closeHelp } = useHelp();
   const [headerMembers, setHeaderMembers] = useState<TeamMember[]>([]);
 
@@ -116,8 +122,88 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<DropdownKey>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const desktopSearchInputRef = useRef<HTMLInputElement>(null);
+  const mobileSearchInputRef = useRef<HTMLInputElement>(null);
   const { totalItemCount, isCartOpen, openCart, closeCart } = useCart();
   const { uniqueItemCount: uniqueWishlistCount } = useWishlist();
+  const productListingPath = lp('/product');
+  const isProductListingPath = pathname === productListingPath;
+  const headerSearchValue = isProductListingPath
+    ? searchParams.get('search') ?? searchParams.get('q') ?? ''
+    : '';
+
+  const focusVisibleHeaderSearch = useCallback(() => {
+    const target =
+      typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches
+        ? desktopSearchInputRef.current
+        : mobileSearchInputRef.current;
+
+    window.setTimeout(() => target?.focus(), 0);
+  }, []);
+
+  const buildProductSearchHref = useCallback(
+    (nextSearch: string, options?: { resetPage?: boolean }) => {
+      const params = new URLSearchParams(isProductListingPath ? searchParams.toString() : '');
+      params.delete('q');
+      params.set('focus', 'true');
+      if (options?.resetPage) {
+        params.set('page', '1');
+      }
+
+      const trimmedSearch = nextSearch.trim();
+      if (trimmedSearch) {
+        params.set('search', trimmedSearch);
+      } else {
+        params.delete('search');
+      }
+
+      return `${productListingPath}?${params.toString()}`;
+    },
+    [isProductListingPath, productListingPath, searchParams],
+  );
+
+  const navigateToProductSearch = useCallback(
+    (nextSearch = headerSearchValue, options?: { resetPage?: boolean }) => {
+      const href = buildProductSearchHref(nextSearch, options);
+      router.push(href, { scroll: false });
+      focusVisibleHeaderSearch();
+    },
+    [buildProductSearchHref, focusVisibleHeaderSearch, headerSearchValue, router],
+  );
+
+  const commitHeaderSearch = useCallback(
+    (nextSearch: string) => {
+      navigateToProductSearch(nextSearch, { resetPage: true });
+    },
+    [navigateToProductSearch],
+  );
+
+  const {
+    inputValue: headerSearchInput,
+    setInputValue: setHeaderSearchInput,
+    commitNow: commitHeaderSearchNow,
+  } = useDebouncedSearchParam({
+    value: headerSearchValue,
+    onCommit: commitHeaderSearch,
+  });
+
+  useEffect(() => {
+    if (isProductListingPath && searchParams.get('focus') === 'true') {
+      focusVisibleHeaderSearch();
+    }
+  }, [focusVisibleHeaderSearch, isProductListingPath, searchParams]);
+
+  const handleHeaderSearchFocus = () => {
+    if (!isProductListingPath) {
+      navigateToProductSearch(headerSearchInput);
+    }
+  };
+
+  const handleHeaderSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    commitHeaderSearchNow();
+    navigateToProductSearch(headerSearchInput, { resetPage: true });
+  };
 
   const handleMouseEnter = (key: DropdownKey) => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
@@ -211,17 +297,28 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
           </Link>
 
           {/* Search */}
-          <Link
-            href={lp('/product?focus=true')}
-            className="w-96 px-4 py-3 rounded-full border border-slate-100 flex items-center gap-2 overflow-hidden text-left cursor-pointer"
-            aria-label={t('header.productsSearchLink')}
+          <form
+            role="search"
+            onSubmit={handleHeaderSearchSubmit}
+            className="w-96 px-4 py-3 rounded-full border border-slate-100 flex items-center gap-2 overflow-hidden text-left focus-within:border-amber-300 focus-within:ring-2 focus-within:ring-amber-500/10"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <circle cx="6.75" cy="6.75" r="5.25" stroke="#9CA3AF" strokeWidth="1.5" />
               <path d="M11.5 11.5L14.5 14.5" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
-            <span className="text-zinc-500 text-sm font-normal leading-5">{t('common.search')}</span>
-          </Link>
+            <input
+              ref={desktopSearchInputRef}
+              type="search"
+              value={headerSearchInput}
+              onFocus={handleHeaderSearchFocus}
+              onClick={handleHeaderSearchFocus}
+              onChange={(event) => setHeaderSearchInput(event.target.value)}
+              placeholder={t('common.search')}
+              aria-label={t('header.productsSearchLink')}
+              autoComplete="off"
+              className="h-5 min-w-0 flex-1 bg-transparent text-sm font-normal leading-5 text-neutral-800 outline-none placeholder:text-zinc-500"
+            />
+          </form>
 
           {/* Right controls */}
           <div className="flex items-center gap-5">
@@ -354,17 +451,28 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
         </div>
         
         {/* Search bar below row on mobile */}
-        <Link
-          href={lp('/product?focus=true')}
-          className="w-full px-4 py-2.5 rounded-full border border-slate-100 flex items-center gap-2 overflow-hidden text-left bg-slate-50"
-          aria-label={t('header.productsSearchLink')}
+        <form
+          role="search"
+          onSubmit={handleHeaderSearchSubmit}
+          className="w-full px-4 py-2.5 rounded-full border border-slate-100 flex items-center gap-2 overflow-hidden text-left bg-slate-50 focus-within:border-amber-300 focus-within:ring-2 focus-within:ring-amber-500/10"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <circle cx="6.75" cy="6.75" r="5.25" stroke="#9CA3AF" strokeWidth="1.5" />
             <path d="M11.5 11.5L14.5 14.5" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
-          <span className="text-zinc-500 text-sm font-normal leading-5">{t('common.search')}</span>
-        </Link>
+          <input
+            ref={mobileSearchInputRef}
+            type="search"
+            value={headerSearchInput}
+            onFocus={handleHeaderSearchFocus}
+            onClick={handleHeaderSearchFocus}
+            onChange={(event) => setHeaderSearchInput(event.target.value)}
+            placeholder={t('common.search')}
+            aria-label={t('header.productsSearchLink')}
+            autoComplete="off"
+            className="h-5 min-w-0 flex-1 bg-transparent text-sm font-normal leading-5 text-neutral-800 outline-none placeholder:text-zinc-500"
+          />
+        </form>
       </div>
 
       {/* Sub-nav */}
