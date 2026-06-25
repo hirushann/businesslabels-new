@@ -87,6 +87,7 @@ export default async function ProductsPage({
               initialCatalog={initialCatalog}
               initialQueryString={query.toString()}
               baselineRangeFilters={baselineCatalog.filters.ranges}
+              hideSearchInput
             />
           </div>
         </div>
