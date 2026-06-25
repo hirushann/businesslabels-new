@@ -44,7 +44,7 @@ export default function DrawerProductCard({
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <h3 className="truncate text-neutral-800 text-base font-semibold leading-6">{name}</h3>
-              <p className="text-blue-400 text-sm leading-5">SKU: {sku}</p>
+              <p className="text-[#479EF5] text-sm leading-5">SKU: {sku}</p>
               {descriptionNode}
             </div>
             <button

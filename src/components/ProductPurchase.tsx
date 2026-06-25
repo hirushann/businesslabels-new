@@ -388,6 +388,16 @@ export default function ProductPurchase({
     return normalizeBulkDiscounts(discounts, minimumQuantity);
   }, [discounts, minimumQuantity]);
   const hasBulkDiscounts = bulkDiscounts.length > 0;
+
+  const displayTiers = useMemo(() => {
+    if (!hasBulkDiscounts) return [];
+    const firstTierQty = Number.parseInt(bulkDiscounts[0].quantity, 10);
+    if (firstTierQty > minimumQuantity) {
+      return [{ quantity: String(minimumQuantity), discount: "0%" }, ...bulkDiscounts];
+    }
+    return bulkDiscounts;
+  }, [bulkDiscounts, hasBulkDiscounts, minimumQuantity]);
+
   const hasWarrantyOptions = normalizedWarranty.options.length > 0;
   const defaultWarrantyOption = normalizedWarranty.options.find(
     (option) => option.id === normalizedWarranty.defaultOptionId,
@@ -400,10 +410,10 @@ export default function ProductPurchase({
   const activeTier = useMemo(() => {
     if (!hasPrice || !hasBulkDiscounts) return null;
     // Find the highest tier that matches the current quantity
-    return [...bulkDiscounts]
+    return [...displayTiers]
       .reverse()
       .find((tier) => quantity >= Number.parseInt(tier.quantity, 10)) ?? null;
-  }, [bulkDiscounts, hasBulkDiscounts, hasPrice, quantity]);
+  }, [displayTiers, hasBulkDiscounts, hasPrice, quantity]);
 
   const activeDiscountPercent = useMemo(() => {
     if (!activeTier) return 0;
@@ -433,8 +443,8 @@ export default function ProductPurchase({
   }, [quantity, getUnitPriceForQuantity]);
 
   const tierLabel = (index: number): string => {
-    const tier = bulkDiscounts[index];
-    const next = bulkDiscounts[index + 1];
+    const tier = displayTiers[index];
+    const next = displayTiers[index + 1];
     if (!tier) return "";
     const tierQty = Number.parseInt(tier.quantity, 10);
     if (!next) return `${tierQty}+`;
@@ -686,7 +696,7 @@ export default function ProductPurchase({
       {/* Price Section */}
       <div className="flex flex-col gap-3">
         <div className="flex justify-between items-center">
-          <span className="text-blue-400 text-base font-normal leading-5">{t("product.sku", { sku: displaySku })}</span>
+          <span className="text-[#479EF5] text-base font-semibold leading-5">{t("product.sku", { sku: displaySku })}</span>
           {((stock != null && stock > 0) || deliveryDatesNoStock == null || deliveryDatesNoStock < 10) ? (
             <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${resolvedInStock ? "bg-[#00A63E]" : "bg-zinc-400"}`}>
               {resolvedInStock ? (
@@ -707,12 +717,12 @@ export default function ProductPurchase({
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 4l4 4m0-4L4 8" />
                 </svg>
               )}
-              <span className="text-white text-xs font-semibold leading-none">{stockText}</span>
+              <span className="text-white text-xs font-normal leading-none">{stockText}</span>
             </div>
           ) : null}
         </div>
         <div className="flex items-baseline gap-2">
-          <span className="text-neutral-800 text-4xl font-bold leading-[48px]">
+          <span className="text-neutral-800 text-4xl font-extrabold leading-[48px]">
             {hasPrice ? formatEuro(activeUnitPrice ?? price ?? 0) : "-"}
           </span>
           {activeDiscountPercent > 0 ? (
@@ -725,71 +735,61 @@ export default function ProductPurchase({
             </span>
           ) : null}
           {activeDiscountPercent > 0 ? (
-            <span className="text-red-600 text-2xl font-semibold leading-7">-{activeDiscountPercent}%</span>
+            <span className="text-red-600 text-2xl font-extrabold leading-7">-{activeDiscountPercent}%</span>
           ) : discountPercentage ? (
-            <span className="text-red-600 text-2xl font-semibold leading-7">-{discountPercentage}%</span>
+            <span className="text-red-600 text-2xl font-extrabold leading-7">-{discountPercentage}%</span>
           ) : null}
         </div>
         <span className="text-zinc-500 text-base font-normal leading-5 text-left">{t("product.exVat")}</span>
       </div>
 
       {hasBulkDiscounts ? (
-        <div className="flex flex-col gap-2">
-          <h3 className="text-neutral-800 text-base font-bold">
-            {t("product.bulkDiscounts")}
-          </h3>
-          <div className="rounded-2xl border border-slate-200 overflow-hidden bg-white">
+        <div className="flex flex-col mt-2">
+          <div className="rounded-xl border border-slate-100 overflow-hidden bg-white shadow-[0px_2px_4px_0px_rgba(0,0,0,0.02)]">
             {/* Table header */}
-            <div className="grid grid-cols-3 bg-slate-50 px-4 py-2.5 border-b border-slate-200">
-              <span className="text-neutral-700 text-xs font-semibold uppercase tracking-wide">
+            <div className="grid grid-cols-[1.2fr_1fr_1fr] gap-2 bg-[#F4F5F7] px-4 sm:px-6 py-4 border-b border-slate-100">
+              <span className="text-neutral-700 text-base font-bold capitalize">
                 {t("product.quantity")}
               </span>
-              <span className="text-neutral-700 text-xs font-semibold uppercase tracking-wide">
-                {locale === "nl" ? "Prijs / stuk" : "Price / unit"}
+              <span className="text-neutral-700 text-base font-bold">
+                {locale === "nl" ? "Prijs / stuk" : "Unit Price"}
               </span>
-              <span className="text-neutral-700 text-xs font-semibold uppercase tracking-wide">
+              <span className="text-neutral-700 text-base font-bold">
                 {locale === "nl" ? "Besparing" : "Savings"}
               </span>
             </div>
 
             {/* Discount tiers */}
-            {bulkDiscounts.map((tier, index) => {
+            {displayTiers.map((tier, index) => {
               const tierQty = Number.parseInt(tier.quantity, 10);
               const isActive = activeTier?.quantity === tier.quantity;
               const tierUnitPrice = getUnitPriceForQuantity(tierQty) ?? price ?? 0;
               const savingsPct = Number.parseFloat(tier.discount.replace("%", ""));
-              const savingsPerUnit = (price ?? 0) - tierUnitPrice;
 
               return (
                 <button
                   key={`${tier.quantity}-${tier.discount}`}
                   type="button"
                   onClick={() => handleTierClick(tierQty)}
-                  className={`w-full grid grid-cols-3 px-4 py-3 text-left transition-all border-b border-slate-100 last:border-b-0 cursor-pointer ${
-                    isActive
-                      ? "bg-green-50"
-                      : "hover:bg-slate-50"
+                  className={`w-full grid grid-cols-[1.2fr_1fr_1fr] gap-2 px-4 sm:px-6 py-4 text-left transition-all border-b border-slate-100 last:border-b-0 cursor-pointer items-center ${
+                    isActive ? "bg-[#E8F5E9]" : "hover:bg-slate-50"
                   }`}
                 >
-                  <span className="flex items-center gap-2">
-                    <span className={`text-sm font-medium ${isActive ? "text-neutral-900" : "text-neutral-700"}`}>
+                  <span className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                    <span className={`text-base font-medium whitespace-nowrap ${isActive ? "text-neutral-900" : "text-neutral-800"}`}>
                       {tierLabel(index)}
                     </span>
                     {isActive && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-green-600 text-white text-[10px] font-bold uppercase tracking-wide">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#00A650] text-white text-[11px] font-bold tracking-wide">
                         {locale === "nl" ? "Actief" : "Active"}
                       </span>
                     )}
                   </span>
-                  <span className={`text-sm font-bold ${isActive ? "text-neutral-900" : "text-neutral-700"}`}>
+                  <span className={`text-base font-extrabold ${isActive ? "text-neutral-900" : "text-neutral-800"}`}>
                     {formatEuro(tierUnitPrice)}
                   </span>
-                  <span className={`text-sm font-semibold ${isActive ? "text-green-600" : "text-green-500"}`}>
-                    {savingsPct}%{isActive && (
-                      <span className="text-zinc-500 font-normal text-xs ml-1">
-                        (–{formatEuro(savingsPerUnit)}/unit)
-                      </span>
-                    )}
+                  <span className={`text-base font-medium text-[#00A650]`}>
+                    {savingsPct > 0 ? `${savingsPct}%` : "-"}
                   </span>
                 </button>
               );
@@ -1082,7 +1082,7 @@ export default function ProductPurchase({
           <PopoverTrigger asChild>
             <button
               type="button"
-              className="w-12 h-12 p-3 bg-slate-100 rounded-2xl flex items-center justify-center hover:bg-slate-200 transition-colors"
+              className="w-12 h-12 p-3 bg-slate-100 rounded-full flex items-center justify-center hover:bg-slate-200 transition-colors"
               aria-label={t("product.shareOptions")}
             >
               <svg className="w-5 h-5 text-neutral-700" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
@@ -1171,7 +1171,7 @@ export default function ProductPurchase({
         {[
           {
             label: t("supportPanel.callUs"),
-            href: "tel:0031318590465",
+            href: "tel:+31318590465",
             icon: (
               <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.948V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />

@@ -869,8 +869,7 @@ export default function MaterialsCatalogClient({
 
             {paginatedMaterials.length > 0 ? (
               <div
-                className={`grid grid-cols-1 gap-6 transition-opacity sm:grid-cols-2 ${loading ? "opacity-60" : "opacity-100"} ${isSidebarOpen ? "xl:grid-cols-3" : "xl:grid-cols-4"
-                  }`}
+                className={`grid grid-cols-1 gap-6 transition-opacity sm:grid-cols-2 ${loading ? "opacity-60" : "opacity-100"} ${isSidebarOpen ? "xl:grid-cols-3" : "lg:grid-cols-3"}`}
               >
                 {paginatedMaterials.map((material) => (
                   <MaterialCard
@@ -882,7 +881,7 @@ export default function MaterialsCatalogClient({
                 ))}
               </div>
             ) : loading ? (
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 8 }, (_, index) => (
                   <div
                     key={index}

@@ -264,7 +264,7 @@ export default function BulkDiscountModal({
             ) : null}
             <div className="min-w-0 flex flex-col gap-0.5">
               {productSku ? (
-                <span className="text-blue-400 text-sm font-normal leading-5">
+                <span className="text-[#479EF5] text-sm font-normal leading-5">
                   SKU: {productSku}
                 </span>
               ) : null}

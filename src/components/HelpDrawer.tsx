@@ -451,7 +451,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
         role="dialog"
         aria-modal="true"
         aria-label={t('help.needHelp')}
-        className="fixed top-0 right-0 h-full w-[480px] bg-white z-[1000] shadow-2xl flex flex-col overflow-hidden"
+        className="fixed top-0 right-0 h-full w-full sm:w-[480px] max-w-full bg-white z-[1000] shadow-2xl flex flex-col overflow-hidden"
         style={{ animation: 'slideInRight 0.28s cubic-bezier(0.16,1,0.3,1) both' }}
       >
         {/* ── Header ─────────────────────────── */}
@@ -496,10 +496,10 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
             </div>
 
             {/* Call + Email cards */}
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               {/* Call */}
               <a
-                href="tel:+310318590465"
+                href="tel:+31318590465"
                 className="flex-1 h-16 p-2.5 bg-white rounded-xl border border-slate-100 flex items-center gap-3 hover:shadow-md transition-shadow"
               >
                 <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center shrink-0">
@@ -507,10 +507,10 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                     <path d="M21 15.46l-5.27-.61-2.52 2.52a15.05 15.05 0 01-6.59-6.59l2.53-2.53L8.54 3H3.03C2.45 13.18 10.82 21.55 21 20.97l.0-5.51z" fill="white" />
                   </svg>
                 </div>
-                <div className="flex flex-col gap-0.5">
+                <div className="flex flex-col gap-0.5 overflow-hidden">
                   <span className="text-neutral-800 text-base font-semibold font-['Segoe_UI'] leading-5">{t('supportPanel.callUs')}</span>
-                  <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI'] leading-5">
-                    +31 (0)318 590 465
+                  <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI'] leading-5 whitespace-nowrap">
+                    +31 318 590 465
                   </span>
                 </div>
               </a>
@@ -526,9 +526,9 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                     <path d="M2 7l10 7 10-7" stroke="#f59e0b" strokeWidth="1.5" />
                   </svg>
                 </div>
-                <div className="flex flex-col gap-0.5">
+                <div className="flex flex-col gap-0.5 overflow-hidden">
                   <span className="text-neutral-800 text-base font-semibold font-['Segoe_UI'] leading-5">{t('supportPanel.email')}</span>
-                  <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI'] leading-5">verkoop@businesslabels.nl</span>
+                  <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI'] leading-5 truncate">verkoop@businesslabels.nl</span>
                 </div>
               </a>
             </div>

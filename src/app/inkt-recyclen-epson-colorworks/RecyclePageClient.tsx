@@ -261,7 +261,7 @@ function CollectionBoxForm() {
           <div className="flex items-center gap-4 flex-wrap">
             <a href="tel:+31318590465" className="flex items-center gap-1.5 text-amber-500 font-semibold font-sans hover:text-amber-600 transition-colors">
               <IconPhone className="text-amber-500" />
-              +31 (0)318 590 465
+              +31 318 590 465
             </a>
             <a href="mailto:verkoop@businesslabels.nl" className="flex items-center gap-1.5 text-amber-500 font-semibold font-sans lowercase hover:text-amber-600 transition-colors">
               <IconMail className="text-amber-500" />
@@ -428,7 +428,7 @@ function PickupForm() {
           <div className="flex items-center gap-4 flex-wrap">
             <a href="tel:+31318590465" className="flex items-center gap-1.5 text-amber-500 font-semibold font-sans hover:text-amber-600 transition-colors">
               <IconPhone className="text-amber-500" />
-              +31 (0)318 590 465
+              +31 318 590 465
             </a>
             <a href="mailto:verkoop@businesslabels.nl" className="flex items-center gap-1.5 text-amber-500 font-semibold font-sans lowercase hover:text-amber-600 transition-colors">
               <IconMail className="text-amber-500" />
