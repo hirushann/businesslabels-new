@@ -13,6 +13,19 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const authToken = request.cookies.get('auth_token')?.value;
+    const isGuestCheckout = !authToken;
+
+    if (isGuestCheckout && body?.payment_method === 'banktransfer') {
+      return NextResponse.json(
+        {
+          message: 'Pay by invoice within 30 days is only available for customers with an account.',
+          errors: {
+            payment_method: ['Pay by invoice within 30 days is only available for customers with an account.'],
+          },
+        },
+        { status: 422 }
+      );
+    }
 
     const endpoint = authToken ? `${API_BASE_URL}/api/orders` : `${API_BASE_URL}/api/guest/orders`;
     

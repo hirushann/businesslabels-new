@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState, useEffect } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import EmptyState from "@/components/EmptyState";
 import { type CartItem, useCart } from "@/components/CartProvider";
 import { toast } from "sonner";
@@ -15,6 +15,8 @@ type CheckoutFormState = {
   lastName: string;
   email: string;
   mobileNumber: string;
+  companyName: string;
+  vatNumber: string;
   streetAddress: string;
   country: string;
   city: string;
@@ -37,6 +39,8 @@ const initialFormState: CheckoutFormState = {
   lastName: "",
   email: "",
   mobileNumber: "",
+  companyName: "",
+  vatNumber: "",
   streetAddress: "",
   country: "Netherlands",
   city: "",
@@ -50,6 +54,8 @@ const demoFormState: CheckoutFormState = {
   lastName: "van Dijk",
   email: "emma.vandijk@example.com",
   mobileNumber: "+31 6 1234 5678",
+  companyName: "Van Dijk Labels BV",
+  vatNumber: "NL123456789B01",
   streetAddress: "Keizersgracht 214",
   country: "Netherlands",
   city: "Amsterdam",
@@ -193,9 +199,18 @@ function CheckoutShell({
   form,
   errors,
   handleChange,
-  browseHref,
   isPending,
   isLoggedIn,
+  loginEmail,
+  loginPassword,
+  loginRemember,
+  loginErrors,
+  loginMessage,
+  isLoginPending,
+  onLoginEmailChange,
+  onLoginPasswordChange,
+  onLoginRememberChange,
+  onLoginSubmit,
   onAddressSelect,
 }: {
   items: CartItem[];
@@ -207,9 +222,18 @@ function CheckoutShell({
   form: CheckoutFormState;
   errors: Partial<Record<keyof CheckoutFormState, string>>;
   handleChange: (field: keyof CheckoutFormState, value: string) => void;
-  browseHref: string;
   isPending: boolean;
   isLoggedIn: boolean;
+  loginEmail: string;
+  loginPassword: string;
+  loginRemember: boolean;
+  loginErrors: { email?: string; password?: string };
+  loginMessage: string;
+  isLoginPending: boolean;
+  onLoginEmailChange: (value: string) => void;
+  onLoginPasswordChange: (value: string) => void;
+  onLoginRememberChange: (value: boolean) => void;
+  onLoginSubmit: () => void;
   onAddressSelect: (address: {
     street: string;
     city: string;
@@ -223,6 +247,12 @@ function CheckoutShell({
   const paymentFee = useMemo(() => (form.paymentMethod === "creditcard" ? totalAmount * 0.025 : 0), [totalAmount, form.paymentMethod]);
   const taxAmount = useMemo(() => (totalAmount + shippingAmount + paymentFee) * 0.21, [totalAmount, shippingAmount, paymentFee]);
   const finalTotal = useMemo(() => totalAmount + shippingAmount + paymentFee + taxAmount, [totalAmount, shippingAmount, paymentFee, taxAmount]);
+  const handleLoginKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      onLoginSubmit();
+    }
+  };
 
 
   return (
@@ -269,6 +299,70 @@ function CheckoutShell({
                       {t('checkout.checkoutDescription')}
                     </p>
                   </div>
+
+                  {!isLoggedIn && (
+                    <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-5">
+                      <div className="flex flex-col gap-4">
+                        <div className="flex flex-col gap-1">
+                          <h2 className="text-lg font-bold text-neutral-800">{t('checkout.loginTitle')}</h2>
+                          <p className="text-sm leading-5 text-neutral-600">{t('checkout.loginDescription')}</p>
+                        </div>
+                        {loginMessage && (
+                          <div className="rounded-xl border border-red-100 bg-white px-4 py-3 text-sm font-semibold text-red-700">
+                            {loginMessage}
+                          </div>
+                        )}
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                          <label className="flex flex-col gap-2">
+                            <span className="text-sm font-semibold text-neutral-700">{t('login.emailLabel')}</span>
+                            <input
+                              type="email"
+                              autoComplete="email"
+                              className={inputClasses(Boolean(loginErrors.email))}
+                              value={loginEmail}
+                              onChange={(event) => onLoginEmailChange(event.target.value)}
+                              onKeyDown={handleLoginKeyDown}
+                              disabled={isLoginPending}
+                            />
+                            {loginErrors.email && <span className="text-xs font-medium text-red-500">{loginErrors.email}</span>}
+                          </label>
+                          <label className="flex flex-col gap-2">
+                            <span className="text-sm font-semibold text-neutral-700">{t('login.passwordLabel')}</span>
+                            <input
+                              type="password"
+                              autoComplete="current-password"
+                              className={inputClasses(Boolean(loginErrors.password))}
+                              value={loginPassword}
+                              onChange={(event) => onLoginPasswordChange(event.target.value)}
+                              onKeyDown={handleLoginKeyDown}
+                              disabled={isLoginPending}
+                            />
+                            {loginErrors.password && <span className="text-xs font-medium text-red-500">{loginErrors.password}</span>}
+                          </label>
+                        </div>
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <label className="flex items-center gap-3 text-sm font-semibold text-neutral-600">
+                            <input
+                              type="checkbox"
+                              checked={loginRemember}
+                              onChange={(event) => onLoginRememberChange(event.target.checked)}
+                              disabled={isLoginPending}
+                              className="size-4 rounded border-slate-300 accent-amber-500"
+                            />
+                            {t('login.rememberMe')}
+                          </label>
+                          <button
+                            type="button"
+                            onClick={onLoginSubmit}
+                            disabled={isLoginPending}
+                            className="inline-flex h-11 items-center justify-center rounded-full bg-neutral-800 px-5 text-sm font-bold text-white transition-colors hover:bg-neutral-900 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {isLoginPending ? t('checkout.loginLoading') : t('checkout.loginButton')}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
  
                   <div className="flex flex-col gap-5">
                     <div className="flex flex-col gap-1">
@@ -298,6 +392,16 @@ function CheckoutShell({
                         <span className="text-sm font-semibold text-neutral-700">{t('checkout.mobileNumber')} <span className="text-red-500">*</span></span>
                         <input className={inputClasses(Boolean(errors.mobileNumber))} value={form.mobileNumber} onChange={(e) => handleChange("mobileNumber", e.target.value)} />
                         {errors.mobileNumber && <span className="text-xs text-red-500 font-medium">{errors.mobileNumber}</span>}
+                      </label>
+                      <label className="flex flex-col gap-2">
+                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.companyName')}</span>
+                        <input className={inputClasses(Boolean(errors.companyName))} value={form.companyName} onChange={(e) => handleChange("companyName", e.target.value)} />
+                        {errors.companyName && <span className="text-xs text-red-500 font-medium">{errors.companyName}</span>}
+                      </label>
+                      <label className="flex flex-col gap-2">
+                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.vatNumber')}</span>
+                        <input className={inputClasses(Boolean(errors.vatNumber))} value={form.vatNumber} onChange={(e) => handleChange("vatNumber", e.target.value)} />
+                        {errors.vatNumber && <span className="text-xs text-red-500 font-medium">{errors.vatNumber}</span>}
                       </label>
                     </div>
                   </div>
@@ -415,32 +519,50 @@ function CheckoutShell({
                         <span className="text-base font-semibold text-neutral-800">{t('checkout.bancontact')}</span>
                       </label>
  
-                      {isLoggedIn && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <label 
-                              className={`flex cursor-pointer items-center gap-4 rounded-xl border p-4 transition-all ${
-                                form.paymentMethod === "banktransfer" ? "border-amber-400 bg-amber-50" : "border-slate-200 hover:border-amber-200"
-                              }`}
-                            >
-                              <input 
-                                type="radio" 
-                                name="paymentMethod" 
-                                className="sr-only" 
-                                checked={form.paymentMethod === "banktransfer"} 
-                                onChange={() => handleChange("paymentMethod", "banktransfer")} 
-                              />
-                              <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${form.paymentMethod === "banktransfer" ? "border-amber-500 bg-amber-500" : "border-slate-300"}`}>
-                                {form.paymentMethod === "banktransfer" && <div className="h-2 w-2 rounded-full bg-white" />}
-                              </div>
-                              <span className="text-base font-semibold text-neutral-800">{t('checkout.invoice')}</span>
-                            </label>
-                          </TooltipTrigger>
-                          <TooltipContent className="p-4 bg-white border border-slate-200 shadow-xl text-neutral-800 rounded-2xl max-w-[300px]">
-                            <p className="font-medium text-sm">{t('checkout.bankTransferTooltip')}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <label 
+                            className={`flex items-start gap-4 rounded-xl border p-4 transition-all ${
+                              isLoggedIn
+                                ? form.paymentMethod === "banktransfer"
+                                  ? "cursor-pointer border-amber-400 bg-amber-50"
+                                  : "cursor-pointer border-slate-200 hover:border-amber-200"
+                                : "cursor-not-allowed border-slate-200 bg-slate-100 opacity-70"
+                            }`}
+                          >
+                            <input 
+                              type="radio" 
+                              name="paymentMethod" 
+                              className="sr-only" 
+                              checked={form.paymentMethod === "banktransfer"} 
+                              disabled={!isLoggedIn}
+                              onChange={() => {
+                                if (isLoggedIn) {
+                                  handleChange("paymentMethod", "banktransfer");
+                                }
+                              }} 
+                            />
+                            <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${form.paymentMethod === "banktransfer" ? "border-amber-500 bg-amber-500" : "border-slate-300"}`}>
+                              {form.paymentMethod === "banktransfer" && <div className="h-2 w-2 rounded-full bg-white" />}
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <span className={`text-base font-semibold ${isLoggedIn ? "text-neutral-800" : "text-neutral-500"}`}>
+                                {t('checkout.invoice')}
+                              </span>
+                              {!isLoggedIn && (
+                                <span className="text-xs font-semibold leading-4 text-neutral-500">
+                                  {t('checkout.invoiceAccountOnly')}
+                                </span>
+                              )}
+                            </div>
+                          </label>
+                        </TooltipTrigger>
+                        <TooltipContent className="p-4 bg-white border border-slate-200 shadow-xl text-neutral-800 rounded-2xl max-w-[300px]">
+                          <p className="font-medium text-sm">
+                            {isLoggedIn ? t('checkout.bankTransferTooltip') : t('checkout.invoiceAccountOnly')}
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
                     </div>
                     {errors.paymentMethod && <p className="text-sm text-red-500">{errors.paymentMethod}</p>}
                   </div>
@@ -613,6 +735,176 @@ function CheckoutShell({
   );
 }
 
+type LoginErrors = {
+  email?: string[];
+  password?: string[];
+};
+
+type LoginResponse = {
+  message?: string;
+  user?: unknown;
+  data?: unknown;
+  customer?: unknown;
+  auth?: unknown;
+  errors?: LoginErrors;
+};
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function readString(source: unknown, keys: string[]): string {
+  if (!isPlainObject(source)) {
+    return "";
+  }
+
+  for (const key of keys) {
+    const value = source[key];
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+    if (typeof value === "number") {
+      return String(value);
+    }
+  }
+
+  return "";
+}
+
+function extractUser(data: LoginResponse, email: string) {
+  if (isPlainObject(data.user)) {
+    return data.user;
+  }
+
+  if (isPlainObject(data.data)) {
+    if (isPlainObject(data.data.user)) {
+      return data.data.user;
+    }
+
+    if (typeof data.data.email === "string" || typeof data.data.name === "string") {
+      return data.data;
+    }
+  }
+
+  if (isPlainObject(data.customer)) {
+    return data.customer;
+  }
+
+  if (isPlainObject(data.auth) && isPlainObject(data.auth.user)) {
+    return data.auth.user;
+  }
+
+  return { email };
+}
+
+function extractPayloadObject(payload: unknown): Record<string, unknown> {
+  if (!isPlainObject(payload)) {
+    return {};
+  }
+
+  if (isPlainObject(payload.data)) {
+    return payload.data;
+  }
+
+  if (isPlainObject(payload.user)) {
+    return payload.user;
+  }
+
+  if (isPlainObject(payload.customer)) {
+    return payload.customer;
+  }
+
+  return payload;
+}
+
+function extractAddressList(payload: unknown): Record<string, unknown>[] {
+  if (Array.isArray(payload)) {
+    return payload.filter(isPlainObject);
+  }
+
+  if (!isPlainObject(payload)) {
+    return [];
+  }
+
+  if (Array.isArray(payload.data)) {
+    return payload.data.filter(isPlainObject);
+  }
+
+  if (Array.isArray(payload.addresses)) {
+    return payload.addresses.filter(isPlainObject);
+  }
+
+  if (isPlainObject(payload.data) && Array.isArray(payload.data.addresses)) {
+    return payload.data.addresses.filter(isPlainObject);
+  }
+
+  return [];
+}
+
+function countryFromAddress(address: Record<string, unknown>, fallback: string) {
+  const countryId = readString(address, ["country_id", "countryCode", "country_code"]).toUpperCase();
+
+  if (countryId === "NL") return "Netherlands";
+  if (countryId === "BE") return "Belgium";
+  if (countryId === "DE") return "Germany";
+
+  return readString(address, ["country_name", "country"]) || fallback;
+}
+
+function splitName(source: unknown) {
+  let firstName = readString(source, ["firstName", "firstname", "first_name", "billing_first_name"]);
+  let lastName = readString(source, ["lastName", "lastname", "last_name", "billing_last_name"]);
+
+  if (!firstName) {
+    const name = readString(source, ["name", "full_name", "display_name"]);
+    if (name) {
+      const parts = name.trim().split(/\s+/);
+      firstName = parts[0] || "";
+      lastName = lastName || parts.slice(1).join(" ");
+    }
+  }
+
+  return { firstName, lastName };
+}
+
+function readNestedString(source: unknown, objectKeys: string[], valueKeys: string[]) {
+  if (!isPlainObject(source)) {
+    return "";
+  }
+
+  for (const objectKey of objectKeys) {
+    const nested = source[objectKey];
+    const value = readString(nested, valueKeys);
+
+    if (value) {
+      return value;
+    }
+  }
+
+  return "";
+}
+
+function readAddressState(address: unknown) {
+  return (
+    readString(address, [
+      "state",
+      "state_name",
+      "province",
+      "province_name",
+      "region",
+      "region_name",
+      "county",
+      "administrative_area",
+      "administrative_area_level_1",
+    ]) ||
+    readNestedString(address, ["state", "province", "region"], ["name", "title", "label", "code"])
+  );
+}
+
+function valueWhenBlank(current: string, next: string) {
+  return current.trim() ? current : next || current;
+}
+
 export default function CheckoutPageClient({
   mode = "live",
   demoItems = [],
@@ -631,79 +923,172 @@ export default function CheckoutPageClient({
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginRemember, setLoginRemember] = useState(true);
+  const [loginErrors, setLoginErrors] = useState<{ email?: string; password?: string }>({});
+  const [loginMessage, setLoginMessage] = useState("");
+  const [isLoginPending, setIsLoginPending] = useState(false);
 
-  useEffect(() => {
-    setIsLoggedIn(!!localStorage.getItem('auth_user'));
-  }, []);
+  const autofillCustomerDetails = useCallback(async () => {
+    if (isDemoMode) return;
 
-  useEffect(() => {
-    if (isDemoMode || isAutofilled) return;
-
-    const storedUser = localStorage.getItem('auth_user');
+    const storedUser = localStorage.getItem("auth_user");
+    let storedUserData: unknown = {};
     if (storedUser) {
       try {
-        const user = JSON.parse(storedUser);
-        
-        // Split name if first/last are missing
-        let firstName = user.firstName || user.firstname || user.first_name || '';
-        let lastName = user.lastName || user.lastname || user.last_name || '';
-        
-        if (!firstName && user.name) {
-          const parts = user.name.trim().split(/\s+/);
-          firstName = parts[0] || '';
-          lastName = parts.slice(1).join(' ') || '';
-        }
-
-        // Initial pre-fill from user object
-        setForm(prev => ({
-          ...prev,
-          firstName: firstName || prev.firstName,
-          lastName: lastName || prev.lastName,
-          email: user.email || prev.email,
-          mobileNumber: user.phone || user.mobile || user.mobile_number || user.mobileNumber || prev.mobileNumber,
-        }));
-
-        // Fetch addresses for more complete pre-fill
-        fetch('/api/account/addresses')
-          .then(res => res.json())
-          .then(data => {
-            const addresses = data.data || data.addresses || (Array.isArray(data) ? data : []);
-            if (addresses.length > 0) {
-              // Prefer shipping, then billing, then first available
-              const addr = addresses.find((a: any) => a.type === 'shipping') || 
-                           addresses.find((a: any) => a.type === 'billing') || 
-                           addresses[0];
-              
-              setForm(prev => ({
-                ...prev,
-                firstName: addr.firstname || firstName || prev.firstName,
-                lastName: addr.lastname || lastName || prev.lastName,
-                streetAddress: addr.address || addr.street || addr.address_1 || addr.street_address || prev.streetAddress,
-                city: addr.city || prev.city,
-                state: addr.state || addr.province || addr.region || addr.province_id || prev.state,
-                postcode: addr.postalcode || addr.postcode || addr.zip || addr.postal_code || prev.postcode,
-                country: addr.country_id === 'NL' ? 'Netherlands' : 
-                         addr.country_id === 'BE' ? 'Belgium' : 
-                         addr.country_id === 'DE' ? 'Germany' : 
-                         (addr.country_name || addr.country || prev.country),
-              }));
-            }
-            setIsAutofilled(true);
-          })
-          .catch(err => {
-            console.error('Failed to fetch addresses for autofill:', err);
-            setIsAutofilled(true); // Don't keep trying if it fails
-          });
-      } catch (e) {
-        console.error('Failed to parse auth_user for autofill:', e);
+        storedUserData = JSON.parse(storedUser);
+      } catch (error) {
+        console.error("Failed to parse auth_user for autofill:", error);
       }
     }
-  }, [isDemoMode, isAutofilled]);
+
+    // Try fetching from backend first
+    const profileResponse = await fetch("/api/account/profile", { cache: "no-store" }).catch(() => null);
+    const profilePayload = profileResponse?.ok ? await profileResponse.json().catch(() => ({})) : null;
+
+    const addressResponse = await fetch("/api/account/addresses", { cache: "no-store" }).catch(() => null);
+    const addressPayload = addressResponse?.ok ? await addressResponse.json().catch(() => ({})) : null;
+
+    // If we have a profile response from backend, use it
+    let profile = profilePayload ? extractPayloadObject(profilePayload) : {};
+    let addresses = addressPayload ? extractAddressList(addressPayload) : [];
+
+    const hasBackendProfile = profile && Object.keys(profile).length > 0;
+    let finalProfile = profile;
+
+    if (hasBackendProfile) {
+      // Sync with localStorage so the user is logged in client-side
+      localStorage.setItem("auth_user", JSON.stringify(profile));
+      setIsLoggedIn(true);
+      window.dispatchEvent(new Event("auth-user-updated"));
+    } else if (storedUser && Object.keys(storedUserData as object).length > 0) {
+      // Fallback: If backend check failed/unauthorized, but we have stored user, use stored user
+      finalProfile = storedUserData as Record<string, unknown>;
+      setIsLoggedIn(true);
+    } else {
+      // Not logged in either backend or frontend
+      setIsLoggedIn(false);
+      setIsAutofilled(true);
+      return;
+    }
+
+    const preferredAddress =
+      addresses.find((address) => readString(address, ["type"]) === "billing") ??
+      addresses.find((address) => readString(address, ["type"]) === "shipping") ??
+      addresses[0] ??
+      null;
+
+    const profileName = splitName(finalProfile);
+    const storedName = splitName(storedUserData);
+    const addressName = splitName(preferredAddress);
+    const profilePhone = readString(finalProfile, ["phone", "telephone", "mobile", "mobile_number", "mobileNumber"]);
+    const storedPhone = readString(storedUserData, ["phone", "telephone", "mobile", "mobile_number", "mobileNumber"]);
+    const addressPhone = readString(preferredAddress, ["phone", "telephone", "mobile", "mobile_number", "mobileNumber"]);
+
+    setForm((prev) => ({
+      ...prev,
+      firstName: valueWhenBlank(prev.firstName, profileName.firstName || storedName.firstName || addressName.firstName),
+      lastName: valueWhenBlank(prev.lastName, profileName.lastName || storedName.lastName || addressName.lastName),
+      email: valueWhenBlank(prev.email, readString(finalProfile, ["email"]) || readString(storedUserData, ["email"]) || readString(preferredAddress, ["email"])),
+      mobileNumber: valueWhenBlank(prev.mobileNumber, profilePhone || storedPhone || addressPhone),
+      companyName: valueWhenBlank(
+        prev.companyName,
+        readString(preferredAddress, ["company", "company_name", "business_name"]) ||
+          readString(finalProfile, ["company", "company_name", "business_name"]) ||
+          readString(storedUserData, ["company", "company_name", "business_name"]),
+      ),
+      vatNumber: valueWhenBlank(
+        prev.vatNumber,
+        readString(preferredAddress, ["vat_number", "btw_number", "vatNumber"]) ||
+          readString(finalProfile, ["vat_number", "btw_number", "vatNumber"]) ||
+          readString(storedUserData, ["vat_number", "btw_number", "vatNumber"]),
+      ),
+      streetAddress: valueWhenBlank(prev.streetAddress, readString(preferredAddress, ["address", "street", "address_1", "street_address"])),
+      city: valueWhenBlank(prev.city, readString(preferredAddress, ["city", "town", "locality"])),
+      state: valueWhenBlank(prev.state, readAddressState(preferredAddress)),
+      postcode: valueWhenBlank(prev.postcode, readString(preferredAddress, ["postalcode", "postcode", "zip", "postal_code"])),
+      country: preferredAddress ? countryFromAddress(preferredAddress, prev.country) : prev.country,
+    }));
+
+    setIsAutofilled(true);
+  }, [isDemoMode]);
+
+  useEffect(() => {
+    const refreshAuthState = () => {
+      const hasUser = !!localStorage.getItem("auth_user");
+      setIsLoggedIn(hasUser);
+
+      if (!hasUser) {
+        setForm((current) =>
+          current.paymentMethod === "banktransfer" ? { ...current, paymentMethod: "" } : current,
+        );
+      }
+
+      if (!isAutofilled) {
+        void autofillCustomerDetails();
+      }
+    };
+
+    refreshAuthState();
+    window.addEventListener("auth-user-updated", refreshAuthState);
+    window.addEventListener("storage", refreshAuthState);
+
+    return () => {
+      window.removeEventListener("auth-user-updated", refreshAuthState);
+      window.removeEventListener("storage", refreshAuthState);
+    };
+  }, [autofillCustomerDetails, isAutofilled]);
 
 
   const handleChange = (field: keyof CheckoutFormState, value: string) => {
+    if (field === "paymentMethod" && value === "banktransfer" && !isLoggedIn) {
+      setForm((current) => ({ ...current, paymentMethod: "" }));
+      setErrors((current) => ({ ...current, paymentMethod: t("checkout.invoiceAccountOnly") }));
+      return;
+    }
+
     setForm((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
+  };
+
+  const handleCheckoutLogin = async () => {
+    setIsLoginPending(true);
+    setLoginErrors({});
+    setLoginMessage("");
+
+    try {
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: loginEmail, password: loginPassword, remember: loginRemember }),
+      });
+
+      const data = (await response.json()) as LoginResponse;
+
+      if (!response.ok) {
+        setLoginErrors({
+          email: data.errors?.email?.[0],
+          password: data.errors?.password?.[0],
+        });
+        setLoginMessage(data.message || t("checkout.loginError"));
+        return;
+      }
+
+      const user = extractUser(data, loginEmail);
+      localStorage.setItem("auth_user", JSON.stringify(user));
+      setIsLoggedIn(true);
+      setIsAutofilled(false);
+      window.dispatchEvent(new Event("auth-user-updated"));
+      toast.success(t("checkout.loginSuccess"));
+    } catch {
+      setLoginMessage(t("checkout.loginError"));
+    } finally {
+      setIsLoginPending(false);
+    }
   };
 
   const validate = (): boolean => {
@@ -725,6 +1110,8 @@ export default function CheckoutPageClient({
       lastName: t('checkout.lastName'),
       email: t('checkout.email'),
       mobileNumber: t('checkout.mobileNumber'),
+      companyName: t('checkout.companyName'),
+      vatNumber: t('checkout.vatNumber'),
       streetAddress: t('checkout.streetAddress'),
       city: t('checkout.city'),
       state: t('checkout.state'),
@@ -740,6 +1127,10 @@ export default function CheckoutPageClient({
 
     if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
       nextErrors.email = t('validation.invalidEmail');
+    }
+
+    if (!isLoggedIn && form.paymentMethod === "banktransfer") {
+      nextErrors.paymentMethod = t("checkout.invoiceAccountOnly");
     }
 
     setErrors(nextErrors);
@@ -812,8 +1203,15 @@ export default function CheckoutPageClient({
       billing_lastname: form.lastName,
       billing_email: form.email,
       billing_phone: form.mobileNumber,
+      billing_company_name: form.companyName,
+      company_name: form.companyName,
+      billing_vat_number: form.vatNumber,
+      vat_number: form.vatNumber,
+      btw_number: form.vatNumber,
       billing_address: form.streetAddress,
       billing_city: form.city,
+      billing_state: form.state,
+      billing_province: form.state,
       billing_postalcode: form.postcode,
       billing_country_id: form.country === "Netherlands" ? "NL" : form.country === "Belgium" ? "BE" : "DE",
       shipping_amount: shippingAmount,
@@ -923,8 +1321,17 @@ export default function CheckoutPageClient({
       form={form}
       errors={errors}
       handleChange={handleChange}
-      browseHref={isDemoMode ? "/category/demo" : "/product"}
       isPending={isPending}
+      loginEmail={loginEmail}
+      loginPassword={loginPassword}
+      loginRemember={loginRemember}
+      loginErrors={loginErrors}
+      loginMessage={loginMessage}
+      isLoginPending={isLoginPending}
+      onLoginEmailChange={setLoginEmail}
+      onLoginPasswordChange={setLoginPassword}
+      onLoginRememberChange={setLoginRemember}
+      onLoginSubmit={handleCheckoutLogin}
       onAddressSelect={(address) => {
         setForm((prev) => {
           // Map Google Maps country names to our select options
