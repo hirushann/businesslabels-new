@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useMemo } from 'react';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import EmptyState from '@/components/EmptyState';
 import { useCart, type CartItem } from '@/components/CartProvider';
+import CartQuantityInput from '@/components/CartQuantityInput';
 import { useTranslations } from 'next-intl';
 
 function formatEuro(value: number): string {
@@ -26,11 +26,11 @@ export default function CartPageClient() {
   const t = useTranslations();
   const {
     items,
-    totalItemCount,
     totalAmount,
     removeItem,
     incrementItemQuantity,
     decrementItemQuantity,
+    setItemQuantity,
   } = useCart();
 
   const subtotal = totalAmount;
@@ -130,23 +130,18 @@ export default function CartPageClient() {
                           {item.quantity}
                         </div>
                       ) : (
-                        <div className="flex h-10 items-center rounded-full border border-slate-200 bg-white px-1 shadow-sm">
-                          <button
-                            type="button"
-                            onClick={() => decrementItemQuantity(item.key)}
-                            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-50 text-neutral-600 transition-colors"
-                          >
-                            -
-                          </button>
-                          <span className="w-8 text-center text-sm font-bold text-neutral-800">{item.quantity}</span>
-                          <button
-                            type="button"
-                            onClick={() => incrementItemQuantity(item.key)}
-                            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-50 text-neutral-600 transition-colors"
-                          >
-                            +
-                          </button>
-                        </div>
+                        <CartQuantityInput
+                          quantity={item.quantity}
+                          itemName={item.name}
+                          decreaseLabel={t('cart.decreaseQuantity', { name: item.name })}
+                          increaseLabel={t('cart.increaseQuantity', { name: item.name })}
+                          onDecrease={() => decrementItemQuantity(item.key)}
+                          onIncrease={() => incrementItemQuantity(item.key)}
+                          onQuantityChange={(quantity) => setItemQuantity(item.key, quantity)}
+                          className="shadow-sm"
+                          buttonClassName="text-neutral-600 hover:bg-slate-50"
+                          inputClassName="font-bold"
+                        />
                       )}
                     </div>
                   </div>
