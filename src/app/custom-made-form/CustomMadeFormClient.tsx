@@ -661,7 +661,7 @@ export default function CustomMadeFormClient() {
                 </div>
                 <button
                   type="submit"
-                  disabled={isSubmitting || submitStatus === 'success'}
+                  disabled={isSubmitting}
                   className="h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] flex justify-center items-center gap-2 hover:bg-amber-600 disabled:opacity-50 active:scale-[0.98] transition-all"
                 >
                   <span className="text-white text-base font-semibold font-sans leading-6">
