@@ -46,7 +46,7 @@ export default function ProductPaginationSwitcher({
   pageCount,
   onPageChange,
 }: ProductPaginationSwitcherProps) {
-  const t = useTranslations("common");
+  const t = useTranslations("pagination");
   const page = Math.min(Math.max(1, currentPage), pageCount);
   const visiblePages = buildVisiblePages(page, pageCount);
 
@@ -58,7 +58,7 @@ export default function ProductPaginationSwitcher({
         disabled={page <= 1}
         className="rounded-[50px] border border-slate-100 px-6 py-2.5 text-base font-medium text-neutral-800 disabled:opacity-50"
       >
-        {t("pagination.previous")}
+        {t("previous")}
       </button>
 
       {visiblePages.map((item, index) =>
@@ -87,7 +87,7 @@ export default function ProductPaginationSwitcher({
         disabled={page >= pageCount}
         className="rounded-[50px] border border-slate-100 px-6 py-2.5 text-base font-semibold text-neutral-800 disabled:opacity-50"
       >
-        {t("pagination.next")}
+        {t("next")}
       </button>
     </div>
   );

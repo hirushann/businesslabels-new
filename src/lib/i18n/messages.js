@@ -1372,6 +1372,13 @@ export const MESSAGES_V4 = {
       add: 'Toevoegen',
       loading: 'Laden...',
       viewMoreProducts: 'Meer producten bekijken',
+      pagination: {
+        previous: 'Vorige',
+        next: 'Volgende',
+        page: 'Pagina',
+        of: 'van',
+        showing: 'Toont {from}-{to} van {total}',
+      }
     },
     validation: {
       required: "{field} is verplicht",
