@@ -953,6 +953,8 @@ export const MESSAGES_V4 = {
       showMore: 'Show more ({count} more)',
       from: 'From',
       to: 'To',
+      expandScale: 'Expand scale',
+      collapseScale: 'Collapse scale',
       fanFold: 'Fan-fold',
     },
     product: {
@@ -2271,6 +2273,8 @@ export const MESSAGES_V4 = {
       showMore: 'Meer tonen ({count} meer)',
       from: 'Van',
       to: 'Tot',
+      expandScale: 'Schaal vergroten',
+      collapseScale: 'Schaal verkleinen',
       fanFold: 'Fan-fold',
     },
     product: {

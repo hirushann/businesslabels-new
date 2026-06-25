@@ -198,76 +198,33 @@ describe("RangeSlider Component", () => {
     expect(onAfterChangeMock).toHaveBeenCalledWith([300, 800]);
   });
 
-  it("supports visual capping and absoluteMax boundaries", () => {
+  it("clamps typed and dragged values to the provided max scale", () => {
     const onChangeMock = vi.fn();
     const onAfterChangeMock = vi.fn();
 
-    const { container, rerender } = render(
+    const { container } = render(
       <RangeSlider
         min={0}
         max={800}
-        absoluteMax={140000}
-        value={[25, 140000]}
+        value={[25, 500]}
         onChange={onChangeMock}
         onAfterChange={onAfterChangeMock}
       />
     );
 
-    // Verify visual label shows "800+"
-    const maxLabel = screen.getByText("800+");
+    const maxLabel = screen.getByText("800");
     expect(maxLabel).toBeDefined();
 
-    // Verify label for "To" field displays "(140000)"
-    const toLabel = screen.getByText("To (140000)");
-    expect(toLabel).toBeDefined();
-
-    // Verify input box initializes to visual cap "800" instead of actual max "140000"
     const toInput = screen.getAllByRole("spinbutton")[1] as HTMLInputElement;
-    expect(toInput.value).toBe("800");
+    expect(toInput.value).toBe("500");
 
-    // Verify manual input allows entering values up to absoluteMax (e.g. 5000)
     fireEvent.change(toInput, { target: { value: "5000" } });
     fireEvent.blur(toInput);
 
-    expect(toInput.value).toBe("5000");
-    expect(onChangeMock).toHaveBeenCalledWith([25, 5000]);
-    expect(onAfterChangeMock).toHaveBeenCalledWith([25, 5000]);
+    expect(toInput.value).toBe("800");
+    expect(onChangeMock).toHaveBeenCalledWith([25, 800]);
+    expect(onAfterChangeMock).toHaveBeenCalledWith([25, 800]);
 
-    // Rerender to simulate parent state update to [25, 5000]
-    rerender(
-      <RangeSlider
-        min={0}
-        max={800}
-        absoluteMax={140000}
-        value={[25, 5000]}
-        onChange={onChangeMock}
-        onAfterChange={onAfterChangeMock}
-      />
-    );
-
-    // Verify manual input allows entering absoluteMax (e.g. 140000) and preserves it
-    fireEvent.change(toInput, { target: { value: "140000" } });
-    fireEvent.blur(toInput);
-
-    expect(toInput.value).toBe("140000");
-    expect(onChangeMock).toHaveBeenLastCalledWith([25, 140000]);
-    expect(onAfterChangeMock).toHaveBeenLastCalledWith([25, 140000]);
-
-    // Rerender with props echoing the update: value [25, 140000]
-    rerender(
-      <RangeSlider
-        min={0}
-        max={800}
-        absoluteMax={140000}
-        value={[25, 140000]}
-        onChange={onChangeMock}
-        onAfterChange={onAfterChangeMock}
-      />
-    );
-    // It should keep the typed value "140000" instead of resetting to "800"
-    expect(toInput.value).toBe("140000");
-
-    // Verify dragging the thumb clamps it to max (800)
     const thumbs = container.querySelectorAll("button[type='button']");
     const maxThumb = thumbs[1] as HTMLButtonElement;
 
@@ -287,9 +244,8 @@ describe("RangeSlider Component", () => {
     }
 
     fireEvent.pointerDown(maxThumb, { pointerId: 1, pointerType: "mouse" });
-    // Drag to 50% position (clientX = 300)
     fireEvent(window, new MouseEvent("pointermove", { clientX: 300 }));
-    expect(toInput.value).toBe("400"); // 50% of visual max (800) is 400
+    expect(toInput.value).toBe("400");
     fireEvent(window, new MouseEvent("pointerup"));
   });
 });

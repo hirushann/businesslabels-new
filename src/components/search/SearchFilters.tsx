@@ -8,6 +8,7 @@ import Accordion from "@/components/Accordion";
 import RangeSlider from "@/components/RangeSlider";
 
 const INITIAL_MIN = 0;
+const HEIGHT_RANGE_CAP = 800;
 const FALLBACK_MAX_BY_FIELD: Record<RangeFilterField, number> = {
   price: 5000,
   meta_width_mm: 100,
@@ -229,21 +230,23 @@ function RangeFilter({
   pillConfig?: PillFilterConfig;
 }) {
   const t = useTranslations();
+  const [showFullScale, setShowFullScale] = useState(false);
   const rawMax = sliderMax(rawResponse, config.field);
   const isHeight = config.field === "meta_height_mm";
-  const max = isHeight ? Math.min(rawMax, 800) : rawMax;
-  const absoluteMax = isHeight ? rawMax : undefined;
 
   const filter = activeFilters.find((activeFilter) => activeFilter.field === config.field);
   const filterRange = filter?.values.find(isPriceRangeFilter);
-  const filterMax = absoluteMax ?? max;
+  const filterTo = numericValue(filterRange?.to);
+  const hasFullScaleAvailable = isHeight && rawMax > HEIGHT_RANGE_CAP;
+  const isFullScale = showFullScale || (hasFullScaleAvailable && filterTo !== null && filterTo > HEIGHT_RANGE_CAP);
+  const max = hasFullScaleAvailable && !isFullScale ? HEIGHT_RANGE_CAP : rawMax;
   const range: [number, number] = [
-    Math.min(numericValue(filterRange?.from) ?? INITIAL_MIN, filterMax),
-    Math.min(numericValue(filterRange?.to) ?? filterMax, filterMax),
+    Math.min(numericValue(filterRange?.from) ?? INITIAL_MIN, max),
+    Math.min(filterTo ?? max, max),
   ];
 
   const handleAfterChange = (newRange: [number, number]) => {
-    const isUnbounded = newRange[1] === max || newRange[1] >= filterMax;
+    const isUnbounded = newRange[1] >= max;
     if (newRange[0] === INITIAL_MIN && isUnbounded) {
       removeFilter(config.field);
     } else {
@@ -255,19 +258,39 @@ function RangeFilter({
     }
   };
 
+  const toggleScale = () => {
+    if (!isFullScale) {
+      setShowFullScale(true);
+      return;
+    }
+
+    setShowFullScale(false);
+    if (filterTo !== null && filterTo > HEIGHT_RANGE_CAP) {
+      handleAfterChange([Math.min(range[0], HEIGHT_RANGE_CAP), HEIGHT_RANGE_CAP]);
+    }
+  };
+
   return (
     <Accordion title={t(config.titleKey)} defaultOpen={true} size="compact">
       <div className="flex flex-col gap-4">
         <RangeSlider
           min={INITIAL_MIN}
           max={max}
-          absoluteMax={absoluteMax}
           value={range}
           onChange={() => { }}
           onAfterChange={handleAfterChange}
           formatValue={(value) => formatRangeValue(value, config)}
           inputPrefix={config.unitPrefix}
         />
+        {hasFullScaleAvailable ? (
+          <button
+            type="button"
+            onClick={toggleScale}
+            className="w-fit rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 transition-colors hover:border-amber-300 hover:bg-amber-50 hover:text-amber-600"
+          >
+            {isFullScale ? t("filters.collapseScale") : t("filters.expandScale")}
+          </button>
+        ) : null}
         {pillConfig && addFilter && (() => {
           const options = pillOptions(rawResponse, pillConfig.responseKey);
           if (options.length === 0) return null;
