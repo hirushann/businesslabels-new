@@ -598,6 +598,11 @@ export const MESSAGES_V4 = {
       printersMetadataDescription: 'Discover printer media materials selected for precision, durability, color accuracy, and reliable professional output.',
       loadingProducts: 'Loading products...',
     },
+    pagination: {
+      previous: 'Previous',
+      next: 'Next',
+      page: 'Page {current} of {total}',
+    },
     thankYou: {
       loading: 'Loading order details...',
       successTitle: 'Thank You for Your Order!',
@@ -1915,6 +1920,11 @@ export const MESSAGES_V4 = {
       printersMetadataTitle: 'Printerproducten — Businesslabels',
       printersMetadataDescription: 'Ontdek printermaterialen geselecteerd voor precisie, duurzaamheid, kleurnauwkeurigheid en betrouwbare professionele output.',
       loadingProducts: 'Producten laden...',
+    },
+    pagination: {
+      previous: 'Vorige',
+      next: 'Volgende',
+      page: 'Pagina {current} van {total}',
     },
     thankYou: {
       loading: 'Bestelgegevens laden...',
