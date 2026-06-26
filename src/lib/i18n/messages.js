@@ -1027,7 +1027,8 @@ export const MESSAGES_V4 = {
       quantityMinError: 'Quantity must be at least 1.',
       quantityLimitErrorSingular: 'Only quantities up to {limit} or multiples of {limit} can be added.',
       quantityLimitErrorMultiple: 'Only 1 or multiples of {limit} can be added.',
-      priceExclTax: 'ex VAT'
+      priceExclTax: 'ex VAT',
+      fromPrice: 'From'
     },
     printer: {
       compatibilityTitle: 'Compatibility Properties',
@@ -2374,7 +2375,8 @@ export const MESSAGES_V4 = {
       quantityMinError: 'Aantal moet minimaal 1 zijn.',
       quantityLimitErrorSingular: 'Alleen aantallen tot {limit} of veelvouden van {limit} kunnen worden toegevoegd.',
       quantityLimitErrorMultiple: 'Alleen 1 of veelvouden van {limit} kunnen worden toegevoegd.',
-      priceExclTax: 'ex BTW'
+      priceExclTax: 'ex BTW',
+      fromPrice: 'Vanaf'
     },
     printer: {
       compatibilityTitle: 'Compatibiliteitseigenschappen',

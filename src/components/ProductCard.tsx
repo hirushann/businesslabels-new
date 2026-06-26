@@ -46,6 +46,11 @@ export type BulkDiscountTier = {
   discount?: string | number | null;
 };
 
+type NormalizedBulkDiscountTier = {
+  quantity: number;
+  discountPct: number;
+};
+
 export type ProductCardTranslation = {
   language?: string | null;
   name?: string | null;
@@ -103,6 +108,46 @@ type ProductCardProps = {
   href?: LinkProps["href"];
   onClick?: () => void;
 };
+
+function normalizeBulkDiscountTiers(
+  discounts: ProductCardData["discounts"],
+): NormalizedBulkDiscountTier[] {
+  if (!discounts) return [];
+
+  let parsed: BulkDiscountTier[];
+  if (typeof discounts === "string") {
+    try {
+      parsed = JSON.parse(discounts) as BulkDiscountTier[];
+    } catch {
+      return [];
+    }
+  } else {
+    parsed = discounts;
+  }
+
+  if (!Array.isArray(parsed)) return [];
+
+  return parsed
+    .map((tier) => {
+      const quantity = Number(tier?.quantity);
+      const discountPct = Number(tier?.discount);
+
+      if (
+        !Number.isFinite(quantity) ||
+        quantity <= 0 ||
+        !Number.isFinite(discountPct) ||
+        discountPct <= 0
+      ) {
+        return null;
+      }
+
+      return {
+        quantity: Math.floor(quantity),
+        discountPct,
+      };
+    })
+    .filter((tier): tier is NormalizedBulkDiscountTier => tier !== null);
+}
 
 function normalizeText(value: string | null | undefined): string | null {
   if (!value) return null;
@@ -380,23 +425,22 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
     defaultWarrantyOption;
   const hasWarrantyOptions = normalizedWarranty.options.length > 0;
 
-  // Normalize bulk discounts: only truthy arrays with valid tiers
-  const hasBulkDiscounts = useMemo(() => {
-    const raw = product.discounts;
-    if (!raw) return false;
-    let arr: Array<{ discount?: string | number | null; quantity?: string | number | null }>;
-    if (typeof raw === "string") {
-      try { arr = JSON.parse(raw); } catch { return false; }
-    } else {
-      arr = raw;
+  const bulkDiscountTiers = useMemo(
+    () => normalizeBulkDiscountTiers(product.discounts),
+    [product.discounts],
+  );
+  const hasBulkDiscounts = bulkDiscountTiers.length > 0;
+  const overviewPrice = useMemo(() => {
+    if (!hasPrice || !hasBulkDiscounts) {
+      return product.price ?? null;
     }
-    if (!Array.isArray(arr) || arr.length === 0) return false;
-    return arr.some((tier) => {
-      const qty = Number(tier?.quantity);
-      const pct = Number(tier?.discount);
-      return Number.isFinite(qty) && qty > 0 && Number.isFinite(pct) && pct > 0;
-    });
-  }, [product.discounts]);
+
+    return bulkDiscountTiers.reduce(
+      (lowestPrice, tier) =>
+        Math.min(lowestPrice, product.price! * (1 - tier.discountPct / 100)),
+      product.price!,
+    );
+  }, [bulkDiscountTiers, hasBulkDiscounts, hasPrice, product.price]);
 
   const addProductWithWarranty = (selectedOption: typeof selectedWarrantyOption, overrideQty?: number, overridePrice?: number) => {
     const finalQty = overrideQty ?? addQuantity;
@@ -617,8 +661,13 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
           <div className="flex justify-between items-center">
             <div className="flex flex-col gap-2">
               <div className="flex items-end gap-2">
+                {hasBulkDiscounts && hasPrice ? (
+                  <span className="text-neutral-500 text-sm font-semibold font-['Segoe_UI'] leading-5">
+                    {t("product.fromPrice")}
+                  </span>
+                ) : null}
                 <span className="text-neutral-800 text-2xl font-extrabold font-['Segoe_UI'] leading-7">
-                  {hasPrice ? formatEuro(product.price!) : "-"}
+                  {hasPrice && overviewPrice !== null ? formatEuro(overviewPrice) : "-"}
                 </span>
                 {hasOriginalPrice ? (
                   <span className="text-zinc-400 text-sm font-normal font-['Segoe_UI'] leading-5 line-through">
