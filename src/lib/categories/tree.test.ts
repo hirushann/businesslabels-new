@@ -42,7 +42,7 @@ describe("category tree helpers", () => {
     expect(findCategoryBySlug(groups, "etiketten", "nl")?.category.id).toBe(1);
   });
 
-  it("fetches categories without a lang query", async () => {
+  it("fetches categories without a lang query or persistent cache", async () => {
     const originalBaseUrl = process.env.BBNL_API_BASE_URL;
     process.env.BBNL_API_BASE_URL = "https://example.test";
     const fetchMock = vi.fn().mockResolvedValue({
@@ -54,7 +54,7 @@ describe("category tree helpers", () => {
     await fetchCategoryGroups();
 
     expect(fetchMock).toHaveBeenCalledWith("https://example.test/api/categories", {
-      next: { revalidate: 300 },
+      cache: "no-store",
     });
 
     vi.unstubAllGlobals();
