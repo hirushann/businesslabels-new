@@ -175,6 +175,8 @@ export default function Footer() {
               <Link
                 key={item.key}
                 href={item.href}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-white/60 text-sm font-normal font-['Segoe_UI'] leading-5 hover:text-white/80 transition-colors"
               >
                 {t(item.key)}

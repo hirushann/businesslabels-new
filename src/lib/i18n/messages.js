@@ -34,6 +34,7 @@ export const MESSAGES_V4 = {
       continueShopping: 'Continue Shopping',
       view: 'View',
       add: 'Add',
+      select: 'Select',
       loading: 'Loading...',
       viewMoreProducts: 'View more Products',
       pagination: {
@@ -1004,6 +1005,7 @@ export const MESSAGES_V4 = {
       selectQuantity: 'Select Quantity',
       addToCart: 'Add to Cart',
       addProductToCart: 'Add {name} to cart',
+      selectProductQuantity: 'Select quantity for {name}',
       unnamedProduct: 'Unnamed product',
       chooseWarranty: 'Choose Warranty',
       warrantyDescription: 'Select a warranty option before adding this item to your cart.',
@@ -1376,6 +1378,7 @@ export const MESSAGES_V4 = {
       continueShopping: 'Verder winkelen',
       view: 'Tonen',
       add: 'Toevoegen',
+      select: 'Selecteer',
       loading: 'Laden...',
       viewMoreProducts: 'Meer producten bekijken',
       pagination: {
@@ -2349,6 +2352,7 @@ export const MESSAGES_V4 = {
       selectQuantity: 'Selecteer aantal',
       addToCart: 'In winkelwagen',
       addProductToCart: '{name} toevoegen aan winkelwagen',
+      selectProductQuantity: 'Selecteer aantal voor {name}',
       unnamedProduct: 'Naamloos product',
       chooseWarranty: 'Kies garantie',
       warrantyDescription: 'Selecteer een garantieoptie voordat u dit artikel aan uw winkelwagen toevoegt.',

@@ -634,9 +634,9 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
                   type="button"
                   onClick={handleAddToCart}
                   className="px-4 py-2.5 bg-amber-500 rounded-full flex items-center gap-2 text-white text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors"
-                  aria-label={t("product.addProductToCart", { name: productName })}
+                  aria-label={t(hasBulkDiscounts ? "product.selectProductQuantity" : "product.addProductToCart", { name: productName })}
                 >
-                  {t("common.add")}
+                  {t(hasBulkDiscounts ? "common.select" : "common.add")}
                   <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M7.33366 20.1663C7.83992 20.1663 8.25033 19.7559 8.25033 19.2497C8.25033 18.7434 7.83992 18.333 7.33366 18.333C6.8274 18.333 6.41699 18.7434 6.41699 19.2497C6.41699 19.7559 6.8274 20.1663 7.33366 20.1663Z" stroke="white" strokeWidth="1.375" strokeLinecap="round" strokeLinejoin="round"/>
 <path d="M17.4167 20.1663C17.9229 20.1663 18.3333 19.7559 18.3333 19.2497C18.3333 18.7434 17.9229 18.333 17.4167 18.333C16.9104 18.333 16.5 18.7434 16.5 19.2497C16.5 19.7559 16.9104 20.1663 17.4167 20.1663Z" stroke="white" strokeWidth="1.375" strokeLinecap="round" strokeLinejoin="round"/>
