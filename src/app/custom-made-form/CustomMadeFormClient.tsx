@@ -72,7 +72,7 @@ const STEPS: string[] = ['Shape', 'Size', 'Printer', 'Material', 'Contact'];
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function CustomMadeFormClient() {
+export default function CustomMadeFormClient({ matCode }: { matCode: string | undefined }) {
   const t = useTranslations('customForm');
   const locale = useLocale() === 'nl' ? 'nl' : 'en';
 
@@ -83,7 +83,7 @@ export default function CustomMadeFormClient() {
   const [diameter, setDiameter] = useState<string>('');
   const [printerQuery, setPrinterQuery] = useState<string>('');
   const [unknownPrinter, setUnknownPrinter] = useState<boolean>(false);
-  const [materialCode, setMaterialCode] = useState<string>('');
+  const [materialCode, setMaterialCode] = useState<string>(matCode || '');
   const [unsureMaterial, setUnsureMaterial] = useState<boolean>(false);
   const [selectedMaterial, setSelectedMaterial] = useState<string | null>(null);
   const [company, setCompany] = useState<string>('');
@@ -108,7 +108,7 @@ export default function CustomMadeFormClient() {
         if (data.diameter !== undefined) setDiameter(data.diameter);
         if (data.printerQuery !== undefined) setPrinterQuery(data.printerQuery);
         if (data.unknownPrinter !== undefined) setUnknownPrinter(data.unknownPrinter);
-        if (data.materialCode !== undefined) setMaterialCode(data.materialCode);
+        if (!matCode && data.materialCode !== undefined) setMaterialCode(data.materialCode);
         if (data.unsureMaterial !== undefined) setUnsureMaterial(data.unsureMaterial);
         if (data.selectedMaterial !== undefined) setSelectedMaterial(data.selectedMaterial);
         if (data.company !== undefined) setCompany(data.company);
@@ -119,8 +119,9 @@ export default function CustomMadeFormClient() {
         if (data.comments !== undefined) setComments(data.comments);
       } catch(e) { console.error('Failed to parse saved form data', e); }
     }
+    if (matCode) setMaterialCode(matCode);
     setIsLoaded(true);
-  }, []);
+  }, [matCode]);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -432,6 +433,7 @@ export default function CustomMadeFormClient() {
                   </label>
                   <MaterialModelSelect
                     value={null}
+                    textValue={materialCode}
                     onValueChange={(material) => {
                       if (material) {
                         setMaterialCode(material.code);

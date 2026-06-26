@@ -10,21 +10,14 @@ type IccProfileModalProps = {
 };
 
 const PRINTER_MODELS = [
-  "Epson ColorWorks C3500",
-  "Epson ColorWorks C6000",
-  "Epson ColorWorks C6500",
-  "Epson ColorWorks C7500",
-  "Epson ColorWorks C8000",
-  "Epson ColorWorks C8000e",
-  "Epson TM-C3400",
-  "Epson TM-C3500",
-  "Canon PIXMA",
-  "Canon imagePROGRAF",
-  "HP DesignJet",
-  "HP Indigo",
-  "Zebra ZT410",
-  "Zebra ZT610",
-  "Zebra ZT620",
+  "CW-C4000 series BK",
+  "CW-C4000 series MK",
+  "CW-D3800 Dye",
+  "CW-C6000 series BK",
+  "CW-C6000 series MK",
+  "CW-D6000 series Dye",
+  "CW-C8000 series BK",
+  "CW-C8000 series MK",
   "Other",
 ];
 
@@ -170,11 +163,11 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
               <h2 className="text-2xl font-bold text-slate-900">
                 {isNl ? "ICC-profiel aanvragen" : "Request ICC Profile"}
               </h2>
-              <p className="mt-1 text-sm text-slate-500">
+              {/* <p className="mt-1 text-sm text-slate-500">
                 {isNl
                   ? "We sturen u uw profiel binnen 1 werkdag per e-mail."
                   : "We'll email your profile within 1 business day."}
-              </p>
+              </p> */}
             </div>
             <button
               type="button"
@@ -297,7 +290,7 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
                 <div>
                   <label htmlFor="icc-company" className="mb-1.5 block text-sm font-bold text-slate-800">
                     {isNl ? "Bedrijfsnaam" : "Company name"}
-                    <span className="ml-1 font-normal text-slate-400">({isNl ? "optioneel" : "optional"})</span>
+                    {/* <span className="ml-1 font-normal text-slate-400">({isNl ? "optioneel" : "optional"})</span> */}
                   </label>
                   <input
                     id="icc-company"
@@ -307,6 +300,9 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
                     onChange={(e) => setForm((f) => ({ ...f, companyName: e.target.value }))}
                     className="w-full rounded-full border border-slate-200 px-5 py-3 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#f08500]/30 transition-colors"
                   />
+                  {errors.companyName && (
+                    <p className="mt-1 pl-4 text-xs text-red-500">{errors.companyName}</p>
+                  )}
                 </div>
 
                 {/* Phone number */}

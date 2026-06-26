@@ -416,7 +416,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
               </SidebarCard>
 
               <SidebarCard title={t("materialDetail.customSizeTitle")} description={t("materialDetail.customSizeDesc")}>
-                <Link href="/custom" className="flex h-12 items-center justify-center rounded-full border border-amber-500 bg-amber-500/10 px-4 text-base font-semibold leading-6 text-amber-600 transition-colors hover:bg-amber-500/20">
+                <Link href={`/custom-made-form?materialId=${material.code}`} className="flex h-12 items-center justify-center rounded-full border border-amber-500 bg-amber-500/10 px-4 text-base font-semibold leading-6 text-amber-600 transition-colors hover:bg-amber-500/20">
                   {t("materialDetail.requestCustomMade")}
                 </Link>
               </SidebarCard>

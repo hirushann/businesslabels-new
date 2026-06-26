@@ -20,6 +20,7 @@ export function materialLabel(material: Material) {
 
 type MaterialModelSelectProps = {
   value: Material | null;
+  textValue?: string;
   onValueChange: (material: Material | null) => void;
   onTextChange?: (text: string) => void;
   placeholder?: string;
@@ -30,6 +31,7 @@ type MaterialModelSelectProps = {
 
 export default function MaterialModelSelect({
   value,
+  textValue,
   onValueChange,
   onTextChange,
   placeholder,
@@ -46,6 +48,15 @@ export default function MaterialModelSelect({
   const [materialSearchError, setMaterialSearchError] = useState<string | null>(null);
 
   const canShowMaterialResults = materialQuery.trim().length >= 3;
+
+  useEffect(() => {
+    if (textValue !== undefined) {
+      setMaterialQuery(textValue);
+      return;
+    }
+
+    setMaterialQuery(value ? materialLabel(value) : "");
+  }, [textValue, value]);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -109,9 +120,9 @@ export default function MaterialModelSelect({
   };
 
   const handleMaterialSelect = (material: Material) => {
-    onValueChange(material);
     setMaterialQuery(materialLabel(material));
     onTextChange?.(materialLabel(material));
+    onValueChange(material);
     setIsOpen(false);
   };
 
