@@ -82,6 +82,7 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
     const newErrors: Record<string, string> = {};
     if (!form.printerModel) newErrors.printerModel = isNl ? "Selecteer een printermodel" : "Please select a printer model";
     if (!form.email) newErrors.email = isNl ? "Vul uw e-mailadres in" : "Please enter your email address";
+    if (!form.companyName) newErrors.companyName = isNl ? "Vul uw bedrijfsnaam in" : "Please enter your company name";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
       newErrors.email = isNl ? "Ongeldig e-mailadres" : "Invalid email address";
     }
@@ -298,7 +299,9 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
                     placeholder={isNl ? "Uw bedrijfsnaam" : "Your company name"}
                     value={form.companyName}
                     onChange={(e) => setForm((f) => ({ ...f, companyName: e.target.value }))}
-                    className="w-full rounded-full border border-slate-200 px-5 py-3 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#f08500]/30 transition-colors"
+                    className={`w-full rounded-full border px-5 py-3 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[#f08500]/30 ${
+                      errors.companyName ? "border-red-400" : "border-slate-200"
+                    } placeholder:text-slate-400`}
                   />
                   {errors.companyName && (
                     <p className="mt-1 pl-4 text-xs text-red-500">{errors.companyName}</p>
