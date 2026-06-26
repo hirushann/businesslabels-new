@@ -102,26 +102,44 @@ function normalizePrintMethod(raw: string): string {
   return ""; // unknown — let the category slugs decide
 }
 
+function printMethodLabelFromSlug(method?: string) {
+  if (method === "inkjet") return "Inkjet";
+  if (method === "thermal-transfer") return "Thermal Transfer";
+  if (method === "thermal-direct") return "Thermal Direct";
+  return "";
+}
+
 // Dynamic helper to extract attributes when DB values are null
 function deriveMaterialAttributes(material: Material, currentPrintMethod?: string) {
   // Normalize whatever the API returns ("dt", "thermal_direct", "TT", …) to a
   // canonical value so the slug comparison in the filter always matches.
   let printTech = material.print_method ? normalizePrintMethod(material.print_method) : "";
-  let printTechs: string[] = printTech ? [printTech] : [];
+  const printTechs: string[] = printTech ? [printTech] : [];
 
-  if (printTechs.length === 0 && material.categories) {
-    const cats = material.categories.map((c) => c.slug.toLowerCase());
-    const hasInkjet = cats.includes("inkjet") || cats.some((s) => s.includes("inkjet"));
-    const hasTT = cats.includes("thermal-transfer") || cats.includes("ttr") || cats.some((s) => s.includes("thermal-transfer"));
-    const hasTD = cats.includes("thermal-direct") || cats.includes("td") || cats.includes("thermisch-direct") || cats.includes("dt") || cats.some((s) => s.includes("thermal-direct") || s.endsWith("-td") || s.includes("thermische"));
+  if (printTechs.length === 0) {
+    const cats = [
+      ...(material.categories ?? []).map((c) => c.slug),
+      ...(material.category_slugs ?? []),
+    ].map((slug) => slug.toLowerCase());
+    const hasInkjet = cats.some((s) => s.includes("inkjet"));
+    const hasTT = cats.some((s) =>
+      s.includes("thermal-transfer") ||
+      s.includes("thermische-overdracht") ||
+      s.endsWith("-tt") ||
+      s === "ttr" ||
+      s === "tt"
+    );
+    const hasTD = cats.some((s) =>
+      s.includes("thermal-direct") ||
+      s.includes("thermisch-direct") ||
+      s.endsWith("-td") ||
+      s === "dt" ||
+      s === "td"
+    );
 
     if (hasInkjet) printTechs.push("Inkjet");
     if (hasTT) printTechs.push("Thermal Transfer");
     if (hasTD) printTechs.push("Thermal Direct");
-
-    if (printTechs.length === 0) {
-      printTechs.push("Inkjet");
-    }
   }
 
   // Preserve printTech for any single-value backward compatibility references
@@ -133,7 +151,7 @@ function deriveMaterialAttributes(material: Material, currentPrintMethod?: strin
     } else if (currentPrintMethod === "thermal-direct" && printTechs.includes("Thermal Direct")) {
       printTech = "Thermal Direct";
     } else {
-      printTech = printTechs[0] || "Inkjet";
+      printTech = printTechs[0] || printMethodLabelFromSlug(currentPrintMethod);
     }
   }
 
@@ -227,6 +245,30 @@ function deriveMaterialAttributes(material: Material, currentPrintMethod?: strin
   return { printTech, printTechs, baseMat, finish, adhesive, weight, thickness };
 }
 
+function PrintMethodBadgeIcon({ tech }: { tech: string }) {
+  if (tech === "Inkjet") {
+    return (
+      <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a7 7 0 0 0 7-7c0-4.25-4.39-8.92-6.22-10.7a1.1 1.1 0 0 0-1.56 0C9.39 5.08 5 9.75 5 14a7 7 0 0 0 7 7Z" />
+      </svg>
+    );
+  }
+
+  if (tech === "Thermal Transfer") {
+    return (
+      <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M4 17h16M7 7v10m10-10v10M9.5 12h5" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M13 2 4 14h7l-1 8 10-13h-7l0-7Z" />
+    </svg>
+  );
+}
+
 function MaterialCard({
   material,
   locale,
@@ -269,6 +311,7 @@ function MaterialCard({
                   <path d="M8.5 7H3.5C3.22386 7 3 7.22386 3 7.5V10.5C3 10.7761 3.22386 11 3.5 11H8.5C8.77614 11 9 10.7761 9 10.5V7.5C9 7.22386 8.77614 7 8.5 7Z" stroke="#444444" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
 
+                <PrintMethodBadgeIcon tech={tech} />
                 {getLocalizedLabel(tech, locale)}
               </span>
             );
@@ -299,7 +342,7 @@ function MaterialCard({
             <span className="rounded-full bg-amber-50 border border-amber-200 px-2.5 py-1 text-xs font-medium text-brown-600">
               {getLocalizedLabel(baseMat, locale)}
             </span>
-            <span className="rounded-full bg-violet-50 border border-violet-200 px-2.5 py-1 text-xs font-medium text-violet-700">
+            <span className="rounded-full bg-violet-50 border border-violet-200 px-2.5 py-1 text-xs font-medium text-violet-900">
               {getLocalizedLabel(finish, locale)}
             </span>
             <span className="rounded-full bg-lime-50 border border-lime-200 px-2.5 py-1 text-xs font-medium text-lime-900">

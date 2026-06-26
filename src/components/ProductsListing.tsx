@@ -67,6 +67,7 @@ const RANGE_PARAM_KEYS = {
 } as const;
 
 const HEIGHT_RANGE_CAP = 800;
+const PAGINATION_SCROLL_OFFSET = 96;
 
 const KNOWN_FILTER_PARAMS = [
   "search",
@@ -277,6 +278,7 @@ function CatalogProductsListing({
   >(null);
   const [isPending, startTransition] = useTransition();
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const listingControlsRef = useRef<HTMLDivElement>(null);
   const hasFocusedSearchRef = useRef(false);
 
   useEffect(() => {
@@ -625,6 +627,21 @@ function CatalogProductsListing({
     });
   };
 
+  const scrollToListingControls = useCallback(() => {
+    window.requestAnimationFrame(() => {
+      const controlsTop = listingControlsRef.current?.getBoundingClientRect().top;
+
+      if (typeof controlsTop !== "number") {
+        return;
+      }
+
+      window.scrollTo({
+        top: Math.max(window.scrollY + controlsTop - PAGINATION_SCROLL_OFFSET, 0),
+        behavior: "smooth",
+      });
+    });
+  }, []);
+
   const toggleOption = (key: CatalogOptionFilterKey, value: string) => {
     setParams((params) => {
       const paramKey = OPTION_PARAM_KEY[key];
@@ -714,7 +731,7 @@ function CatalogProductsListing({
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div ref={listingControlsRef} className="flex flex-wrap items-center gap-3">
         {!hideSearchInput ? (
           <div className="flex min-h-11 w-full items-center gap-3 rounded-lg border border-slate-200 px-3">
             <svg
@@ -1149,7 +1166,7 @@ function CatalogProductsListing({
                   pageCount={catalog.lastPage}
                   onPageChange={(p) => {
                     setPage(p);
-                    window.scrollTo({ top: 0, behavior: "smooth" });
+                    scrollToListingControls();
                   }}
                 />
               ) : null}
