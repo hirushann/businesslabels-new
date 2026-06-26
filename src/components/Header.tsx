@@ -28,6 +28,14 @@ import { getAccessoryCategoryPath } from '@/lib/routes/accessoryCategories';
 import { getLabelCategoryPath } from '@/lib/routes/labelCategories';
 import { getPrinterCategoryPath } from '@/lib/routes/printerCategories';
 import { useDebouncedSearchParam } from '@/components/search/useDebouncedSearchParam';
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from '@/components/ui/navigation-menu';
 
 type DropdownKey = 'printers' | 'labels' | 'accessories' | 'resources' | 'brands' | null;
 // import { useCart } from '@/context/CartContext';
@@ -120,8 +128,6 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
 
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [activeDropdown, setActiveDropdown] = useState<DropdownKey>(null);
-  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const desktopSearchInputRef = useRef<HTMLInputElement>(null);
   const mobileSearchInputRef = useRef<HTMLInputElement>(null);
   const { totalItemCount, isCartOpen, openCart, closeCart } = useCart();
@@ -203,15 +209,6 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
     event.preventDefault();
     commitHeaderSearchNow();
     navigateToProductSearch(headerSearchInput, { resetPage: true });
-  };
-
-  const handleMouseEnter = (key: DropdownKey) => {
-    if (closeTimer.current) clearTimeout(closeTimer.current);
-    setActiveDropdown(key);
-  };
-
-  const handleMouseLeave = () => {
-    closeTimer.current = setTimeout(() => setActiveDropdown(null), 200);
   };
 
   const dropdownMap: Record<string, React.ReactNode> = {
@@ -478,67 +475,87 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
       {/* Sub-nav */}
       <div className="hidden lg:flex w-full px-10 py-2 relative bg-gray-50 border-t border-violet-50">
         <div className="max-w-360 mx-auto w-full flex justify-between items-center">
-          <nav className="flex items-center gap-6">
+          <NavigationMenu>
+            <NavigationMenuList>
             {navItems.map((item, index) => (
-              <div
+              <NavigationMenuItem
                 key={item.href}
-                className="relative"
-                onMouseEnter={() => handleMouseEnter(item.dropdownKey ?? null)}
-                onMouseLeave={handleMouseLeave}
               >
-                <Link
-                  href={
-                    item.dropdownKey === 'printers'
-                      ? printerCategoryHref
-                      : item.dropdownKey === 'labels'
-                        ? labelCategoryHref
-                        : item.dropdownKey === 'accessories'
-                          ? accessoryCategoryHref
-                        : item.href
-                  }
-                  className={`flex items-end gap-2 relative ${
-                    item.active
-                      ? 'text-sky-950 font-semibold'
-                      : 'text-stone-500 font-normal hover:text-sky-950 transition-colors'
-                  } text-base font-['Segoe_UI'] leading-5`}
-                >
-                  {t.has(item.labelKey) ? t(item.labelKey) : item.fallbackLabel}
-                  {item.dropdown && (
-                    <svg
-                      width="16" height="16" viewBox="0 0 16 16" fill="none"
-                      className={`transition-transform duration-200 ${
-                        activeDropdown === item.dropdownKey ? 'rotate-180' : ''
-                      }`}
-                    >
-                      <path d="M4 6L8 10L12 6" stroke="currentColor" />
-                    </svg>
-                  )}
-                  {item.active && (
-                    <span className="absolute -bottom-2 left-0 w-11 h-0.5 bg-sky-950 rounded" />
-                  )}
-                </Link>
+                {item.dropdownKey ? (
+                  <>
+                    <NavigationMenuTrigger asChild>
+                      <Link
+                        href={
+                          item.dropdownKey === 'printers'
+                            ? printerCategoryHref
+                            : item.dropdownKey === 'labels'
+                              ? labelCategoryHref
+                              : item.dropdownKey === 'accessories'
+                                ? accessoryCategoryHref
+                              : item.href
+                        }
+                        className="group -m-3 block p-3"
+                      >
+                        <span
+                          className={`flex items-end gap-2 relative ${
+                            item.active
+                              ? 'text-sky-950 font-semibold'
+                              : 'text-stone-500 font-normal group-hover:text-sky-950 transition-colors'
+                          } text-base font-['Segoe_UI'] leading-5`}
+                        >
+                          {t.has(item.labelKey) ? t(item.labelKey) : item.fallbackLabel}
+                          <svg
+                            width="16" height="16" viewBox="0 0 16 16" fill="none"
+                            className="transition-transform duration-200 group-data-[state=open]:rotate-180"
+                          >
+                            <path d="M4 6L8 10L12 6" stroke="currentColor" />
+                          </svg>
+                          {item.active && (
+                            <span className="absolute -bottom-2 left-0 w-11 h-0.5 bg-sky-950 rounded" />
+                          )}
+                        </span>
+                      </Link>
+                    </NavigationMenuTrigger>
 
-                {/* Dropdown panel */}
-                {item.dropdownKey && activeDropdown === item.dropdownKey && (
-                  <div
-                    className={`absolute top-full z-50 ${
-                      index <= 2 ? 'left-0' : 
-                      index >= 5 ? 'right-0' : 
-                      'left-1/2 -translate-x-1/2'
-                    }`}
-                    onMouseEnter={() => handleMouseEnter(item.dropdownKey ?? null)}
-                    onMouseLeave={handleMouseLeave}
-                  >
-                    {/* Transparent bridge covering the gap between nav bar and dropdown panel */}
-                    <div className="h-3 w-full pointer-events-auto" />
-                    <div className="animate-in fade-in slide-in-from-top-2 duration-200">
-                      {dropdownMap[item.dropdownKey]}
-                    </div>
-                  </div>
+                    <NavigationMenuContent
+                      className={
+                        index <= 2
+                          ? 'left-0'
+                          : index >= 5
+                            ? 'right-0'
+                            : 'left-1/2 -translate-x-1/2'
+                      }
+                    >
+                      <div className="-mx-8 px-8 pt-5 pb-3">
+                        {dropdownMap[item.dropdownKey]}
+                      </div>
+                    </NavigationMenuContent>
+                  </>
+                ) : (
+                  <NavigationMenuLink asChild>
+                    <Link
+                      href={item.href}
+                      className="group -m-3 block p-3"
+                    >
+                      <span
+                        className={`flex items-end gap-2 relative ${
+                          item.active
+                            ? 'text-sky-950 font-semibold'
+                            : 'text-stone-500 font-normal group-hover:text-sky-950 transition-colors'
+                        } text-base font-['Segoe_UI'] leading-5`}
+                      >
+                        {t.has(item.labelKey) ? t(item.labelKey) : item.fallbackLabel}
+                        {item.active && (
+                          <span className="absolute -bottom-2 left-0 w-11 h-0.5 bg-sky-950 rounded" />
+                        )}
+                      </span>
+                    </Link>
+                  </NavigationMenuLink>
                 )}
-              </div>
+              </NavigationMenuItem>
             ))}
-          </nav>
+            </NavigationMenuList>
+          </NavigationMenu>
           <div className="flex items-center gap-4">
             <Link href="/custom-made-form" className="text-amber-500 text-base font-semibold leading-6">
               {t('header.customMadeForm')}
