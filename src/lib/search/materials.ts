@@ -27,6 +27,7 @@ export type Material = {
   finish: string | null;
   adhesive: string | null;
   main_image?: string;
+  description?: string;
 };
 
 export type MaterialSortValue = "name_asc" | "name_desc" | "latest" | "oldest";
