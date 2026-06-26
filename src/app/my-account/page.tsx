@@ -4,6 +4,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Script from "next/script";
 import { getTranslations } from "next-intl/server";
+import { getServerLocale } from "@/lib/i18n/server";
+import { localePath } from "@/lib/i18n/utils";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations();
@@ -20,7 +22,9 @@ export default async function MyAccountPage() {
   const authSession = cookieStore.get("auth_session")?.value;
 
   if (!authToken && !authSession) {
-    redirect("/login?redirect=/my-account");
+    const locale = await getServerLocale();
+    const accountPath = localePath("/my-account", locale);
+    redirect(`${localePath("/login", locale)}?redirect=${encodeURIComponent(accountPath)}`);
   }
 
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;

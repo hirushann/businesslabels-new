@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCart } from "@/components/CartProvider";
+import { localePath } from "@/lib/i18n/utils";
 
 type OrderDetails = {
   status?: string | null;
@@ -12,6 +13,7 @@ type OrderDetails = {
 
 export default function ThankYouPage() {
   const t = useTranslations();
+  const locale = useLocale();
   const searchParams = useSearchParams();
   const orderNumber = searchParams.get("order_number");
   const { clearCart } = useCart();
@@ -98,13 +100,13 @@ export default function ThankYouPage() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
             <Link
-              href="/product"
+              href={localePath("/product", locale)}
               className="inline-flex h-12 items-center justify-center rounded-full bg-amber-500 px-8 text-base font-semibold text-white transition-colors hover:bg-amber-600"
             >
               {t("thankYou.continueShopping")}
             </Link>
             <Link
-              href="/"
+              href={localePath("/", locale)}
               className="inline-flex h-12 items-center justify-center rounded-full border border-slate-200 bg-white px-8 text-base font-semibold text-neutral-700 transition-colors hover:bg-slate-50"
             >
               {t("thankYou.backToHome")}
