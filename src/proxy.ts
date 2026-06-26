@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE, LOCALE_HEADER } from '@/lib/i18n/config';
+import { LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE, LOCALE_HEADER, normalizeLocale } from '@/lib/i18n/config';
 
 const EN_PREFIX = '/en';
 const COOKIE_OPTIONS = { path: '/', sameSite: 'lax' as const, maxAge: LOCALE_COOKIE_MAX_AGE };
@@ -19,15 +19,18 @@ function persistLocale(response: NextResponse, locale: 'en' | 'nl') {
 /**
  * Locale-prefix routing:
  * - /en/* → English, rewrite internally to /* + persist NEXT_LOCALE=en
- * - /* → Dutch, persist NEXT_LOCALE=nl
+ * - /* → Use the persisted user locale, falling back to Dutch.
  *
- * The URL shape is the source of truth so refreshes cannot be pulled back to
- * English by a stale cookie after the user switches to Dutch.
+ * The user's explicit language choice is the source of truth. This prevents
+ * external returns (checkout/payment callbacks, email links, reloads, etc.)
+ * from silently switching an English user back to Dutch just because the URL is
+ * unprefixed.
  */
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const hasEnglishPrefix = pathname.startsWith(EN_PREFIX + '/') || pathname === EN_PREFIX;
-  const locale = hasEnglishPrefix ? 'en' : 'nl';
+  const persistedLocale = normalizeLocale(request.cookies.get(LOCALE_COOKIE)?.value);
+  const locale = hasEnglishPrefix ? 'en' : persistedLocale;
   const cleanPathname = hasEnglishPrefix ? (pathname.slice(EN_PREFIX.length) || '/') : pathname;
 
   // ── Locale routing ──────────────────────────────────────────────────────────
@@ -39,9 +42,9 @@ export function proxy(request: NextRequest) {
     const authSession = request.cookies.get('auth_session')?.value;
 
     if (!authToken && !authSession) {
-      const loginPath = hasEnglishPrefix ? `${EN_PREFIX}/login` : '/login';
+      const loginPath = locale === 'en' ? `${EN_PREFIX}/login` : '/login';
       const loginUrl = new URL(loginPath, request.url);
-      loginUrl.searchParams.set('redirect', pathname + search);
+      loginUrl.searchParams.set('redirect', locale === 'en' && !hasEnglishPrefix ? `${EN_PREFIX}${pathname}${search}` : pathname + search);
       return persistLocale(NextResponse.redirect(loginUrl), locale);
     }
   }
@@ -56,9 +59,9 @@ export function proxy(request: NextRequest) {
   }
 
   const response = NextResponse.next({
-    request: { headers: requestHeadersWithLocale(request, 'nl') },
+    request: { headers: requestHeadersWithLocale(request, locale) },
   });
-  return persistLocale(response, 'nl');
+  return persistLocale(response, locale);
 }
 
 export const config = {
