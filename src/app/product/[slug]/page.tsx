@@ -880,7 +880,7 @@ export default async function SingleProductPage({
             {/* Title & Description */}
             <div className="flex flex-col gap-4">
               {productName ? (
-                <h1 className="text-[#222222] text-[32px] font-bold leading-10">
+                <h1 className="text-[#222222] text-[32px] font-semibold leading-10">
                   {productName}
                 </h1>
               ) : null}
@@ -987,7 +987,7 @@ export default async function SingleProductPage({
                       className={`flex px-6 py-3 justify-between items-start gap-4 rounded-md ${i % 2 === 0 ? "bg-white/50" : ""}`}
                     >
                       <span className="shrink-0 text-neutral-500 text-base font-normal">{spec.label}</span>
-                      <span className="min-w-0 text-right text-neutral-700 text-base font-semibold break-words">{spec.value}</span>
+                      <span className="min-w-0 text-right text-neutral-700 text-base font-bold break-words">{spec.value}</span>
                     </div>
                   ))}
                 </div>

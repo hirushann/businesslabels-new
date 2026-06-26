@@ -237,7 +237,7 @@ function MaterialCard({
   printMethod?: string;
 }) {
   const { printTechs, baseMat, finish, adhesive, weight, thickness } = deriveMaterialAttributes(material, printMethod);
-  const cardImage = toDisplayImageUrl(material.main_image) || "/images/labelrolls.png";
+  const cardImage = toDisplayImageUrl(material.main_image) || "/images/material-placeholder.svg"; 
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_4px_20px_rgba(109,109,120,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(109,109,120,0.12)]">
@@ -247,7 +247,7 @@ function MaterialCard({
           alt={material.title}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          className="object-contain p-4 transition-transform duration-500 group-hover:scale-105"
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
         />
         <div className="absolute left-4 top-4 flex flex-wrap gap-2 z-10">
           {printTechs.map((tech) => {

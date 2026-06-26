@@ -49,7 +49,7 @@ export default function Accordion({
 }: AccordionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const headerSizeClassName = size === "compact" ? "min-h-12 px-4 py-3" : "min-h-20 px-6 py-6";
-  const titleClassName = size === "compact" ? "text-neutral-700 text-base font-semibold" : "text-neutral-700 text-2xl font-bold";
+  const titleClassName = size === "compact" ? "text-neutral-700 text-base font-semibold" : "text-neutral-700 text-2xl font-semibold";
   const contentSizeClassName = size === "compact" ? "px-4 pb-4" : "px-6 pb-6";
 
   return (
