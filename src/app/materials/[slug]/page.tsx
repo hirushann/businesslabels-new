@@ -7,6 +7,7 @@ import { getTranslations } from "next-intl/server";
 import Accordion from "@/components/Accordion";
 import CTABanner from "@/components/CTABanner";
 import IccProfileModal from "@/components/materials/IccProfileModal";
+import ScrollToMaterialProductsButton from "@/components/materials/ScrollToMaterialProductsButton";
 import ProductsListing from "@/components/ProductsListing";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
@@ -90,6 +91,8 @@ const emptyCatalogResponse: CatalogSearchResponse = {
   perPage: 12,
   filters: { ranges: [], options: [] },
 };
+
+const MATERIAL_PRODUCTS_SECTION_ID = "products-from-this-material";
 
 function toUrlSearchParams(query: Record<string, string | string[] | undefined>): URLSearchParams {
   const params = new URLSearchParams();
@@ -246,7 +249,7 @@ function MaterialProductsSection({
   scopeQueryString: string;
 }) {
   return (
-    <section className="bg-gray-50 px-4 py-24 sm:px-6 lg:px-10">
+    <section id={MATERIAL_PRODUCTS_SECTION_ID} className="scroll-mt-24 bg-gray-50 px-4 py-24 sm:px-6 lg:px-10">
       <div className="mx-auto flex max-w-300 flex-col gap-8">
         <h2 className="text-4xl font-bold leading-12 text-neutral-800">{title}</h2>
         <ProductsListing
@@ -407,9 +410,9 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
             {/* Right sidebar */}
             <aside className="flex w-full flex-col gap-6 lg:sticky lg:top-24 lg:w-96">
               <SidebarCard title={t("materialDetail.availableStockItemsTitle")} description={t("materialDetail.availableStockItemsDesc")}>
-                <Link href="/product" className="flex h-12 items-center justify-center rounded-full bg-amber-500 px-4 text-base font-semibold leading-6 text-white transition-colors hover:bg-amber-600">
+                <ScrollToMaterialProductsButton targetId={MATERIAL_PRODUCTS_SECTION_ID}>
                   {t("materialDetail.viewStockItems")}
-                </Link>
+                </ScrollToMaterialProductsButton>
               </SidebarCard>
 
               <SidebarCard title={t("materialDetail.customSizeTitle")} description={t("materialDetail.customSizeDesc")}>
