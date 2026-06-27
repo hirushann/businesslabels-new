@@ -17,9 +17,68 @@ const PRINTER_MODELS = [
   "CW-C6000 series MK",
   "CW-D6000 series Dye",
   "CW-C8000 series BK",
-  "CW-C8000 series MK",
-  "Other",
+  "CW-C8000 series MK"
 ];
+
+const EMPTY_FORM = {
+  printerModel: "",
+  email: "",
+  companyName: "",
+  phone: "",
+};
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function readString(source: unknown, keys: string[]) {
+  if (!isPlainObject(source)) return "";
+
+  for (const key of keys) {
+    const value = source[key];
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return "";
+}
+
+function extractAuthUser(value: unknown): Record<string, unknown> | null {
+  if (!isPlainObject(value)) return null;
+
+  if (isPlainObject(value.user)) return value.user;
+  if (isPlainObject(value.data)) {
+    if (isPlainObject(value.data.user)) return value.data.user;
+    return value.data;
+  }
+  if (isPlainObject(value.customer)) return value.customer;
+  if (isPlainObject(value.auth) && isPlainObject(value.auth.user)) return value.auth.user;
+
+  return value;
+}
+
+function getStoredAuthUser() {
+  const storedUser = localStorage.getItem("auth_user");
+  if (!storedUser) return null;
+
+  try {
+    return extractAuthUser(JSON.parse(storedUser));
+  } catch (error) {
+    console.error("Failed to parse auth_user for ICC profile autofill:", error);
+    return null;
+  }
+}
+
+function getAuthUserFormValues() {
+  const authUser = getStoredAuthUser();
+
+  return {
+    email: readString(authUser, ["email", "billing_email"]),
+    companyName: readString(authUser, ["companyName", "company_name", "company", "business_name"]),
+    phone: readString(authUser, ["phone", "telephone", "mobile", "mobile_number", "mobileNumber"]),
+  };
+}
 
 export default function IccProfileModal({ materialTitle, isNl = false }: IccProfileModalProps) {
   const t = useTranslations();
@@ -30,16 +89,12 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
   const [submittedEmail, setSubmittedEmail] = useState("");
   const dialogRef = useRef<HTMLDialogElement>(null);
 
-  const [form, setForm] = useState({
-    printerModel: "",
-    email: "",
-    companyName: "",
-    phone: "",
-  });
+
+  const [form, setForm] = useState(EMPTY_FORM);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-
   useEffect(() => {
+
     const dialog = dialogRef.current;
     if (!dialog) return;
 
@@ -75,7 +130,19 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
     setSubmitted(false);
     setSubmittedEmail("");
     setErrors({});
-    setForm({ printerModel: "", email: "", companyName: "", phone: "" });
+    setForm({ ...EMPTY_FORM });
+  };
+
+  const handleOpen = () => {
+    const authUserValues = getAuthUserFormValues();
+
+    setForm((current) => ({
+      ...current,
+      email: current.email.trim() ? current.email : authUserValues.email,
+      companyName: current.companyName.trim() ? current.companyName : authUserValues.companyName,
+      phone: current.phone.trim() ? current.phone : authUserValues.phone,
+    }));
+    setIsOpen(true);
   };
 
   const validate = () => {
@@ -117,7 +184,7 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
         setSubmittedEmail(email);
         setSubmitted(true);
         toast.success(isNl ? "Aanvraag verstuurd!" : "Request sent!");
-        setForm({ printerModel: "", email: "", companyName: "", phone: "" });
+        setForm({ ...EMPTY_FORM });
       } else {
         const data = (await res.json()) as { message?: string; errors?: Record<string, string[]> };
         let errorText = data.message ?? (isNl ? 'Er is iets misgegaan. Probeer het opnieuw.' : 'Something went wrong. Please try again.');
@@ -142,7 +209,7 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
     <>
       <button
         type="button"
-        onClick={() => setIsOpen(true)}
+        onClick={handleOpen}
         className="mt-3 inline-block text-sm font-semibold text-[#f08500] underline hover:text-orange-700 transition-colors"
       >
         {isNl ? "ICC-profiel aanvragen" : "Request ICC Profile"}

@@ -70,6 +70,49 @@ const getMaterials = (t: any): Material[] => [
 
 const STEPS: string[] = ['Shape', 'Size', 'Printer', 'Material', 'Contact'];
 
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function readString(source: unknown, keys: string[]) {
+  if (!isPlainObject(source)) return '';
+
+  for (const key of keys) {
+    const value = source[key];
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return '';
+}
+
+function extractAuthUser(value: unknown): Record<string, unknown> | null {
+  if (!isPlainObject(value)) return null;
+
+  if (isPlainObject(value.user)) return value.user;
+  if (isPlainObject(value.data)) {
+    if (isPlainObject(value.data.user)) return value.data.user;
+    return value.data;
+  }
+  if (isPlainObject(value.customer)) return value.customer;
+  if (isPlainObject(value.auth) && isPlainObject(value.auth.user)) return value.auth.user;
+
+  return value;
+}
+
+function getStoredAuthUser() {
+  const storedUser = localStorage.getItem('auth_user');
+  if (!storedUser) return null;
+
+  try {
+    return extractAuthUser(JSON.parse(storedUser));
+  } catch (error) {
+    console.error('Failed to parse auth_user for custom form autofill:', error);
+    return null;
+  }
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function CustomMadeFormClient({ matCode }: { matCode: string | undefined }) {
@@ -100,6 +143,10 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
+    let draftCompany = '';
+    let draftEmail = '';
+    let draftPhone = '';
+
     const saved = localStorage.getItem('customMadeFormDraft');
     if (saved) {
       try {
@@ -111,14 +158,35 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
         if (!matCode && data.materialCode !== undefined) setMaterialCode(data.materialCode);
         if (data.unsureMaterial !== undefined) setUnsureMaterial(data.unsureMaterial);
         if (data.selectedMaterial !== undefined) setSelectedMaterial(data.selectedMaterial);
-        if (data.company !== undefined) setCompany(data.company);
+        if (data.company !== undefined) {
+          draftCompany = data.company;
+          setCompany(data.company);
+        }
         if (data.name !== undefined) setName(data.name);
-        if (data.email !== undefined) setEmail(data.email);
-        if (data.phone !== undefined) setPhone(data.phone);
+        if (data.email !== undefined) {
+          draftEmail = data.email;
+          setEmail(data.email);
+        }
+        if (data.phone !== undefined) {
+          draftPhone = data.phone;
+          setPhone(data.phone);
+        }
         if (data.quantity !== undefined) setQuantity(data.quantity);
         if (data.comments !== undefined) setComments(data.comments);
       } catch(e) { console.error('Failed to parse saved form data', e); }
     }
+
+    const authUser = getStoredAuthUser();
+    if (authUser) {
+      const authCompany = readString(authUser, ['companyName', 'company_name', 'company', 'business_name']);
+      const authEmail = readString(authUser, ['email', 'billing_email']);
+      const authPhone = readString(authUser, ['phone', 'telephone', 'mobile', 'mobile_number', 'mobileNumber']);
+
+      if (!String(draftCompany).trim() && authCompany) setCompany(authCompany);
+      if (!String(draftEmail).trim() && authEmail) setEmail(authEmail);
+      if (!String(draftPhone).trim() && authPhone) setPhone(authPhone);
+    }
+
     if (matCode) setMaterialCode(matCode);
     setIsLoaded(true);
   }, [matCode]);
