@@ -274,6 +274,8 @@ export function flattenCategorySlugs(
 /**
  * Fetch the stored NL category tree. Translated names/slugs are included under
  * each node's `translations`, so this endpoint no longer needs a `lang` query.
+ * The backend owns category ordering; keep this uncached so admin sort-order
+ * changes are reflected on the next page request.
  */
 export async function fetchCategoryGroups(): Promise<CategoryGroup[]> {
   const baseUrl = process.env.BBNL_API_BASE_URL;
@@ -281,7 +283,7 @@ export async function fetchCategoryGroups(): Promise<CategoryGroup[]> {
 
   try {
     const url = `${baseUrl}/api/categories`;
-    const response = await fetch(url, { next: { revalidate: 300 } });
+    const response = await fetch(url, { cache: "no-store" });
     if (!response.ok) return [];
 
     const json = (await response.json()) as { data?: CategoryGroup[] };

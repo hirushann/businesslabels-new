@@ -25,6 +25,11 @@ const printerCategoryRoutes: Record<"en" | "nl", Record<PrinterCategoryKey, stri
   },
 };
 
+const printerCategorySlugAliases: Partial<Record<PrinterCategoryKey, string[]>> = {
+  root: ["label-printers"],
+  starterkits: ["starter-kits"],
+};
+
 function lastPathSegment(path: string): string {
   return path.split("/").filter(Boolean).at(-1) ?? "";
 }
@@ -55,7 +60,7 @@ export function getPrinterCategoryKeyBySlug(slug: string): PrinterCategoryKey | 
     const routeSlugs = [
       lastPathSegment(printerCategoryRoutes.en[category]),
       lastPathSegment(printerCategoryRoutes.nl[category]),
-      ...(category === "starterkits" ? ["starterkits"] : []),
+      ...(printerCategorySlugAliases[category] ?? []),
     ];
 
     if (routeSlugs.includes(decodedSlug)) {

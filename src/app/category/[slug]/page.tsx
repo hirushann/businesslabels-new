@@ -127,7 +127,6 @@ function visibleSubcategories({
 
   return children.filter((child) => {
     const childSlug = categoryRouteSlug(child, sourceLocale);
-    if (child.count <= 0) return false;
     if (virtualChildSlugs) return virtualChildSlugs.has(childSlug);
     if (currentSlug === "labelprinters" && (childSlug === "accessoires" || childSlug === "accessories-1")) {
       return false;
@@ -157,10 +156,7 @@ export async function renderCategoryArchivePage({
   const categoryLookupSegments = routeMode === "productCategory" && routeSegments?.length
     ? getLabelCategoryLookupSegmentsForSegments(routeSegments, locale)
       ?? getAccessoryCategoryLookupSegmentsForSegments(routeSegments, locale)
-      ?? [
-        ...routeSegments.slice(0, -1),
-        getPrinterCategoryLookupSlug(routeSegments.at(-1) ?? slug),
-      ]
+      ?? routeSegments.map((segment) => getPrinterCategoryLookupSlug(segment))
     : undefined;
   const routeQuery = toUrlSearchParams(rawParams);
 
@@ -265,6 +261,9 @@ export async function renderCategoryArchivePage({
   const currentSegments = currentCategory
     ? [...ancestors, currentCategory].map((category) => categoryRouteSlug(category, locale))
     : [categoryLookupSlug];
+  const publicCurrentSegments = routeMode === "productCategory" && routeSegments?.length
+    ? routeSegments
+    : currentSegments;
 
   const hrefForCategory =
     routeMode === "productCategory"
@@ -286,7 +285,7 @@ export async function renderCategoryArchivePage({
           }
 
           return liveProductCategoryPath(locale, [
-            ...currentSegments,
+            ...publicCurrentSegments,
             categoryRouteSlug(category, locale),
           ]);
         }
