@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import EmptyState from '@/components/EmptyState';
 import { useCart } from '@/components/CartProvider';
 import DrawerProductCard from '@/components/DrawerProductCard';
+import CartQuantityInput from '@/components/CartQuantityInput';
 import { useTranslations } from 'next-intl';
 
 type CartDrawerProps = {
@@ -29,6 +30,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
     removeItem,
     incrementItemQuantity,
     decrementItemQuantity,
+    setItemQuantity,
   } = useCart();
 
   useEffect(() => {
@@ -131,35 +133,15 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                           {t('cart.qty', { count: item.quantity })}
                         </div>
                       ) : (
-                        <div className="flex h-10 items-center rounded-full border border-slate-200 bg-white px-1">
-                          <button
-                            type="button"
-                            onClick={(event) => {
-                              event.preventDefault();
-                              event.stopPropagation();
-                              decrementItemQuantity(item.key);
-                            }}
-                            className="flex h-8 w-8 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-slate-100"
-                            aria-label={t('cart.decreaseQuantity', { name: item.name })}
-                          >
-                            -
-                          </button>
-                          <span className="min-w-8 text-center text-sm font-semibold text-neutral-800">
-                            {item.quantity}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={(event) => {
-                              event.preventDefault();
-                              event.stopPropagation();
-                              incrementItemQuantity(item.key);
-                            }}
-                            className="flex h-8 w-8 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-slate-100"
-                            aria-label={t('cart.increaseQuantity', { name: item.name })}
-                          >
-                            +
-                          </button>
-                        </div>
+                        <CartQuantityInput
+                          quantity={item.quantity}
+                          itemName={item.name}
+                          decreaseLabel={t('cart.decreaseQuantity', { name: item.name })}
+                          increaseLabel={t('cart.increaseQuantity', { name: item.name })}
+                          onDecrease={() => decrementItemQuantity(item.key)}
+                          onIncrease={() => incrementItemQuantity(item.key)}
+                          onQuantityChange={(quantity) => setItemQuantity(item.key, quantity)}
+                        />
                       )
                     }
                   />

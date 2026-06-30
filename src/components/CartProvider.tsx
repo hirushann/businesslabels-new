@@ -5,6 +5,11 @@ import type { ProductRouteType } from "@/components/ProductCard";
 
 const CART_STORAGE_KEY = "businesslabels-cart";
 
+type CartDiscountTier = {
+  discount?: string | number | null;
+  quantity?: string | number | null;
+};
+
 export type CartItem = {
   key: string;
   id: string | number;
@@ -21,7 +26,7 @@ export type CartItem = {
   linkedToKey?: string | null;
   componentCount?: number | null;
   basePrice?: number | null;
-  discounts?: string | any[] | null;
+  discounts?: string | CartDiscountTier[] | null;
   warranty?: {
     optionId: number;
     durationMonths?: number | null;
@@ -41,6 +46,7 @@ type CartContextValue = {
   removeItem: (key: string) => void;
   incrementItemQuantity: (key: string) => void;
   decrementItemQuantity: (key: string) => void;
+  setItemQuantity: (key: string, quantity: number) => void;
   clearCart: () => void;
   isCartOpen: boolean;
   openCart: () => void;
@@ -105,16 +111,21 @@ function previousQuantityForItem(item: CartItem): number {
   return Math.max(packingGroup, Math.floor((item.quantity - 1) / packingGroup) * packingGroup);
 }
 
+function isCartDiscountTier(value: unknown): value is CartDiscountTier {
+  return typeof value === "object" && value !== null;
+}
+
 function calculateUnitPrice(item: CartItem): number | null | undefined {
   if (item.itemKind === "warranty") return item.price;
   const priceToUse = item.basePrice ?? item.price;
   if (typeof priceToUse !== "number") return item.price;
   if (!item.discounts) return priceToUse;
 
-  let parsedDiscounts: any[] = [];
+  let parsedDiscounts: CartDiscountTier[] = [];
   if (typeof item.discounts === "string") {
     try {
-      parsedDiscounts = JSON.parse(item.discounts);
+      const parsed = JSON.parse(item.discounts) as unknown;
+      parsedDiscounts = Array.isArray(parsed) ? parsed.filter(isCartDiscountTier) : [];
     } catch {
       return priceToUse;
     }
@@ -145,6 +156,15 @@ function calculateUnitPrice(item: CartItem): number | null | undefined {
   return priceToUse;
 }
 
+function normalizeCartQuantity(value: unknown): number | null {
+  const parsed = typeof value === "number" ? value : Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed < 1) {
+    return null;
+  }
+
+  return parsed;
+}
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -156,6 +176,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (stored) {
         const parsed = JSON.parse(stored) as CartItem[];
         if (Array.isArray(parsed)) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect -- Cart is hydrated from localStorage after mount to avoid SSR/client mismatches.
           setItems(parsed);
         }
       }
@@ -279,6 +300,34 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const setItemQuantity = useCallback((key: string, quantity: number) => {
+    const normalizedQuantity = normalizeCartQuantity(quantity);
+    if (!normalizedQuantity) {
+      return;
+    }
+
+    setItems((currentItems) => {
+      const target = currentItems.find((item) => item.key === key);
+      if (!target) {
+        return currentItems;
+      }
+
+      return currentItems.map((item) => {
+        if (item.key === key) {
+          const updatedItem = { ...item, quantity: normalizedQuantity };
+          return { ...updatedItem, price: calculateUnitPrice(updatedItem) ?? updatedItem.price };
+        }
+
+        if (target.itemKind !== "warranty" && item.linkedToKey === key) {
+          const updatedItem = { ...item, quantity: normalizedQuantity };
+          return { ...updatedItem, price: calculateUnitPrice(updatedItem) ?? updatedItem.price };
+        }
+
+        return item;
+      });
+    });
+  }, []);
+
   const clearCart = useCallback(() => {
     setItems([]);
   }, []);
@@ -307,6 +356,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       removeItem,
       incrementItemQuantity,
       decrementItemQuantity,
+      setItemQuantity,
       clearCart,
       isCartOpen,
       openCart,
@@ -319,6 +369,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       removeItem,
       incrementItemQuantity,
       decrementItemQuantity,
+      setItemQuantity,
       clearCart,
       openCart,
       closeCart,

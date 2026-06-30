@@ -34,8 +34,13 @@ export const MESSAGES_V4 = {
       continueShopping: 'Continue Shopping',
       view: 'View',
       add: 'Add',
+      select: 'Select',
       loading: 'Loading...',
       viewMoreProducts: 'View more Products',
+      pagination: {
+        previous: 'Previous',
+        next: 'Next',
+      },
     },
     validation: {
       required: "{field} is required",
@@ -605,6 +610,11 @@ export const MESSAGES_V4 = {
       printersMetadataDescription: 'Discover printer media materials selected for precision, durability, color accuracy, and reliable professional output.',
       loadingProducts: 'Loading products...',
     },
+    pagination: {
+      previous: 'Previous',
+      next: 'Next',
+      page: 'Page {current} of {total}',
+    },
     thankYou: {
       loading: 'Loading order details...',
       successTitle: 'Thank You for Your Order!',
@@ -960,6 +970,8 @@ export const MESSAGES_V4 = {
       showMore: 'Show more ({count} more)',
       from: 'From',
       to: 'To',
+      expandScale: 'Expand scale',
+      collapseScale: 'Collapse scale',
       fanFold: 'Fan-fold',
     },
     product: {
@@ -993,6 +1005,7 @@ export const MESSAGES_V4 = {
       selectQuantity: 'Select Quantity',
       addToCart: 'Add to Cart',
       addProductToCart: 'Add {name} to cart',
+      selectProductQuantity: 'Select quantity for {name}',
       unnamedProduct: 'Unnamed product',
       chooseWarranty: 'Choose Warranty',
       warrantyDescription: 'Select a warranty option before adding this item to your cart.',
@@ -1014,7 +1027,8 @@ export const MESSAGES_V4 = {
       quantityMinError: 'Quantity must be at least 1.',
       quantityLimitErrorSingular: 'Only quantities up to {limit} or multiples of {limit} can be added.',
       quantityLimitErrorMultiple: 'Only 1 or multiples of {limit} can be added.',
-      priceExclTax: 'ex VAT'
+      priceExclTax: 'ex VAT',
+      fromPrice: 'From'
     },
     printer: {
       compatibilityTitle: 'Compatibility Properties',
@@ -1365,8 +1379,16 @@ export const MESSAGES_V4 = {
       continueShopping: 'Verder winkelen',
       view: 'Tonen',
       add: 'Toevoegen',
+      select: 'Selecteer',
       loading: 'Laden...',
       viewMoreProducts: 'Meer producten bekijken',
+      pagination: {
+        previous: 'Vorige',
+        next: 'Volgende',
+        page: 'Pagina',
+        of: 'van',
+        showing: 'Toont {from}-{to} van {total}',
+      }
     },
     validation: {
       required: "{field} is verplicht",
@@ -1936,6 +1958,11 @@ export const MESSAGES_V4 = {
       printersMetadataDescription: 'Ontdek printermaterialen geselecteerd voor precisie, duurzaamheid, kleurnauwkeurigheid en betrouwbare professionele output.',
       loadingProducts: 'Producten laden...',
     },
+    pagination: {
+      previous: 'Vorige',
+      next: 'Volgende',
+      page: 'Pagina {current} van {total}',
+    },
     thankYou: {
       loading: 'Bestelgegevens laden...',
       successTitle: 'Bedankt voor je bestelling!',
@@ -2291,6 +2318,8 @@ export const MESSAGES_V4 = {
       showMore: 'Meer tonen ({count} meer)',
       from: 'Van',
       to: 'Tot',
+      expandScale: 'Schaal vergroten',
+      collapseScale: 'Schaal verkleinen',
       fanFold: 'Fan-fold',
     },
     product: {
@@ -2324,6 +2353,7 @@ export const MESSAGES_V4 = {
       selectQuantity: 'Selecteer aantal',
       addToCart: 'In winkelwagen',
       addProductToCart: '{name} toevoegen aan winkelwagen',
+      selectProductQuantity: 'Selecteer aantal voor {name}',
       unnamedProduct: 'Naamloos product',
       chooseWarranty: 'Kies garantie',
       warrantyDescription: 'Selecteer een garantieoptie voordat u dit artikel aan uw winkelwagen toevoegt.',
@@ -2345,7 +2375,8 @@ export const MESSAGES_V4 = {
       quantityMinError: 'Aantal moet minimaal 1 zijn.',
       quantityLimitErrorSingular: 'Alleen aantallen tot {limit} of veelvouden van {limit} kunnen worden toegevoegd.',
       quantityLimitErrorMultiple: 'Alleen 1 of veelvouden van {limit} kunnen worden toegevoegd.',
-      priceExclTax: 'ex BTW'
+      priceExclTax: 'ex BTW',
+      fromPrice: 'Vanaf'
     },
     printer: {
       compatibilityTitle: 'Compatibiliteitseigenschappen',

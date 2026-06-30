@@ -33,18 +33,55 @@ export default function DrawerProductCard({
   onCardClick,
 }: DrawerProductCardProps) {
   const locale = useLocale();
+
+  const localizedHref: LinkProps['href'] | undefined = (() => {
+    if (!href) return undefined;
+    if (typeof href === 'string') return localePath(href, locale);
+    if (typeof href === 'object' && 'pathname' in href && typeof href.pathname === 'string') {
+      return { ...href, pathname: localePath(href.pathname, locale) };
+    }
+    return href;
+  })();
+
   const cardBody = (
     <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-[2px_6px_20px_0px_rgba(109,109,120,0.06)]">
       <div className="flex gap-4">
-        <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-slate-100">
-          <Image src={imageSrc} alt={name} fill sizes="96px" className="p-2 object-contain" unoptimized />
-        </div>
+        {localizedHref ? (
+          <Link
+            href={localizedHref}
+            onClick={onCardClick}
+            className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-slate-100"
+            aria-label={name}
+          >
+            <Image src={imageSrc} alt={name} fill sizes="96px" className="p-2 object-contain" unoptimized />
+          </Link>
+        ) : (
+          <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-slate-100">
+            <Image src={imageSrc} alt={name} fill sizes="96px" className="p-2 object-contain" unoptimized />
+          </div>
+        )}
 
         <div className="flex min-w-0 flex-1 flex-col justify-between gap-3">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <h3 className="truncate text-neutral-800 text-base font-semibold leading-6">{name}</h3>
-              <p className="text-[#479EF5] text-sm leading-5">SKU: {sku}</p>
+              <h3 className="truncate text-neutral-800 text-base font-semibold leading-6">
+                {localizedHref ? (
+                  <Link href={localizedHref} onClick={onCardClick} className="hover:text-amber-600 transition-colors">
+                    {name}
+                  </Link>
+                ) : (
+                  name
+                )}
+              </h3>
+              <p className="text-[#479EF5] text-sm leading-5">
+                {localizedHref ? (
+                  <Link href={localizedHref} onClick={onCardClick} className="hover:text-amber-600 transition-colors">
+                    SKU: {sku}
+                  </Link>
+                ) : (
+                  <>SKU: {sku}</>
+                )}
+              </p>
               {descriptionNode}
             </div>
             <button
@@ -65,29 +102,22 @@ export default function DrawerProductCard({
 
           <div className="mt-auto flex items-end justify-between gap-3">
             {priceNode}
-            {actionNode}
+            <div
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+              }}
+              onKeyDown={(event) => {
+                event.stopPropagation();
+              }}
+            >
+              {actionNode}
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 
-  if (!href) {
-    return cardBody;
-  }
-
-  // Apply locale prefix to pathname-style hrefs
-  const localizedHref: LinkProps['href'] = (() => {
-    if (typeof href === 'string') return localePath(href, locale);
-    if (typeof href === 'object' && 'pathname' in href && typeof href.pathname === 'string') {
-      return { ...href, pathname: localePath(href.pathname, locale) };
-    }
-    return href;
-  })();
-
-  return (
-    <Link href={localizedHref} onClick={onCardClick} className="block">
-      {cardBody}
-    </Link>
-  );
+  return cardBody;
 }

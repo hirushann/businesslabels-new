@@ -1,17 +1,11 @@
 'use client';
 
-<<<<<<< HEAD
 import { useState, useEffect, ReactNode } from 'react';
-import { useTranslations } from 'next-intl';
-import Link from 'next/link';
 import Image from 'next/image';
 import { Sparkles, FileText, ShieldCheck, Shield, Eye, Star, ChevronRight } from 'lucide-react';
-=======
-import { useState, ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { toast } from 'sonner';
->>>>>>> 9290e54e569bc9e1659071234447699108fd2a9a
 import PrinterModelSelect from '@/components/PrinterModelSelect';
 import MaterialModelSelect from '@/components/MaterialModelSelect';
 import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogHeader, DialogDescription, DialogClose } from '@/components/ui/dialog';
@@ -76,9 +70,52 @@ const getMaterials = (t: any): Material[] => [
 
 const STEPS: string[] = ['Shape', 'Size', 'Printer', 'Material', 'Contact'];
 
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function readString(source: unknown, keys: string[]) {
+  if (!isPlainObject(source)) return '';
+
+  for (const key of keys) {
+    const value = source[key];
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return '';
+}
+
+function extractAuthUser(value: unknown): Record<string, unknown> | null {
+  if (!isPlainObject(value)) return null;
+
+  if (isPlainObject(value.user)) return value.user;
+  if (isPlainObject(value.data)) {
+    if (isPlainObject(value.data.user)) return value.data.user;
+    return value.data;
+  }
+  if (isPlainObject(value.customer)) return value.customer;
+  if (isPlainObject(value.auth) && isPlainObject(value.auth.user)) return value.auth.user;
+
+  return value;
+}
+
+function getStoredAuthUser() {
+  const storedUser = localStorage.getItem('auth_user');
+  if (!storedUser) return null;
+
+  try {
+    return extractAuthUser(JSON.parse(storedUser));
+  } catch (error) {
+    console.error('Failed to parse auth_user for custom form autofill:', error);
+    return null;
+  }
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function CustomMadeFormClient() {
+export default function CustomMadeFormClient({ matCode }: { matCode: string | undefined }) {
   const t = useTranslations('customForm');
   const locale = useLocale() === 'nl' ? 'nl' : 'en';
 
@@ -89,7 +126,7 @@ export default function CustomMadeFormClient() {
   const [diameter, setDiameter] = useState<string>('');
   const [printerQuery, setPrinterQuery] = useState<string>('');
   const [unknownPrinter, setUnknownPrinter] = useState<boolean>(false);
-  const [materialCode, setMaterialCode] = useState<string>('');
+  const [materialCode, setMaterialCode] = useState<string>(matCode || '');
   const [unsureMaterial, setUnsureMaterial] = useState<boolean>(false);
   const [selectedMaterial, setSelectedMaterial] = useState<string | null>(null);
   const [company, setCompany] = useState<string>('');
@@ -106,6 +143,10 @@ export default function CustomMadeFormClient() {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
+    let draftCompany = '';
+    let draftEmail = '';
+    let draftPhone = '';
+
     const saved = localStorage.getItem('customMadeFormDraft');
     if (saved) {
       try {
@@ -114,19 +155,41 @@ export default function CustomMadeFormClient() {
         if (data.diameter !== undefined) setDiameter(data.diameter);
         if (data.printerQuery !== undefined) setPrinterQuery(data.printerQuery);
         if (data.unknownPrinter !== undefined) setUnknownPrinter(data.unknownPrinter);
-        if (data.materialCode !== undefined) setMaterialCode(data.materialCode);
+        if (!matCode && data.materialCode !== undefined) setMaterialCode(data.materialCode);
         if (data.unsureMaterial !== undefined) setUnsureMaterial(data.unsureMaterial);
         if (data.selectedMaterial !== undefined) setSelectedMaterial(data.selectedMaterial);
-        if (data.company !== undefined) setCompany(data.company);
+        if (data.company !== undefined) {
+          draftCompany = data.company;
+          setCompany(data.company);
+        }
         if (data.name !== undefined) setName(data.name);
-        if (data.email !== undefined) setEmail(data.email);
-        if (data.phone !== undefined) setPhone(data.phone);
+        if (data.email !== undefined) {
+          draftEmail = data.email;
+          setEmail(data.email);
+        }
+        if (data.phone !== undefined) {
+          draftPhone = data.phone;
+          setPhone(data.phone);
+        }
         if (data.quantity !== undefined) setQuantity(data.quantity);
         if (data.comments !== undefined) setComments(data.comments);
       } catch(e) { console.error('Failed to parse saved form data', e); }
     }
+
+    const authUser = getStoredAuthUser();
+    if (authUser) {
+      const authCompany = readString(authUser, ['companyName', 'company_name', 'company', 'business_name']);
+      const authEmail = readString(authUser, ['email', 'billing_email']);
+      const authPhone = readString(authUser, ['phone', 'telephone', 'mobile', 'mobile_number', 'mobileNumber']);
+
+      if (!String(draftCompany).trim() && authCompany) setCompany(authCompany);
+      if (!String(draftEmail).trim() && authEmail) setEmail(authEmail);
+      if (!String(draftPhone).trim() && authPhone) setPhone(authPhone);
+    }
+
+    if (matCode) setMaterialCode(matCode);
     setIsLoaded(true);
-  }, []);
+  }, [matCode]);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -438,6 +501,7 @@ export default function CustomMadeFormClient() {
                   </label>
                   <MaterialModelSelect
                     value={null}
+                    textValue={materialCode}
                     onValueChange={(material) => {
                       if (material) {
                         setMaterialCode(material.code);
@@ -667,7 +731,7 @@ export default function CustomMadeFormClient() {
                 </div>
                 <button
                   type="submit"
-                  disabled={isSubmitting || submitStatus === 'success'}
+                  disabled={isSubmitting}
                   className="h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] flex justify-center items-center gap-2 hover:bg-amber-600 disabled:opacity-50 active:scale-[0.98] transition-all"
                 >
                   <span className="text-white text-base font-semibold font-sans leading-6">

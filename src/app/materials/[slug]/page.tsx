@@ -7,6 +7,7 @@ import { getTranslations } from "next-intl/server";
 import Accordion from "@/components/Accordion";
 import CTABanner from "@/components/CTABanner";
 import IccProfileModal from "@/components/materials/IccProfileModal";
+import ScrollToMaterialProductsButton from "@/components/materials/ScrollToMaterialProductsButton";
 import ProductsListing from "@/components/ProductsListing";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
@@ -90,6 +91,8 @@ const emptyCatalogResponse: CatalogSearchResponse = {
   perPage: 12,
   filters: { ranges: [], options: [] },
 };
+
+const MATERIAL_PRODUCTS_SECTION_ID = "products-from-this-material";
 
 function toUrlSearchParams(query: Record<string, string | string[] | undefined>): URLSearchParams {
   const params = new URLSearchParams();
@@ -179,8 +182,8 @@ function SidebarCard({ title, description, children }: { title: string; descript
   return (
     <div className="flex flex-col gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)]">
       <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-bold leading-6 text-neutral-800">{title}</h2>
-        <p className="text-sm leading-5 text-neutral-500">{description}</p>
+        <h2 className="text-[24px] font-bold leading-9 text-neutral-800">{title}</h2>
+        <p className="text-base leading-7 text-neutral-500">{description}</p>
       </div>
       {children}
     </div>
@@ -246,7 +249,7 @@ function MaterialProductsSection({
   scopeQueryString: string;
 }) {
   return (
-    <section className="bg-gray-50 px-4 py-24 sm:px-6 lg:px-10">
+    <section id={MATERIAL_PRODUCTS_SECTION_ID} className="scroll-mt-24 bg-gray-50 px-4 py-24 sm:px-6 lg:px-10">
       <div className="mx-auto flex max-w-[1440px] flex-col gap-8">
         <h2 className="text-4xl font-bold leading-12 text-neutral-800">{title}</h2>
         <ProductsListing
@@ -362,8 +365,8 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
           />
 
           <div className="flex flex-col gap-2">
-            {material.code ? <span className="text-sm font-semibold uppercase tracking-wide text-amber-500">{material.code}</span> : null}
-            <h1 className="text-3xl font-bold leading-10 text-neutral-800">{material.title}</h1>
+            {material.code ? <span className="text-base font-semibold uppercase tracking-wide text-[#479EF5]">{material.code}</span> : null}
+            <h1 className="text-[32px] font-bold leading-10 text-[#222222]">{material.title}</h1>
             {material.subtitle ? <p className="text-lg leading-7 text-neutral-600">{material.subtitle}</p> : null}
           </div>
 
@@ -408,13 +411,13 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
             {/* Right sidebar */}
             <aside className="flex w-full flex-col gap-6 lg:sticky lg:top-24 lg:w-96">
               <SidebarCard title={t("materialDetail.availableStockItemsTitle")} description={t("materialDetail.availableStockItemsDesc")}>
-                <Link href="/product" className="flex h-12 items-center justify-center rounded-full bg-amber-500 px-4 text-base font-semibold leading-6 text-white transition-colors hover:bg-amber-600">
+                <ScrollToMaterialProductsButton targetId={MATERIAL_PRODUCTS_SECTION_ID}>
                   {t("materialDetail.viewStockItems")}
-                </Link>
+                </ScrollToMaterialProductsButton>
               </SidebarCard>
 
               <SidebarCard title={t("materialDetail.customSizeTitle")} description={t("materialDetail.customSizeDesc")}>
-                <Link href="/custom" className="flex h-12 items-center justify-center rounded-full border border-amber-500 bg-amber-500/10 px-4 text-base font-semibold leading-6 text-amber-600 transition-colors hover:bg-amber-500/20">
+                <Link href={`/custom-made-form?materialId=${material.code}`} className="flex h-12 items-center justify-center rounded-full border border-amber-500 bg-white px-4 text-base font-bold leading-6 text-amber-500 transition-colors hover:bg-amber-500/20">
                   {t("materialDetail.requestCustomMade")}
                 </Link>
               </SidebarCard>

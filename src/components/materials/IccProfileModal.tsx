@@ -10,23 +10,75 @@ type IccProfileModalProps = {
 };
 
 const PRINTER_MODELS = [
-  "Epson ColorWorks C3500",
-  "Epson ColorWorks C6000",
-  "Epson ColorWorks C6500",
-  "Epson ColorWorks C7500",
-  "Epson ColorWorks C8000",
-  "Epson ColorWorks C8000e",
-  "Epson TM-C3400",
-  "Epson TM-C3500",
-  "Canon PIXMA",
-  "Canon imagePROGRAF",
-  "HP DesignJet",
-  "HP Indigo",
-  "Zebra ZT410",
-  "Zebra ZT610",
-  "Zebra ZT620",
-  "Other",
+  "CW-C4000 series BK",
+  "CW-C4000 series MK",
+  "CW-D3800 Dye",
+  "CW-C6000 series BK",
+  "CW-C6000 series MK",
+  "CW-D6000 series Dye",
+  "CW-C8000 series BK",
+  "CW-C8000 series MK"
 ];
+
+const EMPTY_FORM = {
+  printerModel: "",
+  email: "",
+  companyName: "",
+  phone: "",
+};
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function readString(source: unknown, keys: string[]) {
+  if (!isPlainObject(source)) return "";
+
+  for (const key of keys) {
+    const value = source[key];
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return "";
+}
+
+function extractAuthUser(value: unknown): Record<string, unknown> | null {
+  if (!isPlainObject(value)) return null;
+
+  if (isPlainObject(value.user)) return value.user;
+  if (isPlainObject(value.data)) {
+    if (isPlainObject(value.data.user)) return value.data.user;
+    return value.data;
+  }
+  if (isPlainObject(value.customer)) return value.customer;
+  if (isPlainObject(value.auth) && isPlainObject(value.auth.user)) return value.auth.user;
+
+  return value;
+}
+
+function getStoredAuthUser() {
+  const storedUser = localStorage.getItem("auth_user");
+  if (!storedUser) return null;
+
+  try {
+    return extractAuthUser(JSON.parse(storedUser));
+  } catch (error) {
+    console.error("Failed to parse auth_user for ICC profile autofill:", error);
+    return null;
+  }
+}
+
+function getAuthUserFormValues() {
+  const authUser = getStoredAuthUser();
+
+  return {
+    email: readString(authUser, ["email", "billing_email"]),
+    companyName: readString(authUser, ["companyName", "company_name", "company", "business_name"]),
+    phone: readString(authUser, ["phone", "telephone", "mobile", "mobile_number", "mobileNumber"]),
+  };
+}
 
 export default function IccProfileModal({ materialTitle, isNl = false }: IccProfileModalProps) {
   const t = useTranslations();
@@ -37,16 +89,12 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
   const [submittedEmail, setSubmittedEmail] = useState("");
   const dialogRef = useRef<HTMLDialogElement>(null);
 
-  const [form, setForm] = useState({
-    printerModel: "",
-    email: "",
-    companyName: "",
-    phone: "",
-  });
+
+  const [form, setForm] = useState(EMPTY_FORM);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-
   useEffect(() => {
+
     const dialog = dialogRef.current;
     if (!dialog) return;
 
@@ -82,13 +130,26 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
     setSubmitted(false);
     setSubmittedEmail("");
     setErrors({});
-    setForm({ printerModel: "", email: "", companyName: "", phone: "" });
+    setForm({ ...EMPTY_FORM });
+  };
+
+  const handleOpen = () => {
+    const authUserValues = getAuthUserFormValues();
+
+    setForm((current) => ({
+      ...current,
+      email: current.email.trim() ? current.email : authUserValues.email,
+      companyName: current.companyName.trim() ? current.companyName : authUserValues.companyName,
+      phone: current.phone.trim() ? current.phone : authUserValues.phone,
+    }));
+    setIsOpen(true);
   };
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
     if (!form.printerModel) newErrors.printerModel = isNl ? "Selecteer een printermodel" : "Please select a printer model";
     if (!form.email) newErrors.email = isNl ? "Vul uw e-mailadres in" : "Please enter your email address";
+    if (!form.companyName) newErrors.companyName = isNl ? "Vul uw bedrijfsnaam in" : "Please enter your company name";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
       newErrors.email = isNl ? "Ongeldig e-mailadres" : "Invalid email address";
     }
@@ -123,7 +184,7 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
         setSubmittedEmail(email);
         setSubmitted(true);
         toast.success(isNl ? "Aanvraag verstuurd!" : "Request sent!");
-        setForm({ printerModel: "", email: "", companyName: "", phone: "" });
+        setForm({ ...EMPTY_FORM });
       } else {
         const data = (await res.json()) as { message?: string; errors?: Record<string, string[]> };
         let errorText = data.message ?? (isNl ? 'Er is iets misgegaan. Probeer het opnieuw.' : 'Something went wrong. Please try again.');
@@ -148,7 +209,7 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
     <>
       <button
         type="button"
-        onClick={() => setIsOpen(true)}
+        onClick={handleOpen}
         className="mt-3 inline-block text-sm font-semibold text-[#f08500] underline hover:text-orange-700 transition-colors"
       >
         {isNl ? "ICC-profiel aanvragen" : "Request ICC Profile"}
@@ -170,11 +231,11 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
               <h2 className="text-2xl font-bold text-slate-900">
                 {isNl ? "ICC-profiel aanvragen" : "Request ICC Profile"}
               </h2>
-              <p className="mt-1 text-sm text-slate-500">
+              {/* <p className="mt-1 text-sm text-slate-500">
                 {isNl
                   ? "We sturen u uw profiel binnen 1 werkdag per e-mail."
                   : "We'll email your profile within 1 business day."}
-              </p>
+              </p> */}
             </div>
             <button
               type="button"
@@ -297,7 +358,7 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
                 <div>
                   <label htmlFor="icc-company" className="mb-1.5 block text-sm font-bold text-slate-800">
                     {isNl ? "Bedrijfsnaam" : "Company name"}
-                    <span className="ml-1 font-normal text-slate-400">({isNl ? "optioneel" : "optional"})</span>
+                    {/* <span className="ml-1 font-normal text-slate-400">({isNl ? "optioneel" : "optional"})</span> */}
                   </label>
                   <input
                     id="icc-company"
@@ -305,8 +366,13 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
                     placeholder={isNl ? "Uw bedrijfsnaam" : "Your company name"}
                     value={form.companyName}
                     onChange={(e) => setForm((f) => ({ ...f, companyName: e.target.value }))}
-                    className="w-full rounded-full border border-slate-200 px-5 py-3 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#f08500]/30 transition-colors"
+                    className={`w-full rounded-full border px-5 py-3 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[#f08500]/30 ${
+                      errors.companyName ? "border-red-400" : "border-slate-200"
+                    } placeholder:text-slate-400`}
                   />
+                  {errors.companyName && (
+                    <p className="mt-1 pl-4 text-xs text-red-500">{errors.companyName}</p>
+                  )}
                 </div>
 
                 {/* Phone number */}

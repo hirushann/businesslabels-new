@@ -18,6 +18,7 @@ export type Material = {
     name: string;
     slug: string;
   }[];
+  category_slugs?: string[];
   specifications: {
     material_specs?: { label: string; value: string }[];
   } | null;
@@ -26,6 +27,7 @@ export type Material = {
   finish: string | null;
   adhesive: string | null;
   main_image?: string;
+  description?: string;
 };
 
 export type MaterialSortValue = "name_asc" | "name_desc" | "latest" | "oldest";
@@ -159,25 +161,55 @@ function exactTextFilter(fields: string[], rawValues: string[]): estypes.QueryDs
   };
 }
 
-function printMethodFilter(method: string): estypes.QueryDslQueryContainer | null {
+export function printMethodFilterValues(method: string): string[] {
   const normalized = method.trim().toLowerCase();
-  if (!normalized) return null;
+  if (!normalized) return [];
 
   const variants: Record<string, string[]> = {
-    inkjet: ["inkjet", "Inkjet"],
-    "thermal-transfer": ["thermal-transfer", "thermal_transfer", "thermaltransfer", "Thermal Transfer", "ttr", "tt"],
-    "thermal-direct": ["thermal-direct", "thermal_direct", "thermaldirect", "direct-thermal", "Thermal Direct", "dt", "td", "thermisch-direct"],
+    inkjet: [
+      "inkjet",
+      "inkjet-printer-media",
+      "inkjetpapier-labels",
+      "kunststof-inkjet-labels",
+    ],
+    "thermal-transfer": [
+      "thermal-transfer",
+      "thermal-transfer-printer-media",
+      "thermische-overdracht-printer-media",
+      "glanzende-labels-tt",
+      "kunststof-labels-tt",
+      "labels-met-lijm-tt",
+      "matte-labels-tt",
+      "papieren-labels-tt",
+      "verwijderbare-labels-tt",
+      "ttr",
+      "tt",
+    ],
+    "thermal-direct": [
+      "td",
+      "thermal-direct",
+      "thermal-direct-printer-media",
+      "thermisch-direct",
+      "thermisch-directe-printer-media",
+      "kunststof-labels-td",
+      "labels-met-lijm-td",
+      "papieren-labels-td",
+      "verwijderbare-labels-td",
+      "dt",
+    ],
   };
 
-  const values = variants[normalized] ?? [method];
+  return variants[normalized] ?? [method];
+}
+
+function printMethodFilter(method: string): estypes.QueryDslQueryContainer | null {
+  const values = printMethodFilterValues(method);
+  if (values.length === 0) return null;
 
   return {
     bool: {
       minimum_should_match: 1,
       should: [
-        { terms: { print_method: values } },
-        { terms: { "print_method.keyword": values } },
-        { terms: { "print_method_label.keyword": values } },
         { terms: { category_slugs: values } },
         { terms: { "category_slugs.keyword": values } },
       ],
@@ -282,6 +314,7 @@ function mapMaterialHit(hit: estypes.SearchHit<MaterialSource>, locale?: "en" | 
     brand: stringValue(source.brand_label) || stringValue(source.brand),
     status: stringValue(source.status),
     categories,
+    category_slugs: arrayValue(source.category_slugs).map((slug) => stringValue(slug)).filter(Boolean),
     specifications: source.specifications && typeof source.specifications === "object"
       ? (source.specifications as Material["specifications"])
       : null,

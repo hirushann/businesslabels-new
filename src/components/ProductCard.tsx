@@ -46,6 +46,11 @@ export type BulkDiscountTier = {
   discount?: string | number | null;
 };
 
+type NormalizedBulkDiscountTier = {
+  quantity: number;
+  discountPct: number;
+};
+
 export type ProductCardTranslation = {
   language?: string | null;
   name?: string | null;
@@ -103,6 +108,46 @@ type ProductCardProps = {
   href?: LinkProps["href"];
   onClick?: () => void;
 };
+
+function normalizeBulkDiscountTiers(
+  discounts: ProductCardData["discounts"],
+): NormalizedBulkDiscountTier[] {
+  if (!discounts) return [];
+
+  let parsed: BulkDiscountTier[];
+  if (typeof discounts === "string") {
+    try {
+      parsed = JSON.parse(discounts) as BulkDiscountTier[];
+    } catch {
+      return [];
+    }
+  } else {
+    parsed = discounts;
+  }
+
+  if (!Array.isArray(parsed)) return [];
+
+  return parsed
+    .map((tier) => {
+      const quantity = Number(tier?.quantity);
+      const discountPct = Number(tier?.discount);
+
+      if (
+        !Number.isFinite(quantity) ||
+        quantity <= 0 ||
+        !Number.isFinite(discountPct) ||
+        discountPct <= 0
+      ) {
+        return null;
+      }
+
+      return {
+        quantity: Math.floor(quantity),
+        discountPct,
+      };
+    })
+    .filter((tier): tier is NormalizedBulkDiscountTier => tier !== null);
+}
 
 function normalizeText(value: string | null | undefined): string | null {
   if (!value) return null;
@@ -380,23 +425,22 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
     defaultWarrantyOption;
   const hasWarrantyOptions = normalizedWarranty.options.length > 0;
 
-  // Normalize bulk discounts: only truthy arrays with valid tiers
-  const hasBulkDiscounts = useMemo(() => {
-    const raw = product.discounts;
-    if (!raw) return false;
-    let arr: Array<{ discount?: string | number | null; quantity?: string | number | null }>;
-    if (typeof raw === "string") {
-      try { arr = JSON.parse(raw); } catch { return false; }
-    } else {
-      arr = raw;
+  const bulkDiscountTiers = useMemo(
+    () => normalizeBulkDiscountTiers(product.discounts),
+    [product.discounts],
+  );
+  const hasBulkDiscounts = bulkDiscountTiers.length > 0;
+  const overviewPrice = useMemo(() => {
+    if (!hasPrice || !hasBulkDiscounts) {
+      return product.price ?? null;
     }
-    if (!Array.isArray(arr) || arr.length === 0) return false;
-    return arr.some((tier) => {
-      const qty = Number(tier?.quantity);
-      const pct = Number(tier?.discount);
-      return Number.isFinite(qty) && qty > 0 && Number.isFinite(pct) && pct > 0;
-    });
-  }, [product.discounts]);
+
+    return bulkDiscountTiers.reduce(
+      (lowestPrice, tier) =>
+        Math.min(lowestPrice, product.price! * (1 - tier.discountPct / 100)),
+      product.price!,
+    );
+  }, [bulkDiscountTiers, hasBulkDiscounts, hasPrice, product.price]);
 
   const addProductWithWarranty = (selectedOption: typeof selectedWarrantyOption, overrideQty?: number, overridePrice?: number) => {
     const finalQty = overrideQty ?? addQuantity;
@@ -617,8 +661,13 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
           <div className="flex justify-between items-center">
             <div className="flex flex-col gap-2">
               <div className="flex items-end gap-2">
+                {hasBulkDiscounts && hasPrice ? (
+                  <span className="text-neutral-500 text-sm font-semibold font-['Segoe_UI'] leading-5">
+                    {t("product.fromPrice")}
+                  </span>
+                ) : null}
                 <span className="text-neutral-800 text-2xl font-extrabold font-['Segoe_UI'] leading-7">
-                  {hasPrice ? formatEuro(product.price!) : "-"}
+                  {hasPrice && overviewPrice !== null ? formatEuro(overviewPrice) : "-"}
                 </span>
                 {hasOriginalPrice ? (
                   <span className="text-zinc-400 text-sm font-normal font-['Segoe_UI'] leading-5 line-through">
@@ -634,14 +683,17 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
                   type="button"
                   onClick={handleAddToCart}
                   className="px-4 py-2.5 bg-amber-500 rounded-full flex items-center gap-2 text-white text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors"
-                  aria-label={t("product.addProductToCart", { name: productName })}
+                  aria-label={t(hasBulkDiscounts ? "product.selectProductQuantity" : "product.addProductToCart", { name: productName })}
                 >
-                  {t("common.add")}
-                  <svg width="22" height="16" viewBox="0 0 22 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M7.33268 14.6663C7.83894 14.6663 8.24935 14.3679 8.24935 13.9997C8.24935 13.6315 7.83894 13.333 7.33268 13.333C6.82642 13.333 6.41602 13.6315 6.41602 13.9997C6.41602 14.3679 6.82642 14.6663 7.33268 14.6663Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M17.4167 14.6663C17.9229 14.6663 18.3333 14.3679 18.3333 13.9997C18.3333 13.6315 17.9229 13.333 17.4167 13.333C16.9104 13.333 16.5 13.6315 16.5 13.9997C16.5 14.3679 16.9104 14.6663 17.4167 14.6663Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M1.87891 1.36621H3.71224L6.15057 9.64621C6.24002 9.94945 6.47202 10.2205 6.80664 10.4128C7.14126 10.605 7.55757 10.7064 7.9839 10.6995H16.9489C17.3661 10.6991 17.7707 10.5951 18.0957 10.4048C18.4207 10.2145 18.6467 9.94923 18.7364 9.65288L20.2489 4.69954H4.69307" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                  {t(hasBulkDiscounts ? "common.select" : "common.add")}
+                  <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M7.33366 20.1663C7.83992 20.1663 8.25033 19.7559 8.25033 19.2497C8.25033 18.7434 7.83992 18.333 7.33366 18.333C6.8274 18.333 6.41699 18.7434 6.41699 19.2497C6.41699 19.7559 6.8274 20.1663 7.33366 20.1663Z" stroke="white" strokeWidth="1.375" strokeLinecap="round" strokeLinejoin="round"/>
+<path d="M17.4167 20.1663C17.9229 20.1663 18.3333 19.7559 18.3333 19.2497C18.3333 18.7434 17.9229 18.333 17.4167 18.333C16.9104 18.333 16.5 18.7434 16.5 19.2497C16.5 19.7559 16.9104 20.1663 17.4167 20.1663Z" stroke="white" strokeWidth="1.375" strokeLinecap="round" strokeLinejoin="round"/>
+<path d="M1.87988 1.87988H3.71322L6.15155 13.2649C6.241 13.6818 6.473 14.0546 6.80762 14.3189C7.14224 14.5833 7.55855 14.7227 7.98488 14.7132H16.9499C17.3671 14.7125 17.7717 14.5696 18.0967 14.3079C18.4217 14.0462 18.6477 13.6815 18.7374 13.274L20.2499 6.46322H16.3609C16.3609 6.46322 15.5833 9.16667 12.375 9.16667C9.16667 9.16667 8.58301 6.46322 8.58301 6.46322H4.69405" stroke="white" strokeWidth="1.375" strokeLinecap="round" strokeLinejoin="round"/>
+<path d="M10.083 4.125H14.6663" stroke="white" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round"/>
+<path d="M12.375 1.83301V6.41634" stroke="white" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round"/>
+</svg>
+
                 </button>
               </PopoverAnchor>
               {hasWarrantyOptions ? (

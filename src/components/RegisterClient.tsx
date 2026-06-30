@@ -617,7 +617,7 @@ function RegisterContent() {
 
               <p className="text-base font-medium leading-8 text-neutral-700 sm:text-lg">
                 {t('register.privacyText')}{' '}
-                <Link href="/privacy-policy" className="font-semibold text-sky-500 transition-colors hover:text-sky-600">
+                <Link href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="font-semibold text-sky-500 transition-colors hover:text-sky-600">
                   {t('register.privacyPolicy')}
                 </Link>
                 .

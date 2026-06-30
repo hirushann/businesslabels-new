@@ -79,6 +79,55 @@ type TeamMember = {
   sort_order: number;
 };
 
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function readString(source: unknown, keys: string[]) {
+  if (!isPlainObject(source)) return '';
+
+  for (const key of keys) {
+    const value = source[key];
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return '';
+}
+
+function extractAuthUser(value: unknown): Record<string, unknown> | null {
+  if (!isPlainObject(value)) return null;
+
+  if (isPlainObject(value.user)) return value.user;
+  if (isPlainObject(value.data)) {
+    if (isPlainObject(value.data.user)) return value.data.user;
+    return value.data;
+  }
+  if (isPlainObject(value.customer)) return value.customer;
+  if (isPlainObject(value.auth) && isPlainObject(value.auth.user)) return value.auth.user;
+
+  return value;
+}
+
+function getStoredAuthUser() {
+  if (typeof window === 'undefined') return null;
+
+  const storedUser = window.localStorage.getItem('auth_user');
+  if (!storedUser) return null;
+
+  try {
+    return extractAuthUser(JSON.parse(storedUser));
+  } catch (error) {
+    console.error('Failed to parse auth_user for help drawer autofill:', error);
+    return null;
+  }
+}
+
+function getAuthUserString(keys: string[]) {
+  return readString(getStoredAuthUser(), keys);
+}
+
 const WORKING_HOURS = '08:00 - 17:30';
 const UNAVAILABLE_LABEL = 'Unavailable';
 const BUSINESS_START_TIME = '08:00';
@@ -182,10 +231,14 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
   const [scheduleOpen, setScheduleOpen] = useState(true);
   const [messageOpen, setMessageOpen] = useState(true);
   const [selectedCountryCode, setSelectedCountryCode] = useState('NL');
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState(() =>
+    getAuthUserString(['phone', 'telephone', 'mobile', 'mobile_number', 'mobileNumber'])
+  );
   const [bookingStatus, setBookingStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [bookingMessage, setBookingMessage] = useState('');
-  const [contactEmail, setContactEmail] = useState('');
+  const [contactEmail, setContactEmail] = useState(() =>
+    getAuthUserString(['email', 'billing_email'])
+  );
   const [contactMessage, setContactMessage] = useState('');
   const [contactStatus, setContactStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [contactStatusMessage, setContactStatusMessage] = useState('');
@@ -580,8 +633,8 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                   )}
                   <p className="text-[11px] text-zinc-500 font-['Segoe_UI'] text-center">
                     This site is protected by reCAPTCHA and the Google{' '}
-                    <a href="https://policies.google.com/privacy" className="text-amber-500 hover:underline">Privacy Policy</a> and{' '}
-                    <a href="https://policies.google.com/terms" className="text-amber-500 hover:underline">Terms of Service</a> apply.
+                    <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-amber-500 hover:underline">Privacy Policy</a> and{' '}
+                    <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="text-amber-500 hover:underline">Terms of Service</a> apply.
                   </p>
 
                   {bookingMessage && (
@@ -724,8 +777,8 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                 )}
                 <p className="text-[11px] text-zinc-500 font-['Segoe_UI'] text-center">
                   This site is protected by reCAPTCHA and the Google{' '}
-                  <a href="https://policies.google.com/privacy" className="text-amber-500 hover:underline">Privacy Policy</a> and{' '}
-                  <a href="https://policies.google.com/terms" className="text-amber-500 hover:underline">Terms of Service</a> apply.
+                  <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-amber-500 hover:underline">Privacy Policy</a> and{' '}
+                  <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="text-amber-500 hover:underline">Terms of Service</a> apply.
                 </p>
 
                 {contactStatusMessage && (

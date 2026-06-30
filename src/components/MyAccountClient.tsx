@@ -1132,6 +1132,7 @@ function PrintersView() {
 }
 
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
+import { PrinterCardData } from './PrintersListing';
 
 function FavouriteProductsView() {
   const t = useTranslations();

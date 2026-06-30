@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 type RangeSliderProps = {
   min: number;
   max: number;
-  absoluteMax?: number;
   step?: number;
   value: [number, number];
   onChange: (value: [number, number]) => void;
@@ -17,7 +16,6 @@ type RangeSliderProps = {
 export default function RangeSlider({
   min,
   max,
-  absoluteMax,
   step = 1,
   value,
   onChange,
@@ -32,9 +30,7 @@ export default function RangeSlider({
   const [prevValue, setPrevValue] = useState<[number, number]>(value);
   const [localValue, setLocalValue] = useState<[number, number]>(value);
   const [minInput, setMinInput] = useState<string>(String(value[0]));
-  const [maxInput, setMaxInput] = useState<string>(
-    String(value[1] >= (absoluteMax ?? max) ? max : value[1])
-  );
+  const [maxInput, setMaxInput] = useState<string>(String(value[1]));
 
   if (value[0] !== prevValue[0] || value[1] !== prevValue[1]) {
     setPrevValue(value);
@@ -43,7 +39,7 @@ export default function RangeSlider({
       setMinInput(String(value[0]));
     }
     if (value[1] !== latestValue.current[1]) {
-      setMaxInput(String(value[1] >= (absoluteMax ?? max) ? max : value[1]));
+      setMaxInput(String(value[1]));
     }
     latestValue.current = value;
   }
@@ -68,7 +64,7 @@ export default function RangeSlider({
         setMinInput(String(next[0]));
       } else {
         next = [prev[0], Math.max(newValue, prev[0])];
-        setMaxInput(String(next[1] >= (absoluteMax ?? max) ? max : next[1]));
+        setMaxInput(String(next[1]));
       }
       latestValue.current = next;
       onChange(next);
@@ -110,11 +106,8 @@ export default function RangeSlider({
     if (isNaN(minVal)) minVal = min;
     if (isNaN(maxVal)) maxVal = max;
 
-    const absMax = absoluteMax ?? max;
-
-    // Clamp values to absolute bounds [min, absoluteMax]
-    minVal = Math.max(min, Math.min(absMax, minVal));
-    maxVal = Math.max(min, Math.min(absMax, maxVal));
+    minVal = Math.max(min, Math.min(max, minVal));
+    maxVal = Math.max(min, Math.min(max, maxVal));
 
     if (minVal > maxVal) {
       minVal = maxVal;
@@ -186,7 +179,7 @@ export default function RangeSlider({
       {/* Min/Max Labels */}
       <div className="flex justify-between text-xs text-slate-400 -mt-4">
         <span>{formatValue(min)}</span>
-        <span>{absoluteMax && absoluteMax > max ? `${formatValue(max)}+` : formatValue(max)}</span>
+        <span>{formatValue(max)}</span>
       </div>
 
       {/* Inputs */}
@@ -208,7 +201,7 @@ export default function RangeSlider({
         <div className="text-slate-400 mt-5">{t("filters.to")}</div>
         <div className="flex-1">
           <label className="text-xs text-slate-400 mb-1 block">
-            {t("filters.to")} {absoluteMax && absoluteMax > max ? `(${formatValue(absoluteMax)})` : ""}
+            {t("filters.to")}
           </label>
           <div className="h-10 px-3 border border-slate-200 rounded-lg flex items-center bg-white">
             {inputPrefix ? <span className="text-slate-400 mr-1">{inputPrefix}</span> : null}

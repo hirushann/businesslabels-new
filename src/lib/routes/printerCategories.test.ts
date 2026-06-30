@@ -39,10 +39,12 @@ describe("getPrinterCategoryPath", () => {
   });
 
   it("uses Dutch source slugs for printer category lookup", () => {
+    expect(getPrinterCategoryLookupSlug("label-printers")).toBe("labelprinters");
     expect(getPrinterCategoryLookupSlug("color-labelprinters")).toBe("kleuren-labelprinters-nl");
     expect(getPrinterCategoryLookupSlug("thermal-labelprinters")).toBe("thermische-labelprinters-nl");
     expect(getPrinterCategoryLookupSlug("starterkits")).toBe("starterkits");
     expect(getPrinterCategoryLookupSlug("starterkits-2")).toBe("starterkits");
+    expect(getPrinterCategoryLookupSlug("starter-kits")).toBe("starterkits");
     expect(getPrinterCategoryLookupSlug("consumables")).toBe("verbruiksmaterialen-nl");
   });
 

@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
 import { useTranslations, useLocale } from 'next-intl';
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { localePath } from "@/lib/i18n/utils";
 
 type CheckoutFormState = {
   firstName: string;
@@ -243,6 +244,7 @@ function CheckoutShell({
   }) => void;
 }) {
   const t = useTranslations();
+  const locale = useLocale();
   const shippingAmount = useMemo(() => (items.length > 0 ? DELIVERY_FEE : 0), [items.length]);
   const paymentFee = useMemo(() => (form.paymentMethod === "creditcard" ? totalAmount * 0.025 : 0), [totalAmount, form.paymentMethod]);
   const taxAmount = useMemo(() => (totalAmount + shippingAmount + paymentFee) * 0.21, [totalAmount, shippingAmount, paymentFee]);
@@ -267,7 +269,7 @@ function CheckoutShell({
               />
               <div className="mt-8 flex justify-center">
                 <Link
-                  href="/product"
+                  href={localePath("/product", locale)}
                   className="inline-flex h-12 items-center justify-center rounded-full bg-amber-500 px-6 text-base font-semibold text-white transition-colors hover:bg-amber-600"
                 >
                   {t('common.browseProducts')}
@@ -283,7 +285,7 @@ function CheckoutShell({
               >
                 <div className="flex flex-col gap-8">
                   <Link
-                    href="/product"
+                    href={localePath("/product", locale)}
                     className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-700 transition-colors hover:text-amber-500"
                   >
                     <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -951,8 +953,8 @@ export default function CheckoutPageClient({
     const addressPayload = addressResponse?.ok ? await addressResponse.json().catch(() => ({})) : null;
 
     // If we have a profile response from backend, use it
-    let profile = profilePayload ? extractPayloadObject(profilePayload) : {};
-    let addresses = addressPayload ? extractAddressList(addressPayload) : [];
+    const profile = profilePayload ? extractPayloadObject(profilePayload) : {};
+    const addresses = addressPayload ? extractAddressList(addressPayload) : [];
 
     const hasBackendProfile = profile && Object.keys(profile).length > 0;
     let finalProfile = profile;
@@ -1240,7 +1242,7 @@ export default function CheckoutPageClient({
         if (response.status === 401 || json.message === "Unauthenticated.") {
           toast.error(t('checkout.sessionExpired'));
           localStorage.removeItem('auth_user');
-          window.location.href = "/login?redirect=/checkout";
+          window.location.href = `${localePath("/login", locale)}?redirect=${encodeURIComponent(localePath("/checkout", locale))}`;
           return;
         }
         

@@ -66,6 +66,9 @@ const RANGE_PARAM_KEYS = {
   outer_diameter: { min: "outer_diameter_min", max: "outer_diameter_max" },
 } as const;
 
+const HEIGHT_RANGE_CAP = 800;
+const PAGINATION_SCROLL_OFFSET = 96;
+
 const KNOWN_FILTER_PARAMS = [
   "search",
   "q",
@@ -267,11 +270,15 @@ function CatalogProductsListing({
   const [showAllFilters, setShowAllFilters] = useState<Record<string, boolean>>(
     {},
   );
+  const [expandedRangeScales, setExpandedRangeScales] = useState<Record<string, boolean>>(
+    {},
+  );
   const [optimisticQueryString, setOptimisticQueryString] = useState<
     string | null
   >(null);
   const [isPending, startTransition] = useTransition();
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const listingControlsRef = useRef<HTMLDivElement>(null);
   const hasFocusedSearchRef = useRef(false);
 
   useEffect(() => {
@@ -620,6 +627,21 @@ function CatalogProductsListing({
     });
   };
 
+  const scrollToListingControls = useCallback(() => {
+    window.requestAnimationFrame(() => {
+      const controlsTop = listingControlsRef.current?.getBoundingClientRect().top;
+
+      if (typeof controlsTop !== "number") {
+        return;
+      }
+
+      window.scrollTo({
+        top: Math.max(window.scrollY + controlsTop - PAGINATION_SCROLL_OFFSET, 0),
+        behavior: "smooth",
+      });
+    });
+  }, []);
+
   const toggleOption = (key: CatalogOptionFilterKey, value: string) => {
     setParams((params) => {
       const paramKey = OPTION_PARAM_KEY[key];
@@ -641,7 +663,6 @@ function CatalogProductsListing({
     range: [number, number],
     min: number,
     max: number,
-    absoluteMax?: number,
   ) => {
     setParams((params) => {
       const rangeKeys = RANGE_PARAM_KEYS[key];
@@ -651,8 +672,7 @@ function CatalogProductsListing({
         params.set(rangeKeys.min, String(range[0]));
       }
 
-      const limit = absoluteMax ?? max;
-      if (range[1] === max || range[1] >= limit) {
+      if (range[1] >= max) {
         params.delete(rangeKeys.max);
       } else {
         params.set(rangeKeys.max, String(range[1]));
@@ -711,7 +731,7 @@ function CatalogProductsListing({
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div ref={listingControlsRef} className="flex flex-wrap items-center gap-3">
         {!hideSearchInput ? (
           <div className="flex min-h-11 w-full items-center gap-3 rounded-lg border border-slate-200 px-3">
             <svg
@@ -856,18 +876,22 @@ function CatalogProductsListing({
                     const min = filter.min;
                     const rawMax = filter.max;
                     const isHeight = filter.key === "height";
-                    const visualMax = isHeight ? Math.min(rawMax, 800) : rawMax;
-                    const absoluteMax = isHeight ? rawMax : undefined;
-                    const filterMax = absoluteMax ?? visualMax;
+                    const selectedMin = numberFor(displayParams, keys.min);
+                    const selectedMax = numberFor(displayParams, keys.max);
+                    const hasFullScaleAvailable = isHeight && rawMax > HEIGHT_RANGE_CAP;
+                    const isFullScale =
+                      Boolean(expandedRangeScales[filter.key]) ||
+                      (hasFullScaleAvailable && selectedMax !== null && selectedMax > HEIGHT_RANGE_CAP);
+                    const scaleMax = hasFullScaleAvailable && !isFullScale ? HEIGHT_RANGE_CAP : rawMax;
 
                     const value: [number, number] = [
                       Math.max(
                         min,
-                        Math.min(numberFor(displayParams, keys.min) ?? min, filterMax),
+                        Math.min(selectedMin ?? min, scaleMax),
                       ),
                       Math.max(
                         min,
-                        Math.min(numberFor(displayParams, keys.max) ?? filterMax, filterMax),
+                        Math.min(selectedMax ?? scaleMax, scaleMax),
                       ),
                     ];
 
@@ -911,12 +935,11 @@ function CatalogProductsListing({
                         <div className="flex flex-col gap-3">
                           <RangeSlider
                             min={min}
-                            max={visualMax}
-                            absoluteMax={absoluteMax}
+                            max={scaleMax}
                             value={value}
                             onChange={() => {}}
                             onAfterChange={(range) =>
-                              setRange(filter.key, range, min, visualMax, absoluteMax)
+                              setRange(filter.key, range, min, scaleMax)
                             }
                             formatValue={(rangeValue) =>
                               formatRangeValue(
@@ -927,6 +950,45 @@ function CatalogProductsListing({
                             }
                             inputPrefix={filter.unitPrefix}
                           />
+
+                          {hasFullScaleAvailable ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (!isFullScale) {
+                                  setExpandedRangeScales((current) => ({
+                                    ...current,
+                                    [filter.key]: true,
+                                  }));
+                                  return;
+                                }
+
+                                setExpandedRangeScales((current) => ({
+                                  ...current,
+                                  [filter.key]: false,
+                                }));
+
+                                if (
+                                  (selectedMin !== null && selectedMin > HEIGHT_RANGE_CAP) ||
+                                  (selectedMax !== null && selectedMax > HEIGHT_RANGE_CAP)
+                                ) {
+                                  setParams((params) => {
+                                    const cappedMin = Math.min(selectedMin ?? min, HEIGHT_RANGE_CAP);
+                                    if (cappedMin <= min) {
+                                      params.delete(keys.min);
+                                    } else {
+                                      params.set(keys.min, String(cappedMin));
+                                    }
+                                    params.set(keys.max, String(HEIGHT_RANGE_CAP));
+                                    params.set("page", "1");
+                                  });
+                                }
+                              }}
+                              className="w-fit rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 transition-colors hover:border-amber-300 hover:bg-amber-50 hover:text-amber-600"
+                            >
+                              {isFullScale ? t("filters.collapseScale") : t("filters.expandScale")}
+                            </button>
+                          ) : null}
 
                           {fanFoldFilterKey ? (
                             <button
@@ -1108,7 +1170,7 @@ function CatalogProductsListing({
                   pageCount={catalog.lastPage}
                   onPageChange={(p) => {
                     setPage(p);
-                    window.scrollTo({ top: 0, behavior: "smooth" });
+                    scrollToListingControls();
                   }}
                 />
               ) : null}
