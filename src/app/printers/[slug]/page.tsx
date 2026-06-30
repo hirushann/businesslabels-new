@@ -265,7 +265,7 @@ function PrinterSummary({
           ) : null}
 
           {printer.content ? (
-            <div className="mt-4 rounded-lg bg-slate-50 p-4">
+            <div className="mt-4 rounded-lg">
               <div className="text-sm font-medium text-neutral-500">
                 {t("product.productDescription")}
               </div>
@@ -275,7 +275,7 @@ function PrinterSummary({
               />
             </div>
           ) : printer.excerpt ? (
-            <div className="mt-4 rounded-lg bg-slate-50 p-4">
+            <div className="mt-4 rounded-lg">
               <div className="text-sm font-medium text-neutral-500">
                 {t("product.productDescription")}
               </div>

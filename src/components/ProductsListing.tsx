@@ -746,7 +746,11 @@ function CatalogProductsListing({
           </div>
         ) : null}
 
-        <div className="flex shrink-0 items-center gap-3">
+        <div
+          className={`flex items-center gap-3 ${
+            hideSearchInput ? "w-full justify-between" : "shrink-0"
+          }`}
+        >
           <button
             type="button"
             onClick={() => setIsSidebarOpen((currentValue) => !currentValue)}

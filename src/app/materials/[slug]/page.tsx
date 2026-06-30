@@ -247,13 +247,14 @@ function MaterialProductsSection({
 }) {
   return (
     <section className="bg-gray-50 px-4 py-24 sm:px-6 lg:px-10">
-      <div className="mx-auto flex max-w-300 flex-col gap-8">
+      <div className="mx-auto flex max-w-[1440px] flex-col gap-8">
         <h2 className="text-4xl font-bold leading-12 text-neutral-800">{title}</h2>
         <ProductsListing
           initialCatalog={initialCatalog}
           initialQueryString={initialQueryString}
           scopeQueryString={scopeQueryString}
           baselineRangeFilters={baselineCatalog.filters.ranges}
+          hideSearchInput={true}
         />
       </div>
     </section>
