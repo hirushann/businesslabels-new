@@ -435,6 +435,7 @@ export async function searchPrinters(params: PrinterSearchParams): Promise<Print
         "status",
         "created_at",
         "translations",
+        "featured",
       ],
     };
 
@@ -532,6 +533,7 @@ export async function searchPrinters(params: PrinterSearchParams): Promise<Print
         slug: slugs[0] ? String(slugs[0]) : null,
         type: "simple",
         properties: source.properties as Record<string, string[]> | undefined,
+        featured: source.featured !== undefined ? (source.featured as any) : null,
       };
     });
 
