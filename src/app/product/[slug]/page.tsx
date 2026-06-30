@@ -109,6 +109,8 @@ type ComponentProduct = {
   main_image?: string | null;
 };
 
+type NumericLike = number | string | null;
+
 type ProductDetail = {
   id?: number;
   type?: string;
@@ -125,7 +127,7 @@ type ProductDetail = {
   article_number?: string | null;
   price?: number | null;
   original_price?: number | null;
-  stock?: number | null;
+  stock?: NumericLike;
   in_stock?: boolean | null;
   main_image?: string | null;
   gallery_images?: Array<{ id?: number; url?: string | null; name?: string | null }>;
@@ -145,9 +147,9 @@ type ProductDetail = {
   material_information?: string | null;
   make?: string | null;
   packaging_unit?: number | null;
-  jeritech_stock?: number | null;
-  delivery_dates_in_stock?: number | null;
-  delivery_dates_no_stock?: number | null;
+  jeritech_stock?: NumericLike;
+  delivery_dates_in_stock?: NumericLike;
+  delivery_dates_no_stock?: NumericLike;
   packing_group?: string | number | null;
   allow_singulars?: string | number | boolean | null;
   discounts?: string | Array<{ discount?: string | number | null; quantity?: string | number | null }> | null;

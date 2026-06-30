@@ -56,9 +56,9 @@ export function isDeliverableInStock(params: StockStatusParams): boolean | null 
 }
 
 type DeliveryMessageParams = {
-  stock: number;
-  delivery_dates_in_stock: number;
-  delivery_dates_no_stock: number;
+  stock: NumericLike;
+  delivery_dates_in_stock: NumericLike;
+  delivery_dates_no_stock: NumericLike;
   now?: Date;
   pickupTime?: string;
 };
@@ -118,8 +118,20 @@ export function getExpectedDeliveryMessage({
   now = new Date(),
   pickupTime = process.env.NEXT_PUBLIC_DELIVERY_PICKUP_TIME || process.env.DELIVERY_PICKUP_TIME || '13:00',
 }: DeliveryMessageParams): DeliveryMessageResult {
+  const stockCount = toFiniteNumber(stock);
+  if (stockCount === null) {
+    throw new Error("Stock must be a finite number");
+  }
+
   // Determine which delivery days to use
-  const deliveryDays = stock > 0 ? delivery_dates_in_stock : delivery_dates_no_stock;
+  const deliveryDays = getEffectiveDeliveryDays({
+    stock: stockCount,
+    delivery_dates_in_stock,
+    delivery_dates_no_stock,
+  });
+  if (deliveryDays === null) {
+    throw new Error("Delivery dates must be positive finite numbers");
+  }
   
   // Parse pickup time
   const { hours: pickupHour, minutes: pickupMinute } = parsePickupTime(pickupTime);
