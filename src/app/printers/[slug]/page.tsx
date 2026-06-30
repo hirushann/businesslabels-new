@@ -408,6 +408,7 @@ export default async function PrinterFinderDetailPage({
           initialCatalog={initialCatalog}
           initialQueryString={routeQuery.toString()}
           scopeQueryString={baselineQuery.toString()}
+          baselineCatalog={baselineCatalog}
           baselineRangeFilters={baselineCatalog.filters.ranges}
           printer={printer}
         />

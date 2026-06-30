@@ -56,6 +56,20 @@ describe('getExpectedDeliveryMessage', () => {
   const pickupTime = '13:00';
 
   describe('before cutoff', () => {
+    it('should calculate delivery when API fields are numeric strings', () => {
+      const now = new Date('2026-05-06T09:00:00');
+      const result = getExpectedDeliveryMessage({
+        stock: '197',
+        delivery_dates_in_stock: '1',
+        delivery_dates_no_stock: '5',
+        now,
+        pickupTime,
+      });
+
+      expect(result.deliveryLabel).toBe('tomorrow');
+      expect(result.message).toBe('Order within 4 hours 00 minutes for delivery tomorrow');
+    });
+
     it('should calculate correct countdown for in-stock product', () => {
       const now = new Date('2026-05-06T09:00:00');
       const result = getExpectedDeliveryMessage({
@@ -294,6 +308,20 @@ describe('getExpectedDeliveryMessage', () => {
   });
 
   describe('stock levels', () => {
+    it('should not calculate delivery when the relevant estimate is missing', () => {
+      const now = new Date('2026-05-06T09:00:00');
+
+      expect(() =>
+        getExpectedDeliveryMessage({
+          stock: '1',
+          delivery_dates_in_stock: null,
+          delivery_dates_no_stock: '10',
+          now,
+          pickupTime,
+        }),
+      ).toThrow('Delivery dates must be positive finite numbers');
+    });
+
     it('should use delivery_dates_in_stock when stock > 0', () => {
       const now = new Date('2026-05-06T09:00:00');
       const result = getExpectedDeliveryMessage({
