@@ -25,11 +25,13 @@ import type {
   CatalogSearchResponse,
   CatalogSortValue,
 } from "@/lib/search/types";
+import { getAvailablePrinterProductCategoryIds } from "@/lib/printerProductCategories";
 
 type ProductsListingProps = {
   initialCatalog: CatalogSearchResponse;
   initialQueryString: string;
   scopeQueryString?: string;
+  baselineCatalog?: CatalogSearchResponse;
   // Deprecated: filter bounds now come from the currently scoped ES result set.
   baselineRangeFilters?: CatalogRangeFilter[];
   printer?: { title: string; slug: string } | null;
@@ -253,6 +255,7 @@ function CatalogProductsListing({
   initialCatalog,
   initialQueryString,
   scopeQueryString,
+  baselineCatalog,
   printer,
   hiddenFilterKeys,
   validCategorySlugs,
@@ -391,35 +394,37 @@ function CatalogProductsListing({
  
   const activeCategory = displayParams.get("category") || "";
 
-  const categoryCards = isEpson
-    ? [
-        {
-          id: "inkt-cartridges-nl",
-          title: getLocalizedCategoryLabel("inktsets", locale),
-          desc: getLocalizedCategoryLabel("inktsetsDesc", locale),
-          image: "/inkandsupplies.png",
-        },
-        {
-          id: "labels-en-tickets",
-          title: getLocalizedCategoryLabel("labels", locale),
-          desc: getLocalizedCategoryLabel("labelsDesc", locale),
-          image: "/labelrolls.png",
-        },
-      ]
-    : [
-        {
-          id: "tt-printlinten-nl",
-          title: getLocalizedCategoryLabel("lints", locale),
-          desc: getLocalizedCategoryLabel("lintsDesc", locale),
-          image: "/images/thermal_transfer_preview.png",
-        },
-        {
-          id: "labels-en-tickets",
-          title: getLocalizedCategoryLabel("labels", locale),
-          desc: getLocalizedCategoryLabel("labelsDesc", locale),
-          image: "/labelrolls.png",
-        },
-      ];
+  const availableCategoryIds = useMemo(
+    () => getAvailablePrinterProductCategoryIds(baselineCatalog ?? initialCatalog),
+    [baselineCatalog, initialCatalog],
+  );
+
+  const categoryCards = availableCategoryIds.map((categoryId) => {
+    if (categoryId === "ink") {
+      return {
+        id: "inkt-cartridges-nl",
+        title: getLocalizedCategoryLabel("inktsets", locale),
+        desc: getLocalizedCategoryLabel("inktsetsDesc", locale),
+        image: "/inkandsupplies.png",
+      };
+    }
+
+    if (categoryId === "ribbons") {
+      return {
+        id: "tt-printlinten-nl",
+        title: getLocalizedCategoryLabel("lints", locale),
+        desc: getLocalizedCategoryLabel("lintsDesc", locale),
+        image: "/images/thermal_transfer_preview.png",
+      };
+    }
+
+    return {
+      id: "labels-en-tickets",
+      title: getLocalizedCategoryLabel("labels", locale),
+      desc: getLocalizedCategoryLabel("labelsDesc", locale),
+      image: "/labelrolls.png",
+    };
+  });
 
   const handleCategoryClick = (categorySlug: string) => {
     setParams((params) => {

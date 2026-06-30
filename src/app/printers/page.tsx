@@ -380,6 +380,7 @@ export default async function PrintersPage({
           <ProductsListing
             initialCatalog={initialCatalog}
             initialQueryString={query.toString()}
+            baselineCatalog={baselineCatalog}
             baselineRangeFilters={baselineCatalog.filters.ranges}
             printer={printer}
           />
