@@ -64,7 +64,8 @@ function getProductTranslation(
   locale: string
 ): LaravelProductTranslation | null {
   if (!translations) return null;
-  for (const entry of translations) {
+  const list = Array.isArray(translations) ? translations : Object.values(translations);
+  for (const entry of list) {
     if (!entry || typeof entry !== "object") continue;
     if (locale in entry) {
       const keyed = (entry as Record<string, LaravelProductTranslation>)[locale];

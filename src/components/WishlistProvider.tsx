@@ -29,7 +29,7 @@ type WishlistContextValue = {
   items: WishlistItem[];
   uniqueItemCount: number;
   addItem: (item: WishlistInput) => void;
-  removeItem: (key: string) => void;
+  removeItem: (key: string, backendInfo?: { id: string | number; type?: ProductRouteType | null }) => void;
   clearWishlist: () => void;
   moveToCart: (key: string) => void;
   hasItem: (item: Pick<WishlistInput, "id" | "slug" | "type">) => boolean;
@@ -94,9 +94,51 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
 
           return [...currentItems, { ...item, key }];
         });
+
+        if (typeof window !== 'undefined' && localStorage.getItem('auth_user')) {
+          fetch('/api/account/favorites', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              type: item.type || 'simple',
+              id: item.id,
+            }),
+          })
+            .then((res) => {
+              if (res.ok) {
+                window.dispatchEvent(new Event('favorites-updated'));
+              }
+            })
+            .catch((err) => console.error('Failed to sync favorite product add:', err));
+        }
       },
-      removeItem: (key) => {
+      removeItem: (key, backendInfo) => {
+        const itemToRemove = items.find((entry) => entry.key === key);
         setItems((currentItems) => currentItems.filter((item) => item.key !== key));
+
+        const deleteId = backendInfo?.id ?? itemToRemove?.id;
+        const deleteType = backendInfo?.type ?? itemToRemove?.type;
+
+        if (deleteId && typeof window !== 'undefined' && localStorage.getItem('auth_user')) {
+          fetch('/api/account/favorites', {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              type: deleteType || 'simple',
+              id: deleteId,
+            }),
+          })
+            .then((res) => {
+              if (res.ok) {
+                window.dispatchEvent(new Event('favorites-updated'));
+              }
+            })
+            .catch((err) => console.error('Failed to sync favorite product remove:', err));
+        }
       },
       clearWishlist: () => {
         setItems([]);

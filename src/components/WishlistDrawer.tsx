@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import EmptyState from '@/components/EmptyState';
 import DrawerProductCard from '@/components/DrawerProductCard';
 import { useWishlist } from '@/components/WishlistProvider';
+import { useCart } from '@/components/CartProvider';
 
 type WishlistDrawerProps = {
   onClose: () => void;
@@ -21,7 +23,10 @@ function formatEuro(value: number): string {
 
 export default function WishlistDrawer({ onClose }: WishlistDrawerProps) {
   const t = useTranslations();
-  const { items, uniqueItemCount, removeItem, moveToCart } = useWishlist();
+  const { items: localItems, removeItem, moveToCart } = useWishlist();
+  const cart = useCart();
+  const [favorites, setFavorites] = useState<any[]>([]);
+  const [isLoadingFavorites, setIsLoadingFavorites] = useState(false);
 
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
@@ -41,6 +46,103 @@ export default function WishlistDrawer({ onClose }: WishlistDrawerProps) {
     };
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    function loadFavorites() {
+      if (typeof window !== 'undefined' && localStorage.getItem('auth_user')) {
+        setIsLoadingFavorites(true);
+        fetch('/api/account/favorites')
+          .then((res) => res.json())
+          .then((data) => {
+            if (!isMounted) return;
+            const list = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
+            setFavorites(list);
+          })
+          .catch((err) => console.error('Failed to load favorites in drawer:', err))
+          .finally(() => {
+            if (isMounted) setIsLoadingFavorites(false);
+          });
+      }
+    }
+
+    loadFavorites();
+
+    window.addEventListener('favorites-updated', loadFavorites);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener('favorites-updated', loadFavorites);
+    };
+  }, []);
+
+  // Merge local wishlist items and backend favorites
+  const mergedItems = [...localItems];
+  favorites.forEach((fav) => {
+    const key = fav.slug ? (fav.type ? `${fav.slug}::${fav.type}` : fav.slug) : String(fav.id);
+    if (!mergedItems.some((item) => item.key === key)) {
+      mergedItems.push({
+        key,
+        id: fav.id,
+        slug: fav.slug,
+        type: fav.type,
+        name: fav.name,
+        sku: fav.sku,
+        price: fav.price,
+        mainImage: fav.mainImage,
+        subtitle: fav.subtitle,
+        excerpt: fav.excerpt,
+        materialTitle: fav.materialTitle,
+        inStock: fav.inStock !== false,
+      });
+    }
+  });
+
+  const handleRemove = (item: any) => {
+    // 1. Remove from local wishlist if it exists there
+    removeItem(item.key);
+
+    // 2. Also remove from backend favorites if user is logged in
+    if (typeof window !== 'undefined' && localStorage.getItem('auth_user')) {
+      fetch('/api/account/favorites', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: item.type || 'simple',
+          id: item.id,
+        }),
+      })
+        .then((res) => {
+          if (res.ok) {
+            setFavorites((prev) => prev.filter((f) => f.id !== item.id));
+            window.dispatchEvent(new Event('favorites-updated'));
+          }
+        })
+        .catch((err) => console.error('Failed to remove favorite:', err));
+    }
+  };
+
+  const handleMoveToCart = (item: any) => {
+    if (localItems.some((local) => local.key === item.key)) {
+      moveToCart(item.key);
+    } else {
+      cart.addItem({
+        id: item.id,
+        slug: item.slug,
+        type: item.type,
+        name: item.name,
+        sku: item.sku,
+        price: item.price ?? null,
+        mainImage: item.mainImage ?? null,
+        packingGroup: null,
+        allowSingulars: null,
+      });
+      handleRemove(item);
+    }
+  };
+
   return (
     <>
       <div className="fixed inset-0 bg-black/60 z-[999]" onClick={onClose} aria-hidden="true" />
@@ -59,7 +161,7 @@ export default function WishlistDrawer({ onClose }: WishlistDrawerProps) {
                 {t('wishlist.title')}
               </h2>
               <span className="text-neutral-600 text-sm font-normal font-['Segoe_UI'] leading-5">
-                {t('wishlist.items', { count: uniqueItemCount })}
+                {t('wishlist.items', { count: mergedItems.length })}
               </span>
             </div>
 
@@ -77,7 +179,11 @@ export default function WishlistDrawer({ onClose }: WishlistDrawerProps) {
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-6">
-          {items.length === 0 ? (
+          {isLoadingFavorites && mergedItems.length === 0 ? (
+            <div className="flex justify-center items-center py-14">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500" />
+            </div>
+          ) : mergedItems.length === 0 ? (
             <EmptyState
               title={t('wishlist.empty')}
               description={t('wishlist.emptyDescription')}
@@ -85,7 +191,7 @@ export default function WishlistDrawer({ onClose }: WishlistDrawerProps) {
             />
           ) : (
             <div className="flex flex-col gap-4">
-              {items.map((item) => {
+              {mergedItems.map((item) => {
                 const imageSrc = item.mainImage?.trim() || 'https://placehold.co/140x100';
                 const hasPrice = typeof item.price === 'number' && Number.isFinite(item.price);
                 const href = item.slug
@@ -101,7 +207,7 @@ export default function WishlistDrawer({ onClose }: WishlistDrawerProps) {
                     sku={item.sku}
                     imageSrc={imageSrc}
                     removeLabel={t('wishlist.remove', { name: item.name })}
-                    onRemove={() => removeItem(item.key)}
+                    onRemove={() => handleRemove(item)}
                     href={href}
                     onCardClick={onClose}
                     priceNode={
@@ -115,7 +221,7 @@ export default function WishlistDrawer({ onClose }: WishlistDrawerProps) {
                         onClick={(event) => {
                           event.preventDefault();
                           event.stopPropagation();
-                          moveToCart(item.key);
+                          handleMoveToCart(item);
                         }}
                         disabled={!item.inStock}
                         className={`h-10 px-4 rounded-full text-sm font-semibold leading-5 transition-colors flex items-center justify-center ${
@@ -132,6 +238,30 @@ export default function WishlistDrawer({ onClose }: WishlistDrawerProps) {
               })}
             </div>
           )}
+        </div>
+
+        <div className="shrink-0 p-6 border-t border-slate-200 bg-slate-50 flex flex-col gap-3">
+          <Link
+            href="/my-account?tab=favourites"
+            onClick={onClose}
+            className="w-full h-11 bg-amber-500 text-white rounded-full font-black text-sm hover:shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center gap-2"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+            </svg>
+            {t('account.favouriteProducts')}
+          </Link>
+          <Link
+            href="/my-account?tab=printers"
+            onClick={onClose}
+            className="w-full h-11 bg-white border border-slate-200 text-neutral-700 hover:bg-slate-50 rounded-full font-bold text-sm transition-all flex items-center justify-center gap-2"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+              <path d="M6 14h12v8H6z" />
+            </svg>
+            {t('account.myPrinters')}
+          </Link>
         </div>
       </div>
 

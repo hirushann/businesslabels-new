@@ -448,7 +448,10 @@ function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t:
 }
 
 function getProductTranslation(product: ProductDetail, locale: "en" | "nl"): ProductTranslation | null {
-  for (const entry of product.translations ?? []) {
+  const translations = product.translations;
+  if (!translations) return null;
+  const list = Array.isArray(translations) ? translations : Object.values(translations);
+  for (const entry of list) {
     if (!entry || typeof entry !== "object") continue;
     const keyed = (entry as Partial<Record<"en" | "nl", ProductTranslation | null>>)[locale];
     if (keyed) return keyed;
