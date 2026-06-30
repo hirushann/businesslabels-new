@@ -3,6 +3,7 @@ import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import FinderListing from "@/components/FinderListing";
 import ProductsListing from "@/components/ProductsListing";
+import CTABanner from "@/components/CTABanner";
 import {
   parseCatalogSearchParams,
   searchCatalogProducts,
@@ -196,7 +197,7 @@ function PrinterSummary({
                 {t("product.productDescription")}
               </div>
               <div
-                className="mt-2 text-sm leading-relaxed text-neutral-700 font-normal [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
+                className="mt-2 text-sm leading-relaxed text-neutral-700 font-normal [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-[#f08500] [&_a]:underline hover:[&_a]:text-[#d97706] [&_a]:transition-colors"
                 dangerouslySetInnerHTML={{ __html: printer.content }}
               />
             </div>
@@ -206,7 +207,7 @@ function PrinterSummary({
                 {t("product.productDescription")}
               </div>
               <div
-                className="mt-2 text-sm leading-relaxed text-neutral-700 font-normal [&_p]:mb-2"
+                className="mt-2 text-sm leading-relaxed text-neutral-700 font-normal [&_p]:mb-2 [&_a]:text-[#f08500] [&_a]:underline hover:[&_a]:text-[#d97706] [&_a]:transition-colors"
                 dangerouslySetInnerHTML={{ __html: printer.excerpt }}
               />
             </div>
@@ -408,7 +409,7 @@ export default async function PrintersPage({
     <div className="bg-white">
       {/* ── Hero Banner ── */}
       <div className="px-4 pt-6 sm:px-6 lg:px-10">
-        <div className="mx-auto max-w-360">
+        <div className="mx-auto max-w-[1440px] mx-auto">
           <div
             className="relative overflow-hidden rounded-xl"
             style={{ height: "224px" }}
@@ -494,13 +495,16 @@ export default async function PrintersPage({
 
       {/* ── Main Content ── */}
       <div className="px-4 py-10 sm:px-6 lg:px-10">
-        <div className="mx-auto max-w-360">
+        <div className="w-full">
           <FinderListing
             initialCatalog={initialCatalog}
             initialQueryString={query.toString()}
           />
         </div>
+        
       </div>
+      <CTABanner />
     </div>
   );
+  
 }

@@ -214,7 +214,7 @@ function normalizeSortValue(
 function ProductSkeletonGrid({ isSidebarOpen }: { isSidebarOpen: boolean }) {
   return (
     <div
-      className={`grid grid-cols-1 gap-6 sm:grid-cols-2 ${isSidebarOpen ? "xl:grid-cols-3" : "lg:grid-cols-3"}`}
+      className={`grid grid-cols-1 gap-6 sm:grid-cols-2 ${isSidebarOpen ? "lg:grid-cols-3" : "lg:grid-cols-4"}`}
     >
       {Array.from({ length: 8 }, (_, index) => (
         <div
@@ -351,7 +351,7 @@ function CatalogProductsListing({
     () => mergeQueryStrings(scopeQueryString, initialQueryString),
     [scopeQueryString, initialQueryString],
   );
-  const searchValue =  searchParams.get("search") ?? searchParams.get("q") ?? "";
+  const searchValue = searchParams.get("search") ?? searchParams.get("q") ?? "";
   const displaySearchValue =
     displayParams.get("search") ?? displayParams.get("q") ?? "";
   const selectedSort = normalizeSortValue(
@@ -361,7 +361,7 @@ function CatalogProductsListing({
   );
   const hasInitialCatalog =
     scopedCurrentQueryString === initialSortedQueryString;
- 
+
   useEffect(() => {
     if (
       optimisticQueryString === null ||
@@ -370,11 +370,11 @@ function CatalogProductsListing({
       const timeoutId = window.setTimeout(() => {
         setOptimisticQueryString(null);
       }, 0);
- 
+
       return () => window.clearTimeout(timeoutId);
     }
   }, [currentQueryString, optimisticQueryString]);
- 
+
   const setParams = useCallback(
     (updater: (params: URLSearchParams) => void) => {
       const next = new URLSearchParams(displayQueryString);
@@ -388,38 +388,38 @@ function CatalogProductsListing({
     },
     [displayQueryString, pathname, router],
   );
- 
+
   const activeCategory = displayParams.get("category") || "";
 
   const categoryCards = isEpson
     ? [
-        {
-          id: "inkt-cartridges-nl",
-          title: getLocalizedCategoryLabel("inktsets", locale),
-          desc: getLocalizedCategoryLabel("inktsetsDesc", locale),
-          image: "/inkandsupplies.png",
-        },
-        {
-          id: "labels-en-tickets",
-          title: getLocalizedCategoryLabel("labels", locale),
-          desc: getLocalizedCategoryLabel("labelsDesc", locale),
-          image: "/labelrolls.png",
-        },
-      ]
+      {
+        id: "inkt-cartridges-nl",
+        title: getLocalizedCategoryLabel("inktsets", locale),
+        desc: getLocalizedCategoryLabel("inktsetsDesc", locale),
+        image: "/inkandsupplies.png",
+      },
+      {
+        id: "labels-en-tickets",
+        title: getLocalizedCategoryLabel("labels", locale),
+        desc: getLocalizedCategoryLabel("labelsDesc", locale),
+        image: "/labelrolls.png",
+      },
+    ]
     : [
-        {
-          id: "tt-printlinten-nl",
-          title: getLocalizedCategoryLabel("lints", locale),
-          desc: getLocalizedCategoryLabel("lintsDesc", locale),
-          image: "/images/thermal_transfer_preview.png",
-        },
-        {
-          id: "labels-en-tickets",
-          title: getLocalizedCategoryLabel("labels", locale),
-          desc: getLocalizedCategoryLabel("labelsDesc", locale),
-          image: "/labelrolls.png",
-        },
-      ];
+      {
+        id: "tt-printlinten-nl",
+        title: getLocalizedCategoryLabel("lints", locale),
+        desc: getLocalizedCategoryLabel("lintsDesc", locale),
+        image: "/images/thermal_transfer_preview.png",
+      },
+      {
+        id: "labels-en-tickets",
+        title: getLocalizedCategoryLabel("labels", locale),
+        desc: getLocalizedCategoryLabel("labelsDesc", locale),
+        image: "/labelrolls.png",
+      },
+    ];
 
   const handleCategoryClick = (categorySlug: string) => {
     setParams((params) => {
@@ -695,11 +695,10 @@ function CatalogProductsListing({
                 key={card.id}
                 type="button"
                 onClick={() => handleCategoryClick(card.id)}
-                className={`group flex flex-col overflow-hidden text-left rounded-xl border p-3 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${
-                  isActive
-                    ? "border-amber-500 ring-2 ring-amber-500/10 bg-amber-50/5"
-                    : "border-slate-100 bg-white"
-                }`}
+                className={`group flex flex-col overflow-hidden text-left rounded-xl border p-3 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${isActive
+                  ? "border-amber-500 ring-2 ring-amber-500/10 bg-amber-50/5"
+                  : "border-slate-100 bg-white"
+                  }`}
               >
                 <div className="relative h-24 w-full overflow-hidden rounded-lg bg-slate-50">
                   <Image
@@ -715,9 +714,8 @@ function CatalogProductsListing({
                     <h3 className="text-base font-bold text-slate-800 flex items-center justify-between">
                       {card.title}
                       <span
-                        className={`h-2 w-2 rounded-full transition-all duration-200 ${
-                          isActive ? "bg-amber-500 scale-125" : "bg-slate-200"
-                        }`}
+                        className={`h-2 w-2 rounded-full transition-all duration-200 ${isActive ? "bg-amber-500 scale-125" : "bg-slate-200"
+                          }`}
                       />
                     </h3>
                     <p className="mt-1 text-xs text-slate-500 leading-normal">
@@ -731,102 +729,93 @@ function CatalogProductsListing({
         </div>
       )}
 
-      <div ref={listingControlsRef} className="flex flex-wrap items-center gap-3">
-        {!hideSearchInput ? (
-          <div className="flex min-h-11 w-full items-center gap-3 rounded-lg border border-slate-200 px-3">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 16 16"
-              fill="none"
-              className="shrink-0"
-              aria-hidden="true"
-            >
-              <circle
-                cx="6.75"
-                cy="6.75"
-                r="5.25"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              />
-              <path
-                d="M11.5 11.5L14.5 14.5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
-            <input
-              ref={searchInputRef}
-              value={searchInput}
-              onChange={(event) => setSearchInput(event.target.value)}
-              placeholder={t("search.searchProducts")}
-              className="h-11 w-full bg-transparent text-base text-neutral-800 outline-none"
-            />
-          </div>
-        ) : null}
-
-        <div
-          className={`flex items-center gap-3 ${
-            hideSearchInput ? "w-full justify-between" : "shrink-0"
-          }`}
-        >
+      <div ref={listingControlsRef} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+        <div className="flex items-center gap-4">
           <button
             type="button"
             onClick={() => setIsSidebarOpen((currentValue) => !currentValue)}
-            className={`inline-flex h-10 w-fit items-center gap-4 rounded-[42px] border px-5 py-2 text-neutral-800 transition-colors ${
-              isSidebarOpen
-                ? "border-amber-500 bg-amber-50 text-amber-600"
-                : "border-slate-200 hover:border-amber-200"
+            className={`inline-flex h-[42px] w-fit items-center gap-2 px-1 py-2 transition-colors ${
+              isSidebarOpen ? "text-amber-500" : "text-neutral-800 hover:text-amber-500"
             }`}
             aria-expanded={isSidebarOpen}
           >
             <span className="flex items-center gap-2">
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 20 20"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path
-                  d="M3 5H17"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M5.5 10H14.5"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M8 15H12"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-amber-500">
+                <path d="M17.4993 3.33398H11.666" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M8.33333 3.33398H2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M17.5 10H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M6.66667 10H2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M17.5007 16.666H13.334" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M10 16.666H2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M11.666 1.66602V4.99935" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M13.334 15V18.3333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <span className="text-lg font-semibold font-['Segoe_UI'] leading-6">
+              <span className="text-lg font-bold font-sans leading-6">
                 {t("search.filters")}
               </span>
               {activeFilterCount > 0 ? (
-                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-100 px-1.5 text-xs font-semibold text-amber-600">
+                <span className={`flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-semibold ${
+                  isSidebarOpen ? "bg-amber-100 text-amber-600" : "bg-amber-500 text-white"
+                }`}>
                   {activeFilterCount}
                 </span>
               ) : null}
             </span>
           </button>
+          
+          {activeFilterCount > 0 ? (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="text-sm font-medium text-slate-400 hover:text-amber-500 underline underline-offset-4"
+            >
+              {t("search.clearAll")}
+            </button>
+          ) : null}
+        </div>
 
-          <label className="flex h-10 shrink-0 items-center gap-3 rounded-[42px] border border-slate-200 px-5 py-2 text-neutral-800">
-            <span className="sr-only">{t("search.sortProducts")}</span>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          {!hideSearchInput ? (
+            <div className="flex h-10 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 flex-1 sm:w-[280px]">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                className="shrink-0 text-slate-400"
+                aria-hidden="true"
+              >
+                <circle
+                  cx="6.75"
+                  cy="6.75"
+                  r="5.25"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
+                <path
+                  d="M11.5 11.5L14.5 14.5"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <input
+                ref={searchInputRef}
+                value={searchInput}
+                onChange={(event) => setSearchInput(event.target.value)}
+                placeholder={t("search.searchProducts")}
+                className="h-full w-full bg-transparent text-sm text-neutral-800 outline-none"
+              />
+            </div>
+          ) : null}
+
+          <div className="relative flex shrink-0 items-center h-10">
             <select
               value={selectedSort}
               onChange={(event) =>
                 setSort(event.target.value as CatalogSortValue)
               }
-              className="bg-transparent text-base font-normal font-['Segoe_UI'] leading-5 outline-none"
+              className="appearance-none bg-transparent text-sm font-medium font-sans outline-none cursor-pointer hover:text-amber-600 pr-6 text-neutral-800"
             >
               {SORT_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -834,15 +823,21 @@ function CatalogProductsListing({
                 </option>
               ))}
             </select>
-          </label>
+            <div className="pointer-events-none absolute right-0 flex items-center justify-center">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-neutral-500">
+                <path d="M7 15l5 5 5-5"/>
+                <path d="M7 9l5-5 5 5"/>
+              </svg>
+            </div>
+          </div>
         </div>
       </div>
 
       <div
-        className={`flex flex-col gap-6 ${isSidebarOpen ? "lg:flex-row lg:items-start" : ""}`}
+        className={`flex flex-col gap-6 lg:grid ${isSidebarOpen ? "lg:grid-cols-4 lg:items-start" : "lg:grid-cols-4"}`}
       >
         {isSidebarOpen ? (
-          <aside className="w-full shrink-0 rounded-xl border border-slate-100 bg-white p-4 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.08)] md:w-96 lg:w-96 lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto custom-scrollbar">
+          <aside className="w-full shrink-0 rounded-xl border border-slate-100 bg-white p-4 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.08)] lg:col-span-1 lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto custom-scrollbar">
             <div className="flex flex-col gap-5">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
@@ -904,24 +899,24 @@ function CatalogProductsListing({
 
                     const fanFoldSelected = fanFoldFilterKey
                       ? valuesFor(
-                          displayParams,
-                          OPTION_PARAM_KEY[fanFoldFilterKey],
-                        ).some(
-                          (selectedValue) =>
-                             selectedValue.toLowerCase() === "fan-fold",
-                        )
+                        displayParams,
+                        OPTION_PARAM_KEY[fanFoldFilterKey],
+                      ).some(
+                        (selectedValue) =>
+                          selectedValue.toLowerCase() === "fan-fold",
+                      )
                       : false;
 
                     const fanFoldCount = fanFoldFilterKey
                       ? (catalog.filters.options
-                          .find(
-                            (optionFilter) =>
-                              optionFilter.key === fanFoldFilterKey,
-                          )
-                          ?.options.find(
-                            (option) =>
-                              option.value.toLowerCase() === "fan-fold",
-                          )?.count ?? 0)
+                        .find(
+                          (optionFilter) =>
+                            optionFilter.key === fanFoldFilterKey,
+                        )
+                        ?.options.find(
+                          (option) =>
+                            option.value.toLowerCase() === "fan-fold",
+                        )?.count ?? 0)
                       : 0;
 
                     return (
@@ -937,7 +932,7 @@ function CatalogProductsListing({
                             min={min}
                             max={scaleMax}
                             value={value}
-                            onChange={() => {}}
+                            onChange={() => { }}
                             onAfterChange={(range) =>
                               setRange(filter.key, range, min, scaleMax)
                             }
@@ -996,11 +991,10 @@ function CatalogProductsListing({
                               onClick={() =>
                                 toggleOption(fanFoldFilterKey, "Fan-fold")
                               }
-                              className={`inline-flex min-h-9 w-fit items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-                                fanFoldSelected
-                                  ? "bg-amber-500 text-white shadow-sm hover:bg-amber-600"
-                                  : "bg-slate-100 text-neutral-700 hover:bg-amber-50 hover:text-amber-600"
-                              }`}
+                              className={`inline-flex min-h-9 w-fit items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${fanFoldSelected
+                                ? "bg-amber-500 text-white shadow-sm hover:bg-amber-600"
+                                : "bg-slate-100 text-neutral-700 hover:bg-amber-50 hover:text-amber-600"
+                                }`}
                               aria-pressed={fanFoldSelected}
                             >
                               <span>{t("filters.fanFold")}</span>
@@ -1057,11 +1051,10 @@ function CatalogProductsListing({
                                 onClick={() =>
                                   toggleOption(filter.key, option.value)
                                 }
-                                className={`inline-flex min-h-9 items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-                                  selected
-                                    ? "bg-amber-500 text-white shadow-sm hover:bg-amber-600"
-                                    : "bg-slate-100 text-neutral-700 hover:bg-amber-50 hover:text-amber-600"
-                                }`}
+                                className={`inline-flex min-h-9 items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${selected
+                                  ? "bg-amber-500 text-white shadow-sm hover:bg-amber-600"
+                                  : "bg-slate-100 text-neutral-700 hover:bg-amber-50 hover:text-amber-600"
+                                  }`}
                                 aria-pressed={selected}
                               >
                                 <span>{option.label}</span>
@@ -1097,8 +1090,8 @@ function CatalogProductsListing({
                             {showAll
                               ? t("filters.showLess")
                               : t("filters.showMore", {
-                                  count: filter.options.length - DISPLAY_LIMIT,
-                                })}
+                                count: filter.options.length - DISPLAY_LIMIT,
+                              })}
                           </button>
                         )}
                       </div>
@@ -1110,7 +1103,7 @@ function CatalogProductsListing({
           </aside>
         ) : null}
 
-        <div className="min-w-0 flex-1">
+        <div className={`min-w-0 flex-1 ${isSidebarOpen ? "lg:col-span-3" : "lg:col-span-4"}`}>
           <div className="mb-4 text-sm text-neutral-600">
             {loading
               ? t("search.loadingProducts")
@@ -1119,9 +1112,9 @@ function CatalogProductsListing({
 
           {/* Display "Did you mean" suggestion when no results found */}
           {!loading &&
-          catalog.total === 0 &&
-          catalog.suggestion &&
-          searchValue ? (
+            catalog.total === 0 &&
+            catalog.suggestion &&
+            searchValue ? (
             <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
               <p className="text-sm text-blue-800">
                 {t("search.didYouMean")}{" "}
@@ -1151,9 +1144,8 @@ function CatalogProductsListing({
           ) : (
             <>
               <div
-                className={`grid grid-cols-1 gap-6 sm:grid-cols-2 ${
-                  isSidebarOpen ? "xl:grid-cols-3" : "lg:grid-cols-3"
-                }`}
+                className={`grid grid-cols-1 gap-6 sm:grid-cols-2 ${isSidebarOpen ? "lg:grid-cols-3" : "lg:grid-cols-4"
+                  }`}
               >
                 {products.map(({ id, product, href }) => (
                   <ProductCard key={id} product={product} href={href} />
