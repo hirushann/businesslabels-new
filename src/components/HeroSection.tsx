@@ -12,8 +12,8 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useLocalePath } from "@/hooks/useLocalePath";
 import type { CatalogSearchResponse } from "@/lib/search/types";
 import {
-  getAvailablePrinterProductCategoryIds,
-  type PrinterProductCategoryId,
+  getAvailablePrinterProductCategories,
+  type AvailablePrinterProductCategory,
 } from "@/lib/printerProductCategories";
 
 type CategoryCard = {
@@ -25,8 +25,8 @@ type CategoryCard = {
 
 const CATEGORY_CARDS = {
   ink: {
-    label: "Ink Set",
-    description: "Compatible ink cartridges",
+    label: "Ink",
+    description: "Ink cartridges",
     slug: "inkt-cartridges-nl",
     icon: Droplet,
   },
@@ -42,7 +42,7 @@ const CATEGORY_CARDS = {
     slug: "labels-en-tickets",
     icon: Tags,
   },
-} satisfies Record<PrinterProductCategoryId, CategoryCard>;
+} satisfies Record<AvailablePrinterProductCategory["id"], CategoryCard>;
 
 export default function HeroSection() {
   const t = useTranslations();
@@ -54,8 +54,8 @@ export default function HeroSection() {
   const [selectedPrinter, setSelectedPrinter] = useState<PrinterSearchResult | null>(null);
   const [availableCategories, setAvailableCategories] = useState<{
     printerId: number | null;
-    ids: PrinterProductCategoryId[];
-  }>({ printerId: null, ids: [] });
+    categories: AvailablePrinterProductCategory[];
+  }>({ printerId: null, categories: [] });
 
   const printerId = searchParams.get("printer_id");
 
@@ -64,7 +64,10 @@ export default function HeroSection() {
   const categoryCards = useMemo(
     () =>
       availableCategories.printerId === selectedPrinterId
-        ? availableCategories.ids.map((categoryId) => CATEGORY_CARDS[categoryId])
+        ? availableCategories.categories.map((category) => ({
+            ...CATEGORY_CARDS[category.id],
+            slug: category.slug,
+          }))
         : [],
     [availableCategories, selectedPrinterId],
   );
@@ -121,7 +124,7 @@ export default function HeroSection() {
         const catalog = (await response.json()) as CatalogSearchResponse;
         setAvailableCategories({
           printerId: currentPrinterId,
-          ids: getAvailablePrinterProductCategoryIds(catalog),
+          categories: getAvailablePrinterProductCategories(catalog),
         });
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") return;
