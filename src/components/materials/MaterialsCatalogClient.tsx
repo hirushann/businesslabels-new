@@ -299,16 +299,16 @@ function MaterialCard({
               <span
                 key={tech}
                 className={`rounded-full px-3 py-1.5 text-xs font-normal bg-white text-slate-600 shadow-sm flex items-center gap-1.5 ${isInkjet
-                    ? ""
-                    : isTtr
-                      ? "bg-slate-700"
-                      : "bg-emerald-600"
+                  ? ""
+                  : isTtr
+                    ? "bg-slate-700"
+                    : "bg-emerald-600"
                   }`}
               >
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3 9H2C1.73478 9 1.48043 8.89464 1.29289 8.70711C1.10536 8.51957 1 8.26522 1 8V5.5C1 5.23478 1.10536 4.98043 1.29289 4.79289C1.48043 4.60536 1.73478 4.5 2 4.5H10C10.2652 4.5 10.5196 4.60536 10.7071 4.79289C10.8946 4.98043 11 5.23478 11 5.5V8C11 8.26522 10.8946 8.51957 10.7071 8.70711C10.5196 8.89464 10.2652 9 10 9H9" stroke="#444444" stroke-linecap="round" stroke-linejoin="round" />
-                  <path d="M3 4.5V1.5C3 1.36739 3.05268 1.24021 3.14645 1.14645C3.24021 1.05268 3.36739 1 3.5 1H8.5C8.63261 1 8.75979 1.05268 8.85355 1.14645C8.94732 1.24021 9 1.36739 9 1.5V4.5" stroke="#444444" stroke-linecap="round" stroke-linejoin="round" />
-                  <path d="M8.5 7H3.5C3.22386 7 3 7.22386 3 7.5V10.5C3 10.7761 3.22386 11 3.5 11H8.5C8.77614 11 9 10.7761 9 10.5V7.5C9 7.22386 8.77614 7 8.5 7Z" stroke="#444444" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M3 9H2C1.73478 9 1.48043 8.89464 1.29289 8.70711C1.10536 8.51957 1 8.26522 1 8V5.5C1 5.23478 1.10536 4.98043 1.29289 4.79289C1.48043 4.60536 1.73478 4.5 2 4.5H10C10.2652 4.5 10.5196 4.60536 10.7071 4.79289C10.8946 4.98043 11 5.23478 11 5.5V8C11 8.26522 10.8946 8.51957 10.7071 8.70711C10.5196 8.89464 10.2652 9 10 9H9" stroke="#444444" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M3 4.5V1.5C3 1.36739 3.05268 1.24021 3.14645 1.14645C3.24021 1.05268 3.36739 1 3.5 1H8.5C8.63261 1 8.75979 1.05268 8.85355 1.14645C8.94732 1.24021 9 1.36739 9 1.5V4.5" stroke="#444444" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M8.5 7H3.5C3.22386 7 3 7.22386 3 7.5V10.5C3 10.7761 3.22386 11 3.5 11H8.5C8.77614 11 9 10.7761 9 10.5V7.5C9 7.22386 8.77614 7 8.5 7Z" stroke="#444444" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
 
                 <PrintMethodBadgeIcon tech={tech} />
@@ -718,127 +718,120 @@ export default function MaterialsCatalogClient({
             </h2>
           </div>
 
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex min-h-11 w-full items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 lg:max-w-xl">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 16 16"
-                fill="none"
-                className="shrink-0 text-slate-400"
-                aria-hidden="true"
-              >
-                <circle
-                  cx="6.75"
-                  cy="6.75"
-                  r="5.25"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                />
-                <path
-                  d="M11.5 11.5L14.5 14.5"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-              </svg>
-              <input
-                type="text"
-                value={searchInput}
-                onChange={(event) => setSearchInput(event.target.value)}
-                placeholder={getLocalizedLabel("search_placeholder", locale)}
-                aria-label={getLocalizedLabel("search_placeholder", locale)}
-                className="h-11 w-full bg-transparent text-base text-neutral-800 outline-none placeholder:text-slate-400"
-              />
-              {searchInput ? (
-                <button
-                  type="button"
-                  onClick={() => setSearchInput("")}
-                  aria-label="Clear search"
-                  className="shrink-0 rounded-full p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
-                >
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                    <path
-                      d="M3 3l8 8M11 3l-8 8"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </button>
-              ) : null}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+            <div className="flex items-center gap-4">
               {/* Filters Toggle Button */}
               <button
                 type="button"
                 onClick={() => setIsSidebarOpen((prev) => !prev)}
-                className={`inline-flex h-10 w-fit items-center gap-4 rounded-[42px] border px-5 py-2 text-neutral-800 transition-colors ${isSidebarOpen
-                  ? "border-amber-500 bg-amber-50 text-amber-600"
-                  : "border-slate-200 hover:border-amber-200 bg-white"
-                  }`}
+                className={`inline-flex h-[42px] w-fit items-center gap-2 px-1 py-2 transition-colors ${
+                  isSidebarOpen ? "text-amber-500" : "text-neutral-800 hover:text-amber-500"
+                }`}
                 aria-expanded={isSidebarOpen}
               >
                 <span className="flex items-center gap-2">
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 20 20"
-                    fill="none"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M3 5H17"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M5.5 10H14.5"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M8 15H12"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                    />
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-amber-500">
+                    <path d="M17.4993 3.33398H11.666" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M8.33333 3.33398H2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M17.5 10H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M6.66667 10H2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M17.5007 16.666H13.334" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M10 16.666H2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M11.666 1.66602V4.99935" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M13.334 15V18.3333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                  <span className="text-lg font-semibold font-['Segoe_UI'] leading-6">
+                  <span className="text-lg font-bold font-sans leading-6">
                     {getLocalizedLabel("filters", locale)}
                   </span>
                   {activeFilterCount > 0 ? (
-                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-100 px-1.5 text-xs font-semibold text-amber-600">
+                    <span className={`flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-semibold ${
+                      isSidebarOpen ? "bg-amber-100 text-amber-600" : "bg-amber-500 text-white"
+                    }`}>
                       {activeFilterCount}
                     </span>
                   ) : null}
                 </span>
               </button>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              {/* Search */}
+              <div className="flex h-10 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 flex-1 sm:w-[280px]">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  className="shrink-0 text-slate-400"
+                  aria-hidden="true"
+                >
+                  <circle
+                    cx="6.75"
+                    cy="6.75"
+                    r="5.25"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  />
+                  <path
+                    d="M11.5 11.5L14.5 14.5"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <input
+                  type="text"
+                  value={searchInput}
+                  onChange={(event) => setSearchInput(event.target.value)}
+                  placeholder={getLocalizedLabel("search_placeholder", locale)}
+                  aria-label={getLocalizedLabel("search_placeholder", locale)}
+                  className="h-full w-full bg-transparent text-sm text-neutral-800 outline-none"
+                />
+                {searchInput ? (
+                  <button
+                    type="button"
+                    onClick={() => setSearchInput("")}
+                    aria-label="Clear search"
+                    className="shrink-0 rounded-full p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                      <path
+                        d="M3 3l8 8M11 3l-8 8"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </button>
+                ) : null}
+              </div>
 
               {/* Sort select indicator */}
-              <label className="flex h-10 items-center gap-3 rounded-[42px] border border-slate-200 bg-white px-5 py-2 text-neutral-800">
-                <span className="sr-only">{t("materialsPage.sortMaterials")}</span>
+              <div className="relative flex shrink-0 items-center h-10">
                 <select
                   value={sort}
                   onChange={(e) => updateQuery({ sort: e.target.value })}
-                  className="bg-transparent text-base font-normal font-['Segoe_UI'] leading-5 outline-none cursor-pointer"
+                  className="appearance-none bg-transparent text-sm font-medium font-sans outline-none cursor-pointer hover:text-amber-600 pr-6 text-neutral-800"
                 >
                   <option value="name_asc">{getLocalizedLabel("sort_by", locale)}</option>
                   <option value="name_desc">{getLocalizedLabel("sort_by_desc", locale)}</option>
                 </select>
-              </label>
+                <div className="pointer-events-none absolute right-0 flex items-center justify-center">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-neutral-500">
+                    <path d="M7 15l5 5 5-5"/>
+                    <path d="M7 9l5-5 5 5"/>
+                  </svg>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Layout: Sidebar + Grid */}
-        <div className={`flex flex-col gap-6 ${isSidebarOpen ? "lg:flex-row lg:items-start" : ""}`}>
+        <div className={`flex flex-col gap-6 lg:grid ${isSidebarOpen ? "lg:grid-cols-4 lg:items-start" : "lg:grid-cols-4"}`}>
           {/* Collapsible Filters Sidebar */}
           {isSidebarOpen && (
-            <aside className="w-full shrink-0 rounded-xl border border-slate-100 bg-white p-4 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.08)] md:w-80 lg:w-80 lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto custom-scrollbar">
+            <aside className="w-full shrink-0 rounded-xl border border-slate-100 bg-white p-4 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.08)] lg:col-span-1 lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto custom-scrollbar">
               <div className="flex flex-col gap-5">
                 <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-2">
@@ -905,7 +898,7 @@ export default function MaterialsCatalogClient({
           )}
 
           {/* Grid listing */}
-          <div className="min-w-0 flex-1 flex flex-col gap-8">
+          <div className={`min-w-0 flex-1 flex flex-col gap-8 ${isSidebarOpen ? "lg:col-span-3" : "lg:col-span-4"}`}>
             {error ? (
               <div className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
                 {error}
@@ -914,7 +907,7 @@ export default function MaterialsCatalogClient({
 
             {paginatedMaterials.length > 0 ? (
               <div
-                className={`grid grid-cols-1 gap-6 transition-opacity sm:grid-cols-2 ${loading ? "opacity-60" : "opacity-100"} ${isSidebarOpen ? "xl:grid-cols-3" : "lg:grid-cols-3"}`}
+                className={`grid grid-cols-1 gap-6 transition-opacity sm:grid-cols-2 ${loading ? "opacity-60" : "opacity-100"} ${isSidebarOpen ? "lg:grid-cols-3" : "lg:grid-cols-4"}`}
               >
                 {paginatedMaterials.map((material) => (
                   <MaterialCard
@@ -926,7 +919,7 @@ export default function MaterialsCatalogClient({
                 ))}
               </div>
             ) : loading ? (
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className={`grid grid-cols-1 gap-6 sm:grid-cols-2 ${isSidebarOpen ? "lg:grid-cols-3" : "lg:grid-cols-4"}`}>
                 {Array.from({ length: 8 }, (_, index) => (
                   <div
                     key={index}

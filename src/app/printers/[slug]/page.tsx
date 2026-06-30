@@ -173,7 +173,7 @@ function SpecItem({ label, value }: { label: string; value: string }) {
 
   return (
     <li className="flex items-start gap-3">
-      <svg
+      {/* <svg
         className="mt-0.5 shrink-0"
         width="22"
         height="22"
@@ -196,10 +196,10 @@ function SpecItem({ label, value }: { label: string; value: string }) {
           strokeLinecap="round"
           strokeLinejoin="round"
         />
-      </svg>
+      </svg> */}
       <span className="text-base text-neutral-700">
-        <span className="font-semibold text-neutral-800">{cleanLabel}:</span>{" "}
-        {value}
+        <span className="font-normal text-[#444444]">{cleanLabel}:</span>{" "}
+        <span className="font-semibold text-base text-[#444444]">{value}</span>
       </span>
     </li>
   );
@@ -265,22 +265,22 @@ function PrinterSummary({
           ) : null}
 
           {printer.content ? (
-            <div className="mt-4 rounded-lg bg-slate-50 p-4">
+            <div className="mt-4 rounded-lg">
               <div className="text-sm font-medium text-neutral-500">
                 {t("product.productDescription")}
               </div>
               <div
-                className="mt-2 text-sm font-normal leading-relaxed text-neutral-700 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5"
+                className="mt-2 text-sm font-normal leading-relaxed text-neutral-700 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_a]:text-[#f08500] [&_a]:underline hover:[&_a]:text-[#d97706] [&_a]:transition-colors"
                 dangerouslySetInnerHTML={{ __html: printer.content }}
               />
             </div>
           ) : printer.excerpt ? (
-            <div className="mt-4 rounded-lg bg-slate-50 p-4">
+            <div className="mt-4 rounded-lg">
               <div className="text-sm font-medium text-neutral-500">
                 {t("product.productDescription")}
               </div>
               <div
-                className="mt-2 text-sm font-normal leading-relaxed text-neutral-700 [&_p]:mb-2"
+                className="mt-2 text-sm font-normal leading-relaxed text-neutral-700 [&_p]:mb-2 [&_a]:text-[#f08500] [&_a]:underline hover:[&_a]:text-[#d97706] [&_a]:transition-colors"
                 dangerouslySetInnerHTML={{ __html: printer.excerpt }}
               />
             </div>

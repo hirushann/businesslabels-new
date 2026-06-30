@@ -29,6 +29,7 @@ export function printerLabel(printer: PrinterSearchResult) {
 
 type PrinterModelSelectProps = {
   value: PrinterSearchResult | null;
+  textValue?: string;
   onValueChange: (printer: PrinterSearchResult | null) => void;
   onTextChange?: (text: string) => void;
   placeholder?: string;
@@ -39,6 +40,7 @@ type PrinterModelSelectProps = {
 
 export default function PrinterModelSelect({
   value,
+  textValue,
   onValueChange,
   onTextChange,
   placeholder,
@@ -55,6 +57,15 @@ export default function PrinterModelSelect({
   const [printerSearchError, setPrinterSearchError] = useState<string | null>(null);
 
   const canShowPrinterResults = printerQuery.trim().length >= 3;
+
+  useEffect(() => {
+    if (textValue !== undefined) {
+      setPrinterQuery(textValue);
+      return;
+    }
+
+    setPrinterQuery(value ? printerLabel(value) : "");
+  }, [textValue, value]);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {

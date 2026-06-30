@@ -81,28 +81,22 @@ export default function ReviewsSlider({ reviews, totalRatings }: ReviewsSliderPr
           <button
             onClick={scrollLeft}
             disabled={!canScrollLeft}
-            className={`w-12 h-12 rounded-full flex items-center justify-center border transition-colors ${
-              canScrollLeft
-                ? "bg-white border-amber-500 text-amber-500 hover:bg-amber-50 cursor-pointer"
-                : "bg-neutral-50 border-gray-200 text-gray-400 cursor-not-allowed"
-            }`}
+            className={`w-12 h-12 rounded-full flex items-center justify-center border transition-colors ${canScrollLeft
+              ? "bg-white border-amber-500 text-amber-500 hover:bg-amber-50 cursor-pointer"
+              : "bg-neutral-50 border-gray-200 text-gray-400 cursor-not-allowed"
+              }`}
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
+            <svg width="20" height="17" viewBox="0 0 20 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8.23124 0.999474L1.00006 8.23065L8.13542 15.366M18.5363 7.66497L1.20132 8.22916" stroke="#989898" strokeWidth="2" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
           <button
             onClick={scrollRight}
             disabled={!canScrollRight}
-            className={`w-12 h-12 rounded-full flex items-center justify-center border transition-colors ${
-              canScrollRight
-                ? "bg-white border-amber-500 text-amber-500 hover:bg-amber-50 cursor-pointer"
-                : "bg-neutral-50 border-gray-200 text-gray-400 cursor-not-allowed"
-            }`}
+            className={`w-12 h-12 rounded-full flex items-center justify-center border transition-colors ${canScrollRight
+              ? "bg-white border-amber-500 text-amber-500 hover:bg-amber-50 cursor-pointer"
+              : "bg-neutral-50 border-gray-200 text-gray-400 cursor-not-allowed"
+              }`}
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
+            <svg width="20" height="17" viewBox="0 0 20 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.3051 0.999474L18.5363 8.23065L11.401 15.366M1.00007 7.66497L18.3351 8.22916" stroke="#F18800" strokeWidth="2" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
         </div>
       </div>

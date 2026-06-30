@@ -226,10 +226,12 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
   const t = useTranslations();
   const locale = useLocale();
   const formLocale = locale === 'nl' ? 'nl' : 'en';
-  const [callbackOpen, setCallbackOpen] = useState(true);
-  const [moreWaysOpen, setMoreWaysOpen] = useState(true);
-  const [scheduleOpen, setScheduleOpen] = useState(true);
-  const [messageOpen, setMessageOpen] = useState(true);
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+  const toggleSection = (id: string) => setActiveSection(prev => prev === id ? null : id);
+  const callbackOpen = activeSection === 'callback';
+  const moreWaysOpen = activeSection === 'moreWays';
+  const scheduleOpen = activeSection === 'schedule';
+  const messageOpen = activeSection === 'message';
   const [selectedCountryCode, setSelectedCountryCode] = useState('NL');
   const [phoneNumber, setPhoneNumber] = useState(() =>
     getAuthUserString(['phone', 'telephone', 'mobile', 'mobile_number', 'mobileNumber'])
@@ -595,7 +597,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
           <div className="flex flex-col gap-4">
             <button
               className="flex justify-between items-center w-full text-left"
-              onClick={() => setCallbackOpen(v => !v)}
+            onClick={() => toggleSection('callback')}
             >
               <span className="text-neutral-800 text-lg font-normal font-['Segoe_UI'] leading-6">
                 {t('help.requestCallbackTeam')}
@@ -669,7 +671,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
           <div className="flex flex-col gap-4">
             <button
               className="flex justify-between items-center w-full text-left"
-              onClick={() => setMoreWaysOpen(v => !v)}
+              onClick={() => toggleSection('moreWays')}
             >
               <span className="text-neutral-800 text-lg font-normal font-['Segoe_UI'] leading-6">
                 {t('help.moreWaysTeam')}
@@ -697,7 +699,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
           <div className="flex flex-col gap-4">
             <button
               className="flex justify-between items-center w-full text-left"
-              onClick={() => setScheduleOpen(v => !v)}
+              onClick={() => toggleSection('schedule')}
             >
               <span className="text-neutral-800 text-lg font-normal font-['Segoe_UI'] leading-6">
                 {t('help.checkAvailability')}
@@ -732,7 +734,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
           <div className="flex flex-col gap-4 pb-6">
             <button
               className="flex justify-between items-center w-full text-left"
-              onClick={() => setMessageOpen(v => !v)}
+              onClick={() => toggleSection('message')}
             >
               <span className="text-neutral-800 text-lg font-normal font-['Segoe_UI'] leading-6">
                 {t('help.dropMessage')}

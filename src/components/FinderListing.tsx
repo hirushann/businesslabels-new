@@ -8,6 +8,7 @@ import PrinterCard from "@/components/PrinterCard";
 import { useDebouncedSearchParam } from "@/components/search/useDebouncedSearchParam";
 import { RequestPrinterModal } from "@/components/RequestPrinterModal";
 import { getPrinterPath } from "@/lib/routes/printers";
+
 import type {
   PrinterCardData,
   PrinterSearchResponse,
@@ -304,7 +305,7 @@ export default function FinderListing({
   return (
     <div className="flex flex-col">
       {/* ── Search section ── */}
-      <div className="flex flex-col gap-4 pb-4 border-b border-[#EDF0F4] lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-4 pb-4 border-b border-[#EDF0F4] lg:flex-row lg:items-center lg:justify-between max-w-[1440px] mx-auto">
         <h2
           className="text-[#222222] text-3xl font-bold leading-[120%] shrink-0"
           style={{ fontFamily: "Segoe UI, sans-serif" }}
@@ -364,7 +365,7 @@ export default function FinderListing({
 
       {/* ── Results count ── */}
       <div
-        className="py-4 text-sm text-[#666666]"
+        className="py-4 text-sm text-[#666666] max-w-[1440px] mx-auto"
         style={{ fontFamily: "Segoe UI, sans-serif" }}
       >
         {loading
@@ -389,7 +390,7 @@ export default function FinderListing({
         />
       ) : (
         <div
-          className={`grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 transition-opacity duration-200 ${
+          className={`grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 transition-opacity duration-200 max-w-[1440px] mx-auto ${
             loading ? "opacity-60 pointer-events-none" : "opacity-100"
           }`}
         >
@@ -414,7 +415,7 @@ export default function FinderListing({
 
       {/* ── View more Printers button — only shown when more pages exist ── */}
       {!loading && hasMore && (
-        <div className="mt-10 flex justify-center">
+        <div className="mt-10 flex justify-center  max-w-[1440px] mx-auto">
           <button
             type="button"
             onClick={loadMore}
@@ -458,7 +459,7 @@ export default function FinderListing({
 
       {/* ── FAQ / Info cards section ── */}
       <div className="mt-16 -mx-6 px-6 py-20 bg-[#F7F9FA] sm:-mx-10 sm:px-10 lg:-mx-10 lg:px-10">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3  max-w-[1440px] mx-auto">
           {faqItems.map((item) => (
             <div
               key={item.title}
@@ -487,5 +488,6 @@ export default function FinderListing({
         onOpenChange={setIsModalOpen}
       />
     </div>
+    
   );
 }

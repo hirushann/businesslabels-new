@@ -128,7 +128,7 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
   const [unknownPrinter, setUnknownPrinter] = useState<boolean>(false);
   const [materialCode, setMaterialCode] = useState<string>(matCode || '');
   const [unsureMaterial, setUnsureMaterial] = useState<boolean>(false);
-  const [selectedMaterial, setSelectedMaterial] = useState<string | null>(null);
+  const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
   const [company, setCompany] = useState<string>('');
   const [name, setName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
@@ -157,7 +157,11 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
         if (data.unknownPrinter !== undefined) setUnknownPrinter(data.unknownPrinter);
         if (!matCode && data.materialCode !== undefined) setMaterialCode(data.materialCode);
         if (data.unsureMaterial !== undefined) setUnsureMaterial(data.unsureMaterial);
-        if (data.selectedMaterial !== undefined) setSelectedMaterial(data.selectedMaterial);
+        if (data.selectedMaterials !== undefined) {
+          setSelectedMaterials(Array.isArray(data.selectedMaterials) ? data.selectedMaterials :
+            // backwards compat: old single-value string
+            data.selectedMaterials ? [data.selectedMaterials] : []);
+        }
         if (data.company !== undefined) {
           draftCompany = data.company;
           setCompany(data.company);
@@ -194,10 +198,10 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
   useEffect(() => {
     if (!isLoaded) return;
     const data = {
-      selectedShape, diameter, printerQuery, unknownPrinter, materialCode, unsureMaterial, selectedMaterial, company, name, email, phone, quantity, comments
+      selectedShape, diameter, printerQuery, unknownPrinter, materialCode, unsureMaterial, selectedMaterials, company, name, email, phone, quantity, comments
     };
     localStorage.setItem('customMadeFormDraft', JSON.stringify(data));
-  }, [isLoaded, selectedShape, diameter, printerQuery, unknownPrinter, materialCode, unsureMaterial, selectedMaterial, company, name, email, phone, quantity, comments]);
+  }, [isLoaded, selectedShape, diameter, printerQuery, unknownPrinter, materialCode, unsureMaterial, selectedMaterials, company, name, email, phone, quantity, comments]);
 
   function resetForm() {
     setSelectedShape(null);
@@ -206,7 +210,7 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
     setUnknownPrinter(false);
     setMaterialCode('');
     setUnsureMaterial(false);
-    setSelectedMaterial(null);
+    setSelectedMaterials([]);
     setCompany('');
     setName('');
     setEmail('');
@@ -228,7 +232,9 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
       ? 'Unsure - please advise'
       : materialCode
         ? `Code: ${materialCode}`
-        : MATERIALS.find((m) => m.id === selectedMaterial)?.label || 'Not specified';
+        : selectedMaterials.length > 0
+          ? selectedMaterials.map(id => MATERIALS.find(m => m.id === id)?.label || id).join(', ')
+          : 'Not specified';
 
     try {
       const response = await fetch('/api/custom-made-request', {
@@ -253,6 +259,7 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
         resetForm();
         setSubmitStatus('success');
         toast.success(t('successMessage'));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         const data = await response.json().catch(() => ({}));
         setSubmitStatus('error');
@@ -275,13 +282,13 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
     }
   }
 
-  const hasChoices: boolean = !!(selectedShape || diameter || printerQuery || unknownPrinter || selectedMaterial);
+  const hasChoices: boolean = !!(selectedShape || diameter || printerQuery || unknownPrinter || selectedMaterials.length > 0);
 
   let currentStep = 1;
   if (selectedShape) currentStep = 2;
   if (selectedShape && diameter) currentStep = 3;
   if (selectedShape && diameter && (printerQuery || unknownPrinter)) currentStep = 4;
-  if (selectedShape && diameter && (printerQuery || unknownPrinter) && (selectedMaterial || unsureMaterial || materialCode)) currentStep = 5;
+  if (selectedShape && diameter && (printerQuery || unknownPrinter) && (selectedMaterials.length > 0 || unsureMaterial || materialCode)) currentStep = 5;
   if (submitStatus === 'success') currentStep = 6;
 
   let dimW = '';
@@ -299,87 +306,143 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
 
   return (
     <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col gap-4">
-      {/* Page header */}
-      <div className="flex flex-col gap-4">
-        <div className="h-4 flex items-center gap-2">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><mask id="mask0_1909_10965" maskUnits="userSpaceOnUse" x="0" y="0" width="16" height="16"><rect width="16" height="16" fill="#D9D9D9" /></mask><g mask="url(#mask0_1909_10965)"><path d="M4 12.6666H6.23083V9.30758C6.23083 9.13691 6.28856 8.9938 6.404 8.87825C6.51956 8.7628 6.66267 8.70508 6.83333 8.70508H9.16667C9.33733 8.70508 9.48044 8.7628 9.596 8.87825C9.71144 8.9938 9.76917 9.13691 9.76917 9.30758V12.6666H12V6.76908C12 6.73497 11.9925 6.70402 11.9775 6.67625C11.9626 6.64847 11.9423 6.62386 11.9167 6.60241L8.12183 3.74991C8.08761 3.72002 8.047 3.70508 8 3.70508C7.953 3.70508 7.91239 3.72002 7.87817 3.74991L4.08333 6.60241C4.05767 6.62386 4.03739 6.64847 4.0225 6.67625C4.0075 6.70402 4 6.73497 4 6.76908V12.6666ZM3 12.6666V6.76908C3 6.5783 3.04267 6.39758 3.128 6.22691C3.21344 6.05613 3.33144 5.91552 3.482 5.80508L7.277 2.94608C7.48756 2.78541 7.72822 2.70508 7.999 2.70508C8.26978 2.70508 8.51111 2.78541 8.723 2.94608L12.518 5.80508C12.6686 5.91552 12.7866 6.05613 12.872 6.22691C12.9573 6.39758 13 6.5783 13 6.76908V12.6666C13 12.9392 12.9015 13.1741 12.7045 13.3711C12.5075 13.5681 12.2727 13.6666 12 13.6666H9.37183C9.20106 13.6666 9.05794 13.6088 8.9425 13.4932C8.82694 13.3778 8.76917 13.2347 8.76917 13.0639V9.70508H7.23083V13.0639C7.23083 13.2347 7.17306 13.3778 7.0575 13.4932C6.94206 13.6088 6.79894 13.6666 6.62817 13.6666H4C3.72733 13.6666 3.4925 13.5681 3.2955 13.3711C3.0985 13.1741 3 12.9392 3 12.6666Z" fill="#888888" /></g></svg>
-          <span className="text-zinc-500 text-sm font-sans leading-5">/</span>
-          <span className="text-neutral-700 text-sm font-semibold font-sans leading-5">{t('breadcrumb')}</span>
-        </div>
-        <h1 className="text-neutral-800 text-2xl sm:text-3xl lg:text-4xl font-bold font-sans leading-tight sm:leading-[48px]">{t('title')}</h1>
-        <p className="max-w-full lg:max-w-[1003px] text-neutral-700 text-base sm:text-lg font-sans leading-6">
-          {t('description')}
-        </p>
-      </div>
 
-      {/* Main two-column layout */}
-      <div className="flex flex-col lg:flex-row gap-12 items-start">
-        {/* ── Form card ── */}
-        <div className="flex-1 min-w-0 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] outline outline-1 outline-offset-[-1px] outline-gray-100 flex flex-col overflow-hidden">
-          {/* Step indicator */}
-          <div className="px-3 sm:px-6 py-4 bg-white shadow-[2px_6px_20px_0px_rgba(17,17,17,0.04)] outline outline-1 outline-offset-[-1px] outline-gray-100">
-            <div className="relative flex justify-between items-center">
-              {/* track */}
-              <div className="absolute h-0.5 bg-gray-200 rounded-full left-4 right-4 sm:left-[48px] sm:right-[48px] top-[15px]" />
-              <div
-                className="absolute h-0.5 bg-amber-500 rounded-full top-[15px] transition-all duration-500"
-                style={{ left: '1rem', right: '1rem', width: `calc((100% - 2rem) * ${(currentStep - 1) / 4})` }}
-              />
-              {STEPS.map((step, i) => {
-                const stepNum = i + 1;
-                const isCompleted = stepNum < currentStep;
-                const isActive = stepNum === currentStep;
+      {submitStatus === 'success' ? (
+        /* ── Full-page thank-you screen ── */
+        <div className="min-h-[70vh] flex flex-col items-center justify-center text-center py-16 px-4">
 
-                return (
-                  <div key={step} className="flex-1 flex flex-col items-center gap-1.5 z-10">
-                    <div className={`size-7 sm:size-8 rounded-full flex justify-center items-center transition-colors ${isCompleted ? 'bg-amber-500' : isActive ? 'bg-white outline outline-2 outline-offset-[-2px] outline-amber-500' : 'bg-gray-100'
-                      }`}>
-                      {isCompleted ? (
-                        <svg className="size-4 sm:size-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                      ) : (
-                        <span className={`text-sm sm:text-lg font-semibold font-sans ${isActive ? 'text-amber-500' : 'text-zinc-500'}`}>
-                          {stepNum}
-                        </span>
-                      )}
-                    </div>
-                    <span className={`hidden sm:block text-xs sm:text-sm font-semibold font-sans text-center leading-none ${isActive || isCompleted ? 'text-amber-500' : 'text-zinc-500'}`}>
-                      {step === 'Contact' ? t('stepContact') : t('step' + step as any)}
-                    </span>
-                  </div>
-                );
-              })}
+          {/* Icon */}
+          <div className="relative mb-8">
+            <div className="w-24 h-24 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center shadow-xl shadow-amber-500/30">
+              <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
             </div>
+            <div className="absolute inset-0 rounded-full bg-amber-400/20 animate-ping" style={{ animationDuration: '2.5s' }} />
           </div>
 
-          <div className="h-px bg-gray-100" />
+          {/* Heading & messages */}
+          <div className="flex flex-col gap-3 items-center max-w-lg mb-10">
+            <h1 className="text-4xl sm:text-5xl font-bold text-neutral-800 font-sans leading-tight">
+              {t('requestSent')}
+            </h1>
+            <p className="text-neutral-600 text-lg font-sans leading-relaxed">
+              {t('successMessage')}
+            </p>
+            <p className="text-neutral-500 text-sm font-sans leading-relaxed max-w-sm">
+              {t('successSubMessage')}
+            </p>
+          </div>
 
-          {submitStatus === 'success' ? (
-            <div className="p-12 sm:p-20 flex flex-col items-center justify-center text-center gap-6 min-h-[500px]">
-              <div className="w-24 h-24 bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-2 outline outline-4 outline-green-50/50">
-                <svg className="w-12 h-12" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <div className="flex flex-col gap-3 items-center">
-                <h2 className="text-3xl font-bold text-neutral-800 font-sans">{t('requestSent')}</h2>
-                <p className="text-neutral-600 text-lg max-w-[400px] font-sans leading-relaxed">{t('successMessage')}</p>
-              </div>
-              <div className="mt-8 w-full sm:w-auto">
-                <button
-                  type="button"
-                  onClick={() => setSubmitStatus('idle')}
-                  className="w-full sm:w-auto h-12 px-8 py-2.5 bg-amber-500 rounded-[100px] flex justify-center items-center gap-2 hover:bg-amber-600 active:scale-[0.98] transition-all shadow-sm hover:shadow"
-                >
-                  <span className="text-white text-base font-semibold font-sans leading-6">
-                    {t('submitAnotherRequest')}
-                  </span>
-                </button>
+          {/* What happens next card — styled to match site */}
+          <div className="bg-white rounded-2xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] outline outline-1 outline-offset-[-1px] outline-gray-100 overflow-hidden mb-10 max-w-md w-full text-left">
+            <div className="px-6 py-4 bg-slate-50 border-b border-gray-100">
+              <h2 className="text-sm font-bold text-neutral-700 font-sans uppercase tracking-widest text-center">
+                {t('whatHappensNext')}
+              </h2>
+            </div>
+            <ol className="flex flex-col divide-y divide-gray-50 px-6 py-2">
+              {([
+                { icon: (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                ), text: t('nextStep1'), step: '1' },
+                { icon: (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                ), text: t('nextStep2'), step: '2' },
+                { icon: (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                ), text: t('nextStep3'), step: '3' },
+              ] as { icon: React.ReactNode; text: string; step: string }[]).map((item) => (
+                <li key={item.step} className="flex items-center gap-4 py-4">
+                  <div className="w-9 h-9 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center shrink-0 text-amber-500">
+                    {item.icon}
+                  </div>
+                  <span className="text-neutral-700 text-sm font-sans leading-5">{item.text}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          {/* CTAs */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                resetForm();
+                setSubmitStatus('idle');
+              }}
+              className="h-12 px-8 bg-amber-500 rounded-full text-white text-base font-semibold font-sans hover:bg-amber-600 active:scale-[0.98] transition-all shadow-sm hover:shadow flex items-center justify-center"
+            >
+              {t('submitAnotherRequest')}
+            </button>
+            <a
+              href="/"
+              className="h-12 px-8 bg-white rounded-full text-neutral-700 text-base font-semibold font-sans border border-gray-200 hover:border-amber-300 hover:bg-amber-50 active:scale-[0.98] transition-all flex items-center justify-center"
+            >
+              {t('backToHome')}
+            </a>
+          </div>
+        </div>
+      ) : (
+      <>
+        {/* Page header */}
+        <div className="flex flex-col gap-4">
+          <div className="h-4 flex items-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><mask id="mask0_1909_10965" maskUnits="userSpaceOnUse" x="0" y="0" width="16" height="16"><rect width="16" height="16" fill="#D9D9D9" /></mask><g mask="url(#mask0_1909_10965)"><path d="M4 12.6666H6.23083V9.30758C6.23083 9.13691 6.28856 8.9938 6.404 8.87825C6.51956 8.7628 6.66267 8.70508 6.83333 8.70508H9.16667C9.33733 8.70508 9.48044 8.7628 9.596 8.87825C9.71144 8.9938 9.76917 9.13691 9.76917 9.30758V12.6666H12V6.76908C12 6.73497 11.9925 6.70402 11.9775 6.67625C11.9626 6.64847 11.9423 6.62386 11.9167 6.60241L8.12183 3.74991C8.08761 3.72002 8.047 3.70508 8 3.70508C7.953 3.70508 7.91239 3.72002 7.87817 3.74991L4.08333 6.60241C4.05767 6.62386 4.03739 6.64847 4.0225 6.67625C4.0075 6.70402 4 6.73497 4 6.76908V12.6666ZM3 12.6666V6.76908C3 6.5783 3.04267 6.39758 3.128 6.22691C3.21344 6.05613 3.33144 5.91552 3.482 5.80508L7.277 2.94608C7.48756 2.78541 7.72822 2.70508 7.999 2.70508C8.26978 2.70508 8.51111 2.78541 8.723 2.94608L12.518 5.80508C12.6686 5.91552 12.7866 6.05613 12.872 6.22691C12.9573 6.39758 13 6.5783 13 6.76908V12.6666C13 12.9392 12.9015 13.1741 12.7045 13.3711C12.5075 13.5681 12.2727 13.6666 12 13.6666H9.37183C9.20106 13.6666 9.05794 13.6088 8.9425 13.4932C8.82694 13.3778 8.76917 13.2347 8.76917 13.0639V9.70508H7.23083V13.0639C7.23083 13.2347 7.17306 13.3778 7.0575 13.4932C6.94206 13.6088 6.79894 13.6666 6.62817 13.6666H4C3.72733 13.6666 3.4925 13.5681 3.2955 13.3711C3.0985 13.1741 3 12.9392 3 12.6666Z" fill="#888888" /></g></svg>
+            <span className="text-zinc-500 text-sm font-sans leading-5">/</span>
+            <span className="text-neutral-700 text-sm font-semibold font-sans leading-5">{t('breadcrumb')}</span>
+          </div>
+          <h1 className="text-neutral-800 text-2xl sm:text-3xl lg:text-4xl font-bold font-sans leading-tight sm:leading-[48px]">{t('title')}</h1>
+          <p className="max-w-full lg:max-w-[1003px] text-neutral-700 text-base sm:text-lg font-sans leading-6">
+            {t('description')}
+          </p>
+        </div>
+
+        {/* Main two-column layout */}
+        <div className="flex flex-col lg:flex-row gap-12 items-start">
+          {/* ── Form card ── */}
+          <div className="flex-1 min-w-0 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] outline outline-1 outline-offset-[-1px] outline-gray-100 flex flex-col overflow-hidden">
+            {/* Step indicator */}
+            <div className="px-3 sm:px-6 py-4 bg-white shadow-[2px_6px_20px_0px_rgba(17,17,17,0.04)] outline outline-1 outline-offset-[-1px] outline-gray-100">
+              <div className="relative flex justify-between items-center">
+                {/* track */}
+                <div className="absolute h-0.5 bg-gray-200 rounded-full left-4 right-4 sm:left-[48px] sm:right-[48px] top-[15px]" />
+                <div
+                  className="absolute h-0.5 bg-amber-500 rounded-full top-[15px] transition-all duration-500"
+                  style={{ left: '1rem', right: '1rem', width: `calc((100% - 2rem) * ${(currentStep - 1) / 4})` }}
+                />
+                {STEPS.map((step, i) => {
+                  const stepNum = i + 1;
+                  const isCompleted = stepNum < currentStep;
+                  const isActive = stepNum === currentStep;
+                  return (
+                    <div key={step} className="flex-1 flex flex-col items-center gap-1.5 z-10">
+                      <div className={`size-7 sm:size-8 rounded-full flex justify-center items-center transition-colors ${isCompleted ? 'bg-amber-500' : isActive ? 'bg-white outline outline-2 outline-offset-[-2px] outline-amber-500' : 'bg-gray-100'}`}>
+                        {isCompleted ? (
+                          <svg className="size-4 sm:size-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          <span className={`text-sm sm:text-lg font-semibold font-sans ${isActive ? 'text-amber-500' : 'text-zinc-500'}`}>{stepNum}</span>
+                        )}
+                      </div>
+                      <span className={`hidden sm:block text-xs sm:text-sm font-semibold font-sans text-center leading-none ${isActive || isCompleted ? 'text-amber-500' : 'text-zinc-500'}`}>
+                        {step === 'Contact' ? t('stepContact') : t('step' + step as any)}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-          ) : (
-          <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-6">
+            <div className="h-px bg-gray-100" />
+
+            <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-6">
             {/* ── Step 1: Shape ── */}
             <section className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
@@ -451,6 +514,7 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
               <div className="flex flex-col gap-4">
                 <PrinterModelSelect
                   value={null}
+                  textValue={printerQuery}
                   onValueChange={(printer) => {
                     if (printer) {
                       setPrinterQuery(printer.name);
@@ -524,16 +588,30 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     {MATERIALS.map((mat) => {
-                      const active = selectedMaterial === mat.id;
+                      const active = selectedMaterials.includes(mat.id);
                       return (
                         <button
                           key={mat.id}
                           type="button"
-                          onClick={() => setSelectedMaterial(active ? null : mat.id)}
-                          className={`px-2 py-2.5 rounded-lg outline outline-1 outline-offset-[-1px] flex items-center gap-2 transition-colors ${active ? 'bg-orange-50 outline-amber-500' : 'bg-slate-50 outline-gray-100'
-                            }`}
+                          onClick={() => setSelectedMaterials(prev =>
+                            prev.includes(mat.id)
+                              ? prev.filter(id => id !== mat.id)
+                              : [...prev, mat.id]
+                          )}
+                          className={`px-2 py-2.5 rounded-lg outline outline-1 outline-offset-[-1px] flex items-center gap-2 transition-colors ${
+                            active ? 'bg-orange-50 outline-amber-500' : 'bg-slate-50 outline-gray-100'
+                          }`}
                         >
-                          <span className={`size-4 rounded-full border shrink-0 ${active ? 'bg-amber-500 border-amber-500' : 'bg-white border-gray-300'}`} />
+                          {/* Checkbox indicator */}
+                          <span className={`size-4 rounded border-2 shrink-0 flex items-center justify-center ${
+                            active ? 'bg-amber-500 border-amber-500' : 'bg-white border-gray-300'
+                          }`}>
+                            {active && (
+                              <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                                <path d="M1 4l2.5 2.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            )}
+                          </span>
                           <span className="text-neutral-700 text-sm font-semibold font-sans">{mat.label}</span>
                           <span className="text-zinc-500 text-sm font-medium font-sans leading-4">{mat.sub}</span>
                         </button>
@@ -594,7 +672,7 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
 
                       <div className="flex-1 overflow-y-auto pr-2 -mr-2 space-y-3 pb-4">
                         {MATERIALS.map((mat) => {
-                          const active = selectedMaterial === mat.id;
+                          const active = selectedMaterials.includes(mat.id);
                           
                           let Icon = FileText;
                           if (mat.id === 'gloss-paper') Icon = Sparkles;
@@ -605,42 +683,75 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
                           else if (mat.id === 'silver-polyester') Icon = Star;
 
                           return (
-                            <DialogClose asChild key={mat.id}>
-                              <button
-                                type="button"
-                                onMouseEnter={() => setHoveredMaterialId(mat.id)}
-                                onMouseLeave={() => setHoveredMaterialId(null)}
-                                onClick={() => {
-                                  setSelectedMaterial(mat.id);
-                                  setUnsureMaterial(false);
-                                  setMaterialCode('');
-                                }}
-                                className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-300 group flex items-start gap-4 ${
-                                  active 
-                                    ? 'border-amber-500 bg-amber-50/50 shadow-md shadow-amber-500/10' 
-                                    : 'border-transparent bg-neutral-50 hover:bg-white hover:border-amber-200 hover:shadow-lg hover:shadow-neutral-200/50'
-                                }`}
-                              >
-                                <div className={`p-3 rounded-xl flex-shrink-0 transition-colors ${
-                                  active ? 'bg-amber-500 text-white shadow-md' : 'bg-white text-neutral-400 group-hover:text-amber-500 group-hover:bg-amber-50 shadow-sm border border-neutral-100'
-                                }`}>
-                                  <Icon className="size-6" strokeWidth={1.5} />
-                                </div>
-                                <div className="flex-1 min-w-0 py-1">
-                                  <h3 className="font-bold text-neutral-800 text-lg mb-1 group-hover:text-amber-600 transition-colors">
-                                    {mat.label}
-                                  </h3>
-                                  <p className="text-sm text-neutral-500 leading-relaxed line-clamp-2">
-                                    {mat.sub}
-                                  </p>
-                                </div>
-                                <div className={`py-3 flex-shrink-0 transition-transform duration-300 ${active ? 'translate-x-0 opacity-100 text-amber-500' : '-translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 text-amber-400'}`}>
+                            <button
+                              key={mat.id}
+                              type="button"
+                              onMouseEnter={() => setHoveredMaterialId(mat.id)}
+                              onMouseLeave={() => setHoveredMaterialId(null)}
+                              onClick={() => {
+                                setSelectedMaterials(prev =>
+                                  prev.includes(mat.id)
+                                    ? prev.filter(id => id !== mat.id)
+                                    : [...prev, mat.id]
+                                );
+                                setUnsureMaterial(false);
+                                setMaterialCode('');
+                              }}
+                              className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-300 group flex items-start gap-4 ${
+                                active 
+                                  ? 'border-amber-500 bg-amber-50/50 shadow-md shadow-amber-500/10' 
+                                  : 'border-transparent bg-neutral-50 hover:bg-white hover:border-amber-200 hover:shadow-lg hover:shadow-neutral-200/50'
+                              }`}
+                            >
+                              <div className={`p-3 rounded-xl flex-shrink-0 transition-colors ${
+                                active ? 'bg-amber-500 text-white shadow-md' : 'bg-white text-neutral-400 group-hover:text-amber-500 group-hover:bg-amber-50 shadow-sm border border-neutral-100'
+                              }`}>
+                                <Icon className="size-6" strokeWidth={1.5} />
+                              </div>
+                              <div className="flex-1 min-w-0 py-1">
+                                <h3 className="font-bold text-neutral-800 text-lg mb-1 group-hover:text-amber-600 transition-colors">
+                                  {mat.label}
+                                </h3>
+                                <p className="text-sm text-neutral-500 leading-relaxed line-clamp-2">
+                                  {mat.sub}
+                                </p>
+                              </div>
+                              <div className={`py-3 flex-shrink-0 transition-all duration-300 ${
+                                active
+                                  ? 'opacity-100 text-amber-500 scale-100'
+                                  : 'opacity-0 group-hover:opacity-60 text-amber-400 scale-90'
+                              }`}>
+                                {active ? (
+                                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <circle cx="10" cy="10" r="9" fill="#f59e0b" />
+                                    <path d="M6 10l2.5 2.5L14 7" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                  </svg>
+                                ) : (
                                   <ChevronRight className="size-5" strokeWidth={2.5} />
-                                </div>
-                              </button>
-                            </DialogClose>
+                                )}
+                              </div>
+                            </button>
                           );
                         })}
+                      </div>
+                      {/* Confirm button */}
+                      <div className="pt-4 border-t border-neutral-100">
+                        {selectedMaterials.length > 0 && (
+                          <p className="text-xs text-neutral-500 mb-3">
+                            {selectedMaterials.length === 1
+                              ? `1 material selected`
+                              : `${selectedMaterials.length} materials selected`
+                            }: <span className="font-medium text-neutral-700">{selectedMaterials.map(id => MATERIALS.find(m => m.id === id)?.label).join(', ')}</span>
+                          </p>
+                        )}
+                        <DialogClose asChild>
+                          <button
+                            type="button"
+                            className="w-full h-11 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-full transition-colors"
+                          >
+                            {selectedMaterials.length > 0 ? 'Confirm selection' : 'Close'}
+                          </button>
+                        </DialogClose>
                       </div>
                     </div>
                   </DialogContent>
@@ -746,7 +857,6 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
               </div>
             </section>
           </form>
-          )}
         </div>
 
         {/* ── Sidebar ── */}
@@ -845,10 +955,10 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
                           {unknownPrinter ? t('unknown') : printerQuery}
                         </li>
                       )}
-                      {selectedMaterial && (
+                      {selectedMaterials.length > 0 && (
                         <li>
                           <span className="font-semibold">{t('materialLbl')} </span>
-                          {MATERIALS.find((m) => m.id === selectedMaterial)?.label}
+                          {selectedMaterials.map(id => MATERIALS.find(m => m.id === id)?.label).join(', ')}
                         </li>
                       )}
                     </ul>
@@ -927,6 +1037,8 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
           </div>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 }
