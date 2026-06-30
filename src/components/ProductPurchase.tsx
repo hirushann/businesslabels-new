@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import type { ProductRouteType } from "@/components/ProductCard";
 import { buildCartItemKey, useCart } from "@/components/CartProvider";
 import { useWishlist } from "@/components/WishlistProvider";
-import { getExpectedDeliveryMessage, isDeliverableInStock } from "@/lib/utils/delivery";
+import { getEffectiveDeliveryDays, getExpectedDeliveryMessage, isDeliverableInStock } from "@/lib/utils/delivery";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Popover, PopoverAnchor, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
@@ -18,6 +18,7 @@ type BulkDiscount = {
 };
 
 type ProductDiscountInput = string | Array<{ discount?: string | number | null; quantity?: string | number | null }> | null | undefined;
+type NumericLike = number | string | null | undefined;
 
 type WarrantyOption = {
   id: number;
@@ -43,9 +44,9 @@ type ProductPurchaseProps = {
   mainImage?: string | null;
   packingGroup?: string | null;
   allowSingulars?: boolean | null;
-  stock?: number | null;
-  deliveryDatesInStock?: number | null;
-  deliveryDatesNoStock?: number | null;
+  stock?: NumericLike;
+  deliveryDatesInStock?: NumericLike;
+  deliveryDatesNoStock?: NumericLike;
   discounts?: ProductDiscountInput;
   warranty?: {
     is_available?: boolean | null;
@@ -99,6 +100,19 @@ function normalizeDiscountNumber(value: string | number | null | undefined): str
   }
 
   return Number.isInteger(numericValue) ? String(numericValue) : String(numericValue);
+}
+
+function normalizeOptionalNumber(value: NumericLike): number | null {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : null;
+  }
+
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsedValue = Number(value);
+    return Number.isFinite(parsedValue) ? parsedValue : null;
+  }
+
+  return null;
 }
 
 function normalizeBulkDiscounts(discounts: ProductDiscountInput | undefined, minimumQuantity: number = 1): BulkDiscount[] {
@@ -360,6 +374,13 @@ export default function ProductPurchase({
       delivery_dates_in_stock: deliveryDatesInStock,
       delivery_dates_no_stock: deliveryDatesNoStock,
     }) ?? Boolean(inStock);
+  const stockCount = normalizeOptionalNumber(stock);
+  const deliveryDatesNoStockCount = normalizeOptionalNumber(deliveryDatesNoStock);
+  const hasDeliveryEstimate = getEffectiveDeliveryDays({
+    stock,
+    delivery_dates_in_stock: deliveryDatesInStock,
+    delivery_dates_no_stock: deliveryDatesNoStock,
+  }) !== null;
 
   const stockText = resolvedInStock ? t("product.inStock") : t("product.outOfStock");
 
@@ -464,11 +485,8 @@ export default function ProductPurchase({
   // Calculate delivery message
   const deliveryInfo = useMemo(() => {
     if (
-      typeof stock !== "number" ||
-      typeof deliveryDatesInStock !== "number" ||
-      typeof deliveryDatesNoStock !== "number" ||
-      deliveryDatesInStock === 0 ||
-      deliveryDatesNoStock === 0 ||
+      stockCount === null ||
+      !hasDeliveryEstimate ||
       !currentTime
     ) {
       return null;
@@ -485,7 +503,7 @@ export default function ProductPurchase({
       console.error("Failed to calculate delivery message:", error);
       return null;
     }
-  }, [stock, deliveryDatesInStock, deliveryDatesNoStock, currentTime]);
+  }, [stock, stockCount, deliveryDatesInStock, deliveryDatesNoStock, hasDeliveryEstimate, currentTime]);
 
   const validateQuantity = (customQuantity?: number): number | null => {
     setQuantityError(null);
@@ -697,7 +715,7 @@ export default function ProductPurchase({
         <div className="flex flex-col gap-3">
           <div className="flex justify-between items-center">
             <span className="text-[#479EF5] text-base font-bold leading-5">{t("product.sku", { sku: displaySku })}</span>
-            {((stock != null && stock > 0) || deliveryDatesNoStock == null || deliveryDatesNoStock < 10) ? (
+            {((stockCount != null && stockCount > 0) || deliveryDatesNoStockCount == null || deliveryDatesNoStockCount < 10) ? (
               <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${resolvedInStock ? "bg-[#00A63E]" : "bg-zinc-400"}`}>
                 {resolvedInStock ? (
                   <svg className="w-3 h-3 text-white" fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12">

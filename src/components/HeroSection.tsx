@@ -8,8 +8,13 @@ import { Droplet, Search, ScrollText, Tags } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PrinterModelSelect, { type PrinterSearchResult } from "@/components/PrinterModelSelect";
 import { useHelp } from "./HelpProvider";
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useLocalePath } from "@/hooks/useLocalePath";
+import type { CatalogSearchResponse } from "@/lib/search/types";
+import {
+  getAvailablePrinterProductCategories,
+  type AvailablePrinterProductCategory,
+} from "@/lib/printerProductCategories";
 
 type CategoryCard = {
   label: string;
@@ -37,27 +42,34 @@ const CATEGORY_CARDS = {
     slug: "labels-en-tickets",
     icon: Tags,
   },
-} satisfies Record<string, CategoryCard>;
-
-function isEpsonPrinter(printer: PrinterSearchResult | null) {
-  return printer?.brand?.toLowerCase().includes("epson") ?? false;
-}
+} satisfies Record<AvailablePrinterProductCategory["id"], CategoryCard>;
 
 export default function HeroSection() {
   const t = useTranslations();
+  const locale = useLocale();
   const router = useRouter();
   const localePath = useLocalePath();
   const searchParams = useSearchParams();
   const { openHelp } = useHelp();
   const [selectedPrinter, setSelectedPrinter] = useState<PrinterSearchResult | null>(null);
+  const [availableCategories, setAvailableCategories] = useState<{
+    printerId: number | null;
+    categories: AvailablePrinterProductCategory[];
+  }>({ printerId: null, categories: [] });
 
   const printerId = searchParams.get("printer_id");
 
+  const selectedPrinterId = selectedPrinter?.id ?? null;
+
   const categoryCards = useMemo(
-    () => (isEpsonPrinter(selectedPrinter)
-      ? [CATEGORY_CARDS.ink, CATEGORY_CARDS.ribbons, CATEGORY_CARDS.labels]
-      : [CATEGORY_CARDS.ribbons, CATEGORY_CARDS.labels]),
-    [selectedPrinter],
+    () =>
+      availableCategories.printerId === selectedPrinterId
+        ? availableCategories.categories.map((category) => ({
+            ...CATEGORY_CARDS[category.id],
+            slug: category.slug,
+          }))
+        : [],
+    [availableCategories, selectedPrinterId],
   );
 
   useEffect(() => {
@@ -87,6 +99,42 @@ export default function HeroSection() {
 
     return () => controller.abort();
   }, [printerId]);
+
+  useEffect(() => {
+    if (!selectedPrinter) {
+      return;
+    }
+
+    const currentPrinterId = selectedPrinter.id;
+    const controller = new AbortController();
+
+    async function loadAvailableCategories() {
+      try {
+        const params = new URLSearchParams({
+          printer_id: String(currentPrinterId),
+          per_page: "1",
+          locale,
+        });
+        const response = await fetch(`/api/catalog/products?${params.toString()}`, {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) return;
+
+        const catalog = (await response.json()) as CatalogSearchResponse;
+        setAvailableCategories({
+          printerId: currentPrinterId,
+          categories: getAvailablePrinterProductCategories(catalog),
+        });
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+      }
+    }
+
+    loadAvailableCategories();
+
+    return () => controller.abort();
+  }, [locale, selectedPrinter]);
 
   const handleShowCompatibleProducts = () => {
     if (!selectedPrinter) return;
@@ -241,28 +289,30 @@ export default function HeroSection() {
                 <span className="text-neutral-800 text-lg font-semibold font-['Segoe_UI'] leading-5">
                   {t('hero.availableForPrinter')}
                 </span>
-                <div className="flex flex-col sm:flex-row gap-4">
-                  {categoryCards.map((category) => {
-                    const Icon = category.icon;
+                {categoryCards.length > 0 ? (
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    {categoryCards.map((category) => {
+                      const Icon = category.icon;
 
-                    return (
-                      <div
-                        key={category.slug}
-                        className="flex h-auto flex-1 items-center gap-3 rounded-lg border border-zinc-100 bg-gray-50 px-3 py-3 text-left"
-                      >
-                        <Icon className="shrink-0 text-neutral-500" />
-                        <span className="flex min-w-0 flex-col gap-0.5">
-                          <span className="truncate text-base font-semibold font-['Segoe_UI'] leading-5 text-neutral-700">
-                            {category.label}
+                      return (
+                        <div
+                          key={category.slug}
+                          className="flex h-auto flex-1 items-center gap-3 rounded-lg border border-zinc-100 bg-gray-50 px-3 py-3 text-left"
+                        >
+                          <Icon className="shrink-0 text-neutral-500" />
+                          <span className="flex min-w-0 flex-col gap-0.5">
+                            <span className="truncate text-base font-semibold font-['Segoe_UI'] leading-5 text-neutral-700">
+                              {category.label}
+                            </span>
+                            <span className="truncate text-sm font-normal font-['Segoe_UI'] leading-5 text-zinc-500">
+                              {category.description}
+                            </span>
                           </span>
-                          <span className="truncate text-sm font-normal font-['Segoe_UI'] leading-5 text-zinc-500">
-                            {category.description}
-                          </span>
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : null}
                 <Button
                   type="button"
                   onClick={handleShowCompatibleProducts}
