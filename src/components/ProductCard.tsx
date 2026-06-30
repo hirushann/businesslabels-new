@@ -81,13 +81,19 @@ export type ProductCardData = {
   id: string | number;
   sku: string;
   name: string;
+  title?: string | null;
   subtitle?: string | null;
   excerpt?: string | null;
   materialTitle?: string | null;
   price?: number | null;
   originalPrice?: number | null;
+  original_price?: number | null;
+  stock?: number | string | null;
   inStock: boolean;
+  in_stock?: boolean | null;
   mainImage?: string | null;
+  main_image?: string | null;
+  api_path_by_slug?: string | null;
   categories?: ProductCardCategory[];
   slug?: string | null;
   type?: ProductRouteType | null;
@@ -379,21 +385,31 @@ function productHrefWithSlug(href: LinkProps["href"] | undefined, slug: string |
   return href;
 }
 
+function slugFromApiPath(apiPath: string | null | undefined): string | null {
+  if (!apiPath) return null;
+  const match = apiPath.match(/\/slug\/([^/?]+)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 export default function ProductCard({ product, href, onClick }: ProductCardProps) {
   const locale = useLocale();
   const productLocale = normalizeProductLocale(locale);
   const t = useTranslations();
   const { addItem, openCart } = useCart();
-  const productName = localizedProductField(product.translations, productLocale, ["title", "name"]) ?? product.name ?? "";
-  const productSlug = localizedProductField(product.translations, productLocale, ["slug"]) ?? product.slug ?? null;
+  const productName = localizedProductField(product.translations, productLocale, ["title", "name"]) ?? product.name ?? product.title ?? "";
+  const productSlug = localizedProductField(product.translations, productLocale, ["slug"]) ?? product.slug ?? slugFromApiPath(product.api_path_by_slug);
   const categoryBadge = lastCategoryLabel(product.categories, productLocale);
   const features = featureLines(product, productLocale);
+  const productPrice = product.price;
+  const productOriginalPrice = product.originalPrice ?? product.original_price;
+  const productInStock = product.inStock ?? product.in_stock ?? normalizeBoolean(product.stock);
+  const productMainImage = product.mainImage ?? product.main_image ?? null;
   const hasPrice = typeof product.price === "number" && Number.isFinite(product.price);
   const hasOriginalPrice =
-    typeof product.originalPrice === "number" &&
-    Number.isFinite(product.originalPrice) &&
-    (!hasPrice || (hasPrice && (product.price !== undefined && product.price !== null) && product.originalPrice > product.price));
-  const imageSrc = normalizeText(product.mainImage) || "https://placehold.co/600x400?text=" + encodeURIComponent(productName);
+    typeof productOriginalPrice === "number" &&
+    Number.isFinite(productOriginalPrice) &&
+    (!hasPrice || (hasPrice && productPrice !== undefined && productPrice !== null && productOriginalPrice > productPrice));
+  const imageSrc = normalizeText(productMainImage) || "https://placehold.co/600x400?text=" + encodeURIComponent(productName);
   
   const properties = product.properties as Record<string, unknown> | null;
   const kernValue = properties?.kern;
@@ -432,19 +448,19 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
   const hasBulkDiscounts = bulkDiscountTiers.length > 0;
   const overviewPrice = useMemo(() => {
     if (!hasPrice || !hasBulkDiscounts) {
-      return product.price ?? null;
+      return productPrice ?? null;
     }
 
     return bulkDiscountTiers.reduce(
       (lowestPrice, tier) =>
-        Math.min(lowestPrice, product.price! * (1 - tier.discountPct / 100)),
-      product.price!,
+        Math.min(lowestPrice, productPrice! * (1 - tier.discountPct / 100)),
+      productPrice!,
     );
-  }, [bulkDiscountTiers, hasBulkDiscounts, hasPrice, product.price]);
+  }, [bulkDiscountTiers, hasBulkDiscounts, hasPrice, productPrice]);
 
   const addProductWithWarranty = (selectedOption: typeof selectedWarrantyOption, overrideQty?: number, overridePrice?: number) => {
     const finalQty = overrideQty ?? addQuantity;
-    const finalPrice = overridePrice ?? product.price ?? null;
+    const finalPrice = overridePrice ?? productPrice ?? null;
 
     addItem(
       {
@@ -454,9 +470,9 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
         name: productName,
         sku: product.sku,
         price: finalPrice,
-        basePrice: product.price,
+        basePrice: productPrice,
         discounts: product.discounts,
-        mainImage: product.mainImage ?? null,
+        mainImage: productMainImage,
         packingGroup: normalizedPackingGroup,
         allowSingulars: normalizeBoolean(product.allow_singulars),
       },
@@ -478,7 +494,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
           name: warrantyName,
           sku: `${product.sku}-WARRANTY`,
           price: warrantyPrice,
-          mainImage: product.mainImage ?? null,
+          mainImage: productMainImage,
           itemKind: "warranty",
           linkedToKey: parentKey,
           packingGroup: normalizedPackingGroup,
@@ -584,7 +600,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
           ) : <div className="w-8" />}
           {/* Only an in-stock badge is ever shown — out-of-stock products are
               filtered out of listings, never flagged. */}
-          {product.inStock ? (
+          {productInStock ? (
             <div className="px-2.5 py-1 bg-green-600 rounded-full flex items-center gap-1.5">
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <g clipPath="url(#clip0_1768_8264)">
@@ -671,7 +687,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
                 </span>
                 {hasOriginalPrice ? (
                   <span className="text-zinc-400 text-sm font-normal font-['Segoe_UI'] leading-5 line-through">
-                    {formatEuro(product.originalPrice!)}
+                    {formatEuro(productOriginalPrice!)}
                   </span>
                 ) : null}
               </div>
@@ -778,8 +794,8 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
       onConfirm={handleBulkModalConfirm}
       productName={productName}
       productSku={product.sku}
-      productImage={normalizeText(product.mainImage)}
-      price={product.price!}
+      productImage={normalizeText(productMainImage)}
+      price={productPrice!}
       discounts={product.discounts}
       packingGroup={normalizedPackingGroup}
       allowSingulars={normalizeBoolean(product.allow_singulars)}
