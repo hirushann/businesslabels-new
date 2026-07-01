@@ -100,7 +100,7 @@ export default function DrawerProductCard({
             </button>
           </div>
 
-          <div className="mt-auto flex items-end justify-between gap-3">
+          <div className="mt-auto flex flex-col gap-2">
             {priceNode}
             <div
               onClick={(event) => {

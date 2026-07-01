@@ -133,15 +133,41 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                           {t('cart.qty', { count: item.quantity })}
                         </div>
                       ) : (
-                        <CartQuantityInput
-                          quantity={item.quantity}
-                          itemName={item.name}
-                          decreaseLabel={t('cart.decreaseQuantity', { name: item.name })}
-                          increaseLabel={t('cart.increaseQuantity', { name: item.name })}
-                          onDecrease={() => decrementItemQuantity(item.key)}
-                          onIncrease={() => incrementItemQuantity(item.key)}
-                          onQuantityChange={(quantity) => setItemQuantity(item.key, quantity)}
-                        />
+                        <div className="flex items-center gap-2">
+                          <CartQuantityInput
+                            quantity={item.quantity}
+                            itemName={item.name}
+                            decreaseLabel={t('cart.decreaseQuantity', { name: item.name })}
+                            increaseLabel={t('cart.increaseQuantity', { name: item.name })}
+                            onDecrease={() => decrementItemQuantity(item.key)}
+                            onIncrease={() => incrementItemQuantity(item.key)}
+                            onQuantityChange={(quantity) => setItemQuantity(item.key, quantity)}
+                          />
+                          {item.packingGroup && item.packingGroup > 0 ? (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const pg = item.packingGroup!;
+                                const nextBoxQty = Math.ceil((item.quantity + 1) / pg) * pg;
+                                setItemQuantity(item.key, nextBoxQty);
+                              }}
+                              className="flex items-center gap-1.5 h-10 px-3 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold whitespace-nowrap hover:bg-amber-100 transition-colors"
+                              title={`${t('product.box')}: ${item.packingGroup} ${t('product.rollsStack')}`}
+                            >
+                              <svg width="14" height="14" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M7.33366 20.1663C7.83992 20.1663 8.25033 19.7559 8.25033 19.2497C8.25033 18.7434 7.83992 18.333 7.33366 18.333C6.8274 18.333 6.41699 18.7434 6.41699 19.2497C6.41699 19.7559 6.8274 20.1663 7.33366 20.1663Z" stroke="currentColor" strokeWidth="1.375" strokeLinecap="round" strokeLinejoin="round" />
+                                <path d="M17.4167 20.1663C17.9229 20.1663 18.3333 19.7559 18.3333 19.2497C18.3333 18.7434 17.9229 18.333 17.4167 18.333C16.9104 18.333 16.5 18.7434 16.5 19.2497C16.5 19.7559 16.9104 20.1663 17.4167 20.1663Z" stroke="currentColor" strokeWidth="1.375" strokeLinecap="round" strokeLinejoin="round" />
+                                <path d="M1.87988 1.87988H3.71322L6.15155 13.2649C6.241 13.6818 6.473 14.0546 6.80762 14.3189C7.14224 14.5833 7.55855 14.7227 7.98488 14.7132H16.9499C17.3671 14.7125 17.7717 14.5696 18.0967 14.3079C18.4217 14.0462 18.6477 13.6815 18.7374 13.274L20.2499 6.46322H16.3609C16.3609 6.46322 15.5833 9.16667 12.375 9.16667C9.16667 9.16667 8.58301 6.46322 8.58301 6.46322H4.69405" stroke="currentColor" strokeWidth="1.375" strokeLinecap="round" strokeLinejoin="round" />
+                                <path d="M10.083 4.125H14.6663" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
+                                <path d="M12.375 1.83301V6.41634" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                              +{t('product.box')}
+                              <span className="text-amber-500 font-normal">({item.packingGroup})</span>
+                            </button>
+                          ) : null}
+                        </div>
                       )
                     }
                   />
