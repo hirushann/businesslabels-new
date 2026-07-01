@@ -99,7 +99,7 @@ export default function DownloadSpecSheetButton({
       }
 
       let currentY = 38;
-      
+
       // We will place the image on the right. Max width 70mm, Max height 70mm.
       let imgDrawH = 0;
       if (materialImageBase64) {
@@ -244,7 +244,7 @@ export default function DownloadSpecSheetButton({
         if (logoBase64) {
           doc.addImage(logoBase64, "PNG", 15, 10, 41, 8); // 41x8mm preserves approx 5:1 ratio
         }
-        
+
         doc.setFont("helvetica", "bold");
         doc.setFontSize(9);
         doc.setTextColor(16, 24, 40);
@@ -291,10 +291,16 @@ export default function DownloadSpecSheetButton({
   };
 
   const pdfIcon = (
-    <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M14 3H7A2 2 0 0 0 5 5V19A2 2 0 0 0 7 21H17A2 2 0 0 0 19 19V8L14 3Z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M14 3V8H19" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width="14" height="18" viewBox="0 0 14 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6.36699 12.1966C6.57299 12.4027 6.90683 12.4026 7.11269 12.1966L9.37203 9.93726C9.57802 9.7314 9.57802 9.39742 9.37203 9.19156C9.16617 8.98557 8.83232 8.98557 8.62633 9.19156L7.26719 10.5507V6.74023C7.26719 6.44896 7.03098 6.21289 6.73984 6.21289C6.44857 6.21289 6.2125 6.44896 6.2125 6.74023V10.5507L4.85335 9.19156C4.64736 8.98557 4.31351 8.98557 4.10752 9.19156C3.90166 9.39742 3.90166 9.7314 4.10752 9.93726L6.36699 12.1966Z" fill="#F18800" />
+      <path d="M8.99928 13.5566H4.48047C4.18933 13.5566 3.95312 13.7927 3.95312 14.084C3.95312 14.3751 4.18933 14.6113 4.48047 14.6113H8.99928C9.29042 14.6113 9.52663 14.3751 9.52663 14.084C9.52663 13.7927 9.29056 13.5566 8.99928 13.5566Z" fill="#F18800" />
+      <path d="M11.8242 0H3.91635C3.77655 0 3.64238 0.0556183 3.5435 0.154495L0.154495 3.5435C0.0556183 3.64238 0 3.77655 0 3.91635V16.343C0 17.2566 0.743362 18 1.65701 18H11.8242C12.7352 18 13.4812 17.2634 13.4812 16.343V1.65701C13.4812 0.745972 12.7447 0 11.8242 0ZM3.95384 1.23555V3.35152C3.95384 3.68372 3.68372 3.95384 3.35152 3.95384H1.23555L3.95384 1.23555ZM12.4265 16.343C12.4265 16.6711 12.1613 16.9453 11.8242 16.9453H1.65701C1.32495 16.9453 1.05469 16.675 1.05469 16.343V5.00867H3.35152C4.26517 5.00867 5.00853 4.2653 5.00853 3.35165V1.05469H11.8242C12.1524 1.05469 12.4265 1.32001 12.4265 1.65701V16.343Z" fill="#F18800" />
     </svg>
+
+    // <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    //   <path d="M14 3H7A2 2 0 0 0 5 5V19A2 2 0 0 0 7 21H17A2 2 0 0 0 19 19V8L14 3Z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    //   <path d="M14 3V8H19" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    // </svg>
   );
 
   const loaderIcon = (
@@ -323,7 +329,7 @@ export default function DownloadSpecSheetButton({
       onClick={handleDownload}
       disabled={isGenerating}
       type="button"
-      className="inline-flex items-center gap-1.5 font-semibold text-amber-600 transition-colors hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-70"
+      className="inline-flex items-center gap-1.5 font-bold underline text-amber-600 transition-colors hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-70"
     >
       {isGenerating ? loaderIcon : pdfIcon}
       <span>{isGenerating ? "Laden..." : downloadLabel}</span>
