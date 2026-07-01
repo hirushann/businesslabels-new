@@ -1099,7 +1099,7 @@ function PrintersView() {
           <h2 className="text-3xl font-black text-neutral-800 tracking-tight">{t('account.myPrinters')}</h2>
           <p className="text-neutral-500 font-medium">{t('account.hardwareMonitoring')}</p>
         </div>
-        <Link href="/product-finder" className="h-11 px-8 bg-sky-950 text-white rounded-full font-bold text-sm hover:bg-amber-500 transition-all flex items-center gap-2 whitespace-nowrap">
+        <Link href="/en/printers" className="h-11 px-8 bg-sky-950 text-white rounded-full font-bold text-sm hover:bg-amber-500 transition-all flex items-center gap-2 whitespace-nowrap">
            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
              <path d="M5 12h14"/><path d="M12 5v14"/>
            </svg>
