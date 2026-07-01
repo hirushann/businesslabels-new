@@ -781,7 +781,7 @@ function CatalogProductsListing({
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           {!hideSearchInput ? (
-            <div className="flex h-10 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 flex-1 sm:w-[280px]">
+            <div className="flex h-10 items-center gap-2 rounded-full bg-transparent px-3 flex-1 sm:w-[280px]">
               <svg
                 width="16"
                 height="16"
@@ -820,7 +820,7 @@ function CatalogProductsListing({
               onChange={(event) =>
                 setSort(event.target.value as CatalogSortValue)
               }
-              className="appearance-none bg-transparent text-sm font-medium font-sans outline-none cursor-pointer hover:text-amber-600 pr-6 text-neutral-800"
+              className="appearance-none bg-transparent text-right text-sm font-medium font-sans outline-none cursor-pointer hover:text-amber-600 pr-6 text-neutral-800"
             >
               {SORT_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -1109,11 +1109,11 @@ function CatalogProductsListing({
         ) : null}
 
         <div className={`min-w-0 flex-1 ${isSidebarOpen ? "lg:col-span-2" : "lg:col-span-3"}`}>
-          <div className="mb-4 text-sm text-neutral-600">
+          {/* <div className="mb-4 text-sm text-neutral-600">
             {loading
               ? t("search.loadingProducts")
               : t("search.results", { count: catalog.total })}
-          </div>
+          </div> */}
 
           {/* Display "Did you mean" suggestion when no results found */}
           {!loading &&

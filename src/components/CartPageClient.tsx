@@ -280,7 +280,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                               {linkedWarranty.name}
                             </span>
                             <span className="text-sm font-normal font-['Segoe_UI'] text-[#444444]">
-                              {t('cart.warrantyDesc') || 'Protect your printer after the standard warranty expires.'}
+                              {t.has('cart.warrantyDesc') ? t('cart.warrantyDesc') : 'Protect your printer after the standard warranty expires.'}
                             </span>
                           </div>
                           
