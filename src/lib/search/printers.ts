@@ -234,16 +234,17 @@ export async function getPrinterById(id: number, locale?: "en" | "nl"): Promise<
 }
 
 function buildSortClause(sort: PrinterSortValue): estypes.Sort {
+  const featuredSort = { featured: { order: "desc" } } as const;
   switch (sort) {
     case "oldest":
-      return [{ created_at_timestamp: { order: "asc" } }];
+      return [featuredSort, { created_at_timestamp: { order: "asc" } }];
     case "title_asc":
-      return [{ "title_sort": { order: "asc" } }];
+      return [featuredSort, { "title_sort": { order: "asc" } }];
     case "title_desc":
-      return [{ "title_sort": { order: "desc" } }];
+      return [featuredSort, { "title_sort": { order: "desc" } }];
     case "latest":
     default:
-      return [{ created_at_timestamp: { order: "desc" } }];
+      return [featuredSort, { created_at_timestamp: { order: "desc" } }];
   }
 }
 
