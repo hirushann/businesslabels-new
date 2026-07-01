@@ -124,7 +124,7 @@ export default function FinderListing({
     };
 
     const updatedMyPrinters = myPrinters.map((localPrinter) => {
-      const fetched = printers.find((p) => p.id === localPrinter.id);
+      const fetched = printers.find((p) => String(p.id) === String(localPrinter.id));
       return fetched ? fetched : localPrinter;
     });
 
@@ -352,7 +352,7 @@ export default function FinderListing({
   return (
     <div className="flex flex-col">
       {/* ── Search section ── */}
-      <div className="flex w-full flex-col gap-4 border-b border-[#EDF0F4] pb-4 lg:flex-row lg:items-center lg:justify-between max-w-[1440px] mx-auto">
+      <div className="flex w-full flex-col gap-4 border-b border-[#EDF0F4] pb-4 lg:flex-row lg:items-center lg:justify-between max-w-[1440px] mx-auto mb-6">
         <h2
           className="shrink-0 text-3xl font-bold leading-[120%] text-[#222222]"
           style={{ fontFamily: "Segoe UI, sans-serif" }}
@@ -412,7 +412,7 @@ export default function FinderListing({
 
       {/* ── Results count ── */}
       <div
-        className="py-4 text-sm text-[#666666] max-w-[1440px] mx-auto"
+        className="py-4 text-sm text-[#666666] max-w-[1440px] mx-auto hidden"
         style={{ fontFamily: "Segoe UI, sans-serif" }}
       >
         {loading
@@ -467,7 +467,7 @@ export default function FinderListing({
             type="button"
             onClick={loadMore}
             disabled={isLoadingMore}
-            className="inline-flex items-center justify-center gap-2 h-[52px] px-8 rounded-full border-[1.5px] border-[#F18800] text-[#F18800] font-semibold text-lg leading-6 hover:bg-orange-50 transition-colors duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="inline-flex items-center justify-center gap-2 h-[52px] px-8 rounded-full border-[1.5px] border-[#F18800] text-[#F18800] font-bold text-lg leading-6 hover:bg-orange-50 transition-colors duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
             style={{ fontFamily: "Segoe UI, sans-serif" }}
           >
             {isLoadingMore ? (

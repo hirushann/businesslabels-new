@@ -786,7 +786,7 @@ export default function ProductPurchase({
       packingGroup: normalizedPackingGroup,
       allowSingulars: Boolean(allowSingulars),
     });
-    toast.success(t("product.savedToWishlist") || "Saved to Wishlist");
+    toast.success(t("product.savedToFavorite") || "Added to Favorite");
   };
 
   const handleRemoveFromWishlist = () => {
@@ -797,7 +797,7 @@ export default function ProductPurchase({
     )?.key;
     if (key) {
       wishlist.removeItem(key);
-      toast.success(locale === "nl" ? "Verwijderd van verlanglijst" : "Removed from Wishlist");
+      toast.success(locale === "nl" ? "Verwijderd uit favorieten" : "Removed from Favorite");
     }
   };
 
@@ -1173,7 +1173,7 @@ export default function ProductPurchase({
           )}
 
           {hasWarrantyOptions ? (
-            <DialogContent className="w-[calc(100vw-1rem)] max-w-xl gap-0 overflow-hidden bg-background p-0 text-foreground shadow-xl sm:max-w-xl sm:rounded-2xl" showCloseButton={false}>
+            <DialogContent className="w-[calc(100vw-1rem)] max-w-5xl gap-0 overflow-hidden bg-background p-0 text-foreground shadow-xl sm:max-w-5xl sm:rounded-2xl" showCloseButton={false}>
               <div className="max-h-[calc(100dvh-6rem)] overflow-y-auto p-4 sm:p-5">
                 <div className="mb-4 flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -1192,7 +1192,7 @@ export default function ProductPurchase({
                   </DialogClose>
                 </div>
 
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-3">
                   {normalizedWarranty.defaultOption && (
                     <button
                       type="button"
@@ -1218,9 +1218,9 @@ export default function ProductPurchase({
                     </button>
                   )}
 
-                  <div className="flex flex-col gap-4" role="group" aria-label={getTrans("product.chooseWarranty", "Choose Warranty", "Kies garantie")}>
+                  <div className="flex flex-col gap-3" role="group" aria-label={getTrans("product.chooseWarranty", "Choose Warranty", "Kies garantie")}>
                     {normalizedWarranty.types.map((type) => (
-                      <section key={type.id || type.name} className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3 shadow-sm">
+                      <section key={type.id || type.name} className="flex flex-col gap-2.5 rounded-xl border border-border bg-card p-3 shadow-sm">
                         <div className="flex flex-col gap-1.5">
                           <div className="flex flex-wrap items-center gap-1.5">
                             {type.icon === "truck" ? (
@@ -1246,7 +1246,7 @@ export default function ProductPurchase({
                           <p className="text-sm leading-5 text-muted-foreground">{type.description}</p>
                         )}
 
-                        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                           {type.options.map((option) => {
                             const optionId = `warranty-option-${option.id}`;
                             const isSelected = selectedWarrantyId == option.id;
@@ -1254,17 +1254,17 @@ export default function ProductPurchase({
                               <label
                                 key={option.id}
                                 htmlFor={optionId}
-                                className={`relative flex cursor-pointer flex-col gap-1.5 rounded-lg border p-3 pr-9 transition-all ${isSelected ? 'border-amber-500 bg-amber-50/70 shadow-sm ring-2 ring-amber-500/15' : 'border-border bg-muted/40 hover:border-muted-foreground/30 hover:bg-muted/60'}`}
+                                className={`relative flex min-h-36 cursor-pointer flex-col gap-1.5 rounded-lg border p-2.5 pr-8 transition-all ${isSelected ? 'border-amber-500 bg-amber-50/70 shadow-sm ring-2 ring-amber-500/15' : 'border-border bg-muted/40 hover:border-muted-foreground/30 hover:bg-muted/60'}`}
                               >
                                 <Checkbox
                                   id={optionId}
                                   checked={isSelected}
                                   onCheckedChange={() => setSelectedWarrantyId(isSelected ? defaultWarrantyId : option.id)}
-                                  className="absolute right-3 top-3 size-4 rounded bg-background text-white data-checked:border-amber-600 data-checked:bg-amber-600"
+                                  className="absolute right-2.5 top-2.5 size-4 rounded bg-background text-white data-checked:border-amber-600 data-checked:bg-amber-600"
                                 />
-                                <div className="pr-2 text-sm font-bold leading-snug text-foreground">{option.name}</div>
-                                <div className={`text-xl font-bold leading-tight ${isSelected ? 'text-amber-600' : 'text-foreground'}`}>{formatWarrantyEuro(option.price)}</div>
-                                <div className="text-xs leading-5 text-muted-foreground">{option.description || getTrans("product.warrantyDescription", "Extended warranty coverage.", "Uitgebreide garantiedekking.")}</div>
+                                <div className="pr-4 text-sm font-bold leading-tight text-foreground">{option.name}</div>
+                                <div className={`text-lg font-bold leading-tight ${isSelected ? 'text-amber-600' : 'text-foreground'}`}>{formatWarrantyEuro(option.price)}</div>
+                                <div className="text-xs leading-4 text-muted-foreground">{option.description || getTrans("product.warrantyDescription", "Extended warranty coverage.", "Uitgebreide garantiedekking.")}</div>
                               </label>
                             );
                           })}
@@ -1275,7 +1275,7 @@ export default function ProductPurchase({
                     {normalizedWarranty.oldOptions.length > 0 && (
                       <section className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3 shadow-sm">
                         <h3 className="text-base font-bold leading-5 text-foreground">{getTrans("product.additionalOptions", "Additional Options", "Extra opties")}</h3>
-                        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                           {normalizedWarranty.oldOptions.map((option) => {
                             const optionId = `warranty-option-${option.id}`;
                             const isSelected = selectedWarrantyId == option.id;
@@ -1283,17 +1283,17 @@ export default function ProductPurchase({
                               <label
                                 key={option.id}
                                 htmlFor={optionId}
-                                className={`relative flex cursor-pointer flex-col gap-1.5 rounded-lg border p-3 pr-9 transition-all ${isSelected ? 'border-amber-500 bg-amber-50/70 shadow-sm ring-2 ring-amber-500/15' : 'border-border bg-muted/40 hover:border-muted-foreground/30 hover:bg-muted/60'}`}
+                                className={`relative flex min-h-36 cursor-pointer flex-col gap-1.5 rounded-lg border p-2.5 pr-8 transition-all ${isSelected ? 'border-amber-500 bg-amber-50/70 shadow-sm ring-2 ring-amber-500/15' : 'border-border bg-muted/40 hover:border-muted-foreground/30 hover:bg-muted/60'}`}
                               >
                                 <Checkbox
                                   id={optionId}
                                   checked={isSelected}
                                   onCheckedChange={() => setSelectedWarrantyId(isSelected ? defaultWarrantyId : option.id)}
-                                  className="absolute right-3 top-3 size-4 rounded bg-background text-white data-checked:border-amber-600 data-checked:bg-amber-600"
+                                  className="absolute right-2.5 top-2.5 size-4 rounded bg-background text-white data-checked:border-amber-600 data-checked:bg-amber-600"
                                 />
-                                <div className="pr-2 text-sm font-bold leading-snug text-foreground">{option.name}</div>
-                                <div className={`text-xl font-bold leading-tight ${isSelected ? 'text-amber-600' : 'text-foreground'}`}>{formatWarrantyEuro(option.price)}</div>
-                                <div className="text-xs leading-5 text-muted-foreground">{option.description || getTrans("product.warrantyDescription", "Extended warranty coverage.", "Uitgebreide garantiedekking.")}</div>
+                                <div className="pr-4 text-sm font-bold leading-tight text-foreground">{option.name}</div>
+                                <div className={`text-lg font-bold leading-tight ${isSelected ? 'text-amber-600' : 'text-foreground'}`}>{formatWarrantyEuro(option.price)}</div>
+                                <div className="text-xs leading-4 text-muted-foreground">{option.description || getTrans("product.warrantyDescription", "Extended warranty coverage.", "Uitgebreide garantiedekking.")}</div>
                               </label>
                             );
                           })}
@@ -1368,17 +1368,16 @@ export default function ProductPurchase({
         <div className="flex items-center gap-4">
           <button
             type="button"
-            onClick={handleAddToWishlist}
-            disabled={isWishlisted}
+            onClick={handleToggleWishlist}
             className={`flex-1 h-12 px-4 py-2.5 rounded-[100px] outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2 transition-colors ${isWishlisted
-              ? "bg-slate-100 outline-slate-200 text-neutral-500"
+              ? "bg-orange-50 outline-[#F18800] text-[#F18800]"
               : "outline-black/10 text-neutral-700 hover:bg-slate-50"
               }`}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.67} viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill={isWishlisted ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.67} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
             </svg>
-            <span className="text-sm sm:text-base font-semibold">{isWishlisted ? t("product.savedToWishlist") : t("product.addToWishlist")}</span>
+            <span className="text-sm sm:text-base font-semibold">{isWishlisted ? (t("product.savedToFavorite") || "Added to Favorite") : (t("product.addToFavorite") || "Add to Favorite")}</span>
           </button>
           <Popover>
             <PopoverTrigger asChild>
