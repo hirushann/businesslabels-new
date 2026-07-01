@@ -1173,7 +1173,7 @@ export default function ProductPurchase({
           )}
 
           {hasWarrantyOptions ? (
-            <DialogContent className="w-[calc(100vw-1rem)] max-w-xl gap-0 overflow-hidden bg-background p-0 text-foreground shadow-xl sm:max-w-xl sm:rounded-2xl" showCloseButton={false}>
+            <DialogContent className="w-[calc(100vw-1rem)] max-w-5xl gap-0 overflow-hidden bg-background p-0 text-foreground shadow-xl sm:max-w-5xl sm:rounded-2xl" showCloseButton={false}>
               <div className="max-h-[calc(100dvh-6rem)] overflow-y-auto p-4 sm:p-5">
                 <div className="mb-4 flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -1192,7 +1192,7 @@ export default function ProductPurchase({
                   </DialogClose>
                 </div>
 
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-3">
                   {normalizedWarranty.defaultOption && (
                     <button
                       type="button"
@@ -1218,9 +1218,9 @@ export default function ProductPurchase({
                     </button>
                   )}
 
-                  <div className="flex flex-col gap-4" role="group" aria-label={getTrans("product.chooseWarranty", "Choose Warranty", "Kies garantie")}>
+                  <div className="flex flex-col gap-3" role="group" aria-label={getTrans("product.chooseWarranty", "Choose Warranty", "Kies garantie")}>
                     {normalizedWarranty.types.map((type) => (
-                      <section key={type.id || type.name} className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3 shadow-sm">
+                      <section key={type.id || type.name} className="flex flex-col gap-2.5 rounded-xl border border-border bg-card p-3 shadow-sm">
                         <div className="flex flex-col gap-1.5">
                           <div className="flex flex-wrap items-center gap-1.5">
                             {type.icon === "truck" ? (
@@ -1246,7 +1246,7 @@ export default function ProductPurchase({
                           <p className="text-sm leading-5 text-muted-foreground">{type.description}</p>
                         )}
 
-                        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                           {type.options.map((option) => {
                             const optionId = `warranty-option-${option.id}`;
                             const isSelected = selectedWarrantyId == option.id;
@@ -1254,17 +1254,17 @@ export default function ProductPurchase({
                               <label
                                 key={option.id}
                                 htmlFor={optionId}
-                                className={`relative flex cursor-pointer flex-col gap-1.5 rounded-lg border p-3 pr-9 transition-all ${isSelected ? 'border-amber-500 bg-amber-50/70 shadow-sm ring-2 ring-amber-500/15' : 'border-border bg-muted/40 hover:border-muted-foreground/30 hover:bg-muted/60'}`}
+                                className={`relative flex min-h-36 cursor-pointer flex-col gap-1.5 rounded-lg border p-2.5 pr-8 transition-all ${isSelected ? 'border-amber-500 bg-amber-50/70 shadow-sm ring-2 ring-amber-500/15' : 'border-border bg-muted/40 hover:border-muted-foreground/30 hover:bg-muted/60'}`}
                               >
                                 <Checkbox
                                   id={optionId}
                                   checked={isSelected}
                                   onCheckedChange={() => setSelectedWarrantyId(isSelected ? defaultWarrantyId : option.id)}
-                                  className="absolute right-3 top-3 size-4 rounded bg-background text-white data-checked:border-amber-600 data-checked:bg-amber-600"
+                                  className="absolute right-2.5 top-2.5 size-4 rounded bg-background text-white data-checked:border-amber-600 data-checked:bg-amber-600"
                                 />
-                                <div className="pr-2 text-sm font-bold leading-snug text-foreground">{option.name}</div>
-                                <div className={`text-xl font-bold leading-tight ${isSelected ? 'text-amber-600' : 'text-foreground'}`}>{formatWarrantyEuro(option.price)}</div>
-                                <div className="text-xs leading-5 text-muted-foreground">{option.description || getTrans("product.warrantyDescription", "Extended warranty coverage.", "Uitgebreide garantiedekking.")}</div>
+                                <div className="pr-4 text-sm font-bold leading-tight text-foreground">{option.name}</div>
+                                <div className={`text-lg font-bold leading-tight ${isSelected ? 'text-amber-600' : 'text-foreground'}`}>{formatWarrantyEuro(option.price)}</div>
+                                <div className="text-xs leading-4 text-muted-foreground">{option.description || getTrans("product.warrantyDescription", "Extended warranty coverage.", "Uitgebreide garantiedekking.")}</div>
                               </label>
                             );
                           })}
@@ -1275,7 +1275,7 @@ export default function ProductPurchase({
                     {normalizedWarranty.oldOptions.length > 0 && (
                       <section className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3 shadow-sm">
                         <h3 className="text-base font-bold leading-5 text-foreground">{getTrans("product.additionalOptions", "Additional Options", "Extra opties")}</h3>
-                        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                           {normalizedWarranty.oldOptions.map((option) => {
                             const optionId = `warranty-option-${option.id}`;
                             const isSelected = selectedWarrantyId == option.id;
@@ -1283,17 +1283,17 @@ export default function ProductPurchase({
                               <label
                                 key={option.id}
                                 htmlFor={optionId}
-                                className={`relative flex cursor-pointer flex-col gap-1.5 rounded-lg border p-3 pr-9 transition-all ${isSelected ? 'border-amber-500 bg-amber-50/70 shadow-sm ring-2 ring-amber-500/15' : 'border-border bg-muted/40 hover:border-muted-foreground/30 hover:bg-muted/60'}`}
+                                className={`relative flex min-h-36 cursor-pointer flex-col gap-1.5 rounded-lg border p-2.5 pr-8 transition-all ${isSelected ? 'border-amber-500 bg-amber-50/70 shadow-sm ring-2 ring-amber-500/15' : 'border-border bg-muted/40 hover:border-muted-foreground/30 hover:bg-muted/60'}`}
                               >
                                 <Checkbox
                                   id={optionId}
                                   checked={isSelected}
                                   onCheckedChange={() => setSelectedWarrantyId(isSelected ? defaultWarrantyId : option.id)}
-                                  className="absolute right-3 top-3 size-4 rounded bg-background text-white data-checked:border-amber-600 data-checked:bg-amber-600"
+                                  className="absolute right-2.5 top-2.5 size-4 rounded bg-background text-white data-checked:border-amber-600 data-checked:bg-amber-600"
                                 />
-                                <div className="pr-2 text-sm font-bold leading-snug text-foreground">{option.name}</div>
-                                <div className={`text-xl font-bold leading-tight ${isSelected ? 'text-amber-600' : 'text-foreground'}`}>{formatWarrantyEuro(option.price)}</div>
-                                <div className="text-xs leading-5 text-muted-foreground">{option.description || getTrans("product.warrantyDescription", "Extended warranty coverage.", "Uitgebreide garantiedekking.")}</div>
+                                <div className="pr-4 text-sm font-bold leading-tight text-foreground">{option.name}</div>
+                                <div className={`text-lg font-bold leading-tight ${isSelected ? 'text-amber-600' : 'text-foreground'}`}>{formatWarrantyEuro(option.price)}</div>
+                                <div className="text-xs leading-4 text-muted-foreground">{option.description || getTrans("product.warrantyDescription", "Extended warranty coverage.", "Uitgebreide garantiedekking.")}</div>
                               </label>
                             );
                           })}
