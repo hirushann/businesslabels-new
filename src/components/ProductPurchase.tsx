@@ -7,9 +7,12 @@ import { useWishlist } from "@/components/WishlistProvider";
 import { getEffectiveDeliveryDays, getExpectedDeliveryMessage, isDeliverableInStock } from "@/lib/utils/delivery";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Popover, PopoverAnchor, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Field, FieldContent, FieldDescription, FieldLabel, FieldTitle } from "@/components/ui/field";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogClose, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { InfoIcon, DownloadIcon, TruckIcon, HomeIcon } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 
 type BulkDiscount = {
@@ -21,12 +24,22 @@ type ProductDiscountInput = string | Array<{ discount?: string | number | null; 
 type NumericLike = number | string | null | undefined;
 
 type WarrantyOption = {
-  id: number;
+  id: number | string;
   name: string;
   durationMonths: number;
   price: number;
   description: string;
-  sortOrder: number;
+  sortOrder?: number;
+};
+
+type NormalizedWarrantyType = {
+  id: number | string;
+  name: string;
+  description: string;
+  icon: string;
+  badgeText: string;
+  badgeColor: string;
+  options: WarrantyOption[];
 };
 
 type ProductPurchaseProps = {
@@ -51,6 +64,38 @@ type ProductPurchaseProps = {
   warranty?: {
     is_available?: boolean | null;
     has_options?: boolean | null;
+    default_option?: {
+      type?: string | null;
+      warranty_option_id?: number | string | null;
+      sku?: string | null;
+      name?: string | null;
+      duration_years?: number | null;
+      price?: number | null;
+      description?: string | null;
+    } | null;
+    types?: Array<{
+      id: number;
+      name?: string | null;
+      description?: string | null;
+      icon?: string | null;
+      badge_text?: string | null;
+      badge_color?: string | null;
+      options?: Array<{
+        id?: number | string | null;
+        type?: string | null;
+        warranty_option_id?: number | string | null;
+        sku?: string | null;
+        name?: string | null;
+        duration_years?: number | null;
+        description?: string | null;
+        price?: number | null;
+        cart?: {
+          type?: string | null;
+          warranty_option_id?: number | string | null;
+          sku?: string | null;
+        } | null;
+      }> | null;
+    }> | null;
     options?: Array<{
       id: number;
       name?: string | null;
@@ -59,18 +104,10 @@ type ProductPurchaseProps = {
       description?: string | null;
       sort_order?: number | null;
     }> | null;
-    default_option?: {
-      id: number;
-      name?: string | null;
-      duration_months?: number | null;
-      price?: number | null;
-      description?: string | null;
-      sort_order?: number | null;
-    } | null;
   } | null;
   componentCount?: number | null;
   isLabelProduct?: boolean | null;
-  properties?: any;
+  properties?: unknown;
 };
 
 
@@ -80,6 +117,15 @@ function formatEuro(value: number): string {
     style: "currency",
     currency: "EUR",
     minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+function formatWarrantyEuro(value: number): string {
+  return new Intl.NumberFormat("nl-NL", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: Number.isInteger(value) ? 0 : 2,
     maximumFractionDigits: 2,
   }).format(value);
 }
@@ -155,19 +201,62 @@ function normalizeBulkDiscounts(discounts: ProductDiscountInput | undefined, min
     .sort((a, b) => Number(a.quantity) - Number(b.quantity));
 }
 
-function normalizeWarrantyOptions(warranty: ProductPurchaseProps["warranty"]) {
-  const options: WarrantyOption[] = (warranty?.options || []).map((opt) => ({
+function normalizeWarrantyOptions(warranty: ProductPurchaseProps["warranty"], locale: string) {
+  const defaultOption = warranty?.default_option ? {
+    id: warranty.default_option.warranty_option_id ?? "default",
+    name: warranty.default_option.name || "Warranty",
+    durationMonths: warranty.default_option.duration_years ? warranty.default_option.duration_years * 12 : 0,
+    price: warranty.default_option.price || 0,
+    description: warranty.default_option.description || "",
+  } : null;
+
+  let types: NormalizedWarrantyType[] = (warranty?.types || []).map((t) => ({
+    id: t.id,
+    name: t.name || "",
+    description: t.description || "",
+    icon: t.icon || "",
+    badgeText: t.badge_text || "",
+    badgeColor: t.badge_color || "",
+    options: (t.options || []).map((opt) => ({
+      id: opt.warranty_option_id ?? opt.id ?? opt.cart?.warranty_option_id ?? 0,
+      name: opt.name || "Warranty",
+      durationMonths: opt.duration_years ? opt.duration_years * 12 : 0,
+      price: opt.price || 0,
+      description: opt.description || (opt.duration_years ? (locale === "nl" ? `${opt.duration_years * 12} maanden dekking` : `${opt.duration_years * 12} months coverage`) : (locale === "nl" ? "Uitgebreide dekking" : "Extended coverage")),
+    })),
+  }));
+
+  const oldOptions: WarrantyOption[] = (warranty?.options || []).map((opt) => ({
     id: opt.id,
     name: opt.name || "Warranty",
     durationMonths: opt.duration_months || 0,
     price: opt.price || 0,
-    description: opt.description || "",
+    description: opt.description || (opt.duration_months ? (locale === "nl" ? `${opt.duration_months} maanden dekking` : `${opt.duration_months} months coverage`) : (locale === "nl" ? "Uitgebreide dekking" : "Extended coverage")),
     sortOrder: opt.sort_order || 0,
   })).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
 
+  if (types.length === 0 && oldOptions.length > 0) {
+    types = [{
+      id: "legacy",
+      name: locale === "nl" ? "Garantie Opties" : "Extended Warranty",
+      description: locale === "nl" ? "Verleng de dekking van uw printer." : "Extend your printer coverage.",
+      icon: "shield-check",
+      badgeText: "",
+      badgeColor: "",
+      options: oldOptions
+    }];
+  }
+
+  let allOptions = types.flatMap((t) => t.options);
+  if (oldOptions.length > 0 && types[0]?.id !== "legacy") {
+    allOptions = [...allOptions, ...oldOptions];
+  }
+
   return {
-    options,
-    defaultOptionId: warranty?.default_option?.id || (options.length > 0 ? options[0].id : null),
+    defaultOption,
+    types,
+    oldOptions: types[0]?.id === "legacy" ? [] : oldOptions,
+    allOptions,
   };
 }
 
@@ -197,12 +286,16 @@ export default function ProductPurchase({
 }: ProductPurchaseProps) {
   const { addItem, openCart, isCartOpen } = useCart();
   const t = useTranslations();
+  const getTrans = (key: string, fbEn: string, fbNl: string) => {
+    if (t.has(key)) return t(key);
+    return locale === "nl" ? fbNl : fbEn;
+  };
   const wishlist = useWishlist();
   const locale = useLocale();
 
   const kernValue = useMemo(() => {
     if (!properties || typeof properties !== 'object') return null;
-    const kern = properties.kern;
+    const kern = (properties as { kern?: unknown }).kern;
     if (!kern) return null;
     if (typeof kern === 'string') {
       return kern;
@@ -248,7 +341,7 @@ export default function ProductPurchase({
   const [quantityError, setQuantityError] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [isWarrantyPopoverOpen, setIsWarrantyPopoverOpen] = useState(false);
-  const [selectedWarrantyId, setSelectedWarrantyId] = useState<number | null>(null);
+  const [selectedWarrantyId, setSelectedWarrantyId] = useState<number | string | null>(null);
   const [pendingQuantity, setPendingQuantity] = useState<number | null>(null);
   const [shareUrl, setShareUrl] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -276,25 +369,38 @@ export default function ProductPurchase({
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setShareUrl(window.location.href);
+      const timeout = window.setTimeout(() => {
+        setShareUrl(window.location.href);
+      }, 0);
+
+      return () => window.clearTimeout(timeout);
     }
   }, []);
 
   // Update countdown every minute
   useEffect(() => {
-    setCurrentTime(new Date());
+    const timeout = window.setTimeout(() => {
+      setCurrentTime(new Date());
+    }, 0);
 
     const interval = setInterval(() => {
       setCurrentTime(new Date());
     }, 60000); // Update every 60 seconds
 
-    return () => clearInterval(interval);
+    return () => {
+      window.clearTimeout(timeout);
+      clearInterval(interval);
+    };
   }, []);
 
   // Sync quantity state when initialQuantity changes
   useEffect(() => {
-    setQuantity(initialQuantity);
-    setQuantityError(null);
+    const timeout = window.setTimeout(() => {
+      setQuantity(initialQuantity);
+      setQuantityError(null);
+    }, 0);
+
+    return () => window.clearTimeout(timeout);
   }, [initialQuantity]);
 
   const increment = () => {
@@ -394,15 +500,7 @@ export default function ProductPurchase({
     type,
   };
   const isWishlisted = wishlist.hasItem(itemIdentity);
-  const quantityStep =
-    allowSingulars && hasPackingGroup && normalizedPackingGroup
-      ? quantity < normalizedPackingGroup
-        ? 1
-        : normalizedPackingGroup
-      : hasPackingGroup
-        ? normalizedPackingGroup
-        : 1;
-  const normalizedWarranty = useMemo(() => normalizeWarrantyOptions(warranty), [warranty]);
+  const normalizedWarranty = useMemo(() => normalizeWarrantyOptions(warranty, locale), [warranty, locale]);
   const minimumQuantity = (!allowSingulars && normalizedPackingGroup) ? normalizedPackingGroup : 1;
 
   const bulkDiscounts = useMemo(() => {
@@ -419,13 +517,16 @@ export default function ProductPurchase({
     return bulkDiscounts;
   }, [bulkDiscounts, hasBulkDiscounts, minimumQuantity]);
 
-  const hasWarrantyOptions = normalizedWarranty.options.length > 0;
-  const defaultWarrantyOption = normalizedWarranty.options.find(
-    (option) => option.id === normalizedWarranty.defaultOptionId,
-  ) ?? null;
-  const selectedWarrantyOption = normalizedWarranty.options.find(
+  const defaultWarrantyId = normalizedWarranty.defaultOption?.id ?? null;
+  const hasWarrantyOptions = Boolean(normalizedWarranty.defaultOption) || normalizedWarranty.types.length > 0 || normalizedWarranty.oldOptions.length > 0;
+  const selectedWarrantyOption = normalizedWarranty.allOptions.find(
     (option) => option.id === selectedWarrantyId,
-  ) ?? defaultWarrantyOption;
+  ) ?? (selectedWarrantyId === defaultWarrantyId ? normalizedWarranty.defaultOption : null);
+  const selectedWarrantyPrice =
+    selectedWarrantyOption && typeof selectedWarrantyOption.price === "number" && Number.isFinite(selectedWarrantyOption.price)
+      ? selectedWarrantyOption.price
+      : 0;
+  const hasSelectedPaidWarranty = selectedWarrantyPrice > 0;
 
   // Find active discount percentage based on quantity
   const activeTier = useMemo(() => {
@@ -585,7 +686,7 @@ export default function ProductPurchase({
           packingGroup: normalizedPackingGroup,
           allowSingulars: Boolean(allowSingulars),
           warranty: {
-            optionId: selectedOption.id,
+            optionId: Number(selectedOption.id),
             durationMonths: selectedOption.durationMonths,
             parentSku: displaySku,
             parentName: displayName,
@@ -606,6 +707,7 @@ export default function ProductPurchase({
 
     if (hasWarrantyOptions) {
       setPendingQuantity(qtyToAdd);
+      setSelectedWarrantyId((currentId) => currentId ?? defaultWarrantyId);
       setIsWarrantyPopoverOpen(true);
       return;
     }
@@ -618,7 +720,7 @@ export default function ProductPurchase({
       return;
     }
 
-    addProductWithWarranty(pendingQuantity, selectedWarrantyOption ?? defaultWarrantyOption);
+    addProductWithWarranty(pendingQuantity, selectedWarrantyOption ?? null);
     setIsWarrantyPopoverOpen(false);
     setPendingQuantity(null);
   };
@@ -659,9 +761,6 @@ export default function ProductPurchase({
       handleAddToWishlist();
     }
   };
-
-  const [isSharing, setIsSharing] = useState(false);
-  const isSharingRef = useRef(false);
 
   /* 
   const handleShare = async () => {
@@ -817,7 +916,7 @@ export default function ProductPurchase({
         ) : null}
 
         {/* Quantity + Add to Cart */}
-        <Popover
+        <Dialog
           open={isWarrantyPopoverOpen}
           onOpenChange={(nextOpen) => {
             setIsWarrantyPopoverOpen(nextOpen);
@@ -828,7 +927,7 @@ export default function ProductPurchase({
         >
           {isLabelProduct ? (
             // Label product layout with Rolls/Stack and Box buttons
-            <PopoverAnchor asChild>
+            <DialogTrigger asChild>
               <div className="flex flex-col gap-3">
                 {allowSingulars ? (
                   <>
@@ -867,7 +966,10 @@ export default function ProductPurchase({
 
                       <button
                         type="button"
-                        onClick={() => handleAddToCart(quantity)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleAddToCart(quantity);
+                        }}
                         aria-describedby={quantityError ? "quantity-error" : undefined}
                         className="w-full sm:flex-1 h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm flex"
                       >
@@ -885,7 +987,10 @@ export default function ProductPurchase({
 
                     <button
                       type="button"
-                      onClick={() => handleAddToCart(Math.max(1, Math.ceil(quantity / (normalizedPackingGroup || 1))) * (normalizedPackingGroup || 1))}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleAddToCart(Math.max(1, Math.ceil(quantity / (normalizedPackingGroup || 1))) * (normalizedPackingGroup || 1));
+                      }}
                       className="w-full h-12 px-4 py-2.5 bg-amber-100 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-amber-300 justify-center items-center gap-2 hover:bg-amber-300 transition-colors flex"
                     >
                       <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -940,7 +1045,10 @@ export default function ProductPurchase({
 
                     <button
                       type="button"
-                      onClick={() => handleAddToCart(Math.max(1, Math.ceil(quantity / (normalizedPackingGroup || 1))) * (normalizedPackingGroup || 1))}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleAddToCart(Math.max(1, Math.ceil(quantity / (normalizedPackingGroup || 1))) * (normalizedPackingGroup || 1));
+                      }}
                       className="w-full sm:flex-1 h-12 px-4 py-2.5 bg-amber-100 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-amber-300 justify-center items-center gap-2 hover:bg-amber-300 transition-colors flex"
                     >
                       <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -961,10 +1069,10 @@ export default function ProductPurchase({
                   </div>
                 )}
               </div>
-            </PopoverAnchor>
+            </DialogTrigger>
           ) : (
             // Original single-button layout with quantity selector
-            <PopoverAnchor asChild>
+            <DialogTrigger asChild>
               <div className="flex flex-col sm:flex-row sm:items-end gap-4">
                 <div className="flex flex-col gap-3 w-full sm:w-auto">
                   <span className="text-neutral-800 text-lg font-bold leading-5 w-full">{t("product.selectQuantity")}</span>
@@ -1000,7 +1108,10 @@ export default function ProductPurchase({
                 <div className="flex flex-col gap-2 w-full sm:flex-1">
                   <button
                     type="button"
-                    onClick={() => handleAddToCart(quantity)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleAddToCart(quantity);
+                    }}
                     aria-describedby={quantityError ? "quantity-error" : undefined}
                     className="flex h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm"
                   >
@@ -1011,81 +1122,189 @@ export default function ProductPurchase({
                   </button>
                 </div>
               </div>
-            </PopoverAnchor>
+            </DialogTrigger>
           )}
 
           {hasWarrantyOptions ? (
-            <PopoverContent align="end" className="w-[420px] p-4">
-              <PopoverHeader>
-                <PopoverTitle className="text-base">{t("product.chooseWarranty")}</PopoverTitle>
-                <PopoverDescription>
-                  {t("product.warrantyDescription")}
-                </PopoverDescription>
-              </PopoverHeader>
+            <DialogContent className="w-[calc(100vw-1rem)] max-w-xl gap-0 overflow-hidden bg-background p-0 text-foreground shadow-xl sm:max-w-xl sm:rounded-2xl" showCloseButton={false}>
+              <div className="max-h-[calc(100dvh-6rem)] overflow-y-auto p-4 sm:p-5">
+                <div className="mb-4 flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <DialogTitle className="mb-1 text-xl font-bold leading-tight text-foreground sm:text-2xl">
+                      {getTrans("product.chooseWarranty", "Extend Your Warranty", "Breid uw garantie uit")}
+                    </DialogTitle>
+                    <DialogDescription className="text-sm leading-5 text-muted-foreground">
+                      {displayName}
+                    </DialogDescription>
+                  </div>
+                  <DialogClose className="-mr-1 -mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+                    <svg className="size-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    <span className="sr-only">Close</span>
+                  </DialogClose>
+                </div>
 
-              <RadioGroup
-                value={selectedWarrantyOption ? String(selectedWarrantyOption.id) : undefined}
-                onValueChange={(value) => {
-                  const parsed = Number.parseInt(value, 10);
-                  if (Number.isFinite(parsed)) {
-                    setSelectedWarrantyId(parsed);
-                  }
-                }}
-                className="gap-2"
-              >
-                {normalizedWarranty.options.map((option) => {
-                  const optionId = `warranty-option-${option.id}`;
-                  const isDefaultOption = option.id === normalizedWarranty.defaultOptionId;
-                  const hasExtraPrice = option.price > 0;
+                <div className="flex flex-col gap-4">
+                  {normalizedWarranty.defaultOption && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedWarrantyId(normalizedWarranty.defaultOption?.id ?? "default")}
+                      className={`w-full rounded-xl border p-3 text-left transition-colors ${selectedWarrantyId === defaultWarrantyId ? 'border-amber-500 bg-amber-50/60 ring-2 ring-amber-500/15' : 'border-amber-400 bg-amber-50/40 hover:bg-amber-50/70'}`}
+                      aria-pressed={selectedWarrantyId === defaultWarrantyId}
+                    >
+                      <div className="flex items-start gap-2">
+                        <InfoIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground" strokeWidth={1.8} />
+                        <div className="min-w-0">
+                          <h3 className="text-base font-semibold leading-5 text-foreground">
+                            {normalizedWarranty.defaultOption.name}
+                          </h3>
+                          <p className="mt-1.5 text-sm leading-5 text-muted-foreground">
+                            {normalizedWarranty.defaultOption.description || getTrans("product.defaultWarrantyDescription", "Standard coverage included with this product.", "Standaarddekking inbegrepen bij dit product.")}
+                          </p>
+                          <span className="mt-2 flex items-center gap-1.5 text-sm font-semibold leading-normal text-amber-600 underline underline-offset-2">
+                            <DownloadIcon className="size-4" strokeWidth={1.8} />
+                            {locale === "nl" ? "Downloaden als markdown" : "Download as markdown"}
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                  )}
 
-                  return (
-                    <FieldLabel key={option.id} htmlFor={optionId} className="cursor-pointer rounded-xl border border-slate-200 p-0">
-                      <Field orientation="horizontal" className="items-start rounded-xl border-none p-3">
-                        <RadioGroupItem id={optionId} value={String(option.id)} className="mt-1" />
-                        <FieldContent>
-                          <div className="flex items-start justify-between gap-3">
-                            <FieldTitle className="text-sm font-semibold text-neutral-800">{option.name}</FieldTitle>
-                            <span className={`text-sm font-semibold ${hasExtraPrice ? "text-amber-600" : "text-emerald-600"}`}>
-                              {hasExtraPrice ? `+${formatEuro(option.price)}` : t("product.noExtraCost")}
-                            </span>
+                  <div className="flex flex-col gap-4" role="group" aria-label={getTrans("product.chooseWarranty", "Choose Warranty", "Kies garantie")}>
+                    {normalizedWarranty.types.map((type) => (
+                      <section key={type.id || type.name} className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3 shadow-sm">
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {type.icon === "truck" ? (
+                              <TruckIcon className="size-4 text-amber-600" strokeWidth={2.2} />
+                            ) : type.icon === "home" ? (
+                              <HomeIcon className="size-4 text-amber-600" strokeWidth={2.2} />
+                            ) : type.icon ? (
+                              <InfoIcon className="size-4 text-amber-600" strokeWidth={2.2} />
+                            ) : null}
+                            <h3 className="text-base font-bold leading-5 text-foreground">{type.name}</h3>
                           </div>
-                          <FieldDescription className="text-xs">
-                            {option.description || (option.durationMonths ? `${option.durationMonths} months coverage` : "Extended coverage")}
-                          </FieldDescription>
-                          {isDefaultOption ? (
-                            <span className="mt-1 inline-flex w-fit rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
-                              {t("product.defaultOption")}
+                          {type.badgeText && (
+                            <span className={`w-fit rounded-full px-2 py-0.5 text-xs font-medium leading-none ${type.badgeColor === 'blue' ? 'bg-blue-50 text-blue-600 ring-1 ring-blue-100' : type.badgeColor === 'green' ? 'bg-green-50 text-green-700 ring-1 ring-green-100' : 'bg-muted text-muted-foreground ring-1 ring-border'}`}>
+                              {type.badgeText}
                             </span>
-                          ) : null}
-                        </FieldContent>
-                      </Field>
-                    </FieldLabel>
-                  );
-                })}
-              </RadioGroup>
+                          )}
+                        </div>
 
-              <div className="mt-2 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsWarrantyPopoverOpen(false);
-                    setPendingQuantity(null);
-                  }}
-                  className="h-9 rounded-full border border-slate-200 px-4 text-sm font-semibold text-neutral-700 transition-colors hover:bg-slate-100"
-                >
-                  {t("product.cancel")}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleConfirmWarrantyAdd}
-                  className="h-9 rounded-full bg-amber-500 px-4 text-sm font-semibold text-white transition-colors hover:bg-amber-600"
-                >
-                  {t("product.addToCart")}
-                </button>
+                        {type.description && (
+                          <p className="text-sm leading-5 text-muted-foreground">{type.description}</p>
+                        )}
+
+                        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                          {type.options.map((option) => {
+                            const optionId = `warranty-option-${option.id}`;
+                            const isSelected = selectedWarrantyId == option.id;
+                            return (
+                              <label
+                                key={option.id}
+                                htmlFor={optionId}
+                                className={`relative flex cursor-pointer flex-col gap-1.5 rounded-lg border p-3 pr-9 transition-all ${isSelected ? 'border-amber-500 bg-amber-50/70 shadow-sm ring-2 ring-amber-500/15' : 'border-border bg-muted/40 hover:border-muted-foreground/30 hover:bg-muted/60'}`}
+                              >
+                                <Checkbox
+                                  id={optionId}
+                                  checked={isSelected}
+                                  onCheckedChange={() => setSelectedWarrantyId(isSelected ? defaultWarrantyId : option.id)}
+                                  className="absolute right-3 top-3 size-4 rounded bg-background text-white data-checked:border-amber-600 data-checked:bg-amber-600"
+                                />
+                                <div className="pr-2 text-sm font-bold leading-snug text-foreground">{option.name}</div>
+                                <div className={`text-xl font-bold leading-tight ${isSelected ? 'text-amber-600' : 'text-foreground'}`}>{formatWarrantyEuro(option.price)}</div>
+                                <div className="text-xs leading-5 text-muted-foreground">{option.description || getTrans("product.warrantyDescription", "Extended warranty coverage.", "Uitgebreide garantiedekking.")}</div>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </section>
+                    ))}
+
+                    {normalizedWarranty.oldOptions.length > 0 && (
+                      <section className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3 shadow-sm">
+                        <h3 className="text-base font-bold leading-5 text-foreground">{getTrans("product.additionalOptions", "Additional Options", "Extra opties")}</h3>
+                        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                          {normalizedWarranty.oldOptions.map((option) => {
+                            const optionId = `warranty-option-${option.id}`;
+                            const isSelected = selectedWarrantyId == option.id;
+                            return (
+                              <label
+                                key={option.id}
+                                htmlFor={optionId}
+                                className={`relative flex cursor-pointer flex-col gap-1.5 rounded-lg border p-3 pr-9 transition-all ${isSelected ? 'border-amber-500 bg-amber-50/70 shadow-sm ring-2 ring-amber-500/15' : 'border-border bg-muted/40 hover:border-muted-foreground/30 hover:bg-muted/60'}`}
+                              >
+                                <Checkbox
+                                  id={optionId}
+                                  checked={isSelected}
+                                  onCheckedChange={() => setSelectedWarrantyId(isSelected ? defaultWarrantyId : option.id)}
+                                  className="absolute right-3 top-3 size-4 rounded bg-background text-white data-checked:border-amber-600 data-checked:bg-amber-600"
+                                />
+                                <div className="pr-2 text-sm font-bold leading-snug text-foreground">{option.name}</div>
+                                <div className={`text-xl font-bold leading-tight ${isSelected ? 'text-amber-600' : 'text-foreground'}`}>{formatWarrantyEuro(option.price)}</div>
+                                <div className="text-xs leading-5 text-muted-foreground">{option.description || getTrans("product.warrantyDescription", "Extended warranty coverage.", "Uitgebreide garantiedekking.")}</div>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </section>
+                    )}
+                  </div>
+
+                  <p className="text-xs leading-5 text-muted-foreground">
+                    {getTrans("product.warrantyFooterText", "Extend your existing warranty with additional years. These options are only available for printers with an active warranty.", "Verleng uw bestaande garantie met extra jaren. Deze opties zijn alleen beschikbaar voor printers met een actieve garantie.")}
+                  </p>
+                </div>
               </div>
-            </PopoverContent>
+
+              <Separator />
+              <div className="flex flex-col gap-2 bg-background/95 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="w-full sm:w-auto">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="default"
+                    onClick={() => {
+                      if (!pendingQuantity) return;
+                      addProductWithWarranty(pendingQuantity, null);
+                      setIsWarrantyPopoverOpen(false);
+                      setPendingQuantity(null);
+                    }}
+                    className="h-8 w-full rounded-full px-4 text-sm font-semibold sm:w-auto"
+                  >
+                    {getTrans("product.noThanks", "No, thanks", "Nee bedankt")}
+                  </Button>
+                </div>
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+                  {hasSelectedPaidWarranty ? (
+                    <div className="flex items-baseline justify-between gap-2 whitespace-nowrap sm:flex-col sm:items-end sm:gap-0">
+                      <span className="text-xs leading-tight text-muted-foreground">
+                        {locale === "nl" ? "Garantie toevoegen:" : "Add warranty:"}
+                      </span>
+                      <span className="text-base font-bold leading-5 text-foreground">
+                        +{formatWarrantyEuro(selectedWarrantyPrice)}
+                      </span>
+                    </div>
+                  ) : null}
+                  <Button
+                    type="button"
+                    size="default"
+                    onClick={handleConfirmWarrantyAdd}
+                    disabled={selectedWarrantyId == null}
+                    className="flex h-8 w-full items-center justify-center gap-1.5 rounded-full px-4 text-sm font-semibold sm:w-auto"
+                  >
+                    <svg className="size-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.5l2.7 12.15a2.25 2.25 0 0 0 2.2 1.76h8.7a2.25 2.25 0 0 0 2.2-1.78l1.2-5.63H6.3" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 21a.75.75 0 1 0 0-1.5A.75.75 0 0 0 9 21Zm9 0a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM12 5.25h4.5M14.25 3v4.5" />
+                    </svg>
+                    {t("product.addToCart")}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
           ) : null}
-        </Popover>
+        </Dialog>
 
         <div>
           {!hasPackingGroup && quantityError ? (

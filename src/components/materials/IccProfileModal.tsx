@@ -210,7 +210,7 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
       <button
         type="button"
         onClick={handleOpen}
-        className="inline-block text-left text-[18px] font-bold text-[#F18800] underline decoration-[#F18800] underline-offset-4 hover:text-[#d97706] hover:decoration-[#d97706] transition-colors"
+        className="inline-block text-left text-[18px] font-normal text-[#F18800] underline decoration-[#F18800] underline-offset-4 hover:text-[#d97706] hover:decoration-[#d97706] transition-colors"
       >
         {isNl ? "ICC-profiel aanvragen" : "Request ICC Profile"}
       </button>

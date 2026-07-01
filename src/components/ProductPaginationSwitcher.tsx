@@ -56,7 +56,7 @@ export default function ProductPaginationSwitcher({
         type="button"
         onClick={() => onPageChange(Math.max(1, page - 1))}
         disabled={page <= 1}
-        className="rounded-[50px] border border-slate-100 px-6 py-2.5 text-base font-medium text-neutral-800 disabled:opacity-50"
+        className="rounded-[50px] border border-slate-100 px-6 py-2.5 text-base font-bold text-neutral-800 disabled:opacity-50"
       >
         {t("previous")}
       </button>
@@ -85,7 +85,7 @@ export default function ProductPaginationSwitcher({
         type="button"
         onClick={() => onPageChange(Math.min(pageCount, page + 1))}
         disabled={page >= pageCount}
-        className="rounded-[50px] border border-slate-100 px-6 py-2.5 text-base font-semibold text-neutral-800 disabled:opacity-50"
+        className="rounded-[50px] border border-slate-100 px-6 py-2.5 text-base font-bold text-neutral-800 disabled:opacity-50"
       >
         {t("next")}
       </button>
