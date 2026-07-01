@@ -45,9 +45,10 @@ import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 const navItems = [
   { labelKey: 'header.nav.home', fallbackLabel: 'Home', href: '/', active: true, dropdownKey: null },
-  { labelKey: 'header.nav.printers', fallbackLabel: 'Printers', href: '/product-category/labelprinters', dropdown: true, dropdownKey: 'printers' as DropdownKey },
+  { labelKey: 'header.nav.printers', fallbackLabel: 'Label Printers', href: '/product-category/labelprinters', dropdown: true, dropdownKey: 'printers' as DropdownKey },
   { labelKey: 'header.nav.labels', fallbackLabel: 'Labels and tickets', href: '/category/labels-en-tickets', dropdown: true, dropdownKey: 'labels' as DropdownKey },
   { labelKey: 'header.nav.accessories', fallbackLabel: 'Accessories', href: '/category/accessoires', dropdown: true, dropdownKey: 'accessories' as DropdownKey },
+  { labelKey: 'header.nav.materials', fallbackLabel: 'Materials', href: '/materials', dropdownKey: null },
   { labelKey: 'header.nav.resources', fallbackLabel: 'Resources', href: '/resources', dropdown: true, dropdownKey: 'resources' as DropdownKey },
   { labelKey: 'header.nav.brands', fallbackLabel: 'Brands', href: '/brands', dropdown: true, dropdownKey: 'brands' as DropdownKey },
   { labelKey: 'header.nav.support', fallbackLabel: 'Support', href: '/support', dropdownKey: null },
