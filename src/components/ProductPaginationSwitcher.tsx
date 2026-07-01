@@ -51,7 +51,7 @@ export default function ProductPaginationSwitcher({
   const visiblePages = buildVisiblePages(page, pageCount);
 
   return (
-    <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+    <div className="mt-8 flex flex-wrap items-center justify-center gap-3 mb-10">
       <button
         type="button"
         onClick={() => onPageChange(Math.max(1, page - 1))}
