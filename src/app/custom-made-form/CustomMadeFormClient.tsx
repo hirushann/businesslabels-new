@@ -256,7 +256,6 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
       });
 
       if (response.ok) {
-        resetForm();
         setSubmitStatus('success');
         toast.success(t('successMessage'));
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -443,7 +442,7 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
             <div className="h-px bg-gray-100" />
 
             <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-6">
-            {/* ── Step 1: Shape ── */}
+              {/* ── Step 1: Shape ── */}
             <section className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
                 <span className="text-amber-500 text-sm font-sans">{t('stepProgress', { current: 1, total: 5 })}</span>
