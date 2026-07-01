@@ -414,7 +414,7 @@ export const MESSAGES_V4 = {
     },
     footer: {
       trust: {
-        epsonTitle: 'Epson Gold Partner',
+        epsonTitle: 'strokeLinejoin',
         epsonSub: 'Certified compatibility',
         customersTitle: '12,000+ Customers',
         customersSub: 'Trusted worldwide',
@@ -1919,7 +1919,7 @@ export const MESSAGES_V4 = {
     },
     footer: {
       trust: {
-        epsonTitle: 'Epson Gold Partner',
+        epsonTitle: 'Epson Diamond Partner',
         epsonSub: 'Gecertificeerde compatibiliteit',
         customersTitle: '12.000+ Klanten',
         customersSub: 'Wereldwijd vertrouwd',
