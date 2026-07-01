@@ -143,6 +143,12 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
 
                     const linePrice = unitPrice * item.quantity;
                     const baseLinePrice = baseUnitPrice * item.quantity;
+                    const linkedWarranty = items.find(
+                      (warrantyItem) => warrantyItem.itemKind === 'warranty' && warrantyItem.linkedToKey === item.key
+                    );
+                    const warrantyDurationYears = linkedWarranty?.warranty?.durationMonths
+                      ? Math.round(linkedWarranty.warranty.durationMonths / 12)
+                      : null;
 
                     const imageSrc = item.mainImage?.trim() || 'https://placehold.co/80x80';
                     const href = item.slug
@@ -152,117 +158,157 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                       : undefined;
 
                     return (
-                      <div key={item.key} className="py-4 flex gap-4">
-                        {/* Product Image */}
-                        <div className="w-20 h-20 relative bg-[#EDF0F4] rounded-[6px] overflow-hidden shrink-0">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={imageSrc}
-                            alt={item.name}
-                            className="w-full h-full object-contain p-1"
-                          />
+                      <div key={item.key} className="py-4 flex flex-col gap-3">
+                        <div className="flex gap-4">
+                          {/* Product Image */}
+                          <div className="w-20 h-20 relative bg-[#EDF0F4] rounded-[6px] overflow-hidden shrink-0">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={imageSrc}
+                              alt={item.name}
+                              className="w-full h-full object-contain p-1"
+                            />
+                          </div>
+
+                          {/* Product Details */}
+                          <div className="flex-1 flex flex-col gap-2 min-w-0">
+                            <div className="flex justify-between items-start gap-2">
+                              <div className="min-w-0 flex-1">
+                                <span className="text-[#479EF5] text-sm font-['Segoe_UI'] font-normal leading-[18.2px] block">
+                                  SKU: {item.sku}
+                                </span>
+                                <h3 className="text-[#222222] text-base font-semibold font-['Segoe_UI'] leading-[21.6px] mt-0.5 line-clamp-2">
+                                  {href ? (
+                                    <Link href={href} onClick={onClose} className="hover:text-amber-600 transition-colors">
+                                      {item.name}
+                                    </Link>
+                                  ) : (
+                                    item.name
+                                  )}
+                                </h3>
+                              </div>
+
+                              {/* Remove Item Button */}
+                              <button
+                                type="button"
+                                onClick={() => removeItem(item.key)}
+                                aria-label={t('cart.removeFromCart', { name: item.name })}
+                                className="w-6 h-6 bg-[#EDF2F7] rounded-[2px] flex items-center justify-center text-[#222222] hover:bg-[#e2e8f0] transition-colors shrink-0"
+                              >
+                                <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                                  <path d="M2 2L10 10M10 2L2 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                                </svg>
+                              </button>
+                            </div>
+
+                            {/* Price */}
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {hasDiscount && (
+                                <span className="text-[#888888] text-base font-normal font-['Segoe_UI'] line-through leading-5">
+                                  {formatEuro(baseLinePrice)}
+                                </span>
+                              )}
+                              <span className="text-[#F18800] text-xl font-semibold font-['Segoe_UI'] leading-6">
+                                {formatEuro(linePrice)}
+                              </span>
+                              <span className="text-[#888888] text-sm font-normal font-['Segoe_UI'] leading-[20.8px]">
+                                {t('product.exVat') || 'ex. VAT'}
+                              </span>
+                            </div>
+
+                            {/* Quantity and Actions */}
+                            <div className="flex items-center gap-2 flex-wrap mt-1">
+                              {/* Quantity stepper */}
+                              <div className="h-[38px] bg-white rounded-[44px] shadow-[0px_1px_2px_rgba(16,24,40,0.05)] border border-black/10 flex items-center overflow-hidden shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => decrementItemQuantity(item.key)}
+                                  className="w-[38px] h-[38px] flex items-center justify-center border-r border-black/10 text-neutral-700 hover:bg-slate-50 transition-colors text-lg"
+                                >
+                                  -
+                                </button>
+                                <input
+                                  type="text"
+                                  inputMode="numeric"
+                                  pattern="[1-9][0-9]*"
+                                  value={item.quantity}
+                                  onChange={(e) => {
+                                    const val = parseInt(e.target.value, 10);
+                                    if (Number.isInteger(val) && val > 0) {
+                                      setItemQuantity(item.key, val);
+                                    }
+                                  }}
+                                  className="w-[38px] h-[38px] border-r border-black/10 bg-transparent text-center text-base font-semibold text-[#222222] focus:outline-none focus:ring-0 p-0"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => incrementItemQuantity(item.key)}
+                                  className="w-[38px] h-[38px] flex items-center justify-center text-neutral-700 hover:bg-slate-50 transition-colors text-lg"
+                                >
+                                  +
+                                </button>
+                              </div>
+
+                              {/* Box Option */}
+                              {item.packingGroup && item.packingGroup > 0 && (
+                                <>
+                                  <span className="text-[#888888] text-xs font-normal font-['Segoe_UI']">
+                                    {t('cart.or')}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const pg = item.packingGroup!;
+                                      const nextBoxQty = Math.ceil((item.quantity + 1) / pg) * pg;
+                                      setItemQuantity(item.key, nextBoxQty);
+                                    }}
+                                    className="h-[38px] px-4 rounded-[100px] border border-[#F18800] text-[#F18800] text-sm font-semibold font-['Segoe_UI'] hover:bg-orange-50 transition-colors whitespace-nowrap"
+                                  >
+                                    {t('cart.boxOption', { count: item.packingGroup })}
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </div>
                         </div>
 
-                        {/* Product Details */}
-                        <div className="flex-1 flex flex-col gap-2 min-w-0">
-                          <div className="flex justify-between items-start gap-2">
-                            <div className="min-w-0 flex-1">
-                              <span className="text-[#479EF5] text-sm font-['Segoe_UI'] font-normal leading-[18.2px] block">
-                                SKU: {item.sku}
-                              </span>
-                              <h3 className="text-[#222222] text-base font-semibold font-['Segoe_UI'] leading-[21.6px] mt-0.5 line-clamp-2">
-                                {href ? (
-                                  <Link href={href} onClick={onClose} className="hover:text-amber-600 transition-colors">
-                                    {item.name}
-                                  </Link>
-                                ) : (
-                                  item.name
-                                )}
-                              </h3>
-                            </div>
-
-                            {/* Remove Item Button */}
-                            <button
-                              type="button"
-                              onClick={() => removeItem(item.key)}
-                              aria-label={t('cart.removeFromCart', { name: item.name })}
-                              className="w-6 h-6 bg-[#EDF2F7] rounded-[2px] flex items-center justify-center text-[#222222] hover:bg-[#e2e8f0] transition-colors shrink-0"
-                            >
-                              <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                                <path d="M2 2L10 10M10 2L2 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                              </svg>
-                            </button>
-                          </div>
-
-                          {/* Price */}
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            {hasDiscount && (
-                              <span className="text-[#888888] text-base font-normal font-['Segoe_UI'] line-through leading-5">
-                                {formatEuro(baseLinePrice)}
-                              </span>
-                            )}
-                            <span className="text-[#F18800] text-xl font-semibold font-['Segoe_UI'] leading-6">
-                              {formatEuro(linePrice)}
-                            </span>
-                            <span className="text-[#888888] text-sm font-normal font-['Segoe_UI'] leading-[20.8px]">
-                              {t('product.exVat') || 'ex. VAT'}
-                            </span>
-                          </div>
-
-                          {/* Quantity and Actions */}
-                          <div className="flex items-center gap-2 flex-wrap mt-1">
-                            {/* Quantity stepper */}
-                            <div className="h-[38px] bg-white rounded-[44px] shadow-[0px_1px_2px_rgba(16,24,40,0.05)] border border-black/10 flex items-center overflow-hidden shrink-0">
-                              <button
-                                type="button"
-                                onClick={() => decrementItemQuantity(item.key)}
-                                className="w-[38px] h-[38px] flex items-center justify-center border-r border-black/10 text-neutral-700 hover:bg-slate-50 transition-colors text-lg"
-                              >
-                                -
-                              </button>
-                              <input
-                                type="text"
-                                inputMode="numeric"
-                                pattern="[1-9][0-9]*"
-                                value={item.quantity}
-                                onChange={(e) => {
-                                  const val = parseInt(e.target.value, 10);
-                                  if (Number.isInteger(val) && val > 0) {
-                                    setItemQuantity(item.key, val);
-                                  }
-                                }}
-                                className="w-[38px] h-[38px] border-r border-black/10 bg-transparent text-center text-base font-semibold text-[#222222] focus:outline-none focus:ring-0 p-0"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => incrementItemQuantity(item.key)}
-                                className="w-[38px] h-[38px] flex items-center justify-center text-neutral-700 hover:bg-slate-50 transition-colors text-lg"
-                              >
-                                +
-                              </button>
-                            </div>
-
-                            {/* Box Option */}
-                            {item.packingGroup && item.packingGroup > 0 && (
-                              <>
-                                <span className="text-[#888888] text-xs font-normal font-['Segoe_UI']">
-                                  {t('cart.or')}
+                        {linkedWarranty ? (
+                          <div className="ml-24 rounded-lg border border-amber-100 bg-amber-50/60 p-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <span className="text-xs font-semibold uppercase tracking-wide text-amber-700">
+                                  {t('cart.linkedWarranty')}
+                                </span>
+                                <p className="mt-0.5 text-sm font-semibold leading-5 text-[#222222]">
+                                  {linkedWarranty.name}
+                                </p>
+                                <p className="mt-0.5 text-xs leading-4 text-[#666666]">
+                                  {t.has('cart.warrantyDesc') ? t('cart.warrantyDesc') : 'Protect your printer after the standard warranty expires.'}
+                                </p>
+                                {warrantyDurationYears ? (
+                                  <p className="mt-1 text-xs font-medium text-[#444444]">
+                                    {t('cart.years', { count: warrantyDurationYears })}
+                                  </p>
+                                ) : null}
+                              </div>
+                              <div className="flex shrink-0 flex-col items-end gap-1">
+                                <span className="text-base font-bold text-[#222222]">
+                                  {formatEuro((linkedWarranty.price ?? 0) * linkedWarranty.quantity)}
+                                </span>
+                                <span className="text-xs text-[#888888]">
+                                  {linkedWarranty.quantity} x {formatEuro(linkedWarranty.price ?? 0)}
                                 </span>
                                 <button
                                   type="button"
-                                  onClick={() => {
-                                    const pg = item.packingGroup!;
-                                    const nextBoxQty = Math.ceil((item.quantity + 1) / pg) * pg;
-                                    setItemQuantity(item.key, nextBoxQty);
-                                  }}
-                                  className="h-[38px] px-4 rounded-[100px] border border-[#F18800] text-[#F18800] text-sm font-semibold font-['Segoe_UI'] hover:bg-orange-50 transition-colors whitespace-nowrap"
+                                  onClick={() => removeItem(linkedWarranty.key)}
+                                  className="text-xs font-semibold text-[#DD3333] underline transition-colors hover:text-red-700"
                                 >
-                                  {t('cart.boxOption', { count: item.packingGroup })}
+                                  {t.has('common.remove') ? t('common.remove') : 'Remove'}
                                 </button>
-                              </>
-                            )}
+                              </div>
+                            </div>
                           </div>
-                        </div>
+                        ) : null}
                       </div>
                     );
                   })}
