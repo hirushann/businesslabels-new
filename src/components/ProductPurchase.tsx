@@ -786,7 +786,7 @@ export default function ProductPurchase({
       packingGroup: normalizedPackingGroup,
       allowSingulars: Boolean(allowSingulars),
     });
-    toast.success(t("product.savedToWishlist") || "Saved to Wishlist");
+    toast.success(t("product.savedToFavorite") || "Added to Favorite");
   };
 
   const handleRemoveFromWishlist = () => {
@@ -797,7 +797,7 @@ export default function ProductPurchase({
     )?.key;
     if (key) {
       wishlist.removeItem(key);
-      toast.success(locale === "nl" ? "Verwijderd van verlanglijst" : "Removed from Wishlist");
+      toast.success(locale === "nl" ? "Verwijderd uit favorieten" : "Removed from Favorite");
     }
   };
 
@@ -1368,17 +1368,16 @@ export default function ProductPurchase({
         <div className="flex items-center gap-4">
           <button
             type="button"
-            onClick={handleAddToWishlist}
-            disabled={isWishlisted}
+            onClick={handleToggleWishlist}
             className={`flex-1 h-12 px-4 py-2.5 rounded-[100px] outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2 transition-colors ${isWishlisted
-              ? "bg-slate-100 outline-slate-200 text-neutral-500"
+              ? "bg-orange-50 outline-[#F18800] text-[#F18800]"
               : "outline-black/10 text-neutral-700 hover:bg-slate-50"
               }`}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.67} viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill={isWishlisted ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.67} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
             </svg>
-            <span className="text-sm sm:text-base font-semibold">{isWishlisted ? t("product.savedToWishlist") : t("product.addToWishlist")}</span>
+            <span className="text-sm sm:text-base font-semibold">{isWishlisted ? (t("product.savedToFavorite") || "Added to Favorite") : (t("product.addToFavorite") || "Add to Favorite")}</span>
           </button>
           <Popover>
             <PopoverTrigger asChild>

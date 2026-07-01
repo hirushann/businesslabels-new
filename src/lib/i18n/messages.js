@@ -481,6 +481,8 @@ export const MESSAGES_V4 = {
       goToShoppingCart: 'Go to shopping cart',
       freeShippingProgress: 'Order another <amountStyle>{amount}</amountStyle> for <shippingStyle>free shipping</shippingStyle>',
       freeShippingQualified: 'Your order qualifies for free shipping!',
+      orderWithin: 'Order within <timeStyle>2 hours 34 minutes</timeStyle> for delivery <deliveryStyle>today → </deliveryStyle>shipped <shippedStyle>today</shippedStyle>',
+      freeDeliveryThreshold: 'Free delivery on orders over <amountStyle>€100</amountStyle>',
     },
     menus: {
       printers: {
@@ -899,6 +901,8 @@ export const MESSAGES_V4 = {
       goToShoppingCart: 'Go to shopping cart',
       freeShippingProgress: 'Order another <amountStyle>{amount}</amountStyle> for <shippingStyle>free shipping</shippingStyle>',
       freeShippingQualified: 'Your order qualifies for free shipping!',
+      orderWithin: 'Order within <timeStyle>2 hours 34 minutes</timeStyle> for delivery <deliveryStyle>today → </deliveryStyle>shipped <shippedStyle>today</shippedStyle>',
+      freeDeliveryThreshold: 'Free delivery on orders over <amountStyle>€100</amountStyle>',
     },
     help: {
       title: 'How can we help?',
@@ -1054,6 +1058,8 @@ export const MESSAGES_V4 = {
       cancel: 'Cancel',
       savedToWishlist: 'Saved to Wishlist',
       addToWishlist: 'Add to Wishlist',
+      addToFavorite: 'Add to Favorite',
+      savedToFavorite: 'Added to Favorite',
       copyLink: 'Copy Link',
       expectedDelivery: 'Expected Delivery',
       orderWithinPrefix: 'Order within ',
@@ -1986,6 +1992,8 @@ export const MESSAGES_V4 = {
       goToShoppingCart: 'Ga naar winkelwagen',
       freeShippingProgress: 'Bestel nog voor <amountStyle>{amount}</amountStyle> voor <shippingStyle>gratis verzending</shippingStyle>',
       freeShippingQualified: 'Je bestelling komt in aanmerking voor gratis verzending!',
+      orderWithin: 'Bestel binnen <timeStyle>2 uur 34 minuten</timeStyle> voor levering <deliveryStyle>vandaag → </deliveryStyle><shippedStyle>vandaag</shippedStyle> verzonden',
+      freeDeliveryThreshold: 'Gratis verzending bij bestellingen vanaf <amountStyle>€100</amountStyle>',
     },
     menus: {
       printers: {
@@ -2404,6 +2412,8 @@ export const MESSAGES_V4 = {
       goToShoppingCart: 'Ga naar winkelwagen',
       freeShippingProgress: 'Bestel nog voor <amountStyle>{amount}</amountStyle> voor <shippingStyle>gratis verzending</shippingStyle>',
       freeShippingQualified: 'Je bestelling komt in aanmerking voor gratis verzending!',
+      orderWithin: 'Bestel binnen <timeStyle>2 uur 34 minuten</timeStyle> voor levering <deliveryStyle>vandaag → </deliveryStyle><shippedStyle>vandaag</shippedStyle> verzonden',
+      freeDeliveryThreshold: 'Gratis verzending bij bestellingen vanaf <amountStyle>€100</amountStyle>',
     },
     help: {
       title: 'Hoe kunnen we helpen?',
@@ -2559,6 +2569,8 @@ export const MESSAGES_V4 = {
       cancel: 'Annuleren',
       savedToWishlist: 'Opgeslagen op verlanglijst',
       addToWishlist: 'Op verlanglijst',
+      addToFavorite: 'Voeg toe aan favorieten',
+      savedToFavorite: 'Toegevoegd aan favorieten',
       copyLink: 'Kopieer link',
       expectedDelivery: 'Verwachte levering',
       orderWithinPrefix: 'Bestel binnen ',
