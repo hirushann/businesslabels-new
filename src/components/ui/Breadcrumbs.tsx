@@ -33,7 +33,7 @@ export function Breadcrumbs({ items, className = "text-zinc-500" }: BreadcrumbsP
               {item.label}
             </Link>
           ) : (
-            <span className="font-bold text-zinc-700 transition-colors">{item.label}</span>
+            <span className="font-bold transition-colors">{item.label}</span>
           )}
         </div>
       ))}
