@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback, type CSSProperties } from "react";
 import type { ProductRouteType } from "@/components/ProductCard";
 import { buildCartItemKey, useCart } from "@/components/CartProvider";
 import { useWishlist } from "@/components/WishlistProvider";
@@ -128,6 +128,53 @@ function formatWarrantyEuro(value: number): string {
     minimumFractionDigits: Number.isInteger(value) ? 0 : 2,
     maximumFractionDigits: 2,
   }).format(value);
+}
+
+function normalizeHexColor(value: string | null | undefined): string | null {
+  if (!value) return null;
+
+  const trimmed = value.trim();
+  if (/^#[0-9a-f]{3}$/i.test(trimmed)) {
+    return `#${trimmed[1]}${trimmed[1]}${trimmed[2]}${trimmed[2]}${trimmed[3]}${trimmed[3]}`;
+  }
+
+  return /^#[0-9a-f]{6}$/i.test(trimmed) ? trimmed : null;
+}
+
+function hexToRgba(hexColor: string, alpha: number): string {
+  const cleanHex = hexColor.replace("#", "");
+  const r = Number.parseInt(cleanHex.slice(0, 2), 16);
+  const g = Number.parseInt(cleanHex.slice(2, 4), 16);
+  const b = Number.parseInt(cleanHex.slice(4, 6), 16);
+
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function getWarrantyBadgeStyle(color: string): CSSProperties | undefined {
+  const hexColor = normalizeHexColor(color);
+  if (!hexColor) return undefined;
+
+  return {
+    backgroundColor: hexToRgba(hexColor, 0.1),
+    borderColor: hexToRgba(hexColor, 0.25),
+    color: hexColor,
+  };
+}
+
+function getWarrantyBadgeClass(color: string): string {
+  if (normalizeHexColor(color)) {
+    return "border";
+  }
+
+  if (color === "blue") {
+    return "bg-blue-50 text-blue-600 ring-1 ring-blue-100";
+  }
+
+  if (color === "green") {
+    return "bg-green-50 text-green-700 ring-1 ring-green-100";
+  }
+
+  return "bg-muted text-muted-foreground ring-1 ring-border";
 }
 
 function normalizeDiscountNumber(value: string | number | null | undefined): string | null {
@@ -1186,7 +1233,10 @@ export default function ProductPurchase({
                             <h3 className="text-base font-bold leading-5 text-foreground">{type.name}</h3>
                           </div>
                           {type.badgeText && (
-                            <span className={`w-fit rounded-full px-2 py-0.5 text-xs font-medium leading-none ${type.badgeColor === 'blue' ? 'bg-blue-50 text-blue-600 ring-1 ring-blue-100' : type.badgeColor === 'green' ? 'bg-green-50 text-green-700 ring-1 ring-green-100' : 'bg-muted text-muted-foreground ring-1 ring-border'}`}>
+                            <span
+                              className={`w-fit rounded-full px-2 py-0.5 text-xs font-medium leading-none ${getWarrantyBadgeClass(type.badgeColor)}`}
+                              style={getWarrantyBadgeStyle(type.badgeColor)}
+                            >
                               {type.badgeText}
                             </span>
                           )}
@@ -1292,7 +1342,7 @@ export default function ProductPurchase({
                     size="default"
                     onClick={handleConfirmWarrantyAdd}
                     disabled={selectedWarrantyId == null}
-                    className="flex h-8 w-full items-center justify-center gap-1.5 rounded-full px-4 text-sm font-semibold sm:w-auto"
+                    className="flex h-8 w-full items-center justify-center gap-1.5 rounded-full bg-amber-500 px-4 text-sm font-bold text-white shadow-sm transition-colors hover:bg-amber-600 disabled:bg-amber-500 disabled:text-white disabled:opacity-50 sm:w-auto"
                   >
                     <svg className="size-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.5l2.7 12.15a2.25 2.25 0 0 0 2.2 1.76h8.7a2.25 2.25 0 0 0 2.2-1.78l1.2-5.63H6.3" />
