@@ -530,6 +530,11 @@ export const MESSAGES_V4 = {
       moveToCart: 'Add to Cart',
       outOfStock: 'Out of Stock',
     },
+    favoritesPage: {
+      emptyTitle: 'Your Favorite list is Empty',
+      emptyDescription: 'It seems you haven\'t saved any items yet. Explore our collection and add your favorites!',
+      exploreProduct: 'Explore Product',
+    },
     checkout: {
       title: 'Checkout',
       emptyCart: 'Your cart is empty',
@@ -1885,6 +1890,11 @@ export const MESSAGES_V4 = {
       remove: '{name} verwijderen van verlanglijst',
       moveToCart: 'Toevoegen aan winkelwagen',
       outOfStock: 'Niet op voorraad',
+    },
+    favoritesPage: {
+      emptyTitle: 'Je favorietenlijst is leeg',
+      emptyDescription: 'Het lijkt erop dat je nog geen items hebt opgeslagen. Ontdek onze collectie en voeg je favorieten toe!',
+      exploreProduct: 'Producten ontdekken',
     },
     checkout: {
       title: 'Afrekenen',

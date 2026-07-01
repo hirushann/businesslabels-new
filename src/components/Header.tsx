@@ -362,9 +362,8 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
               </svg>
             </Link>
             {/* Wishlist */}
-            <button
-              type="button"
-              onClick={() => setIsWishlistOpen(true)}
+            <Link
+              href={lp('/favorites')}
               className="relative cursor-pointer"
               aria-label={t('header.wishlistOpen')}
             >
@@ -376,7 +375,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                   {uniqueWishlistCount}
                 </span>
               ) : null}
-            </button>
+            </Link>
             {/* Cart */}
             <button
               type="button"
