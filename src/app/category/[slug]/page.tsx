@@ -355,7 +355,7 @@ export async function renderCategoryArchivePage({
               keeps the unchanged product-grid layout. */}
           <div className="flex flex-col gap-6">
             {hasSubcategories ? (
-              <h2 className="text-2xl font-bold leading-8 text-neutral-800">
+              <h2 className="text-2xl font-semibold leading-8 text-neutral-800">
                 {t("categoryArchive.productsTitle", { category: categoryTitle })}
               </h2>
             ) : null}
