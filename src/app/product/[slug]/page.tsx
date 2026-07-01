@@ -1074,7 +1074,7 @@ export default async function SingleProductPage({
               <Accordion
                 title={t('product.productSpecifications')}
               >
-                <div className="rounded-lg overflow-hidden flex flex-col gap-2">
+                <div className="rounded-lg -mx-6 overflow-hidden flex flex-col gap-2">
                   {specs.map((spec, i) => (
                     <div
                       key={spec.label}

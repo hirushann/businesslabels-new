@@ -59,7 +59,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                 className="w-[275px] h-[200px] object-contain"
               />
               <div className="w-full flex flex-col justify-start items-center gap-4">
-                <h2 className="w-full text-center text-[#222222] text-[40px] font-['Segoe_UI'] font-bold leading-[48px]">
+                <h2 className="w-full text-center text-[#222222] text-2xl md:text-[32px] lg:text-[40px] font-['Segoe_UI'] font-bold leading-tight md:leading-[48px]">
                   {t('cart.emptyTitle') || 'Your Cart is Empty'}
                 </h2>
                 <p className="w-full max-w-[800px] text-center text-[#444444] text-lg font-['Segoe_UI'] font-normal leading-[26px]">
@@ -103,15 +103,15 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
             {/* Left Panel: Products List */}
             <div className="flex-1 w-full bg-white rounded-xl border border-[#EDF2F7] overflow-hidden shadow-[2px_4px_20px_rgba(109,109,120,0.06)] relative flex flex-col">
               
-              {/* Table Headers */}
-              <div className="w-full h-[68px] border-b border-[#EDF2F7] flex items-center px-6">
+              {/* Table Headers - hidden on mobile/tablet, visible on desktop */}
+              <div className="hidden lg:flex w-full h-[68px] border-b border-[#EDF2F7] items-center px-6">
                 <div className="flex-1 flex items-center gap-6">
                   <div className="w-4" />
                   <div className="w-[280px] text-base font-semibold font-['Segoe_UI'] text-[#444444]">
                     {t('cart.products') || 'Products'}
                   </div>
                 </div>
-                <div className="hidden md:flex items-center gap-6">
+                <div className="flex items-center gap-6">
                   <div className="w-[120px] text-sm font-semibold font-['Segoe_UI'] text-[#444444]">
                     {t('cart.unitPrice') || 'Unit Price'}
                   </div>
@@ -125,7 +125,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
               </div>
 
               {/* Products List Body */}
-              <div className="p-6 flex flex-col gap-6">
+              <div className="p-4 md:p-6 flex flex-col gap-6">
                 {mainItems.map((item, index) => {
                   const href = item.slug ? `/product/${item.slug}${item.type ? `?type=${item.type}` : ''}` : undefined;
                   const linkedWarranty = items.find(
@@ -141,10 +141,10 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                   return (
                     <div key={item.key} className="flex flex-col gap-4">
                       {/* Product Row */}
-                      <div className="w-full flex flex-col md:flex-row md:items-center justify-between gap-4 py-2">
+                      <div className="w-full flex flex-col lg:flex-row lg:items-center justify-between gap-4 py-2">
                         
                         {/* Image & Title Info */}
-                        <div className="flex-1 flex items-center gap-6 min-w-0">
+                        <div className="flex-1 flex items-start md:items-center gap-3 md:gap-6 min-w-0">
                           {/* Close/Remove Button */}
                           <button
                             type="button"
@@ -157,9 +157,9 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                             </svg>
                           </button>
                           
-                          <div className="flex-1 flex items-center gap-4 min-w-0">
+                          <div className="flex-1 flex items-start md:items-center gap-3 md:gap-4 min-w-0">
                             {/* Product Image */}
-                            <div className="w-20 h-20 bg-[#EDF2F7] rounded-lg overflow-hidden flex items-center justify-center p-2 shrink-0">
+                            <div className="w-16 h-16 md:w-20 md:h-20 bg-[#EDF2F7] rounded-lg overflow-hidden flex items-center justify-center p-2 shrink-0">
                               <img
                                 src={item.mainImage || 'https://placehold.co/80x80'}
                                 alt={item.name}
@@ -168,11 +168,11 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                             </div>
                             
                             {/* SKU & Name */}
-                            <div className="flex-1 max-w-[280px] flex flex-col gap-1 min-w-0">
+                            <div className="flex-1 lg:max-w-[280px] flex flex-col gap-1 min-w-0">
                               <span className="text-sm font-semibold font-['Segoe_UI'] text-[#479EF5] truncate">
                                 {item.sku}
                               </span>
-                              <h3 className="text-lg font-semibold font-['Segoe_UI'] text-[#222222] leading-tight min-w-0">
+                              <h3 className="text-lg font-bold font-['Segoe_UI'] text-[#222222] leading-tight min-w-0">
                                 {href ? (
                                   <Link href={href} className="hover:text-[#F18800] transition-colors block whitespace-normal break-words">
                                     {item.name}
@@ -186,16 +186,19 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                         </div>
 
                         {/* Price, Quantity, Line Total */}
-                        <div className="flex flex-wrap md:flex-nowrap items-center gap-6">
+                        <div className="flex flex-wrap lg:flex-nowrap items-center gap-4 md:gap-6 pl-7 md:pl-0 justify-between">
                           {/* Unit Price */}
-                          <div className="w-[120px] flex flex-col justify-center items-start shrink-0">
+                          <div className="w-full md:w-auto lg:w-[120px] flex flex-col justify-center items-start shrink-0">
+                            <span className="text-xs font-semibold text-[#888888] uppercase tracking-wide lg:hidden mb-0.5">
+                              {t('cart.unitPrice') || 'Unit Price'}
+                            </span>
                             <div className="flex items-center gap-1">
                               {hasTierPrices && (
                                 <span className="text-[#444444] text-base font-normal font-['Segoe_UI']">
                                   {t('product.fromPrice') || 'From'}
                                 </span>
                               )}
-                              <span className="text-lg md:text-xl font-semibold font-['Segoe_UI'] text-[#222222]">
+                              <span className="text-lg md:text-xl font-bold font-['Segoe_UI'] text-[#222222]">
                                 {formatEuro(item.price ?? 0)}
                               </span>
                             </div>
@@ -205,7 +208,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                           </div>
 
                           {/* Quantity Selector */}
-                          <div className="w-[260px] flex items-center gap-2">
+                          <div className="w-full md:w-auto lg:w-[260px] flex flex-wrap items-center gap-2">
                             {/* Pill Input */}
                             <div className="h-[38px] bg-white rounded-[44px] shadow-[0px_1px_2px_rgba(16,24,40,0.05)] border border-black/10 flex items-center overflow-hidden shrink-0">
                               <button
@@ -255,7 +258,10 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                           </div>
 
                           {/* Line Total */}
-                          <div className="w-[120px] flex flex-col justify-center items-end shrink-0">
+                          <div className="w-full md:w-auto lg:w-[120px] flex flex-col justify-center items-start lg:items-end shrink-0">
+                            <span className="text-xs font-semibold text-[#888888] uppercase tracking-wide lg:hidden mb-0.5">
+                              {t('common.total') || 'Total'}
+                            </span>
                             <span className="text-lg md:text-xl font-bold font-['Segoe_UI'] text-[#222222]">
                               {formatEuro(linePrice(item))}
                             </span>
@@ -268,7 +274,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
 
                       {/* Nested Warranty Item */}
                       {linkedWarranty ? (
-                        <div className="ml-10 max-w-[728px] w-full p-3 bg-[#F7F9FA] rounded-[12px] flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div className="ml-0 md:ml-10 max-w-[728px] w-full p-3 bg-[#F7F9FA] rounded-[12px] flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                           <div className="flex-1 flex flex-col gap-1 min-w-0">
                             <span className="text-base font-semibold font-['Segoe_UI'] text-[#222222] truncate">
                               {linkedWarranty.name}
@@ -360,7 +366,11 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                       </svg>
                     </div>
                     <p className="text-base font-normal font-['Segoe_UI'] text-[#444444] leading-tight">
-                      Order within <span className="font-semibold">2 hours 34 minutes</span> for delivery <span className="font-semibold">today → </span>shipped <span className="font-semibold">today</span>
+                      {t.rich('cart.orderWithin', {
+                        timeStyle: (chunks) => <span className="font-bold">{chunks}</span>,
+                        deliveryStyle: (chunks) => <span className="font-bold">{chunks}</span>,
+                        shippedStyle: (chunks) => <span className="font-bold">{chunks}</span>,
+                      })}
                     </p>
                   </div>
                   
@@ -376,7 +386,9 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                       </svg>
                     </div>
                     <p className="text-base font-normal font-['Segoe_UI'] text-[#444444] leading-tight">
-                      Free delivery on orders over <span className="font-semibold">€100</span>
+                      {t.rich('cart.freeDeliveryThreshold', {
+                        amountStyle: (chunks) => <span className="font-bold">{chunks}</span>,
+                      })}
                     </p>
                   </div>
 
@@ -407,20 +419,20 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                 <div className="flex flex-col gap-4">
                   {/* Subtotal */}
                   <div className="flex justify-between items-center bg-white/50">
-                    <span className="text-lg font-semibold font-['Segoe_UI'] text-[#222222]">
+                    <span className="text-lg font-bold font-['Segoe_UI'] text-[#222222]">
                       {t('cart.subtotal') || 'Subtotal'}
                     </span>
-                    <span className="text-lg font-semibold font-['Segoe_UI'] text-[#222222]">
+                    <span className="text-lg font-bold font-['Segoe_UI'] text-[#222222]">
                       {formatEuro(totalAmount)}
                     </span>
                   </div>
 
                   {/* Shipping */}
                   <div className="flex justify-between items-center bg-white/50">
-                    <span className="text-lg font-semibold font-['Segoe_UI'] text-[#222222]">
+                    <span className="text-lg font-bold font-['Segoe_UI'] text-[#222222]">
                       {t('checkout.shipping') || 'Shipping'}
                     </span>
-                    <span className="text-lg font-semibold font-['Segoe_UI'] text-[#222222]">
+                    <span className="text-lg font-bold font-['Segoe_UI'] text-[#222222]">
                       {shipping === 0 ? t('checkout.free') || 'Free' : formatEuro(shipping)}
                     </span>
                   </div>
@@ -428,14 +440,14 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                   {/* VAT */}
                   <div className="flex justify-between items-center bg-white/50">
                     <div>
-                      <span className="text-lg font-semibold font-['Segoe_UI'] text-[#222222]">
+                      <span className="text-lg font-bold font-['Segoe_UI'] text-[#222222]">
                         {t('checkout.tax') || 'VAT'}{' '}
                       </span>
                       <span className="text-lg font-normal font-['Segoe_UI'] text-[#222222]">
                         (21%)
                       </span>
                     </div>
-                    <span className="text-lg font-semibold font-['Segoe_UI'] text-[#222222]">
+                    <span className="text-lg font-bold font-['Segoe_UI'] text-[#222222]">
                       {formatEuro(tax)}
                     </span>
                   </div>
@@ -443,7 +455,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                   {/* Discount */}
                   {discountTotal > 0 ? (
                     <div className="flex justify-between items-center bg-white/50">
-                      <span className="text-lg font-semibold font-['Segoe_UI'] text-[#222222]">
+                      <span className="text-lg font-bold font-['Segoe_UI'] text-[#222222]">
                         {t('cart.discount') || 'Discount'}
                       </span>
                       <span className="text-lg font-semibold font-['Segoe_UI'] text-[#DD3333]">
@@ -456,7 +468,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
 
                   {/* Total incl. VAT */}
                   <div className="flex justify-between items-center bg-white/50">
-                    <span className="text-xl font-semibold font-['Segoe_UI'] text-[#222222]">
+                    <span className="text-xl font-bold font-['Segoe_UI'] text-[#222222]">
                       {t('cart.totalInclVat') || 'Total incl. VAT'}
                     </span>
                     <span className="text-xl font-semibold font-['Segoe_UI'] text-[#222222]">
