@@ -88,6 +88,29 @@ type UpsellProduct = {
   main_image: string;
 };
 
+type RelatedProductsSection = {
+  title?: string | null;
+  data?: ProductCardData[] | null;
+  meta?: {
+    total?: number | null;
+  } | null;
+};
+
+type RelatedProductsSectionsResponse = {
+  data?: {
+    sections?: {
+      ink_maintenance?: RelatedProductsSection | null;
+      hardwares?: RelatedProductsSection | null;
+    } | null;
+  } | null;
+};
+
+type ProductCarouselDataSection = {
+  id: string;
+  title: string;
+  products: ProductCardData[];
+};
+
 type ProductWarrantyOption = {
   id: number;
   name?: string | null;
@@ -95,6 +118,40 @@ type ProductWarrantyOption = {
   price?: number | null;
   description?: string | null;
   sort_order?: number | null;
+};
+
+type ProductWarrantyDefaultOption = {
+  type?: string | null;
+  warranty_option_id?: number | string | null;
+  sku?: string | null;
+  name?: string | null;
+  duration_years?: number | null;
+  price?: number | null;
+  description?: string | null;
+};
+
+type ProductWarrantyType = {
+  id: number;
+  name?: string | null;
+  description?: string | null;
+  icon?: string | null;
+  badge_text?: string | null;
+  badge_color?: string | null;
+  options?: Array<{
+    id?: number | string | null;
+    type?: string | null;
+    warranty_option_id?: number | string | null;
+    sku?: string | null;
+    name?: string | null;
+    duration_years?: number | null;
+    description?: string | null;
+    price?: number | null;
+    cart?: {
+      type?: string | null;
+      warranty_option_id?: number | string | null;
+      sku?: string | null;
+    } | null;
+  }> | null;
 };
 
 type ComponentProduct = {
@@ -172,7 +229,8 @@ type ProductDetail = {
     is_available?: boolean | null;
     has_options?: boolean | null;
     options?: ProductWarrantyOption[] | null;
-    default_option?: ProductWarrantyOption | null;
+    default_option?: ProductWarrantyDefaultOption | ProductWarrantyOption | null;
+    types?: ProductWarrantyType[] | null;
   } | null;
   translations?: ProductTranslationEntry[] | null;
   locale_slugs?: Partial<Record<"en" | "nl", string>>;
@@ -695,34 +753,57 @@ function productHref(product: ProductCardData): { pathname: string; query?: { ty
   return { pathname: `/product/${product.slug}` };
 }
 
-/** Map a full API product (ProductResource) to the ProductCard shape. */
-function mapApiProductToCard(p: Record<string, unknown>, locale: "en" | "nl"): ProductCardData {
-  return mapLaravelProductToCardData(p as LaravelProduct, locale);
-}
-
-/** Fetch products compatible with a product finder printer (Post), by sub-category. */
-async function fetchPrinterProducts(
+async function fetchRelatedProductSections(
   baseUrl: string,
-  printerId: number,
-  productType: "ink" | "labels",
+  product: ProductDetail,
+  selectedType: "simple" | "variable" | "group_product" | null,
   locale: "en" | "nl",
-): Promise<ProductCardData[]> {
+): Promise<ProductCarouselDataSection[]> {
+  const productType = productRouteType(product, selectedType);
+  const productSlug = product.slug;
+
+  if (!productType || !productSlug) {
+    return [];
+  }
+
   try {
-    const response = await fetch(withLocaleParam(`${baseUrl}/api/products/printer-products`, locale), {
-      method: "POST",
+    const url = withLocaleParam(
+      `${baseUrl}/api/products/${encodeURIComponent(productType)}/slug/${encodeURIComponent(productSlug)}/related-sections?limit=12`,
+      locale,
+    );
+    const response = await fetch(url, {
       cache: "no-store",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ printer_id: printerId, product_type: productType, per_page: 12 }),
+      headers: { Accept: "application/json" },
     });
 
     if (!response.ok) {
       return [];
     }
 
-    const json = (await response.json()) as { products?: { data?: Array<Record<string, unknown>> } };
-    return (json.products?.data ?? []).map((product) => mapApiProductToCard(product, locale));
+    const json = (await response.json()) as RelatedProductsSectionsResponse;
+    const sections = json.data?.sections;
+    const sectionOrder: Array<{ id: string; fallbackTitle: string; section?: RelatedProductsSection | null }> = [
+      { id: "ink-maintenance", fallbackTitle: "Ink & Maintenance", section: sections?.ink_maintenance },
+      { id: "hardwares", fallbackTitle: "Hardwares", section: sections?.hardwares },
+    ];
+
+    return sectionOrder
+      .map(({ id, fallbackTitle, section }) => {
+        const products = section?.data ?? [];
+
+        if (products.length === 0) {
+          return null;
+        }
+
+        return {
+          id,
+          title: section?.title?.trim() || fallbackTitle,
+          products,
+        };
+      })
+      .filter((section): section is ProductCarouselDataSection => section !== null);
   } catch (error) {
-    console.error(`Failed to fetch printer products (${productType})`, error);
+    console.error(`Failed to fetch related product sections for slug '${productSlug}'`, error);
     return [];
   }
 }
@@ -745,7 +826,7 @@ function ProductCarouselSection({
 
   return (
     <div id={id} className={`scroll-mt-24 px-4 sm:px-10 py-10 ${bgClass}`}>
-      <div className="mx-auto flex flex-col gap-12">
+      <div className="max-w-360 mx-auto flex flex-col gap-12">
         <Carousel opts={{ align: "start", loop: true }} className="w-full">
           <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 px-4 sm:px-10 lg:px-20">
             <h2 className="text-neutral-800 text-2xl sm:text-3xl md:text-4xl font-bold leading-tight md:leading-[48px]">
@@ -840,13 +921,9 @@ export default async function SingleProductPage({
   // show its compatible consumables instead of generic up-sells.
   const printerFinderId = product.printer_finder_id ?? null;
   const isPrinterProduct = printerFinderId != null;
-  const [printerInkProducts, printerHardwareProducts] =
-    printerFinderId != null && baseUrl
-      ? await Promise.all([
-          fetchPrinterProducts(baseUrl, printerFinderId, "ink", locale),
-          fetchPrinterProducts(baseUrl, printerFinderId, "labels", locale),
-        ])
-      : [[] as ProductCardData[], [] as ProductCardData[]];
+  const relatedProductSections = baseUrl
+    ? await fetchRelatedProductSections(baseUrl, product, productRouteType(product, selectedType), locale)
+    : [];
 
   // Ink / label products show "Suitable Printers" and skip the generic up-sells block.
   const hasSuitablePrinters = suitablePrinters.length > 0;
@@ -1121,23 +1198,15 @@ export default async function SingleProductPage({
         </div>
       </div>
 
-      {/* Printer: compatible consumables pulled from the product finder */}
-      {isPrinterProduct && (
-        <>
-          <ProductCarouselSection
-            id="ink-maintenance"
-            title={t('product.inkMaintenance')}
-            products={printerInkProducts}
-            bgClass="bg-gray-50"
-          />
-          <ProductCarouselSection
-            id="hardwares"
-            title={t('product.hardwares')}
-            products={printerHardwareProducts}
-            bgClass="bg-white"
-          />
-        </>
-      )}
+      {relatedProductSections.map((section, index) => (
+        <ProductCarouselSection
+          key={section.id}
+          id={section.id}
+          title={section.title}
+          products={section.products}
+          bgClass={index % 2 === 0 ? "bg-gray-50" : "bg-white"}
+        />
+      ))}
 
       {/* Ink / label: suitable printers (replaces the generic up-sell block) */}
       {hasSuitablePrinters && (
