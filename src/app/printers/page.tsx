@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import FinderListing from "@/components/FinderListing";
+
+export const dynamic = "force-dynamic";
 import ProductsListing from "@/components/ProductsListing";
 import CTABanner from "@/components/CTABanner";
 import {
@@ -398,12 +400,26 @@ export default async function PrintersPage({
     initialCatalog = await searchPrinters(
       parsePrinterSearchParams(query, locale),
     );
+    // Log to local file for debugging
+    const fs = require('fs');
+    const path = require('path');
+    const logPath = path.join(process.cwd(), 'api-log.txt');
+    const logEntry = `[${new Date().toISOString()}] PAGE RENDER - Query: ${query.toString()}\n` +
+      `Printers: ${initialCatalog.printers.map(p => `${p.id}:${p.name}(featured:${p.featured})`).join(', ')}\n\n`;
+    fs.appendFileSync(logPath, logEntry);
+
     console.log(
       `[Finder Page] Server-side initial catalog loaded (${initialCatalog.printers.length} printers):`,
       initialCatalog.printers,
     );
   } catch (error) {
     console.error("Failed to load printer catalog.", error);
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const logPath = path.join(process.cwd(), 'api-log.txt');
+      fs.appendFileSync(logPath, `[${new Date().toISOString()}] PAGE RENDER ERROR: ${(error as any).message}\n\n`);
+    } catch {}
   }
 
   return (
