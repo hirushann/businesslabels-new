@@ -61,7 +61,7 @@ export default function PrinterCard({ printer, href }: PrinterCardProps) {
   const cardContent = (
     <div className="bg-white rounded-xl border border-[#EDF0F4] shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] flex flex-col overflow-hidden hover:shadow-[2px_8px_28px_0px_rgba(109,109,120,0.18)] transition-shadow duration-200">
       {/* Image area */}
-      <div className="relative h-[220px] bg-white border-b border-[#EDF0F4] flex items-center justify-center overflow-hidden">
+      <div className="relative h-[220px] border-b border-[#EDF2F7] flex items-center justify-center overflow-hidden bg-[#EDF2F7]">
         <Image
           src={imageSrc}
           alt={printerName}

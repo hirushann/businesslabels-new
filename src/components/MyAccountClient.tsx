@@ -435,6 +435,34 @@ async function requestAccountAddresses() {
   return normalizeAddresses(data);
 }
 
+async function requestAccountFavorites() {
+  const response = await fetch('/api/account/favorites', {
+    headers: {
+      Accept: 'application/json',
+    },
+  });
+  const data = await response.json().catch(() => ({}));
+  console.log('Favorites API Response:', data);
+
+  if (!response.ok) {
+    if (response.status === 401 || data.message === 'Unauthenticated.') {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth_user');
+        window.location.href = '/login?redirect=/my-account';
+      }
+      return [];
+    }
+
+    throw new Error(
+      isPlainObject(data) && typeof data.message === 'string'
+        ? data.message
+        : 'Unable to load your favorite products.'
+    );
+  }
+
+  return Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
+}
+
 function formatCustomerSince(user: StoredUser, t: TranslationFn, locale: string) {
   const dateValue = userString(user, ['created_at', 'createdAt']);
 
@@ -1132,42 +1160,86 @@ function PrintersView() {
 }
 
 import ProductCard, { type ProductCardData } from "@/components/ProductCard";
+import { useWishlist } from "@/components/WishlistProvider";
 import { PrinterCardData } from './PrintersListing';
 
 function FavouriteProductsView() {
   const t = useTranslations();
-  const favourites: ProductCardData[] = [
-    {
-      id: 1,
-      sku: 'BL-7500-MATTE',
-      name: 'Matte Paper Labels 102mm x 152mm',
-      subtitle: 'Premium Quality',
-      excerpt: 'Ideal for shipping labels and industrial identification.',
-      materialTitle: 'Matte Paper',
-      price: 45.99,
-      originalPrice: 52.00,
-      inStock: true,
-      mainImage: 'https://placehold.co/600x400',
-      slug: 'matte-paper-labels',
-      type: 'simple',
-      categories: [{ name: 'Labels' }]
-    },
-    {
-      id: 2,
-      sku: 'BL-C6000-INK-BLK',
-      name: 'Epson SJIC36P Ink Cartridge - Black',
-      subtitle: 'Original Epson Ink',
-      excerpt: 'Genuine UltraChrome DL pigment ink for ColorWorks C6000.',
-      materialTitle: 'Pigment Ink',
-      price: 129.00,
-      originalPrice: null,
-      inStock: true,
-      mainImage: 'https://placehold.co/600x400',
-      slug: 'epson-c6000-ink-black',
-      type: 'simple',
-      categories: [{ name: 'Ink Supplies' }]
+  const wishlist = useWishlist();
+  const [favourites, setFavourites] = useState<ProductCardData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadFavourites() {
+      try {
+        const nextFavourites = await requestAccountFavorites();
+        if (isMounted) {
+          setFavourites(nextFavourites);
+        }
+      } catch (error) {
+        if (isMounted) {
+          setFavourites([]);
+          setErrorMessage(error instanceof Error ? error.message : 'Unable to load your favorite products.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
     }
-  ];
+
+    void loadFavourites();
+
+    window.addEventListener('favorites-updated', loadFavourites);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener('favorites-updated', loadFavourites);
+    };
+  }, [t]);
+
+  const handleRemoveFavorite = async (product: ProductCardData) => {
+    const key = product.slug ? (product.type ? `${product.slug}::${product.type}` : product.slug) : String(product.id);
+    
+    // Optimistic update for current view
+    setFavourites(prev => prev.filter(p => p.id !== product.id));
+
+    // Remove from local wishlist state & trigger DELETE API sync
+    wishlist.removeItem(key, { id: product.id, type: product.type });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="flex flex-col gap-2">
+          <h2 className="text-3xl font-black text-neutral-800 tracking-tight">{t('account.favouriteProducts')}</h2>
+          <p className="text-neutral-500 font-medium">{t('account.favouriteSuppliesDesc')}</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {[1, 2].map((i) => (
+            <div key={i} className="h-96 bg-slate-50 rounded-[40px] animate-pulse border border-slate-200" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="flex flex-col gap-2">
+          <h2 className="text-3xl font-black text-neutral-800 tracking-tight">{t('account.favouriteProducts')}</h2>
+          <p className="text-neutral-500 font-medium">{t('account.favouriteSuppliesDesc')}</p>
+        </div>
+        <div className="p-8 bg-red-50 border border-red-200 text-red-600 rounded-[40px] font-bold text-center">
+          {errorMessage}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -1189,11 +1261,21 @@ function FavouriteProductsView() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {favourites.map((product) => (
-            <ProductCard 
-              key={product.sku} 
-              product={product} 
-              href={product.slug ? `/product/${product.slug}` : undefined}
-            />
+            <div key={product.sku} className="relative group">
+              <ProductCard 
+                product={product} 
+                href={product.slug ? `/product/${product.slug}` : undefined}
+              />
+              <button
+                onClick={() => handleRemoveFavorite(product)}
+                className="absolute top-4 right-4 z-20 bg-white/90 hover:bg-red-500 hover:text-white text-neutral-500 p-2 rounded-full shadow-md transition-all duration-200 flex items-center justify-center border border-neutral-200/50 hover:border-red-500"
+                title={t('account.removeFromFavorites') || "Remove from favorites"}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           ))}
         </div>
       )}

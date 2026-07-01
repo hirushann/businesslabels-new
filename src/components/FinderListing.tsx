@@ -8,6 +8,7 @@ import PrinterCard from "@/components/PrinterCard";
 import { useDebouncedSearchParam } from "@/components/search/useDebouncedSearchParam";
 import { RequestPrinterModal } from "@/components/RequestPrinterModal";
 import { getPrinterPath } from "@/lib/routes/printers";
+
 import type {
   PrinterCardData,
   PrinterSearchResponse,
@@ -64,9 +65,113 @@ export default function FinderListing({
 
   const currentQueryString = searchParams.toString();
   const loading = isPending || isFetching;
-  const hasMore = currentPage < lastPage;
 
   // Auto-focus search on mount / when focus param present
+  const [favoriteIds, setFavoriteIds] = useState<Set<string | number>>(new Set());
+  const [myPrinters, setMyPrinters] = useState<PrinterCardData[]>([]);
+
+  useEffect(() => {
+    function updateFavorites() {
+      const stored = localStorage.getItem('favorite_printers');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            setMyPrinters(parsed);
+            setFavoriteIds(new Set(parsed.map((p: any) => p.id)));
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      } else {
+        setMyPrinters([]);
+        setFavoriteIds(new Set());
+      }
+    }
+
+    updateFavorites();
+
+    window.addEventListener('favorites-updated', updateFavorites);
+    return () => {
+      window.removeEventListener('favorites-updated', updateFavorites);
+    };
+  }, []);
+
+  const searchValue = searchParams.get("search") || searchParams.get("q") || "";
+
+  const sortedMyPrinters = useMemo(() => {
+    const compareName = (a: PrinterCardData, b: PrinterCardData) => {
+      return a.name.localeCompare(b.name, locale);
+    };
+
+    const updatedMyPrinters = myPrinters.map(localPrinter => {
+      const fetched = printers.find(p => p.id === localPrinter.id);
+      return fetched ? fetched : localPrinter;
+    });
+
+    const filtered = updatedMyPrinters.filter((printer) => {
+      if (searchValue) {
+        const lowerQuery = searchValue.toLowerCase().trim();
+        const matchesName = printer.name?.toLowerCase().includes(lowerQuery);
+        const matchesSubtitle = printer.subtitle?.toLowerCase().includes(lowerQuery);
+        const matchesSku = printer.sku?.toLowerCase().includes(lowerQuery);
+        const matchesSlug = printer.slug?.toLowerCase().includes(lowerQuery);
+        if (!matchesName && !matchesSubtitle && !matchesSku && !matchesSlug) {
+          return false;
+        }
+      }
+
+      const paramKeys = ["druktype", "kern", "detectie", "width", "buiten_diameter"] as const;
+      for (const key of paramKeys) {
+        const urlKey = key === "buiten_diameter" ? "buiten_diameter" : key;
+        const selectedValues = searchParams.getAll(urlKey).flatMap(v => v.split(",")).filter(Boolean);
+        if (selectedValues.length > 0) {
+          const printerValues = printer.properties?.[key] || [];
+          const hasMatch = selectedValues.some(val => printerValues.includes(val));
+          if (!hasMatch) return false;
+        }
+      }
+
+      return true;
+    });
+
+    return [...filtered].sort(compareName);
+  }, [myPrinters, printers, searchValue, searchParams, locale]);
+
+  const otherPrinters = useMemo(() => {
+    const isMyPrinter = (p: PrinterCardData) => favoriteIds.has(p.id) || favoriteIds.has(Number(p.id)) || favoriteIds.has(String(p.id));
+
+    const isFeatured = (p: PrinterCardData) => {
+      return !!(
+        p.properties?.featured?.[0] === '1' ||
+        p.properties?.featured?.[0] === 'true' ||
+        p.properties?.featured?.[0] === 'yes' ||
+        (p as any).featured === '1' ||
+        (p as any).featured === true ||
+        (p as any).featured === 'true'
+      );
+    };
+
+    const compareName = (a: PrinterCardData, b: PrinterCardData) => {
+      return a.name.localeCompare(b.name, locale);
+    };
+
+    const featuredPrintersList = printers.filter(p => !isMyPrinter(p) && isFeatured(p)).sort(compareName);
+    const otherPrintersList = printers.filter(p => !isMyPrinter(p) && !isFeatured(p)).sort(compareName);
+
+    return [...featuredPrintersList, ...otherPrintersList];
+  }, [printers, favoriteIds, locale]);
+
+  const sortedPrinters = useMemo(() => {
+    return [...sortedMyPrinters, ...otherPrinters];
+  }, [sortedMyPrinters, otherPrinters]);
+
+  const displayedPrinters = useMemo(() => {
+    return sortedPrinters.slice(0, currentPage * 24);
+  }, [sortedPrinters, currentPage]);
+
+  const hasMore = currentPage < lastPage || sortedPrinters.length > displayedPrinters.length;
+
   useEffect(() => {
     if (!hasFocusedSearchRef.current || searchParams.get("focus") === "true") {
       hasFocusedSearchRef.current = true;
@@ -132,6 +237,12 @@ export default function FinderListing({
     setIsLoadingMore(true);
     const nextPage = currentPage + 1;
 
+    if (nextPage > lastPage) {
+      setCurrentPage(nextPage);
+      setIsLoadingMore(false);
+      return;
+    }
+
     const params = new URLSearchParams(currentQueryString);
     params.set("page", String(nextPage));
     const endpoint = `/api/printers?${params.toString()}`;
@@ -151,9 +262,7 @@ export default function FinderListing({
     } finally {
       setIsLoadingMore(false);
     }
-  }, [isLoadingMore, hasMore, currentPage, currentQueryString]);
-
-  const searchValue = searchParams.get("search") || searchParams.get("q") || "";
+  }, [isLoadingMore, hasMore, currentPage, lastPage, currentQueryString]);
 
   const setParams = useCallback(
     (updater: (params: URLSearchParams) => void) => {
@@ -196,7 +305,7 @@ export default function FinderListing({
   return (
     <div className="flex flex-col">
       {/* ── Search section ── */}
-      <div className="flex flex-col gap-4 pb-4 border-b border-[#EDF0F4] lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-4 pb-4 border-b border-[#EDF0F4] lg:flex-row lg:items-center lg:justify-between max-w-[1440px] mx-auto">
         <h2
           className="text-[#222222] text-3xl font-bold leading-[120%] shrink-0"
           style={{ fontFamily: "Segoe UI, sans-serif" }}
@@ -256,7 +365,7 @@ export default function FinderListing({
 
       {/* ── Results count ── */}
       <div
-        className="py-4 text-sm text-[#666666]"
+        className="py-4 text-sm text-[#666666] max-w-[1440px] mx-auto"
         style={{ fontFamily: "Segoe UI, sans-serif" }}
       >
         {loading
@@ -265,7 +374,7 @@ export default function FinderListing({
       </div>
 
       {/* ── Printer grid ── */}
-      {loading && printers.length === 0 ? (
+      {loading && displayedPrinters.length === 0 ? (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 9 }).map((_, i) => (
             <div
@@ -274,18 +383,18 @@ export default function FinderListing({
             />
           ))}
         </div>
-      ) : printers.length === 0 ? (
+      ) : displayedPrinters.length === 0 ? (
         <EmptyState
           title={t("finder.noPrintersFound")}
           description={t("finder.noPrintersDescription")}
         />
       ) : (
         <div
-          className={`grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 transition-opacity duration-200 ${
+          className={`grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 transition-opacity duration-200 max-w-[1440px] mx-auto ${
             loading ? "opacity-60 pointer-events-none" : "opacity-100"
           }`}
         >
-          {printers.map((printer) => (
+          {displayedPrinters.map((printer) => (
             <PrinterCard
               key={printer.id}
               printer={printer}
@@ -306,7 +415,7 @@ export default function FinderListing({
 
       {/* ── View more Printers button — only shown when more pages exist ── */}
       {!loading && hasMore && (
-        <div className="mt-10 flex justify-center">
+        <div className="mt-10 flex justify-center  max-w-[1440px] mx-auto">
           <button
             type="button"
             onClick={loadMore}
@@ -350,7 +459,7 @@ export default function FinderListing({
 
       {/* ── FAQ / Info cards section ── */}
       <div className="mt-16 -mx-6 px-6 py-20 bg-[#F7F9FA] sm:-mx-10 sm:px-10 lg:-mx-10 lg:px-10">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3  max-w-[1440px] mx-auto">
           {faqItems.map((item) => (
             <div
               key={item.title}
@@ -379,5 +488,6 @@ export default function FinderListing({
         onOpenChange={setIsModalOpen}
       />
     </div>
+    
   );
 }

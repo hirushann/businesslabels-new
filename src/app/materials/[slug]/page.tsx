@@ -141,37 +141,30 @@ export async function generateMetadata({ params }: MaterialPageProps): Promise<M
 function ContactIcon({ type }: { type: "call" | "email" | "whatsapp" }) {
   if (type === "call") {
     return (
-      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M22 16.92V20A2 2 0 0 1 19.82 22A19.8 19.8 0 0 1 3.08 5.18A2 2 0 0 1 5.06 3H8.15A2 2 0 0 1 10.15 4.72C10.28 5.68 10.5 6.62 10.82 7.52A2 2 0 0 1 10.37 9.63L9.06 10.94A16 16 0 0 0 13.06 14.94L14.37 13.63A2 2 0 0 1 16.48 13.18C17.38 13.5 18.32 13.72 19.28 13.85A2 2 0 0 1 22 16.92Z" />
-      </svg>
+      <svg width="38" height="38" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg"><g filter="url(#filter0_d_1507_1198)"><path d="M1 8C1 3.58172 4.58172 0 9 0H25C29.4183 0 33 3.58172 33 8V24C33 28.4183 29.4183 32 25 32H9C4.58172 32 1 28.4183 1 24V8Z" fill="#FFF7ED" shapeRendering="crispEdges"/><mask id="mask0_1507_1198" style={{ maskType: "alpha" }} maskUnits="userSpaceOnUse" x="9" y="8" width="16" height="16"><rect x="9" y="8" width="16" height="16" fill="#D9D9D9"/></mask><g mask="url(#mask0_1507_1198)"><path d="M21.9623 21.6624C20.7059 21.6624 19.4438 21.3703 18.1758 20.7861C16.9079 20.2019 15.7429 19.3778 14.6809 18.3138C13.6191 17.2497 12.796 16.0847 12.2118 14.8188C11.6276 13.553 11.3354 12.2919 11.3354 11.0356C11.3354 10.8337 11.4021 10.6655 11.5354 10.5309C11.6688 10.3964 11.8354 10.3291 12.0354 10.3291H14.2098C14.3781 10.3291 14.5266 10.384 14.6553 10.4939C14.7839 10.6037 14.8658 10.7394 14.9008 10.9009L15.2829 12.8624C15.3094 13.0444 15.3038 13.2008 15.2663 13.3316C15.2286 13.4624 15.1611 13.5722 15.0636 13.6611L13.5239 15.1599C13.7717 15.6137 14.0548 16.043 14.3733 16.4478C14.6916 16.8524 15.0363 17.2389 15.4073 17.6073C15.7731 17.9732 16.1619 18.3129 16.5739 18.6266C16.9859 18.9403 17.4308 19.2322 17.9086 19.5023L19.4046 17.9933C19.509 17.8847 19.6353 17.8086 19.7836 17.7649C19.9318 17.7214 20.0859 17.7107 20.2458 17.7329L22.097 18.1099C22.2653 18.1544 22.4027 18.2403 22.5091 18.3676C22.6156 18.4949 22.6688 18.6394 22.6688 18.8009V20.9624C22.6688 21.1624 22.6015 21.3291 22.467 21.4624C22.3324 21.5958 22.1642 21.6624 21.9623 21.6624ZM13.0508 14.2138L14.2406 13.0753C14.2619 13.0582 14.2758 13.0347 14.2823 13.0048C14.2887 12.9749 14.2877 12.9471 14.2791 12.9214L13.9893 11.4316C13.9807 11.3975 13.9658 11.3719 13.9444 11.3548C13.9231 11.3377 13.8953 11.3291 13.8611 11.3291H12.4354C12.4098 11.3291 12.3884 11.3377 12.3713 11.3548C12.3543 11.3719 12.3458 11.3933 12.3458 11.4189C12.3799 11.8745 12.4544 12.3373 12.5694 12.8073C12.6843 13.2774 12.8448 13.7462 13.0508 14.2138ZM18.8508 19.9753C19.2927 20.1813 19.7536 20.3388 20.2334 20.4478C20.7135 20.5567 21.162 20.6214 21.5789 20.6419C21.6046 20.6419 21.626 20.6334 21.6431 20.6163C21.6602 20.5992 21.6688 20.5778 21.6688 20.5521V19.1496C21.6688 19.1154 21.6602 19.0876 21.6431 19.0663C21.626 19.0449 21.6004 19.03 21.5663 19.0214L20.1663 18.7368C20.1406 18.7282 20.1182 18.7272 20.099 18.7336C20.0797 18.74 20.0594 18.7539 20.038 18.7753L18.8508 19.9753Z" fill="#F18800"/></g></g><defs><filter id="filter0_d_1507_1198" x="0" y="0" width="34" height="34" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB"><feFlood floodOpacity="0" result="BackgroundImageFix"/><feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/><feMorphology radius="1" operator="erode" in="SourceAlpha" result="effect1_dropShadow_1507_1198"/><feOffset dy="1"/><feGaussianBlur stdDeviation="1"/><feComposite in2="hardAlpha" operator="out"/><feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.1 0"/><feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1507_1198"/><feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1507_1198" result="shape"/></filter></defs></svg>
     );
   }
   if (type === "email") {
     return (
-      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <rect x="2" y="4" width="20" height="16" rx="2" />
-        <path d="M2 7l10 7 10-7" />
-      </svg>
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg"><g filter="url(#filter0_d_1507_1205)"><path d="M1 8C1 3.58172 4.58172 0 9 0H25C29.4183 0 33 3.58172 33 8V24C33 28.4183 29.4183 32 25 32H9C4.58172 32 1 28.4183 1 24V8Z" fill="#FFF7ED" shapeRendering="crispEdges"/><mask id="mask0_1507_1205" style={{ maskType: "alpha" }} maskUnits="userSpaceOnUse" x="9" y="8" width="16" height="16"><rect x="9" y="8" width="16" height="16" fill="#D9D9D9"/></mask><g mask="url(#mask0_1507_1205)"><path d="M11.8717 21C11.5349 21 11.2498 20.8833 11.0165 20.65C10.7832 20.4167 10.6665 20.1316 10.6665 19.7948V12.2052C10.6665 11.8684 10.7832 11.5833 11.0165 11.35C11.2498 11.1167 11.5349 11 11.8717 11H22.128C22.4648 11 22.7498 11.1167 22.9832 11.35C23.2165 11.5833 23.3332 11.8684 23.3332 12.2052V19.7948C23.3332 20.1316 23.2165 20.4167 22.9832 20.65C22.7498 20.8833 22.4648 21 22.128 21H11.8717ZM22.3332 12.9615L17.3242 16.168C17.2729 16.197 17.2199 16.2198 17.1652 16.2365C17.1105 16.2532 17.0554 16.2615 16.9998 16.2615C16.9443 16.2615 16.8892 16.2532 16.8345 16.2365C16.7797 16.2198 16.7267 16.197 16.6755 16.168L11.6665 12.9615V19.7948C11.6665 19.8547 11.6857 19.9039 11.7242 19.9423C11.7626 19.9808 11.8118 20 11.8717 20H22.128C22.1879 20 22.2371 19.9808 22.2755 19.9423C22.3139 19.9039 22.3332 19.8547 22.3332 19.7948V12.9615ZM16.9998 15.3333L22.2307 12H11.769L16.9998 15.3333ZM11.6665 13.1153V12.3532V12.373V12.3518V13.1153Z" fill="#F18800"/></g></g><defs><filter id="filter0_d_1507_1205" x="0" y="0" width="34" height="34" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB"><feFlood floodOpacity="0" result="BackgroundImageFix"/><feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/><feMorphology radius="1" operator="erode" in="SourceAlpha" result="effect1_dropShadow_1507_1205"/><feOffset dy="1"/><feGaussianBlur stdDeviation="1"/><feComposite in2="hardAlpha" operator="out"/><feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.1 0"/><feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1507_1205"/><feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1507_1205" result="shape"/></filter></defs></svg>
     );
   }
   return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-    </svg>
+    <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg"><g filter="url(#filter0_d_1507_1212)"><path d="M1 8C1 3.58172 4.58172 0 9 0H25C29.4183 0 33 3.58172 33 8V24C33 28.4183 29.4183 32 25 32H9C4.58172 32 1 28.4183 1 24V8Z" fill="#FFF7ED" shapeRendering="crispEdges"/><path d="M9 24L10.1247 19.8913C9.43067 18.6887 9.066 17.3253 9.06667 15.9273C9.06867 11.5567 12.6253 8 16.9953 8C19.116 8.00067 21.1066 8.82667 22.604 10.3253C24.1006 11.824 24.9246 13.816 24.924 15.9347C24.922 20.306 21.3653 23.8627 16.9953 23.8627C15.6687 23.862 14.3613 23.5293 13.2033 22.8973L9 24ZM13.398 21.462C14.5153 22.1253 15.582 22.5227 16.9926 22.5233C20.6246 22.5233 23.5833 19.5673 23.5853 15.9333C23.5866 12.292 20.642 9.34 16.998 9.33867C13.3633 9.33867 10.4067 12.2947 10.4053 15.928C10.4047 17.4113 10.8393 18.522 11.5693 19.684L10.9033 22.116L13.398 21.462ZM20.9893 17.8193C20.94 17.7367 20.808 17.6873 20.6093 17.588C20.4113 17.4887 19.4373 17.0093 19.2553 16.9433C19.074 16.8773 18.942 16.844 18.8093 17.0427C18.6773 17.2407 18.2973 17.6873 18.182 17.8193C18.0666 17.9513 17.9506 17.968 17.7526 17.8687C17.5546 17.7693 16.916 17.5607 16.1593 16.8853C15.5707 16.36 15.1727 15.7113 15.0573 15.5127C14.942 15.3147 15.0453 15.2073 15.144 15.1087C15.2333 15.02 15.342 14.8773 15.4413 14.7613C15.542 14.6467 15.5747 14.564 15.6413 14.4313C15.7073 14.2993 15.6747 14.1833 15.6247 14.084C15.5747 13.9853 15.1787 13.01 15.014 12.6133C14.8527 12.2273 14.6893 12.2793 14.568 12.2733L14.188 12.2667C14.056 12.2667 13.8413 12.316 13.66 12.5147C13.4787 12.7133 12.9667 13.192 12.9667 14.1673C12.9667 15.1427 13.6767 16.0847 13.7753 16.2167C13.8747 16.3487 15.172 18.35 17.1593 19.208C17.632 19.412 18.0013 19.534 18.2886 19.6253C18.7633 19.776 19.1953 19.7547 19.5366 19.704C19.9173 19.6473 20.7086 19.2247 20.874 18.762C21.0393 18.2987 21.0393 17.902 20.9893 17.8193Z" fill="#F18800"/></g><defs><filter id="filter0_d_1507_1212" x="0" y="0" width="34" height="34" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB"><feFlood floodOpacity="0" result="BackgroundImageFix"/><feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/><feMorphology radius="1" operator="erode" in="SourceAlpha" result="effect1_dropShadow_1507_1212"/><feOffset dy="1"/><feGaussianBlur stdDeviation="1"/><feComposite in2="hardAlpha" operator="out"/><feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.1 0"/><feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1507_1212"/><feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1507_1212" result="shape"/></filter></defs></svg>
   );
 }
 
 
 function DetailTable({ rows }: { rows: { label: string; value: ReactNode }[] }) {
   return (
-    <div className="overflow-hidden rounded-lg border border-black/5">
+    <div className="overflow-hidden">
       {rows.map((row, index) => (
         <div
           key={`${row.label}-${index}`}
           className={`flex items-center justify-between gap-6 px-4 py-3 ${index % 2 === 0 ? "bg-white/70" : "bg-transparent"}`}
         >
           <span className="text-base leading-6 text-neutral-500">{row.label}</span>
-          <span className="text-right text-base font-semibold leading-6 text-neutral-800">{row.value}</span>
+          <span className="text-right text-base font-bold leading-6 text-neutral-800">{row.value}</span>
         </div>
       ))}
     </div>
@@ -180,10 +173,10 @@ function DetailTable({ rows }: { rows: { label: string; value: ReactNode }[] }) 
 
 function SidebarCard({ title, description, children }: { title: string; description: string; children: ReactNode }) {
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)]">
+    <div className="flex flex-col gap-4 rounded-xl border border-[#EDF2F7] bg-white p-6 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)]">
       <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-bold leading-6 text-neutral-800">{title}</h2>
-        <p className="text-sm leading-5 text-neutral-500">{description}</p>
+        <h2 className="text-[24px] font-bold leading-9 font-semibold text-neutral-800">{title}</h2>
+        <p className="text-base leading-7 text-neutral-500">{description}</p>
       </div>
       {children}
     </div>
@@ -216,18 +209,18 @@ function HelpPanel({
   ];
   return (
     <div className="flex flex-col gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)]">
-      <h2 className="text-lg font-bold leading-6 text-neutral-800">{labels.title}</h2>
+      <h2 className="text-lg font-semibold leading-6 text-neutral-800">{labels.title}</h2>
       <div className="grid grid-cols-3 gap-4">
         {actions.map((action) => (
           <Link
             key={action.label}
             href={action.href}
-            className="flex flex-col items-center justify-center gap-3 rounded-xl border border-gray-100 bg-slate-100/30 p-3 text-center transition-colors hover:border-amber-200 hover:bg-orange-50"
+            className="flex flex-col items-center justify-center gap-3 rounded-xl border border-gray-100 bg-[slate-100/30] p-3 text-center transition-colors hover:border-amber-200 hover:bg-orange-50"
           >
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-50 shadow-sm">
               <ContactIcon type={action.type} />
             </span>
-            <span className="text-sm font-semibold leading-5 text-neutral-800">{action.label}</span>
+            <span className="text-sm font-bold leading-5 text-neutral-800">{action.label}</span>
           </Link>
         ))}
       </div>
@@ -250,13 +243,14 @@ function MaterialProductsSection({
 }) {
   return (
     <section id={MATERIAL_PRODUCTS_SECTION_ID} className="scroll-mt-24 bg-gray-50 px-4 py-24 sm:px-6 lg:px-10">
-      <div className="mx-auto flex max-w-300 flex-col gap-8">
-        <h2 className="text-4xl font-bold leading-12 text-neutral-800">{title}</h2>
+      <div className="mx-auto flex max-w-[1440px] flex-col gap-8">
+        <h2 className="text-4xl font-semibold leading-12 text-neutral-800">{title}</h2>
         <ProductsListing
           initialCatalog={initialCatalog}
           initialQueryString={initialQueryString}
           scopeQueryString={scopeQueryString}
           baselineRangeFilters={baselineCatalog.filters.ranges}
+          hideSearchInput={true}
         />
       </div>
     </section>
@@ -338,7 +332,8 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
           aboutRows={aboutRows}
           specRows={rawSpecRows}
           variant="link"
-          downloadLabel={t("materialsPage.downloadSpecSheet")}
+          // downloadLabel={t("materialsPage.downloadSpecSheet")}
+          downloadLabel={(material.brand ? material.brand + "-" : "") + material.code + ".pdf"}
           materialImage={materialImage}
           description={material.description}
           pdfTitleLabel={t("materialDetail.specSheet")}
@@ -364,8 +359,8 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
           />
 
           <div className="flex flex-col gap-2">
-            {material.code ? <span className="text-sm font-semibold uppercase tracking-wide text-amber-500">{material.code}</span> : null}
-            <h1 className="text-3xl font-bold leading-10 text-neutral-800">{material.title}</h1>
+            {material.code ? <span className="text-base font-bold uppercase tracking-wide text-[#479EF5]">{material.code}</span> : null}
+            <h1 className="text-[32px] font-semibold leading-10 text-[#222222]">{material.title}</h1>
             {material.subtitle ? <p className="text-lg leading-7 text-neutral-600">{material.subtitle}</p> : null}
           </div>
 
@@ -386,11 +381,11 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
 
               <div className="flex flex-col gap-6">
                 <Accordion title={t("materialDetail.aboutThisMaterial")}>
-                  <div className="flex flex-col gap-5">
+                  <div className="flex flex-col gap-5 -mx-10 px-5">
                     <DetailTable rows={aboutRows} />
                     {material.description ? (
                       <div
-                        className="text-base leading-7 text-neutral-600 [&_a]:font-medium [&_a]:text-amber-600 [&_a:hover]:text-amber-700"
+                        className="text-base px-5 leading-7 text-neutral-600 [&_a]:text-[#f08500] [&_a]:underline hover:[&_a]:text-[#d97706] [&_a]:transition-colors"
                         dangerouslySetInnerHTML={{ __html: material.description }}
                       />
                     ) : null}
@@ -399,7 +394,9 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
 
                 <Accordion title={t("materialDetail.specifications")}>
                   {specRows.length > 0 ? (
+                    <div className="flex flex-col gap-5 -mx-10 px-5">
                     <DetailTable rows={specRows} />
+                    </div>
                   ) : (
                     <p className="text-base leading-6 text-neutral-500">{t("materialDetail.noSpecifications")}</p>
                   )}
@@ -432,19 +429,21 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
               />
 
               {/* ICC Color Profiles */}
-              <div className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-6">
-                <h2 className="text-lg font-bold leading-6 text-neutral-800">
-                  {t("materialDetail.iccProfilesTitle")}
-                </h2>
-                <p className="text-sm leading-5 text-neutral-600">
-                  {isNl
-                    ? "Download ICC-profielen om te zorgen voor een nauwkeurige en precieze kleurweergave van de printer."
-                    : "Download ICC profiles to ensure precise and accurate printer color reproduction."}
-                </p>
+              <div className="flex flex-col gap-4 rounded-xl border-2 border-[#FFEDD4] bg-[linear-gradient(135deg,#FFF7ED_0%,#FFFFFF_100%)] p-6">
+                <div className="flex flex-col gap-2">
+                  <h2 className="text-[24px] font-semibold leading-9 text-[#222222]">
+                    {t("materialDetail.iccProfilesTitle")}
+                  </h2>
+                  <p className="text-base leading-[26px] text-[#4F4F4F]">
+                    {isNl
+                      ? "Download ICC-profielen om te zorgen voor een nauwkeurige en precieze kleurweergave van de printer."
+                      : "Download ICC profiles to ensure precise and accurate printer color reproduction."}
+                  </p>
+                </div>
                 <IccProfileModal materialTitle={material.title} isNl={isNl} />
               </div>
 
-              {material.spec_sheet_url && (
+              {/* {material.spec_sheet_url && (
                 <DownloadSpecSheetButton
                   materialId={material.id}
                   materialTitle={material.title}
@@ -464,7 +463,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
                   pageLabel={locale === "nl" ? "Pagina" : "Page"}
                   ofLabel={locale === "nl" ? "van" : "of"}
                 />
-              )}
+              )} */}
             </aside>
           </div>
         </div>

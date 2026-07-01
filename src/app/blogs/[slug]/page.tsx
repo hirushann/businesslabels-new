@@ -145,7 +145,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
               {/* Article Content */}
               <article className="flex flex-1 flex-col items-start gap-8">
                 <div 
-                  className="cms-content w-full prose prose-neutral max-w-none prose-headings:text-neutral-800 prose-p:text-neutral-700 prose-a:text-amber-600 hover:prose-a:text-amber-700"
+                  className="cms-content w-full prose prose-neutral max-w-none prose-headings:text-neutral-800 prose-p:text-neutral-700 prose-a:text-[#f08500] hover:prose-a:text-[#d97706] prose-a:underline"
                   dangerouslySetInnerHTML={{ __html: unescapeHtml(post.content) }}
                 />
 

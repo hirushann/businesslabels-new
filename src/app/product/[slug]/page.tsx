@@ -508,7 +508,10 @@ function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t:
 }
 
 function getProductTranslation(product: ProductDetail, locale: "en" | "nl"): ProductTranslation | null {
-  for (const entry of product.translations ?? []) {
+  const translations = product.translations;
+  if (!translations) return null;
+  const list = Array.isArray(translations) ? translations : Object.values(translations);
+  for (const entry of list) {
     if (!entry || typeof entry !== "object") continue;
     const keyed = (entry as Partial<Record<"en" | "nl", ProductTranslation | null>>)[locale];
     if (keyed) return keyed;
@@ -900,7 +903,19 @@ export default async function SingleProductPage({
   console.log("Specs derived from product:", specs);
   const relatedProducts = (product.up_sells ?? []).map((upsell) => mapUpsellToProductCard(upsell, locale));
   const suitablePrinters = (product.suitable_printers ?? []).map((upsell) => mapUpsellToProductCard(upsell, locale));
-  const showCompatibilityCta = product.is_label_product == true || product.meta?.is_label_product === true;
+  // Only show the compatibility CTA for consumable products:
+  // labels/etiketten, inks/inkt, transfer ribbons/lint.
+  // Accessories (accessoires, onderdelen, diversen, overig, printers) must NOT show it.
+  // NOTE: is_label_product is unreliable — the API sets it true for accessories too.
+  const COMPATIBILITY_ALLOW_LIST = ['inkt', 'lint', 'ink', 'ribbon', 'etiket', 'labels', 'stickers', 'thermisch'];
+  const COMPATIBILITY_BLOCK_LIST = ['printer', 'accessoire', 'onderdeel', 'parts', 'diversen', 'overig'];
+  const isCompatibilityProduct = productCategorySlugs.some(slug => {
+    const s = slug.toLowerCase();
+    const blocked = COMPATIBILITY_BLOCK_LIST.some(b => s.includes(b));
+    if (blocked) return false;
+    return COMPATIBILITY_ALLOW_LIST.some(a => s.includes(a));
+  });
+  const showCompatibilityCta = isCompatibilityProduct;
 
   // A product linked to a product finder entry (via Printer URL) is a printer:
   // show its compatible consumables instead of generic up-sells.
@@ -964,7 +979,7 @@ export default async function SingleProductPage({
                 </h1>
               ) : null}
               {shortDescription ? (
-                <div className="text-neutral-700 text-lg font-normal leading-7" dangerouslySetInnerHTML={{ __html: shortDescription }}>
+                <div className="text-neutral-700 text-lg font-normal leading-7 [&_a]:text-[#f08500] [&_a]:underline hover:[&_a]:text-[#d97706] [&_a]:transition-colors" dangerouslySetInnerHTML={{ __html: shortDescription }}>
                 </div>
               ) : null}
             </div>
@@ -1046,7 +1061,7 @@ export default async function SingleProductPage({
               >
                 {productDescription ? (
                   <div
-                    className="text-neutral-700 text-base font-normal leading-6 cms-content"
+                    className="text-neutral-700 text-base font-normal leading-6 cms-content [&_a]:text-[#f08500] [&_a]:underline hover:[&_a]:text-[#d97706] [&_a]:transition-colors"
                     dangerouslySetInnerHTML={{ __html: productDescription }}
                   />
                 ) : (
@@ -1072,39 +1087,6 @@ export default async function SingleProductPage({
                 </div>
               </Accordion>
 
-              {showCompatibilityCta ? (
-                <div className="p-5 sm:p-6 bg-gradient-to-br from-orange-50 to-white rounded-xl outline outline-2 outline-offset-[-2px] outline-orange-100">
-                  <div className="flex flex-col sm:flex-row gap-4 sm:gap-3 items-start">
-                    <div className="w-8 h-8 p-2 bg-white rounded-lg shadow-sm flex-shrink-0 flex items-center justify-center">
-                      <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0H3" />
-                      </svg>
-                    </div>
-                    <div className="flex-1 flex flex-col gap-4">
-                      <div className="flex flex-col gap-2">
-                        <h3 className="text-neutral-700 text-xl sm:text-2xl font-bold leading-7">{t('product.doesThisFitMyPrinter')}</h3>
-                        <p className="text-neutral-700 text-base font-normal leading-6">
-                        {t('product.compatibilityDescription')}
-                        </p>
-                      </div>
-                      <ProductCompatibilityDialog
-                        productId={product.id}
-                        compatiblePrinterIds={compatiblePrinterIds}
-                        productCategorySlugs={productCategorySlugs}
-                        productMake={normalizeValue(product.make)}
-                        productName={productName}
-                        productImage={product.main_image}
-                        productSku={product.sku}
-                        productSlug={product.slug}
-                        productType={normalizeType(product.type) || (product.is_group_product || (product.component_products?.length ?? 0) > 0 ? "group_product" : null)}
-                        productPrice={price}
-                        packingGroup={product.packing_group != null ? Number(product.packing_group) : null}
-                        allowSingulars={normalizeBoolean(product.allow_singulars)}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ) : null}
             </div>
           </div>
 
@@ -1134,6 +1116,40 @@ export default async function SingleProductPage({
               isLabelProduct={product?.is_label_product == true || product?.meta?.is_label_product === true}
               properties={product?.properties}
             />
+
+            {showCompatibilityCta ? (
+              <div className="p-5 bg-gradient-to-br from-orange-50 to-white rounded-xl outline outline-2 outline-offset-[-2px] outline-orange-100">
+                <div className="flex flex-row gap-3 items-start">
+                  <div className="w-8 h-8 p-2 bg-white rounded-lg shadow-sm flex-shrink-0 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0H3" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 flex flex-col gap-4">
+                    <div className="flex flex-col gap-2">
+                      <h3 className="text-neutral-700 text-xl font-bold leading-6">{t('product.doesThisFitMyPrinter')}</h3>
+                      <p className="text-neutral-700 text-sm font-normal leading-5">
+                      {t('product.compatibilityDescription')}
+                      </p>
+                    </div>
+                    <ProductCompatibilityDialog
+                      productId={product.id}
+                      compatiblePrinterIds={compatiblePrinterIds}
+                      productCategorySlugs={productCategorySlugs}
+                      productMake={normalizeValue(product.make)}
+                      productName={productName}
+                      productImage={product.main_image}
+                      productSku={product.sku}
+                      productSlug={product.slug}
+                      productType={normalizeType(product.type) || (product.is_group_product || (product.component_products?.length ?? 0) > 0 ? "group_product" : null)}
+                      productPrice={price}
+                      packingGroup={product.packing_group != null ? Number(product.packing_group) : null}
+                      allowSingulars={normalizeBoolean(product.allow_singulars)}
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : null}
 
             {/* Consumable Items — image cards (printer products only) */}
             {isPrinterProduct && (
