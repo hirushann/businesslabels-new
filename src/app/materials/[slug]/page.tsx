@@ -164,7 +164,7 @@ function DetailTable({ rows }: { rows: { label: string; value: ReactNode }[] }) 
           className={`flex items-center justify-between gap-6 px-4 py-3 ${index % 2 === 0 ? "bg-white/70" : "bg-transparent"}`}
         >
           <span className="text-base leading-6 text-neutral-500">{row.label}</span>
-          <span className="text-right text-base font-semibold leading-6 text-neutral-800">{row.value}</span>
+          <span className="text-right text-base font-bold leading-6 text-neutral-800">{row.value}</span>
         </div>
       ))}
     </div>
