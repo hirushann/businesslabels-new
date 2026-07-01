@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useRef, useEffect, useCallback } from 'react';
-import type { FormEvent } from 'react';
+import type { FormEvent, MouseEvent } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 interface TeamMember {
@@ -28,6 +28,8 @@ import { getAccessoryCategoryPath } from '@/lib/routes/accessoryCategories';
 import { getLabelCategoryPath } from '@/lib/routes/labelCategories';
 import { getPrinterCategoryPath } from '@/lib/routes/printerCategories';
 import { useDebouncedSearchParam } from '@/components/search/useDebouncedSearchParam';
+import LoginPopup from '@/components/LoginPopup';
+import RegisterPopup from '@/components/RegisterPopup';
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -124,7 +126,16 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
   }, []);
 
   const isAuthenticated = clientAuthState ?? hasAuthToken;
-  const accountHref = isAuthenticated === false ? '/login?redirect=/my-account' : '/my-account';
+  const accountHref = '/my-account';
+  const [isLoginPopupOpen, setIsLoginPopupOpen] = useState(false);
+  const [isRegisterPopupOpen, setIsRegisterPopupOpen] = useState(false);
+
+  const handleAccountClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (!isAuthenticated) {
+      event.preventDefault();
+      setIsLoginPopupOpen(true);
+    }
+  };
 
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -355,7 +366,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
             {/* Language */}
             <LanguageSwitcher />
             {/* User */}
-            <Link href={accountHref} aria-label={t('header.accountLink')}>
+            <Link href={accountHref} onClick={handleAccountClick} aria-label={t('header.accountLink')}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="cursor-pointer">
                 <circle cx="12" cy="8" r="4" stroke="#404040" strokeWidth="1.5" />
                 <path d="M4 20c0-4.42 3.58-8 8-8s8 3.58 8 8" stroke="#404040" strokeWidth="1.5" strokeLinecap="round" />
@@ -425,7 +436,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
           {/* Right: Cart, Wishlist, Language */}
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
-            <Link href={accountHref} aria-label={t('header.accountLink')}>
+            <Link href={accountHref} onClick={handleAccountClick} aria-label={t('header.accountLink')}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                 <circle cx="12" cy="8" r="4" stroke="#404040" strokeWidth="2" />
                 <path d="M4 20c0-4.42 3.58-8 8-8s8 3.58 8 8" stroke="#404040" strokeWidth="2" strokeLinecap="round" />
@@ -662,6 +673,16 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
       {isHelpOpen && <HelpDrawer onClose={closeHelp} />}
       {isWishlistOpen && <WishlistDrawer onClose={() => setIsWishlistOpen(false)} />}
       {isCartOpen && <CartDrawer onClose={closeCart} />}
+      <LoginPopup
+        open={isLoginPopupOpen}
+        onOpenChange={setIsLoginPopupOpen}
+        onSwitchToRegister={() => setIsRegisterPopupOpen(true)}
+      />
+      <RegisterPopup
+        open={isRegisterPopupOpen}
+        onOpenChange={setIsRegisterPopupOpen}
+        onSwitchToLogin={() => setIsLoginPopupOpen(true)}
+      />
     </header>
   );
 }
