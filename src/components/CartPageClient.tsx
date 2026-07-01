@@ -46,36 +46,37 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
 
   if (items.length === 0) {
     return (
-      <div className="px-4 md:px-8 lg:px-10 py-12">
-        <div className="max-w-360 mx-auto w-full">
-          <Breadcrumbs items={breadcrumbs} className="mb-8" />
-          
-          <div className="w-full flex flex-col justify-start items-center gap-10 py-12">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/cart-empty.png"
-              alt=""
-              className="w-[275px] h-[200px] object-contain"
-            />
-            <div className="w-full flex flex-col justify-start items-center gap-4">
-              <h2 className="w-full text-center text-[#222222] text-[40px] font-['Segoe_UI'] font-bold leading-[48px]">
-                {t('cart.emptyTitle') || 'Your Cart is Empty'}
-              </h2>
-              <p className="w-full max-w-[800px] text-center text-[#444444] text-lg font-['Segoe_UI'] font-normal leading-[26px]">
-                {t('cart.emptyDescription') || 'Before proceed to checkout you must add some products to your shopping cart. You will find a lot of interesting products on our “Shop” page.'}
-              </p>
-              <Link
-                href="/product"
-                className="h-[52px] px-[30px] py-4 bg-[#F18800] hover:bg-[#e07d00] transition-colors rounded-[50px] flex justify-center items-center gap-2.5 text-center text-white text-lg font-['Segoe_UI'] font-semibold leading-6 mt-2"
-              >
-                {t('common.browseProducts') || 'Browse Products'}
-              </Link>
+      <>
+        <div className="px-4 md:px-8 lg:px-10 py-12">
+          <div className="max-w-360 mx-auto w-full">
+            <Breadcrumbs items={breadcrumbs} className="mb-8" />
+            
+            <div className="w-full flex flex-col justify-start items-center gap-10 py-12">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/cart-empty.png"
+                alt=""
+                className="w-[275px] h-[200px] object-contain"
+              />
+              <div className="w-full flex flex-col justify-start items-center gap-4">
+                <h2 className="w-full text-center text-[#222222] text-[40px] font-['Segoe_UI'] font-bold leading-[48px]">
+                  {t('cart.emptyTitle') || 'Your Cart is Empty'}
+                </h2>
+                <p className="w-full max-w-[800px] text-center text-[#444444] text-lg font-['Segoe_UI'] font-normal leading-[26px]">
+                  {t('cart.emptyDescription') || 'Before proceed to checkout you must add some products to your shopping cart. You will find a lot of interesting products on our “Shop” page.'}
+                </p>
+                <Link
+                  href="/product"
+                  className="h-[52px] px-[30px] py-4 bg-[#F18800] hover:bg-[#e07d00] transition-colors rounded-[50px] flex justify-center items-center gap-2.5 text-center text-white text-lg font-['Segoe_UI'] font-semibold leading-6 mt-2"
+                >
+                  {t('common.browseProducts') || 'Browse Products'}
+                </Link>
+              </div>
             </div>
           </div>
-
-          <CartProductSlider products={popularProducts} />
         </div>
-      </div>
+        <CartProductSlider products={popularProducts} />
+      </>
     );
   }
 
