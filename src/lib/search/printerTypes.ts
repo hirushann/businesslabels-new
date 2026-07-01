@@ -2,6 +2,7 @@ import type { ProductCardData } from "@/components/ProductCard";
 
 export type PrinterCardData = ProductCardData & {
   properties?: Record<string, string[]>;
+  featured?: boolean | string | number | null;
 };
 
 export type PrinterSortValue = "latest" | "oldest" | "title_asc" | "title_desc";

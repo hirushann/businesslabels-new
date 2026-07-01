@@ -399,6 +399,8 @@ export const MESSAGES_V4 = {
       loadingMorePrinters: 'Loading more printers...',
       scrollForMorePrinters: 'Scroll for more printers',
       clearAll: 'Clear all',
+      myPrinters: 'My Printers',
+      allPrinters: 'All Printers',
     },
     sort: {
       sortBy: 'Sort by',
@@ -1873,6 +1875,8 @@ export const MESSAGES_V4 = {
       loadingMorePrinters: 'Meer printers laden...',
       scrollForMorePrinters: 'Scroll voor meer printers',
       clearAll: 'Alles wissen',
+      myPrinters: 'Mijn Printers',
+      allPrinters: 'Alle Printers',
     },
     sort: {
       sortBy: 'Sorteren op',

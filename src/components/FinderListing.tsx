@@ -65,9 +65,113 @@ export default function FinderListing({
 
   const currentQueryString = searchParams.toString();
   const loading = isPending || isFetching;
-  const hasMore = currentPage < lastPage;
 
   // Auto-focus search on mount / when focus param present
+  const [favoriteIds, setFavoriteIds] = useState<Set<string | number>>(new Set());
+  const [myPrinters, setMyPrinters] = useState<PrinterCardData[]>([]);
+
+  useEffect(() => {
+    function updateFavorites() {
+      const stored = localStorage.getItem('favorite_printers');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            setMyPrinters(parsed);
+            setFavoriteIds(new Set(parsed.map((p: any) => p.id)));
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      } else {
+        setMyPrinters([]);
+        setFavoriteIds(new Set());
+      }
+    }
+
+    updateFavorites();
+
+    window.addEventListener('favorites-updated', updateFavorites);
+    return () => {
+      window.removeEventListener('favorites-updated', updateFavorites);
+    };
+  }, []);
+
+  const searchValue = searchParams.get("search") || searchParams.get("q") || "";
+
+  const sortedMyPrinters = useMemo(() => {
+    const compareName = (a: PrinterCardData, b: PrinterCardData) => {
+      return a.name.localeCompare(b.name, locale);
+    };
+
+    const updatedMyPrinters = myPrinters.map(localPrinter => {
+      const fetched = printers.find(p => p.id === localPrinter.id);
+      return fetched ? fetched : localPrinter;
+    });
+
+    const filtered = updatedMyPrinters.filter((printer) => {
+      if (searchValue) {
+        const lowerQuery = searchValue.toLowerCase().trim();
+        const matchesName = printer.name?.toLowerCase().includes(lowerQuery);
+        const matchesSubtitle = printer.subtitle?.toLowerCase().includes(lowerQuery);
+        const matchesSku = printer.sku?.toLowerCase().includes(lowerQuery);
+        const matchesSlug = printer.slug?.toLowerCase().includes(lowerQuery);
+        if (!matchesName && !matchesSubtitle && !matchesSku && !matchesSlug) {
+          return false;
+        }
+      }
+
+      const paramKeys = ["druktype", "kern", "detectie", "width", "buiten_diameter"] as const;
+      for (const key of paramKeys) {
+        const urlKey = key === "buiten_diameter" ? "buiten_diameter" : key;
+        const selectedValues = searchParams.getAll(urlKey).flatMap(v => v.split(",")).filter(Boolean);
+        if (selectedValues.length > 0) {
+          const printerValues = printer.properties?.[key] || [];
+          const hasMatch = selectedValues.some(val => printerValues.includes(val));
+          if (!hasMatch) return false;
+        }
+      }
+
+      return true;
+    });
+
+    return [...filtered].sort(compareName);
+  }, [myPrinters, printers, searchValue, searchParams, locale]);
+
+  const otherPrinters = useMemo(() => {
+    const isMyPrinter = (p: PrinterCardData) => favoriteIds.has(p.id) || favoriteIds.has(Number(p.id)) || favoriteIds.has(String(p.id));
+
+    const isFeatured = (p: PrinterCardData) => {
+      return !!(
+        p.properties?.featured?.[0] === '1' ||
+        p.properties?.featured?.[0] === 'true' ||
+        p.properties?.featured?.[0] === 'yes' ||
+        (p as any).featured === '1' ||
+        (p as any).featured === true ||
+        (p as any).featured === 'true'
+      );
+    };
+
+    const compareName = (a: PrinterCardData, b: PrinterCardData) => {
+      return a.name.localeCompare(b.name, locale);
+    };
+
+    const featuredPrintersList = printers.filter(p => !isMyPrinter(p) && isFeatured(p)).sort(compareName);
+    const otherPrintersList = printers.filter(p => !isMyPrinter(p) && !isFeatured(p)).sort(compareName);
+
+    return [...featuredPrintersList, ...otherPrintersList];
+  }, [printers, favoriteIds, locale]);
+
+  const sortedPrinters = useMemo(() => {
+    return [...sortedMyPrinters, ...otherPrinters];
+  }, [sortedMyPrinters, otherPrinters]);
+
+  const displayedPrinters = useMemo(() => {
+    return sortedPrinters.slice(0, currentPage * 24);
+  }, [sortedPrinters, currentPage]);
+
+  const hasMore = currentPage < lastPage || sortedPrinters.length > displayedPrinters.length;
+
   useEffect(() => {
     if (!hasFocusedSearchRef.current || searchParams.get("focus") === "true") {
       hasFocusedSearchRef.current = true;
@@ -133,6 +237,12 @@ export default function FinderListing({
     setIsLoadingMore(true);
     const nextPage = currentPage + 1;
 
+    if (nextPage > lastPage) {
+      setCurrentPage(nextPage);
+      setIsLoadingMore(false);
+      return;
+    }
+
     const params = new URLSearchParams(currentQueryString);
     params.set("page", String(nextPage));
     const endpoint = `/api/printers?${params.toString()}`;
@@ -152,9 +262,7 @@ export default function FinderListing({
     } finally {
       setIsLoadingMore(false);
     }
-  }, [isLoadingMore, hasMore, currentPage, currentQueryString]);
-
-  const searchValue = searchParams.get("search") || searchParams.get("q") || "";
+  }, [isLoadingMore, hasMore, currentPage, lastPage, currentQueryString]);
 
   const setParams = useCallback(
     (updater: (params: URLSearchParams) => void) => {
@@ -266,7 +374,7 @@ export default function FinderListing({
       </div>
 
       {/* ── Printer grid ── */}
-      {loading && printers.length === 0 ? (
+      {loading && displayedPrinters.length === 0 ? (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 9 }).map((_, i) => (
             <div
@@ -275,7 +383,7 @@ export default function FinderListing({
             />
           ))}
         </div>
-      ) : printers.length === 0 ? (
+      ) : displayedPrinters.length === 0 ? (
         <EmptyState
           title={t("finder.noPrintersFound")}
           description={t("finder.noPrintersDescription")}
@@ -286,7 +394,7 @@ export default function FinderListing({
             loading ? "opacity-60 pointer-events-none" : "opacity-100"
           }`}
         >
-          {printers.map((printer) => (
+          {displayedPrinters.map((printer) => (
             <PrinterCard
               key={printer.id}
               printer={printer}

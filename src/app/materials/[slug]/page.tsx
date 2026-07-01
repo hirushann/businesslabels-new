@@ -157,14 +157,14 @@ function ContactIcon({ type }: { type: "call" | "email" | "whatsapp" }) {
 
 function DetailTable({ rows }: { rows: { label: string; value: ReactNode }[] }) {
   return (
-    <div className="overflow-hidden rounded-lg border border-black/5">
+    <div className="overflow-hidden">
       {rows.map((row, index) => (
         <div
           key={`${row.label}-${index}`}
           className={`flex items-center justify-between gap-6 px-4 py-3 ${index % 2 === 0 ? "bg-white/70" : "bg-transparent"}`}
         >
           <span className="text-base leading-6 text-neutral-500">{row.label}</span>
-          <span className="text-right text-base font-semibold leading-6 text-neutral-800">{row.value}</span>
+          <span className="text-right text-base font-bold leading-6 text-neutral-800">{row.value}</span>
         </div>
       ))}
     </div>
@@ -173,9 +173,9 @@ function DetailTable({ rows }: { rows: { label: string; value: ReactNode }[] }) 
 
 function SidebarCard({ title, description, children }: { title: string; description: string; children: ReactNode }) {
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)]">
+    <div className="flex flex-col gap-4 rounded-xl border border-[#EDF2F7] bg-white p-6 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)]">
       <div className="flex flex-col gap-1">
-        <h2 className="text-[24px] font-bold leading-9 text-neutral-800">{title}</h2>
+        <h2 className="text-[24px] font-bold leading-9 font-semibold text-neutral-800">{title}</h2>
         <p className="text-base leading-7 text-neutral-500">{description}</p>
       </div>
       {children}
@@ -209,18 +209,18 @@ function HelpPanel({
   ];
   return (
     <div className="flex flex-col gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)]">
-      <h2 className="text-lg font-bold leading-6 text-neutral-800">{labels.title}</h2>
+      <h2 className="text-lg font-semibold leading-6 text-neutral-800">{labels.title}</h2>
       <div className="grid grid-cols-3 gap-4">
         {actions.map((action) => (
           <Link
             key={action.label}
             href={action.href}
-            className="flex flex-col items-center justify-center gap-3 rounded-xl border border-gray-100 bg-slate-100/30 p-3 text-center transition-colors hover:border-amber-200 hover:bg-orange-50"
+            className="flex flex-col items-center justify-center gap-3 rounded-xl border border-gray-100 bg-[slate-100/30] p-3 text-center transition-colors hover:border-amber-200 hover:bg-orange-50"
           >
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-50 shadow-sm">
               <ContactIcon type={action.type} />
             </span>
-            <span className="text-sm font-semibold leading-5 text-neutral-800">{action.label}</span>
+            <span className="text-sm font-bold leading-5 text-neutral-800">{action.label}</span>
           </Link>
         ))}
       </div>
@@ -244,7 +244,7 @@ function MaterialProductsSection({
   return (
     <section id={MATERIAL_PRODUCTS_SECTION_ID} className="scroll-mt-24 bg-gray-50 px-4 py-24 sm:px-6 lg:px-10">
       <div className="mx-auto flex max-w-[1440px] flex-col gap-8">
-        <h2 className="text-4xl font-bold leading-12 text-neutral-800">{title}</h2>
+        <h2 className="text-4xl font-semibold leading-12 text-neutral-800">{title}</h2>
         <ProductsListing
           initialCatalog={initialCatalog}
           initialQueryString={initialQueryString}
@@ -332,7 +332,8 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
           aboutRows={aboutRows}
           specRows={rawSpecRows}
           variant="link"
-          downloadLabel={t("materialsPage.downloadSpecSheet")}
+          // downloadLabel={t("materialsPage.downloadSpecSheet")}
+          downloadLabel={(material.brand ? material.brand + "-" : "") + material.code + ".pdf"}
           materialImage={materialImage}
           description={material.description}
           pdfTitleLabel={t("materialDetail.specSheet")}
@@ -358,8 +359,8 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
           />
 
           <div className="flex flex-col gap-2">
-            {material.code ? <span className="text-base font-semibold uppercase tracking-wide text-[#479EF5]">{material.code}</span> : null}
-            <h1 className="text-[32px] font-bold leading-10 text-[#222222]">{material.title}</h1>
+            {material.code ? <span className="text-base font-bold uppercase tracking-wide text-[#479EF5]">{material.code}</span> : null}
+            <h1 className="text-[32px] font-semibold leading-10 text-[#222222]">{material.title}</h1>
             {material.subtitle ? <p className="text-lg leading-7 text-neutral-600">{material.subtitle}</p> : null}
           </div>
 
@@ -380,11 +381,11 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
 
               <div className="flex flex-col gap-6">
                 <Accordion title={t("materialDetail.aboutThisMaterial")}>
-                  <div className="flex flex-col gap-5">
+                  <div className="flex flex-col gap-5 -mx-10 px-5">
                     <DetailTable rows={aboutRows} />
                     {material.description ? (
                       <div
-                        className="text-base leading-7 text-neutral-600 [&_a]:text-[#f08500] [&_a]:underline hover:[&_a]:text-[#d97706] [&_a]:transition-colors"
+                        className="text-base px-5 leading-7 text-neutral-600 [&_a]:text-[#f08500] [&_a]:underline hover:[&_a]:text-[#d97706] [&_a]:transition-colors"
                         dangerouslySetInnerHTML={{ __html: material.description }}
                       />
                     ) : null}
@@ -393,7 +394,9 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
 
                 <Accordion title={t("materialDetail.specifications")}>
                   {specRows.length > 0 ? (
+                    <div className="flex flex-col gap-5 -mx-10 px-5">
                     <DetailTable rows={specRows} />
+                    </div>
                   ) : (
                     <p className="text-base leading-6 text-neutral-500">{t("materialDetail.noSpecifications")}</p>
                   )}
@@ -428,7 +431,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
               {/* ICC Color Profiles */}
               <div className="flex flex-col gap-4 rounded-xl border-2 border-[#FFEDD4] bg-[linear-gradient(135deg,#FFF7ED_0%,#FFFFFF_100%)] p-6">
                 <div className="flex flex-col gap-2">
-                  <h2 className="text-[24px] font-bold leading-9 text-[#222222]">
+                  <h2 className="text-[24px] font-semibold leading-9 text-[#222222]">
                     {t("materialDetail.iccProfilesTitle")}
                   </h2>
                   <p className="text-base leading-[26px] text-[#4F4F4F]">
@@ -440,7 +443,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
                 <IccProfileModal materialTitle={material.title} isNl={isNl} />
               </div>
 
-              {material.spec_sheet_url && (
+              {/* {material.spec_sheet_url && (
                 <DownloadSpecSheetButton
                   materialId={material.id}
                   materialTitle={material.title}
@@ -460,7 +463,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
                   pageLabel={locale === "nl" ? "Pagina" : "Page"}
                   ofLabel={locale === "nl" ? "van" : "of"}
                 />
-              )}
+              )} */}
             </aside>
           </div>
         </div>
