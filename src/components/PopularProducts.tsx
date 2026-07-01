@@ -67,7 +67,7 @@ export default async function PopularProducts() {
         </div>
 
         {/* Product grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 justify-center gap-8 max-w-[72rem] mx-auto w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 justify-center gap-8 mx-auto w-full">
           {products.length === 0 ? (
             <EmptyState
               className="col-span-full"
