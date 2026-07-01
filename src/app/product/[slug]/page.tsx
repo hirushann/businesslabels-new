@@ -120,6 +120,40 @@ type ProductWarrantyOption = {
   sort_order?: number | null;
 };
 
+type ProductWarrantyDefaultOption = {
+  type?: string | null;
+  warranty_option_id?: number | string | null;
+  sku?: string | null;
+  name?: string | null;
+  duration_years?: number | null;
+  price?: number | null;
+  description?: string | null;
+};
+
+type ProductWarrantyType = {
+  id: number;
+  name?: string | null;
+  description?: string | null;
+  icon?: string | null;
+  badge_text?: string | null;
+  badge_color?: string | null;
+  options?: Array<{
+    id?: number | string | null;
+    type?: string | null;
+    warranty_option_id?: number | string | null;
+    sku?: string | null;
+    name?: string | null;
+    duration_years?: number | null;
+    description?: string | null;
+    price?: number | null;
+    cart?: {
+      type?: string | null;
+      warranty_option_id?: number | string | null;
+      sku?: string | null;
+    } | null;
+  }> | null;
+};
+
 type ComponentProduct = {
   id?: number;
   name?: string | null;
@@ -195,7 +229,8 @@ type ProductDetail = {
     is_available?: boolean | null;
     has_options?: boolean | null;
     options?: ProductWarrantyOption[] | null;
-    default_option?: ProductWarrantyOption | null;
+    default_option?: ProductWarrantyDefaultOption | ProductWarrantyOption | null;
+    types?: ProductWarrantyType[] | null;
   } | null;
   translations?: ProductTranslationEntry[] | null;
   locale_slugs?: Partial<Record<"en" | "nl", string>>;
