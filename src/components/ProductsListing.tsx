@@ -216,7 +216,7 @@ function normalizeSortValue(
 function ProductSkeletonGrid({ isSidebarOpen }: { isSidebarOpen: boolean }) {
   return (
     <div
-      className={`grid grid-cols-1 gap-6 sm:grid-cols-2 ${isSidebarOpen ? "lg:grid-cols-3" : "lg:grid-cols-4"}`}
+      className={`grid grid-cols-1 gap-6 sm:grid-cols-2 ${isSidebarOpen ? "lg:grid-cols-2" : "lg:grid-cols-3"}`}
     >
       {Array.from({ length: 8 }, (_, index) => (
         <div
@@ -839,7 +839,7 @@ function CatalogProductsListing({
       </div>
 
       <div
-        className={`flex flex-col gap-6 lg:grid ${isSidebarOpen ? "lg:grid-cols-4 lg:items-start" : "lg:grid-cols-4"}`}
+        className={`flex flex-col gap-6 lg:grid ${isSidebarOpen ? "lg:grid-cols-3 lg:items-start" : "lg:grid-cols-3"}`}
       >
         {isSidebarOpen ? (
           <aside className="w-full shrink-0 rounded-xl border border-slate-100 bg-white p-4 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.08)] lg:col-span-1 lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto custom-scrollbar">
@@ -1108,7 +1108,7 @@ function CatalogProductsListing({
           </aside>
         ) : null}
 
-        <div className={`min-w-0 flex-1 ${isSidebarOpen ? "lg:col-span-3" : "lg:col-span-4"}`}>
+        <div className={`min-w-0 flex-1 ${isSidebarOpen ? "lg:col-span-2" : "lg:col-span-3"}`}>
           <div className="mb-4 text-sm text-neutral-600">
             {loading
               ? t("search.loadingProducts")
@@ -1149,7 +1149,7 @@ function CatalogProductsListing({
           ) : (
             <>
               <div
-                className={`grid grid-cols-1 gap-6 sm:grid-cols-2 ${isSidebarOpen ? "lg:grid-cols-3" : "lg:grid-cols-4"
+                className={`grid grid-cols-1 gap-6 sm:grid-cols-2 ${isSidebarOpen ? "lg:grid-cols-2" : "lg:grid-cols-3"
                   }`}
               >
                 {products.map(({ id, product, href }) => (

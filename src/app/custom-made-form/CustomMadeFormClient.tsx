@@ -256,7 +256,6 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
       });
 
       if (response.ok) {
-        resetForm();
         setSubmitStatus('success');
         toast.success(t('successMessage'));
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -442,8 +441,33 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
             </div>
             <div className="h-px bg-gray-100" />
 
-            <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-6">
-            {/* ── Step 1: Shape ── */}
+            {submitStatus === 'success' ? (
+              <div className="p-12 flex flex-col items-center justify-center text-center gap-6 min-h-[400px]">
+                <div className="size-20 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 mb-2">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-neutral-800 mb-3">{t('successMessage')}</h2>
+                  <p className="text-neutral-600 text-lg">Thank you for your request, we will get started on it as soon as possible.</p>
+                </div>
+                <div className="mt-4 pt-8 border-t border-gray-100 w-full max-w-sm flex flex-col gap-4">
+                  <p className="text-sm text-neutral-500 font-medium">Want to compare prices for a different material?</p>
+                  <button
+                    onClick={() => {
+                      setSubmitStatus('idle');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="w-full h-12 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-full transition-colors flex items-center justify-center gap-2"
+                  >
+                    Request another quote
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-6">
+              {/* ── Step 1: Shape ── */}
             <section className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
                 <span className="text-amber-500 text-sm font-sans">{t('stepProgress', { current: 1, total: 5 })}</span>
@@ -857,6 +881,7 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
               </div>
             </section>
           </form>
+          )}
         </div>
 
         {/* ── Sidebar ── */}
