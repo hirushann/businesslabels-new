@@ -178,9 +178,11 @@ const RESULT_SOURCE_FIELDS = [
   "meta",
   "material",
   "warranty_available",
+  "warranty",
   "warranty_option_ids",
   "warranty_option_names",
   "warranty_option_months",
+  "warranty_option_years",
   "warranty_option_prices",
   "properties",
   "is_group_product",
@@ -1374,12 +1376,19 @@ function imageUrl(url: string | null): string | null {
 }
 
 function warrantyFromSource(source: ProductSource): ProductWarrantyData | null | undefined {
+  if ("warranty" in source) {
+    const warranty = source.warranty;
+    if (warranty === null) return null;
+    if (warranty && typeof warranty === "object") return warranty as ProductWarrantyData;
+  }
+
   if (!("warranty_available" in source)) return undefined;
   if (!booleanValue(source.warranty_available)) return null;
 
   const ids = Array.isArray(source.warranty_option_ids) ? source.warranty_option_ids : [];
   const names = Array.isArray(source.warranty_option_names) ? source.warranty_option_names : [];
   const months = Array.isArray(source.warranty_option_months) ? source.warranty_option_months : [];
+  const years = Array.isArray(source.warranty_option_years) ? source.warranty_option_years : [];
   const prices = Array.isArray(source.warranty_option_prices) ? source.warranty_option_prices : [];
 
   const options = ids
@@ -1390,7 +1399,8 @@ function warrantyFromSource(source: ProductSource): ProductWarrantyData | null |
       return {
         id: optionId,
         name: names[index] != null ? String(names[index]) : null,
-        duration_months: months[index] != null ? Number(months[index]) : null,
+        duration_months: months[index] != null ? Number(months[index]) : years[index] != null ? Number(years[index]) * 12 : null,
+        duration_years: years[index] != null ? Number(years[index]) : null,
         price: prices[index] != null ? Number(prices[index]) : null,
         description: null,
         sort_order: index,
@@ -1402,7 +1412,7 @@ function warrantyFromSource(source: ProductSource): ProductWarrantyData | null |
     is_available: true,
     has_options: options.length > 0,
     options,
-    default_option: options[0] ?? null,
+    default_option: null,
   };
 }
 
@@ -1582,34 +1592,56 @@ async function applyProductConfigOverrides(products: CatalogProductResult[], loc
         discounts: LaravelProduct["discounts"];
         isLabelProduct: boolean | null;
         isGroupProduct: boolean | null;
+        warranty: LaravelProduct["warranty"];
       }
     >();
 
+    const addProductConfig = (key: string | null | undefined, config: {
+      packingGroup: number | null;
+      allowSingulars: LaravelProduct["allow_singulars"];
+      discounts: LaravelProduct["discounts"];
+      isLabelProduct: boolean | null;
+      isGroupProduct: boolean | null;
+      warranty: LaravelProduct["warranty"];
+    }) => {
+      const normalized = key?.trim();
+      if (normalized) productConfigMap.set(normalized, config);
+    };
+
     (json.data as LaravelProduct[]).forEach((p) => {
-      if (!p?.slug) return;
-
-      const resolvedSlug = typeof p.slug === "string" ? p.slug : (p.slug.en || p.slug.nl || "");
-      if (!resolvedSlug) return;
-
-      productConfigMap.set(resolvedSlug, {
+      const config = {
         packingGroup: p.packing_group != null ? Number(p.packing_group) : null,
         allowSingulars: p.allow_singulars ?? null,
         discounts: p.discounts ?? null,
         isLabelProduct: p.is_label_product ?? p.is_label ?? null,
         isGroupProduct: p.is_group_product ?? null,
-      });
+        warranty: p.warranty ?? null,
+      };
+
+      const slugValues = typeof p.slug === "string"
+        ? [p.slug]
+        : [p.slug?.en, p.slug?.nl].filter((slug): slug is string => Boolean(slug));
+
+      slugValues.forEach((slug) => addProductConfig(`slug:${slug}`, config));
+      addProductConfig(`id:${String(p.id)}`, config);
+      addProductConfig(p.sku ? `sku:${p.sku}` : null, config);
     });
 
     products.forEach((p) => {
-      if (!p.product.slug || !productConfigMap.has(p.product.slug)) return;
+      const productConfig =
+        (p.product.slug ? productConfigMap.get(`slug:${p.product.slug}`) : undefined) ??
+        productConfigMap.get(`id:${String(p.product.id)}`) ??
+        (p.product.sku ? productConfigMap.get(`sku:${p.product.sku}`) : undefined);
 
-      const productConfig = productConfigMap.get(p.product.slug);
+      if (!productConfig) return;
+
       p.product.packing_group = productConfig?.packingGroup ?? null;
       p.product.allow_singulars = productConfig?.allowSingulars ?? null;
       p.product.discounts = productConfig?.discounts ?? null;
       p.product.is_label_product = productConfig?.isLabelProduct ?? null;
       p.product.is_label = productConfig?.isLabelProduct ?? null;
       p.product.is_group_product = productConfig?.isGroupProduct ?? null;
+      p.product.warranty = productConfig?.warranty ?? p.product.warranty ?? null;
     });
   } catch (err) {
     console.error("[Search] Failed to fetch packing_group overrides:", err);

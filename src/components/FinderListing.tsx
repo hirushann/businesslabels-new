@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import EmptyState from "@/components/EmptyState";
@@ -14,7 +21,6 @@ import type {
   PrinterSearchResponse,
 } from "@/lib/search/printerTypes";
 
-
 type PrintersListingProps = {
   initialCatalog: PrinterSearchResponse;
   initialQueryString: string;
@@ -26,20 +32,23 @@ export default function FinderListing({
 }: PrintersListingProps) {
   const t = useTranslations();
   const locale = useLocale();
-  const faqItems = useMemo(() => [
-    {
-      title: t("finder.faqNotListedTitle"),
-      body: t("finder.faqNotListedBody"),
-    },
-    {
-      title: t("finder.faqHowItWorksTitle"),
-      body: t("finder.faqHowItWorksBody"),
-    },
-    {
-      title: t("finder.faqSavePrintersTitle"),
-      body: t("finder.faqSavePrintersBody"),
-    },
-  ], [t]);
+  const faqItems = useMemo(
+    () => [
+      {
+        title: t("finder.faqNotListedTitle"),
+        body: t("finder.faqNotListedBody"),
+      },
+      {
+        title: t("finder.faqHowItWorksTitle"),
+        body: t("finder.faqHowItWorksBody"),
+      },
+      {
+        title: t("finder.faqSavePrintersTitle"),
+        body: t("finder.faqSavePrintersBody"),
+      },
+    ],
+    [t],
+  );
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -67,18 +76,28 @@ export default function FinderListing({
   const loading = isPending || isFetching;
 
   // Auto-focus search on mount / when focus param present
-  const [favoriteIds, setFavoriteIds] = useState<Set<string | number>>(new Set());
+  const [favoriteIds, setFavoriteIds] = useState<Set<string | number>>(
+    new Set(),
+  );
   const [myPrinters, setMyPrinters] = useState<PrinterCardData[]>([]);
 
   useEffect(() => {
     function updateFavorites() {
-      const stored = localStorage.getItem('favorite_printers');
+      const stored = localStorage.getItem("favorite_printers");
       if (stored) {
         try {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed)) {
-            setMyPrinters(parsed);
-            setFavoriteIds(new Set(parsed.map((p: any) => p.id)));
+            const parsedPrinters = parsed.filter(
+              (printer): printer is PrinterCardData =>
+                Boolean(printer) &&
+                typeof printer === "object" &&
+                "id" in printer,
+            );
+            setMyPrinters(parsedPrinters);
+            setFavoriteIds(
+              new Set(parsedPrinters.map((printer) => printer.id)),
+            );
           }
         } catch (e) {
           console.error(e);
@@ -91,9 +110,9 @@ export default function FinderListing({
 
     updateFavorites();
 
-    window.addEventListener('favorites-updated', updateFavorites);
+    window.addEventListener("favorites-updated", updateFavorites);
     return () => {
-      window.removeEventListener('favorites-updated', updateFavorites);
+      window.removeEventListener("favorites-updated", updateFavorites);
     };
   }, []);
 
@@ -104,8 +123,8 @@ export default function FinderListing({
       return a.name.localeCompare(b.name, locale);
     };
 
-    const updatedMyPrinters = myPrinters.map(localPrinter => {
-      const fetched = printers.find(p => p.id === localPrinter.id);
+    const updatedMyPrinters = myPrinters.map((localPrinter) => {
+      const fetched = printers.find((p) => p.id === localPrinter.id);
       return fetched ? fetched : localPrinter;
     });
 
@@ -113,7 +132,9 @@ export default function FinderListing({
       if (searchValue) {
         const lowerQuery = searchValue.toLowerCase().trim();
         const matchesName = printer.name?.toLowerCase().includes(lowerQuery);
-        const matchesSubtitle = printer.subtitle?.toLowerCase().includes(lowerQuery);
+        const matchesSubtitle = printer.subtitle
+          ?.toLowerCase()
+          .includes(lowerQuery);
         const matchesSku = printer.sku?.toLowerCase().includes(lowerQuery);
         const matchesSlug = printer.slug?.toLowerCase().includes(lowerQuery);
         if (!matchesName && !matchesSubtitle && !matchesSku && !matchesSlug) {
@@ -121,13 +142,24 @@ export default function FinderListing({
         }
       }
 
-      const paramKeys = ["druktype", "kern", "detectie", "width", "buiten_diameter"] as const;
+      const paramKeys = [
+        "druktype",
+        "kern",
+        "detectie",
+        "width",
+        "buiten_diameter",
+      ] as const;
       for (const key of paramKeys) {
         const urlKey = key === "buiten_diameter" ? "buiten_diameter" : key;
-        const selectedValues = searchParams.getAll(urlKey).flatMap(v => v.split(",")).filter(Boolean);
+        const selectedValues = searchParams
+          .getAll(urlKey)
+          .flatMap((v) => v.split(","))
+          .filter(Boolean);
         if (selectedValues.length > 0) {
           const printerValues = printer.properties?.[key] || [];
-          const hasMatch = selectedValues.some(val => printerValues.includes(val));
+          const hasMatch = selectedValues.some((val) =>
+            printerValues.includes(val),
+          );
           if (!hasMatch) return false;
         }
       }
@@ -139,16 +171,20 @@ export default function FinderListing({
   }, [myPrinters, printers, searchValue, searchParams, locale]);
 
   const otherPrinters = useMemo(() => {
-    const isMyPrinter = (p: PrinterCardData) => favoriteIds.has(p.id) || favoriteIds.has(Number(p.id)) || favoriteIds.has(String(p.id));
+    const isMyPrinter = (p: PrinterCardData) =>
+      favoriteIds.has(p.id) ||
+      favoriteIds.has(Number(p.id)) ||
+      favoriteIds.has(String(p.id));
 
     const isFeatured = (p: PrinterCardData) => {
       return !!(
-        p.properties?.featured?.[0] === '1' ||
-        p.properties?.featured?.[0] === 'true' ||
-        p.properties?.featured?.[0] === 'yes' ||
-        (p as any).featured === '1' ||
-        (p as any).featured === true ||
-        (p as any).featured === 'true'
+        p.properties?.featured?.[0] === "1" ||
+        p.properties?.featured?.[0] === "true" ||
+        p.properties?.featured?.[0] === "yes" ||
+        p.featured === "1" ||
+        p.featured === 1 ||
+        p.featured === true ||
+        p.featured === "true"
       );
     };
 
@@ -156,8 +192,12 @@ export default function FinderListing({
       return a.name.localeCompare(b.name, locale);
     };
 
-    const featuredPrintersList = printers.filter(p => !isMyPrinter(p) && isFeatured(p)).sort(compareName);
-    const otherPrintersList = printers.filter(p => !isMyPrinter(p) && !isFeatured(p)).sort(compareName);
+    const featuredPrintersList = printers
+      .filter((p) => !isMyPrinter(p) && isFeatured(p))
+      .sort(compareName);
+    const otherPrintersList = printers
+      .filter((p) => !isMyPrinter(p) && !isFeatured(p))
+      .sort(compareName);
 
     return [...featuredPrintersList, ...otherPrintersList];
   }, [printers, favoriteIds, locale]);
@@ -170,7 +210,8 @@ export default function FinderListing({
     return sortedPrinters.slice(0, currentPage * 24);
   }, [sortedPrinters, currentPage]);
 
-  const hasMore = currentPage < lastPage || sortedPrinters.length > displayedPrinters.length;
+  const hasMore =
+    currentPage < lastPage || sortedPrinters.length > displayedPrinters.length;
 
   useEffect(() => {
     if (!hasFocusedSearchRef.current || searchParams.get("focus") === "true") {
@@ -202,7 +243,10 @@ export default function FinderListing({
         const response = await fetch(endpoint, { signal: controller.signal });
         if (response.ok && isCurrent) {
           const data: PrinterSearchResponse = await response.json();
-          console.log("[FinderListing] Client-side fetchPage1 printers received:", data.printers);
+          console.log(
+            "[FinderListing] Client-side fetchPage1 printers received:",
+            data.printers,
+          );
           setPrinters(data.printers);
           setCurrentPage(data.currentPage);
           setLastPage(data.lastPage);
@@ -251,7 +295,10 @@ export default function FinderListing({
       const response = await fetch(endpoint);
       if (response.ok) {
         const data: PrinterSearchResponse = await response.json();
-        console.log("[FinderListing] Client-side loadMore printers received:", data.printers);
+        console.log(
+          "[FinderListing] Client-side loadMore printers received:",
+          data.printers,
+        );
         setPrinters((prev) => [...prev, ...data.printers]);
         setCurrentPage(data.currentPage);
         setLastPage(data.lastPage);
@@ -305,17 +352,17 @@ export default function FinderListing({
   return (
     <div className="flex flex-col">
       {/* ── Search section ── */}
-      <div className="flex flex-col gap-4 pb-4 border-b border-[#EDF0F4] lg:flex-row lg:items-center lg:justify-between max-w-[1440px] mx-auto">
+      <div className="flex w-full flex-col gap-4 border-b border-[#EDF0F4] pb-4 lg:flex-row lg:items-center lg:justify-between max-w-[1440px] mx-auto">
         <h2
-          className="text-[#222222] text-3xl font-bold leading-[120%] shrink-0"
+          className="shrink-0 text-3xl font-bold leading-[120%] text-[#222222]"
           style={{ fontFamily: "Segoe UI, sans-serif" }}
         >
           {t("finder.findYourPrinter")}
         </h2>
 
-        <div className="flex items-stretch gap-4 w-full lg:max-w-200">
+        <div className="flex w-full items-stretch gap-4 lg:ml-auto lg:max-w-200 lg:justify-end">
           {/* Search input */}
-          <div className="flex items-center gap-2 h-10 flex-1 rounded-full border border-[#EDF0F4] bg-white px-4">
+          <div className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-full border border-[#EDF0F4] bg-white px-4">
             <svg
               width="18"
               height="18"
@@ -346,7 +393,7 @@ export default function FinderListing({
                 if (e.key === "Enter") commitSearchNow();
               }}
               placeholder={t("common.search")}
-              className="flex-1 bg-transparent text-sm text-[#222222] placeholder-[#888888] outline-none"
+              className="min-w-0 flex-1 bg-transparent text-sm text-[#222222] placeholder-[#888888] outline-none"
               style={{ fontFamily: "Segoe UI, sans-serif" }}
             />
           </div>
@@ -355,7 +402,7 @@ export default function FinderListing({
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center justify-center px-5 rounded-full border border-[#F18800] text-[#F18800] font-semibold text-base leading-6 hover:bg-orange-50 transition-colors duration-150 whitespace-nowrap"
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-full border border-[#F18800] px-5 text-base font-semibold leading-6 text-[#F18800] transition-colors duration-150 hover:bg-orange-50"
             style={{ fontFamily: "Segoe UI, sans-serif" }}
           >
             {t("finder.requestNewPrinter")}
@@ -483,11 +530,7 @@ export default function FinderListing({
       </div>
 
       {/* Request Printer Modal */}
-      <RequestPrinterModal
-        open={isModalOpen}
-        onOpenChange={setIsModalOpen}
-      />
+      <RequestPrinterModal open={isModalOpen} onOpenChange={setIsModalOpen} />
     </div>
-    
   );
 }

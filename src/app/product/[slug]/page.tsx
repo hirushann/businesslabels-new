@@ -1145,6 +1145,7 @@ export default async function SingleProductPage({
                       productPrice={price}
                       packingGroup={product.packing_group != null ? Number(product.packing_group) : null}
                       allowSingulars={normalizeBoolean(product.allow_singulars)}
+                      warranty={product.warranty}
                     />
                   </div>
                 </div>
