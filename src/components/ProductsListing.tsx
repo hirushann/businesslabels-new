@@ -1180,5 +1180,5 @@ function CatalogProductsListing({
 }
 
 export default function ProductsListing(props: ProductsListingProps) {
-  return <CatalogProductsListing {...props} />;
+  return <div className="mb-14"><CatalogProductsListing {...props} /></div>;
 }
