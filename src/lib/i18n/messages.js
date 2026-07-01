@@ -414,7 +414,7 @@ export const MESSAGES_V4 = {
     },
     footer: {
       trust: {
-        epsonTitle: 'strokeLinejoin',
+        epsonTitle: 'Epson Diamond Partner',
         epsonSub: 'Certified compatibility',
         customersTitle: '12,000+ Customers',
         customersSub: 'Trusted worldwide',
