@@ -27,8 +27,8 @@ export async function GET(request: NextRequest) {
 
     const response = await fetch(url, {
       headers: { 'Accept': 'application/json' },
-      next: { revalidate: 300 }, // Cache for 5 minutes
-    } as RequestInit & { next?: { revalidate?: number | false } });
+      cache: 'no-store',
+    });
 
     if (!response.ok) {
       console.error(`Backend API error: ${response.status}`);
@@ -49,7 +49,11 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json();
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      },
+    });
   } catch (error) {
     console.error('Error fetching products:', error);
     return NextResponse.json(

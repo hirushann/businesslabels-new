@@ -1576,7 +1576,7 @@ async function applyProductConfigOverrides(products: CatalogProductResult[], loc
     const url = `${backendUrl}/api/products?${queryParams.toString()}`;
     const res = await fetch(url, {
       headers: { Accept: "application/json" },
-      next: { revalidate: 300 },
+      cache: "no-store",
     });
 
     if (!res.ok) return;
