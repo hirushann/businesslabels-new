@@ -136,8 +136,8 @@ export default function WhyChooseUs() {
                   />
 
                   <div className="absolute bottom-0 top-auto inset-0 pointer-events-none grid grid-cols-2 gap-4 p-4 sm:p-6 lg:p-8">
-                     <Image src="/images/diamond-partner.png" alt="Diamond Partner" className="w-full h-auto object-contain rounded-2xl border border-blue-900" width={100} height={100} />
-                     <Image src="/images/label-authorised.png" alt="Label Authorised" className="w-full h-auto object-contain max-h-[100px] bg-[#10218B] rounded-2xl border border-blue-900" width={100} height={100} />
+                     <Image src="/images/diamond-partner.png" alt="Diamond Partner" className="w-full h-auto object-contain rounded-2xl" width={300} height={300} unoptimized />
+                     <Image src="/images/label-authorised.png" alt="Label Authorised" className="w-full h-auto object-contain max-h-[100px] bg-[#10218B] rounded-2xl" width={300} height={300} unoptimized />
                   </div>
                </div>
 
