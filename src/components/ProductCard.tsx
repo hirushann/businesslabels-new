@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { LinkProps } from "next/link";
@@ -427,6 +427,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
   const addQuantity = normalizeBoolean(product.allow_singulars) ? 1 : normalizedPackingGroup ?? 1;
   const normalizedWarranty = useMemo(() => normalizeWarrantyOptions(product.warranty, locale), [product.warranty, locale]);
   const [isWarrantyPopoverOpen, setIsWarrantyPopoverOpen] = useState(false);
+  const warrantyDialogHandledRef = useRef(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const hasWarrantyOptions = Boolean(normalizedWarranty.defaultOption) || normalizedWarranty.allOptions.length > 0 || normalizedWarranty.oldOptions.length > 0;
 
@@ -513,6 +514,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
     }
 
     if (hasWarrantyOptions) {
+      warrantyDialogHandledRef.current = false;
       setIsWarrantyPopoverOpen(true);
       return;
     }
@@ -521,8 +523,24 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
   };
 
   const handleConfirmWarrantyAdd = (selectedOption: WarrantyOption | null) => {
+    warrantyDialogHandledRef.current = true;
     addProductWithWarranty(selectedOption);
     setIsWarrantyPopoverOpen(false);
+  };
+
+  const handleWarrantyDialogOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
+      warrantyDialogHandledRef.current = false;
+      setIsWarrantyPopoverOpen(true);
+      return;
+    }
+
+    setIsWarrantyPopoverOpen(false);
+
+    if (!warrantyDialogHandledRef.current) {
+      warrantyDialogHandledRef.current = true;
+      addProductWithWarranty(null);
+    }
   };
 
   // Called when user confirms from bulk discount modal
@@ -679,7 +697,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
               </div>
               <span className="text-zinc-500 text-xs font-normal font-['Segoe_UI'] leading-4">{t('product.priceExclTax')}</span>
             </div>
-            <Dialog open={isWarrantyPopoverOpen} onOpenChange={setIsWarrantyPopoverOpen}>
+            <Dialog open={isWarrantyPopoverOpen} onOpenChange={handleWarrantyDialogOpenChange}>
               <DialogTrigger asChild>
                 <button
                   type="button"
@@ -714,6 +732,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
                   selectWarrantyLabel={locale === "nl" ? "Selecteer een garantie" : "Select a Warranty"}
                   addToCartLabel={t("product.addToCart")}
                   onSkip={() => {
+                    warrantyDialogHandledRef.current = true;
                     addProductWithWarranty(null);
                     setIsWarrantyPopoverOpen(false);
                   }}
