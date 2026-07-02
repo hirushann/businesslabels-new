@@ -112,7 +112,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
           <>
             {/* Header */}
             <div className="shrink-0 px-6 py-4 bg-white shadow-[2px_6px_20px_rgba(17,17,17,0.04)] border-b border-slate-200 flex items-center justify-between">
-              <h2 className="text-[#222222] text-xl font-semibold font-['Segoe_UI'] leading-[24px]">
+              <h2 className="text-[#222222] text-xl font-bold font-['Segoe_UI'] leading-[24px]">
                 {t('cart.title')}
               </h2>
               <button
@@ -343,7 +343,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
 
                 {/* Total */}
                 <div className="px-6 flex justify-between items-center">
-                  <span className="text-[#444444] text-lg font-semibold font-['Segoe_UI'] leading-[21.6px]">
+                  <span className="text-[#444444] text-lg font-bold font-['Segoe_UI'] leading-[21.6px]">
                     {t('cart.totalInclVat')}
                   </span>
                   <span className="text-[#222222] text-lg font-semibold font-['Segoe_UI'] leading-[21.6px]">
@@ -359,7 +359,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                   onClick={onClose}
                   className="w-full h-[38px] bg-[#F18800] hover:bg-[#d87a00] active:bg-[#c26e00] rounded-[100px] flex items-center justify-center gap-2 cursor-pointer transition-colors"
                 >
-                  <span className="text-center text-white text-base font-semibold font-['Segoe_UI'] leading-6 whitespace-nowrap">
+                  <span className="text-center text-white text-base font-bold font-['Segoe_UI'] leading-6 whitespace-nowrap">
                     {t('cart.goToShoppingCart')}
                   </span>
                   <svg width="6" height="10" viewBox="0 0 6 10" fill="none" className="text-white">
@@ -373,14 +373,14 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                     <p className="text-[#888888] text-base font-['Segoe_UI'] leading-[20.8px]">
                       {t.rich('cart.freeShippingProgress', {
                         amount: formatEuro(500 - totalAmount),
-                        amountStyle: (chunks) => <span className="font-semibold text-[#888888]">{chunks}</span>,
-                        shippingStyle: (chunks) => <span className="font-semibold text-[#888888]">{chunks}</span>,
+                        amountStyle: (chunks) => <span className="font-bold text-[#888888]">{chunks}</span>,
+                        shippingStyle: (chunks) => <span className="font-bold text-[#888888]">{chunks}</span>,
                       })}
                     </p>
                   </div>
                 ) : (
                   <div className="flex justify-center items-center">
-                    <p className="text-emerald-600 text-base font-semibold font-['Segoe_UI'] leading-[20.8px]">
+                    <p className="text-emerald-600 text-base font-bold font-['Segoe_UI'] leading-[20.8px]">
                       {t('cart.freeShippingQualified')}
                     </p>
                   </div>
