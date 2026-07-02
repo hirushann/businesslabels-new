@@ -2,8 +2,25 @@ import { getTranslations } from "next-intl/server";
 import ReviewsSection from "@/components/ReviewsSection";
 import ContactForm from "./ContactForm";
 
+async function getTeamMembers() {
+   const apiBaseUrl = process.env.BBNL_API_BASE_URL;
+   if (!apiBaseUrl) return [];
+
+   try {
+      const url = `${apiBaseUrl.replace(/\/$/, "")}/api/team-members`;
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) return [];
+      const json = await res.json();
+      return json.data || [];
+   } catch (err) {
+      console.error("Failed to fetch team members:", err);
+      return [];
+   }
+}
+
 export default async function ContactPage() {
    const t = await getTranslations();
+   const teamMembers = await getTeamMembers();
    return (
       <>
          <div className="w-full flex flex-col py-24">
@@ -151,77 +168,46 @@ export default async function ContactPage() {
                      No anonymous support desk. You always speak with the same specialist who knows your situation.
                   </div>
                </div>
-               <div className="max-w-360 mx-auto self-stretch inline-flex justify-start items-stretch gap-6">
-                  <div className="flex-1 px-6 py-10 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] inline-flex flex-col justify-center items-center gap-6">
-                     <img className="size-28 relative rounded-[230px]" src="https://placehold.co/120x120" />
-                     <div className="self-stretch flex flex-col justify-center items-center gap-5">
-                        <div className="self-stretch flex flex-col justify-start items-start gap-2">
-                           <div className="self-stretch text-center justify-start text-neutral-800 text-2xl font-bold font-['Segoe_UI'] leading-7">
-                              Lars van den Berg
+               <div className="max-w-360 mx-auto self-stretch inline-flex flex-wrap justify-center items-stretch gap-6">
+                  {teamMembers.map((member) => (
+                     <div
+                        key={member.id}
+                        className="flex-1 min-w-[280px] px-6 py-10 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] inline-flex flex-col justify-center items-center gap-6"
+                     >
+                        <img
+                           className="size-28 relative rounded-[230px] object-cover"
+                           src={member.profile_pic_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=f59e0b&color=fff`}
+                           alt={member.name}
+                        />
+                        <div className="self-stretch flex flex-col justify-center items-center gap-5">
+                           <div className="self-stretch flex flex-col justify-start items-start gap-2">
+                              <div className="self-stretch text-center justify-start text-neutral-800 text-2xl font-bold font-['Segoe_UI'] leading-7">
+                                 {member.name}
+                              </div>
                            </div>
-                           <div className="self-stretch text-center justify-start text-amber-500 text-base font-semibold font-['Segoe_UI'] leading-6">
-                              Founder & Label Expert
-                           </div>
-                        </div>
-                        <div className="self-stretch text-center justify-start text-neutral-700 text-base font-normal font-['Segoe_UI'] leading-6">
-                           15 years in inkjet label tech. Lars founded BusinessLabels to help small and medium businesses access the label industry.
-                        </div>
-                        <div className="size- inline-flex justify-center items-center gap-4">
-                           <div className="size-7 relative overflow-hidden">
-                              <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><g clipPath="url(#clip0_2508_8108)"><path d="M24.1818 0H3.81818C2.80554 0 1.83437 0.402272 1.11832 1.11832C0.402272 1.83437 0 2.80554 0 3.81818L0 24.1818C0 25.1945 0.402272 26.1656 1.11832 26.8817C1.83437 27.5977 2.80554 28 3.81818 28H24.1818C25.1945 28 26.1656 27.5977 26.8817 26.8817C27.5977 26.1656 28 25.1945 28 24.1818V3.81818C28 2.80554 27.5977 1.83437 26.8817 1.11832C26.1656 0.402272 25.1945 0 24.1818 0ZM9.54545 22.1582C9.54566 22.2358 9.53055 22.3127 9.50098 22.3845C9.47142 22.4563 9.42797 22.5216 9.37314 22.5766C9.31832 22.6315 9.25318 22.6752 9.18147 22.7049C9.10975 22.7347 9.03287 22.75 8.95523 22.75H6.44C6.36222 22.7502 6.28517 22.735 6.21327 22.7054C6.14138 22.6757 6.07605 22.6321 6.02105 22.5771C5.96606 22.5221 5.92247 22.4568 5.8928 22.3849C5.86314 22.313 5.84797 22.236 5.84818 22.1582V11.6136C5.84818 11.4567 5.91053 11.3061 6.02152 11.1952C6.13251 11.0842 6.28304 11.0218 6.44 11.0218H8.95523C9.11191 11.0222 9.26203 11.0848 9.37268 11.1957C9.48332 11.3067 9.54545 11.457 9.54545 11.6136V22.1582ZM7.69682 10.0227C7.22484 10.0227 6.76346 9.88277 6.37103 9.62055C5.97859 9.35834 5.67272 8.98564 5.49211 8.54959C5.31149 8.11353 5.26423 7.63372 5.35631 7.17081C5.44839 6.7079 5.67567 6.28269 6.0094 5.94895C6.34314 5.61521 6.76835 5.38793 7.23126 5.29585C7.69417 5.20377 8.17399 5.25103 8.61004 5.43165C9.04609 5.61227 9.41879 5.91814 9.68101 6.31057C9.94322 6.70301 10.0832 7.16439 10.0832 7.63636C10.0832 8.26927 9.83176 8.87625 9.38423 9.32378C8.9367 9.77131 8.32972 10.0227 7.69682 10.0227ZM22.6927 22.1995C22.6929 22.2711 22.679 22.3419 22.6517 22.408C22.6245 22.4741 22.5844 22.5342 22.5338 22.5847C22.4833 22.6353 22.4232 22.6754 22.3571 22.7026C22.291 22.7299 22.2201 22.7438 22.1486 22.7436H19.4441C19.3726 22.7438 19.3017 22.7299 19.2356 22.7026C19.1695 22.6754 19.1095 22.6353 19.0589 22.5847C19.0083 22.5342 18.9683 22.4741 18.941 22.408C18.9137 22.3419 18.8998 22.2711 18.9 22.1995V17.2598C18.9 16.5216 19.1164 14.027 16.9702 14.027C15.3077 14.027 14.9689 15.7341 14.902 16.5009V22.2059C14.9021 22.3488 14.8458 22.486 14.7455 22.5879C14.6452 22.6897 14.5088 22.7479 14.3659 22.75H11.7536C11.6823 22.75 11.6116 22.7359 11.5457 22.7086C11.4797 22.6812 11.4199 22.6411 11.3695 22.5905C11.3191 22.54 11.2791 22.48 11.252 22.414C11.2248 22.348 11.2109 22.2773 11.2111 22.2059V11.5675C11.2109 11.4961 11.2248 11.4254 11.252 11.3594C11.2791 11.2934 11.3191 11.2334 11.3695 11.1829C11.4199 11.1323 11.4797 11.0922 11.5457 11.0649C11.6116 11.0375 11.6823 11.0234 11.7536 11.0234H14.3659C14.5102 11.0234 14.6486 11.0807 14.7506 11.1828C14.8527 11.2848 14.91 11.4232 14.91 11.5675V12.487C15.5273 11.5595 16.442 10.8468 18.3941 10.8468C22.7182 10.8468 22.6895 14.8845 22.6895 17.1023L22.6927 22.1995Z" fill="#888888" /></g><defs><clipPath id="clip0_2508_8108"><rect width="28" height="28" fill="white" /></clipPath></defs></svg>
-                           </div>
-                           <div className="size-7 relative overflow-hidden">
-                              <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><g clipPath="url(#clip0_2508_8118)"><path d="M14.9363 13.5212L21.2373 22.534H18.6514L13.5096 15.1796V15.1791L12.7547 14.0995L6.74829 5.50781H9.33424L14.1814 12.4416L14.9363 13.5212Z" fill="#888888" /><path d="M24.9745 0H3.02546C1.35459 0 0 1.35459 0 3.02546V24.9745C0 26.6454 1.35459 28 3.02546 28H24.9745C26.6454 28 28 26.6454 28 24.9745V3.02546C28 1.35459 26.6454 0 24.9745 0ZM17.8593 23.7445L12.6561 16.172L6.14174 23.7445H4.45809L11.9086 15.0844L4.45809 4.24108H10.1407L15.0677 11.4118L21.2364 4.24108H22.9201L15.8155 12.4996H15.8151L23.5419 23.7445H17.8593Z" fill="#888888" /></g><defs><clipPath id="clip0_2508_8118"><rect width="28" height="28" fill="white" /></clipPath></defs></svg>
-                           </div>
-                        </div>
-                     </div>
-                  </div>
-                  <div className="flex-1 px-6 py-10 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] inline-flex flex-col justify-center items-center gap-6">
-                     <img className="size-28 relative rounded-[230px]" src="https://placehold.co/120x120" />
-                     <div className="self-stretch flex flex-col justify-start items-center gap-5">
-                        <div className="self-stretch flex flex-col justify-start items-start gap-2">
-                           <div className="self-stretch text-center justify-start text-neutral-800 text-2xl font-bold font-['Segoe_UI'] leading-7">Sophie Janssen</div>
-                           <div className="self-stretch text-center justify-start text-amber-500 text-base font-semibold font-['Segoe_UI'] leading-6">
-                              Technical Consultant
-                           </div>
-                        </div>
-                        <div className="self-stretch text-center justify-start text-neutral-700 text-base font-normal font-['Segoe_UI'] leading-6">
-                           Sophie helps customers every day choose the right printer and label. She has guided over 200 installations from start to finish.
-                        </div>
-                        <div className="size- inline-flex justify-center items-center gap-4">
-                           <div className="size-7 relative overflow-hidden">
-                              <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><g clipPath="url(#clip0_2508_8108)"><path d="M24.1818 0H3.81818C2.80554 0 1.83437 0.402272 1.11832 1.11832C0.402272 1.83437 0 2.80554 0 3.81818L0 24.1818C0 25.1945 0.402272 26.1656 1.11832 26.8817C1.83437 27.5977 2.80554 28 3.81818 28H24.1818C25.1945 28 26.1656 27.5977 26.8817 26.8817C27.5977 26.1656 28 25.1945 28 24.1818V3.81818C28 2.80554 27.5977 1.83437 26.8817 1.11832C26.1656 0.402272 25.1945 0 24.1818 0ZM9.54545 22.1582C9.54566 22.2358 9.53055 22.3127 9.50098 22.3845C9.47142 22.4563 9.42797 22.5216 9.37314 22.5766C9.31832 22.6315 9.25318 22.6752 9.18147 22.7049C9.10975 22.7347 9.03287 22.75 8.95523 22.75H6.44C6.36222 22.7502 6.28517 22.735 6.21327 22.7054C6.14138 22.6757 6.07605 22.6321 6.02105 22.5771C5.96606 22.5221 5.92247 22.4568 5.8928 22.3849C5.86314 22.313 5.84797 22.236 5.84818 22.1582V11.6136C5.84818 11.4567 5.91053 11.3061 6.02152 11.1952C6.13251 11.0842 6.28304 11.0218 6.44 11.0218H8.95523C9.11191 11.0222 9.26203 11.0848 9.37268 11.1957C9.48332 11.3067 9.54545 11.457 9.54545 11.6136V22.1582ZM7.69682 10.0227C7.22484 10.0227 6.76346 9.88277 6.37103 9.62055C5.97859 9.35834 5.67272 8.98564 5.49211 8.54959C5.31149 8.11353 5.26423 7.63372 5.35631 7.17081C5.44839 6.7079 5.67567 6.28269 6.0094 5.94895C6.34314 5.61521 6.76835 5.38793 7.23126 5.29585C7.69417 5.20377 8.17399 5.25103 8.61004 5.43165C9.04609 5.61227 9.41879 5.91814 9.68101 6.31057C9.94322 6.70301 10.0832 7.16439 10.0832 7.63636C10.0832 8.26927 9.83176 8.87625 9.38423 9.32378C8.9367 9.77131 8.32972 10.0227 7.69682 10.0227ZM22.6927 22.1995C22.6929 22.2711 22.679 22.3419 22.6517 22.408C22.6245 22.4741 22.5844 22.5342 22.5338 22.5847C22.4833 22.6353 22.4232 22.6754 22.3571 22.7026C22.291 22.7299 22.2201 22.7438 22.1486 22.7436H19.4441C19.3726 22.7438 19.3017 22.7299 19.2356 22.7026C19.1695 22.6754 19.1095 22.6353 19.0589 22.5847C19.0083 22.5342 18.9683 22.4741 18.941 22.408C18.9137 22.3419 18.8998 22.2711 18.9 22.1995V17.2598C18.9 16.5216 19.1164 14.027 16.9702 14.027C15.3077 14.027 14.9689 15.7341 14.902 16.5009V22.2059C14.9021 22.3488 14.8458 22.486 14.7455 22.5879C14.6452 22.6897 14.5088 22.7479 14.3659 22.75H11.7536C11.6823 22.75 11.6116 22.7359 11.5457 22.7086C11.4797 22.6812 11.4199 22.6411 11.3695 22.5905C11.3191 22.54 11.2791 22.48 11.252 22.414C11.2248 22.348 11.2109 22.2773 11.2111 22.2059V11.5675C11.2109 11.4961 11.2248 11.4254 11.252 11.3594C11.2791 11.2934 11.3191 11.2334 11.3695 11.1829C11.4199 11.1323 11.4797 11.0922 11.5457 11.0649C11.6116 11.0375 11.6823 11.0234 11.7536 11.0234H14.3659C14.5102 11.0234 14.6486 11.0807 14.7506 11.1828C14.8527 11.2848 14.91 11.4232 14.91 11.5675V12.487C15.5273 11.5595 16.442 10.8468 18.3941 10.8468C22.7182 10.8468 22.6895 14.8845 22.6895 17.1023L22.6927 22.1995Z" fill="#888888" /></g><defs><clipPath id="clip0_2508_8108"><rect width="28" height="28" fill="white" /></clipPath></defs></svg>
-                           </div>
-                           <div className="size-7 relative overflow-hidden">
-                              <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><g clipPath="url(#clip0_2508_8118)"><path d="M14.9363 13.5212L21.2373 22.534H18.6514L13.5096 15.1796V15.1791L12.7547 14.0995L6.74829 5.50781H9.33424L14.1814 12.4416L14.9363 13.5212Z" fill="#888888" /><path d="M24.9745 0H3.02546C1.35459 0 0 1.35459 0 3.02546V24.9745C0 26.6454 1.35459 28 3.02546 28H24.9745C26.6454 28 28 26.6454 28 24.9745V3.02546C28 1.35459 26.6454 0 24.9745 0ZM17.8593 23.7445L12.6561 16.172L6.14174 23.7445H4.45809L11.9086 15.0844L4.45809 4.24108H10.1407L15.0677 11.4118L21.2364 4.24108H22.9201L15.8155 12.4996H15.8151L23.5419 23.7445H17.8593Z" fill="#888888" /></g><defs><clipPath id="clip0_2508_8118"><rect width="28" height="28" fill="white" /></clipPath></defs></svg>
-                           </div>
+                           {(member.email || member.phone) && (
+                              <div className="self-stretch flex flex-col justify-start items-center gap-1">
+                                 {member.email && (
+                                    <a
+                                       href={`mailto:${member.email}`}
+                                       className="self-stretch text-center justify-start text-neutral-700 text-base font-normal font-['Segoe_UI'] leading-6 hover:text-amber-500"
+                                    >
+                                       {member.email}
+                                    </a>
+                                 )}
+                                 {member.phone && (
+                                    <a
+                                       href={`tel:${member.phone}`}
+                                       className="self-stretch text-center justify-start text-neutral-700 text-base font-normal font-['Segoe_UI'] leading-6 hover:text-amber-500"
+                                    >
+                                       {member.phone}
+                                    </a>
+                                 )}
+                              </div>
+                           )}
                         </div>
                      </div>
-                  </div>
-                  <div className="flex-1 px-6 py-10 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] inline-flex flex-col justify-center items-center gap-6">
-                     <img className="size-28 relative rounded-[230px]" src="https://placehold.co/120x120" />
-                     <div className="self-stretch flex flex-col justify-start items-center gap-5">
-                        <div className="self-stretch flex flex-col justify-start items-start gap-2">
-                           <div className="self-stretch text-center justify-start text-neutral-800 text-2xl font-bold font-['Segoe_UI'] leading-7">
-                              Lars van den Berg
-                           </div>
-                           <div className="self-stretch text-center justify-start text-amber-500 text-base font-semibold font-['Segoe_UI'] leading-6">
-                              Account Manager
-                           </div>
-                        </div>
-                        <div className="self-stretch text-center justify-start text-neutral-700 text-base font-normal font-['Segoe_UI'] leading-6">
-                           Tim handles large orders and custom solutions for production companies. His focus is on building long-term partnerships with clients.
-                        </div>
-                        <div className="size- inline-flex justify-center items-center gap-4">
-                           <div className="size-7 relative overflow-hidden">
-                              <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><g clipPath="url(#clip0_2508_8108)"><path d="M24.1818 0H3.81818C2.80554 0 1.83437 0.402272 1.11832 1.11832C0.402272 1.83437 0 2.80554 0 3.81818L0 24.1818C0 25.1945 0.402272 26.1656 1.11832 26.8817C1.83437 27.5977 2.80554 28 3.81818 28H24.1818C25.1945 28 26.1656 27.5977 26.8817 26.8817C27.5977 26.1656 28 25.1945 28 24.1818V3.81818C28 2.80554 27.5977 1.83437 26.8817 1.11832C26.1656 0.402272 25.1945 0 24.1818 0ZM9.54545 22.1582C9.54566 22.2358 9.53055 22.3127 9.50098 22.3845C9.47142 22.4563 9.42797 22.5216 9.37314 22.5766C9.31832 22.6315 9.25318 22.6752 9.18147 22.7049C9.10975 22.7347 9.03287 22.75 8.95523 22.75H6.44C6.36222 22.7502 6.28517 22.735 6.21327 22.7054C6.14138 22.6757 6.07605 22.6321 6.02105 22.5771C5.96606 22.5221 5.92247 22.4568 5.8928 22.3849C5.86314 22.313 5.84797 22.236 5.84818 22.1582V11.6136C5.84818 11.4567 5.91053 11.3061 6.02152 11.1952C6.13251 11.0842 6.28304 11.0218 6.44 11.0218H8.95523C9.11191 11.0222 9.26203 11.0848 9.37268 11.1957C9.48332 11.3067 9.54545 11.457 9.54545 11.6136V22.1582ZM7.69682 10.0227C7.22484 10.0227 6.76346 9.88277 6.37103 9.62055C5.97859 9.35834 5.67272 8.98564 5.49211 8.54959C5.31149 8.11353 5.26423 7.63372 5.35631 7.17081C5.44839 6.7079 5.67567 6.28269 6.0094 5.94895C6.34314 5.61521 6.76835 5.38793 7.23126 5.29585C7.69417 5.20377 8.17399 5.25103 8.61004 5.43165C9.04609 5.61227 9.41879 5.91814 9.68101 6.31057C9.94322 6.70301 10.0832 7.16439 10.0832 7.63636C10.0832 8.26927 9.83176 8.87625 9.38423 9.32378C8.9367 9.77131 8.32972 10.0227 7.69682 10.0227ZM22.6927 22.1995C22.6929 22.2711 22.679 22.3419 22.6517 22.408C22.6245 22.4741 22.5844 22.5342 22.5338 22.5847C22.4833 22.6353 22.4232 22.6754 22.3571 22.7026C22.291 22.7299 22.2201 22.7438 22.1486 22.7436H19.4441C19.3726 22.7438 19.3017 22.7299 19.2356 22.7026C19.1695 22.6754 19.1095 22.6353 19.0589 22.5847C19.0083 22.5342 18.9683 22.4741 18.941 22.408C18.9137 22.3419 18.8998 22.2711 18.9 22.1995V17.2598C18.9 16.5216 19.1164 14.027 16.9702 14.027C15.3077 14.027 14.9689 15.7341 14.902 16.5009V22.2059C14.9021 22.3488 14.8458 22.486 14.7455 22.5879C14.6452 22.6897 14.5088 22.7479 14.3659 22.75H11.7536C11.6823 22.75 11.6116 22.7359 11.5457 22.7086C11.4797 22.6812 11.4199 22.6411 11.3695 22.5905C11.3191 22.54 11.2791 22.48 11.252 22.414C11.2248 22.348 11.2109 22.2773 11.2111 22.2059V11.5675C11.2109 11.4961 11.2248 11.4254 11.252 11.3594C11.2791 11.2934 11.3191 11.2334 11.3695 11.1829C11.4199 11.1323 11.4797 11.0922 11.5457 11.0649C11.6116 11.0375 11.6823 11.0234 11.7536 11.0234H14.3659C14.5102 11.0234 14.6486 11.0807 14.7506 11.1828C14.8527 11.2848 14.91 11.4232 14.91 11.5675V12.487C15.5273 11.5595 16.442 10.8468 18.3941 10.8468C22.7182 10.8468 22.6895 14.8845 22.6895 17.1023L22.6927 22.1995Z" fill="#888888" /></g><defs><clipPath id="clip0_2508_8108"><rect width="28" height="28" fill="white" /></clipPath></defs></svg>
-                           </div>
-                           <div className="size-7 relative overflow-hidden">
-                              <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><g clipPath="url(#clip0_2508_8118)"><path d="M14.9363 13.5212L21.2373 22.534H18.6514L13.5096 15.1796V15.1791L12.7547 14.0995L6.74829 5.50781H9.33424L14.1814 12.4416L14.9363 13.5212Z" fill="#888888" /><path d="M24.9745 0H3.02546C1.35459 0 0 1.35459 0 3.02546V24.9745C0 26.6454 1.35459 28 3.02546 28H24.9745C26.6454 28 28 26.6454 28 24.9745V3.02546C28 1.35459 26.6454 0 24.9745 0ZM17.8593 23.7445L12.6561 16.172L6.14174 23.7445H4.45809L11.9086 15.0844L4.45809 4.24108H10.1407L15.0677 11.4118L21.2364 4.24108H22.9201L15.8155 12.4996H15.8151L23.5419 23.7445H17.8593Z" fill="#888888" /></g><defs><clipPath id="clip0_2508_8118"><rect width="28" height="28" fill="white" /></clipPath></defs></svg>
-                           </div>
-                        </div>
-                     </div>
-                  </div>
+                  ))}
                </div>
             </div>
          </div>
