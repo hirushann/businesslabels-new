@@ -165,31 +165,34 @@ function WarrantyDialogContentBody({
   const hasSelectedPaidWarranty = selectedWarrantyPrice > 0;
 
   return (
-    <DialogContent className="min-w-xl max-w-3xl gap-0 overflow-hidden bg-background p-0 text-foreground shadow-xl sm:rounded-xl" showCloseButton={false}>
-      <div className="max-h-[calc(100dvh-6rem)] overflow-y-auto p-5 sm:p-6">
-        <div className="mb-6 flex items-start justify-between gap-3">
+    <DialogContent
+      className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] gap-0 overflow-hidden bg-background p-0 text-foreground shadow-xl sm:w-[92vw] sm:max-w-[44rem] sm:rounded-xl md:max-w-[49rem] lg:max-w-[52rem]"
+      showCloseButton={false}
+    >
+      <div className="max-h-[calc(100dvh-5rem)] overflow-y-auto p-4 sm:p-5">
+        <div className="mb-5 flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <DialogTitle className="mb-1 text-xl font-extrabold leading-tight text-foreground sm:text-2xl">
+            <DialogTitle className="mb-1 text-lg font-extrabold leading-tight text-foreground sm:text-xl">
               {title}
             </DialogTitle>
             <DialogDescription className="text-sm leading-5 text-muted-foreground">
               {productName}
             </DialogDescription>
           </div>
-          <DialogClose className="-mr-1 -mt-1 flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-            <svg className="size-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
+          <DialogClose className="-mr-1 -mt-1 flex size-7 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+            <svg className="size-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
             <span className="sr-only">Close</span>
           </DialogClose>
         </div>
 
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-5">
           {warranty.defaultOption && (
             <button
               type="button"
               onClick={() => setSelectedWarrantyId(warranty.defaultOption?.id ?? "default")}
-              className={`w-full rounded-lg border p-4 text-left transition-colors ${
+              className={`w-full rounded-lg border p-3.5 text-left transition-colors sm:p-4 ${
                 selectedWarrantyId === defaultWarrantyId
                   ? "border-amber-500 bg-amber-50/60 ring-2 ring-amber-500/15"
                   : "border-amber-400 bg-amber-50/30 hover:bg-amber-50/60"
@@ -199,14 +202,14 @@ function WarrantyDialogContentBody({
               <div className="flex items-start gap-2">
                 <InfoIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground" strokeWidth={1.8} />
                 <div className="min-w-0">
-                  <h3 className="text-base font-bold leading-6 text-foreground">
+                  <h3 className="text-sm font-bold leading-5 text-foreground sm:text-base">
                     {warranty.defaultOption.name}
                   </h3>
-                  <p className="mt-2 text-base leading-6 text-muted-foreground">
+                  <p className="mt-2 text-sm leading-5 text-muted-foreground">
                     {warranty.defaultOption.description || defaultWarrantyDescription}
                   </p>
                   <span className="mt-2 flex items-center gap-1.5 text-sm font-semibold leading-normal text-amber-600 underline underline-offset-2">
-                    <DownloadIcon className="size-4" strokeWidth={1.8} />
+                    <DownloadIcon className="size-3.5" strokeWidth={1.8} />
                     {downloadLabel}
                   </span>
                 </div>
@@ -214,19 +217,19 @@ function WarrantyDialogContentBody({
             </button>
           )}
 
-          <div className="flex flex-col gap-6" role="group" aria-label={groupLabel}>
+          <div className="flex flex-col gap-5" role="group" aria-label={groupLabel}>
             {warranty.types.map((type) => {
               const WarrantyIcon = getWarrantyTypeIcon(type.icon);
 
               return (
-                <section key={type.id || type.name} className="flex flex-col gap-3">
+                <section key={type.id || type.name} className="flex flex-col gap-2.5">
                   <div className="flex flex-col gap-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <WarrantyIcon className="size-5 text-amber-600" strokeWidth={2.2} />
-                      <h3 className="text-lg font-extrabold leading-6 text-foreground">{type.name}</h3>
+                      <WarrantyIcon className="size-[1.125rem] text-amber-600" strokeWidth={2.2} />
+                      <h3 className="text-base font-extrabold leading-6 text-foreground sm:text-lg">{type.name}</h3>
                       {type.badgeText && (
                         <span
-                          className={`rounded-full px-2.5 py-1 text-xs font-semibold leading-none ${getWarrantyBadgeClass(type.badgeColor)}`}
+                          className={`rounded-full px-2.5 py-0.5 text-xs font-semibold leading-4 ${getWarrantyBadgeClass(type.badgeColor)}`}
                           style={getWarrantyBadgeStyle(type.badgeColor)}
                         >
                           {type.badgeText}
@@ -236,10 +239,10 @@ function WarrantyDialogContentBody({
                   </div>
 
                   {type.description && (
-                    <p className="text-base leading-6 text-muted-foreground">{type.description}</p>
+                    <p className="text-sm leading-5 text-muted-foreground sm:text-[0.95rem]">{type.description}</p>
                   )}
 
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {type.options.map((option) => (
                       <WarrantyOptionCard
                         key={option.id}
@@ -256,9 +259,9 @@ function WarrantyDialogContentBody({
             })}
 
             {warranty.oldOptions.length > 0 && (
-              <section className="flex flex-col gap-3">
-                <h3 className="text-lg font-extrabold leading-6 text-foreground">{additionalOptionsLabel}</h3>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <section className="flex flex-col gap-2.5">
+                <h3 className="text-base font-extrabold leading-6 text-foreground sm:text-lg">{additionalOptionsLabel}</h3>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {warranty.oldOptions.map((option) => (
                     <WarrantyOptionCard
                       key={option.id}
@@ -274,19 +277,19 @@ function WarrantyDialogContentBody({
             )}
           </div>
 
-          <p className="text-sm leading-5 text-muted-foreground">{footerText}</p>
+          <p className="text-xs leading-5 text-muted-foreground sm:text-sm">{footerText}</p>
         </div>
       </div>
 
       <Separator />
-      <div className="flex flex-col gap-3 bg-background/95 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+      <div className="flex flex-col gap-3 bg-background/95 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <div className="w-full sm:w-auto">
           <Button
             type="button"
             variant="outline"
             size="default"
             onClick={onSkip}
-            className="h-12 w-full rounded-full px-6 text-base font-bold sm:w-auto"
+            className="h-10 w-full rounded-full px-5 text-sm font-bold sm:w-auto"
           >
             {noThanksLabel}
           </Button>
@@ -294,8 +297,8 @@ function WarrantyDialogContentBody({
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end sm:gap-3">
           {hasSelectedPaidWarranty ? (
             <div className="flex items-baseline justify-between gap-2 whitespace-nowrap sm:flex-col sm:items-end sm:gap-1">
-              <span className="text-sm leading-tight text-muted-foreground">{addWarrantyLabel}</span>
-              <span className="text-xl font-extrabold leading-6 text-foreground">
+              <span className="text-xs leading-tight text-muted-foreground">{addWarrantyLabel}</span>
+              <span className="text-lg font-extrabold leading-6 text-foreground">
                 +{formatWarrantyEuro(selectedWarrantyPrice)}
               </span>
             </div>
@@ -305,7 +308,7 @@ function WarrantyDialogContentBody({
             size="default"
             onClick={() => onConfirm(selectedWarrantyOption ?? null)}
             disabled={selectedWarrantyId == null}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-amber-500 px-8 text-base font-extrabold text-white shadow-sm transition-colors hover:bg-amber-600 disabled:bg-slate-100 disabled:text-slate-500 disabled:opacity-100 sm:w-auto"
+            className="flex h-10 w-full items-center justify-center gap-2 rounded-full bg-amber-500 px-6 text-sm font-extrabold text-white shadow-sm transition-colors hover:bg-amber-600 disabled:bg-slate-100 disabled:text-slate-500 disabled:opacity-100 sm:w-auto"
           >
             <ShoppingCart data-icon="inline-start" />
             {selectedWarrantyId == null ? selectWarrantyLabel : addToCartLabel}
@@ -334,7 +337,7 @@ function WarrantyOptionCard({
   return (
     <label
       htmlFor={inputId}
-      className={`relative flex min-h-32 cursor-pointer flex-col gap-2 rounded-lg border p-3 pr-9 transition-all ${
+      className={`relative flex min-h-[7.5rem] cursor-pointer flex-col gap-1.5 rounded-lg border p-3 pr-8 transition-all ${
         isSelected
           ? "border-amber-500 bg-amber-50/60 shadow-sm"
           : "border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-slate-100/70"
@@ -344,10 +347,10 @@ function WarrantyOptionCard({
         id={inputId}
         checked={isSelected}
         onCheckedChange={onSelect}
-        className="absolute right-3 top-3 size-4 rounded-full border-slate-300 bg-background text-white shadow-none data-checked:border-amber-500 data-checked:bg-amber-500"
+        className="absolute right-3 top-3 size-3.5 rounded-full border-slate-300 bg-background text-white shadow-none data-checked:border-amber-500 data-checked:bg-amber-500"
       />
-      <div className="pr-4 text-base font-extrabold leading-6 text-foreground">{option.name}</div>
-      <div className={`text-2xl font-bold leading-tight ${isSelected ? "text-amber-600" : "text-foreground"}`}>
+      <div className="pr-4 text-sm font-extrabold leading-5 text-foreground sm:text-[0.95rem]">{option.name}</div>
+      <div className={`text-xl font-bold leading-tight sm:text-[1.35rem] ${isSelected ? "text-amber-600" : "text-foreground"}`}>
         {formatWarrantyEuro(option.price)}
       </div>
       <div className="text-xs leading-4 text-muted-foreground">{option.description || fallbackDescription}</div>
