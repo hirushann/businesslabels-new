@@ -350,7 +350,7 @@ export default function FinderListing({
   });
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col w-full">
       {/* ── Search section ── */}
       <div className="flex w-full flex-col gap-4 border-b border-[#EDF0F4] pb-4 lg:flex-row lg:items-center lg:justify-between max-w-[1440px] mx-auto mb-6">
         <h2
@@ -422,11 +422,11 @@ export default function FinderListing({
 
       {/* ── Printer grid ── */}
       {loading && displayedPrinters.length === 0 ? (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid w-full grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 max-w-[1440px] mx-auto justify-items-start">
           {Array.from({ length: 9 }).map((_, i) => (
             <div
               key={i}
-              className="h-[360px] rounded-xl bg-slate-100 animate-pulse"
+              className="h-[360px] w-full rounded-xl bg-slate-100 animate-pulse"
             />
           ))}
         </div>
@@ -437,16 +437,17 @@ export default function FinderListing({
         />
       ) : (
         <div
-          className={`grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 transition-opacity duration-200 max-w-[1440px] mx-auto ${
+          className={`grid w-full grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 transition-opacity duration-200 max-w-[1440px] mx-auto justify-items-start items-stretch ${
             loading ? "opacity-60 pointer-events-none" : "opacity-100"
           }`}
         >
           {displayedPrinters.map((printer) => (
-            <PrinterCard
-              key={printer.id}
-              printer={printer}
-              href={getPrinterPath(locale, printer.slug)}
-            />
+            <div key={printer.id} className="w-full flex justify-start">
+              <PrinterCard
+                printer={printer}
+                href={getPrinterPath(locale, printer.slug)}
+              />
+            </div>
           ))}
 
           {/* Skeleton cards appended at the end while loading more */}
@@ -454,7 +455,7 @@ export default function FinderListing({
             Array.from({ length: 3 }).map((_, i) => (
               <div
                 key={`skeleton-${i}`}
-                className="h-[360px] rounded-xl bg-slate-100 animate-pulse"
+                className="h-[360px] w-full rounded-xl bg-slate-100 animate-pulse"
               />
             ))}
         </div>
