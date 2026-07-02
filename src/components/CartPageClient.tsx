@@ -95,7 +95,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
         <div className="max-w-360 mx-auto w-full">
           <Breadcrumbs items={breadcrumbs} className="mb-8" />
           
-          <h1 className="text-[32px] font-bold text-[#222222] font-['Segoe_UI'] mb-10 text-center md:text-left">
+          <h1 className="text-[32px] font-bold text-[#222222] font-['Segoe_UI'] mb-10 text-center md:text-center">
             {t('cart.title') || 'My Cart'}
           </h1>
 
@@ -107,18 +107,18 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
               <div className="hidden lg:flex w-full h-[68px] border-b border-[#EDF2F7] items-center px-6">
                 <div className="flex-1 flex items-center gap-6">
                   <div className="w-4" />
-                  <div className="w-[280px] text-base font-semibold font-['Segoe_UI'] text-[#444444]">
+                  <div className="w-[280px] text-base font-bold font-['Segoe_UI'] text-[#444444]">
                     {t('cart.products') || 'Products'}
                   </div>
                 </div>
                 <div className="flex items-center gap-6">
-                  <div className="w-[120px] text-sm font-semibold font-['Segoe_UI'] text-[#444444]">
+                  <div className="w-[120px] text-sm font-bold font-['Segoe_UI'] text-[#444444]">
                     {t('cart.unitPrice') || 'Unit Price'}
                   </div>
-                  <div className="w-[260px] text-sm font-semibold font-['Segoe_UI'] text-[#444444]">
+                  <div className="w-[260px] text-sm font-bold font-['Segoe_UI'] text-[#444444]">
                     {t('cart.quantity') || 'Quantity'}
                   </div>
-                  <div className="w-[120px] text-base font-semibold font-['Segoe_UI'] text-[#444444] text-right">
+                  <div className="w-[120px] text-base font-bold font-['Segoe_UI'] text-[#444444] text-right">
                     {t('common.total') || 'Total'}
                   </div>
                 </div>
@@ -229,7 +229,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                                     setItemQuantity(item.key, val);
                                   }
                                 }}
-                                className="w-[38px] h-[38px] border-r border-black/10 bg-transparent text-center text-base font-semibold text-[#222222] focus:outline-none focus:ring-0 p-0"
+                                className="w-[38px] h-[38px] border-r border-black/10 bg-transparent text-center text-base font-bold text-[#222222] focus:outline-none focus:ring-0 p-0"
                               />
                               <button
                                 type="button"
@@ -333,7 +333,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                 <span className="text-lg font-normal font-['Segoe_UI'] text-[#222222]">
                   {t('cart.subtotal') || 'Sub-total'}:
                 </span>
-                <span className="text-2xl font-bold font-['Segoe_UI'] text-[#222222]">
+                <span className="text-2xl font-semibold font-['Segoe_UI'] text-[#222222]">
                   {formatEuro(totalAmount)}
                 </span>
               </div>
@@ -343,7 +343,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
             <aside className="w-full lg:w-[400px] shrink-0 bg-white rounded-xl border border-[#EDF2F7] overflow-hidden shadow-[2px_4px_20px_rgba(109,109,120,0.06)] flex flex-col">
               {/* Header */}
               <div className="w-full p-4 bg-[#F7F9FA] border-b border-[#E5E7EB] text-center">
-                <h2 className="text-2xl font-semibold font-['Segoe_UI'] text-[#222222] tracking-wider uppercase">
+                <h2 className="text-2xl font-bold font-['Segoe_UI'] text-[#222222] tracking-wider uppercase">
                   {t('cart.summary') || 'Your overview'}
                 </h2>
               </div>
@@ -482,7 +482,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                   href="/checkout"
                   className="w-full h-13 bg-[#F18800] hover:bg-[#d87a00] active:bg-[#c26e00] rounded-[100px] flex items-center justify-center cursor-pointer transition-colors"
                 >
-                  <span className="text-center text-white text-lg font-semibold font-['Segoe_UI'] leading-6 whitespace-nowrap">
+                  <span className="text-center text-white text-lg font-bold font-['Segoe_UI'] leading-6 whitespace-nowrap">
                     {t('cart.checkout') || 'Proceed to checkout'}
                   </span>
                 </Link>
