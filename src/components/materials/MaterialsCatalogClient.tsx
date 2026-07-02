@@ -4,7 +4,6 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
 import Accordion from "@/components/Accordion";
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 import EmptyState from "@/components/EmptyState";
@@ -269,6 +268,13 @@ function PrintMethodBadgeIcon({ tech }: { tech: string }) {
   );
 }
 
+function plainText(value?: string | null): string {
+  return (value ?? "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function MaterialCard({
   material,
   locale,
@@ -280,6 +286,7 @@ function MaterialCard({
 }) {
   const { printTechs, baseMat, finish, adhesive, weight, thickness } = deriveMaterialAttributes(material, printMethod);
   const cardImage = toDisplayImageUrl(material.main_image) || "/images/material-placeholder.svg";
+  const materialSummary = plainText(material.excerpt || material.description || material.subtitle);
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_4px_20px_rgba(109,109,120,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(109,109,120,0.12)]">
@@ -334,9 +341,11 @@ function MaterialCard({
             </Link>
           </h3>
 
-          <p className="mb-4 text-sm leading-relaxed text-slate-500 line-clamp-2">
-            {material.description}
-          </p>
+          {materialSummary ? (
+            <p className="mb-4 text-sm leading-relaxed text-slate-500 line-clamp-2">
+              {materialSummary}
+            </p>
+          ) : null}
 
           <div className="mb-5 flex flex-wrap gap-1.5">
             <span className="rounded-full bg-amber-50 border border-amber-200 px-2.5 py-1 text-xs font-medium text-brown-600">
@@ -391,7 +400,6 @@ export default function MaterialsCatalogClient({
   /** When set, the print method is locked to this value via the URL path (e.g. /materials/inkjet). */
   defaultPrintMethod?: string;
 }) {
-  const t = useTranslations();
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();

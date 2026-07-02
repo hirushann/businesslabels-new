@@ -28,6 +28,7 @@ export type Material = {
   adhesive: string | null;
   main_image?: string;
   description?: string;
+  excerpt?: string;
 };
 
 export type MaterialSortValue = "name_asc" | "name_desc" | "latest" | "oldest";
@@ -285,6 +286,8 @@ function applyTranslation(source: MaterialSource, locale?: "en" | "nl"): Partial
     title: nullableString(translation.title) ?? nullableString(translation.name) ?? undefined,
     subtitle: nullableString(translation.subtitle) ?? undefined,
     slug: nullableString(translation.slug) ?? undefined,
+    description: nullableString(translation.description) ?? undefined,
+    excerpt: nullableString(translation.excerpt) ?? nullableString(translation.short_description) ?? undefined,
   };
 }
 
@@ -323,6 +326,8 @@ function mapMaterialHit(hit: estypes.SearchHit<MaterialSource>, locale?: "en" | 
     finish: nullableString(source.finish_label) ?? nullableString(source.finish),
     adhesive: nullableString(source.adhesive_label) ?? nullableString(source.adhesive),
     main_image: nullableString(source.main_image) ?? nullableString(source.image) ?? undefined,
+    description: translated.description || nullableString(source.description) || undefined,
+    excerpt: translated.excerpt || nullableString(source.excerpt) || nullableString(source.short_description) || undefined,
   };
 }
 
@@ -372,6 +377,10 @@ export async function searchMaterials(params: MaterialSearchParams): Promise<Mat
       "adhesive_label",
       "main_image",
       "image",
+      "description",
+      "description_locales",
+      "excerpt",
+      "short_description",
       "translations",
       "created_at_timestamp",
     ],

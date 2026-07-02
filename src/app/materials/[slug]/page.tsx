@@ -38,6 +38,8 @@ type MaterialSpec = {
   value: string;
 };
 
+type LocalizedText = string | { en?: string | null; nl?: string | null } | null | undefined;
+
 type Material = {
   id: number;
   title: string;
@@ -47,7 +49,9 @@ type Material = {
   brand: string;
   brand_label: string | null;
   status: string;
-  description: string;
+  description?: LocalizedText;
+  excerpt?: LocalizedText;
+  short_description?: LocalizedText;
   main_image?: string | null;
   specifications: { material_specs?: MaterialSpec[] } | null;
   print_method: string | null;
@@ -94,6 +98,116 @@ const emptyCatalogResponse: CatalogSearchResponse = {
 
 const MATERIAL_PRODUCTS_SECTION_ID = "products-from-this-material";
 
+function resolveLocalizedText(value: LocalizedText, locale: "en" | "nl"): string {
+  if (!value) return "";
+  if (typeof value === "string") return value.trim();
+  return (value[locale] || value.en || value.nl || "").trim();
+}
+
+function plainText(value: string): string {
+  return value
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&#(\d+);/g, (_, code: string) => String.fromCodePoint(Number(code)))
+    .replace(/&([a-z]+);/gi, (_, entity: string) => {
+      const entities: Record<string, string> = {
+        amp: "&",
+        apos: "'",
+        gt: ">",
+        lt: "<",
+        nbsp: " ",
+        quot: '"',
+      };
+      return entities[entity.toLowerCase()] ?? `&${entity};`;
+    })
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function specValue(specs: MaterialSpec[], patterns: RegExp[]): string {
+  const match = specs.find((spec) => patterns.some((pattern) => pattern.test(spec.label)));
+  return match?.value?.trim() ?? "";
+}
+
+function categoryText(material: Material): string {
+  return material.categories
+    .flatMap((category) => [category.name, category.slug])
+    .join(" ")
+    .toLowerCase();
+}
+
+function derivedBrand(material: Material): string {
+  const direct = material.brand_label || material.brand;
+  if (direct) return direct;
+
+  const brandCategory = material.categories.find((category) =>
+    ["diamondlabels", "zebra", "epson", "godex", "pure-labels"].includes(category.slug.toLowerCase()),
+  );
+
+  return brandCategory?.name ?? "";
+}
+
+function derivedPrintMethod(material: Material): string {
+  const direct = material.print_method_label || material.print_method;
+  if (direct) return direct;
+
+  const text = categoryText(material);
+  if (/\b(inkjet|inkjetpapier)\b/.test(text)) return "Inkjet";
+  if (/\b(thermal-transfer|thermische-overdracht|thermal transfer|labels-met-lijm-tt|papieren-labels-tt|matte-labels-tt|tt|ttr)\b/.test(text)) {
+    return "Thermal Transfer";
+  }
+  if (/\b(thermal-direct|thermisch direct|thermisch-direct|td|papieren-labels-td|labels-met-lijm-td)\b/.test(text)) {
+    return "Thermal Direct";
+  }
+
+  return "";
+}
+
+function derivedBaseMaterial(material: Material, specs: MaterialSpec[]): string {
+  const direct = material.base_material_label || material.base_material;
+  if (direct) return direct;
+
+  const spec = specValue(specs, [/material base/i, /material type/i, /base material/i]);
+  if (spec) return spec;
+
+  const text = categoryText(material);
+  if (/\b(papier|paper|papieren|inkjetpapier)\b/.test(text)) return "Paper";
+  if (/\b(hdpe)\b/.test(text)) return "HDPE";
+  if (/\b(pet)\b/.test(text)) return "PET";
+  if (/\b(pp|polypropylene|polypropyleen)\b/.test(text)) return "PP";
+  if (/\b(pe|polyethylene|polyethyleen)\b/.test(text)) return "PE";
+  if (/\b(kunststof|plastic|synthetic)\b/.test(text)) return "Synthetic";
+
+  return "";
+}
+
+function derivedFinish(material: Material, specs: MaterialSpec[]): string {
+  const direct = material.finish_label || material.finish;
+  if (direct) return direct;
+
+  const finishSpec = specValue(specs, [/^finish$/i]);
+  if (finishSpec) return finishSpec;
+
+  const text = categoryText(material);
+  if (/\b(glanz|gloss|glanzende)\b/.test(text)) return "Glossy";
+  if (/\b(mat|matte)\b/.test(text)) return "Matte";
+
+  return specValue(specs, [/coating/i]);
+}
+
+function derivedAdhesive(material: Material, specs: MaterialSpec[]): string {
+  const direct = material.adhesive_label || material.adhesive;
+  if (direct) return direct;
+
+  const spec = specValue(specs, [/adhesive/i, /lijm/i]);
+  if (spec) return spec;
+
+  const text = categoryText(material);
+  if (/\b(verwijderbaar|removable)\b/.test(text)) return "Removable";
+  if (/\b(labels-met-lijm|permanent|lijm)\b/.test(text)) return "Permanent";
+
+  return "";
+}
+
 function toUrlSearchParams(query: Record<string, string | string[] | undefined>): URLSearchParams {
   const params = new URLSearchParams();
 
@@ -131,9 +245,13 @@ export async function generateMetadata({ params }: MaterialPageProps): Promise<M
   const { slug } = await params;
   const material = await getMaterial(slug);
   if (!material) return { title: "Material — Businesslabels" };
+  const locale = await getServerLocale();
+  const richDescription = resolveLocalizedText(material.description, locale);
+  const description = material.subtitle || plainText(richDescription);
+
   return {
     title: `${material.title} — Businesslabels`,
-    description: material.subtitle,
+    description,
   };
 }
 
@@ -208,7 +326,7 @@ function HelpPanel({
     },
   ];
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)]">
+    <div className="flex flex-col gap-4">
       <h2 className="text-lg font-semibold leading-6 text-neutral-800">{labels.title}</h2>
       <div className="grid grid-cols-3 gap-4">
         {actions.map((action) => (
@@ -296,20 +414,30 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
     toDisplayImageUrl(material.main_image) ||
     toDisplayImageUrl(material.products?.[0]?.main_image) ||
     "/images/labelrolls.png";
+  const materialDescription =
+    resolveLocalizedText(material.description, locale) ||
+    resolveLocalizedText(material.excerpt, locale) ||
+    resolveLocalizedText(material.short_description, locale);
+  const materialSummary = material.subtitle;
+  const specEntries = material.specifications?.material_specs ?? [];
+  const brand = derivedBrand(material);
+  const printMethod = derivedPrintMethod(material);
+  const baseMaterial = derivedBaseMaterial(material, specEntries);
+  const finish = derivedFinish(material, specEntries);
+  const adhesive = derivedAdhesive(material, specEntries);
 
   const aboutRows = [
     { label: t("materialSpecs.code"), value: material.code },
-    { label: t("materialSpecs.brand"), value: material.brand_label || material.brand },
-    { label: t("materialSpecs.printMethod"), value: material.print_method_label || material.print_method },
-    { label: t("materialSpecs.baseMaterial"), value: material.base_material_label || material.base_material },
-    { label: t("materialSpecs.finish"), value: material.finish_label || material.finish },
-    { label: t("materialSpecs.adhesive"), value: material.adhesive_label || material.adhesive },
+    { label: t("materialSpecs.brand"), value: brand },
+    { label: t("materialSpecs.printMethod"), value: printMethod },
+    { label: t("materialSpecs.baseMaterial"), value: baseMaterial },
+    { label: t("materialSpecs.finish"), value: finish },
+    { label: t("materialSpecs.adhesive"), value: adhesive },
     { label: t("materialSpecs.supplier"), value: material.supplier_label || material.supplier },
     { label: t("materialSpecs.supplierReference"), value: material.supplier_reference },
     { label: t("materialSpecs.certificate"), value: material.certificate && material.certificate !== "none" ? material.certificate : null },
   ].filter((row): row is { label: string; value: string } => row.value != null && row.value !== "");
 
-  const specEntries = material.specifications?.material_specs ?? [];
   const specRows: { label: string; value: ReactNode }[] = specEntries
     .filter((spec) => spec.label && spec.value)
     .map((spec) => ({ label: spec.label, value: spec.value }));
@@ -335,7 +463,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
           // downloadLabel={t("materialsPage.downloadSpecSheet")}
           downloadLabel={(material.brand ? material.brand + "-" : "") + material.code + ".pdf"}
           materialImage={materialImage}
-          description={material.description}
+          description={materialDescription}
           pdfTitleLabel={t("materialDetail.specSheet")}
           aboutThisMaterialLabel={t("materialDetail.aboutThisMaterial")}
           specificationsLabel={t("materialDetail.specifications")}
@@ -361,7 +489,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
           <div className="flex flex-col gap-2">
             {material.code ? <span className="text-base font-bold uppercase tracking-wide text-[#479EF5]">{material.code}</span> : null}
             <h1 className="text-[32px] font-semibold leading-10 text-[#222222]">{material.title}</h1>
-            {material.subtitle ? <p className="text-lg leading-7 text-neutral-600">{material.subtitle}</p> : null}
+            {materialSummary ? <p className="text-lg leading-7 text-neutral-600">{materialSummary}</p> : null}
           </div>
 
           <div className="flex flex-col gap-10 lg:flex-row lg:items-start">
@@ -383,10 +511,10 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
                 <Accordion title={t("materialDetail.aboutThisMaterial")}>
                   <div className="flex flex-col gap-5 -mx-10 px-5">
                     <DetailTable rows={aboutRows} />
-                    {material.description ? (
+                    {materialDescription ? (
                       <div
                         className="text-base px-5 leading-7 text-neutral-600 [&_a]:text-[#f08500] [&_a]:underline hover:[&_a]:text-[#d97706] [&_a]:transition-colors"
-                        dangerouslySetInnerHTML={{ __html: material.description }}
+                        dangerouslySetInnerHTML={{ __html: materialDescription }}
                       />
                     ) : null}
                   </div>
@@ -416,17 +544,17 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
                 <Link href={`/custom-made-form?materialId=${material.code}`} className="flex h-12 items-center justify-center rounded-full border border-amber-500 bg-white px-4 text-base font-bold leading-6 text-amber-500 transition-colors hover:bg-amber-500/20">
                   {t("materialDetail.requestCustomMade")}
                 </Link>
+                <div className="h-px w-full bg-[#EDF2F7]" />
+                <HelpPanel
+                  labels={{
+                    title: t("supportPanel.title"),
+                    callUs: t("supportPanel.callUs"),
+                    email: t("supportPanel.email"),
+                    whatsapp: t("supportPanel.whatsapp"),
+                  }}
+                  materialCode={material.code || material.title || ""}
+                />
               </SidebarCard>
-
-              <HelpPanel
-                labels={{
-                  title: t("supportPanel.title"),
-                  callUs: t("supportPanel.callUs"),
-                  email: t("supportPanel.email"),
-                  whatsapp: t("supportPanel.whatsapp"),
-                }}
-                materialCode={material.code || material.title || ""}
-              />
 
               {/* ICC Color Profiles */}
               <div className="flex flex-col gap-4 rounded-xl border-2 border-[#FFEDD4] bg-[linear-gradient(135deg,#FFF7ED_0%,#FFFFFF_100%)] p-6">
@@ -456,7 +584,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
                   variant="button"
                   downloadLabel={t("materialsPage.downloadSpecSheet")}
                   materialImage={materialImage}
-                  description={material.description}
+                  description={materialDescription}
                   pdfTitleLabel={t("materialDetail.specSheet")}
                   aboutThisMaterialLabel={t("materialDetail.aboutThisMaterial")}
                   specificationsLabel={t("materialDetail.specifications")}

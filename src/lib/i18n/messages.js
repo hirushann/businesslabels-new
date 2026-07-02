@@ -333,9 +333,10 @@ export const MESSAGES_V4 = {
       menu: 'Menu',
       nav: {
         home: 'Home',
-        printers: 'Printers',
+        printers: 'Label Printers',
         labels: 'Labels and tickets',
         accessories: 'Accessories',
+        materials: 'Materials',
         resources: 'Resources',
         brands: 'Brands',
         support: 'Support',
@@ -414,7 +415,7 @@ export const MESSAGES_V4 = {
     },
     footer: {
       trust: {
-        epsonTitle: 'strokeLinejoin',
+        epsonTitle: 'Epson Diamond Partner',
         epsonSub: 'Certified compatibility',
         customersTitle: '12,000+ Customers',
         customersSub: 'Trusted worldwide',
@@ -1859,9 +1860,10 @@ export const MESSAGES_V4 = {
       menu: 'Menu',
       nav: {
         home: 'Home',
-        printers: 'Printers',
+        printers: 'Label Printers',
         labels: 'Labels en tickets',
         accessories: 'Accessoires',
+        materials: 'Materialen',
         resources: 'Resources',
         brands: 'Merken',
         support: 'Support',
