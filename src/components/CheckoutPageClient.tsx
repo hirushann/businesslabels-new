@@ -6,10 +6,13 @@ import { useCallback, useMemo, useState, useEffect } from "react";
 import EmptyState from "@/components/EmptyState";
 import { type CartItem, useCart } from "@/components/CartProvider";
 import { toast } from "sonner";
+import LoginPopup from "@/components/LoginPopup";
+import RegisterPopup from "@/components/RegisterPopup";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
 import { useTranslations, useLocale } from 'next-intl';
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { localePath } from "@/lib/i18n/utils";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 type CheckoutFormState = {
   firstName: string;
@@ -24,6 +27,16 @@ type CheckoutFormState = {
   state: string;
   postcode: string;
   paymentMethod: "ideal" | "creditcard" | "bancontact" | "banktransfer" | "";
+  // Shipping fields
+  shippingFirstName: string;
+  shippingLastName: string;
+  shippingStreetAddress: string;
+  shippingCountry: string;
+  shippingCity: string;
+  shippingState: string;
+  shippingPostcode: string;
+  sameAsBilling: boolean;
+  purchaseReference: string;
 };
 
 type CheckoutMode = "live" | "demo";
@@ -48,6 +61,15 @@ const initialFormState: CheckoutFormState = {
   state: "",
   postcode: "",
   paymentMethod: "",
+  shippingFirstName: "",
+  shippingLastName: "",
+  shippingStreetAddress: "",
+  shippingCountry: "Netherlands",
+  shippingCity: "",
+  shippingState: "",
+  shippingPostcode: "",
+  sameAsBilling: true,
+  purchaseReference: "213321",
 };
 
 const demoFormState: CheckoutFormState = {
@@ -63,6 +85,15 @@ const demoFormState: CheckoutFormState = {
   state: "North Holland",
   postcode: "1016 DW",
   paymentMethod: "ideal",
+  shippingFirstName: "Emma",
+  shippingLastName: "van Dijk",
+  shippingStreetAddress: "Keizersgracht 214",
+  shippingCountry: "Netherlands",
+  shippingCity: "Amsterdam",
+  shippingState: "North Holland",
+  shippingPostcode: "1016 DW",
+  sameAsBilling: true,
+  purchaseReference: "213321",
 };
 
 function formatEuro(value: number): string {
@@ -75,10 +106,10 @@ function formatEuro(value: number): string {
 }
 
 function inputClasses(hasError = false): string {
-  return `h-12 rounded-xl border bg-white px-4 text-neutral-800 outline-none transition-colors ${
+  return `w-full h-[52px] px-5 py-4 rounded-full border bg-white text-neutral-800 text-[16px] outline-none transition-all placeholder-[#888888] ${
     hasError
-      ? "border-red-300 focus:border-red-400"
-      : "border-slate-200 focus:border-amber-400"
+      ? "border-red-300 focus:border-red-400 focus:ring-1 focus:ring-red-400"
+      : "border-[#DDE1EA] focus:border-[#F18800] focus:ring-1 focus:ring-[#F18800]"
   }`;
 }
 
@@ -213,6 +244,8 @@ function CheckoutShell({
   onLoginRememberChange,
   onLoginSubmit,
   onAddressSelect,
+  step,
+  setStep,
 }: {
   items: CartItem[];
   totalAmount: number;
@@ -222,7 +255,7 @@ function CheckoutShell({
   handleSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
   form: CheckoutFormState;
   errors: Partial<Record<keyof CheckoutFormState, string>>;
-  handleChange: (field: keyof CheckoutFormState, value: string) => void;
+  handleChange: (field: keyof CheckoutFormState, value: string | boolean) => void;
   isPending: boolean;
   isLoggedIn: boolean;
   loginEmail: string;
@@ -241,7 +274,9 @@ function CheckoutShell({
     state: string;
     postcode: string;
     country: string;
-  }) => void;
+  }, isShipping?: boolean) => void;
+  step: 1 | 2 | 3;
+  setStep: (step: 1 | 2 | 3) => void;
 }) {
   const t = useTranslations();
   const locale = useLocale();
@@ -249,6 +284,10 @@ function CheckoutShell({
   const paymentFee = useMemo(() => (form.paymentMethod === "creditcard" ? totalAmount * 0.025 : 0), [totalAmount, form.paymentMethod]);
   const taxAmount = useMemo(() => (totalAmount + shippingAmount + paymentFee) * 0.21, [totalAmount, shippingAmount, paymentFee]);
   const finalTotal = useMemo(() => totalAmount + shippingAmount + paymentFee + taxAmount, [totalAmount, shippingAmount, paymentFee, taxAmount]);
+  const [isEditingRef, setIsEditingRef] = useState(false);
+  const [isLoginPopupOpen, setIsLoginPopupOpen] = useState(false);
+  const [isRegisterPopupOpen, setIsRegisterPopupOpen] = useState(false);
+
   const handleLoginKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") {
       event.preventDefault();
@@ -256,464 +295,783 @@ function CheckoutShell({
     }
   };
 
+  const breadcrumbs = [
+    { label: t('checkout.title') || 'Checkout' }
+  ];
 
   return (
-    <div className="bg-slate-50 px-5 py-15">
-      <div className="mx-auto max-w-[80%]">
-        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[2px_8px_40px_0px_rgba(109,109,120,0.10)]">
-          {items.length === 0 ? (
-            <div className="px-8 py-16">
-              <EmptyState
-                title={t('checkout.emptyCart')}
-                description={t('checkout.emptyCartDescription')}
-              />
-              <div className="mt-8 flex justify-center">
-                <Link
-                  href={localePath("/product", locale)}
-                  className="inline-flex h-12 items-center justify-center rounded-full bg-amber-500 px-6 text-base font-semibold text-white transition-colors hover:bg-amber-600"
+    <div className="px-4 md:px-8 lg:px-10 py-12 min-h-screen" style={{
+      background: "radial-gradient(circle at 15% 15%, rgba(241, 136, 0, 0.08) 0%, rgba(250, 251, 253, 0) 55%), #FAFBFD"
+    }}>
+      <div className="max-w-360 mx-auto w-full">
+        
+        {/* Breadcrumbs */}
+        <Breadcrumbs items={breadcrumbs} className="mb-8" />
+        
+        {/* Page Title */}
+        <h1 className="text-[32px] font-semibold text-[#222222] font-['Segoe_UI'] mb-10 text-center">
+          {t('checkout.title')}
+        </h1>
+
+        <div className="flex flex-col lg:flex-row justify-between items-start gap-6">
+          
+          {/* Main Checkout Panel */}
+          <div className="w-full flex-1 bg-white shadow-[2px_4px_20px_rgba(109,109,120,0.10)] rounded-xl border border-[#EDF2F7] flex flex-col overflow-hidden">
+            
+            {/* Step Progress Bar */}
+            <div className="align-self-stretch px-6 py-4 bg-white border-b border-[#EDF2F7] flex flex-col justify-start items-center gap-4">
+              <div className="relative overflow-hidden justify-start items-center gap-8 inline-flex" style={{ paddingRight: '0.06px' }}>
+                <div className="absolute h-[2px] bg-[#EDF2F7] rounded-[5px]" style={{ width: '346px', left: '74.03px', top: '15px' }} />
+                <div className="absolute h-[2px] bg-[#F18800] rounded-[5px] transition-all duration-300" style={{
+                  width: step === 1 ? '0px' : step === 2 ? '173px' : '346px',
+                  left: '74.03px',
+                  top: '15px'
+                }} />
+                
+                {/* Step 1: Billing Address */}
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="relative z-10 w-[140px] flex-col justify-start items-center gap-2 inline-flex focus:outline-none"
                 >
-                  {t('common.browseProducts')}
-                </Link>
+                  <div className={`w-8 h-8 rounded-full justify-center items-center inline-flex transition-all ${
+                    step > 1 ? "bg-[#F18800]" : "bg-white border-2 border-[#F18800]"
+                  }`}>
+                    {step > 1 ? (
+                      <svg width="14" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1 5L5 9L13 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    ) : (
+                      <span className="text-[#F18800] text-[18px] font-normal">1</span>
+                    )}
+                  </div>
+                  <div className={`text-[14px] font-bold font-['Segoe_UI'] ${
+                    step === 1 ? "text-[#F18800]" : "text-[#888888]"
+                  }`}>
+                    {t('checkout.billingAddress')}
+                  </div>
+                </button>
+
+                {/* Step 2: Shipping Address */}
+                <button
+                  type="button"
+                  onClick={() => step > 1 && setStep(2)}
+                  disabled={step < 2}
+                  className="relative z-10 w-[140px] flex-col justify-start items-center gap-2 inline-flex focus:outline-none disabled:cursor-not-allowed"
+                >
+                  <div className={`w-8 h-8 rounded-full justify-center items-center inline-flex transition-all ${
+                    step > 2
+                      ? "bg-[#F18800]"
+                      : step === 2
+                        ? "bg-white border-2 border-[#F18800]"
+                        : "bg-[#F3F4F6]"
+                  }`}>
+                    {step > 2 ? (
+                      <svg width="14" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1 5L5 9L13 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    ) : (
+                      <span className={`text-[18px] font-normal ${
+                        step === 2 ? "text-[#F18800]" : "text-[#888888]"
+                      }`}>2</span>
+                    )}
+                  </div>
+                  <div className={`text-[14px] font-bold font-['Segoe_UI'] ${
+                    step === 2 ? "text-[#F18800]" : "text-[#888888]"
+                  }`}>
+                    {t('checkout.shippingAddress')}
+                  </div>
+                </button>
+
+                {/* Step 3: Payment Method */}
+                <div className="relative z-10 w-[140px] flex-col justify-start items-center gap-2 inline-flex">
+                  <div className={`w-8 h-8 rounded-full justify-center items-center inline-flex transition-all ${
+                    step === 3 ? "bg-white border-2 border-[#F18800]" : "bg-[#F3F4F6]"
+                  }`}>
+                    <span className={`text-[18px] font-normal ${
+                      step === 3 ? "text-[#F18800]" : "text-[#888888]"
+                    }`}>3</span>
+                  </div>
+                  <div className={`text-[14px] font-bold font-['Segoe_UI'] ${
+                    step === 3 ? "text-[#F18800]" : "text-[#888888]"
+                  }`}>
+                    {t('checkout.paymentMethod')}
+                  </div>
+                </div>
               </div>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-[1.45fr_0.75fr]">
-              <form
-                id="checkout-form"
-                onSubmit={handleSubmit}
-                className="border-b border-slate-200 p-8 lg:border-b-0 lg:border-r"
-              >
-                <div className="flex flex-col gap-8">
+
+            {/* Form Section */}
+            {items.length === 0 ? (
+              <div className="px-8 py-16 text-center">
+                <EmptyState
+                  title={t('checkout.emptyCart')}
+                  description={t('checkout.emptyCartDescription')}
+                />
+                <div className="mt-8 flex justify-center">
                   <Link
                     href={localePath("/product", locale)}
-                    className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-700 transition-colors hover:text-amber-500"
+                    className="inline-flex h-12 items-center justify-center rounded-full bg-[#F18800] px-6 text-base font-semibold text-white transition-colors hover:bg-amber-600"
                   >
-                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                      <path d="M11.25 4.5L6.75 9L11.25 13.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M6.75 9H16.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    </svg>
-                    {t('checkout.goBackToCart')}
+                    {t('common.browseProducts')}
                   </Link>
- 
-                  <div className="flex flex-col gap-2">
-                    <h1 className="text-neutral-800 text-4xl font-bold leading-[48px]">{t('checkout.title')}</h1>
-                    <p className="text-neutral-600 text-base leading-6">
-                      {t('checkout.checkoutDescription')}
-                    </p>
-                  </div>
-
-                  {!isLoggedIn && (
-                    <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-5">
-                      <div className="flex flex-col gap-4">
-                        <div className="flex flex-col gap-1">
-                          <h2 className="text-lg font-bold text-neutral-800">{t('checkout.loginTitle')}</h2>
-                          <p className="text-sm leading-5 text-neutral-600">{t('checkout.loginDescription')}</p>
+                </div>
+              </div>
+            ) : (
+              <form id="checkout-form" onSubmit={handleSubmit} className="p-6 md:p-8 flex flex-col gap-6">
+                
+                {/* LOGIN SECTION FOR GUESTS */}
+                {step === 1 && !isLoggedIn && (
+                  <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-5 mb-4 hidden">
+                    <div className="flex flex-col gap-4">
+                      <div className="flex flex-col gap-1">
+                        <h2 className="text-lg font-bold text-neutral-800">{t('checkout.loginTitle')}</h2>
+                        <p className="text-sm leading-5 text-neutral-600">{t('checkout.loginDescription')}</p>
+                      </div>
+                      {loginMessage && (
+                        <div className="rounded-xl border border-red-100 bg-white px-4 py-3 text-sm font-semibold text-red-700">
+                          {loginMessage}
                         </div>
-                        {loginMessage && (
-                          <div className="rounded-xl border border-red-100 bg-white px-4 py-3 text-sm font-semibold text-red-700">
-                            {loginMessage}
-                          </div>
-                        )}
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                          <label className="flex flex-col gap-2">
-                            <span className="text-sm font-semibold text-neutral-700">{t('login.emailLabel')}</span>
-                            <input
-                              type="email"
-                              autoComplete="email"
-                              className={inputClasses(Boolean(loginErrors.email))}
-                              value={loginEmail}
-                              onChange={(event) => onLoginEmailChange(event.target.value)}
-                              onKeyDown={handleLoginKeyDown}
-                              disabled={isLoginPending}
-                            />
-                            {loginErrors.email && <span className="text-xs font-medium text-red-500">{loginErrors.email}</span>}
-                          </label>
-                          <label className="flex flex-col gap-2">
-                            <span className="text-sm font-semibold text-neutral-700">{t('login.passwordLabel')}</span>
-                            <input
-                              type="password"
-                              autoComplete="current-password"
-                              className={inputClasses(Boolean(loginErrors.password))}
-                              value={loginPassword}
-                              onChange={(event) => onLoginPasswordChange(event.target.value)}
-                              onKeyDown={handleLoginKeyDown}
-                              disabled={isLoginPending}
-                            />
-                            {loginErrors.password && <span className="text-xs font-medium text-red-500">{loginErrors.password}</span>}
-                          </label>
-                        </div>
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                          <label className="flex items-center gap-3 text-sm font-semibold text-neutral-600">
-                            <input
-                              type="checkbox"
-                              checked={loginRemember}
-                              onChange={(event) => onLoginRememberChange(event.target.checked)}
-                              disabled={isLoginPending}
-                              className="size-4 rounded border-slate-300 accent-amber-500"
-                            />
-                            {t('login.rememberMe')}
-                          </label>
-                          <button
-                            type="button"
-                            onClick={onLoginSubmit}
+                      )}
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <label className="flex flex-col gap-2">
+                          <span className="text-sm font-semibold text-neutral-700">{t('login.emailLabel')}</span>
+                          <input
+                            type="email"
+                            autoComplete="email"
+                            className={inputClasses(Boolean(loginErrors.email))}
+                            value={loginEmail}
+                            onChange={(event) => onLoginEmailChange(event.target.value)}
+                            onKeyDown={handleLoginKeyDown}
                             disabled={isLoginPending}
-                            className="inline-flex h-11 items-center justify-center rounded-full bg-neutral-800 px-5 text-sm font-bold text-white transition-colors hover:bg-neutral-900 disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            {isLoginPending ? t('checkout.loginLoading') : t('checkout.loginButton')}
-                          </button>
-                        </div>
+                          />
+                          {loginErrors.email && <span className="text-xs font-medium text-red-500">{loginErrors.email}</span>}
+                        </label>
+                        <label className="flex flex-col gap-2">
+                          <span className="text-sm font-semibold text-neutral-700">{t('login.passwordLabel')}</span>
+                          <input
+                            type="password"
+                            autoComplete="current-password"
+                            className={inputClasses(Boolean(loginErrors.password))}
+                            value={loginPassword}
+                            onChange={(event) => onLoginPasswordChange(event.target.value)}
+                            onKeyDown={handleLoginKeyDown}
+                            disabled={isLoginPending}
+                          />
+                          {loginErrors.password && <span className="text-xs font-medium text-red-500">{loginErrors.password}</span>}
+                        </label>
+                      </div>
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <label className="flex items-center gap-3 text-sm font-semibold text-neutral-600">
+                          <input
+                            type="checkbox"
+                            checked={loginRemember}
+                            onChange={(event) => onLoginRememberChange(event.target.checked)}
+                            disabled={isLoginPending}
+                            className="size-4 rounded border-slate-300 accent-[#F18800]"
+                          />
+                          {t('login.rememberMe')}
+                        </label>
+                        <button
+                          type="button"
+                          onClick={onLoginSubmit}
+                          disabled={isLoginPending}
+                          className="inline-flex h-11 items-center justify-center rounded-full bg-neutral-800 px-5 text-sm font-bold text-white transition-colors hover:bg-[#F18800] disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {isLoginPending ? t('checkout.loginLoading') : t('checkout.loginButton')}
+                        </button>
                       </div>
                     </div>
-                  )}
- 
-                  <div className="flex flex-col gap-5">
-                    <div className="flex flex-col gap-1">
-                      <h2 className="text-neutral-800 text-2xl font-bold leading-8">{t('checkout.deliveryInfo')}</h2>
-                      <p className="text-neutral-600 text-sm leading-5">
-                        {t('checkout.deliveryInfoDesc')}
+                  </div>
+                )}
+
+                {/* STEP 1: BILLING ADDRESS */}
+                {step === 1 && (
+                  <div className="flex flex-col gap-6">
+                    <div className="flex flex-col gap-2">
+                      <h2 className="text-[#222222] text-[28px] font-bold leading-[33.6px]">{t('checkout.billingAddress')}</h2>
+                      <p className="text-[#444444] text-[16px] font-normal leading-[20.8px]">
+                        {t('checkout.billingDescription')}
                       </p>
                     </div>
- 
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                      <label className="flex flex-col gap-2">
-                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.firstName')} <span className="text-red-500">*</span></span>
-                        <input className={inputClasses(Boolean(errors.firstName))} value={form.firstName} onChange={(e) => handleChange("firstName", e.target.value)} />
-                        {errors.firstName && <span className="text-xs text-red-500 font-medium">{errors.firstName}</span>}
-                      </label>
-                      <label className="flex flex-col gap-2">
-                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.lastName')} <span className="text-red-500">*</span></span>
-                        <input className={inputClasses(Boolean(errors.lastName))} value={form.lastName} onChange={(e) => handleChange("lastName", e.target.value)} />
-                        {errors.lastName && <span className="text-xs text-red-500 font-medium">{errors.lastName}</span>}
-                      </label>
-                      <label className="flex flex-col gap-2">
-                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.email')} <span className="text-red-500">*</span></span>
-                        <input className={inputClasses(Boolean(errors.email))} value={form.email} onChange={(e) => handleChange("email", e.target.value)} />
-                        {errors.email && <span className="text-xs text-red-500 font-medium">{errors.email}</span>}
-                      </label>
-                      <label className="flex flex-col gap-2">
-                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.mobileNumber')} <span className="text-red-500">*</span></span>
-                        <input className={inputClasses(Boolean(errors.mobileNumber))} value={form.mobileNumber} onChange={(e) => handleChange("mobileNumber", e.target.value)} />
-                        {errors.mobileNumber && <span className="text-xs text-red-500 font-medium">{errors.mobileNumber}</span>}
-                      </label>
-                      <label className="flex flex-col gap-2">
-                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.companyName')}</span>
-                        <input className={inputClasses(Boolean(errors.companyName))} value={form.companyName} onChange={(e) => handleChange("companyName", e.target.value)} />
-                        {errors.companyName && <span className="text-xs text-red-500 font-medium">{errors.companyName}</span>}
-                      </label>
-                      <label className="flex flex-col gap-2">
-                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.vatNumber')}</span>
-                        <input className={inputClasses(Boolean(errors.vatNumber))} value={form.vatNumber} onChange={(e) => handleChange("vatNumber", e.target.value)} />
-                        {errors.vatNumber && <span className="text-xs text-red-500 font-medium">{errors.vatNumber}</span>}
-                      </label>
-                    </div>
-                  </div>
- 
-                  <div className="flex flex-col gap-5">
-                    <div className="flex flex-col gap-1">
-                      <h2 className="text-neutral-800 text-2xl font-bold leading-8">{t('checkout.address')}</h2>
-                    </div>
- 
-                    <label className="flex flex-col gap-2">
-                      <span className="text-sm font-semibold text-neutral-700">{t('checkout.quickAddressSearch')}</span>
+                    <div className="h-px bg-[#EDF2F7] w-full" />
+
+                    {/* Address Autocomplete Search (Billing) */}
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[18px] font-bold text-[#222222]">{t('checkout.quickAddressSearch')}</span>
                       <AddressAutocomplete
                         value={form.streetAddress}
                         onChange={(val) => handleChange("streetAddress", val)}
-                        onAddressSelect={onAddressSelect}
+                        onAddressSelect={(addr) => onAddressSelect(addr, false)}
                         className={inputClasses(Boolean(errors.streetAddress))}
-                        hasError={Boolean(errors.streetAddress)}
+                        placeholder={t('checkout.quickAddressSearch')}
                       />
-                      <span className="text-sm font-semibold text-neutral-700">{t('checkout.streetAddress')} <span className="text-red-500">*</span></span>
-                      <input className={inputClasses(Boolean(errors.streetAddress))} value={form.streetAddress} onChange={(e) => handleChange("streetAddress", e.target.value)} />
-                      {errors.streetAddress && <span className="text-xs text-red-500 font-medium">{errors.streetAddress}</span>}
-                    </label>
- 
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-                      <label className="flex flex-col gap-2 md:col-span-1">
-                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.country')}</span>
-                        <select className={inputClasses()} value={form.country} onChange={(e) => handleChange("country", e.target.value)}>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex flex-col gap-2">
+                        <span className="text-[18px] font-bold text-[#222222]">{t('checkout.companyName')}</span>
+                        <input
+                          type="text"
+                          value={form.companyName}
+                          onChange={(e) => handleChange("companyName", e.target.value)}
+                          placeholder="Van Dijk Labels BV"
+                          className={inputClasses(Boolean(errors.companyName))}
+                        />
+                        {errors.companyName && <span className="text-xs text-red-500">{errors.companyName}</span>}
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <span className="text-[18px] font-bold text-[#222222]">{t('checkout.vatNumber')}</span>
+                        <input
+                          type="text"
+                          value={form.vatNumber}
+                          onChange={(e) => handleChange("vatNumber", e.target.value)}
+                          placeholder="NL123456789B01"
+                          className={inputClasses(Boolean(errors.vatNumber))}
+                        />
+                        {errors.vatNumber && <span className="text-xs text-red-500">{errors.vatNumber}</span>}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex flex-col gap-2">
+                        <span className="text-[18px] font-bold text-[#222222]">{t('checkout.firstName')} *</span>
+                        <input
+                          type="text"
+                          value={form.firstName}
+                          onChange={(e) => handleChange("firstName", e.target.value)}
+                          placeholder="Emma"
+                          className={inputClasses(Boolean(errors.firstName))}
+                        />
+                        {errors.firstName && <span className="text-xs text-red-500">{errors.firstName}</span>}
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <span className="text-[18px] font-bold text-[#222222]">{t('checkout.lastName')} *</span>
+                        <input
+                          type="text"
+                          value={form.lastName}
+                          onChange={(e) => handleChange("lastName", e.target.value)}
+                          placeholder="van Dijk"
+                          className={inputClasses(Boolean(errors.lastName))}
+                        />
+                        {errors.lastName && <span className="text-xs text-red-500">{errors.lastName}</span>}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex flex-col gap-2">
+                        <span className="text-[18px] font-bold text-[#222222]">{t('checkout.email')} *</span>
+                        <input
+                          type="email"
+                          value={form.email}
+                          onChange={(e) => handleChange("email", e.target.value)}
+                          placeholder="you@example.com"
+                          className={inputClasses(Boolean(errors.email))}
+                        />
+                        {errors.email && <span className="text-xs text-red-500">{errors.email}</span>}
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <span className="text-[18px] font-bold text-[#222222]">{t('checkout.mobileNumber')} *</span>
+                        <input
+                          type="tel"
+                          value={form.mobileNumber}
+                          onChange={(e) => handleChange("mobileNumber", e.target.value)}
+                          placeholder="+31 6 1234 5678"
+                          className={inputClasses(Boolean(errors.mobileNumber))}
+                        />
+                        {errors.mobileNumber && <span className="text-xs text-red-500">{errors.mobileNumber}</span>}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[18px] font-bold text-[#222222]">{t('checkout.country')}</span>
+                      <div className="relative">
+                        <select
+                          value={form.country}
+                          onChange={(e) => handleChange("country", e.target.value)}
+                          className={`${inputClasses()} appearance-none pr-10`}
+                        >
                           <option value="Netherlands">{t('countries.netherlands')}</option>
                           <option value="Belgium">{t('countries.belgium')}</option>
                           <option value="Germany">{t('countries.germany')}</option>
                         </select>
-                      </label>
-                      <label className="flex flex-col gap-2 md:col-span-1">
-                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.city')} <span className="text-red-500">*</span></span>
-                        <input className={inputClasses(Boolean(errors.city))} value={form.city} onChange={(e) => handleChange("city", e.target.value)} />
-                        {errors.city && <span className="text-xs text-red-500 font-medium">{errors.city}</span>}
-                      </label>
-                      <label className="flex flex-col gap-2 md:col-span-1">
-                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.state')} <span className="text-red-500">*</span></span>
-                        <input className={inputClasses(Boolean(errors.state))} value={form.state} onChange={(e) => handleChange("state", e.target.value)} />
-                        {errors.state && <span className="text-xs text-red-500 font-medium">{errors.state}</span>}
-                      </label>
-                      <label className="flex flex-col gap-2 md:col-span-1">
-                        <span className="text-sm font-semibold text-neutral-700">{t('checkout.postcode')} <span className="text-red-500">*</span></span>
-                        <input className={inputClasses(Boolean(errors.postcode))} value={form.postcode} onChange={(e) => handleChange("postcode", e.target.value)} />
-                        {errors.postcode && <span className="text-xs text-red-500 font-medium">{errors.postcode}</span>}
-                      </label>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4 6L8 10L12 6" stroke="#888888" strokeWidth="1.16667" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex flex-col gap-2">
+                        <span className="text-[18px] font-bold text-[#222222]">{t('checkout.streetAddress')} *</span>
+                        <input
+                          type="text"
+                          value={form.streetAddress}
+                          onChange={(e) => handleChange("streetAddress", e.target.value)}
+                          placeholder="Keizersgracht 214"
+                          className={inputClasses(Boolean(errors.streetAddress))}
+                        />
+                        {errors.streetAddress && <span className="text-xs text-red-500">{errors.streetAddress}</span>}
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <span className="text-[18px] font-bold text-[#222222]">{t('checkout.postcode')} *</span>
+                        <input
+                          type="text"
+                          value={form.postcode}
+                          onChange={(e) => handleChange("postcode", e.target.value)}
+                          placeholder="1016 DW"
+                          className={inputClasses(Boolean(errors.postcode))}
+                        />
+                        {errors.postcode && <span className="text-xs text-red-500">{errors.postcode}</span>}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex flex-col gap-2">
+                        <span className="text-[18px] font-bold text-[#222222]">{t('checkout.city')} *</span>
+                        <input
+                          type="text"
+                          value={form.city}
+                          onChange={(e) => handleChange("city", e.target.value)}
+                          placeholder="Amsterdam"
+                          className={inputClasses(Boolean(errors.city))}
+                        />
+                        {errors.city && <span className="text-xs text-red-500">{errors.city}</span>}
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <span className="text-[18px] font-bold text-[#222222]">{t('checkout.state')}</span>
+                        <input
+                          type="text"
+                          value={form.state}
+                          onChange={(e) => handleChange("state", e.target.value)}
+                          placeholder="North Holland"
+                          className={inputClasses(Boolean(errors.state))}
+                        />
+                        {errors.state && <span className="text-xs text-red-500">{errors.state}</span>}
+                      </div>
                     </div>
                   </div>
- 
-                  <div className="flex flex-col gap-5">
-                    <div className="flex flex-col gap-1">
-                      <h2 className="text-neutral-800 text-2xl font-bold leading-8">{t('checkout.paymentMethod')} <span className="text-red-500">*</span></h2>
-                      <p className="text-neutral-600 text-sm leading-5">
+                )}
+
+                {/* STEP 2: SHIPPING ADDRESS */}
+                {step === 2 && (
+                  <div className="flex flex-col gap-6">
+                    <div className="flex flex-col gap-2">
+                      <h2 className="text-[#222222] text-[28px] font-bold font-['Segoe_UI'] leading-[33.60px]">
+                        {t('checkout.shippingAddress')}
+                      </h2>
+                      <p className="text-[#444444] text-[16px] font-normal font-['Segoe_UI'] leading-[20.80px]">
+                        {t('checkout.deliveryInfoDesc') || "Enter the address where you'd like your order to be delivered."}
+                      </p>
+                    </div>
+                    <div className="h-px bg-[#EDF2F7] w-full" />
+
+                     {/* Toggle Same as Billing (Custom styled checkbox container) */}
+                    <label className="w-full p-4 rounded-xl border border-[#DDE1EA] justify-start items-start gap-3 inline-flex cursor-pointer hover:bg-slate-50 transition-all select-none">
+                      <input
+                        type="checkbox"
+                        checked={form.sameAsBilling}
+                        onChange={(e) => handleChange("sameAsBilling", e.target.checked)}
+                        className="sr-only"
+                      />
+                      <div className={`w-[22px] h-[22px] rounded-[2px] flex items-center justify-center shrink-0 transition-all ${
+                        form.sameAsBilling ? "bg-[#F18800] border-[1.5px] border-[#F18800]" : "border-[1.5px] border-[#BBC0CC]"
+                      }`}>
+                        {form.sameAsBilling && (
+                          <svg width="12" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 5L5 9L13 1" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        )}
+                      </div>
+                      <div className="flex-col justify-center items-start gap-[12px] inline-flex">
+                        <div className="text-[#222222] text-[18px] font-bold font-['Segoe_UI'] leading-[20px]">
+                          {t('checkout.sameAsBilling') || "Use my billing address for shipping"}
+                        </div>
+                        <div className="text-[#444444] text-[14px] font-normal font-['Segoe_UI'] leading-[18.20px]">
+                          {t('checkout.sameAsBillingSub') || "Fill in the fields below automatically with your billing address"}
+                        </div>
+                      </div>
+                    </label>
+
+                    {/* Info Warning Banner */}
+                    {!isLoggedIn && (
+                      <div className="w-full p-4 bg-gradient-to-br from-[#FFF7ED] to-white rounded-xl border border-[#E9CA9E] justify-start items-center gap-2 inline-flex">
+                        <div className="flex-1 flex-col justify-center items-start gap-2 inline-flex">
+                          <div className="justify-start items-start gap-2 inline-flex">
+                            <div className="w-5 h-5 relative flex items-center justify-center">
+                              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="2" y="2" width="16" height="16" rx="8" stroke="#222222" strokeWidth="1.5"/>
+                                <path d="M10 6V11" stroke="#222222" strokeWidth="1.5" strokeLinecap="round"/>
+                                <circle cx="10" cy="14" r="1" fill="#222222"/>
+                              </svg>
+                            </div>
+                            <div className="text-[#222222] text-[18px] font-bold font-['Segoe_UI'] leading-[20px]">
+                              {t('checkout.multipleShippingTitle')}
+                            </div>
+                          </div>
+                          <div className="self-stretch text-[#444444] text-[14px] font-normal font-['Segoe_UI'] leading-[18.20px]">
+                            {t.rich('checkout.multipleShippingDesc', {
+                              registerLink: (chunks) => (
+                                <button
+                                  type="button"
+                                  onClick={() => setIsLoginPopupOpen(true)}
+                                  className="text-[#F18800] underline font-['Segoe_UI'] hover:text-[#d97706] cursor-pointer bg-transparent border-none p-0 inline align-baseline font-semibold"
+                                >
+                                  {chunks}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {!form.sameAsBilling && (
+                      <div className="flex flex-col gap-4 mt-2">
+                        {/* First Name & Last Name */}
+                        <div className="self-stretch justify-start items-start gap-4 inline-flex w-full">
+                          <div className="flex-1 flex-col justify-start items-start gap-2 inline-flex">
+                            <div className="text-[#222222] text-[18px] font-bold font-['Segoe_UI'] leading-[20px]">
+                              {t('checkout.firstName')} *
+                            </div>
+                            <input
+                              type="text"
+                              value={form.shippingFirstName}
+                              onChange={(e) => handleChange("shippingFirstName", e.target.value)}
+                              placeholder="First name"
+                              className={inputClasses(Boolean(errors.shippingFirstName))}
+                            />
+                            {errors.shippingFirstName && <span className="text-xs text-red-500">{errors.shippingFirstName}</span>}
+                          </div>
+                          <div className="flex-1 flex-col justify-start items-start gap-2 inline-flex">
+                            <div className="text-[#222222] text-[18px] font-bold font-['Segoe_UI'] leading-[20px]">
+                              {t('checkout.lastName')} *
+                            </div>
+                            <input
+                              type="text"
+                              value={form.shippingLastName}
+                              onChange={(e) => handleChange("shippingLastName", e.target.value)}
+                              placeholder="Last name"
+                              className={inputClasses(Boolean(errors.shippingLastName))}
+                            />
+                            {errors.shippingLastName && <span className="text-xs text-red-500">{errors.shippingLastName}</span>}
+                          </div>
+                        </div>
+
+                        {/* Email & Phone Number */}
+                        <div className="self-stretch justify-start items-start gap-4 inline-flex w-full">
+                          <div className="flex-1 flex-col justify-start items-start gap-2 inline-flex">
+                            <div className="text-[#222222] text-[18px] font-bold font-['Segoe_UI'] leading-[20px]">
+                              {t('checkout.email')} *
+                            </div>
+                            <input
+                              type="email"
+                              value={form.email}
+                              onChange={(e) => handleChange("email", e.target.value)}
+                              placeholder="you@example.com"
+                              className={inputClasses(Boolean(errors.email))}
+                            />
+                            {errors.email && <span className="text-xs text-red-500">{errors.email}</span>}
+                          </div>
+                          <div className="flex-1 flex-col justify-start items-start gap-2 inline-flex">
+                            <div className="text-[#222222] text-[18px] font-bold font-['Segoe_UI'] leading-[20px]">
+                              {t('checkout.mobileNumber')} *
+                            </div>
+                            <input
+                              type="tel"
+                              value={form.mobileNumber}
+                              onChange={(e) => handleChange("mobileNumber", e.target.value)}
+                              placeholder="+555-113324"
+                              className={inputClasses(Boolean(errors.mobileNumber))}
+                            />
+                            {errors.mobileNumber && <span className="text-xs text-red-500">{errors.mobileNumber}</span>}
+                          </div>
+                        </div>
+
+                        {/* Country / Region */}
+                        <div className="w-full flex-col justify-start items-start gap-2 inline-flex">
+                          <div className="text-[#222222] text-[18px] font-bold font-['Segoe_UI'] leading-[20px]">
+                            {t('checkout.country') || "Country / Region"}
+                          </div>
+                          <div className="relative w-full">
+                            <select
+                              value={form.shippingCountry}
+                              onChange={(e) => handleChange("shippingCountry", e.target.value)}
+                              className={`${inputClasses()} appearance-none pr-10`}
+                            >
+                              <option value="Netherlands">{t('countries.netherlands')}</option>
+                              <option value="Belgium">{t('countries.belgium')}</option>
+                              <option value="Germany">{t('countries.germany')}</option>
+                            </select>
+                            <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none">
+                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M4 6L8 10L12 6" stroke="#888888" strokeWidth="1.16667" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Street & Postcode */}
+                        <div className="self-stretch justify-start items-start gap-4 inline-flex w-full">
+                          <div className="flex-1 flex-col justify-start items-start gap-2 inline-flex">
+                            <div className="text-[#222222] text-[18px] font-bold font-['Segoe_UI'] leading-[20px]">
+                              {t('checkout.streetAddress')} *
+                            </div>
+                            <AddressAutocomplete
+                              value={form.shippingStreetAddress}
+                              onChange={(val) => handleChange("shippingStreetAddress", val)}
+                              onAddressSelect={(addr) => onAddressSelect(addr, true)}
+                              className={inputClasses(Boolean(errors.shippingStreetAddress))}
+                              placeholder="Street and house number"
+                            />
+                            {errors.shippingStreetAddress && <span className="text-xs text-red-500">{errors.shippingStreetAddress}</span>}
+                          </div>
+                          <div className="flex-1 flex-col justify-start items-start gap-2 inline-flex">
+                            <div className="text-[#222222] text-[18px] font-bold font-['Segoe_UI'] leading-[20px]">
+                              {t('checkout.postcode')} *
+                            </div>
+                            <input
+                              type="text"
+                              value={form.shippingPostcode}
+                              onChange={(e) => handleChange("shippingPostcode", e.target.value)}
+                              placeholder="Postcode"
+                              className={inputClasses(Boolean(errors.shippingPostcode))}
+                            />
+                            {errors.shippingPostcode && <span className="text-xs text-red-500">{errors.shippingPostcode}</span>}
+                          </div>
+                        </div>
+
+                        {/* City (Place) & State */}
+                        <div className="self-stretch justify-start items-start gap-4 inline-flex w-full">
+                          <div className="flex-1 flex-col justify-start items-start gap-2 inline-flex">
+                            <div className="text-[#222222] text-[18px] font-bold font-['Segoe_UI'] leading-[20px]">
+                              {t('checkout.city') || "Place"} *
+                            </div>
+                            <input
+                              type="text"
+                              value={form.shippingCity}
+                              onChange={(e) => handleChange("shippingCity", e.target.value)}
+                              placeholder="Place"
+                              className={inputClasses(Boolean(errors.shippingCity))}
+                            />
+                            {errors.shippingCity && <span className="text-xs text-red-500">{errors.shippingCity}</span>}
+                          </div>
+                          <div className="flex-1 flex-col justify-start items-start gap-2 inline-flex">
+                            <div className="text-[#222222] text-[18px] font-bold font-['Segoe_UI'] leading-[20px]">
+                              {t('checkout.state') || "State (optional)"}
+                            </div>
+                            <input
+                              type="text"
+                              value={form.shippingState}
+                              onChange={(e) => handleChange("shippingState", e.target.value)}
+                              placeholder="State"
+                              className={inputClasses(Boolean(errors.shippingState))}
+                            />
+                            {errors.shippingState && <span className="text-xs text-red-500">{errors.shippingState}</span>}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* STEP 3: PAYMENT METHOD */}
+                {step === 3 && (
+                  <div className="flex flex-col gap-6">
+                    <div className="flex flex-col gap-2">
+                      <h2 className="text-[#222222] text-[28px] font-bold leading-[33.6px]">{t('checkout.paymentMethod')} *</h2>
+                      <p className="text-[#444444] text-[16px] font-normal leading-[20.8px]">
                         {t('checkout.paymentMethodDesc')}
                       </p>
                     </div>
- 
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <label 
-                        className={`flex cursor-pointer items-center gap-4 rounded-xl border p-4 transition-all ${
-                          form.paymentMethod === "ideal" ? "border-amber-400 bg-amber-50" : "border-slate-200 hover:border-amber-200"
+                    <div className="h-px bg-[#EDF2F7] w-full" />
+
+                    <div className="flex flex-col gap-4">
+                      {/* iDEAL */}
+                      <label
+                        className={`flex cursor-pointer items-center justify-between p-4 rounded-xl border transition-all ${
+                          form.paymentMethod === "ideal"
+                            ? "border-[#F18800] bg-[rgba(241,136,0,0.02)]"
+                            : "border-[#E0E7EE] bg-white hover:border-amber-200"
                         }`}
                       >
-                        <input 
-                          type="radio" 
-                          name="paymentMethod" 
-                          className="sr-only" 
-                          checked={form.paymentMethod === "ideal"} 
-                          onChange={() => handleChange("paymentMethod", "ideal")} 
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          className="sr-only"
+                          checked={form.paymentMethod === "ideal"}
+                          onChange={() => handleChange("paymentMethod", "ideal")}
                         />
-                        <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${form.paymentMethod === "ideal" ? "border-amber-500 bg-amber-500" : "border-slate-300"}`}>
-                          {form.paymentMethod === "ideal" && <div className="h-2 w-2 rounded-full bg-white" />}
+                        <div className="flex items-center gap-[15px]">
+                          {form.paymentMethod === "ideal" ? (
+                            <div className="w-5 h-5 rounded-full bg-[#F18800] flex items-center justify-center shrink-0">
+                              <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </div>
+                          ) : (
+                            <div className="w-5 h-5 rounded-full border border-[#CAD3DF] shrink-0" />
+                          )}
+                          <div className="flex items-center gap-[10px]">
+                            <img className="w-[32px] h-[28px] object-contain" src="/ideal-logo.png" alt="iDEAL" />
+                            <span className="text-[#222222] text-[22px] font-bold font-['Segoe_UI'] leading-[28px]">{t('checkout.ideal')}</span>
+                          </div>
                         </div>
-                        <span className="text-base font-semibold text-neutral-800">{t('checkout.ideal')}</span>
                       </label>
- 
-                      <label 
- 
-                        className={`flex cursor-pointer items-center gap-4 rounded-xl border p-4 transition-all ${
-                          form.paymentMethod === "creditcard" ? "border-amber-400 bg-amber-50" : "border-slate-200 hover:border-amber-200"
+
+                      {/* Credit Card */}
+                      <label
+                        className={`flex cursor-pointer items-center justify-between p-4 rounded-xl border transition-all ${
+                          form.paymentMethod === "creditcard"
+                            ? "border-[#F18800] bg-[rgba(241,136,0,0.02)]"
+                            : "border-[#E0E7EE] bg-white hover:border-amber-200"
                         }`}
                       >
-                        <input 
-                          type="radio" 
-                          name="paymentMethod" 
-                          className="sr-only" 
-                          checked={form.paymentMethod === "creditcard"} 
-                          onChange={() => handleChange("paymentMethod", "creditcard")} 
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          className="sr-only"
+                          checked={form.paymentMethod === "creditcard"}
+                          onChange={() => handleChange("paymentMethod", "creditcard")}
                         />
-                        <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${form.paymentMethod === "creditcard" ? "border-amber-500 bg-amber-500" : "border-slate-300"}`}>
-                          {form.paymentMethod === "creditcard" && <div className="h-2 w-2 rounded-full bg-white" />}
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-base font-semibold text-neutral-800">{t('checkout.creditCard')}</span>
-                          <span className="text-xs text-amber-600 font-medium">+2.5% fee</span>
+                        <div className="flex items-center gap-[15px]">
+                          {form.paymentMethod === "creditcard" ? (
+                            <div className="w-5 h-5 rounded-full bg-[#F18800] flex items-center justify-center shrink-0">
+                              <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </div>
+                          ) : (
+                            <div className="w-5 h-5 rounded-full border border-[#CAD3DF] shrink-0" />
+                          )}
+                          <div className="flex items-center gap-[10px]">
+                            <img className="w-[33px] h-[28px] object-contain" src="/creditcard-logo.svg" alt="Credit Card" />
+                            <div className="flex items-baseline gap-2">
+                              <span className="text-[#222222] text-[22px] font-bold font-['Segoe_UI'] leading-[28px]">{t('checkout.creditCard')}</span>
+                              <span className="text-xs text-amber-600 font-medium font-['Segoe_UI']">+2.5% fee</span>
+                            </div>
+                          </div>
                         </div>
                       </label>
- 
-                      <label 
-                        className={`flex cursor-pointer items-center gap-4 rounded-xl border p-4 transition-all ${
-                          form.paymentMethod === "bancontact" ? "border-amber-400 bg-amber-50" : "border-slate-200 hover:border-amber-200"
+
+                      {/* Bancontact */}
+                      <label
+                        className={`flex cursor-pointer items-center justify-between p-4 rounded-xl border transition-all ${
+                          form.paymentMethod === "bancontact"
+                            ? "border-[#F18800] bg-[rgba(241,136,0,0.02)]"
+                            : "border-[#E0E7EE] bg-white hover:border-amber-200"
                         }`}
                       >
-                        <input 
-                          type="radio" 
-                          name="paymentMethod" 
-                          className="sr-only" 
-                          checked={form.paymentMethod === "bancontact"} 
-                          onChange={() => handleChange("paymentMethod", "bancontact")} 
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          className="sr-only"
+                          checked={form.paymentMethod === "bancontact"}
+                          onChange={() => handleChange("paymentMethod", "bancontact")}
                         />
-                        <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${form.paymentMethod === "bancontact" ? "border-amber-500 bg-amber-500" : "border-slate-300"}`}>
-                          {form.paymentMethod === "bancontact" && <div className="h-2 w-2 rounded-full bg-white" />}
+                        <div className="flex items-center gap-[15px]">
+                          {form.paymentMethod === "bancontact" ? (
+                            <div className="w-5 h-5 rounded-full bg-[#F18800] flex items-center justify-center shrink-0">
+                              <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </div>
+                          ) : (
+                            <div className="w-5 h-5 rounded-full border border-[#CAD3DF] shrink-0" />
+                          )}
+                          <div className="flex items-center gap-[10px]">
+                            <img className="w-[33px] h-[28px] object-contain rounded" src="/bancontact-logo.webp" alt="Bancontact" />
+                            <span className="text-[#222222] text-[22px] font-bold font-['Segoe_UI'] leading-[28px]">{t('checkout.bancontact')}</span>
+                          </div>
                         </div>
-                        <span className="text-base font-semibold text-neutral-800">{t('checkout.bancontact')}</span>
                       </label>
- 
+
+                      {/* Bank Transfer (Invoice) */}
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <label 
-                            className={`flex items-start gap-4 rounded-xl border p-4 transition-all ${
+                          <label
+                            className={`flex items-center justify-between p-4 rounded-xl border transition-all ${
                               isLoggedIn
                                 ? form.paymentMethod === "banktransfer"
-                                  ? "cursor-pointer border-amber-400 bg-amber-50"
-                                  : "cursor-pointer border-slate-200 hover:border-amber-200"
-                                : "cursor-not-allowed border-slate-200 bg-slate-100 opacity-70"
+                                  ? "cursor-pointer border-[#F18800] bg-[rgba(241,136,0,0.02)]"
+                                  : "cursor-pointer border-[#E0E7EE] bg-white hover:border-amber-200"
+                                : "cursor-not-allowed border-[#E0E7EE] bg-slate-50 opacity-60"
                             }`}
                           >
-                            <input 
-                              type="radio" 
-                              name="paymentMethod" 
-                              className="sr-only" 
-                              checked={form.paymentMethod === "banktransfer"} 
+                            <input
+                              type="radio"
+                              name="paymentMethod"
+                              className="sr-only"
+                              checked={form.paymentMethod === "banktransfer"}
                               disabled={!isLoggedIn}
                               onChange={() => {
                                 if (isLoggedIn) {
                                   handleChange("paymentMethod", "banktransfer");
                                 }
-                              }} 
+                              }}
                             />
-                            <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${form.paymentMethod === "banktransfer" ? "border-amber-500 bg-amber-500" : "border-slate-300"}`}>
-                              {form.paymentMethod === "banktransfer" && <div className="h-2 w-2 rounded-full bg-white" />}
-                            </div>
-                            <div className="flex flex-col gap-1">
-                              <span className={`text-base font-semibold ${isLoggedIn ? "text-neutral-800" : "text-neutral-500"}`}>
-                                {t('checkout.invoice')}
-                              </span>
-                              {!isLoggedIn && (
-                                <span className="text-xs font-semibold leading-4 text-neutral-500">
-                                  {t('checkout.invoiceAccountOnly')}
-                                </span>
+                            <div className="flex items-center gap-[15px]">
+                              {form.paymentMethod === "banktransfer" ? (
+                                <div className="w-5 h-5 rounded-full bg-[#F18800] flex items-center justify-center shrink-0">
+                                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                  </svg>
+                                </div>
+                              ) : (
+                                <div className="w-5 h-5 rounded-full border border-[#CAD3DF] shrink-0" />
                               )}
+                              <div className="flex items-center gap-[10px]">
+                                <div className="w-[33px] h-[28px] flex items-center justify-center text-neutral-600 shrink-0">
+                                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    <polyline points="10 9 9 9 8 9"></polyline>
+                                  </svg>
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className={`text-[22px] font-bold font-['Segoe_UI'] leading-[28px] ${isLoggedIn ? "text-[#222222]" : "text-neutral-500"}`}>
+                                    {t('checkout.invoice')}
+                                  </span>
+                                  {!isLoggedIn && (
+                                    <span className="text-xs font-semibold leading-4 text-neutral-500 font-['Segoe_UI']">
+                                      {t('checkout.invoiceAccountOnly')}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
                             </div>
                           </label>
                         </TooltipTrigger>
                         <TooltipContent className="p-4 bg-white border border-slate-200 shadow-xl text-neutral-800 rounded-2xl max-w-[300px]">
-                          <p className="font-medium text-sm">
+                          <p className="font-medium text-sm font-['Segoe_UI']">
                             {isLoggedIn ? t('checkout.bankTransferTooltip') : t('checkout.invoiceAccountOnly')}
                           </p>
                         </TooltipContent>
                       </Tooltip>
                     </div>
-                    {errors.paymentMethod && <p className="text-sm text-red-500">{errors.paymentMethod}</p>}
+                    {errors.paymentMethod && <p className="text-sm text-red-500 font-medium font-['Segoe_UI']">{errors.paymentMethod}</p>}
                   </div>
-                </div>
-              </form>
+                )}
 
-              <aside className="bg-slate-50 p-8 lg:rounded-br-3xl lg:rounded-tr-3xl">
-                <div className="flex flex-col gap-8">
-                  <div className="flex flex-col gap-3">
-                    <span className="text-neutral-600 text-base font-semibold leading-6">{t('checkout.totalPrice')}</span>
-                    <span className="text-neutral-800 text-5xl font-bold leading-[56px]">{formatEuro(finalTotal)}</span>
-                  </div>
-
-                   <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-5">
-                    <div className="flex items-center justify-between text-neutral-700">
-                      <span>{t('checkout.subtotal')}</span>
-                      <span className="font-semibold">{formatEuro(totalAmount)}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-neutral-700">
-                      <span>{t('checkout.shipping')}</span>
-                      <span className="font-semibold">{formatEuro(shippingAmount)}</span>
-                    </div>
-                    {paymentFee > 0 && (
-                      <div className="flex items-center justify-between text-neutral-700">
-                        <span>{t('checkout.paymentFeeLabel')}</span>
-                        <span className="font-semibold">{formatEuro(paymentFee)}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center justify-between text-neutral-700">
-                      <span>{t('checkout.taxVatLabel')}</span>
-                      <span className="font-semibold">{formatEuro(taxAmount)}</span>
-                    </div>
-                    <div className="h-px bg-slate-100" />
-                    <div className="flex items-center justify-between text-neutral-800">
-                      <span className="font-semibold">{t('checkout.finalTotal')}</span>
-                      <span className="text-xl font-bold">{formatEuro(finalTotal)}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-4">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-neutral-800 text-2xl font-bold leading-8">{t('checkout.productInformation')}</h2>
-                      <span className="text-amber-500 text-base font-semibold leading-6">({items.length})</span>
-                    </div>
-
-                    <div className="flex flex-col gap-4">
-                      {items.map((item) => {
-                        const imageSrc = item.mainImage?.trim() || "https://placehold.co/120x96";
-                        const isWarrantyItem = item.itemKind === "warranty";
-                        const href = item.slug
-                          ? item.type
-                            ? { pathname: `/product/${item.slug}`, query: { type: item.type } }
-                            : { pathname: `/product/${item.slug}` }
-                          : undefined;
-
-                        const cardContent = (
-                          <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-[2px_6px_20px_0px_rgba(109,109,120,0.06)]">
-                            <div className="flex gap-4">
-                              <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-slate-100">
-                                <Image src={imageSrc} alt={item.name} fill sizes="96px" className="object-cover" unoptimized />
-                              </div>
-
-                              <div className="flex min-w-0 flex-1 flex-col justify-between gap-3">
-                                <div className="flex items-start justify-between gap-3">
-                                  <div className="min-w-0 flex-1">
-                                    <h3 className="truncate text-neutral-800 text-base font-semibold leading-6">
-                                      {item.name}
-                                    </h3>
-                                    <p className="text-[#479EF5] text-sm leading-5">SKU: {item.sku}</p>
-                                    {isWarrantyItem ? (
-                                      <p className="text-xs leading-4 text-neutral-500">{t('cart.linkedWarranty')}</p>
-                                    ) : null}
-                                  </div>
-                                  <button
-                                    type="button"
-                                    onClick={(event) => {
-                                      event.preventDefault();
-                                      event.stopPropagation();
-                                      removeItem(item.key);
-                                    }}
-                                    aria-label={`Remove ${item.name} from checkout`}
-                                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-zinc-500 transition-colors hover:bg-red-50 hover:text-red-600"
-                                  >
-                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                                      <path d="M2 2L10 10M10 2L2 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                                    </svg>
-                                  </button>
-                                </div>
-
-                                <div className="mt-auto flex items-end justify-between gap-3">
-                                  <span className="text-neutral-800 text-lg font-bold leading-6">{formatEuro(linePrice(item))}</span>
-
-                                  {isWarrantyItem ? (
-                                    <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-neutral-600">
-                                      {t('cart.qty', { count: item.quantity })}
-                                    </div>
-                                  ) : (
-                                    <div className="flex h-10 items-center rounded-full border border-slate-200 bg-white px-1">
-                                      <button
-                                        type="button"
-                                        onClick={(event) => {
-                                          event.preventDefault();
-                                          event.stopPropagation();
-                                          decrementItemQuantity(item.key);
-                                        }}
-                                        className="flex h-8 w-8 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-slate-100"
-                                        aria-label={`Decrease quantity for ${item.name}`}
-                                      >
-                                        -
-                                      </button>
-                                      <span className="min-w-8 text-center text-sm font-semibold text-neutral-800">{item.quantity}</span>
-                                      <button
-                                        type="button"
-                                        onClick={(event) => {
-                                          event.preventDefault();
-                                          event.stopPropagation();
-                                          incrementItemQuantity(item.key);
-                                        }}
-                                        className="flex h-8 w-8 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-slate-100"
-                                        aria-label={`Increase quantity for ${item.name}`}
-                                      >
-                                        +
-                                      </button>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-
-                        if (!href || isWarrantyItem) {
-                          return <div key={item.key}>{cardContent}</div>;
-                        }
-
-                        return (
-                          <Link key={item.key} href={href} className="block">
-                            {cardContent}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-
+                {/* BOTTOM NAVIGATION ACTIONS */}
+                <div className="flex items-center gap-4 mt-6 pt-4 border-t border-[#EDF2F7]">
+                  {step > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => setStep((step - 1) as 1 | 2)}
+                      className="w-[160px] h-[52px] rounded-full border border-[rgba(0,0,0,0.10)] text-[#444444] font-bold text-[18px] hover:bg-slate-50 transition-colors flex items-center justify-center"
+                    >
+                      {t('common.previous') || "Back"}
+                    </button>
+                  )}
                   <button
                     type="submit"
-                    form="checkout-form"
                     disabled={isPending}
-                    className="h-12 w-full rounded-full bg-amber-500 px-4 text-base font-semibold text-white transition-colors hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="flex-1 h-[52px] bg-[#F18800] text-white rounded-full font-bold text-[18px] flex items-center justify-center gap-2 hover:bg-[#d97706] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isPending ? (
                       <>
@@ -721,18 +1079,143 @@ function CheckoutShell({
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        {t('checkout.processing')}
+                        {t('checkout.calculating')}
                       </>
+                    ) : step < 3 ? (
+                      t('common.next')
                     ) : (
                       t('checkout.makePayment', { amount: formatEuro(finalTotal) })
                     )}
                   </button>
                 </div>
-              </aside>
+              </form>
+            )}
+          </div>
+
+          {/* Right Sidebar: Order Summary & Purchase Reference */}
+          <div className="w-full lg:w-[360px] flex flex-col gap-6 shrink-0">
+            
+            {/* Your Order Card */}
+            <div className="w-full bg-white shadow-[2px_4px_20px_rgba(109,109,120,0.06)] rounded-xl border border-[#EDF2F7] flex flex-col overflow-hidden">
+              <div className="w-full p-4 bg-[#F7F9FA] border-[#E5E7EB] border flex items-center justify-center">
+                <h3 className="text-[#222222] text-xl font-bold uppercase tracking-wider">{t('checkout.yourOrder')}</h3>
+              </div>
+
+              <div className="p-4 flex flex-col gap-4">
+                {/* Product List */}
+                <div className="flex flex-col gap-4">
+                  {items.map((item) => {
+                    const imageSrc = item.mainImage?.trim() || "https://placehold.co/62x62";
+                    return (
+                      <div key={item.key} className="w-full flex items-center gap-3">
+                        <div className="w-[62px] h-[62px] p-1 bg-[#EDF2F7] rounded-lg flex items-center justify-center overflow-hidden shrink-0">
+                          <img src={imageSrc} alt={item.name} className="w-full h-full object-contain" />
+                        </div>
+                        <div className="flex-1 flex items-start justify-between gap-2 min-w-0">
+                          <div className="flex flex-col min-w-0">
+                            <h4 className="text-[#444444] text-[16px] font-bold truncate leading-[19.2px]">{item.name}</h4>
+                            <span className="text-[#888888] text-sm mt-1">{item.quantity} {item.quantity === 1 ? t('checkout.item') : t('checkout.items')}</span>
+                          </div>
+                          <span className="text-[#222222] text-[18px] font-bold shrink-0">{formatEuro(linePrice(item))}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="h-px bg-[#EDF2F7] w-full" />
+
+                {/* Subtotals */}
+                <div className="flex flex-col gap-3">
+                  <div className="flex justify-between items-center text-[18px]">
+                    <span className="text-[#222222] font-bold">{t('checkout.subtotal')}</span>
+                    <span className="text-[#222222] font-bold">{formatEuro(totalAmount)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[18px]">
+                    <span className="text-[#222222] font-bold">{t('checkout.shipping')}</span>
+                    <span className="text-[#222222] font-bold">{formatEuro(shippingAmount)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[18px]">
+                    <span className="text-[#222222] font-bold">{t('checkout.vat')} (21%)</span>
+                    <span className="text-[#222222] font-bold">{formatEuro(taxAmount)}</span>
+                  </div>
+                  {paymentFee > 0 && (
+                    <div className="flex justify-between items-center text-[18px]">
+                      <span className="text-[#222222] font-bold">{t('checkout.paymentFeeLabel')}</span>
+                      <span className="text-[#222222] font-bold">{formatEuro(paymentFee)}</span>
+                    </div>
+                  )}
+                  {paymentFee < 0 && (
+                    <div className="flex justify-between items-center text-[18px]">
+                      <span className="text-[#222222] font-bold">{t('checkout.discount')}</span>
+                      <span className="text-[#DD3333] font-bold">-{formatEuro(Math.abs(paymentFee))}</span>
+                    </div>
+                  )}
+
+                  <div className="h-px bg-[#D9E3ED] w-full mt-1" />
+
+                  <div className="flex justify-between items-center mt-1">
+                    <span className="text-[#222222] text-[20px] font-bold">{t('checkout.totalInclVat')}</span>
+                    <span className="text-[#222222] text-[20px] font-semibold">{formatEuro(finalTotal)}</span>
+                  </div>
+                </div>
+
+              </div>
             </div>
-          )}
+
+            {/* Purchase Reference Card */}
+            <div className="w-full p-4 bg-gradient-to-br from-[#FFF7ED] to-white rounded-xl border-2 border-[#FFEDD4] flex flex-col gap-3">
+              <h3 className="text-[#222222] text-[20px] font-bold leading-6">{t('checkout.purchaseReference')}</h3>
+              
+              <div className="relative w-full h-[52px]">
+                <input
+                  type="text"
+                  value={form.purchaseReference}
+                  onChange={(e) => handleChange("purchaseReference", e.target.value)}
+                  disabled={!isEditingRef}
+                  className={`w-full h-full pl-5 pr-14 rounded-full border bg-white font-medium outline-none transition-all ${
+                    isEditingRef ? "border-[#F18800]" : "border-[#DDE1EA] text-[#888888] cursor-not-allowed"
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsEditingRef(!isEditingRef)}
+                  className="absolute right-2 top-2 w-9 h-9 bg-[#EDF2F7] rounded-full flex items-center justify-center hover:bg-slate-200 transition-colors"
+                  aria-label="Edit Purchase Reference"
+                >
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <mask id="mask0_2740_6734" style={{ maskType: "alpha" }} maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
+                      <rect width="20" height="20" fill="#D9D9D9"/>
+                    </mask>
+                    <g mask="url(#mask0_2740_6734)">
+                      <path d="M2.91699 20.0019C2.57616 20.0019 2.28262 19.8801 2.03637 19.6365C1.79012 19.3928 1.66699 19.098 1.66699 18.7519C1.66699 18.411 1.79012 18.1175 2.03637 17.8713C2.28262 17.625 2.57616 17.5019 2.91699 17.5019H17.0837C17.4245 17.5019 17.718 17.6237 17.9643 17.8673C18.2105 18.1109 18.3337 18.4058 18.3337 18.7519C18.3337 19.0927 18.2105 19.3863 17.9643 19.6325C17.718 19.8788 17.4245 20.0019 17.0837 20.0019H2.91699ZM5.00033 13.6798H6.03074L12.9474 6.77583L12.4235 6.24396L11.9043 5.73271L5.00033 12.6494V13.6798ZM3.75033 14.1765V12.4315C3.75033 12.331 3.76713 12.2354 3.80074 12.1446C3.83449 12.0538 3.89033 11.9693 3.96824 11.8913L13.0918 2.78875C13.2125 2.66806 13.3495 2.57674 13.5028 2.51479C13.656 2.45285 13.8144 2.42188 13.9778 2.42188C14.1467 2.42188 14.3073 2.45285 14.4595 2.51479C14.6117 2.57674 14.7525 2.67236 14.8818 2.80167L15.8832 3.81604C16.0125 3.93674 16.106 4.07451 16.1637 4.22938C16.2214 4.38438 16.2503 4.54625 16.2503 4.715C16.2503 4.87 16.2214 5.0241 16.1637 5.17729C16.106 5.33063 16.0125 5.47195 15.8832 5.60125L6.78074 14.7038C6.70269 14.7818 6.61831 14.839 6.52762 14.8752C6.43678 14.9116 6.34116 14.9298 6.24074 14.9298H4.50366C4.2888 14.9298 4.10956 14.8579 3.96595 14.7142C3.8222 14.5706 3.75033 14.3913 3.75033 14.1765ZM12.9474 6.77583L12.4235 6.24396L11.9043 5.73271L12.9474 6.77583Z" fill="#888888"/>
+                    </g>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+          </div>
+
         </div>
       </div>
+
+      <LoginPopup
+        open={isLoginPopupOpen}
+        onOpenChange={setIsLoginPopupOpen}
+        onSwitchToRegister={() => {
+          setIsLoginPopupOpen(false);
+          setIsRegisterPopupOpen(true);
+        }}
+      />
+      <RegisterPopup
+        open={isRegisterPopupOpen}
+        onOpenChange={setIsRegisterPopupOpen}
+        onSwitchToLogin={() => {
+          setIsRegisterPopupOpen(false);
+          setIsLoginPopupOpen(true);
+        }}
+      />
     </div>
   );
 }
@@ -918,6 +1401,7 @@ export default function CheckoutPageClient({
   const [form, setForm] = useState<CheckoutFormState>(
     isDemoMode ? demoFormState : initialFormState,
   );
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [errors, setErrors] = useState<Partial<Record<keyof CheckoutFormState, string>>>({});
   const [isPending, setIsPending] = useState(false);
   const [localDemoItems, setLocalDemoItems] = useState<CartItem[]>(demoItems);
@@ -1004,7 +1488,7 @@ export default function CheckoutPageClient({
         prev.vatNumber,
         readString(preferredAddress, ["vat_number", "btw_number", "vatNumber"]) ||
           readString(finalProfile, ["vat_number", "btw_number", "vatNumber"]) ||
-          readString(storedUserData, ["vat_number", "btw_number", "vatNumber"]),
+          readString(storedUserData, ["company", "company_name", "business_name"]),
       ),
       streetAddress: valueWhenBlank(prev.streetAddress, readString(preferredAddress, ["address", "street", "address_1", "street_address"])),
       city: valueWhenBlank(prev.city, readString(preferredAddress, ["city", "town", "locality"])),
@@ -1042,8 +1526,7 @@ export default function CheckoutPageClient({
     };
   }, [autofillCustomerDetails, isAutofilled]);
 
-
-  const handleChange = (field: keyof CheckoutFormState, value: string) => {
+  const handleChange = (field: keyof CheckoutFormState, value: string | boolean) => {
     if (field === "paymentMethod" && value === "banktransfer" && !isLoggedIn) {
       setForm((current) => ({ ...current, paymentMethod: "" }));
       setErrors((current) => ({ ...current, paymentMethod: t("checkout.invoiceAccountOnly") }));
@@ -1093,20 +1576,8 @@ export default function CheckoutPageClient({
     }
   };
 
-  const validate = (): boolean => {
+  const validateStep = (currentStep: number): boolean => {
     const nextErrors: Partial<Record<keyof CheckoutFormState, string>> = {};
-    const requiredFields: Array<keyof CheckoutFormState> = [
-      "firstName",
-      "lastName",
-      "email",
-      "mobileNumber",
-      "streetAddress",
-      "city",
-      "state",
-      "postcode",
-      "paymentMethod",
-    ];
-
     const fieldLabels: Record<string, string> = {
       firstName: t('checkout.firstName'),
       lastName: t('checkout.lastName'),
@@ -1118,21 +1589,57 @@ export default function CheckoutPageClient({
       city: t('checkout.city'),
       state: t('checkout.state'),
       postcode: t('checkout.postcode'),
+      shippingFirstName: t('checkout.firstName'),
+      shippingLastName: t('checkout.lastName'),
+      shippingStreetAddress: t('checkout.streetAddress'),
+      shippingCity: t('checkout.city'),
+      shippingState: t('checkout.state'),
+      shippingPostcode: t('checkout.postcode'),
       paymentMethod: t('checkout.paymentMethod'),
     };
 
-    for (const field of requiredFields) {
-      if (!form[field]?.trim()) {
-        nextErrors[field] = t('validation.required', { field: fieldLabels[field] || field });
+    if (currentStep === 1) {
+      const requiredFields: Array<keyof CheckoutFormState> = [
+        "firstName",
+        "lastName",
+        "email",
+        "mobileNumber",
+        "streetAddress",
+        "city",
+        "postcode",
+      ];
+      for (const field of requiredFields) {
+        const val = form[field];
+        if (typeof val === "string" && !val.trim()) {
+          nextErrors[field] = t('validation.required', { field: fieldLabels[field] || field });
+        }
       }
-    }
-
-    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      nextErrors.email = t('validation.invalidEmail');
-    }
-
-    if (!isLoggedIn && form.paymentMethod === "banktransfer") {
-      nextErrors.paymentMethod = t("checkout.invoiceAccountOnly");
+      if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+        nextErrors.email = t('validation.invalidEmail');
+      }
+    } else if (currentStep === 2) {
+      if (!form.sameAsBilling) {
+        const requiredFields: Array<keyof CheckoutFormState> = [
+          "shippingFirstName",
+          "shippingLastName",
+          "shippingStreetAddress",
+          "shippingCity",
+          "shippingPostcode",
+        ];
+        for (const field of requiredFields) {
+          const val = form[field];
+          if (typeof val === "string" && !val.trim()) {
+            nextErrors[field] = t('validation.required', { field: fieldLabels[field] || field });
+          }
+        }
+      }
+    } else if (currentStep === 3) {
+      if (!form.paymentMethod) {
+        nextErrors.paymentMethod = t('validation.required', { field: fieldLabels.paymentMethod });
+      }
+      if (!isLoggedIn && form.paymentMethod === "banktransfer") {
+        nextErrors.paymentMethod = t("checkout.invoiceAccountOnly");
+      }
     }
 
     setErrors(nextErrors);
@@ -1180,7 +1687,18 @@ export default function CheckoutPageClient({
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (items.length === 0 || !validate()) {
+    if (items.length === 0) {
+      return;
+    }
+
+    if (step < 3) {
+      if (validateStep(step)) {
+        setStep((step + 1) as 1 | 2 | 3);
+      }
+      return;
+    }
+
+    if (!validateStep(3)) {
       return;
     }
 
@@ -1198,9 +1716,17 @@ export default function CheckoutPageClient({
     const taxAmount = (totalAmount + shippingAmount + paymentFee) * 0.21;
     const finalTotal = totalAmount + shippingAmount + paymentFee + taxAmount;
 
+    const shippingFirst = form.sameAsBilling ? form.firstName : form.shippingFirstName;
+    const shippingLast = form.sameAsBilling ? form.lastName : form.shippingLastName;
+    const shippingStreet = form.sameAsBilling ? form.streetAddress : form.shippingStreetAddress;
+    const shippingCityVal = form.sameAsBilling ? form.city : form.shippingCity;
+    const shippingStateVal = form.sameAsBilling ? form.state : form.shippingState;
+    const shippingPostcodeVal = form.sameAsBilling ? form.postcode : form.shippingPostcode;
+    const shippingCountryVal = form.sameAsBilling ? form.country : form.shippingCountry;
+
     const orderData = {
       status: "pending",
-      notes: "Customer order via checkout",
+      notes: form.purchaseReference,
       billing_firstname: form.firstName,
       billing_lastname: form.lastName,
       billing_email: form.email,
@@ -1216,6 +1742,16 @@ export default function CheckoutPageClient({
       billing_province: form.state,
       billing_postalcode: form.postcode,
       billing_country_id: form.country === "Netherlands" ? "NL" : form.country === "Belgium" ? "BE" : "DE",
+      
+      shipping_firstname: shippingFirst,
+      shipping_lastname: shippingLast,
+      shipping_address: shippingStreet,
+      shipping_city: shippingCityVal,
+      shipping_state: shippingStateVal,
+      shipping_province: shippingStateVal,
+      shipping_postalcode: shippingPostcodeVal,
+      shipping_country_id: shippingCountryVal === "Netherlands" ? "NL" : shippingCountryVal === "Belgium" ? "BE" : "DE",
+
       shipping_amount: shippingAmount,
       tax_amount: taxAmount,
       payment_fee: paymentFee,
@@ -1272,14 +1808,14 @@ export default function CheckoutPageClient({
 
   if (isSubmitted) {
     return (
-      <div className="bg-slate-50 px-5 py-24 min-h-[70vh] flex items-center justify-center">
+      <div className="bg-[#FAFBFD] px-5 py-24 min-h-[70vh] flex items-center justify-center">
         <div className="max-w-xl w-full bg-white rounded-3xl border border-slate-200 p-12 shadow-[2px_8px_40px_0px_rgba(109,109,120,0.10)] flex flex-col items-center text-center gap-6">
           <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 mb-2">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
           </div>
-           <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2">
             <h1 className="text-3xl font-bold text-neutral-800">{t('checkout.successTitle')}</h1>
             <p className="text-neutral-600 text-lg">
               {t('checkout.successSubtitle', { email: form.email })}
@@ -1289,20 +1825,20 @@ export default function CheckoutPageClient({
           {orderNumber && (
             <div className="bg-slate-50 rounded-xl px-6 py-4 border border-slate-100">
               <p className="text-sm text-neutral-500 font-medium uppercase tracking-wider">{t('checkout.orderNumberLabel')}</p>
-              <p className="text-2xl font-bold text-amber-500">{orderNumber}</p>
+              <p className="text-2xl font-bold text-[#F18800]">{orderNumber}</p>
             </div>
           )}
 
           <div className="flex flex-col gap-4 w-full pt-4">
             <Link 
               href="/my-account" 
-              className="h-12 w-full rounded-full bg-amber-500 px-6 text-base font-semibold text-white transition-colors hover:bg-amber-600 flex items-center justify-center"
+              className="h-12 w-full rounded-full bg-[#F18800] px-6 text-base font-bold text-white transition-colors hover:bg-amber-600 flex items-center justify-center"
             >
               {t('checkout.viewMyOrders')}
             </Link>
             <Link 
               href="/product" 
-              className="h-12 w-full rounded-full border border-slate-200 px-6 text-base font-semibold text-neutral-700 transition-colors hover:bg-slate-50 flex items-center justify-center"
+              className="h-12 w-full rounded-full border border-slate-200 px-6 text-base font-bold text-neutral-700 transition-colors hover:bg-slate-50 flex items-center justify-center"
             >
               {t('common.continueShopping')}
             </Link>
@@ -1334,35 +1870,53 @@ export default function CheckoutPageClient({
       onLoginPasswordChange={setLoginPassword}
       onLoginRememberChange={setLoginRemember}
       onLoginSubmit={handleCheckoutLogin}
-      onAddressSelect={(address) => {
+      step={step}
+      setStep={setStep}
+      onAddressSelect={(address, isShipping = false) => {
         setForm((prev) => {
-          // Map Google Maps country names to our select options
           let normalizedCountry = address.country;
           if (address.country === "Nederland") normalizedCountry = "Netherlands";
           if (address.country === "België" || address.country === "Belgique") normalizedCountry = "Belgium";
           if (address.country === "Deutschland") normalizedCountry = "Germany";
           
-          // Only update if it's one of our supported countries
           const supportedCountries = ["Netherlands", "Belgium", "Germany"];
-          const finalCountry = supportedCountries.includes(normalizedCountry) ? normalizedCountry : prev.country;
-
-          return {
-            ...prev,
-            streetAddress: address.street,
-            city: address.city || prev.city,
-            state: address.state || prev.state,
-            postcode: address.postcode || prev.postcode,
-            country: finalCountry,
-          };
+          
+          if (isShipping) {
+            const finalCountry = supportedCountries.includes(normalizedCountry) ? normalizedCountry : prev.shippingCountry;
+            return {
+              ...prev,
+              shippingStreetAddress: address.street,
+              shippingCity: address.city || prev.shippingCity,
+              shippingState: address.state || prev.shippingState,
+              shippingPostcode: address.postcode || prev.shippingPostcode,
+              shippingCountry: finalCountry,
+            };
+          } else {
+            const finalCountry = supportedCountries.includes(normalizedCountry) ? normalizedCountry : prev.country;
+            return {
+              ...prev,
+              streetAddress: address.street,
+              city: address.city || prev.city,
+              state: address.state || prev.state,
+              postcode: address.postcode || prev.postcode,
+              country: finalCountry,
+            };
+          }
         });
         
-        // Clear errors for auto-filled fields
         setErrors((prev) => {
           const next = { ...prev };
-          if (address.street) delete next.streetAddress;
-          if (address.city) delete next.city;
-          if (address.state) delete next.state;
-          if (address.postcode) delete next.postcode;
+          if (isShipping) {
+            if (address.street) delete next.shippingStreetAddress;
+            if (address.city) delete next.shippingCity;
+            if (address.state) delete next.shippingState;
+            if (address.postcode) delete next.shippingPostcode;
+          } else {
+            if (address.street) delete next.streetAddress;
+            if (address.city) delete next.city;
+            if (address.state) delete next.state;
+            if (address.postcode) delete next.postcode;
+          }
           return next;
         });
       }}

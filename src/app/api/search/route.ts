@@ -1300,7 +1300,7 @@ async function injectProductOverrides(results: any[], locale?: string) {
     const url = `${backendUrl}/api/products?${queryParams.toString()}`;
     const res = await fetch(url, {
       headers: { Accept: "application/json" },
-      next: { revalidate: 300 },
+      cache: "no-store",
     });
 
     if (!res.ok) return;
@@ -1316,6 +1316,7 @@ async function injectProductOverrides(results: any[], locale?: string) {
         packingGroup: number | null;
         allowSingulars: any;
         discounts: any;
+        warranty: any;
       }
     >();
 
@@ -1331,6 +1332,7 @@ async function injectProductOverrides(results: any[], locale?: string) {
         packingGroup: p.packing_group != null ? Number(p.packing_group) : null,
         allowSingulars: p.allow_singulars ?? null,
         discounts: p.discounts ?? null,
+        warranty: p.warranty ?? null,
       });
     });
 
@@ -1346,6 +1348,7 @@ async function injectProductOverrides(results: any[], locale?: string) {
         r.is_group_product = { raw: config.isGroupProduct };
         r.packing_group = { raw: config.packingGroup };
         r.allow_singulars = { raw: config.allowSingulars };
+        r.warranty = { raw: config.warranty };
         if (config.discounts) {
           r.discounts = { raw: typeof config.discounts === 'object' ? JSON.stringify(config.discounts) : config.discounts };
         }
