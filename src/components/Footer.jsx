@@ -61,7 +61,7 @@ const footerLinks = {
     { nameKey: 'footer.links.testLoan', href: '/support/loan' },
     { nameKey: 'footer.links.samplePrints', href: '/support/samples' },
     { nameKey: 'footer.links.inkCalculator', href: '/resources/ink-calculator' },
-    { nameKey: 'footer.links.helpCenter', href: '/support' },
+    { nameKey: 'footer.links.helpCenter', href: '/contact' },
   ],
 };
 
