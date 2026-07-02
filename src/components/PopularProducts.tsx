@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { connection } from 'next/server';
 import EmptyState from "@/components/EmptyState";
 import ProductCard from "@/components/ProductCard";
 import { getTranslations } from 'next-intl/server';
@@ -18,6 +19,8 @@ function shuffleArray<T>(array: T[]): T[] {
 }
 
 export default async function PopularProducts() {
+  await connection();
+
   const locale = await getServerLocale();
   const t = await getTranslations();
 
@@ -35,7 +38,6 @@ export default async function PopularProducts() {
       if (response.ok) {
         const json = (await response.json()) as { data?: LaravelProduct[] };
         if (json.data && Array.isArray(json.data)) {
-          // Shuffle and limit to 6 popular products
           products = shuffleArray(json.data).slice(0, 6);
         }
       } else {
@@ -67,7 +69,7 @@ export default async function PopularProducts() {
         </div>
 
         {/* Product grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 justify-center gap-8 max-w-[72rem] mx-auto w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 justify-center gap-8 mx-auto w-full">
           {products.length === 0 ? (
             <EmptyState
               className="col-span-full"

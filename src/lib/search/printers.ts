@@ -171,7 +171,7 @@ function mapFinderPrinter(source: PrinterSource, locale?: "en" | "nl"): FinderPr
 }
 
 function parseSortValue(value: string | null): PrinterSortValue {
-  return PRINTER_SORT_VALUES.includes(value as PrinterSortValue) ? (value as PrinterSortValue) : "latest";
+  return PRINTER_SORT_VALUES.includes(value as PrinterSortValue) ? (value as PrinterSortValue) : "title_asc";
 }
 
 export function parsePrinterSearchParams(params: URLSearchParams, locale?: "en" | "nl"): PrinterSearchParams {
@@ -238,13 +238,13 @@ function buildSortClause(sort: PrinterSortValue): estypes.Sort {
   switch (sort) {
     case "oldest":
       return [featuredSort, { created_at_timestamp: { order: "asc" } }];
-    case "title_asc":
-      return [featuredSort, { "title_sort": { order: "asc" } }];
-    case "title_desc":
-      return [featuredSort, { "title_sort": { order: "desc" } }];
     case "latest":
-    default:
       return [featuredSort, { created_at_timestamp: { order: "desc" } }];
+    case "title_desc":
+      return [featuredSort, { "title_sort.keyword": { order: "desc" } }];
+    case "title_asc":
+    default:
+      return [featuredSort, { "title_sort.keyword": { order: "asc" } }];
   }
 }
 

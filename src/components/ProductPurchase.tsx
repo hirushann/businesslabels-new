@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { InfoIcon, DownloadIcon, TruckIcon, HomeIcon } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
+import { normalizeWarrantyOptions, type NormalizedWarrantyOption as WarrantyOption } from "@/lib/warranty/localize";
 
 type BulkDiscount = {
   discount: string;
@@ -22,25 +23,6 @@ type BulkDiscount = {
 
 type ProductDiscountInput = string | Array<{ discount?: string | number | null; quantity?: string | number | null }> | null | undefined;
 type NumericLike = number | string | null | undefined;
-
-type WarrantyOption = {
-  id: number | string;
-  name: string;
-  durationMonths: number;
-  price: number;
-  description: string;
-  sortOrder?: number;
-};
-
-type NormalizedWarrantyType = {
-  id: number | string;
-  name: string;
-  description: string;
-  icon: string;
-  badgeText: string;
-  badgeColor: string;
-  options: WarrantyOption[];
-};
 
 type ProductPurchaseProps = {
   id?: string | number | null;
@@ -72,6 +54,7 @@ type ProductPurchaseProps = {
       duration_years?: number | null;
       price?: number | null;
       description?: string | null;
+      translations?: unknown;
     } | null;
     types?: Array<{
       id: number;
@@ -80,6 +63,7 @@ type ProductPurchaseProps = {
       icon?: string | null;
       badge_text?: string | null;
       badge_color?: string | null;
+      translations?: unknown;
       options?: Array<{
         id?: number | string | null;
         type?: string | null;
@@ -94,6 +78,7 @@ type ProductPurchaseProps = {
           warranty_option_id?: number | string | null;
           sku?: string | null;
         } | null;
+        translations?: unknown;
       }> | null;
     }> | null;
     options?: Array<{
@@ -103,6 +88,7 @@ type ProductPurchaseProps = {
       price?: number | null;
       description?: string | null;
       sort_order?: number | null;
+      translations?: unknown;
     }> | null;
   } | null;
   componentCount?: number | null;
@@ -246,65 +232,6 @@ function normalizeBulkDiscounts(discounts: ProductDiscountInput | undefined, min
     .filter((discount): discount is BulkDiscount => Boolean(discount))
     .filter((discount) => Number(discount.quantity) >= minimumQuantity)
     .sort((a, b) => Number(a.quantity) - Number(b.quantity));
-}
-
-function normalizeWarrantyOptions(warranty: ProductPurchaseProps["warranty"], locale: string) {
-  const defaultOption = warranty?.default_option ? {
-    id: warranty.default_option.warranty_option_id ?? "default",
-    name: warranty.default_option.name || "Warranty",
-    durationMonths: warranty.default_option.duration_years ? warranty.default_option.duration_years * 12 : 0,
-    price: warranty.default_option.price || 0,
-    description: warranty.default_option.description || "",
-  } : null;
-
-  let types: NormalizedWarrantyType[] = (warranty?.types || []).map((t) => ({
-    id: t.id,
-    name: t.name || "",
-    description: t.description || "",
-    icon: t.icon || "",
-    badgeText: t.badge_text || "",
-    badgeColor: t.badge_color || "",
-    options: (t.options || []).map((opt) => ({
-      id: opt.warranty_option_id ?? opt.id ?? opt.cart?.warranty_option_id ?? 0,
-      name: opt.name || "Warranty",
-      durationMonths: opt.duration_years ? opt.duration_years * 12 : 0,
-      price: opt.price || 0,
-      description: opt.description || (opt.duration_years ? (locale === "nl" ? `${opt.duration_years * 12} maanden dekking` : `${opt.duration_years * 12} months coverage`) : (locale === "nl" ? "Uitgebreide dekking" : "Extended coverage")),
-    })),
-  }));
-
-  const oldOptions: WarrantyOption[] = (warranty?.options || []).map((opt) => ({
-    id: opt.id,
-    name: opt.name || "Warranty",
-    durationMonths: opt.duration_months || 0,
-    price: opt.price || 0,
-    description: opt.description || (opt.duration_months ? (locale === "nl" ? `${opt.duration_months} maanden dekking` : `${opt.duration_months} months coverage`) : (locale === "nl" ? "Uitgebreide dekking" : "Extended coverage")),
-    sortOrder: opt.sort_order || 0,
-  })).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-
-  if (types.length === 0 && oldOptions.length > 0) {
-    types = [{
-      id: "legacy",
-      name: locale === "nl" ? "Garantie Opties" : "Extended Warranty",
-      description: locale === "nl" ? "Verleng de dekking van uw printer." : "Extend your printer coverage.",
-      icon: "shield-check",
-      badgeText: "",
-      badgeColor: "",
-      options: oldOptions
-    }];
-  }
-
-  let allOptions = types.flatMap((t) => t.options);
-  if (oldOptions.length > 0 && types[0]?.id !== "legacy") {
-    allOptions = [...allOptions, ...oldOptions];
-  }
-
-  return {
-    defaultOption,
-    types,
-    oldOptions: types[0]?.id === "legacy" ? [] : oldOptions,
-    allOptions,
-  };
 }
 
 export default function ProductPurchase({
