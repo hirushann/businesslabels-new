@@ -24,6 +24,7 @@ import { Separator } from '@/components/ui/separator';
 import { toDisplayImageUrl } from '@/lib/utils/imageProxy';
 import { getPrinterPath } from '@/lib/routes/printers';
 import type { ProductWarrantyData } from '@/components/ProductCard';
+import { normalizeWarrantyOptions, type NormalizedWarrantyOption as WarrantyOption } from '@/lib/warranty/localize';
 
 type ProductCompatibilityDialogProps = {
   productId?: number | string | null;
@@ -44,25 +45,6 @@ type ProductCompatibilityDialogProps = {
 type CompatibilityResult = {
   compatible: boolean;
   printerName: string;
-};
-
-type WarrantyOption = {
-  id: number | string;
-  name: string;
-  durationMonths: number;
-  price: number;
-  description: string;
-  sortOrder?: number;
-};
-
-type NormalizedWarrantyType = {
-  id: number | string;
-  name: string;
-  description: string;
-  icon: string;
-  badgeText: string;
-  badgeColor: string;
-  options: WarrantyOption[];
 };
 
 function normalizeId(value: number | string | null | undefined) {
@@ -223,65 +205,6 @@ function getWarrantyBadgeClass(color: string): string {
   }
 
   return "bg-muted text-muted-foreground ring-1 ring-border";
-}
-
-function normalizeWarrantyOptions(warranty: ProductWarrantyData | null | undefined, locale: string) {
-  const defaultOption = warranty?.default_option ? {
-    id: warranty.default_option.warranty_option_id ?? "default",
-    name: warranty.default_option.name || "Warranty",
-    durationMonths: warranty.default_option.duration_years ? warranty.default_option.duration_years * 12 : 0,
-    price: warranty.default_option.price || 0,
-    description: warranty.default_option.description || "",
-  } : null;
-
-  let types: NormalizedWarrantyType[] = (warranty?.types || []).map((type) => ({
-    id: type.id,
-    name: type.name || "",
-    description: type.description || "",
-    icon: type.icon || "",
-    badgeText: type.badge_text || "",
-    badgeColor: type.badge_color || "",
-    options: (type.options || []).map((option) => ({
-      id: option.warranty_option_id ?? option.id ?? option.cart?.warranty_option_id ?? 0,
-      name: option.name || "Warranty",
-      durationMonths: option.duration_years ? option.duration_years * 12 : 0,
-      price: option.price || 0,
-      description: option.description || (option.duration_years ? (locale === "nl" ? `${option.duration_years * 12} maanden dekking` : `${option.duration_years * 12} months coverage`) : (locale === "nl" ? "Uitgebreide dekking" : "Extended coverage")),
-    })),
-  }));
-
-  const oldOptions: WarrantyOption[] = (warranty?.options || []).map((option) => ({
-    id: option.id,
-    name: option.name || "Warranty",
-    durationMonths: option.duration_months || 0,
-    price: option.price || 0,
-    description: option.description || (option.duration_months ? (locale === "nl" ? `${option.duration_months} maanden dekking` : `${option.duration_months} months coverage`) : (locale === "nl" ? "Uitgebreide dekking" : "Extended coverage")),
-    sortOrder: option.sort_order || 0,
-  })).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-
-  if (types.length === 0 && oldOptions.length > 0) {
-    types = [{
-      id: "legacy",
-      name: locale === "nl" ? "Garantie Opties" : "Extended Warranty",
-      description: locale === "nl" ? "Verleng de dekking van uw printer." : "Extend your printer coverage.",
-      icon: "shield-check",
-      badgeText: "",
-      badgeColor: "",
-      options: oldOptions,
-    }];
-  }
-
-  let allOptions = types.flatMap((type) => type.options);
-  if (oldOptions.length > 0 && types[0]?.id !== "legacy") {
-    allOptions = [...allOptions, ...oldOptions];
-  }
-
-  return {
-    defaultOption,
-    types,
-    oldOptions: types[0]?.id === "legacy" ? [] : oldOptions,
-    allOptions,
-  };
 }
 
 export default function ProductCompatibilityDialog({
