@@ -567,6 +567,7 @@ export default function ProductPurchase({
         componentCount,
         packingGroup: normalizedPackingGroup,
         allowSingulars: Boolean(allowSingulars),
+        isLabelProduct: Boolean(isLabelProduct),
       },
       qtyToAdd,
     );

@@ -69,7 +69,7 @@ const initialFormState: CheckoutFormState = {
   shippingState: "",
   shippingPostcode: "",
   sameAsBilling: true,
-  purchaseReference: "213321",
+  purchaseReference: "",
 };
 
 const demoFormState: CheckoutFormState = {
@@ -93,7 +93,7 @@ const demoFormState: CheckoutFormState = {
   shippingState: "North Holland",
   shippingPostcode: "1016 DW",
   sameAsBilling: true,
-  purchaseReference: "213321",
+  purchaseReference: "",
 };
 
 function formatEuro(value: number): string {
@@ -313,7 +313,31 @@ function CheckoutShell({
           {t('checkout.title')}
         </h1>
 
-        <div className="flex flex-col lg:flex-row justify-between items-start gap-6">
+        {items.length === 0 ? (
+          <div className="w-full flex flex-col justify-start items-center gap-10 py-12">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/cart-empty.png"
+              alt=""
+              className="w-[275px] h-[200px] object-contain"
+            />
+            <div className="w-full flex flex-col justify-start items-center gap-4">
+              <h2 className="w-full text-center text-[#222222] text-2xl md:text-[32px] lg:text-[40px] font-['Segoe_UI'] font-bold leading-tight md:leading-[48px]">
+                {t('checkout.emptyCart')}
+              </h2>
+              <p className="w-full max-w-[800px] text-center text-[#444444] text-lg font-['Segoe_UI'] font-normal leading-[26px]">
+                {t('checkout.emptyCartDescription')}
+              </p>
+              <Link
+                href={localePath("/product", locale)}
+                className="h-[52px] px-[30px] py-4 bg-[#F18800] hover:bg-[#e07d00] transition-colors rounded-[50px] flex justify-center items-center gap-2.5 text-center text-white text-lg font-['Segoe_UI'] font-semibold leading-6 mt-2"
+              >
+                {t('common.browseProducts')}
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col lg:flex-row justify-between items-start gap-6">
           
           {/* Main Checkout Panel */}
           <div className="w-full flex-1 bg-white shadow-[2px_4px_20px_rgba(109,109,120,0.10)] rounded-xl border border-[#EDF2F7] flex flex-col overflow-hidden">
@@ -402,23 +426,7 @@ function CheckoutShell({
             </div>
 
             {/* Form Section */}
-            {items.length === 0 ? (
-              <div className="px-8 py-16 text-center">
-                <EmptyState
-                  title={t('checkout.emptyCart')}
-                  description={t('checkout.emptyCartDescription')}
-                />
-                <div className="mt-8 flex justify-center">
-                  <Link
-                    href={localePath("/product", locale)}
-                    className="inline-flex h-12 items-center justify-center rounded-full bg-[#F18800] px-6 text-base font-semibold text-white transition-colors hover:bg-amber-600"
-                  >
-                    {t('common.browseProducts')}
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              <form id="checkout-form" onSubmit={handleSubmit} className="p-6 md:p-8 flex flex-col gap-6">
+            <form id="checkout-form" onSubmit={handleSubmit} className="p-6 md:p-8 flex flex-col gap-6">
                 
                 {/* LOGIN SECTION FOR GUESTS */}
                 {step === 1 && !isLoggedIn && (
@@ -1089,8 +1097,7 @@ function CheckoutShell({
                   </button>
                 </div>
               </form>
-            )}
-          </div>
+            </div>
 
           {/* Right Sidebar: Order Summary & Purchase Reference */}
           <div className="w-full lg:w-[360px] flex flex-col gap-6 shrink-0">
@@ -1173,6 +1180,7 @@ function CheckoutShell({
                   value={form.purchaseReference}
                   onChange={(e) => handleChange("purchaseReference", e.target.value)}
                   disabled={!isEditingRef}
+                  placeholder={t('checkout.purchaseReferencePlaceholder') || "e.g., PO-12345"}
                   className={`w-full h-full pl-5 pr-14 rounded-full border bg-white font-medium outline-none transition-all ${
                     isEditingRef ? "border-[#F18800]" : "border-[#DDE1EA] text-[#888888] cursor-not-allowed"
                   }`}
@@ -1198,6 +1206,7 @@ function CheckoutShell({
           </div>
 
         </div>
+        )}
       </div>
 
       <LoginPopup

@@ -465,6 +465,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
         mainImage: productMainImage,
         packingGroup: normalizedPackingGroup,
         allowSingulars: normalizeBoolean(product.allow_singulars),
+        isLabelProduct: Boolean(product.is_label_product ?? product.is_label ?? false),
       },
       finalQty,
     );

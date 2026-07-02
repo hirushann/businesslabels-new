@@ -241,7 +241,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                             </div>
 
                             {/* Box Option */}
-                            {item.packingGroup && item.packingGroup > 0 ? (
+                            {item.isLabelProduct && item.packingGroup && item.packingGroup > 0 ? (
                               <>
                                 <span className="text-xs font-normal font-['Segoe_UI'] text-[#888888]">
                                   {t('cart.or') || 'Or'}
