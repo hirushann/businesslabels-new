@@ -69,7 +69,7 @@ const initialFormState: CheckoutFormState = {
   shippingState: "",
   shippingPostcode: "",
   sameAsBilling: true,
-  purchaseReference: "213321",
+  purchaseReference: "",
 };
 
 const demoFormState: CheckoutFormState = {
@@ -93,7 +93,7 @@ const demoFormState: CheckoutFormState = {
   shippingState: "North Holland",
   shippingPostcode: "1016 DW",
   sameAsBilling: true,
-  purchaseReference: "213321",
+  purchaseReference: "",
 };
 
 function formatEuro(value: number): string {
@@ -1180,6 +1180,7 @@ function CheckoutShell({
                   value={form.purchaseReference}
                   onChange={(e) => handleChange("purchaseReference", e.target.value)}
                   disabled={!isEditingRef}
+                  placeholder={t('checkout.purchaseReferencePlaceholder') || "e.g., PO-12345"}
                   className={`w-full h-full pl-5 pr-14 rounded-full border bg-white font-medium outline-none transition-all ${
                     isEditingRef ? "border-[#F18800]" : "border-[#DDE1EA] text-[#888888] cursor-not-allowed"
                   }`}
