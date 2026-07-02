@@ -250,7 +250,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                               </div>
 
                               {/* Box Option */}
-                              {item.packingGroup && item.packingGroup > 0 && (
+                              {item.isLabelProduct && item.packingGroup && item.packingGroup > 0 && (
                                 <>
                                   <span className="text-[#888888] text-xs font-normal font-['Segoe_UI']">
                                     {t('cart.or')}

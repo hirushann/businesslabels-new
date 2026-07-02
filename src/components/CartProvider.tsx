@@ -22,6 +22,7 @@ export type CartItem = {
   quantity: number;
   packingGroup?: number | null;
   allowSingulars?: boolean | null;
+  isLabelProduct?: boolean | null;
   itemKind?: "product" | "warranty";
   linkedToKey?: string | null;
   componentCount?: number | null;
@@ -213,6 +214,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
               ...currentItem,
               packingGroup: item.packingGroup ?? currentItem.packingGroup,
               allowSingulars: item.allowSingulars ?? currentItem.allowSingulars,
+              isLabelProduct: item.isLabelProduct ?? currentItem.isLabelProduct,
               quantity: currentItem.quantity + normalizedQuantity,
             };
             return {
