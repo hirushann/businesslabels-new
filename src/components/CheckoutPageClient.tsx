@@ -1114,7 +1114,7 @@ function CheckoutShell({
                         <div className="flex-1 flex items-start justify-between gap-2 min-w-0">
                           <div className="flex flex-col min-w-0">
                             <h4 className="text-[#444444] text-[16px] font-bold truncate leading-[19.2px]">{item.name}</h4>
-                            <span className="text-[#888888] text-sm mt-1">{item.quantity} {item.quantity === 1 ? t('cart.item') : t('cart.items')}</span>
+                            <span className="text-[#888888] text-sm mt-1">{item.quantity} {item.quantity === 1 ? t('checkout.item') : t('checkout.items')}</span>
                           </div>
                           <span className="text-[#222222] text-[18px] font-bold shrink-0">{formatEuro(linePrice(item))}</span>
                         </div>
