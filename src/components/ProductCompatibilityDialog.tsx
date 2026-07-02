@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Loader2, ShoppingCart } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import Image from 'next/image';
@@ -168,6 +168,7 @@ export default function ProductCompatibilityDialog({
   const { addItem, openCart } = useCart();
   const [open, setOpen] = useState(false);
   const [isWarrantyDialogOpen, setIsWarrantyDialogOpen] = useState(false);
+  const warrantyDialogHandledRef = useRef(false);
   const [selectedPrinter, setSelectedPrinter] = useState<PrinterSearchResult | null>(null);
   const [isChecking, setIsChecking] = useState(false);
   const [compatibilityResult, setCompatibilityResult] = useState<CompatibilityResult | null>(null);
@@ -271,11 +272,27 @@ export default function ProductCompatibilityDialog({
 
     if (hasWarrantyOptions) {
       setOpen(false);
+      warrantyDialogHandledRef.current = false;
       setIsWarrantyDialogOpen(true);
       return;
     }
 
     addProductWithWarranty(null);
+  };
+
+  const handleWarrantyDialogOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
+      warrantyDialogHandledRef.current = false;
+      setIsWarrantyDialogOpen(true);
+      return;
+    }
+
+    setIsWarrantyDialogOpen(false);
+
+    if (!warrantyDialogHandledRef.current) {
+      warrantyDialogHandledRef.current = true;
+      addProductWithWarranty(null);
+    }
   };
 
   return (
@@ -410,7 +427,7 @@ export default function ProductCompatibilityDialog({
         </div>
       </DialogContent>
     </Dialog>
-    <Dialog open={isWarrantyDialogOpen} onOpenChange={setIsWarrantyDialogOpen}>
+    <Dialog open={isWarrantyDialogOpen} onOpenChange={handleWarrantyDialogOpenChange}>
       {hasWarrantyOptions ? (
         <WarrantyDialogContent
           open={isWarrantyDialogOpen}
@@ -427,8 +444,14 @@ export default function ProductCompatibilityDialog({
           addWarrantyLabel={locale === "nl" ? "Garantie toevoegen:" : "Add warranty:"}
           selectWarrantyLabel={locale === "nl" ? "Selecteer een garantie" : "Select a Warranty"}
           addToCartLabel={t('product.addToCart')}
-          onSkip={() => addProductWithWarranty(null)}
-          onConfirm={(selectedOption) => addProductWithWarranty(selectedOption)}
+          onSkip={() => {
+            warrantyDialogHandledRef.current = true;
+            addProductWithWarranty(null);
+          }}
+          onConfirm={(selectedOption) => {
+            warrantyDialogHandledRef.current = true;
+            addProductWithWarranty(selectedOption);
+          }}
         />
       ) : null}
     </Dialog>
