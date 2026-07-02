@@ -513,35 +513,38 @@ export default function BulkDiscountModal({
           {/* Divider */}
           <div className="h-px bg-slate-100" />
 
-          {/* Savings Banner */}
-          {activeTier && totalSavings > 0 ? (
-            <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-green-50 border border-green-100">
-              <span className="shrink-0 inline-flex items-center justify-center px-2 py-0.5 rounded-full bg-green-600 text-white text-xs font-bold">
-                -{activeTier.discountPct}%
-              </span>
-              <p className="text-green-700 text-sm font-semibold">
-                {t("bulkDiscount.savingAmount", { amount: formatEuro(totalSavings) })}
-              </p>
-            </div>
-          ) : null}
+          {/* Banners Container - Fixed minimum height to prevent layout shift when banners appear/disappear */}
+          <div className="flex flex-col gap-3 min-h-[140px]">
+            {/* Savings Banner */}
+            {activeTier && totalSavings > 0 ? (
+              <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-green-50 border border-green-100">
+                <span className="shrink-0 inline-flex items-center justify-center px-2 py-0.5 rounded-full bg-green-600 text-white text-xs font-bold">
+                  -{activeTier.discountPct}%
+                </span>
+                <p className="text-green-700 text-sm font-semibold">
+                  {t("bulkDiscount.savingAmount", { amount: formatEuro(totalSavings) })}
+                </p>
+              </div>
+            ) : null}
 
-          {/* Next-tier tip */}
-          {nextTier && qtyToNextTier && qtyToNextTier > 0 ? (
-            <div className="flex items-start gap-3 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200">
-              <svg className="shrink-0 mt-0.5 text-amber-500" width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
-              </svg>
-              <p className="text-amber-700 text-sm">
-                {t.rich("bulkDiscount.tipMore", {
-                  more: qtyToNextTier,
-                  price: formatEuro(nextTier.unitPrice),
-                  savings: formatEuro((price - nextTier.unitPrice) * (quantity + qtyToNextTier)),
-                  bold: (chunks) => <span className="font-bold">{chunks}</span>,
-                  semibold: (chunks) => <span className="font-semibold">{chunks}</span>,
-                })}
-              </p>
-            </div>
-          ) : null}
+            {/* Next-tier tip */}
+            {nextTier && qtyToNextTier && qtyToNextTier > 0 ? (
+              <div className="flex items-start gap-3 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200">
+                <svg className="shrink-0 mt-0.5 text-amber-500" width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
+                </svg>
+                <p className="text-amber-700 text-sm">
+                  {t.rich("bulkDiscount.tipMore", {
+                    more: qtyToNextTier,
+                    price: formatEuro(nextTier.unitPrice),
+                    savings: formatEuro((price - nextTier.unitPrice) * (quantity + qtyToNextTier)),
+                    bold: (chunks) => <span className="font-bold">{chunks}</span>,
+                    semibold: (chunks) => <span className="font-semibold">{chunks}</span>,
+                  })}
+                </p>
+              </div>
+            ) : null}
+          </div>
 
         </div>
       </div>

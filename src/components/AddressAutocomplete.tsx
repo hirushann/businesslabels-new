@@ -54,9 +54,8 @@ export default function AddressAutocomplete({
           if (!sessionTokenRef.current) {
             sessionTokenRef.current = new window.google.maps.places.AutocompleteSessionToken();
           }
-          if (!autocompleteServiceRef.current && window.google.maps.places.AutocompleteService) {
-            autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
-          }
+          // We don't instantiate legacy service here to avoid deprecation warning.
+          // It will be instantiated on-demand if modern API fails.
         } catch (error) {
           console.error("Failed to load Places library:", error);
         }
@@ -100,8 +99,8 @@ export default function AddressAutocomplete({
         return;
       } catch (error: any) {
         // If "Places API (New)" is not enabled, fallback to legacy
-        if (error.message?.includes("disabled") || error.message?.includes("not authorized")) {
-          console.warn("Places API (New) not enabled, falling back to legacy AutocompleteService.");
+        if (error.message?.includes("disabled") || error.message?.includes("not authorized") || error.message?.includes("blocked")) {
+          console.warn("Places API (New) not enabled or blocked, falling back to legacy AutocompleteService.");
           setUseLegacy(true);
         } else {
           console.error("Error fetching suggestions (Modern):", error);
@@ -110,9 +109,14 @@ export default function AddressAutocomplete({
     }
 
     // Legacy Fallback
-    if (autocompleteServiceRef.current) {
-      try {
-        autocompleteServiceRef.current.getPlacePredictions(
+    if (useLegacy) {
+      if (!autocompleteServiceRef.current && window.google.maps.places.AutocompleteService) {
+        autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
+      }
+      
+      if (autocompleteServiceRef.current) {
+        try {
+          autocompleteServiceRef.current.getPlacePredictions(
           {
             input,
             componentRestrictions: { country: ["nl", "be", "de"] },
@@ -129,6 +133,7 @@ export default function AddressAutocomplete({
       } catch (error) {
         console.error("Error fetching suggestions (Legacy):", error);
       }
+    }
     }
   }, [isLoaded, useLegacy]);
 
