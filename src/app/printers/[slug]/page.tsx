@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import ProductsListing from "@/components/ProductsListing";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import PrinterActionButtons from "@/components/PrinterActionButtons";
 import {
   parseCatalogSearchParams,
   searchCatalogProducts,
@@ -343,18 +344,7 @@ function PrinterSummary({
                   />
                 ) : null}
               </ul>
-              {productUrl ? (
-                <div className="mt-6">
-                  <a
-                    href={productUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center min-w-[220px] h-[52px] bg-[#f08500] hover:bg-[#d97706] text-white font-bold rounded-full transition-colors font-['Segoe_UI'] shadow-sm text-[18px]"
-                  >
-                    {t("finder.viewPrinter")}
-                  </a>
-                </div>
-              ) : null}
+              <PrinterActionButtons printer={printer} productUrl={productUrl} />
             </div>
           ) : null}
         </div>
