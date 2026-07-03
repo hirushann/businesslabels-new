@@ -395,7 +395,7 @@ export default function LoginPopup({
               )}
             </Button>
 
-            <div className="flex items-center gap-4">
+            {/* <div className="flex items-center gap-4">
               <div className="h-px flex-1 bg-slate-200" />
               <span className="text-sm font-semibold text-neutral-400">{t('login.orDivider')}</span>
               <div className="h-px flex-1 bg-slate-200" />
@@ -413,7 +413,7 @@ export default function LoginPopup({
                 <path fill="#EA4335" d="M10 3.96c1.47 0 2.79.5 3.82 1.5l2.87-2.87A9.55 9.55 0 0 0 10 0 10 10 0 0 0 1.06 5.49l3.35 2.58C5.2 5.71 7.4 3.96 10 3.96Z" />
               </svg>
               {t('login.signInWithGoogle')}
-            </button>
+            </button> */}
 
             <p className="text-center text-sm font-semibold text-neutral-500">
               {t('login.dontHaveAccount')}{' '}

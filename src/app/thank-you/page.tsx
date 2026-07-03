@@ -22,6 +22,7 @@ type OrderDetails = {
   payment_method?: string;
   purchase_reference?: string;
   purchase_ref?: string;
+  customer_notes?: string;
   original_checkout_payload?: Record<string, any>;
   billing_address?: {
     name?: string;
@@ -206,7 +207,7 @@ export default function ThankYouPage() {
     ? "Bank Transfer"
     : rawPaymentMethod || (isRealOrder ? "" : "Visa ending in *****4242");
 
-  const purchaseReference = readStringValue(order, ["notes"]) || readStringValue(payload, ["notes"]) || readStringValue(order, ["purchase_reference", "purchase_ref"]) || (isRealOrder ? "" : "PR-213321");
+  const purchaseReference = readStringValue(order, ["customer_notes", "customer_note"]) || readStringValue(payload, ["customer_notes", "customer_note"]) || (isRealOrder ? (t("thankYou.noReference") || "No Reference") : "PR-213321");
 
   // Totals calculations
   const subtotal = isRealOrder ? (readNumberValue(order, ["subtotal"]) ?? 0) : 4704.67;

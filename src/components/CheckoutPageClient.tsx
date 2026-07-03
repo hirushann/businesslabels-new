@@ -309,9 +309,11 @@ function CheckoutShell({
         <Breadcrumbs items={breadcrumbs} className="mb-8" />
         
         {/* Page Title */}
-        <h1 className="text-[32px] font-semibold text-[#222222] font-['Segoe_UI'] mb-10 text-center">
-          {t('checkout.title')}
-        </h1>
+        {items.length > 0 && (
+          <h1 className="text-[32px] font-semibold text-[#222222] font-['Segoe_UI'] mb-10 text-center">
+            {t('checkout.title')}
+          </h1>
+        )}
 
         {items.length === 0 ? (
           <div className="w-full flex flex-col justify-start items-center gap-10 py-12">
@@ -343,22 +345,23 @@ function CheckoutShell({
           <div className="w-full flex-1 bg-white shadow-[2px_4px_20px_rgba(109,109,120,0.10)] rounded-xl border border-[#EDF2F7] flex flex-col overflow-hidden">
             
             {/* Step Progress Bar */}
-            <div className="align-self-stretch px-6 py-4 bg-white border-b border-[#EDF2F7] flex flex-col justify-start items-center gap-4">
-              <div className="relative overflow-hidden justify-start items-center gap-8 inline-flex" style={{ paddingRight: '0.06px' }}>
-                <div className="absolute h-[2px] bg-[#EDF2F7] rounded-[5px]" style={{ width: '346px', left: '74.03px', top: '15px' }} />
-                <div className="absolute h-[2px] bg-[#F18800] rounded-[5px] transition-all duration-300" style={{
-                  width: step === 1 ? '0px' : step === 2 ? '173px' : '346px',
-                  left: '74.03px',
-                  top: '15px'
-                }} />
+            <div className="w-full px-4 py-4 bg-white border-b border-[#EDF2F7] flex justify-center">
+              <div className="w-full max-w-lg relative flex justify-between items-start">
+                {/* Progress Track */}
+                <div className="absolute h-[2px] bg-[#EDF2F7] rounded-[5px] left-[16.66%] right-[16.66%] top-4 -translate-y-1/2 -z-0">
+                  <div
+                    className="h-full bg-[#F18800] rounded-[5px] transition-all duration-300"
+                    style={{ width: step === 1 ? '0%' : step === 2 ? '50%' : '100%' }}
+                  />
+                </div>
                 
                 {/* Step 1: Billing Address */}
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="relative z-10 w-[140px] flex-col justify-start items-center gap-2 inline-flex focus:outline-none"
+                  className="relative z-10 flex-1 flex flex-col items-center gap-2 focus:outline-none"
                 >
-                  <div className={`w-8 h-8 rounded-full justify-center items-center inline-flex transition-all ${
+                  <div className={`w-8 h-8 rounded-full justify-center items-center inline-flex transition-all shrink-0 ${
                     step > 1 ? "bg-[#F18800]" : "bg-white border-2 border-[#F18800]"
                   }`}>
                     {step > 1 ? (
@@ -369,7 +372,7 @@ function CheckoutShell({
                       <span className="text-[#F18800] text-[18px] font-normal">1</span>
                     )}
                   </div>
-                  <div className={`text-[14px] font-bold font-['Segoe_UI'] ${
+                  <div className={`text-[12px] sm:text-[14px] font-bold font-['Segoe_UI'] text-center px-1 leading-tight ${
                     step === 1 ? "text-[#F18800]" : "text-[#888888]"
                   }`}>
                     {t('checkout.billingAddress')}
@@ -381,9 +384,9 @@ function CheckoutShell({
                   type="button"
                   onClick={() => step > 1 && setStep(2)}
                   disabled={step < 2}
-                  className="relative z-10 w-[140px] flex-col justify-start items-center gap-2 inline-flex focus:outline-none disabled:cursor-not-allowed"
+                  className="relative z-10 flex-1 flex flex-col items-center gap-2 focus:outline-none disabled:cursor-not-allowed"
                 >
-                  <div className={`w-8 h-8 rounded-full justify-center items-center inline-flex transition-all ${
+                  <div className={`w-8 h-8 rounded-full justify-center items-center inline-flex transition-all shrink-0 ${
                     step > 2
                       ? "bg-[#F18800]"
                       : step === 2
@@ -400,7 +403,7 @@ function CheckoutShell({
                       }`}>2</span>
                     )}
                   </div>
-                  <div className={`text-[14px] font-bold font-['Segoe_UI'] ${
+                  <div className={`text-[12px] sm:text-[14px] font-bold font-['Segoe_UI'] text-center px-1 leading-tight ${
                     step === 2 ? "text-[#F18800]" : "text-[#888888]"
                   }`}>
                     {t('checkout.shippingAddress')}
@@ -408,15 +411,15 @@ function CheckoutShell({
                 </button>
 
                 {/* Step 3: Payment Method */}
-                <div className="relative z-10 w-[140px] flex-col justify-start items-center gap-2 inline-flex">
-                  <div className={`w-8 h-8 rounded-full justify-center items-center inline-flex transition-all ${
+                <div className="relative z-10 flex-1 flex flex-col items-center gap-2">
+                  <div className={`w-8 h-8 rounded-full justify-center items-center inline-flex transition-all shrink-0 ${
                     step === 3 ? "bg-white border-2 border-[#F18800]" : "bg-[#F3F4F6]"
                   }`}>
                     <span className={`text-[18px] font-normal ${
                       step === 3 ? "text-[#F18800]" : "text-[#888888]"
                     }`}>3</span>
                   </div>
-                  <div className={`text-[14px] font-bold font-['Segoe_UI'] ${
+                  <div className={`text-[12px] sm:text-[14px] font-bold font-['Segoe_UI'] text-center px-1 leading-tight ${
                     step === 3 ? "text-[#F18800]" : "text-[#888888]"
                   }`}>
                     {t('checkout.paymentMethod')}
@@ -430,65 +433,19 @@ function CheckoutShell({
                 
                 {/* LOGIN SECTION FOR GUESTS */}
                 {step === 1 && !isLoggedIn && (
-                  <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-5 mb-4 hidden">
-                    <div className="flex flex-col gap-4">
-                      <div className="flex flex-col gap-1">
+                  <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-5 mb-4">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="flex flex-col gap-1 max-w-xl">
                         <h2 className="text-lg font-bold text-neutral-800">{t('checkout.loginTitle')}</h2>
                         <p className="text-sm leading-5 text-neutral-600">{t('checkout.loginDescription')}</p>
                       </div>
-                      {loginMessage && (
-                        <div className="rounded-xl border border-red-100 bg-white px-4 py-3 text-sm font-semibold text-red-700">
-                          {loginMessage}
-                        </div>
-                      )}
-                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <label className="flex flex-col gap-2">
-                          <span className="text-sm font-semibold text-neutral-700">{t('login.emailLabel')}</span>
-                          <input
-                            type="email"
-                            autoComplete="email"
-                            className={inputClasses(Boolean(loginErrors.email))}
-                            value={loginEmail}
-                            onChange={(event) => onLoginEmailChange(event.target.value)}
-                            onKeyDown={handleLoginKeyDown}
-                            disabled={isLoginPending}
-                          />
-                          {loginErrors.email && <span className="text-xs font-medium text-red-500">{loginErrors.email}</span>}
-                        </label>
-                        <label className="flex flex-col gap-2">
-                          <span className="text-sm font-semibold text-neutral-700">{t('login.passwordLabel')}</span>
-                          <input
-                            type="password"
-                            autoComplete="current-password"
-                            className={inputClasses(Boolean(loginErrors.password))}
-                            value={loginPassword}
-                            onChange={(event) => onLoginPasswordChange(event.target.value)}
-                            onKeyDown={handleLoginKeyDown}
-                            disabled={isLoginPending}
-                          />
-                          {loginErrors.password && <span className="text-xs font-medium text-red-500">{loginErrors.password}</span>}
-                        </label>
-                      </div>
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <label className="flex items-center gap-3 text-sm font-semibold text-neutral-600">
-                          <input
-                            type="checkbox"
-                            checked={loginRemember}
-                            onChange={(event) => onLoginRememberChange(event.target.checked)}
-                            disabled={isLoginPending}
-                            className="size-4 rounded border-slate-300 accent-[#F18800]"
-                          />
-                          {t('login.rememberMe')}
-                        </label>
-                        <button
-                          type="button"
-                          onClick={onLoginSubmit}
-                          disabled={isLoginPending}
-                          className="inline-flex h-11 items-center justify-center rounded-full bg-neutral-800 px-5 text-sm font-bold text-white transition-colors hover:bg-[#F18800] disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          {isLoginPending ? t('checkout.loginLoading') : t('checkout.loginButton')}
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsLoginPopupOpen(true)}
+                        className="inline-flex h-11 items-center justify-center rounded-full bg-[#F18800] px-6 text-sm font-bold text-white transition-colors hover:bg-[#d97706] shrink-0 self-start md:self-auto"
+                      >
+                        {t('checkout.loginButton')}
+                      </button>
                     </div>
                   </div>
                 )}
@@ -724,7 +681,7 @@ function CheckoutShell({
                               registerLink: (chunks) => (
                                 <button
                                   type="button"
-                                  onClick={() => setIsLoginPopupOpen(true)}
+                                  onClick={() => setIsRegisterPopupOpen(true)}
                                   className="text-[#F18800] underline font-['Segoe_UI'] hover:text-[#d97706] cursor-pointer bg-transparent border-none p-0 inline align-baseline font-semibold"
                                 >
                                   {chunks}
@@ -1510,6 +1467,10 @@ export default function CheckoutPageClient({
   }, [isDemoMode]);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [step]);
+
+  useEffect(() => {
     const refreshAuthState = () => {
       const hasUser = !!localStorage.getItem("auth_user");
       setIsLoggedIn(hasUser);
@@ -1735,7 +1696,7 @@ export default function CheckoutPageClient({
 
     const orderData = {
       status: "pending",
-      notes: form.purchaseReference,
+      customer_notes: form.purchaseReference,
       billing_firstname: form.firstName,
       billing_lastname: form.lastName,
       billing_email: form.email,
