@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Eye, EyeOff, Loader2, Mail, LockKeyhole } from 'lucide-react';
 import { toast } from 'sonner';
@@ -90,8 +90,18 @@ export default function LoginPopup({
   const [errors, setErrors] = useState<LoginErrors>({});
   const [resetErrors, setResetErrors] = useState<ResetPasswordErrors>({});
   const [formMessage, setFormMessage] = useState('');
+  const [formMessageTone, setFormMessageTone] = useState<'success' | 'error' | null>(null);
   const [resetMessage, setResetMessage] = useState('');
   const [resetMessageTone, setResetMessageTone] = useState<'success' | 'error' | null>(null);
+  const closeAfterSuccessTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (closeAfterSuccessTimer.current) {
+        clearTimeout(closeAfterSuccessTimer.current);
+      }
+    };
+  }, []);
 
   const resetFormState = () => {
     setEmail('');
@@ -103,11 +113,17 @@ export default function LoginPopup({
     setErrors({});
     setResetErrors({});
     setFormMessage('');
+    setFormMessageTone(null);
     setResetMessage('');
     setResetMessageTone(null);
   };
 
   const handleOpenChange = (nextOpen: boolean) => {
+    if (closeAfterSuccessTimer.current) {
+      clearTimeout(closeAfterSuccessTimer.current);
+      closeAfterSuccessTimer.current = null;
+    }
+
     onOpenChange(nextOpen);
     if (!nextOpen) {
       resetFormState();
@@ -119,6 +135,7 @@ export default function LoginPopup({
     setIsSubmitting(true);
     setErrors({});
     setFormMessage('');
+    setFormMessageTone(null);
 
     try {
       const response = await fetch('/api/login', {
@@ -135,6 +152,7 @@ export default function LoginPopup({
       if (!response.ok) {
         setErrors(data.errors ?? {});
         setFormMessage(data.message || t('login.loginError'));
+        setFormMessageTone('error');
         return;
       }
 
@@ -143,9 +161,15 @@ export default function LoginPopup({
       window.dispatchEvent(new Event('auth-user-updated'));
 
       toast.success(t('login.loginSuccess'));
-      handleOpenChange(false);
+      setFormMessage(data.message || t('login.loginSuccess'));
+      setFormMessageTone('success');
+      closeAfterSuccessTimer.current = setTimeout(() => {
+        closeAfterSuccessTimer.current = null;
+        handleOpenChange(false);
+      }, 1500);
     } catch {
       setFormMessage(t('login.loginError'));
+      setFormMessageTone('error');
     } finally {
       setIsSubmitting(false);
     }
@@ -158,6 +182,7 @@ export default function LoginPopup({
     setResetMessage('');
     setResetMessageTone(null);
     setFormMessage('');
+    setFormMessageTone(null);
   };
 
   const closeResetMode = () => {
@@ -303,7 +328,15 @@ export default function LoginPopup({
         ) : (
           <form onSubmit={handleSubmit} className="mt-2 flex flex-col gap-5" noValidate>
             {formMessage ? (
-              <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+              <div
+                className={`rounded-2xl border px-4 py-3 text-sm font-semibold ${
+                  formMessageTone === 'success'
+                    ? 'border-green-100 bg-green-50 text-green-700'
+                    : 'border-red-100 bg-red-50 text-red-700'
+                }`}
+                role="status"
+                aria-live="polite"
+              >
                 {formMessage}
               </div>
             ) : null}
