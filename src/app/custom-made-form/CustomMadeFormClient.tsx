@@ -136,6 +136,8 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
 
   const [selectedShape, setSelectedShape] = useState<string | null>(null);
   const [diameter, setDiameter] = useState<string>('');
+  const [width, setWidth] = useState<string>('');
+  const [height, setHeight] = useState<string>('');
   const [printerQuery, setPrinterQuery] = useState<string>('');
   const [unknownPrinter, setUnknownPrinter] = useState<boolean>(false);
   const [materialCode, setMaterialCode] = useState<string>(matCode || '');
@@ -165,6 +167,8 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
         const data = JSON.parse(saved);
         if (data.selectedShape !== undefined) setSelectedShape(data.selectedShape);
         if (data.diameter !== undefined) setDiameter(data.diameter);
+        if (data.width !== undefined) setWidth(data.width);
+        if (data.height !== undefined) setHeight(data.height);
         if (data.printerQuery !== undefined) setPrinterQuery(data.printerQuery);
         if (data.unknownPrinter !== undefined) setUnknownPrinter(data.unknownPrinter);
         if (!matCode && data.materialCode !== undefined) setMaterialCode(data.materialCode);
@@ -210,26 +214,32 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
   useEffect(() => {
     if (!isLoaded) return;
     const data = {
-      selectedShape, diameter, printerQuery, unknownPrinter, materialCode, unsureMaterial, selectedMaterials, company, name, email, phone, quantity, comments
+      selectedShape, diameter, width, height, printerQuery, unknownPrinter, materialCode, unsureMaterial, selectedMaterials, company, name, email, phone, quantity, comments
     };
     localStorage.setItem('customMadeFormDraft', JSON.stringify(data));
-  }, [isLoaded, selectedShape, diameter, printerQuery, unknownPrinter, materialCode, unsureMaterial, selectedMaterials, company, name, email, phone, quantity, comments]);
+  }, [isLoaded, selectedShape, diameter, width, height, printerQuery, unknownPrinter, materialCode, unsureMaterial, selectedMaterials, company, name, email, phone, quantity, comments]);
 
-  const handleIncrement = () => {
-    const numericValue = parseInt(diameter.replace(/[^0-9]/g, '')) || 0;
-    setDiameter(String(numericValue + 1));
+  const handleIncrement = (field: 'diameter' | 'width' | 'height' = 'diameter') => {
+    const val = field === 'diameter' ? diameter : field === 'width' ? width : height;
+    const setter = field === 'diameter' ? setDiameter : field === 'width' ? setWidth : setHeight;
+    const numericValue = parseInt(val.replace(/[^0-9]/g, '')) || 0;
+    setter(String(numericValue + 1));
   };
 
-  const handleDecrement = () => {
-    const numericValue = parseInt(diameter.replace(/[^0-9]/g, '')) || 0;
+  const handleDecrement = (field: 'diameter' | 'width' | 'height' = 'diameter') => {
+    const val = field === 'diameter' ? diameter : field === 'width' ? width : height;
+    const setter = field === 'diameter' ? setDiameter : field === 'width' ? setWidth : setHeight;
+    const numericValue = parseInt(val.replace(/[^0-9]/g, '')) || 0;
     if (numericValue > 0) {
-      setDiameter(String(numericValue - 1));
+      setter(String(numericValue - 1));
     }
   };
 
   function resetForm() {
     setSelectedShape(null);
     setDiameter('');
+    setWidth('');
+    setHeight('');
     setPrinterQuery('');
     setUnknownPrinter(false);
     setMaterialCode('');
@@ -266,7 +276,9 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           shape: shapeLabel,
-          dimensions: diameter || 'Not specified',
+          dimensions: selectedShape === 'round'
+            ? (diameter ? `${diameter} mm` : 'Not specified')
+            : (width && height ? `${width} x ${height} mm` : 'Not specified'),
           printer: printerValue,
           material: materialValue,
           company,
@@ -305,25 +317,29 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
     }
   }
 
-  const hasChoices: boolean = !!(selectedShape || diameter || printerQuery || unknownPrinter || selectedMaterials.length > 0);
+  const hasDimensionsFilled = selectedShape === 'round' ? !!diameter : (!!width && !!height);
+  const hasChoices: boolean = !!(selectedShape || diameter || width || height || printerQuery || unknownPrinter || selectedMaterials.length > 0);
 
   let currentStep = 1;
   if (selectedShape) currentStep = 2;
-  if (selectedShape && diameter) currentStep = 3;
-  if (selectedShape && diameter && (printerQuery || unknownPrinter)) currentStep = 4;
-  if (selectedShape && diameter && (printerQuery || unknownPrinter) && (selectedMaterials.length > 0 || unsureMaterial || materialCode)) currentStep = 5;
+  if (selectedShape && hasDimensionsFilled) currentStep = 3;
+  if (selectedShape && hasDimensionsFilled && (printerQuery || unknownPrinter)) currentStep = 4;
+  if (selectedShape && hasDimensionsFilled && (printerQuery || unknownPrinter) && (selectedMaterials.length > 0 || unsureMaterial || materialCode)) currentStep = 5;
   if (submitStatus === 'success') currentStep = 6;
 
   let dimW = '';
   let dimH = '';
-  if (diameter) {
-    const parts = diameter.toLowerCase().split(/x|\*/).map(s => s.trim());
-    if (parts.length >= 2) {
-      dimW = parts[0] + (parts[0].includes('mm') ? '' : 'mm');
-      dimH = parts[1] + (parts[1].includes('mm') ? '' : 'mm');
-    } else if (parts.length === 1 && parts[0]) {
-      dimW = parts[0] + (parts[0].includes('mm') ? '' : 'mm');
+  if (selectedShape === 'round') {
+    if (diameter) {
+      dimW = diameter + (diameter.toLowerCase().includes('mm') ? '' : 'mm');
       dimH = dimW;
+    }
+  } else {
+    if (width) {
+      dimW = width + (width.toLowerCase().includes('mm') ? '' : 'mm');
+    }
+    if (height) {
+      dimH = height + (height.toLowerCase().includes('mm') ? '' : 'mm');
     }
   }
 
@@ -512,39 +528,119 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
                 </p>
               </div>
               <div className="flex flex-col gap-2">
-                <label htmlFor="diameter" className="text-neutral-700 text-base font-bold font-sans">
-                  {t("diameter")}
-                </label>
-                <div className="relative w-full flex items-center">
-                  <input
-                    id="diameter"
-                    type="text"
-                    value={diameter}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDiameter(e.target.value)}
-                    placeholder={t("enterSize")}
-                    className="h-11 pl-5 pr-12 py-3 rounded-[38px] outline outline-1 outline-offset-[-1px] outline-[#888888]/30 text-[#444444] text-sm font-['Segoe_UI'] w-full bg-white focus:outline-amber-500 transition-all font-normal placeholder:text-[#888888]"
-                  />
-                  <div className="absolute right-4 flex flex-col justify-center items-center gap-0.5">
-                    <button
-                      type="button"
-                      onClick={handleIncrement}
-                      className="hover:scale-110 active:scale-95 transition-transform flex items-center justify-center p-0.5"
-                    >
-                      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-3.5">
-                        <path d="M4.5 11.25L9 6.75L13.5 11.25" stroke="#888888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleDecrement}
-                      className="hover:scale-110 active:scale-95 transition-transform flex items-center justify-center p-0.5"
-                    >
-                      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-3.5">
-                        <path d="M4.5 6.75L9 11.25L13.5 6.75" stroke="#888888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </button>
+                {selectedShape === 'round' ? (
+                <div className="flex flex-col gap-2">
+                  <label htmlFor="diameter" className="text-neutral-700 text-base font-bold font-sans">
+                    {t("diameter")}
+                  </label>
+                  <div className="relative w-full flex items-center">
+                    <input
+                      id="diameter"
+                      type="text"
+                      value={diameter}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDiameter(e.target.value)}
+                      placeholder={t("enterSize")}
+                      className="h-11 pl-5 pr-12 py-3 rounded-[38px] outline outline-1 outline-offset-[-1px] outline-[#888888]/30 text-[#444444] text-sm font-['Segoe_UI'] w-full bg-white focus:outline-amber-500 transition-all font-normal placeholder:text-[#888888]"
+                    />
+                    <div className="absolute right-4 flex flex-col justify-center items-center gap-0.5">
+                      <button
+                        type="button"
+                        onClick={() => handleIncrement('diameter')}
+                        className="hover:scale-110 active:scale-95 transition-transform flex items-center justify-center p-0.5"
+                      >
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-3.5">
+                          <path d="M4.5 11.25L9 6.75L13.5 11.25" stroke="#888888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDecrement('diameter')}
+                        className="hover:scale-110 active:scale-95 transition-transform flex items-center justify-center p-0.5"
+                      >
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-3.5">
+                          <path d="M4.5 6.75L9 11.25L13.5 6.75" stroke="#888888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
+              ) : (
+                <div className="flex flex-col sm:flex-row gap-4">
+                  {/* Width */}
+                  <div className="flex-1 flex flex-col gap-2">
+                    <label htmlFor="width" className="text-neutral-700 text-base font-bold font-sans">
+                      {t("width")}
+                    </label>
+                    <div className="relative w-full flex items-center">
+                      <input
+                        id="width"
+                        type="text"
+                        value={width}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setWidth(e.target.value)}
+                        placeholder={t("enterSize")}
+                        className="h-11 pl-5 pr-12 py-3 rounded-[38px] outline outline-1 outline-offset-[-1px] outline-[#888888]/30 text-[#444444] text-sm font-['Segoe_UI'] w-full bg-white focus:outline-amber-500 transition-all font-normal placeholder:text-[#888888]"
+                      />
+                      <div className="absolute right-4 flex flex-col justify-center items-center gap-0.5">
+                        <button
+                          type="button"
+                          onClick={() => handleIncrement('width')}
+                          className="hover:scale-110 active:scale-95 transition-transform flex items-center justify-center p-0.5"
+                        >
+                          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-3.5">
+                            <path d="M4.5 11.25L9 6.75L13.5 11.25" stroke="#888888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDecrement('width')}
+                          className="hover:scale-110 active:scale-95 transition-transform flex items-center justify-center p-0.5"
+                        >
+                          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-3.5">
+                            <path d="M4.5 6.75L9 11.25L13.5 6.75" stroke="#888888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Height */}
+                  <div className="flex-1 flex flex-col gap-2">
+                    <label htmlFor="height" className="text-neutral-700 text-base font-bold font-sans">
+                      {t("height")}
+                    </label>
+                    <div className="relative w-full flex items-center">
+                      <input
+                        id="height"
+                        type="text"
+                        value={height}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setHeight(e.target.value)}
+                        placeholder={t("enterSize")}
+                        className="h-11 pl-5 pr-12 py-3 rounded-[38px] outline outline-1 outline-offset-[-1px] outline-[#888888]/30 text-[#444444] text-sm font-['Segoe_UI'] w-full bg-white focus:outline-amber-500 transition-all font-normal placeholder:text-[#888888]"
+                      />
+                      <div className="absolute right-4 flex flex-col justify-center items-center gap-0.5">
+                        <button
+                          type="button"
+                          onClick={() => handleIncrement('height')}
+                          className="hover:scale-110 active:scale-95 transition-transform flex items-center justify-center p-0.5"
+                        >
+                          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-3.5">
+                            <path d="M4.5 11.25L9 6.75L13.5 11.25" stroke="#888888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDecrement('height')}
+                          className="hover:scale-110 active:scale-95 transition-transform flex items-center justify-center p-0.5"
+                        >
+                          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-3.5">
+                            <path d="M4.5 6.75L9 11.25L13.5 6.75" stroke="#888888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
                 <p className="text-zinc-500 text-sm font-sans leading-5">
                   {t('sizeHint')}
                 </p>
@@ -922,7 +1018,7 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
               {/* Preview */}
               <div className="flex flex-col gap-4">
                 <span className="text-neutral-800 text-lg font-bold font-sans leading-5">{t('preview')}</span>
-                <div className="h-32 flex items-center justify-center pt-2 pr-6">
+                <div className="h-44 flex items-center justify-center relative p-8">
                   {selectedShape ? (
                     <div className="relative flex flex-col items-center">
                       <div className="relative flex items-center justify-center">
@@ -949,10 +1045,30 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
                           }
                         })()}
 
+                        {/* Vertical Dimension (Right) */}
+                        {dimH && (
+                          <div className="absolute -right-8 top-0 bottom-0 flex items-center gap-1.5 opacity-80">
+                            {/* Vertical Line with ticks */}
+                            <div className="relative w-px h-full bg-[#EDF2F7]">
+                              <div className="absolute top-0 -left-1 w-2.5 h-px bg-[#EDF2F7]" />
+                              <div className="absolute bottom-0 -left-1 w-2.5 h-px bg-[#EDF2F7]" />
+                            </div>
+                            <span className="text-[#888888] text-[13px] font-medium font-manrope leading-none shrink-0" style={{ writingMode: 'vertical-rl' }}>{dimH}</span>
+                          </div>
+                        )}
+
+                        {/* Horizontal Dimension (Bottom) */}
+                        {dimW && (
+                          <div className="absolute -bottom-8 left-0 right-0 flex flex-col items-center gap-1.5 opacity-80">
+                            {/* Horizontal Line with ticks */}
+                            <div className="relative w-full h-px bg-[#EDF2F7]">
+                              <div className="absolute left-0 -top-1 w-px h-2.5 bg-[#EDF2F7]" />
+                              <div className="absolute right-0 -top-1 w-px h-2.5 bg-[#EDF2F7]" />
+                            </div>
+                            <span className="text-[#888888] text-[13px] font-medium font-manrope leading-none shrink-0">{dimW}</span>
+                          </div>
+                        )}
                       </div>
-                      <span className="text-zinc-500 text-sm font-medium font-sans mt-8">
-                        {SHAPES.find((s) => s.id === selectedShape)?.label}
-                      </span>
                     </div>
                   ) : (
                     <span className="text-center text-zinc-500 text-sm font-medium font-sans leading-4">
@@ -966,37 +1082,53 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
 
               {/* Your Choices */}
               <div className="flex flex-col gap-4">
-                <span className="text-neutral-800 text-lg font-semibold font-sans leading-5">{t('yourChoices')}</span>
+                <span className="text-[#222222] text-[18px] font-bold font-['Segoe_UI'] leading-[21.6px]">{t('yourChoices')}</span>
                 <div className="min-h-14">
                   {!hasChoices ? (
                     <span className="text-zinc-500 text-sm font-medium font-sans leading-4">{t('noChoicesYet')}</span>
                   ) : (
-                    <ul className="text-sm text-neutral-700 font-sans space-y-1">
+                    <div className="w-full flex flex-col gap-3">
+                      {/* Shape */}
                       {selectedShape && (
-                        <li>
-                          <span className="font-semibold">{t('stepShape')}: </span>
-                          {SHAPES.find((s) => s.id === selectedShape)?.label}
-                        </li>
+                        <div className="w-full bg-white/50 justify-between items-center flex">
+                          <span className="text-[#444444] text-[16px] font-normal font-['Segoe_UI'] leading-[20.8px]">{t('stepShape')}</span>
+                          <span className="text-[#444444] text-[16px] font-bold font-['Segoe_UI'] leading-[20.8px]">
+                            {SHAPES.find((s) => s.id === selectedShape)?.label}
+                          </span>
+                        </div>
                       )}
-                      {diameter && (
-                        <li>
-                          <span className="font-semibold">{t('stepSize')}: </span>
-                          {diameter} mm
-                        </li>
+                      {/* Size */}
+                      {hasDimensionsFilled && (
+                        <div className="w-full bg-white/50 justify-between items-center flex">
+                          <span className="text-[#444444] text-[16px] font-normal font-['Segoe_UI'] leading-[20.8px]">{t('stepSize')}</span>
+                          <span className="text-[#444444] text-[16px] font-bold font-['Segoe_UI'] leading-[20.8px]">
+                            {selectedShape === 'round' ? `${diameter} mm` : `${width} mm x ${height} mm`}
+                          </span>
+                        </div>
                       )}
+                      {/* Printer */}
                       {(printerQuery || unknownPrinter) && (
-                        <li>
-                          <span className="font-semibold">{t('printerLbl')} </span>
-                          {unknownPrinter ? t('unknown') : printerQuery}
-                        </li>
+                        <div className="w-full bg-white/50 justify-between items-center flex">
+                          <span className="text-[#444444] text-[16px] font-normal font-['Segoe_UI'] leading-[20.8px]">{t('printerLbl').replace(':', '').trim()}</span>
+                          <span className="text-[#444444] text-[16px] font-bold font-['Segoe_UI'] leading-[20.8px]">
+                            {unknownPrinter ? t('unknown') : printerQuery}
+                          </span>
+                        </div>
                       )}
-                      {selectedMaterials.length > 0 && (
-                        <li>
-                          <span className="font-semibold">{t('materialLbl')} </span>
-                          {selectedMaterials.map(id => MATERIALS.find(m => m.id === id)?.label).join(', ')}
-                        </li>
+                      {/* Material */}
+                      {(selectedMaterials.length > 0 || materialCode || unsureMaterial) && (
+                        <div className="w-full bg-white/50 justify-between items-center flex">
+                          <span className="text-[#444444] text-[16px] font-normal font-['Segoe_UI'] leading-[20.8px]">{t('materialLbl').replace(':', '').trim()}</span>
+                          <span className="text-[#444444] text-[16px] font-bold font-['Segoe_UI'] leading-[20.8px]">
+                            {unsureMaterial
+                              ? 'Unsure'
+                              : materialCode
+                                ? materialCode
+                                : selectedMaterials.map(id => MATERIALS.find(m => m.id === id)?.label).join(', ')}
+                          </span>
+                        </div>
                       )}
-                    </ul>
+                    </div>
                   )}
                 </div>
               </div>
