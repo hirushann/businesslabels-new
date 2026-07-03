@@ -222,7 +222,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                                 type="text"
                                 inputMode="numeric"
                                 pattern="[1-9][0-9]*"
-                                value={String(item.quantity).padStart(2, '0')}
+                                value={String(item.quantity)}
                                 onChange={(e) => {
                                   const val = parseInt(e.target.value, 10);
                                   if (Number.isInteger(val) && val > 0) {

@@ -48,11 +48,11 @@ export default function CartProductSlider({ products }: CartProductSliderProps) 
     <section className="w-full bg-[#F7F9FA] py-16 md:py-24 border-t border-slate-100 mt-16 px-4 md:px-8 lg:px-10">
       <div className="max-w-360 mx-auto w-full flex flex-col gap-12">
         {/* Header Row */}
-        <div className="flex justify-between items-center w-full">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-6 w-full">
           <h2 className="text-[#222222] text-3xl md:text-4xl font-bold font-['Segoe_UI'] leading-tight">
             {t('cart.youMayAlsoLike')}
           </h2>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-6 self-end sm:self-auto">
             {/* Left Button */}
             <button
               onClick={scrollLeft}
@@ -104,7 +104,7 @@ export default function CartProductSlider({ products }: CartProductSliderProps) 
         <div
           ref={scrollRef}
           onScroll={checkScroll}
-          className="flex overflow-x-auto gap-6 pb-8 snap-x snap-mandatory hide-scrollbar scroll-smooth"
+          className="w-full flex overflow-x-auto gap-6 pb-8 snap-x snap-mandatory hide-scrollbar scroll-smooth"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {products.map((product) => {
@@ -115,7 +115,7 @@ export default function CartProductSlider({ products }: CartProductSliderProps) 
               : undefined;
 
             return (
-              <div key={product.sku} className="shrink-0 w-[calc(100%-24px)] sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] xl:w-[calc(25%-18px)] snap-start flex">
+              <div key={product.sku} className="shrink-0 w-[calc(100%-24px)] sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] snap-start flex">
                 <ProductCard product={product} href={href} />
               </div>
             );
