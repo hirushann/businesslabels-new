@@ -256,6 +256,7 @@ export default function ProductPurchase({
   const [quantityError, setQuantityError] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [isWarrantyPopoverOpen, setIsWarrantyPopoverOpen] = useState(false);
+  const warrantyDialogHandledRef = useRef(false);
   const [pendingQuantity, setPendingQuantity] = useState<number | null>(null);
   const [shareUrl, setShareUrl] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -566,6 +567,7 @@ export default function ProductPurchase({
         componentCount,
         packingGroup: normalizedPackingGroup,
         allowSingulars: Boolean(allowSingulars),
+        isLabelProduct: Boolean(isLabelProduct),
       },
       qtyToAdd,
     );
@@ -612,6 +614,7 @@ export default function ProductPurchase({
 
     if (hasWarrantyOptions) {
       setPendingQuantity(qtyToAdd);
+      warrantyDialogHandledRef.current = false;
       setIsWarrantyPopoverOpen(true);
       return;
     }
@@ -624,8 +627,26 @@ export default function ProductPurchase({
       return;
     }
 
+    warrantyDialogHandledRef.current = true;
     addProductWithWarranty(pendingQuantity, selectedOption);
     setIsWarrantyPopoverOpen(false);
+    setPendingQuantity(null);
+  };
+
+  const handleWarrantyDialogOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
+      warrantyDialogHandledRef.current = false;
+      setIsWarrantyPopoverOpen(true);
+      return;
+    }
+
+    setIsWarrantyPopoverOpen(false);
+
+    if (!warrantyDialogHandledRef.current && pendingQuantity) {
+      warrantyDialogHandledRef.current = true;
+      addProductWithWarranty(pendingQuantity, null);
+    }
+
     setPendingQuantity(null);
   };
 
@@ -822,12 +843,7 @@ export default function ProductPurchase({
         {/* Quantity + Add to Cart */}
         <Dialog
           open={isWarrantyPopoverOpen}
-          onOpenChange={(nextOpen) => {
-            setIsWarrantyPopoverOpen(nextOpen);
-            if (!nextOpen) {
-              setPendingQuantity(null);
-            }
-          }}
+          onOpenChange={handleWarrantyDialogOpenChange}
         >
           {isLabelProduct ? (
             // Label product layout with Rolls/Stack and Box buttons
@@ -1047,6 +1063,7 @@ export default function ProductPurchase({
               addToCartLabel={t("product.addToCart")}
               onSkip={() => {
                 if (!pendingQuantity) return;
+                warrantyDialogHandledRef.current = true;
                 addProductWithWarranty(pendingQuantity, null);
                 setIsWarrantyPopoverOpen(false);
                 setPendingQuantity(null);

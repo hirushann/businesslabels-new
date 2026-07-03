@@ -175,35 +175,53 @@ function CategoryListingContent({ products }: { products: CategoryCardData[] }) 
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-4 border-b border-gray-100 pb-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <button
-            type="button"
-            onClick={() => setIsSidebarOpen((v) => !v)}
-            className={`inline-flex h-10 w-fit items-center gap-4 rounded-[42px] border px-5 py-2 text-neutral-800 transition-colors ${
-              isSidebarOpen ? "border-amber-500 bg-amber-50 text-amber-600" : "border-slate-200 hover:border-amber-200"
-            }`}
-            aria-expanded={isSidebarOpen}
-          >
-            <span className="flex items-center gap-2">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                <path d="M3 5H17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                <path d="M5.5 10H14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                <path d="M8 15H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-              <span className="text-lg font-semibold font-['Segoe_UI'] leading-6">{t("common.filters")}</span>
-              {activeFilterCount > 0 ? (
-                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-100 px-1.5 text-xs font-semibold text-amber-600">
-                  {activeFilterCount}
-                </span>
-              ) : null}
-            </span>
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => setIsSidebarOpen((v) => !v)}
+              className={`inline-flex h-[42px] w-fit items-center gap-2 px-1 py-2 transition-colors ${
+                isSidebarOpen ? "text-amber-500" : "text-neutral-800 hover:text-amber-500"
+              }`}
+              aria-expanded={isSidebarOpen}
+            >
+              <span className="flex items-center gap-2">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-slate-400">
+                  <path d="M17.4993 3.33398H11.666" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M8.33333 3.33398H2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M17.5 10H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M6.66667 10H2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M17.5007 16.666H13.334" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M10 16.666H2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M11.666 1.66602V4.99935" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M13.334 15V18.3333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span className="text-lg font-bold font-sans leading-6">{t("common.filters")}</span>
+                {activeFilterCount > 0 ? (
+                  <span className={`flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-semibold ${
+                    isSidebarOpen ? "bg-amber-100 text-amber-600" : "bg-amber-500 text-white"
+                  }`}>
+                    {activeFilterCount}
+                  </span>
+                ) : null}
+              </span>
+            </button>
+            
+            {activeFilterCount > 0 ? (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="text-sm font-medium text-slate-400 hover:text-amber-500 underline underline-offset-4"
+              >
+                {t("finder.clearAll")}
+              </button>
+            ) : null}
+          </div>
 
-          <label className="flex h-10 items-center gap-3 rounded-[42px] border border-slate-200 px-5 py-2 text-neutral-800">
-            <span className="sr-only">{t("search.sortProducts")}</span>
+          <div className="relative flex shrink-0 items-center h-10">
             <select
               value={selectedSort}
               onChange={(e) => handleSortChange(e.target.value as CategoryListingSortValue)}
-              className="bg-transparent text-base font-normal font-['Segoe_UI'] leading-5 outline-none"
+              className="appearance-none bg-transparent text-right text-sm font-medium font-sans outline-none cursor-pointer hover:text-amber-600 pr-6 text-neutral-800"
             >
               {LISTING_SORT_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -211,7 +229,13 @@ function CategoryListingContent({ products }: { products: CategoryCardData[] }) 
                 </option>
               ))}
             </select>
-          </label>
+            <div className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-slate-400">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4.66699 10L8.00033 13.3333L11.3337 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M4.66699 6.00001L8.00033 2.66667L11.3337 6.00001" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+          </div>
         </div>
       </div>
 

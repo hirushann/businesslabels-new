@@ -154,6 +154,29 @@ type ProductWarrantyType = {
   }> | null;
 };
 
+type ProductCategoryTranslation = {
+  language?: string | null;
+  name?: string | null;
+  slug?: string | null;
+};
+
+type ProductCategoryTranslations =
+  | Array<Record<string, ProductCategoryTranslation | null> | ProductCategoryTranslation | string>
+  | Record<string, Record<string, string | null> | string | null>
+  | string
+  | null;
+
+type ProductCategory = {
+  id?: number;
+  name?: string | string[] | Partial<Record<"en" | "nl", string | null>> | null;
+  slug?: string | string[] | Partial<Record<"en" | "nl", string | null>> | null;
+  name_en?: string | null;
+  name_nl?: string | null;
+  slug_en?: string | null;
+  slug_nl?: string | null;
+  translations?: ProductCategoryTranslations;
+};
+
 type ComponentProduct = {
   id?: number;
   name?: string | null;
@@ -217,7 +240,7 @@ type ProductDetail = {
     height?: string | number | null;
     length?: string | number | null;
   } | null;
-  categories?: Array<{ id?: number; name?: string | null; slug?: string | null }>;
+  categories?: ProductCategory[];
   component_products?: ComponentProduct[] | null;
   up_sells?: UpsellProduct[];
   cross_sells?: UpsellProduct[];
@@ -438,6 +461,135 @@ function getSpecLabel(key: string, locale: "en" | "nl", t: TranslationLookup): s
   return toTitleCaseFromSlug(key);
 }
 
+function translatedCategoryField(
+  translations: ProductCategoryTranslations | undefined,
+  locale: "en" | "nl",
+  field: keyof ProductCategoryTranslation,
+): string | null {
+  if (!translations) return null;
+
+  let parsed: NonNullable<ProductCategoryTranslations> = translations;
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed) as NonNullable<ProductCategoryTranslations>;
+    } catch {
+      return null;
+    }
+  }
+
+  const valueFromRecord = (record: Record<string, unknown> | null | undefined): string | null => {
+    const value = record?.[field];
+    return typeof value === "string" && value.trim() !== "" ? value.trim() : null;
+  };
+
+  if (Array.isArray(parsed)) {
+    for (const entry of parsed) {
+      let item = entry;
+      if (typeof item === "string") {
+        try {
+          item = JSON.parse(item) as ProductCategoryTranslation;
+        } catch {
+          continue;
+        }
+      }
+
+      if (!item || typeof item !== "object") continue;
+
+      const keyed = (item as Record<string, ProductCategoryTranslation | null>)[locale];
+      const keyedValue = valueFromRecord(keyed as Record<string, unknown> | null);
+      if (keyedValue) return keyedValue;
+
+      const direct = item as ProductCategoryTranslation;
+      if (direct.language === locale) {
+        const directValue = valueFromRecord(direct as Record<string, unknown>);
+        if (directValue) return directValue;
+      }
+    }
+
+    return null;
+  }
+
+  if (parsed && typeof parsed === "object") {
+    const record = parsed as Record<string, Record<string, string | null> | string | null>;
+
+    const localizedByField = record[field];
+    if (localizedByField && typeof localizedByField === "object") {
+      const value = localizedByField[locale];
+      if (typeof value === "string" && value.trim() !== "") {
+        return value.trim();
+      }
+    }
+
+    const localizedEntry = record[locale];
+    if (localizedEntry && typeof localizedEntry === "object") {
+      const value = valueFromRecord(localizedEntry);
+      if (value) return value;
+    }
+  }
+
+  return null;
+}
+
+function localizedCategoryName(category: ProductCategory, locale: "en" | "nl"): string | null {
+  const explicit = category[`name_${locale}`];
+  if (typeof explicit === "string" && explicit.trim() !== "") {
+    return explicit.trim();
+  }
+
+  const translated = translatedCategoryField(category.translations, locale, "name");
+  if (translated) return translated;
+
+  const name = category.name;
+  if (typeof name === "string") {
+    return normalizeDisplayValue(name);
+  }
+
+  if (Array.isArray(name)) {
+    const values = name
+      .map((item) => (typeof item === "string" ? item.trim() : ""))
+      .filter(Boolean);
+
+    return locale === "nl" ? values[1] ?? values[0] ?? null : values[0] ?? null;
+  }
+
+  if (name && typeof name === "object") {
+    const value = name[locale] ?? name.en ?? name.nl ?? null;
+    return normalizeDisplayValue(value);
+  }
+
+  return null;
+}
+
+function localizedCategorySlug(category: ProductCategory, locale: "en" | "nl"): string | null {
+  const explicit = category[`slug_${locale}`];
+  if (typeof explicit === "string" && explicit.trim() !== "") {
+    return explicit.trim();
+  }
+
+  const translated = translatedCategoryField(category.translations, locale, "slug");
+  if (translated) return translated;
+
+  const slug = category.slug;
+  if (typeof slug === "string") {
+    return normalizeValue(slug);
+  }
+
+  if (Array.isArray(slug)) {
+    const values = slug
+      .map((item) => (typeof item === "string" ? item.trim() : ""))
+      .filter(Boolean);
+
+    return locale === "nl" ? values[1] ?? values[0] ?? null : values[0] ?? null;
+  }
+
+  if (slug && typeof slug === "object") {
+    const value = slug[locale] ?? slug.en ?? slug.nl ?? null;
+    return normalizeValue(value);
+  }
+
+  return null;
+}
+
 function appendUnitIfMissing(value: string, unit: string = "mm"): string {
   const trimmed = value.trim();
   if (trimmed.toLowerCase().endsWith(unit.toLowerCase())) {
@@ -449,7 +601,7 @@ function appendUnitIfMissing(value: string, unit: string = "mm"): string {
 function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t: TranslationLookup): Array<{ label: string; value: ReactNode }> {
   const missing = "-";
   const categoryNames = (product?.categories ?? [])
-    .map((category) => normalizeDisplayValue(category.name))
+    .map((category) => localizedCategoryName(category, locale))
     .filter((name): name is string => Boolean(name))
     .join(", ");
   const specRows: Array<{ label: string; value: ReactNode }> = [
@@ -924,6 +1076,9 @@ export default async function SingleProductPage({
   const relatedProductSections = baseUrl
     ? await fetchRelatedProductSections(baseUrl, product, productRouteType(product, selectedType), locale)
     : [];
+  const breadcrumbCategory = product.categories?.[0] ?? null;
+  const breadcrumbCategoryName = breadcrumbCategory ? localizedCategoryName(breadcrumbCategory, locale) : null;
+  const breadcrumbCategorySlug = breadcrumbCategory ? localizedCategorySlug(breadcrumbCategory, locale) : null;
 
   // Ink / label products show "Suitable Printers" and skip the generic up-sells block.
   const hasSuitablePrinters = suitablePrinters.length > 0;
@@ -959,9 +1114,9 @@ export default async function SingleProductPage({
               className="text-neutral-900"
               items={[
                 { label: t('common.products'), href: localePath('/product', locale) },
-                ...(product.categories && product.categories.length > 0 ? [{ 
-                  label: product.categories[0].name || "", 
-                  href: `/category/${product.categories[0].slug || product.categories[0].id}` 
+                ...(breadcrumbCategory && breadcrumbCategoryName ? [{ 
+                  label: breadcrumbCategoryName, 
+                  href: `/category/${breadcrumbCategorySlug || breadcrumbCategory.id}` 
                 }] : []),
                 { label: productName }
               ]} 

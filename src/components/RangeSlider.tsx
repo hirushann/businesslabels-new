@@ -153,7 +153,7 @@ export default function RangeSlider({
         >
           {/* Active Track */}
           <div
-            className="absolute h-full bg-slate-900 rounded-full"
+            className="absolute h-full bg-[#F18800] rounded-full"
             style={{
               left: `${minPos}%`,
               right: `${100 - maxPos}%`,
@@ -165,13 +165,13 @@ export default function RangeSlider({
         <button
           type="button"
           onPointerDown={(e) => handlePointerDown("min", e)}
-          className="absolute w-5 h-5 bg-white border-2 border-slate-900 rounded-full -ml-2.5 z-10 hover:scale-110 transition-transform cursor-pointer focus:outline-none"
+          className="absolute w-5 h-5 bg-white border-2 border-[#F18800] rounded-full -ml-2.5 z-10 hover:scale-110 transition-transform cursor-pointer focus:outline-none"
           style={{ left: `${minPos}%`, touchAction: "none" }}
         />
         <button
           type="button"
           onPointerDown={(e) => handlePointerDown("max", e)}
-          className="absolute w-5 h-5 bg-white border-2 border-slate-900 rounded-full -ml-2.5 z-10 hover:scale-110 transition-transform cursor-pointer focus:outline-none"
+          className="absolute w-5 h-5 bg-white border-2 border-[#F18800] rounded-full -ml-2.5 z-10 hover:scale-110 transition-transform cursor-pointer focus:outline-none"
           style={{ left: `${maxPos}%`, touchAction: "none" }}
         />
       </div>
