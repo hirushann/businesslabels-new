@@ -167,6 +167,8 @@ const RESULT_SOURCE_FIELDS = [
   "images",
   "categories",
   "category_slugs",
+  "category_slugs_en",
+  "category_slugs_nl",
   "category_titles_en",
   "category_titles_nl",
   "frontend_path",
@@ -1021,6 +1023,26 @@ function aggregations(
         },
       };
 
+      if (filter.key === "category") {
+        termsAgg.aggs = {
+          label_source: {
+            top_hits: {
+              size: 1,
+              _source: {
+                includes: [
+                  "categories",
+                  "category_slugs",
+                  "category_slugs_en",
+                  "category_slugs_nl",
+                  "category_titles_en",
+                  "category_titles_nl",
+                ],
+              },
+            },
+          },
+        };
+      }
+
       const innerAgg: estypes.AggregationsAggregationContainer = filter.nestedPath
         ? {
             nested: { path: filter.nestedPath },
@@ -1087,10 +1109,133 @@ function labelFromCode(value: string): string {
     .join(" ");
 }
 
+function normalizeLabelToken(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_]+/g, "-");
+}
+
+const FILTER_VALUE_TRANSLATIONS: Partial<
+  Record<CatalogOptionFilterKey, Record<string, Partial<Record<"en" | "nl", string>>>>
+> = {
+  material: {
+    paper: { en: "Paper", nl: "Papier" },
+    papier: { en: "Paper", nl: "Papier" },
+  },
+};
+
+function localizedFilterOptionLabel(
+  key: CatalogOptionFilterKey,
+  value: string,
+  locale?: "en" | "nl",
+  indexedLabel?: string,
+): string {
+  if (indexedLabel?.trim()) return indexedLabel.trim();
+
+  const fallback = labelFromCode(value);
+  if (!locale) return fallback;
+
+  return FILTER_VALUE_TRANSLATIONS[key]?.[normalizeLabelToken(value)]?.[locale] ?? fallback;
+}
+
+function localizedCategoryNameFromRecord(
+  record: Record<string, unknown>,
+  locale: "en" | "nl",
+): string | null {
+  const explicit = stringValue(record[`name_${locale}`]);
+  if (explicit) return explicit;
+
+  const name = record.name;
+  if (typeof name === "string" && name.trim() !== "") return name.trim();
+  if (Array.isArray(name)) return getLocalizedValue(name, locale);
+  if (name && typeof name === "object") {
+    const value = (name as Record<string, unknown>)[locale];
+    return stringValue(value) ?? getLocalizedValue(name, locale);
+  }
+
+  return null;
+}
+
+function categoryRecordSlugs(record: Record<string, unknown>): string[] {
+  return [
+    stringValue(record.slug),
+    stringValue(record.post_name),
+    stringValue(record.slug_en),
+    stringValue(record.slug_nl),
+    ...(Array.isArray(record.slug)
+      ? record.slug.map((item) => stringValue(item))
+      : []),
+  ].filter((slug): slug is string => Boolean(slug?.trim()));
+}
+
+function localizedCategoryLabelFromSource(
+  source: ProductSource,
+  slug: string,
+  locale: "en" | "nl",
+): string | null {
+  const categories = source.categories;
+  if (Array.isArray(categories)) {
+    for (const category of categories) {
+      if (!category || typeof category !== "object" || Array.isArray(category)) continue;
+      const record = category as Record<string, unknown>;
+      if (categoryRecordSlugs(record).includes(slug)) {
+        const name = localizedCategoryNameFromRecord(record, locale);
+        if (name) return name;
+      }
+    }
+  }
+
+  const slugFields = [
+    source.category_slugs,
+    source[`category_slugs_${locale}`],
+  ];
+  const titleFields = [
+    source[`category_titles_${locale}`],
+    source.category_titles_nl,
+    source.category_titles_en,
+  ];
+
+  for (const slugs of slugFields) {
+    if (!Array.isArray(slugs)) continue;
+    const index = slugs.findIndex((item) => stringValue(item) === slug);
+    if (index < 0) continue;
+
+    for (const titles of titleFields) {
+      if (!Array.isArray(titles)) continue;
+      const title = stringValue(titles[index]);
+      if (title) return title;
+    }
+  }
+
+  return null;
+}
+
+function categoryBucketLabel(
+  bucket: Record<string, unknown>,
+  slug: string,
+  locale?: "en" | "nl",
+): string | null {
+  if (!locale) return null;
+
+  const labelSource = bucket.label_source;
+  if (!labelSource || typeof labelSource !== "object") return null;
+
+  const hits = (labelSource as { hits?: { hits?: unknown[] } }).hits?.hits;
+  const hit = Array.isArray(hits) ? hits[0] : null;
+  if (!hit || typeof hit !== "object") return null;
+
+  const source = (hit as { _source?: unknown })._source;
+  if (!source || typeof source !== "object") return null;
+
+  return localizedCategoryLabelFromSource(source as ProductSource, slug, locale);
+}
+
 function aggregationBuckets(
   aggregationsResult: Record<string, unknown> | undefined,
   key: string,
-): Array<{ key?: string | number; doc_count?: number }> {
+  locale?: "en" | "nl",
+): Array<{ key?: string | number; doc_count?: number; label?: string }> {
   const agg = aggregationsResult?.[`options_${key}`];
   if (!agg || typeof agg !== "object") return [];
   // Walk a fixed list of paths down through the wrapper aggregations.
@@ -1108,7 +1253,19 @@ function aggregationBuckets(
 
   for (const candidate of [values, facet, scoped, root]) {
     if (candidate && Array.isArray(candidate.buckets)) {
-      return candidate.buckets as Array<{ key?: string | number; doc_count?: number }>;
+      return candidate.buckets.map((bucket) => {
+        if (!bucket || typeof bucket !== "object") {
+          return bucket as { key?: string | number; doc_count?: number };
+        }
+
+        const record = bucket as Record<string, unknown>;
+        const value = typeof record.key === "string" ? record.key : String(record.key ?? "");
+        return {
+          key: record.key as string | number | undefined,
+          doc_count: typeof record.doc_count === "number" ? record.doc_count : undefined,
+          label: key === "category" ? categoryBucketLabel(record, value, locale) ?? undefined : undefined,
+        };
+      });
     }
   }
   return [];
@@ -1156,12 +1313,12 @@ export function buildCatalogFilters(
 ): CatalogFilters {
   const options = OPTION_FILTERS.map((filter) => {
     const activeValues = params ? params[filter.paramValues] : [];
-    const aggregatedOptions = aggregationBuckets(aggregationsResult, filter.key)
+    const aggregatedOptions = aggregationBuckets(aggregationsResult, filter.key, params?.locale)
       .map((bucket) => {
         const value = typeof bucket.key === "string" ? bucket.key : String(bucket.key ?? "");
         return {
           value,
-          label: labelFromCode(value),
+          label: localizedFilterOptionLabel(filter.key, value, params?.locale, bucket.label),
           count: typeof bucket.doc_count === "number" ? bucket.doc_count : 0,
         };
       })
@@ -1172,7 +1329,7 @@ export function buildCatalogFilters(
       if (!existingValues.has(value)) {
         aggregatedOptions.push({
           value,
-          label: labelFromCode(value),
+          label: localizedFilterOptionLabel(filter.key, value, params?.locale),
           count: 0,
         });
       }
