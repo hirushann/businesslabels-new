@@ -33,12 +33,19 @@ async function getFaqPage(slug) {
   }
 }
 
-export default async function FaqHubPage() {
+export default async function FaqHubPage({ searchParams }) {
   const locale = await getServerLocale();
   const pagesList = await getFaqPagesList();
   
   let initialPageData = null;
-  if (pagesList.length > 0) {
+  const search = await searchParams;
+  const topic = search?.topic;
+
+  if (topic) {
+    initialPageData = await getFaqPage(topic);
+  }
+
+  if (!initialPageData && pagesList.length > 0) {
     // Get the slug for the active locale, fallback to main_locale
     const firstPage = pagesList[0];
     const slug = firstPage.slugs[locale] ?? firstPage.slugs[firstPage.main_locale];

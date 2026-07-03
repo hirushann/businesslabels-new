@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense, useSyncExternalStore } from 'react';
+import React, { useEffect, useState, Suspense, useSyncExternalStore, Fragment } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
@@ -920,7 +920,7 @@ function OrdersView() {
           
           <div className="self-stretch flex flex-col justify-start items-start gap-2.5 px-8 relative z-10 w-full">
             {orders.map((order, index) => (
-              <React.Fragment key={`${order.id}-${order.date}-${index}`}>
+              <Fragment key={`${order.id}-${order.date}-${index}`}>
                 <div className="self-stretch py-4 inline-flex justify-start items-center gap-6 group hover:bg-slate-50/50 transition-colors -mx-8 px-8 cursor-pointer" onClick={() => setSelectedOrder(order)}>
                   <div className="w-24 justify-start text-neutral-700 text-lg font-normal font-['Segoe_UI'] leading-6">{order.id}</div>
                   <div className="flex-1 justify-start text-neutral-700 text-lg font-normal font-['Segoe_UI'] leading-6">{order.date}</div>
@@ -945,7 +945,7 @@ function OrdersView() {
                 {index < orders.length - 1 && (
                   <div className="self-stretch h-px outline outline-1 outline-offset-[-0.50px] outline-gray-200"></div>
                 )}
-              </React.Fragment>
+              </Fragment>
             ))}
           </div>
         </div>
