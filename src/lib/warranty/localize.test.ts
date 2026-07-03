@@ -89,6 +89,7 @@ describe("normalizeWarrantyOptions", () => {
     });
     expect(english.types[0].options[0]).toMatchObject({
       name: "EN 4 Year Test Warranty Option",
+      typeName: "EN RTBS Test Warranty Type",
       description: "EN 4 Year Test Warranty Option description.",
     });
 
@@ -103,6 +104,7 @@ describe("normalizeWarrantyOptions", () => {
     });
     expect(dutch.types[0].options[0]).toMatchObject({
       name: "NL 4 jaar testgarantie",
+      typeName: "NL Retourservice testgarantie",
       description: "NL testomschrijving voor 4 jaar garantie.",
     });
   });
