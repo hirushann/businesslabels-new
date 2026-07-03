@@ -30,6 +30,10 @@ export type CartItem = {
   discounts?: string | CartDiscountTier[] | null;
   warranty?: {
     optionId: number;
+    type?: string | null;
+    typeName?: string | null;
+    type_name?: string | null;
+    warranty_type_name?: string | null;
     durationMonths?: number | null;
     parentSku?: string | null;
     parentName?: string | null;

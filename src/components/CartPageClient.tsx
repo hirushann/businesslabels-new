@@ -1,10 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { useCart, type CartItem } from '@/components/CartProvider';
-import CartQuantityInput from '@/components/CartQuantityInput';
 import { useTranslations } from 'next-intl';
 import CartProductSlider from '@/components/CartProductSlider';
 import type { ProductCardData } from '@/components/ProductCard';
@@ -21,6 +19,19 @@ function formatEuro(value: number): string {
 function linePrice(item: CartItem): number {
   const price = typeof item.price === 'number' && Number.isFinite(item.price) ? item.price : 0;
   return price * item.quantity;
+}
+
+function warrantyTypeNameFor(item: CartItem | undefined): string | null {
+  const candidates = [
+    item?.warranty?.typeName,
+    item?.warranty?.type_name,
+    item?.warranty?.warranty_type_name,
+    item?.warranty?.type,
+  ];
+
+  const typeName = candidates.find((value) => typeof value === 'string' && value.trim() !== '');
+
+  return typeof typeName === 'string' ? typeName.trim() : null;
 }
 
 export default function CartPageClient({ popularProducts = [] }: { popularProducts?: ProductCardData[] }) {
@@ -99,28 +110,26 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
             {t('cart.title') || 'My Cart'}
           </h1>
 
-          <div className="w-full flex flex-col lg:flex-row gap-6 justify-start items-start">
+          <div className="w-full grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] items-start">
             {/* Left Panel: Products List */}
-            <div className="flex-1 w-full bg-white rounded-xl border border-[#EDF2F7] overflow-hidden shadow-[2px_4px_20px_rgba(109,109,120,0.06)] relative flex flex-col">
+            <div className="w-full min-w-0 bg-white rounded-xl border border-[#EDF2F7] overflow-hidden shadow-[2px_4px_20px_rgba(109,109,120,0.06)] relative flex flex-col">
               
               {/* Table Headers - hidden on mobile/tablet, visible on desktop */}
-              <div className="hidden lg:flex w-full h-[68px] border-b border-[#EDF2F7] items-center px-6">
-                <div className="flex-1 flex items-center gap-6">
-                  <div className="w-4" />
-                  <div className="w-[280px] text-base font-bold font-['Segoe_UI'] text-[#444444]">
+              <div className="hidden lg:grid w-full min-h-[68px] grid-cols-[minmax(16rem,1fr)_minmax(6rem,0.28fr)_minmax(12rem,0.42fr)_minmax(6rem,0.22fr)] gap-6 border-b border-[#EDF2F7] items-center px-6">
+                <div className="flex items-center gap-6 min-w-0">
+                  <div className="w-4 shrink-0" />
+                  <div className="text-base font-bold font-['Segoe_UI'] text-[#444444]">
                     {t('cart.products') || 'Products'}
                   </div>
                 </div>
-                <div className="flex items-center gap-6">
-                  <div className="w-[120px] text-sm font-bold font-['Segoe_UI'] text-[#444444]">
-                    {t('cart.unitPrice') || 'Unit Price'}
-                  </div>
-                  <div className="w-[260px] text-sm font-bold font-['Segoe_UI'] text-[#444444]">
-                    {t('cart.quantity') || 'Quantity'}
-                  </div>
-                  <div className="w-[120px] text-base font-bold font-['Segoe_UI'] text-[#444444] text-right">
-                    {t('common.total') || 'Total'}
-                  </div>
+                <div className="text-sm font-bold font-['Segoe_UI'] text-[#444444]">
+                  {t('cart.unitPrice') || 'Unit Price'}
+                </div>
+                <div className="text-sm font-bold font-['Segoe_UI'] text-[#444444]">
+                  {t('cart.quantity') || 'Quantity'}
+                </div>
+                <div className="text-base font-bold font-['Segoe_UI'] text-[#444444] text-right">
+                  {t('common.total') || 'Total'}
                 </div>
               </div>
 
@@ -137,14 +146,15 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                       ? JSON.parse(item.discounts).length > 0 
                       : Array.isArray(item.discounts) && item.discounts.length > 0
                   );
+                  const warrantyTypeName = warrantyTypeNameFor(linkedWarranty);
 
                   return (
-                    <div key={item.key} className="flex flex-col gap-4">
+                    <div key={item.key} className="flex flex-col gap-3">
                       {/* Product Row */}
-                      <div className="w-full flex flex-col lg:flex-row lg:items-center justify-between gap-4 py-2">
+                      <div className="w-full grid grid-cols-1 lg:grid-cols-[minmax(16rem,1fr)_minmax(6rem,0.28fr)_minmax(12rem,0.42fr)_minmax(6rem,0.22fr)] lg:items-center gap-4 lg:gap-6 py-2">
                         
                         {/* Image & Title Info */}
-                        <div className="flex-1 flex items-start md:items-center gap-3 md:gap-6 min-w-0">
+                        <div className="flex items-start md:items-center gap-3 md:gap-6 min-w-0">
                           {/* Close/Remove Button */}
                           <button
                             type="button"
@@ -168,7 +178,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                             </div>
                             
                             {/* SKU & Name */}
-                            <div className="flex-1 lg:max-w-[280px] flex flex-col gap-1 min-w-0">
+                            <div className="flex-1 flex flex-col gap-1 min-w-0">
                               <span className="text-sm font-semibold font-['Segoe_UI'] text-[#479EF5] truncate">
                                 {item.sku}
                               </span>
@@ -185,14 +195,12 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                           </div>
                         </div>
 
-                        {/* Price, Quantity, Line Total */}
-                        <div className="flex flex-wrap lg:flex-nowrap items-center gap-4 md:gap-6 pl-7 md:pl-0 justify-between">
-                          {/* Unit Price */}
-                          <div className="w-full md:w-auto lg:w-[120px] flex flex-col justify-center items-start shrink-0">
+                        {/* Unit Price */}
+                        <div className="flex flex-col justify-center items-start min-w-0 pl-7 md:pl-0">
                             <span className="text-xs font-semibold text-[#888888] uppercase tracking-wide lg:hidden mb-0.5">
                               {t('cart.unitPrice') || 'Unit Price'}
                             </span>
-                            <div className="flex items-center gap-1">
+                            <div className="flex flex-wrap items-baseline gap-x-1">
                               {hasTierPrices && (
                                 <span className="text-[#444444] text-base font-normal font-['Segoe_UI']">
                                   {t('product.fromPrice') || 'From'}
@@ -205,10 +213,10 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                             <span className="text-sm font-normal font-['Segoe_UI'] text-[#888888]">
                               {t('product.exVat') || 'ex. VAT'}
                             </span>
-                          </div>
+                        </div>
 
-                          {/* Quantity Selector */}
-                          <div className="w-full md:w-auto lg:w-[260px] flex flex-wrap items-center gap-2">
+                        {/* Quantity Selector */}
+                        <div className="flex flex-wrap items-center gap-2 pl-7 md:pl-0">
                             {/* Pill Input */}
                             <div className="h-[38px] bg-white rounded-[44px] shadow-[0px_1px_2px_rgba(16,24,40,0.05)] border border-black/10 flex items-center overflow-hidden shrink-0">
                               <button
@@ -255,10 +263,10 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                                 </button>
                               </>
                             ) : null}
-                          </div>
+                        </div>
 
-                          {/* Line Total */}
-                          <div className="w-full md:w-auto lg:w-[120px] flex flex-col justify-center items-start lg:items-end shrink-0">
+                        {/* Line Total */}
+                        <div className="flex flex-col justify-center items-start lg:items-end min-w-0 pl-7 md:pl-0">
                             <span className="text-xs font-semibold text-[#888888] uppercase tracking-wide lg:hidden mb-0.5">
                               {t('common.total') || 'Total'}
                             </span>
@@ -268,23 +276,27 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                             <span className="text-sm font-normal font-['Segoe_UI'] text-[#888888]">
                               {t('product.exVat') || 'ex. VAT'}
                             </span>
-                          </div>
                         </div>
                       </div>
 
                       {/* Nested Warranty Item */}
                       {linkedWarranty ? (
-                        <div className="ml-0 md:ml-10 max-w-[728px] w-full p-3 bg-[#F7F9FA] rounded-[12px] flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                          <div className="flex-1 flex flex-col gap-1 min-w-0">
-                            <span className="text-base font-semibold font-['Segoe_UI'] text-[#222222] truncate">
+                        <div className="ml-0 md:ml-10 lg:ml-0 w-full md:w-auto p-3 lg:px-0 bg-[#F7F9FA] rounded-[12px] grid grid-cols-1 gap-4 md:grid-cols-[minmax(10rem,1.1fr)_minmax(5.5rem,0.5fr)_minmax(5rem,0.7fr)_minmax(5rem,0.45fr)] lg:grid-cols-[minmax(16rem,1fr)_minmax(6rem,0.28fr)_minmax(12rem,0.42fr)_minmax(6rem,0.22fr)] md:items-start lg:gap-6">
+                          <div className="flex flex-col gap-1.5 min-w-0 lg:pl-10">
+                            <span className="text-base font-semibold font-['Segoe_UI'] text-[#222222] leading-tight">
                               {linkedWarranty.name}
                             </span>
+                            {warrantyTypeName ? (
+                              <span className="text-xs font-semibold font-['Segoe_UI'] text-[#888888] leading-[1.3]">
+                                {t.has('cart.warrantyType') ? t('cart.warrantyType') : 'Warranty type'}: {warrantyTypeName}
+                              </span>
+                            ) : null}
                             <span className="text-sm font-normal font-['Segoe_UI'] text-[#444444]">
                               {t.has('cart.warrantyDesc') ? t('cart.warrantyDesc') : 'Protect your printer after the standard warranty expires.'}
                             </span>
                           </div>
                           
-                          <div className="w-[100px] flex flex-col justify-center items-start md:items-end shrink-0">
+                          <div className="w-full flex flex-col justify-center items-start gap-1">
                             <span className="text-lg md:text-xl font-semibold font-['Segoe_UI'] text-[#222222]">
                               {formatEuro(linkedWarranty.price ?? 0)}
                             </span>
@@ -293,7 +305,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                             </span>
                           </div>
 
-                          <div className="flex-1 text-base font-semibold font-['Segoe_UI'] text-[#222222]">
+                          <div className="text-base font-semibold font-['Segoe_UI'] text-[#222222] leading-5">
                             {t('cart.years', {
                               count: linkedWarranty.warranty?.durationMonths
                                 ? Math.round(linkedWarranty.warranty.durationMonths / 12)
@@ -301,7 +313,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                             }) || '3 Years'}
                           </div>
 
-                          <div className="w-[86px] flex flex-col justify-center items-end shrink-0 gap-1">
+                          <div className="w-full flex flex-col justify-center items-start md:items-end gap-1.5 lg:pr-3">
                             <span className="text-lg md:text-xl font-bold font-['Segoe_UI'] text-[#222222]">
                               {formatEuro(linkedWarranty.price ?? 0)}
                             </span>
@@ -340,7 +352,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
             </div>
 
             {/* Right Panel: Your Overview Sidebar */}
-            <aside className="w-full lg:w-[400px] shrink-0 bg-white rounded-xl border border-[#EDF2F7] overflow-hidden shadow-[2px_4px_20px_rgba(109,109,120,0.06)] flex flex-col">
+            <aside className="w-full bg-white rounded-xl border border-[#EDF2F7] overflow-hidden shadow-[2px_4px_20px_rgba(109,109,120,0.06)] flex flex-col">
               {/* Header */}
               <div className="w-full p-4 bg-[#F7F9FA] border-b border-[#E5E7EB] text-center">
                 <h2 className="text-2xl font-bold font-['Segoe_UI'] text-[#222222] tracking-wider uppercase">

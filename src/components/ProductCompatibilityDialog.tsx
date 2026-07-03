@@ -253,6 +253,7 @@ export default function ProductCompatibilityDialog({
           allowSingulars: allowSingulars != null ? Boolean(allowSingulars) : undefined,
           warranty: {
             optionId: Number(selectedOption.id),
+            typeName: selectedOption.typeName,
             durationMonths: selectedOption.durationMonths,
             parentSku: productSku,
             parentName: productName,

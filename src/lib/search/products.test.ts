@@ -211,6 +211,66 @@ describe('catalog filter metadata from Elasticsearch aggregations', () => {
     ]);
   });
 
+  it('uses localized indexed category titles for category facet labels', () => {
+    const filters = buildCatalogFilters(
+      {
+        options_category: {
+          facet: {
+            buckets: [
+              {
+                key: 'accessories-1',
+                doc_count: 2,
+                label_source: {
+                  hits: {
+                    hits: [
+                      {
+                        _source: {
+                          category_slugs: ['accessories-1'],
+                          category_titles_en: ['Accessories'],
+                          category_titles_nl: ['Accessoires'],
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      catalogParams({ locale: 'nl' }),
+    );
+
+    expect(filters.options).toEqual([
+      {
+        key: 'category',
+        title: 'Product Type',
+        options: [{ value: 'accessories-1', label: 'Accessoires', count: 2 }],
+      },
+    ]);
+  });
+
+  it('localizes known filter option values for the active locale', () => {
+    const filters = buildCatalogFilters(
+      {
+        options_material: {
+          facet: {
+            buckets: [{ key: 'paper', doc_count: 3 }],
+          },
+        },
+      },
+      catalogParams({ locale: 'nl', materials: ['paper'] }),
+    );
+
+    expect(filters.options).toEqual([
+      {
+        key: 'material',
+        title: 'Material Type',
+        options: [{ value: 'paper', label: 'Papier', count: 3 }],
+      },
+    ]);
+  });
+
   it('uses scoped min and max price stats from matching documents', () => {
     const filters = buildCatalogFilters({
       stats_price: {
