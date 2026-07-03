@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Fragment, useEffect, useState, Suspense, useSyncExternalStore } from 'react';
+import React, { useEffect, useState, Suspense, useSyncExternalStore, Fragment } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
@@ -1474,12 +1474,23 @@ function ShippingAddressesView() {
       <div className="justify-start text-neutral-800 text-3xl font-semibold font-['Segoe_UI'] leading-8">
         {getLabel('account.shippingAddress', 'Shipping Address')}
       </div>
-      <div className="self-stretch h-px outline outline-1 outline-offset-[-0.50px] outline-slate-100"></div>
+      <div className="self-stretch h-px outline outline-1 outline-offset-[-0.50px] outline-slate-100 mb-2"></div>
       
-      <div className="self-stretch flex flex-col justify-start items-start gap-4 mt-2">
-        {shippingAddresses.length === 0 && (
-          <div className="text-zinc-500 text-base">{getLabel('account.noShippingAddresses', 'No shipping addresses found.')}</div>
-        )}
+      {editingAddress ? (
+        <ShippingAddressEditInline
+          onClose={() => setEditingAddress(null)} 
+          onSave={() => {
+            setEditingAddress(null);
+            void fetchAddresses();
+          }}
+          address={editingAddress === 'new' ? undefined : editingAddress}
+        />
+      ) : (
+        <>
+          <div className="self-stretch flex flex-col justify-start items-start gap-4">
+            {shippingAddresses.length === 0 && (
+              <div className="text-zinc-500 text-base">{getLabel('account.noShippingAddresses', 'No shipping addresses found.')}</div>
+            )}
         {shippingAddresses.map((addr, index) => {
           const isSelected = index === 0;
           const name = addr.name || `${addr.firstname || ''} ${addr.lastname || ''}`.trim();
@@ -1535,25 +1546,193 @@ function ShippingAddressesView() {
         })}
       </div>
 
-      <button 
-        onClick={() => setEditingAddress('new')}
-        className="h-12 px-8 py-2.5 mt-4 rounded-[100px] outline outline-[1.50px] outline-offset-[-1.50px] outline-amber-500 inline-flex justify-center items-center gap-2 hover:bg-amber-50 transition-colors"
-      >
-        <div className="text-center justify-start text-amber-500 text-xl font-semibold font-['Segoe_UI'] leading-6 mr-1">+</div>
-        <div className="text-center justify-start text-amber-500 text-lg font-semibold font-['Segoe_UI'] leading-6">{getLabel('account.addNewAddress', 'Add New Address')}</div>
-      </button>
-
-      {editingAddress && (
-        <AddressEditModal 
-          type="shipping"
-          onClose={() => setEditingAddress(null)} 
-          onSave={() => {
-            setEditingAddress(null);
-            void fetchAddresses();
-          }}
-          address={editingAddress === 'new' ? undefined : editingAddress}
-        />
+          <button 
+            onClick={() => setEditingAddress('new')}
+            className="h-12 px-8 py-2.5 mt-4 rounded-[100px] outline outline-[1.50px] outline-offset-[-1.50px] outline-amber-500 inline-flex justify-center items-center gap-2 hover:bg-amber-50 transition-colors"
+          >
+            <div className="text-center justify-start text-amber-500 text-xl font-semibold font-['Segoe_UI'] leading-6 mr-1">+</div>
+            <div className="text-center justify-start text-amber-500 text-lg font-semibold font-['Segoe_UI'] leading-6">{getLabel('account.addNewAddress', 'Add New Address')}</div>
+          </button>
+        </>
       )}
+    </div>
+  );
+}
+
+function ShippingAddressEditInline({ 
+  onClose, 
+  onSave, 
+  address 
+}: { 
+  onClose: () => void; 
+  onSave: () => void;
+  address?: AccountAddress;
+}) {
+  const t = useTranslations();
+  const [firstName, setFirstName] = useState(address?.firstname || '');
+  const [lastName, setLastName] = useState(address?.lastname || '');
+  const [email, setEmail] = useState(''); 
+  const [phone, setPhone] = useState(address?.phone || '');
+  const [country, setCountry] = useState(address?.country || 'United States US');
+  const [street, setStreet] = useState(address?.address1 || '');
+  const [postcode, setPostcode] = useState(address?.postcode || '');
+  const [city, setCity] = useState(address?.city || '');
+  const [stateRegion, setStateRegion] = useState(address?.address2 || '');
+  const [label, setLabel] = useState<'office' | 'home'>('home');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const inputClasses = "w-full h-12 px-4 rounded-full border border-slate-200 focus:border-amber-400 outline-none transition-all text-neutral-800 text-base bg-white font-normal";
+  const labelClasses = "text-base font-semibold text-neutral-800 mb-2 block";
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    try {
+      const payload = {
+        id: address?.id,
+        type: 'shipping',
+        name: `${firstName} ${lastName}`,
+        firstname: firstName,
+        lastname: lastName,
+        company_name: label === 'office' ? 'Office' : '',
+        address: street,
+        address2: stateRegion,
+        postalcode: postcode,
+        city: city,
+        phone: phone,
+        country_id: 'NL',
+      };
+
+      const response = await fetch('/api/account/addresses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error();
+      toast.success(t('account.addressSavedSuccess', { type: 'Shipping' }));
+      onSave();
+    } catch (error) {
+      toast.error(t('account.addressesLoadError'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="w-full animate-in fade-in duration-300 mt-2">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className={labelClasses}>First name</label>
+            <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputClasses} required placeholder="Sofia" />
+          </div>
+          <div>
+            <label className={labelClasses}>Last name</label>
+            <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputClasses} required placeholder="Havertz" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className={labelClasses}>Email</label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClasses} placeholder="sofia@gmail.com" />
+          </div>
+          <div>
+            <label className={labelClasses}>Phone number</label>
+            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClasses} placeholder="+555-113324" />
+          </div>
+        </div>
+
+        <div>
+          <label className={labelClasses}>Country / Region</label>
+          <div className="relative">
+            <select value={country} onChange={(e) => setCountry(e.target.value)} className={`${inputClasses} appearance-none pr-10 bg-transparent`}>
+              <option value="United States US">United States US</option>
+              <option value="Netherlands NL">Netherlands NL</option>
+              <option value="United Kingdom UK">United Kingdom UK</option>
+            </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className={labelClasses}>Street and house number</label>
+            <input type="text" value={street} onChange={(e) => setStreet(e.target.value)} className={inputClasses} required placeholder="345 Long Island" />
+          </div>
+          <div>
+            <label className={labelClasses}>Postcode</label>
+            <input type="text" value={postcode} onChange={(e) => setPostcode(e.target.value)} className={inputClasses} required placeholder="1200" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className={labelClasses}>Place</label>
+            <input type="text" value={city} onChange={(e) => setCity(e.target.value)} className={inputClasses} required placeholder="NewYork" />
+          </div>
+          <div>
+            <label className={labelClasses}>State (optional)</label>
+            <input type="text" value={stateRegion} onChange={(e) => setStateRegion(e.target.value)} className={inputClasses} placeholder="NewYork" />
+          </div>
+        </div>
+
+        <div>
+          <label className={labelClasses}>Select a label for effective delivery:</label>
+          <div className="flex gap-4">
+            <button 
+              type="button" 
+              onClick={() => setLabel('office')}
+              className={`flex items-center justify-center gap-2 h-14 px-8 rounded-full border ${label === 'office' ? 'border-amber-500 ring-1 ring-amber-500' : 'border-slate-200 hover:border-slate-300'} transition-all`}
+            >
+              {label === 'office' ? (
+                <div className="w-5 h-5 rounded-full bg-[#f08c00] flex items-center justify-center">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                </div>
+              ) : (
+                <div className="w-5 h-5 rounded-full border border-slate-300"></div>
+              )}
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-600"><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 4h4a2 2 0 0 1 2 2v2H8V6a2 2 0 0 1 2-2z"/></svg>
+              <span className="text-base font-semibold text-neutral-800">Office</span>
+            </button>
+            <button 
+              type="button" 
+              onClick={() => setLabel('home')}
+              className={`flex items-center justify-center gap-2 h-14 px-8 rounded-full border ${label === 'home' ? 'border-amber-500 ring-1 ring-amber-500' : 'border-slate-200 hover:border-slate-300'} transition-all`}
+            >
+              {label === 'home' ? (
+                <div className="w-5 h-5 rounded-full bg-[#f08c00] flex items-center justify-center">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                </div>
+              ) : (
+                <div className="w-5 h-5 rounded-full border border-slate-300"></div>
+              )}
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-600"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              <span className="text-base font-semibold text-neutral-800">Home</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="flex gap-4 mt-2">
+          <button 
+            type="submit" 
+            disabled={isSaving}
+            className="h-12 px-8 rounded-full bg-[#f08c00] hover:bg-[#d97c00] text-white text-base font-semibold transition-colors disabled:opacity-50"
+          >
+            {isSaving ? 'Saving...' : 'Save Changes'}
+          </button>
+          <button 
+            type="button" 
+            onClick={onClose}
+            className="h-12 px-8 rounded-full bg-white border border-slate-200 text-neutral-600 text-base font-semibold hover:bg-slate-50 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

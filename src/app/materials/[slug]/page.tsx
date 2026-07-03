@@ -333,7 +333,7 @@ function HelpPanel({
           <Link
             key={action.label}
             href={action.href}
-            className="flex flex-col items-center justify-center gap-3 rounded-xl border border-gray-100 bg-[slate-100/30] p-3 text-center transition-colors hover:border-amber-200 hover:bg-orange-50"
+            className="flex flex-col items-center justify-center gap-3 rounded-xl border border-gray-100 bg-[#F1F4F84D] p-3 text-center transition-colors hover:border-amber-200 hover:bg-orange-50"
           >
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-50 shadow-sm">
               <ContactIcon type={action.type} />
@@ -360,7 +360,7 @@ function MaterialProductsSection({
   scopeQueryString: string;
 }) {
   return (
-    <section id={MATERIAL_PRODUCTS_SECTION_ID} className="scroll-mt-24 bg-gray-50 px-4 py-24 sm:px-6 lg:px-10">
+    <section id={MATERIAL_PRODUCTS_SECTION_ID} className="scroll-mt-24 bg-gray-50 px-4 pt-24 pb-0 sm:px-6 lg:px-10">
       <div className="mx-auto flex max-w-[1440px] flex-col gap-8">
         <h2 className="text-4xl font-semibold leading-12 text-neutral-800">{title}</h2>
         <ProductsListing
