@@ -492,6 +492,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
           allowSingulars: normalizeBoolean(product.allow_singulars),
           warranty: {
             optionId: Number(selectedOption.id),
+            typeName: selectedOption.typeName,
             durationMonths: selectedOption.durationMonths,
             parentSku: product.sku,
             parentName: productName,

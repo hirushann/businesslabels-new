@@ -594,6 +594,7 @@ export default function ProductPurchase({
           allowSingulars: Boolean(allowSingulars),
           warranty: {
             optionId: Number(selectedOption.id),
+            typeName: selectedOption.typeName,
             durationMonths: selectedOption.durationMonths,
             parentSku: displaySku,
             parentName: displayName,

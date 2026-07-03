@@ -21,6 +21,10 @@ export type WarrantyDefaultOptionInput = {
 export type WarrantyOptionInput = {
   id?: number | string | null;
   warranty_option_id?: number | string | null;
+  type?: string | null;
+  typeName?: string | null;
+  type_name?: string | null;
+  warranty_type_name?: string | null;
   duration_years?: number | null;
   duration_months?: number | null;
   price?: number | null;
@@ -30,6 +34,7 @@ export type WarrantyOptionInput = {
   sort_order?: number | null;
   translations?: unknown;
   cart?: {
+    type?: string | null;
     warranty_option_id?: number | string | null;
   } | null;
 };
@@ -37,6 +42,9 @@ export type WarrantyOptionInput = {
 export type WarrantyTypeInput = {
   id: number | string;
   name?: string | null;
+  title?: string | null;
+  type_name?: string | null;
+  warranty_type_name?: string | null;
   description?: string | null;
   icon?: string | null;
   badge_text?: string | null;
@@ -54,6 +62,7 @@ export type WarrantyInput = {
 export type NormalizedWarrantyOption = {
   id: number | string;
   name: string;
+  typeName?: string;
   durationMonths: number;
   price: number;
   description: string;
@@ -83,15 +92,22 @@ export function normalizeWarrantyOptions(warranty: WarrantyInput, locale: string
       }
     : null;
 
-  let types: NormalizedWarrantyType[] = (warranty?.types || []).map((type) => ({
-    id: type.id,
-    name: localizedWarrantyField(type, normalizedLocale, "name") || "",
-    description: localizedWarrantyField(type, normalizedLocale, "description") || "",
-    icon: type.icon || "",
-    badgeText: localizedWarrantyField(type, normalizedLocale, "badge_text") || "",
-    badgeColor: type.badge_color || "",
-    options: (type.options || []).map((option) => normalizeWarrantyOption(option, normalizedLocale)),
-  }));
+  let types: NormalizedWarrantyType[] = (warranty?.types || []).map((type) => {
+    const typeName = localizedWarrantyField(type, normalizedLocale, "name", "title", "type_name", "warranty_type_name") || "";
+
+    return {
+      id: type.id,
+      name: typeName,
+      description: localizedWarrantyField(type, normalizedLocale, "description") || "",
+      icon: type.icon || "",
+      badgeText: localizedWarrantyField(type, normalizedLocale, "badge_text") || "",
+      badgeColor: type.badge_color || "",
+      options: (type.options || []).map((option) => ({
+        ...normalizeWarrantyOption(option, normalizedLocale),
+        typeName: typeName || warrantyOptionTypeName(option, normalizedLocale) || undefined,
+      })),
+    };
+  });
 
   const oldOptions: NormalizedWarrantyOption[] = (warranty?.options || [])
     .map((option) => normalizeWarrantyOption(option, normalizedLocale))
@@ -135,7 +151,13 @@ function normalizeWarrantyOption(option: WarrantyOptionInput, locale: LocaleCode
     price: option.price || 0,
     description: localizedWarrantyField(option, locale, "description") || fallbackWarrantyDescription(durationMonths, locale),
     sortOrder: option.sort_order ?? option.sort ?? 0,
+    typeName: warrantyOptionTypeName(option, locale) || undefined,
   };
+}
+
+function warrantyOptionTypeName(option: WarrantyOptionInput, locale: LocaleCode): string | null {
+  return localizedWarrantyField(option, locale, "typeName", "type_name", "warranty_type_name", "type")
+    || (typeof option.cart?.type === "string" && option.cart.type.trim() !== "" ? option.cart.type : null);
 }
 
 function localizedWarrantyField(source: { translations?: unknown } & Record<string, unknown>, locale: LocaleCode, ...fields: string[]): string | null {

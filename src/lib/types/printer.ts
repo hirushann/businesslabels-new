@@ -110,6 +110,7 @@ export type Printer = {
   image: string | null;
   thumbnail?: string | null;
   properties: PrinterProperties;
+  product_url?: string | null;
   created_at: string | null;
   updated_at: string | null;
 };

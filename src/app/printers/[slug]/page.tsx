@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import ProductsListing from "@/components/ProductsListing";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import PrinterActionButtons from "@/components/PrinterActionButtons";
 import {
   parseCatalogSearchParams,
   searchCatalogProducts,
@@ -81,6 +82,7 @@ function toFinderPrinter(printer: Printer): FinderPrinterDetails {
     content: printer.content,
     created_at: printer.created_at,
     updated_at: printer.updated_at,
+    product_url: printer.product_url ?? null,
   };
 }
 
@@ -199,7 +201,7 @@ function SpecItem({ label, value }: { label: string; value: string }) {
       </svg> */}
       <span className="text-base text-neutral-700">
         <span className="font-normal text-[#444444]">{cleanLabel}:</span>{" "}
-        <span className="font-semibold text-base text-[#444444]">{value}</span>
+        <span className="font-bold text-base text-[#444444]">{value}</span>
       </span>
     </li>
   );
@@ -253,11 +255,19 @@ function PrinterSummary({
     ? numericParts(maxWidths[0])[0]
     : undefined;
 
+  const productUrls = firstProperty(properties, [
+    "product_url",
+    "product-url",
+    "printer_url",
+    "printer-url",
+  ]);
+  const productUrl = printer.product_url || productUrls[0] || (properties as any)?.printer_url || (properties as any)?.product_url || null;
+
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="flex flex-col lg:min-h-64 lg:flex-row">
         <div className="flex flex-1 basis-1/2 flex-col p-6">
-          <h1 className="font-['Segoe_UI'] text-3xl font-semibold leading-9 text-neutral-800">
+          <h1 className="font-['Segoe_UI'] text-[34px] font-semibold leading-[48px] text-neutral-800">
             {printer.title}
           </h1>
           {printer.subtitle ? (
@@ -270,7 +280,7 @@ function PrinterSummary({
                 {t("product.productDescription")}
               </div> */}
               <div
-                className="mt-2 text-sm font-normal leading-relaxed text-neutral-700 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_a]:text-[#f08500] [&_a]:underline hover:[&_a]:text-[#d97706] [&_a]:transition-colors"
+                className="mt-2 text-base font-normal leading-relaxed text-neutral-700 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_a]:text-[#f08500] [&_a]:underline hover:[&_a]:text-[#d97706] [&_a]:transition-colors"
                 dangerouslySetInnerHTML={{ __html: printer.content }}
               />
             </div>
@@ -280,15 +290,15 @@ function PrinterSummary({
                 {t("product.productDescription")}
               </div>
               <div
-                className="mt-2 text-sm font-normal leading-relaxed text-neutral-700 [&_p]:mb-2 [&_a]:text-[#f08500] [&_a]:underline hover:[&_a]:text-[#d97706] [&_a]:transition-colors"
+                className="mt-2 text-base font-normal leading-relaxed text-neutral-700 [&_p]:mb-2 [&_a]:text-[#f08500] [&_a]:underline hover:[&_a]:text-[#d97706] [&_a]:transition-colors"
                 dangerouslySetInnerHTML={{ __html: printer.excerpt }}
               />
             </div>
           ) : null}
 
           {properties ? (
-            <div className="mt-2 pt-3">
-              <h3 className="text-xl font-bold text-neutral-800">
+            <div className="mt-6 pt-6 border-t border-[#EDF2F7]">
+              <h3 className="text-xl font-semibold text-neutral-800">
                 {t("finder.mediaSpecifications")}
               </h3>
               <ul className="mt-4 flex flex-col gap-3">
@@ -334,6 +344,7 @@ function PrinterSummary({
                   />
                 ) : null}
               </ul>
+              <PrinterActionButtons printer={printer} productUrl={productUrl} />
             </div>
           ) : null}
         </div>
