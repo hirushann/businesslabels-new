@@ -1817,9 +1817,20 @@ function SingleAddressView({ type }: { type: 'billing_address' | 'shipping_addre
       <div className="justify-start text-neutral-800 text-3xl font-semibold font-['Segoe_UI'] leading-8">
         {isBilling ? getLabel('account.billingAddress', 'Billing Address') : getLabel('account.shippingAddress', 'Shipping Address')}
       </div>
-      <div className="self-stretch h-px outline outline-1 outline-offset-[-0.50px] outline-slate-100"></div>
+      <div className="self-stretch h-px outline outline-1 outline-offset-[-0.50px] outline-slate-100 mb-2"></div>
       
-      <div className="self-stretch flex flex-col justify-start items-start gap-6 mt-2">
+      {editingAddress ? (
+        <BillingAddressEditInline 
+          onClose={() => setEditingAddress(null)} 
+          onSave={() => {
+            setEditingAddress(null);
+            void fetchAddresses();
+          }}
+          address={targetAddress}
+        />
+      ) : (
+        <>
+          <div className="self-stretch flex flex-col justify-start items-start gap-6">
         <div className="self-stretch flex flex-col sm:flex-row justify-start items-start gap-6 sm:gap-4">
           <div className="flex-1 inline-flex flex-col justify-start items-start gap-3 w-full">
             <div className="justify-center text-zinc-500 text-base font-normal font-['Segoe_UI'] leading-6">{getLabel('account.company', 'Company name')}</div>
@@ -1875,26 +1886,169 @@ function SingleAddressView({ type }: { type: 'billing_address' | 'shipping_addre
             <div className="justify-start text-neutral-800 text-lg font-semibold font-['Segoe_UI'] leading-5">{targetAddress?.city || '-'}</div>
           </div>
         </div>
-      </div>
+          </div>
 
-      <button 
-        onClick={() => setEditingAddress(isBilling ? 'billing' : 'shipping')}
-        className="h-12 px-8 py-2.5 mt-4 rounded-[100px] outline outline-[1.50px] outline-offset-[-1.50px] outline-amber-500 inline-flex justify-center items-center gap-2 hover:bg-amber-50 transition-colors"
-      >
-        <div className="text-center justify-start text-amber-500 text-lg font-semibold font-['Segoe_UI'] leading-6">{t('account.editAddress') || 'Edit Address'}</div>
-      </button>
-
-      {editingAddress && (
-        <AddressEditModal 
-          type={editingAddress} 
-          onClose={() => setEditingAddress(null)} 
-          onSave={() => {
-            setEditingAddress(null);
-            void fetchAddresses();
-          }}
-          address={targetAddress}
-        />
+          <button 
+            onClick={() => setEditingAddress(isBilling ? 'billing' : 'shipping')}
+            className="h-12 px-8 py-2.5 mt-4 rounded-[100px] outline outline-[1.50px] outline-offset-[-1.50px] outline-amber-500 inline-flex justify-center items-center gap-2 hover:bg-amber-50 transition-colors"
+          >
+            <div className="text-center justify-start text-amber-500 text-lg font-semibold font-['Segoe_UI'] leading-6">{t('account.editAddress') || 'Edit Address'}</div>
+          </button>
+        </>
       )}
+    </div>
+  );
+}
+
+function BillingAddressEditInline({ 
+  onClose, 
+  onSave, 
+  address 
+}: { 
+  onClose: () => void; 
+  onSave: () => void;
+  address?: AccountAddress;
+}) {
+  const t = useTranslations();
+  const [firstName, setFirstName] = useState(address?.firstname || '');
+  const [lastName, setLastName] = useState(address?.lastname || '');
+  const [company, setCompany] = useState(address?.company || '');
+  const [email, setEmail] = useState(''); 
+  const [phone, setPhone] = useState(address?.phone || '');
+  const [country, setCountry] = useState(address?.country || 'United States US');
+  const [street, setStreet] = useState(address?.address1 || '');
+  const [postcode, setPostcode] = useState(address?.postcode || '');
+  const [city, setCity] = useState(address?.city || '');
+  const [stateRegion, setStateRegion] = useState(address?.address2 || '');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const inputClasses = "w-full h-12 px-4 rounded-full border border-slate-200 focus:border-amber-400 outline-none transition-all text-neutral-800 text-base bg-white font-normal";
+  const labelClasses = "text-base font-semibold text-neutral-800 mb-2 block";
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    try {
+      const payload = {
+        id: address?.id,
+        type: 'billing',
+        name: `${firstName} ${lastName}`,
+        firstname: firstName,
+        lastname: lastName,
+        company_name: company,
+        address: street,
+        address2: stateRegion,
+        postalcode: postcode,
+        city: city,
+        phone: phone,
+        country_id: 'NL',
+      };
+
+      const response = await fetch('/api/account/addresses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error();
+      toast.success(t('account.addressSavedSuccess', { type: 'Billing' }));
+      onSave();
+    } catch (error) {
+      toast.error(t('account.addressesLoadError'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="w-full animate-in fade-in duration-300 mt-2">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className={labelClasses}>Company name (optional)</label>
+            <input type="text" value={company} onChange={(e) => setCompany(e.target.value)} className={inputClasses} placeholder="Company Ltd." />
+          </div>
+          <div>
+            <label className={labelClasses}>VAT number (optional)</label>
+            <input type="text" className={inputClasses} placeholder="NL123456789B01" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className={labelClasses}>First name</label>
+            <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputClasses} required placeholder="Sofia" />
+          </div>
+          <div>
+            <label className={labelClasses}>Last name</label>
+            <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputClasses} required placeholder="Havertz" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className={labelClasses}>Email</label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClasses} placeholder="sofia@gmail.com" />
+          </div>
+          <div>
+            <label className={labelClasses}>Phone number</label>
+            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClasses} placeholder="+555-113324" />
+          </div>
+        </div>
+
+        <div>
+          <label className={labelClasses}>Country / Region</label>
+          <div className="relative">
+            <select value={country} onChange={(e) => setCountry(e.target.value)} className={`${inputClasses} appearance-none pr-10 bg-transparent`}>
+              <option value="United States US">United States US</option>
+              <option value="Netherlands NL">Netherlands NL</option>
+              <option value="United Kingdom UK">United Kingdom UK</option>
+            </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className={labelClasses}>Street and house number</label>
+            <input type="text" value={street} onChange={(e) => setStreet(e.target.value)} className={inputClasses} required placeholder="345 Long Island" />
+          </div>
+          <div>
+            <label className={labelClasses}>Postcode</label>
+            <input type="text" value={postcode} onChange={(e) => setPostcode(e.target.value)} className={inputClasses} required placeholder="1200" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className={labelClasses}>Place</label>
+            <input type="text" value={city} onChange={(e) => setCity(e.target.value)} className={inputClasses} required placeholder="NewYork" />
+          </div>
+          <div>
+            <label className={labelClasses}>State (optional)</label>
+            <input type="text" value={stateRegion} onChange={(e) => setStateRegion(e.target.value)} className={inputClasses} placeholder="NewYork" />
+          </div>
+        </div>
+
+        <div className="flex gap-4 mt-2">
+          <button 
+            type="submit" 
+            disabled={isSaving}
+            className="h-12 px-8 rounded-full bg-[#f08c00] hover:bg-[#d97c00] text-white text-base font-semibold transition-colors disabled:opacity-50"
+          >
+            {isSaving ? 'Saving...' : 'Save Changes'}
+          </button>
+          <button 
+            type="button" 
+            onClick={onClose}
+            className="h-12 px-8 rounded-full bg-white border border-slate-200 text-neutral-600 text-base font-semibold hover:bg-slate-50 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
