@@ -22,13 +22,18 @@ type Post = {
   created_at: string;
 };
 
-async function getPosts(): Promise<Post[]> {
+async function getPosts(search?: string): Promise<Post[]> {
   try {
     const apiBaseUrl = process.env.BBNL_API_BASE_URL;
     if (!apiBaseUrl) return [];
 
-    const res = await fetch(`${apiBaseUrl.replace(/\/$/, "")}/api/posts`, {
-      next: { revalidate: 60 },
+    let url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts`;
+    if (search) {
+      url += `?search=${encodeURIComponent(search)}`;
+    }
+
+    const res = await fetch(url, {
+      next: { revalidate: search ? 0 : 60 },
     });
 
     if (!res.ok) return [];
@@ -40,9 +45,15 @@ async function getPosts(): Promise<Post[]> {
   }
 }
 
-export default async function BlogsPage() {
+export default async function BlogsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ search?: string }>;
+}) {
   const t = await getTranslations();
-  const posts = await getPosts();
+  const searchParamsResolved = await searchParams;
+  const search = searchParamsResolved.search;
+  const posts = await getPosts(search);
 
   return (
     <div className="relative bg-white min-h-screen">
