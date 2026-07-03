@@ -141,7 +141,13 @@ export default function MaterialModelSelect({
       onOpenChange={setIsOpen}
     >
       <PopoverAnchor asChild>
-        <div className="relative w-full">
+        <div className="relative w-full flex items-center">
+          <div className="absolute left-4 pointer-events-none flex items-center justify-center text-zinc-400">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8.25 14.25C11.5637 14.25 14.25 11.5637 14.25 8.25C14.25 4.93629 11.5637 2.25 8.25 2.25C4.93629 2.25 2.25 4.93629 2.25 8.25C2.25 11.5637 4.93629 14.25 8.25 14.25Z" stroke="#99A1AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M15.7504 15.7484L12.5254 12.5234" stroke="#99A1AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
           <Input
             id={inputId}
             autoFocus={autoFocus}
@@ -150,7 +156,7 @@ export default function MaterialModelSelect({
             onFocus={() => setIsOpen(!value && materialQuery.trim().length >= 3)}
             placeholder={placeholder ?? "Search material code"}
             autoComplete="off"
-            className={cn(className, "pr-10")}
+            className={cn(className, "pl-11 pr-10")}
           />
           {materialQuery ? (
             <Button
