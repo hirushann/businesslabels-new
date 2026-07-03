@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense, useSyncExternalStore } from 'react';
+import React, { useEffect, useState, Suspense, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
