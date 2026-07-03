@@ -677,6 +677,7 @@ export const MESSAGES_V4 = {
       shippingAddress: 'Shipping address',
       paymentMethod: 'Payment method',
       purchaseReference: 'Purchase Reference',
+      noReference: 'No Reference',
       downloadConfirmation: 'download order confirmation',
     },
     blogsPage: {
@@ -2229,6 +2230,7 @@ export const MESSAGES_V4 = {
       shippingAddress: 'Verzendadres',
       paymentMethod: 'Betaalmethode',
       purchaseReference: 'Inkoopreferentie',
+      noReference: 'Geen referentie',
       downloadConfirmation: 'bestelbevestiging downloaden',
     },
     blogsPage: {
