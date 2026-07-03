@@ -24,7 +24,7 @@ export default function ScrollToMaterialProductsButton({
         target.scrollIntoView({ behavior: "smooth", block: "start" });
         window.history.pushState(null, "", href);
       }}
-      className="flex h-12 items-center justify-center rounded-full bg-amber-500 px-4 text-base font-semibold leading-6 text-white transition-colors hover:bg-amber-600"
+      className="flex h-12 items-center justify-center rounded-full bg-amber-500 px-4 text-base font-bold leading-6 text-white transition-colors hover:bg-amber-600"
     >
       {children}
     </a>
