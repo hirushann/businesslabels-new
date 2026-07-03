@@ -61,6 +61,7 @@ export type FinderPrinterDetails = {
   content?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
+  product_url?: string | null;
 };
 
 function firstScalar(value: unknown): string | number | boolean | null {
@@ -167,6 +168,7 @@ function mapFinderPrinter(source: PrinterSource, locale?: "en" | "nl"): FinderPr
     content,
     created_at: stringValue(source.created_at),
     updated_at: stringValue(source.updated_at),
+    product_url: stringValue(source.product_url),
   };
 }
 
