@@ -1,17 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import LoginPopup from "@/components/LoginPopup";
+import RegisterPopup from "@/components/RegisterPopup";
 
 type PrinterActionButtonsProps = {
   printer: {
@@ -31,7 +24,8 @@ export default function PrinterActionButtons({
 }: PrinterActionButtonsProps) {
   const t = useTranslations();
   const [isFavorite, setIsFavorite] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isLoginPopupOpen, setIsLoginPopupOpen] = useState(false);
+  const [isRegisterPopupOpen, setIsRegisterPopupOpen] = useState(false);
 
   const normalizedPrinter = {
     id: String(printer.id),
@@ -95,7 +89,7 @@ export default function PrinterActionButtons({
       }
       window.dispatchEvent(new Event("favorites-updated"));
     } else {
-      setIsDialogOpen(true);
+      setIsLoginPopupOpen(true);
     }
   };
 
@@ -142,30 +136,23 @@ export default function PrinterActionButtons({
         </button>
       </div>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>{t("finder.bookmarkDialogTitle")}</DialogTitle>
-            <DialogDescription>
-              {t("finder.bookmarkDialogDesc")}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex-col sm:flex-row gap-2 mt-4">
-            <Link
-              href="/register"
-              className="flex-1 flex items-center justify-center h-10 rounded-full border border-slate-300 font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-            >
-              {t("register.registerButton") || "Register"}
-            </Link>
-            <Link
-              href="/login"
-              className="flex-1 flex items-center justify-center h-10 rounded-full bg-[#f08500] font-semibold text-white hover:bg-[#d97706] transition-colors"
-            >
-              {t("login.loginButton")}
-            </Link>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <LoginPopup
+        open={isLoginPopupOpen}
+        onOpenChange={setIsLoginPopupOpen}
+        onSwitchToRegister={() => {
+          setIsLoginPopupOpen(false);
+          setIsRegisterPopupOpen(true);
+        }}
+      />
+
+      <RegisterPopup
+        open={isRegisterPopupOpen}
+        onOpenChange={setIsRegisterPopupOpen}
+        onSwitchToLogin={() => {
+          setIsRegisterPopupOpen(false);
+          setIsLoginPopupOpen(true);
+        }}
+      />
     </>
   );
 }
