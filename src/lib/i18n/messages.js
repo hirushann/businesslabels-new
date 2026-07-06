@@ -1285,6 +1285,7 @@ export const MESSAGES_V4 = {
       securitySettings: 'Security Settings',
       securitySettingsDesc: 'If you want to change your password, please use the password reset flow or contact support.',
       saveProfile: 'Save Profile',
+      shipped: 'Shipped',
     },
     requestPrinter: {
       title: 'Request ICC Profile',
@@ -2866,6 +2867,7 @@ export const MESSAGES_V4 = {
       securitySettings: 'Beveiligingsinstellingen',
       securitySettingsDesc: 'Als u uw wachtwoord wilt wijzigen, gebruik dan de wachtwoordherstelprocedure of neem contact op met de ondersteuning.',
       saveProfile: 'Profiel opslaan',
+      shipped: 'Verzonden',
     },
     requestPrinter: {
       title: 'Vraag ICC-profiel aan',
