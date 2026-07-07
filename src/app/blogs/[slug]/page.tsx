@@ -10,6 +10,14 @@ import { localePath } from "@/lib/i18n/utils";
 import ProductCard from "@/components/ProductCard";
 import { mapLaravelProductToCardData, type LaravelProduct } from "@/lib/mappings/product";
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
+import { searchMaterials } from "@/lib/search/materials";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 type PostData = {
   id: number;
@@ -76,6 +84,7 @@ async function getRecommendedProducts(locale: "en" | "nl"): Promise<LaravelProdu
     if (response.ok) {
       const json = await response.json();
       if (json.data && Array.isArray(json.data)) {
+        console.log("Fetched products length:", json.data.length);
         return shuffleArray(json.data as LaravelProduct[]).slice(0, 4);
       }
     }
@@ -103,20 +112,33 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function SingleBlogPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const t = await getTranslations();
-  const locale = (await getServerLocale()) as "en" | "nl";
+  const locale = await getServerLocale();
   const post = await getPost(slug);
 
   if (!post) {
     notFound();
   }
 
+  const recommendedProducts = await getRecommendedProducts(locale as "en" | "nl");
+
+  const materialResponse = await searchMaterials({
+    page: 1,
+    perPage: 3,
+    search: "",
+    sort: "latest",
+    printMethod: "",
+    baseMaterial: [],
+    finish: [],
+    adhesive: [],
+    locale: locale as "en" | "nl",
+  });
+  const recommendedMaterials = materialResponse.materials;
+
   const formattedDate = new Date(post.created_at).toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
-  
-  const recommendedProducts = await getRecommendedProducts(locale);
 
   return (
     <div className="relative bg-white overflow-hidden w-full">
@@ -314,151 +336,110 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
         {/* Recommended Products */}
         <div className="w-full py-24 bg-gray-50 flex flex-col items-center">
           <div className="w-full max-w-[1440px] px-4 sm:px-6 lg:px-8 flex flex-col gap-12">
-            <div className="w-full flex justify-between items-center">
-              <h2 className="text-neutral-800 text-3xl md:text-4xl font-bold font-['Segoe_UI'] leading-tight">Recommended Products</h2>
-              <div className="hidden sm:flex items-center gap-4">
-                <button className="w-12 h-12 rounded-full border border-gray-300 bg-white flex items-center justify-center hover:bg-gray-50 transition-colors">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
-                </button>
-                <button className="w-12 h-12 rounded-full border border-amber-500 bg-white text-amber-500 flex items-center justify-center hover:bg-amber-50 transition-colors">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
-                </button>
+            <Carousel opts={{ align: "start" }} className="w-full">
+              <div className="w-full flex justify-between items-center mb-12">
+                <h2 className="text-neutral-800 text-3xl md:text-4xl font-bold font-['Segoe_UI'] leading-tight">Recommended Products</h2>
+                <div className="hidden sm:flex items-center gap-4">
+                  <CarouselPrevious className="static transform-none w-12 h-12 rounded-full border border-gray-300 bg-white flex items-center justify-center hover:bg-gray-50 transition-colors" />
+                  <CarouselNext className="static transform-none w-12 h-12 rounded-full border border-amber-500 bg-white text-amber-500 flex items-center justify-center hover:bg-amber-50 transition-colors" />
+                </div>
               </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
-              {recommendedProducts.map((product) => {
-                const cardProduct = mapLaravelProductToCardData(product, locale);
-                const href = cardProduct.slug
-                  ? (cardProduct.type === "simple" || cardProduct.type === "variable")
-                    ? { pathname: `/product/${cardProduct.slug}`, query: { type: cardProduct.type } }
-                    : { pathname: `/product/${cardProduct.slug}` }
-                  : undefined;
-                return <ProductCard key={cardProduct.sku} product={cardProduct} href={href} />;
-              })}
-            </div>
+              <CarouselContent className="-ml-6">
+                {recommendedProducts.map((product) => {
+                  const cardProduct = mapLaravelProductToCardData(product, locale as "en" | "nl");
+                  const href = cardProduct.slug
+                    ? (cardProduct.type === "simple" || cardProduct.type === "variable")
+                      ? { pathname: `/product/${cardProduct.slug}`, query: { type: cardProduct.type } }
+                      : { pathname: `/product/${cardProduct.slug}` }
+                    : undefined;
+                  
+                  return (
+                    <CarouselItem key={product.id} className="pl-6 md:basis-1/2 lg:basis-1/4 flex">
+                      <ProductCard product={cardProduct} href={href} />
+                    </CarouselItem>
+                  );
+                })}
+              </CarouselContent>
+            </Carousel>
           </div>
         </div>
         
-        {/* Recommended Materials (Static representation for now) */}
+        {/* Recommended Materials */}
         <div className="w-full py-24 bg-white flex flex-col items-center">
           <div className="w-full max-w-[1440px] px-4 sm:px-6 lg:px-8 flex flex-col gap-12">
-            <div className="w-full flex justify-between items-center">
-              <h2 className="text-neutral-800 text-3xl md:text-4xl font-bold font-['Segoe_UI'] leading-tight">Recommended Materials</h2>
-              <div className="hidden sm:flex items-center gap-4">
-                <button className="w-12 h-12 rounded-full border border-gray-300 bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-colors">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
-                </button>
-                <button className="w-12 h-12 rounded-full border border-amber-500 bg-white text-amber-500 flex items-center justify-center hover:bg-amber-50 transition-colors">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
-                </button>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
-              {/* Static Material Card 1 */}
-              <div className="w-full bg-white rounded-xl shadow-sm border border-slate-100 flex flex-col overflow-hidden">
-                <div className="h-56 relative bg-slate-100 overflow-hidden">
-                  <Image src="https://placehold.co/384x220" alt="Material" fill className="object-cover" unoptimized />
-                  <div className="absolute left-4 top-4 bg-white rounded-full px-3 py-1 flex items-center gap-2 shadow-sm">
-                    <div className="w-2 h-2 rounded-full bg-neutral-700"></div>
-                    <span className="text-xs font-semibold text-neutral-700">Inkjet</span>
-                  </div>
-                </div>
-                <div className="p-5 flex flex-col gap-4">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-sm font-semibold text-blue-400">DIA055</span>
-                    <h3 className="text-xl font-bold text-neutral-800 line-clamp-1">Matte Paper permanent adhesive.</h3>
-                    <p className="text-neutral-600 text-sm line-clamp-2 mt-1 font-medium">The Diamondlabels DIA055 is an extremely versatile matte inkjet material with favorable pricing.</p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="px-3 py-1 bg-orange-100 text-amber-500 rounded-xl text-sm font-semibold">Paper</span>
-                    <span className="px-3 py-1 bg-purple-100 text-purple-600 rounded-xl text-sm font-semibold">Glossy</span>
-                    <span className="px-3 py-1 bg-green-100 text-green-600 rounded-xl text-sm font-semibold">Permanent</span>
-                  </div>
-                  <div className="w-full h-px bg-slate-100 my-2"></div>
-                  <div className="flex justify-between items-center gap-4">
-                    <div className="flex-1 flex gap-1">
-                      <span className="text-neutral-500">Weight:</span><span className="font-semibold text-neutral-700">165 g/m²</span>
-                    </div>
-                    <div className="flex-1 flex gap-1">
-                      <span className="text-neutral-500">Thickness:</span><span className="font-semibold text-neutral-700">169 μm</span>
-                    </div>
-                  </div>
-                  <button className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-full mt-2 transition-colors">
-                    View Details
-                  </button>
+            <Carousel opts={{ align: "start" }} className="w-full">
+              <div className="w-full flex justify-between items-center mb-12">
+                <h2 className="text-neutral-800 text-3xl md:text-4xl font-bold font-['Segoe_UI'] leading-tight">Recommended Materials</h2>
+                <div className="hidden sm:flex items-center gap-4">
+                  <CarouselPrevious className="static transform-none w-12 h-12 rounded-full border border-gray-300 bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-colors" />
+                  <CarouselNext className="static transform-none w-12 h-12 rounded-full border border-amber-500 bg-white text-amber-500 flex items-center justify-center hover:bg-amber-50 transition-colors" />
                 </div>
               </div>
-              
-              {/* Static Material Card 2 */}
-              <div className="w-full bg-white rounded-xl shadow-sm border border-slate-100 flex flex-col overflow-hidden">
-                <div className="h-56 relative bg-slate-100 overflow-hidden">
-                  <Image src="https://placehold.co/384x220" alt="Material" fill className="object-cover" unoptimized />
-                  <div className="absolute left-4 top-4 bg-white rounded-full px-3 py-1 flex items-center gap-2 shadow-sm">
-                    <div className="w-2 h-2 rounded-full bg-neutral-700"></div>
-                    <span className="text-xs font-semibold text-neutral-700">Thermal Transfer</span>
-                  </div>
-                </div>
-                <div className="p-5 flex flex-col gap-4">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-sm font-semibold text-blue-400">DIA055</span>
-                    <h3 className="text-xl font-bold text-neutral-800 line-clamp-1">Premium Matte Paper</h3>
-                    <p className="text-neutral-600 text-sm line-clamp-2 mt-1 font-medium">Premium matte inkjet paper with superior color reproduction and durability.</p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="px-3 py-1 bg-orange-100 text-amber-500 rounded-xl text-sm font-semibold">PE (polyethylene)</span>
-                    <span className="px-3 py-1 bg-purple-100 text-purple-600 rounded-xl text-sm font-semibold">Matte</span>
-                    <span className="px-3 py-1 bg-green-100 text-green-600 rounded-xl text-sm font-semibold">Removable</span>
-                  </div>
-                  <div className="w-full h-px bg-slate-100 my-2"></div>
-                  <div className="flex justify-between items-center gap-4">
-                    <div className="flex-1 flex gap-1">
-                      <span className="text-neutral-500">Weight:</span><span className="font-semibold text-neutral-700">165 g/m²</span>
-                    </div>
-                    <div className="flex-1 flex gap-1">
-                      <span className="text-neutral-500">Thickness:</span><span className="font-semibold text-neutral-700">169 μm</span>
-                    </div>
-                  </div>
-                  <button className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-full mt-2 transition-colors">
-                    View Details
-                  </button>
-                </div>
-              </div>
-              
-              {/* Static Material Card 3 */}
-              <div className="w-full bg-white rounded-xl shadow-sm border border-slate-100 flex flex-col overflow-hidden">
-                <div className="h-56 relative bg-slate-100 overflow-hidden">
-                  <Image src="https://placehold.co/384x220" alt="Material" fill className="object-cover" unoptimized />
-                  <div className="absolute left-4 top-4 bg-white rounded-full px-3 py-1 flex items-center gap-2 shadow-sm">
-                    <div className="w-2 h-2 rounded-full bg-neutral-700"></div>
-                    <span className="text-xs font-semibold text-neutral-700">Thermal Direct</span>
-                  </div>
-                </div>
-                <div className="p-5 flex flex-col gap-4">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-sm font-semibold text-blue-400">DIA055</span>
-                    <h3 className="text-xl font-bold text-neutral-800 line-clamp-1">Extra Thin Matte Paper</h3>
-                    <p className="text-neutral-600 text-sm line-clamp-2 mt-1 font-medium">Extra thin matte inkjet paper for cost-effective labeling solutions.</p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="px-3 py-1 bg-orange-100 text-amber-500 rounded-xl text-sm font-semibold">PO (polyolefin)</span>
-                    <span className="px-3 py-1 bg-purple-100 text-purple-600 rounded-xl text-sm font-semibold">Top Coated</span>
-                    <span className="px-3 py-1 bg-green-100 text-green-600 rounded-xl text-sm font-semibold">Permanent</span>
-                  </div>
-                  <div className="w-full h-px bg-slate-100 my-2"></div>
-                  <div className="flex justify-between items-center gap-4">
-                    <div className="flex-1 flex gap-1">
-                      <span className="text-neutral-500">Weight:</span><span className="font-semibold text-neutral-700">165 g/m²</span>
-                    </div>
-                    <div className="flex-1 flex gap-1">
-                      <span className="text-neutral-500">Thickness:</span><span className="font-semibold text-neutral-700">169 μm</span>
-                    </div>
-                  </div>
-                  <button className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-full mt-2 transition-colors">
-                    View Details
-                  </button>
-                </div>
-              </div>
-            </div>
+              <CarouselContent className="-ml-6">
+                {recommendedMaterials.map((material) => {
+                  const cardImage = toDisplayImageUrl(material.main_image) || "/images/material-placeholder.svg";
+                  const baseMat = material.base_material || (material.categories?.find(c => c.slug.includes('papier') || c.slug.includes('paper')) ? 'Paper' : '');
+                  const finish = material.finish || (material.categories?.find(c => c.slug.includes('glanzend') || c.slug.includes('glossy')) ? 'Glossy' : (material.categories?.find(c => c.slug.includes('mat')) ? 'Matte' : ''));
+                  const adhesive = material.adhesive || (material.categories?.find(c => c.slug.includes('permanent')) ? 'Permanent' : (material.categories?.find(c => c.slug.includes('verwijderbaar') || c.slug.includes('removable')) ? 'Removable' : ''));
+                  
+                  let weight = "-";
+                  let thickness = "-";
+                  if (material.specifications && Array.isArray(material.specifications.material_specs)) {
+                    for (const spec of material.specifications.material_specs) {
+                      const label = (spec.label || "").toLowerCase();
+                      if (label.includes("weight") || label.includes("gewicht") || label.includes("grammage")) {
+                        weight = spec.value;
+                      } else if (label.includes("thickness") || label.includes("dikte")) {
+                        thickness = spec.value;
+                      }
+                    }
+                  }
+                  const isInkjet = material.categories?.some(c => c.slug.toLowerCase().includes('inkjet'));
+
+                  return (
+                    <CarouselItem key={material.id} className="pl-6 md:basis-1/2 lg:basis-1/3 flex">
+                      <div className="w-full h-full bg-white rounded-xl shadow-[0_4px_20px_rgba(109,109,120,0.05)] border border-slate-100 flex flex-col overflow-hidden group hover:shadow-[0_12px_30px_rgba(109,109,120,0.12)] transition-all duration-300 hover:-translate-y-1">
+                        <Link href={`/materials/${material.slug}`} className="h-56 relative bg-slate-100 overflow-hidden block">
+                          <Image src={cardImage} alt={material.title} fill className="object-contain p-4 group-hover:scale-105 transition-transform duration-500" unoptimized />
+                          <div className="absolute left-4 top-4 bg-white rounded-full px-3 py-1 flex items-center gap-2 shadow-sm">
+                            <div className="w-2 h-2 rounded-full bg-neutral-700"></div>
+                            <span className="text-xs font-semibold text-neutral-700">{isInkjet ? 'Inkjet' : (material.print_method || 'Material')}</span>
+                          </div>
+                        </Link>
+                        <div className="p-5 flex flex-col gap-4 flex-1">
+                          <div className="flex flex-col gap-1">
+                            <span className="text-sm font-semibold text-blue-400">{material.code || material.title.split(' ')[0]}</span>
+                            <Link href={`/materials/${material.slug}`}>
+                              <h3 className="text-xl font-bold text-neutral-800 line-clamp-1 hover:text-amber-500 transition-colors">{material.title}</h3>
+                            </Link>
+                            <p className="text-neutral-600 text-sm line-clamp-2 mt-1 font-medium">{material.excerpt || material.subtitle || ""}</p>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {baseMat && <span className="px-3 py-1 bg-orange-100 text-amber-500 rounded-xl text-xs font-semibold">{baseMat}</span>}
+                            {finish && <span className="px-3 py-1 bg-purple-100 text-purple-600 rounded-xl text-xs font-semibold">{finish}</span>}
+                            {adhesive && <span className="px-3 py-1 bg-green-100 text-green-600 rounded-xl text-xs font-semibold">{adhesive}</span>}
+                          </div>
+                          <div className="w-full h-px bg-slate-100 my-2 mt-auto"></div>
+                          <div className="flex justify-between items-center gap-4">
+                            <div className="flex-1 flex flex-col gap-0.5">
+                              <span className="text-neutral-500 text-xs">Weight</span>
+                              <span className="font-semibold text-neutral-700 text-sm">{weight}</span>
+                            </div>
+                            <div className="flex-1 flex flex-col gap-0.5">
+                              <span className="text-neutral-500 text-xs">Thickness</span>
+                              <span className="font-semibold text-neutral-700 text-sm">{thickness}</span>
+                            </div>
+                          </div>
+                          <Link href={`/materials/${material.slug}`} className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-center font-semibold rounded-full mt-2 transition-colors">
+                            View Details
+                          </Link>
+                        </div>
+                      </div>
+                    </CarouselItem>
+                  );
+                })}
+              </CarouselContent>
+            </Carousel>
           </div>
         </div>
         

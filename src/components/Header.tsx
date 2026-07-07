@@ -532,7 +532,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                       className={
                         index <= 2
                           ? 'left-0'
-                          : index >= 5
+                          : index >= 6
                             ? 'right-0'
                             : 'left-1/2 -translate-x-1/2'
                       }
