@@ -569,7 +569,7 @@ function MyAccountContent() {
                     </div>
                   </div>
                 </div>
-                <div className="justify-start text-neutral-800 text-3xl font-bold font-['Segoe_UI'] leading-8 text-center">{displayName}</div>
+                <div className="justify-start text-[#222222] text-[28px] font-bold font-['Segoe_UI'] leading-8 text-center">{displayName}</div>
               </div>
               
               <div className="self-stretch h-px outline outline-1 outline-offset-[-0.50px] outline-slate-100"></div>
@@ -579,9 +579,9 @@ function MyAccountContent() {
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id as Tab)}
-                    className={`self-stretch py-3 inline-flex justify-start items-center gap-1.5 ${activeTab === item.id ? 'border-b border-amber-500' : ''}`}
+                    className={`self-stretch py-3 inline-flex justify-start items-center gap-1.5 ${activeTab === item.id ? 'border-b border-[#F18800]' : ''}`}
                   >
-                    <div className={`text-center justify-start text-lg font-semibold font-['Segoe_UI'] leading-6 ${activeTab === item.id ? 'text-amber-500' : 'text-neutral-700'}`}>
+                    <div className={`text-center justify-start text-[18px] font-semibold font-['Segoe_UI'] leading-6 ${activeTab === item.id ? 'text-[#F18800]' : 'text-[#444444]'}`}>
                       {item.label}
                     </div>
                   </button>
