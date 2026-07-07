@@ -58,7 +58,7 @@ export default function SupportPage() {
           <div className="bg-white border border-slate-100 rounded-2xl p-10 flex flex-col items-center text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-lg transition-all duration-300">
             <Phone className="w-14 h-14 text-neutral-500 mb-6" strokeWidth={1.5} />
             <h3 className="text-2xl font-bold text-slate-800 mb-4">Call</h3>
-            <p className="text-lg font-semibold text-slate-700 mb-2">+31 (0)318 590 465</p>
+            <a href="tel:+31318590465" className="text-lg font-semibold text-slate-700 hover:text-sky-600 mb-2 transition-colors">+31 (0)318 590 465</a>
             <p className="text-sm text-slate-400 font-medium">Mon – Fri, 8:30 – 17:00</p>
           </div>
 
@@ -72,7 +72,7 @@ export default function SupportPage() {
           <div className="bg-white border border-slate-100 rounded-2xl p-10 flex flex-col items-center text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-lg transition-all duration-300">
             <Monitor className="w-14 h-14 text-neutral-500 mb-6" strokeWidth={1.5} />
             <h3 className="text-2xl font-bold text-slate-800 mb-4">Remote session</h3>
-            <a href="#" className="text-lg font-semibold text-amber-500 hover:text-amber-600 mb-2 flex items-center gap-2 justify-center transition-colors">
+            <a href="https://download.teamviewer.com/download/TeamViewerQS.exe" target="_blank" rel="noopener noreferrer" className="text-lg font-semibold text-amber-500 hover:text-amber-600 mb-2 flex items-center gap-2 justify-center transition-colors">
               <Download className="w-5 h-5" /> Download TeamViewer
             </a>
             <p className="text-sm text-slate-400 font-medium">Scheduled after contact</p>
@@ -295,7 +295,7 @@ export default function SupportPage() {
                 ))}
                 
                 <div className="pt-6">
-                  <a href="#" className="inline-flex items-center gap-2 text-orange-500 font-bold hover:text-orange-600 transition-colors text-[15px] underline underline-offset-4 decoration-orange-500/30 hover:decoration-orange-500">
+                  <a href="https://download.teamviewer.com/download/TeamViewerQS.exe" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-orange-500 font-bold hover:text-orange-600 transition-colors text-[15px] underline underline-offset-4 decoration-orange-500/30 hover:decoration-orange-500">
                     <Download className="w-5 h-5" /> Download TeamViewer QuickSupport
                   </a>
                 </div>
