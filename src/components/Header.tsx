@@ -164,6 +164,8 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
 
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const desktopSearchFormRef = useRef<HTMLFormElement>(null);
+  const mobileSearchFormRef = useRef<HTMLFormElement>(null);
   const desktopSearchInputRef = useRef<HTMLInputElement>(null);
   const mobileSearchInputRef = useRef<HTMLInputElement>(null);
   const { totalItemCount, isCartOpen, openCart, closeCart } = useCart();
@@ -176,6 +178,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
   const [manualHeaderSearchInput, setManualHeaderSearchInput] = useState<string | null>(null);
   const [isSearchPopoverOpen, setIsSearchPopoverOpen] = useState(false);
   const [activeSearchSurface, setActiveSearchSurface] = useState<SearchSurface>('desktop');
+  const [searchPopoverWidth, setSearchPopoverWidth] = useState<number | null>(null);
   const [searchSuggestions, setSearchSuggestions] = useState<HeaderSearchSuggestions | null>(null);
   const [isSearchLoading, setIsSearchLoading] = useState(false);
   const headerSearchInput = manualHeaderSearchInput ?? headerSearchValue;
@@ -207,8 +210,8 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
         console.error('Header search suggestions failed:', error);
         setSearchSuggestions({
           productGroups: [],
-          materials: { id: 'materials', title: 'Materials', href: '/materials', total: 0, items: [] },
-          error: 'Search suggestions are temporarily unavailable.',
+          materials: { id: 'materials', title: t('search.popover.materials'), href: '/materials', total: 0, items: [] },
+          error: t('search.popover.unavailable'),
         });
       } finally {
         if (!controller.signal.aborted) {
@@ -221,15 +224,25 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
       controller.abort();
       window.clearTimeout(timeout);
     };
-  }, [headerSearchInput, isSearchPopoverOpen, locale]);
+  }, [headerSearchInput, isSearchPopoverOpen, locale, t]);
+
+  const measureSearchPopoverWidth = (surface: SearchSurface) => {
+    const node = surface === 'desktop' ? desktopSearchFormRef.current : mobileSearchFormRef.current;
+    const width = node?.getBoundingClientRect().width;
+    if (width) {
+      setSearchPopoverWidth(Math.round(width));
+    }
+  };
 
   const handleHeaderSearchFocus = (surface: SearchSurface) => {
     setActiveSearchSurface(surface);
+    measureSearchPopoverWidth(surface);
     setIsSearchPopoverOpen(true);
   };
 
   const handleHeaderSearchChange = (value: string, surface: SearchSurface) => {
     setActiveSearchSurface(surface);
+    measureSearchPopoverWidth(surface);
     setManualHeaderSearchInput(value);
     setIsSearchPopoverOpen(true);
     if (!value.trim()) {
@@ -249,6 +262,10 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
   };
 
   const handleSearchPopoverOpenChange = (open: boolean) => {
+    if (open) {
+      measureSearchPopoverWidth(activeSearchSurface);
+    }
+
     setIsSearchPopoverOpen(open);
     if (!open) {
       setIsSearchLoading(false);
@@ -295,25 +312,29 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
   const hasMaterialResults = Boolean(searchSuggestions?.materials.items.length);
   const hasSearchResults = hasProductResults || hasMaterialResults;
 
-  const renderSearchState = (state: 'loading' | 'empty') => (
-    <div className="flex min-h-56 flex-col items-center justify-center px-6 py-4 text-center">
+  const renderSearchState = (state: 'idle' | 'loading' | 'empty') => (
+    <div className="flex min-h-72 flex-col items-center justify-center px-6 py-6 text-center">
       <Image
         src="/search-no-result.png"
         alt=""
-        width={320}
-        height={196}
-        className="h-auto w-56 object-contain sm:w-64"
+        width={360}
+        height={220}
+        className="h-auto w-60 object-contain sm:w-72"
         priority={false}
       />
       <p className="mt-4 text-xl font-bold leading-7 text-neutral-800">
-        {state === 'loading'
-          ? (t.has('search.searching') ? t('search.searching') : 'Searching...')
-          : 'No Result Found'}
+        {state === 'idle'
+          ? t('common.search')
+          : state === 'loading'
+            ? t('search.searching')
+            : t('search.popover.noResultsTitle')}
       </p>
       <p className="mt-2 text-base font-normal leading-6 text-zinc-500">
-        {state === 'loading'
-          ? 'Finding the best matching products and materials.'
-          : "We can't find any item matching your search."}
+        {state === 'idle'
+          ? t('search.popover.idleDescription')
+          : state === 'loading'
+            ? t('search.popover.loadingDescription')
+            : t('search.popover.noResultsDescription')}
       </p>
     </div>
   );
@@ -326,22 +347,21 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
         align="start"
         sideOffset={10}
         onOpenAutoFocus={(event) => event.preventDefault()}
-        className="w-[min(calc(100vw-2rem),620px)] rounded-xl bg-white p-5 text-left shadow-[0_16px_34px_rgba(15,23,42,0.14)] ring-slate-100"
+        style={searchPopoverWidth ? { width: searchPopoverWidth } : undefined}
+        className="w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] rounded-xl bg-white p-5 text-left shadow-[0_16px_34px_rgba(15,23,42,0.14)] ring-slate-100 data-open:zoom-in-100 data-closed:zoom-out-100"
       >
         {isSearchLoading && !searchSuggestions ? (
           renderSearchState('loading')
         ) : !hasSearchQuery ? (
-          <div className="flex min-h-32 items-center justify-center text-sm font-semibold text-zinc-500">
-            {t('common.search')}
-          </div>
+          renderSearchState('idle')
         ) : searchSuggestions?.error ? (
           <div className="flex min-h-40 items-center justify-center text-center text-sm font-semibold text-zinc-500">
-            {searchSuggestions.error}
+            {t('search.popover.unavailable')}
           </div>
         ) : !hasSearchResults && !isSearchLoading ? (
           renderSearchState('empty')
         ) : (
-          <div className="grid max-h-[calc(100vh-190px)] grid-cols-1 gap-5 overflow-y-auto pr-1 lg:grid-cols-[1fr_auto_0.95fr] lg:gap-6">
+          <div className="scrollbar-none grid max-h-[calc(100vh-190px)] grid-cols-1 gap-5 overflow-y-auto lg:grid-cols-[1fr_auto_0.95fr] lg:gap-6">
             <div className="flex flex-col gap-5">
               {searchSuggestions?.productGroups.map((group) => (
                 <section key={group.id} className="flex flex-col gap-2">
@@ -354,7 +374,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                     onClick={closeSearchPopover}
                     className="inline-flex text-base font-semibold leading-6 text-orange-500 hover:text-orange-600"
                   >
-                    Show All {group.title} ({group.total})
+                    {t('search.popover.showAll', { label: group.title, count: group.total })}
                   </Link>
                 </section>
               ))}
@@ -362,7 +382,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
             <Separator orientation="vertical" className="hidden lg:block" />
             <section className="flex flex-col gap-2">
               <h2 className="text-xl font-bold leading-7 text-neutral-800">
-                {searchSuggestions?.materials.title ?? 'Materials'}
+                {t('search.popover.materials')}
               </h2>
               <div className="flex flex-col gap-1">
                 {searchSuggestions?.materials.items.map(renderSearchItem)}
@@ -373,7 +393,10 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                   onClick={closeSearchPopover}
                   className="inline-flex text-base font-semibold leading-6 text-orange-500 hover:text-orange-600"
                 >
-                  Show All Materials ({searchSuggestions?.materials.total ?? 0})
+                  {t('search.popover.showAll', {
+                    label: t('search.popover.materials'),
+                    count: searchSuggestions?.materials.total ?? 0,
+                  })}
                 </Link>
               ) : null}
             </section>
@@ -452,9 +475,9 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
 
       {/* Desktop main nav row */}
       <div className="hidden lg:flex w-full px-10 py-4 bg-white border-b border-slate-100">
-        <div className="max-w-360 mx-auto w-full flex justify-between items-center">
+        <div className="w-full grid grid-cols-[minmax(205px,1fr)_minmax(420px,620px)_minmax(0,1fr)] items-center gap-6 xl:gap-8">
           {/* Logo */}
-          <Link href="/" className="flex items-center">
+          <Link href="/" className="flex shrink-0 items-center">
             <Image
               src="/logo.png"
               alt="Businesslabels"
@@ -472,9 +495,10 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
           >
             <PopoverAnchor asChild>
               <form
+                ref={desktopSearchFormRef}
                 role="search"
                 onSubmit={handleHeaderSearchSubmit}
-                className="w-96 px-4 py-3 rounded-full border border-slate-100 flex items-center gap-2 overflow-hidden text-left focus-within:border-amber-300 focus-within:ring-2 focus-within:ring-amber-500/10"
+                className="w-full px-6 py-3 rounded-full border border-slate-100 flex items-center gap-3 overflow-hidden text-left focus-within:border-amber-300 focus-within:ring-2 focus-within:ring-amber-500/10"
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <circle cx="6.75" cy="6.75" r="5.25" stroke="#9CA3AF" strokeWidth="1.5" />
@@ -482,7 +506,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                 </svg>
                 <input
                   ref={desktopSearchInputRef}
-                  type="search"
+                  type="text"
                   value={headerSearchInput}
                   onFocus={() => handleHeaderSearchFocus('desktop')}
                   onClick={() => handleHeaderSearchFocus('desktop')}
@@ -492,14 +516,14 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                   autoComplete="off"
                   className="h-5 min-w-0 flex-1 bg-transparent text-sm font-normal leading-5 text-neutral-800 outline-none placeholder:text-zinc-500"
                 />
-                {headerSearchInput ? (
+                {headerSearchInput && activeSearchSurface === 'desktop' ? (
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon-xs"
                     onClick={() => handleHeaderSearchChange('', 'desktop')}
                     className="size-5 shrink-0 rounded-full text-zinc-400 hover:bg-slate-100 hover:text-zinc-600"
-                    aria-label="Clear search"
+                    aria-label={t('search.popover.clearSearch')}
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
                       <path d="M3 3l6 6M9 3L3 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -512,7 +536,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
           </Popover>
 
           {/* Right controls */}
-          <div className="flex items-center gap-5">
+          <div className="ml-auto flex min-w-0 shrink items-center gap-5">
             {/* Need help CTA */}
             <button
               type="button"
@@ -647,6 +671,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
         >
           <PopoverAnchor asChild>
             <form
+              ref={mobileSearchFormRef}
               role="search"
               onSubmit={handleHeaderSearchSubmit}
               className="w-full px-4 py-2.5 rounded-full border border-slate-100 flex items-center gap-2 overflow-hidden text-left bg-slate-50 focus-within:border-amber-300 focus-within:ring-2 focus-within:ring-amber-500/10"
@@ -657,7 +682,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
               </svg>
               <input
                 ref={mobileSearchInputRef}
-                type="search"
+                type="text"
                 value={headerSearchInput}
                 onFocus={() => handleHeaderSearchFocus('mobile')}
                 onClick={() => handleHeaderSearchFocus('mobile')}
@@ -667,14 +692,14 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                 autoComplete="off"
                 className="h-5 min-w-0 flex-1 bg-transparent text-sm font-normal leading-5 text-neutral-800 outline-none placeholder:text-zinc-500"
               />
-              {headerSearchInput ? (
+              {headerSearchInput && activeSearchSurface === 'mobile' ? (
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon-xs"
                   onClick={() => handleHeaderSearchChange('', 'mobile')}
                   className="size-5 shrink-0 rounded-full text-zinc-400 hover:bg-slate-100 hover:text-zinc-600"
-                  aria-label="Clear search"
+                  aria-label={t('search.popover.clearSearch')}
                 >
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
                     <path d="M3 3l6 6M9 3L3 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />

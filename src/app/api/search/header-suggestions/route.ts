@@ -35,14 +35,14 @@ const PRODUCT_GROUPS: Array<{
 }> = [
   {
     id: "printers",
-    title: { en: "Label Printers", nl: "Label Printers" },
+    title: { en: "Label Printers", nl: "Labelprinters" },
     path: getPrinterCategoryPath,
     slugs: ["labelprinters", "label-printers", "color-labelprinters", "kleuren-labelprinters", "thermal-labelprinters", "thermische-labelprinters"],
     names: ["label printer", "labelprinter", "printer"],
   },
   {
     id: "labels",
-    title: { en: "Labels and tickets", nl: "Labels and tickets" },
+    title: { en: "Labels and tickets", nl: "Labels en tickets" },
     path: getLabelCategoryPath,
     slugs: ["labels-en-tickets", "labels-en-tickets-en", "inkjet-printer-media", "thermal-direct", "thermal-transfer", "jewellery-labels"],
     names: ["label", "ticket", "etiket"],
@@ -133,12 +133,13 @@ function mapMaterialItem(material: Material): HeaderSuggestionItem {
 export async function GET(request: NextRequest) {
   const locale = request.nextUrl.searchParams.get("locale") === "en" ? "en" : "nl";
   const query = request.nextUrl.searchParams.get("search") || request.nextUrl.searchParams.get("q") || "";
+  const materialTitle = locale === "nl" ? "Materialen" : "Materials";
 
   if (!query.trim()) {
     return NextResponse.json({
       query: "",
       productGroups: [],
-      materials: { title: "Materials", href: withSearch("/materials", query), total: 0, items: [] },
+      materials: { title: materialTitle, href: withSearch("/materials", query), total: 0, items: [] },
     });
   }
 
@@ -185,7 +186,7 @@ export async function GET(request: NextRequest) {
       query,
       productGroups,
       materials: {
-        title: "Materials",
+        title: materialTitle,
         href: withSearch("/materials", query),
         total: materials.total,
         items: materials.materials.slice(0, MATERIALS_LIMIT).map(mapMaterialItem),
@@ -198,8 +199,8 @@ export async function GET(request: NextRequest) {
       {
         query,
         productGroups: [],
-        materials: { title: "Materials", href: withSearch("/materials", query), total: 0, items: [] },
-        error: "Search suggestions are temporarily unavailable.",
+        materials: { title: materialTitle, href: withSearch("/materials", query), total: 0, items: [] },
+        error: locale === "nl" ? "Zoeksuggesties zijn tijdelijk niet beschikbaar." : "Search suggestions are temporarily unavailable.",
       },
       { status: 503 },
     );
