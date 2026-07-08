@@ -18,6 +18,13 @@ export const metadata = {
     "Expert-selected labels, accessories and printers. Epson ColorWorks Gold Partner. Order from 1 roll with free support.",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 export default async function RootLayout({ children }) {
   const locale = await getServerLocale();
   const messages = await getMessages(locale);
