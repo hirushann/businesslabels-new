@@ -188,7 +188,7 @@ export default async function KnowledgeBaseArchive() {
             } as Record<string, any>)[category.slug] || BookOpen;
 
             return (
-              <Link key={category.id} href="#" className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 flex items-center gap-6 transition-all group">
+              <Link key={category.id} href={`/blogs?category=${category.slug}`} className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 flex items-center gap-6 transition-all group">
                 <div className="w-20 h-20 bg-orange-50 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform flex-shrink-0">
                   <Icon className="w-10 h-10 text-amber-500" />
                 </div>

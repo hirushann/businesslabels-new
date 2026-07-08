@@ -5,8 +5,19 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { unescapeHtml } from "@/lib/utils";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
-import { getServerLocale } from "@/lib/i18n";
+import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 import { localePath } from "@/lib/i18n/utils";
+import ProductCard from "@/components/ProductCard";
+import { mapLaravelProductToCardData, type LaravelProduct } from "@/lib/mappings/product";
+import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
+import { searchMaterials } from "@/lib/search/materials";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 type PostData = {
   id: number;
@@ -22,6 +33,13 @@ type PostData = {
   image?: string;
   created_at: string;
   updated_at: string;
+  author?: {
+    name: string;
+    email: string;
+    avatar?: string;
+    bio?: string;
+  } | null;
+  categories?: { name: string; slug: string }[];
 };
 
 async function getPost(slug: string): Promise<PostData | null> {
@@ -40,6 +58,40 @@ async function getPost(slug: string): Promise<PostData | null> {
     console.error("Error fetching post:", error);
     return null;
   }
+}
+
+function shuffleArray<T>(array: T[]): T[] {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const temp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = temp;
+  }
+  return arr;
+}
+
+async function getRecommendedProducts(locale: "en" | "nl"): Promise<LaravelProduct[]> {
+  try {
+    const backendUrl = process.env.BBNL_API_BASE_URL;
+    if (!backendUrl) return [];
+    
+    const url = withLocaleParam(`${backendUrl}/api/products`, locale);
+    const response = await fetch(url, {
+      headers: { 'Accept': 'application/json' },
+      next: { revalidate: 0 },
+    });
+    if (response.ok) {
+      const json = await response.json();
+      if (json.data && Array.isArray(json.data)) {
+        console.log("Fetched products length:", json.data.length);
+        return shuffleArray(json.data as LaravelProduct[]).slice(0, 4);
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching recommended products:', error);
+  }
+  return [];
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -67,6 +119,21 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
     notFound();
   }
 
+  const recommendedProducts = await getRecommendedProducts(locale as "en" | "nl");
+
+  const materialResponse = await searchMaterials({
+    page: 1,
+    perPage: 3,
+    search: "",
+    sort: "latest",
+    printMethod: "",
+    baseMaterial: [],
+    finish: [],
+    adhesive: [],
+    locale: locale as "en" | "nl",
+  });
+  const recommendedMaterials = materialResponse.materials;
+
   const formattedDate = new Date(post.created_at).toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "short",
@@ -74,319 +141,329 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
   });
 
   return (
-    <>
-      <div className="relative overflow-hidden bg-white">
-        {/* Ambient glow blobs */}
-        <div className="pointer-events-none absolute left-0 top-[454px] h-48 w-48 rounded-full bg-amber-500/30 blur-[132px]" />
-        <div className="pointer-events-none absolute left-[1312px] top-[858px] h-48 w-48 rounded-full bg-amber-500/30 blur-[132px]" />
-
-        <div className="mx-auto flex max-w-[1440px] flex-col gap-24 pt-10 pb-24 px-4 sm:px-6 lg:px-0">
-          {/* Main Content Area */}
-          <div className="flex flex-col items-start gap-10">
+    <div className="relative bg-white overflow-hidden w-full">
+      {/* Glow Effects */}
+      <div className="hidden lg:block w-48 h-48 left-0 top-[454px] absolute bg-amber-500/30 rounded-full blur-[132px] pointer-events-none"></div>
+      <div className="hidden lg:block w-48 h-48 right-[100px] top-[858px] absolute bg-amber-500/30 rounded-full blur-[132px] pointer-events-none"></div>
+      
+      <div className="w-full flex flex-col justify-start items-center">
+        
+        {/* Main Content Area */}
+        <div className="w-full max-w-[1440px] px-4 sm:px-6 lg:px-0 mt-12 mb-24 flex flex-col justify-start items-center gap-24">
+          
+          <div className="w-full flex flex-col justify-start items-start gap-10">
             {/* Header Section */}
-            <div className="flex w-full flex-col items-start gap-6">
-              <div className="flex flex-col items-start gap-4">
+            <div className="w-full flex flex-col justify-start items-start gap-8">
+              <div className="w-full flex flex-col justify-start items-start gap-4">
                 <Breadcrumbs 
-                  className="text-neutral-900"
                   items={[
                     { label: t("common.blogs"), href: "/blogs" },
-                    { label: t("common.details") }
+                    { label: post.title }
                   ]} 
                 />
-                <h1 className="text-4xl font-bold leading-[48px] text-neutral-800">
-                  {post.title}
-                </h1>
-              </div>
-
-              <div className="relative h-[580px] w-full overflow-hidden rounded-xl bg-slate-100">
-                {post.image ? (
-                  <Image
-                    src={post.image}
-                    alt={post.title}
-                    fill
-                    className="object-cover"
-                    priority
-                    unoptimized
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-full bg-slate-200 text-slate-400">
-                    <svg className="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                )}
-                {post.excerpt && (
-                  <div className="absolute left-[24px] bottom-[24px] right-[24px] inline-flex flex-col items-start gap-4 rounded-lg bg-white/90 p-6 backdrop-blur-[2px] shadow-sm">
-                    <p className="text-lg font-semibold leading-7 text-neutral-700">
-                      {post.excerpt}
-                    </p>
-                    <div className="inline-flex items-start gap-6">
-                      <div className="inline-flex flex-col items-start gap-1.5">
-                        <span className="text-sm font-normal leading-5 text-neutral-700">{t("blogDetail.author")}</span>
-                        <div className="inline-flex items-center gap-1.5">
-                          <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center text-[10px] font-bold text-amber-600">BL</div>
-                          <span className="text-base font-semibold leading-6 text-neutral-800">Businesslabels</span>
-                        </div>
-                      </div>
-                      <div className="h-12 w-px bg-gray-200"></div>
-                      <div className="inline-flex flex-col items-start gap-1.5">
-                        <span className="text-sm font-normal leading-5 text-neutral-700">{t("blogDetail.publishedOn")}</span>
-                        <div className="inline-flex items-center gap-1.5">
-                          <span className="text-base font-semibold leading-6 text-neutral-800">{formattedDate}</span>
-                        </div>
+                
+                <h1 className="text-neutral-800 text-4xl font-bold font-['Segoe_UI'] leading-[48px]">{post.title}</h1>
+                <p className="w-full text-neutral-700 text-lg font-semibold font-['Segoe_UI'] leading-7">
+                  {post.excerpt}
+                </p>
+                
+                <div className="flex flex-wrap justify-start items-center gap-8 mt-2">
+                  {/* Author */}
+                  <div className="flex flex-col justify-start items-start gap-3">
+                    <div className="text-neutral-700 text-sm font-normal font-['Segoe_UI'] leading-5">Author:</div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-amber-100 flex items-center justify-center text-[10px] font-bold text-amber-600">BL</div>
+                      <div className="text-neutral-800 text-lg font-semibold font-['Segoe_UI'] leading-7">
+                        {post.author?.name || "Businesslabels"}
                       </div>
                     </div>
                   </div>
+                  
+                  <div className="hidden sm:block w-px h-14 bg-slate-200"></div>
+                  
+                  {/* Date */}
+                  <div className="flex flex-col justify-start items-start gap-3">
+                    <div className="text-neutral-700 text-sm font-normal font-['Segoe_UI'] leading-5">Published on:</div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 bg-zinc-300 rounded-sm"></div>
+                      <div className="text-neutral-800 text-lg font-semibold font-['Segoe_UI'] leading-7">{formattedDate}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="hidden sm:block w-px h-14 bg-slate-200"></div>
+                  
+                  {/* Category */}
+                  <div className="flex flex-col justify-start items-start gap-3">
+                    <div className="text-neutral-700 text-sm font-normal font-['Segoe_UI'] leading-5">Category:</div>
+                    <div className="h-7 px-3 bg-neutral-800/10 rounded-full flex items-center">
+                      <div className="text-neutral-800 text-sm font-semibold font-['Segoe_UI']">
+                        {post.categories?.[0]?.name || "Article"}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Featured Image */}
+              <div className="w-full h-[300px] sm:h-[450px] lg:h-[580px] relative rounded-xl overflow-hidden bg-slate-100">
+                {post.image ? (
+                  <Image src={toDisplayImageUrl(post.image) as string} alt={post.title} fill className="object-cover" unoptimized />
+                ) : (
+                  <div className="w-full h-full flex justify-center items-center text-slate-400">
+                     <svg className="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                  </div>
                 )}
+                <div className="absolute inset-0 bg-black/10 pointer-events-none"></div>
               </div>
             </div>
-
-            <div className="inline-flex w-full items-start gap-10">
+            
+            {/* Main Content & Sidebar Container */}
+            <div className="w-full flex flex-col lg:flex-row justify-start items-start gap-10">
+              
               {/* Article Content */}
-              <article className="flex flex-1 flex-col items-start gap-8">
+              <div className="flex-1 flex flex-col justify-start items-start gap-8 min-w-0">
                 <div 
-                  className="cms-content w-full prose prose-neutral max-w-none prose-headings:text-neutral-800 prose-p:text-neutral-700 prose-a:text-[#f08500] hover:prose-a:text-[#d97706] prose-a:underline"
+                  className="cms-content w-full prose prose-neutral max-w-none prose-headings:font-bold prose-headings:text-neutral-800 prose-p:text-neutral-700 prose-p:text-lg prose-p:leading-8 prose-a:text-[#f08500] hover:prose-a:text-[#d97706] prose-a:underline prose-img:rounded-xl"
                   dangerouslySetInnerHTML={{ __html: unescapeHtml(post.content) }}
                 />
-
-                {/* Author Bio Box - Default for now as API doesn't provide author yet */}
-                <div className="flex w-full flex-col items-start gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-sm mt-8">
-                  <h3 className="text-2xl font-semibold leading-7 text-neutral-800">{t("blogDetail.aboutTitle")}</h3>
-                  <div className="w-full border-t border-gray-100"></div>
-                  <div className="inline-flex w-full items-center gap-4">
-                    <div className="w-20 h-20 rounded-lg bg-amber-500 flex items-center justify-center text-white text-2xl font-bold">BL</div>
-                    <div className="flex flex-1 flex-col items-start gap-2.5">
-                      <h4 className="text-2xl font-bold text-neutral-800">{t("blogDetail.teamName")}</h4>
-                      <p className="text-base font-medium text-neutral-700">
-                        {t("blogDetail.teamDescription")}
-                      </p>
+                
+                {/* About Author */}
+                <div className="w-full p-6 bg-white rounded-xl shadow-sm border border-slate-100 flex flex-col items-start gap-4 mt-8">
+                  <div className="text-neutral-800 text-2xl font-semibold font-['Segoe_UI'] leading-7">About the Author</div>
+                  <div className="w-full h-px bg-slate-100"></div>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                    <div className="w-32 h-32 rounded-lg bg-amber-500 flex items-center justify-center text-white text-4xl font-bold flex-shrink-0">
+                      BL
+                    </div>
+                    <div className="flex-1 flex flex-col justify-center items-start gap-2.5">
+                      <div className="text-neutral-800 text-2xl font-bold font-['Segoe_UI'] leading-8 line-clamp-1">
+                        {post.author?.name || "Businesslabels Team"}
+                      </div>
+                      <div className="text-neutral-700 text-base font-medium font-['Segoe_UI'] leading-6">
+                        {post.author?.bio || "Support and production specialists at BusinessLabels. With a passion for printing and experience in the technical aspects of production & support, we would be happy to advise and assist you."}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </article>
-
-              {/* Sidebar Area */}
-              <aside className="inline-flex w-80 flex-col items-start gap-7 shrink-0">
-                {/* Share Box */}
-                <div className="relative flex w-full flex-col items-start gap-8 overflow-hidden rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-                  <div className="absolute left-0 top-0 h-14 w-80 bg-slate-50"></div>
-                  <h3 className="relative z-10 text-xl font-semibold leading-6 text-neutral-800">{t("blogDetail.sharePost")}</h3>
-                  <div className="relative z-10 flex w-full flex-col items-start gap-5">
-                    <div className="inline-flex items-center gap-3 w-full">
-                      <button className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors">
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" /></svg>
-                      </button>
-                      <button className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-900 hover:text-white transition-colors">
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
-                      </button>
-                      <button className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-amber-50 hover:text-amber-600 transition-colors">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Categories Box */}
-                <div className="relative flex w-full flex-col items-start gap-8 overflow-hidden rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-                  <div className="absolute left-0 top-0 h-14 w-80 bg-slate-50"></div>
-                  <h3 className="relative z-10 text-xl font-semibold leading-6 text-neutral-800">{t("common.categories")}</h3>
-                  <div className="relative z-10 flex w-full flex-col items-start gap-4">
-                    <Link href="/blogs" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500 transition-colors">{t("blogDetail.allPosts")}</Link>
-                    <div className="w-full border-t border-gray-100"></div>
-                    <Link href="#" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500 transition-colors">{t("blogDetail.labelDesign")}</Link>
-                    <div className="w-full border-t border-gray-100"></div>
-                    <Link href="#" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500 transition-colors">{t("common.materials")}</Link>
-                    <div className="w-full border-t border-gray-100"></div>
-                    <Link href="#" className="text-base font-semibold leading-6 text-neutral-700 hover:text-amber-500 transition-colors">{t("blogDetail.technology")}</Link>
-                  </div>
-                </div>
-              </aside>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Recommended Products */}
-      <div className="flex w-full flex-col items-start gap-12 bg-gray-50 px-4 py-24 sm:px-6 lg:px-40">
-        <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between">
-          <h2 className="text-4xl font-bold leading-[48px] text-neutral-800">{t("blogDetail.recommendedProducts")}</h2>
-          <div className="flex items-center gap-6">
-            <button className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-50 border border-gray-200 text-neutral-800 shadow-sm transition-colors hover:bg-gray-100">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-            <button className="flex h-12 w-12 items-center justify-center rounded-full bg-white border border-amber-500 text-amber-500 shadow-sm transition-colors hover:bg-amber-50">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-        
-        <div className="mx-auto inline-flex w-full max-w-[1200px] items-start gap-6 overflow-x-auto pb-4">
-          {[1, 2, 3].map((item) => (
-            <div key={item} className="flex w-[384px] shrink-0 flex-col items-start overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
-              <div className="relative h-60 w-full overflow-hidden bg-slate-100 flex items-center justify-center">
-                <Image src="https://placehold.co/222x180" alt={t("common.products")} width={222} height={180} unoptimized />
-                <div className="absolute left-4 top-4 flex w-[calc(100%-32px)] items-center justify-between">
-                  <div className="flex items-center gap-1.5 rounded-3xl bg-white px-2.5 py-1">
-                    <div className="h-3 w-3 rounded-full bg-neutral-700/20 flex items-center justify-center">
-                      <div className="h-1.5 w-1.5 rounded-full bg-neutral-700"></div>
-                    </div>
-                    <span className="text-xs font-normal leading-4 text-neutral-700">{t("blogDetail.inkjet")}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 rounded-full bg-green-600 px-2.5 py-[5px]">
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M10 3L4.5 8.5L2 6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    <span className="text-xs font-normal leading-4 text-white">{t("common.inStock")}</span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex w-full flex-col items-start gap-4 p-4 shadow-sm">
-                <div className="flex w-full flex-col items-start gap-4">
-                  <div className="flex w-full flex-col items-start gap-2">
-                    <span className="text-sm font-normal leading-5 text-[#479EF5]">SKU: EP-C3500</span>
-                    <h3 className="line-clamp-1 text-xl font-semibold leading-6 text-neutral-800">
-                      CW-C4000 ink cartridge Black (BK)
-                    </h3>
-                  </div>
-                  <div className="flex w-full flex-col items-start gap-4">
-                    <div className="flex items-center gap-2">
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M10 3L4.5 8.5L2 6" stroke="#22C55E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      <span className="text-base font-normal leading-5 text-neutral-700">{t("blogDetail.inkContent")}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M10 3L4.5 8.5L2 6" stroke="#22C55E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      <span className="text-base font-normal leading-5 text-neutral-700">{t("blogDetail.colorSystem")}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex w-full flex-col items-start gap-4">
-                  <div className="w-full border-t border-gray-100"></div>
-                  <div className="flex w-full items-center justify-between">
-                    <div className="flex flex-col items-start gap-1">
-                      <span className="text-2xl font-bold leading-7 text-neutral-800">€9,34</span>
-                      <span className="text-xs font-normal leading-4 text-zinc-500">{t("blogDetail.exVat")}</span>
-                    </div>
-                    <button className="flex h-9 items-center justify-center gap-2 rounded-full bg-amber-500 px-4 py-2.5 transition-colors hover:bg-amber-600">
-                      <span className="text-base font-semibold leading-6 text-white">{t("blogDetail.add")}</span>
-                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M10 4.16667V15.8333" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M4.16669 10H15.8334" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
+                
+                {/* Was this helpful */}
+                <div className="w-full px-6 py-4 bg-white rounded-xl shadow-sm border border-slate-100 flex flex-col sm:flex-row justify-between sm:items-center gap-6">
+                  <div className="text-neutral-800 text-lg font-semibold font-['Segoe_UI'] leading-5">Was this helpful?</div>
+                  <div className="flex items-center gap-3">
+                    <button className="px-4 py-2 bg-amber-500 hover:bg-amber-600 transition-colors rounded-sm flex items-center gap-2">
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2.333L7 11.666M2.333 7L11.666 7" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
+                      <span className="text-white text-base font-semibold font-['Segoe_UI'] leading-6">Yes</span>
+                    </button>
+                    <button className="px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 transition-colors rounded-sm flex items-center gap-2">
+                      <svg width="14" height="2" viewBox="0 0 14 2" fill="none"><path d="M2.333 1L11.666 1" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round"/></svg>
+                      <span className="text-amber-500 text-base font-semibold font-['Segoe_UI'] leading-6">No</span>
                     </button>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Recommended Materials */}
-      <div className="flex w-full flex-col items-start gap-12 bg-white px-4 py-24 sm:px-6 lg:px-40">
-        <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between">
-          <h2 className="text-4xl font-bold leading-[48px] text-neutral-800">{t("blogDetail.recommendedMaterials")}</h2>
-          <div className="flex items-center gap-6">
-            <button className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-50 border border-gray-200 text-neutral-800 shadow-sm transition-colors hover:bg-gray-100">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-            <button className="flex h-12 w-12 items-center justify-center rounded-full bg-white border border-amber-500 text-amber-500 shadow-sm transition-colors hover:bg-amber-50">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-        
-        <div className="mx-auto inline-flex w-full max-w-[1200px] items-start gap-6 overflow-x-auto pb-4">
-          {[1, 2, 3].map((item) => (
-            <div key={item} className="flex w-[384px] shrink-0 flex-col items-start overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
-              <div className="relative h-56 w-full overflow-hidden bg-gray-100">
-                <Image src="https://placehold.co/384x220" alt={t("common.materials")} width={384} height={220} className="w-full object-cover" unoptimized />
-                <div className="absolute left-4 top-4 flex items-center gap-1.5 rounded-3xl bg-white px-2.5 py-1">
-                  <div className="h-3 w-3 rounded-full bg-neutral-700/20 flex items-center justify-center">
-                    <div className="h-1.5 w-1.5 rounded-full bg-neutral-700"></div>
-                  </div>
-                  <span className="text-xs font-normal leading-4 text-neutral-700">{t("blogDetail.inkjet")}</span>
-                </div>
-              </div>
-              <div className="flex w-full flex-col items-start gap-4 p-4">
-                <div className="flex w-full flex-col items-start gap-4">
-                  <div className="flex w-full flex-col items-start gap-2">
-                    <span className="text-sm font-normal leading-5 text-[#479EF5]">DIA055</span>
-                    <h3 className="line-clamp-1 text-xl font-semibold leading-6 text-neutral-800">
-                      Matte Paper permanent adhesive.
-                    </h3>
-                    <p className="line-clamp-2 text-base font-normal leading-5 text-neutral-700">
-                      The Diamondlabels DIA055 is an extremely versatile matte inkjet material with favorable pricing
-                    </p>
+              
+              {/* Sidebar */}
+              <div className="w-full lg:w-80 flex flex-col justify-start items-start gap-7 shrink-0">
+                {/* In this Article (Placeholder / static layout) */}
+                <div className="w-full p-5 relative bg-white rounded-xl shadow-sm border border-slate-100 flex flex-col items-start gap-4">
+                  <div className="text-neutral-800 text-xl font-bold font-['Segoe_UI'] leading-7">In this Article</div>
+                  <div className="w-full flex flex-col items-start gap-3 pl-3 border-l-2 border-slate-100 relative">
+                    <div className="absolute left-[-2px] top-2 bottom-1/2 w-0.5 bg-amber-500"></div>
+                    <div className="text-neutral-800 text-sm font-semibold font-['Segoe_UI']">Design labels for your printer</div>
+                    <div className="text-neutral-500 text-sm font-normal font-['Segoe_UI'] hover:text-amber-500 cursor-pointer">The search for software</div>
+                    <div className="text-neutral-500 text-sm font-normal font-['Segoe_UI'] hover:text-amber-500 cursor-pointer">Testimonial</div>
+                    <div className="text-neutral-500 text-sm font-normal font-['Segoe_UI'] hover:text-amber-500 cursor-pointer">Comparing options</div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex h-6 items-center justify-center rounded-xl bg-orange-100 px-3">
-                    <span className="text-sm font-normal leading-4 text-amber-500">{t("blogDetail.paper")}</span>
+                
+                {/* Share this article */}
+                <div className="w-full p-5 bg-white rounded-xl shadow-sm border border-slate-100 flex flex-col items-start gap-5">
+                  <div className="text-neutral-800 text-xl font-bold font-['Segoe_UI'] leading-7">Share this article</div>
+                  <div className="flex items-center gap-3">
+                     <button className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-amber-50 hover:text-amber-500 hover:border-amber-500 transition-all">
+                       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/></svg>
+                     </button>
+                     <button className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-amber-50 hover:text-amber-500 hover:border-amber-500 transition-all">
+                       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                     </button>
+                     <button className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-amber-50 hover:text-amber-500 hover:border-amber-500 transition-all">
+                       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/></svg>
+                     </button>
                   </div>
-                  <div className="flex h-6 items-center justify-center rounded-xl bg-purple-100 px-3">
-                    <span className="text-sm font-normal leading-4 text-purple-600">{t("blogDetail.glossy")}</span>
-                  </div>
-                  <div className="flex h-6 items-center justify-center rounded-xl bg-green-100 px-3">
-                    <span className="text-sm font-normal leading-4 text-green-600">{t("blogDetail.permanent")}</span>
+                  <div className="w-full h-10 bg-gray-50 rounded-full flex items-center px-4 border border-slate-100 overflow-hidden relative">
+                    <span className="text-sm text-neutral-500 truncate w-full pr-8">https://businesslabel.com/blogs/{post.slug}</span>
+                    <button className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-amber-500">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                    </button>
                   </div>
                 </div>
-                <div className="flex w-full flex-col items-start gap-4">
-                  <div className="w-full border-t border-gray-100"></div>
-                  <div className="flex w-full items-start gap-2">
-                    <div className="flex-1">
-                      <span className="text-base font-normal leading-5 text-neutral-700">{t("blogDetail.weight")} </span>
-                      <span className="text-base font-semibold leading-5 text-neutral-700">165 g/m²</span>
-                    </div>
-                    <div className="flex-1">
-                      <span className="text-base font-normal leading-5 text-neutral-700">{t("blogDetail.thickness")} </span>
-                      <span className="text-base font-semibold leading-5 text-neutral-700">169 μm</span>
-                    </div>
+                
+                {/* Need help? */}
+                <div className="w-full p-5 bg-white rounded-xl shadow-sm border border-slate-100 flex flex-col items-center text-center gap-5">
+                  <div className="flex flex-col gap-2">
+                    <div className="text-neutral-800 text-xl font-bold font-['Segoe_UI']">Need help?</div>
+                    <div className="text-neutral-600 text-sm font-normal">Our team can walk through this with you over the phone or via TeamViewer.</div>
                   </div>
-                  <button className="flex h-9 w-full items-center justify-center gap-2 rounded-full bg-amber-500 px-4 py-2.5 transition-colors hover:bg-amber-600">
-                    <span className="text-base font-semibold leading-6 text-white">{t("common.viewDetails")}</span>
+                  <div className="w-full flex flex-col gap-3">
+                    <button className="w-full py-3 bg-amber-500 rounded-full text-white font-semibold flex items-center justify-center gap-2 hover:bg-amber-600 transition-colors">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                      +31 (0)318 590 465
+                    </button>
+                    <button className="w-full py-3 border border-amber-500 rounded-full text-amber-500 font-semibold flex items-center justify-center gap-2 hover:bg-amber-50 transition-colors">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                      Send an email
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Download Markdown */}
+                <div className="w-full p-5 bg-gradient-to-br from-orange-50 to-white rounded-xl border-2 border-orange-100 flex flex-col gap-4">
+                  <div className="flex flex-col gap-1">
+                    <div className="text-neutral-800 text-lg font-bold">Download as Markdown</div>
+                    <div className="text-neutral-600 text-sm">Article available as structured markdown for AI tools and documentation.</div>
+                  </div>
+                  <button className="text-amber-500 font-semibold flex items-center gap-2 hover:text-amber-600 underline">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Download as markdown
                   </button>
                 </div>
               </div>
             </div>
-          ))}
+            
+          </div>
         </div>
-      </div>
 
-      {/* Footer CTA */}
-      <div className="relative h-80 w-full overflow-hidden bg-black/20">
-        <div className="absolute left-0 top-0 h-80 w-full bg-gradient-to-l from-black/50 via-black/50 to-transparent"></div>
-        <div className="absolute left-0 top-0 h-80 w-full bg-gradient-to-br from-stone-700/70 to-yellow-950/60"></div>
-        <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-10">
-          <div className="flex flex-col items-center gap-4">
-            <h2 className="text-center text-4xl font-bold leading-[48px] text-white">
-              {t("cta.title")}
-            </h2>
-            <p className="text-center text-lg font-normal leading-7 text-gray-100">
-              {t("cta.subtitle")}
-            </p>
-          </div>
-          <div className="inline-flex items-center gap-4">
-            <Link href={localePath("/printers", locale)} className="flex h-12 items-center justify-center gap-2.5 rounded-[50px] bg-amber-500 px-7 py-4 transition-colors hover:bg-amber-600">
-              <span className="text-center text-lg font-semibold leading-6 text-white">{t("header.productFinder")}</span>
-            </Link>
-            <Link href="/custom" className="flex h-12 items-center justify-center gap-2.5 rounded-[50px] bg-white/10 px-7 py-4 border border-white/20 backdrop-blur-[5px] transition-colors hover:bg-white/20">
-              <span className="text-center text-lg font-semibold leading-6 text-white">{t("blogDetail.customMadeLabels")}</span>
-            </Link>
+        {/* Recommended Products */}
+        <div className="w-full py-24 bg-gray-50 flex flex-col items-center">
+          <div className="w-full max-w-[1440px] px-4 sm:px-6 lg:px-8 flex flex-col gap-12">
+            <Carousel opts={{ align: "start" }} className="w-full">
+              <div className="w-full flex justify-between items-center mb-12">
+                <h2 className="text-neutral-800 text-3xl md:text-4xl font-bold font-['Segoe_UI'] leading-tight">Recommended Products</h2>
+                <div className="hidden sm:flex items-center gap-4">
+                  <CarouselPrevious className="static transform-none w-12 h-12 rounded-full border border-gray-300 bg-white flex items-center justify-center hover:bg-gray-50 transition-colors" />
+                  <CarouselNext className="static transform-none w-12 h-12 rounded-full border border-amber-500 bg-white text-amber-500 flex items-center justify-center hover:bg-amber-50 transition-colors" />
+                </div>
+              </div>
+              <CarouselContent className="-ml-6">
+                {recommendedProducts.map((product) => {
+                  const cardProduct = mapLaravelProductToCardData(product, locale as "en" | "nl");
+                  const href = cardProduct.slug
+                    ? (cardProduct.type === "simple" || cardProduct.type === "variable")
+                      ? { pathname: `/product/${cardProduct.slug}`, query: { type: cardProduct.type } }
+                      : { pathname: `/product/${cardProduct.slug}` }
+                    : undefined;
+                  
+                  return (
+                    <CarouselItem key={product.id} className="pl-6 md:basis-1/2 lg:basis-1/4 flex">
+                      <ProductCard product={cardProduct} href={href} />
+                    </CarouselItem>
+                  );
+                })}
+              </CarouselContent>
+            </Carousel>
           </div>
         </div>
+        
+        {/* Recommended Materials */}
+        <div className="w-full py-24 bg-white flex flex-col items-center">
+          <div className="w-full max-w-[1440px] px-4 sm:px-6 lg:px-8 flex flex-col gap-12">
+            <Carousel opts={{ align: "start" }} className="w-full">
+              <div className="w-full flex justify-between items-center mb-12">
+                <h2 className="text-neutral-800 text-3xl md:text-4xl font-bold font-['Segoe_UI'] leading-tight">Recommended Materials</h2>
+                <div className="hidden sm:flex items-center gap-4">
+                  <CarouselPrevious className="static transform-none w-12 h-12 rounded-full border border-gray-300 bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-colors" />
+                  <CarouselNext className="static transform-none w-12 h-12 rounded-full border border-amber-500 bg-white text-amber-500 flex items-center justify-center hover:bg-amber-50 transition-colors" />
+                </div>
+              </div>
+              <CarouselContent className="-ml-6">
+                {recommendedMaterials.map((material) => {
+                  const cardImage = toDisplayImageUrl(material.main_image) || "/images/material-placeholder.svg";
+                  const baseMat = material.base_material || (material.categories?.find(c => c.slug.includes('papier') || c.slug.includes('paper')) ? 'Paper' : '');
+                  const finish = material.finish || (material.categories?.find(c => c.slug.includes('glanzend') || c.slug.includes('glossy')) ? 'Glossy' : (material.categories?.find(c => c.slug.includes('mat')) ? 'Matte' : ''));
+                  const adhesive = material.adhesive || (material.categories?.find(c => c.slug.includes('permanent')) ? 'Permanent' : (material.categories?.find(c => c.slug.includes('verwijderbaar') || c.slug.includes('removable')) ? 'Removable' : ''));
+                  
+                  let weight = "-";
+                  let thickness = "-";
+                  if (material.specifications && Array.isArray(material.specifications.material_specs)) {
+                    for (const spec of material.specifications.material_specs) {
+                      const label = (spec.label || "").toLowerCase();
+                      if (label.includes("weight") || label.includes("gewicht") || label.includes("grammage")) {
+                        weight = spec.value;
+                      } else if (label.includes("thickness") || label.includes("dikte")) {
+                        thickness = spec.value;
+                      }
+                    }
+                  }
+                  const isInkjet = material.categories?.some(c => c.slug.toLowerCase().includes('inkjet'));
+
+                  return (
+                    <CarouselItem key={material.id} className="pl-6 md:basis-1/2 lg:basis-1/3 flex">
+                      <div className="w-full h-full bg-white rounded-xl shadow-[0_4px_20px_rgba(109,109,120,0.05)] border border-slate-100 flex flex-col overflow-hidden group hover:shadow-[0_12px_30px_rgba(109,109,120,0.12)] transition-all duration-300 hover:-translate-y-1">
+                        <Link href={`/materials/${material.slug}`} className="h-56 relative bg-slate-100 overflow-hidden block">
+                          <Image src={cardImage} alt={material.title} fill className="object-contain p-4 group-hover:scale-105 transition-transform duration-500" unoptimized />
+                          <div className="absolute left-4 top-4 bg-white rounded-full px-3 py-1 flex items-center gap-2 shadow-sm">
+                            <div className="w-2 h-2 rounded-full bg-neutral-700"></div>
+                            <span className="text-xs font-semibold text-neutral-700">{isInkjet ? 'Inkjet' : (material.print_method || 'Material')}</span>
+                          </div>
+                        </Link>
+                        <div className="p-5 flex flex-col gap-4 flex-1">
+                          <div className="flex flex-col gap-1">
+                            <span className="text-sm font-semibold text-blue-400">{material.code || material.title.split(' ')[0]}</span>
+                            <Link href={`/materials/${material.slug}`}>
+                              <h3 className="text-xl font-bold text-neutral-800 line-clamp-1 hover:text-amber-500 transition-colors">{material.title}</h3>
+                            </Link>
+                            <p className="text-neutral-600 text-sm line-clamp-2 mt-1 font-medium">{material.excerpt || material.subtitle || ""}</p>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {baseMat && <span className="px-3 py-1 bg-orange-100 text-amber-500 rounded-xl text-xs font-semibold">{baseMat}</span>}
+                            {finish && <span className="px-3 py-1 bg-purple-100 text-purple-600 rounded-xl text-xs font-semibold">{finish}</span>}
+                            {adhesive && <span className="px-3 py-1 bg-green-100 text-green-600 rounded-xl text-xs font-semibold">{adhesive}</span>}
+                          </div>
+                          <div className="w-full h-px bg-slate-100 my-2 mt-auto"></div>
+                          <div className="flex justify-between items-center gap-4">
+                            <div className="flex-1 flex flex-col gap-0.5">
+                              <span className="text-neutral-500 text-xs">Weight</span>
+                              <span className="font-semibold text-neutral-700 text-sm">{weight}</span>
+                            </div>
+                            <div className="flex-1 flex flex-col gap-0.5">
+                              <span className="text-neutral-500 text-xs">Thickness</span>
+                              <span className="font-semibold text-neutral-700 text-sm">{thickness}</span>
+                            </div>
+                          </div>
+                          <Link href={`/materials/${material.slug}`} className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-center font-semibold rounded-full mt-2 transition-colors">
+                            View Details
+                          </Link>
+                        </div>
+                      </div>
+                    </CarouselItem>
+                  );
+                })}
+              </CarouselContent>
+            </Carousel>
+          </div>
+        </div>
+        
+        {/* Footer CTA */}
+        <div className="w-full h-[320px] relative overflow-hidden bg-black/80 flex items-center justify-center mt-0">
+          <div className="absolute inset-0 bg-gradient-to-l from-black/50 via-black/50 to-transparent z-0"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-stone-700/70 to-yellow-950/60 z-10"></div>
+          <div className="relative z-20 flex flex-col items-center gap-10 px-4 max-w-[1440px] mx-auto">
+            <div className="flex flex-col items-center gap-4">
+              <h2 className="text-white text-4xl md:text-5xl font-bold font-['Segoe_UI'] text-center">Ready to find the perfect labels?</h2>
+              <p className="text-slate-200 text-lg md:text-xl text-center font-normal">Join over 12,000 businesses who trust us for expert advice and high-quality products</p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <Link href={localePath("/printers", locale)} className="px-8 py-4 bg-amber-500 hover:bg-amber-600 rounded-full text-white text-lg font-semibold transition-colors shadow-lg">
+                Product Finder
+              </Link>
+              <Link href="/custom" className="px-8 py-4 bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-sm rounded-full text-white text-lg font-semibold transition-colors">
+                Custom-made Labels
+              </Link>
+            </div>
+          </div>
+        </div>
+
       </div>
-    </>
+    </div>
   );
 }
