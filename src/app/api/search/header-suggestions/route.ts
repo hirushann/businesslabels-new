@@ -9,6 +9,7 @@ import type { CatalogProductResult } from "@/lib/search/types";
 
 const PRODUCTS_PER_GROUP = 4;
 const MATERIALS_LIMIT = 4;
+const GROUP_PRODUCTS_LIMIT = 4;
 
 type HeaderSuggestionItem = {
   id: string;
@@ -18,16 +19,10 @@ type HeaderSuggestionItem = {
   image?: string;
 };
 
-type HeaderSuggestionGroup = {
-  id: "printers" | "labels" | "accessories";
-  title: string;
-  href: string;
-  total: number;
-  items: HeaderSuggestionItem[];
-};
+type ProductSuggestionGroupId = "printers" | "labels" | "accessories";
 
 const PRODUCT_GROUPS: Array<{
-  id: HeaderSuggestionGroup["id"];
+  id: ProductSuggestionGroupId;
   title: Record<"en" | "nl", string>;
   path: (locale: string) => string;
   slugs: string[];
@@ -60,6 +55,10 @@ function withSearch(path: string, query: string): string {
   const params = new URLSearchParams();
   if (query.trim()) params.set("search", query.trim());
   return params.size ? `${path}?${params.toString()}` : path;
+}
+
+function localizedPath(path: string, locale: "en" | "nl"): string {
+  return locale === "en" ? `/en${path}` : path;
 }
 
 function productHref(result: CatalogProductResult): string {
@@ -95,7 +94,12 @@ function productCategoryText(product: CatalogProductResult): string {
     .toLowerCase();
 }
 
-function groupForProduct(product: CatalogProductResult): HeaderSuggestionGroup["id"] | null {
+function isGroupProduct(product: CatalogProductResult): boolean {
+  const sku = product.product.sku?.toLowerCase() ?? "";
+  return product.product.type === "group_product" || product.product.is_group_product === true || sku.startsWith("grp-");
+}
+
+function groupForProduct(product: CatalogProductResult): ProductSuggestionGroupId | null {
   const text = productCategoryText(product);
   if (!text) return null;
 
@@ -134,12 +138,16 @@ export async function GET(request: NextRequest) {
   const locale = request.nextUrl.searchParams.get("locale") === "en" ? "en" : "nl";
   const query = request.nextUrl.searchParams.get("search") || request.nextUrl.searchParams.get("q") || "";
   const materialTitle = locale === "nl" ? "Materialen" : "Materials";
+  const groupProductsTitle = locale === "nl" ? "Groepsproducten" : "Group Products";
+  const materialPath = localizedPath("/materials", locale);
+  const productListingPath = localizedPath("/product", locale);
 
   if (!query.trim()) {
     return NextResponse.json({
       query: "",
       productGroups: [],
-      materials: { title: materialTitle, href: withSearch("/materials", query), total: 0, items: [] },
+      materials: { id: "materials", title: materialTitle, href: withSearch(materialPath, query), total: 0, items: [] },
+      groupProducts: { id: "group-products", title: groupProductsTitle, href: withSearch(productListingPath, query), total: 0, items: [] },
     });
   }
 
@@ -147,7 +155,7 @@ export async function GET(request: NextRequest) {
     const productParams = new URLSearchParams(request.nextUrl.searchParams);
     productParams.set("search", query);
     productParams.set("page", "1");
-    productParams.set("per_page", "24");
+    productParams.set("per_page", "36");
     productParams.set("sort", "relevance");
     productParams.set("locale", locale);
 
@@ -162,8 +170,9 @@ export async function GET(request: NextRequest) {
       searchMaterials(parseMaterialSearchParams(materialParams, locale)),
     ]);
 
-    const buckets = new Map<HeaderSuggestionGroup["id"], CatalogProductResult[]>();
-    products.products.forEach((product) => {
+    const groupProductResults = products.products.filter(isGroupProduct);
+    const buckets = new Map<ProductSuggestionGroupId, CatalogProductResult[]>();
+    products.products.filter((product) => !isGroupProduct(product)).forEach((product) => {
       const group = groupForProduct(product);
       if (!group) return;
       buckets.set(group, [...(buckets.get(group) ?? []), product]);
@@ -186,10 +195,18 @@ export async function GET(request: NextRequest) {
       query,
       productGroups,
       materials: {
+        id: "materials",
         title: materialTitle,
-        href: withSearch("/materials", query),
+        href: withSearch(materialPath, query),
         total: materials.total,
         items: materials.materials.slice(0, MATERIALS_LIMIT).map(mapMaterialItem),
+      },
+      groupProducts: {
+        id: "group-products",
+        title: groupProductsTitle,
+        href: withSearch(productListingPath, query),
+        total: groupProductResults.length,
+        items: groupProductResults.slice(0, GROUP_PRODUCTS_LIMIT).map(mapProductItem),
       },
     });
   } catch (error) {
@@ -199,7 +216,8 @@ export async function GET(request: NextRequest) {
       {
         query,
         productGroups: [],
-        materials: { title: materialTitle, href: withSearch("/materials", query), total: 0, items: [] },
+        materials: { id: "materials", title: materialTitle, href: withSearch(materialPath, query), total: 0, items: [] },
+        groupProducts: { id: "group-products", title: groupProductsTitle, href: withSearch(productListingPath, query), total: 0, items: [] },
         error: locale === "nl" ? "Zoeksuggesties zijn tijdelijk niet beschikbaar." : "Search suggestions are temporarily unavailable.",
       },
       { status: 503 },

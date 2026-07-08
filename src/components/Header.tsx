@@ -65,6 +65,7 @@ type HeaderSearchGroup = {
 type HeaderSearchSuggestions = {
   productGroups: HeaderSearchGroup[];
   materials: HeaderSearchGroup;
+  groupProducts?: HeaderSearchGroup;
   error?: string;
 };
 
@@ -182,6 +183,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
   const [searchSuggestions, setSearchSuggestions] = useState<HeaderSearchSuggestions | null>(null);
   const [isSearchLoading, setIsSearchLoading] = useState(false);
   const headerSearchInput = manualHeaderSearchInput ?? headerSearchValue;
+  const groupProductsTitle = locale === 'nl' ? 'Groepsproducten' : 'Group Products';
 
   useEffect(() => {
     const query = headerSearchInput.trim();
@@ -211,6 +213,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
         setSearchSuggestions({
           productGroups: [],
           materials: { id: 'materials', title: t('search.popover.materials'), href: '/materials', total: 0, items: [] },
+          groupProducts: { id: 'group-products', title: groupProductsTitle, href: productListingPath, total: 0, items: [] },
           error: t('search.popover.unavailable'),
         });
       } finally {
@@ -224,7 +227,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
       controller.abort();
       window.clearTimeout(timeout);
     };
-  }, [headerSearchInput, isSearchPopoverOpen, locale, t]);
+  }, [groupProductsTitle, headerSearchInput, isSearchPopoverOpen, locale, productListingPath, t]);
 
   const measureSearchPopoverWidth = (surface: SearchSurface) => {
     const node = surface === 'desktop' ? desktopSearchFormRef.current : mobileSearchFormRef.current;
@@ -310,7 +313,9 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
   const hasSearchQuery = headerSearchInput.trim().length > 0;
   const hasProductResults = Boolean(searchSuggestions?.productGroups.some((group) => group.items.length > 0));
   const hasMaterialResults = Boolean(searchSuggestions?.materials.items.length);
-  const hasSearchResults = hasProductResults || hasMaterialResults;
+  const hasGroupProductResults = Boolean(searchSuggestions?.groupProducts?.items.length);
+  const hasSearchResults = hasProductResults || hasMaterialResults || hasGroupProductResults;
+  const activeGroupProductsTitle = searchSuggestions?.groupProducts?.title ?? groupProductsTitle;
 
   const renderSearchState = (state: 'idle' | 'loading' | 'empty') => (
     <div className="flex min-h-72 flex-col items-center justify-center px-6 py-6 text-center">
@@ -361,45 +366,71 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
         ) : !hasSearchResults && !isSearchLoading ? (
           renderSearchState('empty')
         ) : (
-          <div className="scrollbar-none grid max-h-[calc(100vh-190px)] grid-cols-1 gap-5 overflow-y-auto lg:grid-cols-[1fr_auto_0.95fr] lg:gap-6">
+          <div className={`scrollbar-none grid max-h-[calc(100vh-190px)] grid-cols-1 gap-5 overflow-y-auto ${hasProductResults ? 'lg:grid-cols-[1fr_auto_0.95fr] lg:gap-6' : ''}`}>
+            {hasProductResults ? (
+              <>
+                <div className="flex flex-col gap-5">
+                  {searchSuggestions?.productGroups.map((group) => (
+                    <section key={group.id} className="flex flex-col gap-2">
+                      <h2 className="text-xl font-bold leading-7 text-neutral-800">{group.title}</h2>
+                      <div className="flex flex-col gap-1">
+                        {group.items.map(renderSearchItem)}
+                      </div>
+                      <Link
+                        href={group.href}
+                        onClick={closeSearchPopover}
+                        className="inline-flex text-base font-semibold leading-6 text-orange-500 hover:text-orange-600"
+                      >
+                        {t('search.popover.showAll', { label: group.title, count: group.total })}
+                      </Link>
+                    </section>
+                  ))}
+                </div>
+                <Separator orientation="vertical" className="hidden lg:block" />
+              </>
+            ) : null}
             <div className="flex flex-col gap-5">
-              {searchSuggestions?.productGroups.map((group) => (
-                <section key={group.id} className="flex flex-col gap-2">
-                  <h2 className="text-xl font-bold leading-7 text-neutral-800">{group.title}</h2>
+              {hasMaterialResults ? (
+                <section className="flex flex-col gap-2">
+                  <h2 className="text-xl font-bold leading-7 text-neutral-800">
+                    {t('search.popover.materials')}
+                  </h2>
                   <div className="flex flex-col gap-1">
-                    {group.items.map(renderSearchItem)}
+                    {searchSuggestions?.materials.items.map(renderSearchItem)}
                   </div>
                   <Link
-                    href={group.href}
+                    href={searchSuggestions?.materials.href ?? '/materials'}
                     onClick={closeSearchPopover}
                     className="inline-flex text-base font-semibold leading-6 text-orange-500 hover:text-orange-600"
                   >
-                    {t('search.popover.showAll', { label: group.title, count: group.total })}
+                    {t('search.popover.showAll', {
+                      label: t('search.popover.materials'),
+                      count: searchSuggestions?.materials.total ?? 0,
+                    })}
                   </Link>
                 </section>
-              ))}
-            </div>
-            <Separator orientation="vertical" className="hidden lg:block" />
-            <section className="flex flex-col gap-2">
-              <h2 className="text-xl font-bold leading-7 text-neutral-800">
-                {t('search.popover.materials')}
-              </h2>
-              <div className="flex flex-col gap-1">
-                {searchSuggestions?.materials.items.map(renderSearchItem)}
-              </div>
-              {hasMaterialResults ? (
-                <Link
-                  href={searchSuggestions?.materials.href ?? '/materials'}
-                  onClick={closeSearchPopover}
-                  className="inline-flex text-base font-semibold leading-6 text-orange-500 hover:text-orange-600"
-                >
-                  {t('search.popover.showAll', {
-                    label: t('search.popover.materials'),
-                    count: searchSuggestions?.materials.total ?? 0,
-                  })}
-                </Link>
               ) : null}
-            </section>
+              {hasGroupProductResults ? (
+                <section className="flex flex-col gap-2">
+                  <h2 className="text-xl font-bold leading-7 text-neutral-800">
+                    {activeGroupProductsTitle}
+                  </h2>
+                  <div className="flex flex-col gap-1">
+                    {searchSuggestions?.groupProducts?.items.map(renderSearchItem)}
+                  </div>
+                  <Link
+                    href={searchSuggestions?.groupProducts?.href ?? productListingPath}
+                    onClick={closeSearchPopover}
+                    className="inline-flex text-base font-semibold leading-6 text-orange-500 hover:text-orange-600"
+                  >
+                    {t('search.popover.showAll', {
+                      label: activeGroupProductsTitle,
+                      count: searchSuggestions?.groupProducts?.total ?? 0,
+                    })}
+                  </Link>
+                </section>
+              ) : null}
+            </div>
           </div>
         )}
       </PopoverContent>
