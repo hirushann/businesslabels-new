@@ -2,9 +2,9 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { FormEvent, MouseEvent } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 
 interface TeamMember {
   id: number;
@@ -27,9 +27,9 @@ import { useLocalePath } from '@/hooks/useLocalePath';
 import { getAccessoryCategoryPath } from '@/lib/routes/accessoryCategories';
 import { getLabelCategoryPath } from '@/lib/routes/labelCategories';
 import { getPrinterCategoryPath } from '@/lib/routes/printerCategories';
-import { useDebouncedSearchParam } from '@/components/search/useDebouncedSearchParam';
 import LoginPopup from '@/components/LoginPopup';
 import RegisterPopup from '@/components/RegisterPopup';
+import { Button } from '@/components/ui/button';
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -38,10 +38,35 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from '@/components/ui/navigation-menu';
+import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
+import { Separator } from '@/components/ui/separator';
 
 type DropdownKey = 'printers' | 'labels' | 'accessories' | 'resources' | 'brands' | null;
+type SearchSurface = 'desktop' | 'mobile';
 // import { useCart } from '@/context/CartContext';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+
+type HeaderSearchItem = {
+  id: string;
+  title: string;
+  meta?: string;
+  href: string;
+  image?: string;
+};
+
+type HeaderSearchGroup = {
+  id: string;
+  title: string;
+  href: string;
+  total: number;
+  items: HeaderSearchItem[];
+};
+
+type HeaderSearchSuggestions = {
+  productGroups: HeaderSearchGroup[];
+  materials: HeaderSearchGroup;
+  error?: string;
+};
 
 const navItems = [
   { labelKey: 'header.nav.home', fallbackLabel: 'Home', href: '/', active: true, dropdownKey: null },
@@ -58,7 +83,6 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
   const t = useTranslations();
   const locale = useLocale();
   const lp = useLocalePath();
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { isHelpOpen, openHelp, closeHelp } = useHelp();
@@ -149,78 +173,214 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
   const headerSearchValue = isProductListingPath
     ? searchParams.get('search') ?? searchParams.get('q') ?? ''
     : '';
-
-  const focusVisibleHeaderSearch = useCallback(() => {
-    const target =
-      typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches
-        ? desktopSearchInputRef.current
-        : mobileSearchInputRef.current;
-
-    window.setTimeout(() => target?.focus(), 0);
-  }, []);
-
-  const buildProductSearchHref = useCallback(
-    (nextSearch: string, options?: { resetPage?: boolean }) => {
-      const params = new URLSearchParams(isProductListingPath ? searchParams.toString() : '');
-      params.delete('q');
-      params.set('focus', 'true');
-      if (options?.resetPage) {
-        params.set('page', '1');
-      }
-
-      const trimmedSearch = nextSearch.trim();
-      if (trimmedSearch) {
-        params.set('search', trimmedSearch);
-      } else {
-        params.delete('search');
-      }
-
-      return `${productListingPath}?${params.toString()}`;
-    },
-    [isProductListingPath, productListingPath, searchParams],
-  );
-
-  const navigateToProductSearch = useCallback(
-    (nextSearch = headerSearchValue, options?: { resetPage?: boolean }) => {
-      const href = buildProductSearchHref(nextSearch, options);
-      router.push(href, { scroll: false });
-      focusVisibleHeaderSearch();
-    },
-    [buildProductSearchHref, focusVisibleHeaderSearch, headerSearchValue, router],
-  );
-
-  const commitHeaderSearch = useCallback(
-    (nextSearch: string) => {
-      navigateToProductSearch(nextSearch, { resetPage: true });
-    },
-    [navigateToProductSearch],
-  );
-
-  const {
-    inputValue: headerSearchInput,
-    setInputValue: setHeaderSearchInput,
-    commitNow: commitHeaderSearchNow,
-  } = useDebouncedSearchParam({
-    value: headerSearchValue,
-    onCommit: commitHeaderSearch,
-  });
+  const [manualHeaderSearchInput, setManualHeaderSearchInput] = useState<string | null>(null);
+  const [isSearchPopoverOpen, setIsSearchPopoverOpen] = useState(false);
+  const [activeSearchSurface, setActiveSearchSurface] = useState<SearchSurface>('desktop');
+  const [searchSuggestions, setSearchSuggestions] = useState<HeaderSearchSuggestions | null>(null);
+  const [isSearchLoading, setIsSearchLoading] = useState(false);
+  const headerSearchInput = manualHeaderSearchInput ?? headerSearchValue;
 
   useEffect(() => {
-    if (isProductListingPath && searchParams.get('focus') === 'true') {
-      focusVisibleHeaderSearch();
-    }
-  }, [focusVisibleHeaderSearch, isProductListingPath, searchParams]);
+    const query = headerSearchInput.trim();
 
-  const handleHeaderSearchFocus = () => {
-    if (!isProductListingPath) {
-      navigateToProductSearch(headerSearchInput);
+    if (!isSearchPopoverOpen || !query) return;
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(async () => {
+      setIsSearchLoading(true);
+
+      try {
+        const params = new URLSearchParams({ search: query, locale });
+        const response = await fetch(`/api/search/header-suggestions?${params.toString()}`, {
+          headers: { Accept: 'application/json' },
+          signal: controller.signal,
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data?.error || 'Search suggestions failed.');
+        }
+
+        setSearchSuggestions(data);
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        console.error('Header search suggestions failed:', error);
+        setSearchSuggestions({
+          productGroups: [],
+          materials: { id: 'materials', title: 'Materials', href: '/materials', total: 0, items: [] },
+          error: 'Search suggestions are temporarily unavailable.',
+        });
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsSearchLoading(false);
+        }
+      }
+    }, 250);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timeout);
+    };
+  }, [headerSearchInput, isSearchPopoverOpen, locale]);
+
+  const handleHeaderSearchFocus = (surface: SearchSurface) => {
+    setActiveSearchSurface(surface);
+    setIsSearchPopoverOpen(true);
+  };
+
+  const handleHeaderSearchChange = (value: string, surface: SearchSurface) => {
+    setActiveSearchSurface(surface);
+    setManualHeaderSearchInput(value);
+    setIsSearchPopoverOpen(true);
+    if (!value.trim()) {
+      setIsSearchLoading(false);
+      setSearchSuggestions(null);
     }
   };
 
   const handleHeaderSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    commitHeaderSearchNow();
-    navigateToProductSearch(headerSearchInput, { resetPage: true });
+    setIsSearchPopoverOpen(true);
+  };
+
+  const closeSearchPopover = () => {
+    setIsSearchPopoverOpen(false);
+    setIsSearchLoading(false);
+  };
+
+  const handleSearchPopoverOpenChange = (open: boolean) => {
+    setIsSearchPopoverOpen(open);
+    if (!open) {
+      setIsSearchLoading(false);
+    }
+  };
+
+  const renderSearchItem = (item: HeaderSearchItem) => (
+    <Link
+      key={item.id}
+      href={item.href}
+      onClick={closeSearchPopover}
+      className="group flex min-w-0 items-center gap-2 rounded-md p-1 transition-colors hover:bg-slate-50"
+    >
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded bg-slate-100">
+        {item.image ? (
+          <Image
+            src={item.image}
+            alt=""
+            width={40}
+            height={40}
+            className="h-full w-full object-cover"
+            unoptimized
+          />
+        ) : (
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4 7.5h16v11H4v-11Z" stroke="#94A3B8" strokeWidth="1.5" />
+            <path d="M7 5h10v2.5H7V5Z" stroke="#94A3B8" strokeWidth="1.5" />
+          </svg>
+        )}
+      </span>
+      <span className="min-w-0 flex-1">
+        {item.meta ? (
+          <span className="block truncate text-sm font-normal leading-5 text-blue-400">{item.meta}</span>
+        ) : null}
+        <span className="block truncate text-base font-semibold leading-5 text-neutral-800 group-hover:text-sky-950">
+          {item.title}
+        </span>
+      </span>
+    </Link>
+  );
+
+  const hasSearchQuery = headerSearchInput.trim().length > 0;
+  const hasProductResults = Boolean(searchSuggestions?.productGroups.some((group) => group.items.length > 0));
+  const hasMaterialResults = Boolean(searchSuggestions?.materials.items.length);
+  const hasSearchResults = hasProductResults || hasMaterialResults;
+
+  const renderSearchState = (state: 'loading' | 'empty') => (
+    <div className="flex min-h-56 flex-col items-center justify-center px-6 py-4 text-center">
+      <Image
+        src="/search-no-result.png"
+        alt=""
+        width={320}
+        height={196}
+        className="h-auto w-56 object-contain sm:w-64"
+        priority={false}
+      />
+      <p className="mt-4 text-xl font-bold leading-7 text-neutral-800">
+        {state === 'loading'
+          ? (t.has('search.searching') ? t('search.searching') : 'Searching...')
+          : 'No Result Found'}
+      </p>
+      <p className="mt-2 text-base font-normal leading-6 text-zinc-500">
+        {state === 'loading'
+          ? 'Finding the best matching products and materials.'
+          : "We can't find any item matching your search."}
+      </p>
+    </div>
+  );
+
+  const renderSearchPopover = (surface: SearchSurface) => {
+    if (!isSearchPopoverOpen || activeSearchSurface !== surface) return null;
+
+    return (
+      <PopoverContent
+        align="start"
+        sideOffset={10}
+        onOpenAutoFocus={(event) => event.preventDefault()}
+        className="w-[min(calc(100vw-2rem),620px)] rounded-xl bg-white p-5 text-left shadow-[0_16px_34px_rgba(15,23,42,0.14)] ring-slate-100"
+      >
+        {isSearchLoading && !searchSuggestions ? (
+          renderSearchState('loading')
+        ) : !hasSearchQuery ? (
+          <div className="flex min-h-32 items-center justify-center text-sm font-semibold text-zinc-500">
+            {t('common.search')}
+          </div>
+        ) : searchSuggestions?.error ? (
+          <div className="flex min-h-40 items-center justify-center text-center text-sm font-semibold text-zinc-500">
+            {searchSuggestions.error}
+          </div>
+        ) : !hasSearchResults && !isSearchLoading ? (
+          renderSearchState('empty')
+        ) : (
+          <div className="grid max-h-[calc(100vh-190px)] grid-cols-1 gap-5 overflow-y-auto pr-1 lg:grid-cols-[1fr_auto_0.95fr] lg:gap-6">
+            <div className="flex flex-col gap-5">
+              {searchSuggestions?.productGroups.map((group) => (
+                <section key={group.id} className="flex flex-col gap-2">
+                  <h2 className="text-xl font-bold leading-7 text-neutral-800">{group.title}</h2>
+                  <div className="flex flex-col gap-1">
+                    {group.items.map(renderSearchItem)}
+                  </div>
+                  <Link
+                    href={group.href}
+                    onClick={closeSearchPopover}
+                    className="inline-flex text-base font-semibold leading-6 text-orange-500 hover:text-orange-600"
+                  >
+                    Show All {group.title} ({group.total})
+                  </Link>
+                </section>
+              ))}
+            </div>
+            <Separator orientation="vertical" className="hidden lg:block" />
+            <section className="flex flex-col gap-2">
+              <h2 className="text-xl font-bold leading-7 text-neutral-800">
+                {searchSuggestions?.materials.title ?? 'Materials'}
+              </h2>
+              <div className="flex flex-col gap-1">
+                {searchSuggestions?.materials.items.map(renderSearchItem)}
+              </div>
+              {hasMaterialResults ? (
+                <Link
+                  href={searchSuggestions?.materials.href ?? '/materials'}
+                  onClick={closeSearchPopover}
+                  className="inline-flex text-base font-semibold leading-6 text-orange-500 hover:text-orange-600"
+                >
+                  Show All Materials ({searchSuggestions?.materials.total ?? 0})
+                </Link>
+              ) : null}
+            </section>
+          </div>
+        )}
+      </PopoverContent>
+    );
   };
 
   const dropdownMap: Record<string, React.ReactNode> = {
@@ -306,28 +466,50 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
           </Link>
 
           {/* Search */}
-          <form
-            role="search"
-            onSubmit={handleHeaderSearchSubmit}
-            className="w-96 px-4 py-3 rounded-full border border-slate-100 flex items-center gap-2 overflow-hidden text-left focus-within:border-amber-300 focus-within:ring-2 focus-within:ring-amber-500/10"
+          <Popover
+            open={isSearchPopoverOpen && activeSearchSurface === 'desktop'}
+            onOpenChange={handleSearchPopoverOpenChange}
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <circle cx="6.75" cy="6.75" r="5.25" stroke="#9CA3AF" strokeWidth="1.5" />
-              <path d="M11.5 11.5L14.5 14.5" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-            <input
-              ref={desktopSearchInputRef}
-              type="search"
-              value={headerSearchInput}
-              onFocus={handleHeaderSearchFocus}
-              onClick={handleHeaderSearchFocus}
-              onChange={(event) => setHeaderSearchInput(event.target.value)}
-              placeholder={t('common.search')}
-              aria-label={t('header.productsSearchLink')}
-              autoComplete="off"
-              className="h-5 min-w-0 flex-1 bg-transparent text-sm font-normal leading-5 text-neutral-800 outline-none placeholder:text-zinc-500"
-            />
-          </form>
+            <PopoverAnchor asChild>
+              <form
+                role="search"
+                onSubmit={handleHeaderSearchSubmit}
+                className="w-96 px-4 py-3 rounded-full border border-slate-100 flex items-center gap-2 overflow-hidden text-left focus-within:border-amber-300 focus-within:ring-2 focus-within:ring-amber-500/10"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <circle cx="6.75" cy="6.75" r="5.25" stroke="#9CA3AF" strokeWidth="1.5" />
+                  <path d="M11.5 11.5L14.5 14.5" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+                <input
+                  ref={desktopSearchInputRef}
+                  type="search"
+                  value={headerSearchInput}
+                  onFocus={() => handleHeaderSearchFocus('desktop')}
+                  onClick={() => handleHeaderSearchFocus('desktop')}
+                  onChange={(event) => handleHeaderSearchChange(event.target.value, 'desktop')}
+                  placeholder={t('common.search')}
+                  aria-label={t('header.productsSearchLink')}
+                  autoComplete="off"
+                  className="h-5 min-w-0 flex-1 bg-transparent text-sm font-normal leading-5 text-neutral-800 outline-none placeholder:text-zinc-500"
+                />
+                {headerSearchInput ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-xs"
+                    onClick={() => handleHeaderSearchChange('', 'desktop')}
+                    className="size-5 shrink-0 rounded-full text-zinc-400 hover:bg-slate-100 hover:text-zinc-600"
+                    aria-label="Clear search"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                      <path d="M3 3l6 6M9 3L3 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                  </Button>
+                ) : null}
+              </form>
+            </PopoverAnchor>
+            {renderSearchPopover('desktop')}
+          </Popover>
 
           {/* Right controls */}
           <div className="flex items-center gap-5">
@@ -459,28 +641,50 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
         </div>
         
         {/* Search bar below row on mobile */}
-        <form
-          role="search"
-          onSubmit={handleHeaderSearchSubmit}
-          className="w-full px-4 py-2.5 rounded-full border border-slate-100 flex items-center gap-2 overflow-hidden text-left bg-slate-50 focus-within:border-amber-300 focus-within:ring-2 focus-within:ring-amber-500/10"
+        <Popover
+          open={isSearchPopoverOpen && activeSearchSurface === 'mobile'}
+          onOpenChange={handleSearchPopoverOpenChange}
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <circle cx="6.75" cy="6.75" r="5.25" stroke="#9CA3AF" strokeWidth="1.5" />
-            <path d="M11.5 11.5L14.5 14.5" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-          <input
-            ref={mobileSearchInputRef}
-            type="search"
-            value={headerSearchInput}
-            onFocus={handleHeaderSearchFocus}
-            onClick={handleHeaderSearchFocus}
-            onChange={(event) => setHeaderSearchInput(event.target.value)}
-            placeholder={t('common.search')}
-            aria-label={t('header.productsSearchLink')}
-            autoComplete="off"
-            className="h-5 min-w-0 flex-1 bg-transparent text-sm font-normal leading-5 text-neutral-800 outline-none placeholder:text-zinc-500"
-          />
-        </form>
+          <PopoverAnchor asChild>
+            <form
+              role="search"
+              onSubmit={handleHeaderSearchSubmit}
+              className="w-full px-4 py-2.5 rounded-full border border-slate-100 flex items-center gap-2 overflow-hidden text-left bg-slate-50 focus-within:border-amber-300 focus-within:ring-2 focus-within:ring-amber-500/10"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <circle cx="6.75" cy="6.75" r="5.25" stroke="#9CA3AF" strokeWidth="1.5" />
+                <path d="M11.5 11.5L14.5 14.5" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              <input
+                ref={mobileSearchInputRef}
+                type="search"
+                value={headerSearchInput}
+                onFocus={() => handleHeaderSearchFocus('mobile')}
+                onClick={() => handleHeaderSearchFocus('mobile')}
+                onChange={(event) => handleHeaderSearchChange(event.target.value, 'mobile')}
+                placeholder={t('common.search')}
+                aria-label={t('header.productsSearchLink')}
+                autoComplete="off"
+                className="h-5 min-w-0 flex-1 bg-transparent text-sm font-normal leading-5 text-neutral-800 outline-none placeholder:text-zinc-500"
+              />
+              {headerSearchInput ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => handleHeaderSearchChange('', 'mobile')}
+                  className="size-5 shrink-0 rounded-full text-zinc-400 hover:bg-slate-100 hover:text-zinc-600"
+                  aria-label="Clear search"
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                    <path d="M3 3l6 6M9 3L3 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                </Button>
+              ) : null}
+            </form>
+          </PopoverAnchor>
+          {renderSearchPopover('mobile')}
+        </Popover>
       </div>
 
       {/* Sub-nav */}
