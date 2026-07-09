@@ -95,10 +95,12 @@ export function normalizeWarrantyOptions(warranty: WarrantyInput, locale: string
   let types: NormalizedWarrantyType[] = (warranty?.types || []).map((type) => {
     const typeName = localizedWarrantyField(type, normalizedLocale, "name", "title", "type_name", "warranty_type_name") || "";
 
+    const typeDescription = localizedWarrantyField(type, normalizedLocale, "description") || "";
+
     return {
       id: type.id,
       name: typeName,
-      description: localizedWarrantyField(type, normalizedLocale, "description") || "",
+      description: typeDescription,
       icon: type.icon || "",
       badgeText: localizedWarrantyField(type, normalizedLocale, "badge_text") || "",
       badgeColor: type.badge_color || "",
