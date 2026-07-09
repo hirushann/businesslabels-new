@@ -185,8 +185,7 @@ export default function PrintSamplePage() {
         <div className="flex flex-col gap-4">
           <h1 className="text-[#222] text-[40px] font-bold font-['Segoe_UI'] leading-[48px]">{t('title')}</h1>
           <p className="w-full max-w-[939px] text-neutral-700 text-lg font-normal font-['Segoe_UI'] leading-6">
-            Request a printed sample of your own label design on an Epson ColorWorks printer. Fill in the form below and
-            we will print and ship your sample free of charge. We will contact you if we need to discuss any specific requirements.
+            {t('description')}
           </p>
         </div>
 
@@ -200,7 +199,7 @@ export default function PrintSamplePage() {
               {/* Design file */}
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
-                  <h2 className="text-[#222] text-[24px] font-normal font-['Segoe_UI'] leading-[28px]">{t('designFile')}</h2>
+                  <h2 className="text-neutral-800 text-2xl font-semibold font-['Segoe_UI'] leading-7">{t('designFile')}</h2>
                   <p className="text-neutral-700 text-sm font-normal font-['Segoe_UI'] leading-5">{t('uploadDesc')}</p>
                 </div>
                 <label htmlFor="file-upload" className="self-stretch h-48 min-h-36 bg-white rounded-md outline-dashed outline-2 outline-offset-[-2px] outline-black/10 flex flex-col justify-center items-center cursor-pointer hover:bg-slate-50 transition-colors">
@@ -406,29 +405,29 @@ export default function PrintSamplePage() {
           <div className="w-full lg:w-[360px] flex-shrink-0 flex flex-col gap-6">
             <div className="p-4 bg-gray-50 rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col gap-4 overflow-hidden">
               <div className="flex flex-col gap-2">
-                <h3 className="text-neutral-800 text-xl font-semibold font-['Segoe_UI'] leading-7">{t('preparePdfTitle')}</h3>
+                <h3 className="text-[#222] text-[24px] font-semibold font-['Segoe_UI'] leading-[28px]">{t('preparePdfTitle')}</h3>
                 <p className="text-neutral-700 text-base font-normal font-['Segoe_UI'] leading-5">{t('preparePdfDesc')}</p>
               </div>
               <div className="h-px bg-slate-100" />
-              {[
-                { title: t('textAsOutlines'), desc: t('textAsOutlinesDesc') },
-                { title: t('rgbColorSpace'), desc: t('rgbColorSpaceDesc') },
-                { title: t('exactDimensions'), desc: t('exactDimensionsDesc') },
-                { title: t('safeMargin'), desc: t('safeMarginDesc') },
-                { title: t('minFontSize'), desc: t('minFontSizeDesc') },
-              ].map((item) => (
-                <div key={item.title} className="flex items-start gap-3">
-                  <div className="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-amber-500/10 flex items-center justify-center">
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                      <path d="M2 5L4 7L8 3" stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+              <div className="flex flex-col gap-5">
+                {[
+                  { title: t('textAsOutlines'), desc: t('textAsOutlinesDesc') },
+                  { title: t('rgbColorSpace'), desc: t('rgbColorSpaceDesc') },
+                  { title: t('exactDimensions'), desc: t('exactDimensionsDesc') },
+                  { title: t('safeMargin'), desc: t('safeMarginDesc') },
+                  { title: t('minFontSize'), desc: t('minFontSizeDesc') },
+                ].map((item, index) => (
+                  <div key={item.title} className="flex items-start gap-2.5">
+                    <div className="flex-shrink-0 text-zinc-400 text-lg font-semibold font-['Segoe_UI'] leading-5">
+                      {index + 1}.
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <p className="text-[#222] text-base font-semibold font-['Segoe_UI'] leading-5">{item.title}</p>
+                      <p className="text-neutral-700 text-sm font-normal font-['Segoe_UI'] leading-5">{item.desc}</p>
+                    </div>
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <p className="text-neutral-800 text-base font-semibold font-['Segoe_UI'] leading-5">{item.title}</p>
-                    <p className="text-neutral-700 text-sm font-normal font-['Segoe_UI'] leading-5">{item.desc}</p>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
 
             <div className="relative p-4 bg-gradient-to-br from-orange-50 to-white rounded-xl outline outline-1 outline-offset-[-1px] outline-orange-100 flex items-start gap-3">
