@@ -1,5 +1,7 @@
 import { getTranslations } from "next-intl/server";
+import Link from "next/link";
 import ReviewsSection from "@/components/ReviewsSection";
+import AvailabilityStatus from "./AvailabilityStatus";
 import ContactForm from "./ContactForm";
 
 async function getTeamMembers() {
@@ -19,7 +21,7 @@ async function getTeamMembers() {
 }
 
 export default async function ContactPage() {
-   const t = await getTranslations();
+   const t = await getTranslations("contactPage");
    const teamMembers = await getTeamMembers();
    return (
       <>
@@ -38,11 +40,11 @@ export default async function ContactPage() {
                               </svg>
                            </div>
                            <div className="justify-start text-zinc-500 text-sm font-normal font-['Segoe_UI'] leading-5">/</div>
-                           <div className="self-stretch justify-start text-neutral-700 text-sm font-semibold font-['Segoe_UI'] leading-5">Contact</div>
+                           <div className="self-stretch justify-start text-neutral-700 text-sm font-semibold font-['Segoe_UI'] leading-5">{t("breadcrumb")}</div>
                         </div>
-                        <div className="self-stretch justify-start text-neutral-800 text-7xl font-bold font-['Segoe_UI'] leading-[86.40px]">Contact Us</div>
+                        <div className="self-stretch justify-start text-neutral-800 text-7xl font-bold font-['Segoe_UI'] leading-[86.40px]">{t("title")}</div>
                         <div className="self-stretch justify-start text-neutral-700 text-xl font-normal font-['Segoe_UI'] leading-8">
-                           No chatbots, no queues. One of our label experts will get back to you within 2 hours — or call us directly.
+                           {t("subtitle")}
                         </div>
                      </div>
                      <div className="self-stretch flex flex-col justify-start items-start gap-4">
@@ -58,10 +60,10 @@ export default async function ContactPage() {
                            </div>
                            <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
                               <div className="self-stretch flex flex-col justify-start items-start">
-                                 <div className="justify-start text-neutral-800 text-xl font-bold font-['Segoe_UI'] leading-6">Printer advice</div>
+                                 <div className="justify-start text-neutral-800 text-xl font-bold font-['Segoe_UI'] leading-6">{t("printerAdviceTitle")}</div>
                               </div>
                               <div className="self-stretch justify-start text-neutral-700 text-base font-normal font-['Segoe_UI']">
-                                 Help choosing the right Epson ColorWorks printer for your application.
+                                 {t("printerAdviceDesc")}
                               </div>
                            </div>
                         </div>
@@ -78,10 +80,10 @@ export default async function ContactPage() {
                            </div>
                            <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
                               <div className="self-stretch flex flex-col justify-start items-start">
-                                 <div className="justify-start text-neutral-800 text-xl font-bold font-['Segoe_UI'] leading-6">Label advice</div>
+                                 <div className="justify-start text-neutral-800 text-xl font-bold font-['Segoe_UI'] leading-6">{t("labelAdviceTitle")}</div>
                               </div>
                               <div className="self-stretch justify-start text-neutral-700 text-base font-normal font-['Segoe_UI']">
-                                 Advice, bulk pricing, and custom options for Diamondlabels.
+                                 {t("labelAdviceDesc")}
                               </div>
                            </div>
                         </div>
@@ -96,18 +98,18 @@ export default async function ContactPage() {
                            </div>
                            <div className="w-[523px] inline-flex flex-col justify-start items-start gap-2">
                               <div className="self-stretch flex flex-col justify-start items-start">
-                                 <div className="justify-start text-neutral-800 text-xl font-bold font-['Segoe_UI'] leading-6">Free sample pack</div>
+                                 <div className="justify-start text-neutral-800 text-xl font-bold font-['Segoe_UI'] leading-6">{t("sampleTitle")}</div>
                               </div>
                               <div className="self-stretch justify-start">
-                                 <span className="text-amber-500 text-base font-bold font-['Segoe_UI'] underline">Request a free sample</span>
-                                 <span className="text-neutral-700 text-base font-normal font-['Segoe_UI']"> to test quality before ordering.</span>
+                                 <Link href="/print-sample" className="text-amber-500 text-base font-bold font-['Segoe_UI'] underline">{t("sampleLink")}</Link>
+                                 <span className="text-neutral-700 text-base font-normal font-['Segoe_UI']">{t("sampleDesc")}</span>
                               </div>
                            </div>
                         </div>
                      </div>
                      <div className="self-stretch h-0 outline outline-1 outline-offset-[-0.50px] outline-slate-100"></div>
-                     <div className="self-stretch inline-flex justify-start items-center gap-4">
-                        <div className="flex-1 p-6 bg-gray-50 rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-200 inline-flex flex-col justify-start items-center gap-4">
+                     <div className="self-stretch inline-flex justify-start items-stretch gap-4">
+                        <a href="tel:+31318590465" className="group flex-1 self-stretch p-6 bg-gray-50 rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-200 inline-flex flex-col justify-start items-center gap-4 hover:shadow-md hover:outline-amber-400 transition-all cursor-pointer">
                            <div className="self-stretch flex flex-col justify-center items-start gap-4">
                               <div className="self-stretch inline-flex justify-center items-center gap-3">
                                  <div>
@@ -118,19 +120,17 @@ export default async function ContactPage() {
                                        />
                                     </svg>
                                  </div>
-                                 <div className="text-center justify-start text-neutral-800 text-xl font-semibold font-['Segoe_UI'] leading-6">Call</div>
+                                 <div className="text-center justify-start text-neutral-800 text-xl font-semibold font-['Segoe_UI'] leading-6">{t("callTitle")}</div>
                               </div>
                               <div className="self-stretch flex flex-col justify-start items-start gap-2">
-                                 <div className="self-stretch text-center justify-start text-neutral-700 text-lg font-semibold font-['Segoe_UI'] leading-6">
+                                 <div className="self-stretch text-center justify-start text-neutral-700 text-lg font-semibold font-['Segoe_UI'] leading-6 group-hover:text-amber-500 transition-colors">
                                     +31 (0)318 590 465
                                  </div>
-                                 <div className="self-stretch text-center justify-start text-zinc-500 text-base font-normal font-['Segoe_UI'] leading-6">
-                                    Mon – Fri, 8:30 – 17:00
-                                 </div>
+                                 <AvailabilityStatus />
                               </div>
                            </div>
-                        </div>
-                        <div className="flex-1 p-6 bg-gray-50 rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-200 inline-flex flex-col justify-start items-center gap-4">
+                        </a>
+                        <a href="mailto:verkoop@businesslabels.nl" className="group flex-1 self-stretch p-6 bg-gray-50 rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-200 inline-flex flex-col justify-start items-center gap-4 hover:shadow-md hover:outline-amber-400 transition-all cursor-pointer">
                            <div className="self-stretch inline-flex justify-center items-center gap-3">
                               <div>
                                  <svg width="19" height="15" viewBox="0 0 19 15" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -140,17 +140,17 @@ export default async function ContactPage() {
                                     />
                                  </svg>
                               </div>
-                              <div className="text-center justify-start text-neutral-800 text-xl font-semibold font-['Segoe_UI'] leading-6">Email</div>
+                              <div className="text-center justify-start text-neutral-800 text-xl font-semibold font-['Segoe_UI'] leading-6">{t("emailTitle")}</div>
                            </div>
                            <div className="self-stretch flex flex-col justify-start items-center gap-2">
-                              <div className="self-stretch text-center justify-start text-neutral-700 text-lg font-semibold font-['Segoe_UI'] leading-6">
+                              <div className="self-stretch text-center justify-start text-neutral-700 text-lg font-semibold font-['Segoe_UI'] leading-6 group-hover:text-amber-500 transition-colors">
                                  verkoop@businesslabels.nl
                               </div>
                               <div className="self-stretch text-center justify-start text-zinc-500 text-base font-normal font-['Segoe_UI'] leading-6">
-                                 Response within 1 business day
+                                 {t("emailTime")}
                               </div>
                            </div>
-                        </div>
+                        </a>
                      </div>
                   </div>
                </div>
@@ -162,10 +162,10 @@ export default async function ContactPage() {
             <div className="w-full mx-auto px-40 py-32 bg-gray-50 inline-flex flex-col justify-start items-start gap-12">
                <div className="max-w-360 mx-auto self-stretch flex flex-col justify-start items-center gap-4">
                   <div className="self-stretch text-center justify-start text-neutral-800 text-4xl font-semibold font-['Segoe_UI'] leading-[48px]">
-                     Our Amaizing Team
+                     {t("teamTitle")}
                   </div>
                   <div className="text-center justify-start text-neutral-700 text-lg font-normal font-['Segoe_UI'] leading-7">
-                     No anonymous support desk. You always speak with the same specialist who knows your situation.
+                     {t("teamDesc")}
                   </div>
                </div>
                <div className="max-w-360 mx-auto self-stretch inline-flex flex-wrap justify-center items-stretch gap-6">

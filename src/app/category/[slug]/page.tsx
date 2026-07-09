@@ -46,6 +46,10 @@ function slugToTitle(slug: string): string {
 }
 
 function categoryTitleForSlug(slug: string): string {
+  if (slug === "labelprinters") {
+    return "Label Printers";
+  }
+
   return slugToTitle(slug);
 }
 
@@ -67,11 +71,12 @@ export async function generateMetadata({
 }
 
 export async function generateCategoryArchiveMetadata(slug: string): Promise<Metadata> {
-  const title = `${categoryTitleForSlug(slug)} - Businesslabels`;
+  const t = await getTranslations();
+  const category = categoryTitleForSlug(slug);
 
   return {
-    title,
-    description: `Browse our full range of ${categoryTitleForSlug(slug)} products.`,
+    title: t("pages.categoryMetadataTitle", { category }),
+    description: t("pages.categoryMetadataDescription", { category }),
   };
 }
 
@@ -292,7 +297,7 @@ export async function renderCategoryArchivePage({
       : undefined;
 
   const breadcrumbItems = [
-    { label: t("common.products"), href: "/products" },
+    { label: t("common.products"), href: localePath("/product", locale) },
     ...ancestors.map((ancestor, index) => {
       const ancestorSlug = categoryRouteSlug(ancestor, locale);
       const href =

@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { useLocale as useIntlLocale, useTranslations } from 'next-intl';
 import { LOCALES, LOCALE_LABELS, normalizeLocale } from '@/lib/i18n/config';
 import { writeLocaleCookieClient, stripLocalePath } from '@/lib/i18n/utils';
@@ -38,8 +39,9 @@ const FLAG_BY_LOCALE = {
 export default function LanguageSwitcher() {
   const locale = useIntlLocale();
   const t = useTranslations();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [isNavigating, setIsNavigating] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const containerRef = useRef(null);
 
   const setLocale = (nextLocale) => {
@@ -47,7 +49,6 @@ export default function LanguageSwitcher() {
     if (normalized === locale) return;
 
     writeLocaleCookieClient(normalized);
-    setIsNavigating(true);
 
     // Build the target URL: EN gets /en prefix, NL gets clean path
     const currentPath = window.location.pathname;
@@ -58,7 +59,10 @@ export default function LanguageSwitcher() {
 
     if (alternateHref) {
       const alternateUrl = new URL(alternateHref, window.location.origin);
-      window.location.assign(`${alternateUrl.pathname}${alternateUrl.search}${window.location.hash}`);
+      startTransition(() => {
+        router.push(`${alternateUrl.pathname}${alternateUrl.search}${window.location.hash}`);
+        router.refresh();
+      });
       return;
     }
 
@@ -67,7 +71,10 @@ export default function LanguageSwitcher() {
       getLocalizedLabelCategoryPathForPath(currentPath, normalized) ??
       getLocalizedAccessoryCategoryPathForPath(currentPath, normalized);
     const targetPath = (translatedPath ?? (normalized === 'en' ? '/en' + cleanPath : cleanPath)) + window.location.search + window.location.hash;
-    window.location.assign(targetPath);
+    startTransition(() => {
+      router.push(targetPath);
+      router.refresh();
+    });
   };
 
   useEffect(() => {
@@ -96,7 +103,7 @@ export default function LanguageSwitcher() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        disabled={isNavigating}
+        disabled={isPending}
         className="flex items-center gap-1 cursor-pointer disabled:cursor-wait disabled:opacity-70"
         aria-haspopup="listbox"
         aria-expanded={open}
@@ -125,7 +132,7 @@ export default function LanguageSwitcher() {
                 <button
                   type="button"
                   role="option"
-                  disabled={isNavigating}
+                  disabled={isPending}
                   aria-selected={isActive}
                   onClick={() => {
                     setLocale(code);

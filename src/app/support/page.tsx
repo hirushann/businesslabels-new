@@ -21,7 +21,6 @@ import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { useTranslations } from 'next-intl';
 import { OpeningStatus } from "@/components/OpeningStatus";
 import CTABanner from "@/components/CTABanner";
-
 export default function SupportPage() {
   const t = useTranslations('supportPage');
   return (
@@ -49,8 +48,10 @@ export default function SupportPage() {
 
             <h1 className="text-4xl sm:text-5xl font-bold leading-tight mb-4 text-white">
               {t('heroTitle')}
+              {t('heroTitle')}
             </h1>
             <p className="text-lg text-slate-200 leading-relaxed max-w-3xl">
+              {t('heroDesc')}
               {t('heroDesc')}
             </p>
           </div>
@@ -61,6 +62,7 @@ export default function SupportPage() {
           <div className="bg-white border border-slate-100 rounded-2xl p-10 flex flex-col items-center text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-lg transition-all duration-300">
             <Phone className="w-14 h-14 text-neutral-500 mb-6" strokeWidth={1.5} />
             <h3 className="text-2xl font-bold text-slate-800 mb-4">{t('callTitle')}</h3>
+            <h3 className="text-2xl font-bold text-slate-800 mb-4">{t('callTitle')}</h3>
             <a href="tel:+31318590465" className="text-lg font-semibold text-slate-700 hover:text-sky-600 mb-2 transition-colors">+31 (0)318 590 465</a>
             <OpeningStatus />
           </div>
@@ -68,7 +70,9 @@ export default function SupportPage() {
           <div className="bg-white border border-slate-100 rounded-2xl p-10 flex flex-col items-center text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-lg transition-all duration-300">
             <Mail className="w-14 h-14 text-neutral-500 mb-6" strokeWidth={1.5} />
             <h3 className="text-2xl font-bold text-slate-800 mb-4">{t('emailTitle')}</h3>
+            <h3 className="text-2xl font-bold text-slate-800 mb-4">{t('emailTitle')}</h3>
             <a href="mailto:verkoop@businesslabels.nl" className="text-lg font-semibold text-slate-700 hover:text-sky-600 mb-2 transition-colors">verkoop@businesslabels.nl</a>
+            <p className="text-sm text-slate-400 font-medium">{t('emailTime')}</p>
             <p className="text-sm text-slate-400 font-medium">{t('emailTime')}</p>
           </div>
 
@@ -87,10 +91,10 @@ export default function SupportPage() {
           <div className="bg-[#fffdf8] border border-orange-100 rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_4px_20px_-4px_rgba(255,165,0,0.05)]">
             <div className="max-w-3xl">
               <h3 className="text-2xl font-bold text-slate-800 mb-2">
-                GRATIS Hulp op afstand voor vaste klanten (Fair use)
+                {t('freeSupportTitle')}
               </h3>
               <p className="text-slate-600 font-medium">
-                Als bedankje voor uw voortdurende samenwerking genieten vaste klanten van GRATIS Hulp op afstand via TeamViewer.
+                {t('freeSupportDesc')}
               </p>
             </div>
             {/* Custom TeamViewer Logo mimicking the image */}
@@ -113,10 +117,10 @@ export default function SupportPage() {
           <div className="bg-[#f8f9fa] rounded-2xl p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="max-w-3xl">
               <h3 className="text-xl font-bold text-slate-800 mb-1">
-                Probeer eerst de Kennisbank
+                {t('kbTitle')}
               </h3>
               <p className="text-slate-500 text-sm">
-                Voor de meeste veelvoorkomende problemen is een oplossing gedocumenteerd. Zoek in onze handleidingen voordat u belt — dat is sneller.
+                {t('kbDesc')}
               </p>
             </div>
             <Link href="/knowledge" className="shrink-0 bg-[#ea7a0e] hover:bg-[#d66e0a] text-white px-6 py-3 rounded-full font-semibold transition-colors flex items-center gap-2">
@@ -169,8 +173,8 @@ export default function SupportPage() {
               </div>
               <div className="hidden lg:block w-px h-16 bg-slate-100"></div>
               <div className="lg:w-48 lg:text-right w-full pt-4 lg:pt-0 border-t lg:border-t-0 border-slate-100">
-                <div className="text-2xl font-bold text-orange-500">€120 <span className="text-xl font-semibold text-orange-500/70">/ uur</span></div>
-                <div className="text-xs text-slate-400 mt-1 font-medium">per uur gefactureerd, excl. btw</div>
+                <div className="text-2xl font-bold text-orange-500">{t('s2Price')} <span className="text-xl font-semibold text-orange-500/70">{t('s2PriceUnit')}</span></div>
+                <div className="text-xs text-slate-400 mt-1 font-medium">{t('billedHourly')}</div>
               </div>
             </div>
 
@@ -190,8 +194,8 @@ export default function SupportPage() {
               </div>
               <div className="hidden lg:block w-px h-16 bg-slate-100"></div>
               <div className="lg:w-48 lg:text-right w-full pt-4 lg:pt-0 border-t lg:border-t-0 border-slate-100">
-                <div className="text-2xl font-bold text-orange-500">€100 <span className="text-xl font-semibold text-orange-500/70">/ uur</span></div>
-                <div className="text-xs text-slate-400 mt-1 font-medium">per uur gefactureerd, excl. btw</div>
+                <div className="text-2xl font-bold text-orange-500">{t('s1Price')} <span className="text-xl font-semibold text-orange-500/70">{t('s1PriceUnit')}</span></div>
+                <div className="text-xs text-slate-400 mt-1 font-medium">{t('billedHourly')}</div>
               </div>
             </div>
 
@@ -240,7 +244,7 @@ export default function SupportPage() {
           </div>
           
           <p className="text-sm text-slate-400 font-medium mt-4 leading-relaxed max-w-4xl">
-            Alle prijzen zijn exclusief btw. Ondersteuning is beschikbaar voor printers aangeschaft via BusinessLabels. Windows-systemen worden voor standaardvragen doorgaans zonder extra kosten gedekt. Andere besturingssystemen hebben mogelijk beperkte of betaalde ondersteuning. Service op locatie is exclusief reiskosten.
+            {t('bottomText')}
           </p>
         </section>
       </div>
@@ -255,13 +259,13 @@ export default function SupportPage() {
               <h2 className="text-3xl lg:text-4xl font-extrabold text-slate-900 mb-8 tracking-tight">{t('whatWeHelpWithTitle')}</h2>
               <ul className="space-y-5">
                 {[
-                  "Printer wordt niet herkend door computer of software",
-                  "Onjuiste kleuren of onverwachte printuitvoer",
-                  "Banding, strepen of slechte printkwaliteit",
-                  "Installatie en configuratie van stuurprogramma's",
-                  "Mediatype-instellingen en ICC-profiel configuratie",
-                  "NiceLabel, Bartender of andere labelsoftware",
-                  "Netwerkprinter connectiviteitsproblemen"
+                  t('help1'),
+                  t('help2'),
+                  t('help3'),
+                  t('help4'),
+                  t('help5'),
+                  t('help6'),
+                  t('help7')
                 ].map((item, idx) => (
                   <li key={idx} className="flex items-center gap-3">
                     <CheckCircle2 className="w-5 h-5 text-slate-300 shrink-0" strokeWidth={1.5} />
@@ -284,10 +288,10 @@ export default function SupportPage() {
               <h2 className="text-3xl lg:text-4xl font-extrabold text-slate-900 mb-8 tracking-tight">{t('howRemoteWorksTitle')}</h2>
               <div className="space-y-6">
                 {[
-                  "U neemt telefonisch of per e-mail contact met ons op en omschrijft het probleem.",
-                  "We plannen een TeamViewer-sessie op een moment dat het u uitkomt.",
-                  "U installeert TeamViewer QuickSupport — geen account nodig.",
-                  "We maken verbinding, bekijken uw scherm en nemen samen de instellingen door."
+                  t('how1'),
+                  t('how2'),
+                  t('how3'),
+                  t('how4')
                 ].map((item, idx) => (
                   <div key={idx} className="flex items-start gap-4">
                     <div className="text-slate-400 font-medium shrink-0 pt-0.5 w-6">

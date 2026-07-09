@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const response = await fetch(backendUrl(API_BASE_URL, '/api/profile'), {
+    const response = await fetch(backendUrl(API_BASE_URL, '/api/user/profile'), {
       method: 'GET',
       headers: {
         Accept: 'application/json',
@@ -47,7 +47,6 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   const authToken = request.cookies.get('auth_token')?.value;
-  const body = await request.json();
 
   if (!API_BASE_URL) {
     return NextResponse.json({ message: 'Backend API URL is not configured.' }, { status: 500 });
@@ -58,15 +57,35 @@ export async function PUT(request: NextRequest) {
   }
 
   try {
-    const response = await fetch(backendUrl(API_BASE_URL, '/api/user/profile'), {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        Authorization: `Bearer ${authToken}`,
-      },
-      body: JSON.stringify(body),
-    });
+    const contentType = request.headers.get('content-type') || '';
+    let response;
+
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await request.formData();
+      if (!formData.has('_method')) {
+        formData.append('_method', 'PUT');
+      }
+
+      response = await fetch(backendUrl(API_BASE_URL, '/api/user/profile'), {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: formData,
+      });
+    } else {
+      const body = await request.json();
+      response = await fetch(backendUrl(API_BASE_URL, '/api/user/profile'), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify(body),
+      });
+    }
 
     const data = await readResponseBody(response);
     return NextResponse.json(data, { status: response.status });

@@ -310,14 +310,14 @@ export default function BadgeMakenPageClient() {
             </p>
 
             <div className="mt-8 flex flex-wrap gap-4">
-              <a
+              <Link
                 id="badge-maken-proefpakket-btn"
-                href="mailto:verkoop@businesslabels.nl?subject=Aanvraag%20ExpoBadge%20proefpakket&body=Beste%20Businesslabels%2C%20%20Hierbij%20geef%20ik%20aan%20graag%20een%20proefpakket%20van%20ExpoBadge%20te%20ontvangen."
+                href="/print-sample"
                 className="inline-flex items-center gap-2.5 rounded-full bg-amber-500 px-7 py-3.5 text-sm font-bold text-white uppercase tracking-wide shadow-lg shadow-amber-500/25 transition-all duration-200 hover:bg-amber-600 hover:shadow-amber-500/40 active:scale-[0.98]"
               >
                 <IconSend />
                 {t('heroBtnSample')}
-              </a>
+              </Link>
 
               <Link
                 id="badge-maken-advies-btn"

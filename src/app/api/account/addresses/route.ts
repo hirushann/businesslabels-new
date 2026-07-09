@@ -18,6 +18,26 @@ async function readResponseBody(response: Response) {
   }
 }
 
+async function getCustomerId(apiBaseUrl: string, authToken: string): Promise<number | null> {
+  try {
+    const response = await fetch(backendUrl(apiBaseUrl, '/api/user/profile'), {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${authToken}`,
+      },
+      cache: 'no-store',
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    const user = data.data || data;
+    return user?.id || null;
+  } catch (error) {
+    console.error('Error fetching user profile for customer ID:', error);
+    return null;
+  }
+}
+
 export async function GET(request: NextRequest) {
   const apiBaseUrl = process.env.BBNL_API_BASE_URL;
   const authToken = request.cookies.get('auth_token')?.value;
@@ -58,6 +78,7 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
 export async function POST(request: NextRequest) {
   const apiBaseUrl = process.env.BBNL_API_BASE_URL;
   const authToken = request.cookies.get('auth_token')?.value;
@@ -72,7 +93,12 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const response = await fetch(backendUrl(apiBaseUrl, '/api/user/addresses'), {
+    const customerId = await getCustomerId(apiBaseUrl, authToken);
+    if (!customerId) {
+      return NextResponse.json({ message: 'Unable to verify customer account.' }, { status: 400 });
+    }
+
+    const response = await fetch(backendUrl(apiBaseUrl, `/api/customers/${customerId}/addresses`), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -87,5 +113,86 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error saving account address:', error);
     return NextResponse.json({ message: 'Unable to save address right now.' }, { status: 500 });
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  const apiBaseUrl = process.env.BBNL_API_BASE_URL;
+  const authToken = request.cookies.get('auth_token')?.value;
+  const body = await request.json();
+
+  if (!apiBaseUrl) {
+    return NextResponse.json({ message: 'Backend API URL is not configured.' }, { status: 500 });
+  }
+
+  if (!authToken) {
+    return NextResponse.json({ message: 'Please login.' }, { status: 401 });
+  }
+
+  const { id, ...addressData } = body;
+  if (!id) {
+    return NextResponse.json({ message: 'Missing address id.' }, { status: 400 });
+  }
+
+  try {
+    const customerId = await getCustomerId(apiBaseUrl, authToken);
+    if (!customerId) {
+      return NextResponse.json({ message: 'Unable to verify customer account.' }, { status: 400 });
+    }
+
+    const response = await fetch(backendUrl(apiBaseUrl, `/api/customers/${customerId}/addresses/${id}`), {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: JSON.stringify(addressData),
+    });
+
+    const data = await readResponseBody(response);
+    return NextResponse.json(data, { status: response.status });
+  } catch (error) {
+    console.error('Error updating account address:', error);
+    return NextResponse.json({ message: 'Unable to update address right now.' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  const apiBaseUrl = process.env.BBNL_API_BASE_URL;
+  const authToken = request.cookies.get('auth_token')?.value;
+
+  if (!apiBaseUrl) {
+    return NextResponse.json({ message: 'Backend API URL is not configured.' }, { status: 500 });
+  }
+
+  if (!authToken) {
+    return NextResponse.json({ message: 'Please login.' }, { status: 401 });
+  }
+
+  try {
+    const { id } = await request.json();
+    if (!id) {
+      return NextResponse.json({ message: 'Missing address id.' }, { status: 400 });
+    }
+
+    const customerId = await getCustomerId(apiBaseUrl, authToken);
+    if (!customerId) {
+      return NextResponse.json({ message: 'Unable to verify customer account.' }, { status: 400 });
+    }
+
+    const response = await fetch(backendUrl(apiBaseUrl, `/api/customers/${customerId}/addresses/${id}`), {
+      method: 'DELETE',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${authToken}`,
+      },
+    });
+
+    const data = await readResponseBody(response);
+    return NextResponse.json(data, { status: response.status });
+  } catch (error) {
+    console.error('Error deleting account address:', error);
+    return NextResponse.json({ message: 'Unable to delete address right now.' }, { status: 500 });
   }
 }

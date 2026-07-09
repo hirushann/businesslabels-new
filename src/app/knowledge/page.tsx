@@ -184,8 +184,8 @@ export default async function KnowledgeBaseArchive() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {postCategories.map((category) => {
-            const categoryName = typeof category.name === 'object' && category.name !== null ? (category.name[locale] ?? category.name.en ?? category.name.nl) : category.name;
-            const categorySlug = typeof category.slug === 'object' && category.slug !== null ? (category.slug[locale] ?? category.slug.en ?? category.slug.nl) : category.slug;
+            const categoryName = typeof category.name === 'object' && category.name !== null ? ((category.name as any)[locale] ?? (category.name as any).en ?? (category.name as any).nl) : category.name;
+            const categorySlug = typeof category.slug === 'object' && category.slug !== null ? ((category.slug as any)[locale] ?? (category.slug as any).en ?? (category.slug as any).nl) : category.slug;
             
             const Icon = ({
               'printer-setup-installation': Settings,
@@ -218,7 +218,7 @@ export default async function KnowledgeBaseArchive() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {popularArticles.map((article) => {
             const rawCatName = article.categories?.[0]?.name || "Article";
-            const categoryName = typeof rawCatName === 'object' && rawCatName !== null ? (rawCatName[locale] ?? rawCatName.en ?? rawCatName.nl) : rawCatName;
+            const categoryName = typeof rawCatName === 'object' && rawCatName !== null ? ((rawCatName as any)[locale] ?? (rawCatName as any).en ?? (rawCatName as any).nl) : rawCatName;
             
             return (
               <Link key={article.id} href={`/knowledge/${article.slug}`} className="bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 p-5 flex flex-col sm:flex-row gap-6 transition-all group">
