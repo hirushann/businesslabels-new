@@ -488,6 +488,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
             durationMonths: selectedOption.durationMonths,
             parentSku: product.sku,
             parentName: productName,
+            description: selectedOption.description,
           },
         },
         finalQty,

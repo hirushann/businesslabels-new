@@ -257,6 +257,7 @@ export default function ProductCompatibilityDialog({
             durationMonths: selectedOption.durationMonths,
             parentSku: productSku,
             parentName: productName,
+            description: selectedOption.description,
           },
         },
         1,

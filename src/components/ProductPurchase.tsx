@@ -590,6 +590,7 @@ export default function ProductPurchase({
             durationMonths: selectedOption.durationMonths,
             parentSku: displaySku,
             parentName: displayName,
+            description: selectedOption.description,
           },
         },
         qtyToAdd,

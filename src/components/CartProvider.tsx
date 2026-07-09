@@ -37,6 +37,7 @@ export type CartItem = {
     durationMonths?: number | null;
     parentSku?: string | null;
     parentName?: string | null;
+    description?: string | null;
   } | null;
 };
 

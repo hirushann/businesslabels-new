@@ -7,6 +7,8 @@ import { useLocale, useTranslations } from 'next-intl';
 import CartProductSlider from '@/components/CartProductSlider';
 import type { ProductCardData } from '@/components/ProductCard';
 import { localePath } from '@/lib/i18n/utils';
+import { useState, useEffect } from 'react';
+import { getExpectedDeliveryMessage } from '@/lib/utils/delivery';
 
 function formatEuro(value: number): string {
   return new Intl.NumberFormat('nl-NL', {
@@ -52,6 +54,27 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
   const shipping = subtotal >= shippingThreshold ? 0 : 15;
   const tax = subtotal * 0.21;
   const total = subtotal + shipping;
+
+  const [countdown, setCountdown] = useState({ hours: 2, minutes: 34, formattedMinutes: '34' });
+
+  useEffect(() => {
+    const updateCountdown = () => {
+      try {
+        const { countdown } = getExpectedDeliveryMessage({
+          stock: 1,
+          delivery_dates_in_stock: 1,
+          delivery_dates_no_stock: 1
+        });
+        setCountdown(countdown);
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const breadcrumbs = [
     { label: t('cart.title') }
@@ -293,9 +316,11 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                                 {t.has('cart.warrantyType') ? t('cart.warrantyType') : 'Warranty type'}: {warrantyTypeName}
                               </span>
                             ) : null}
-                            <span className="text-sm font-normal font-['Segoe_UI'] text-[#444444]">
-                              {t.has('cart.warrantyDesc') ? t('cart.warrantyDesc') : 'Protect your printer after the standard warranty expires.'}
-                            </span>
+                            {linkedWarranty.warranty?.description ? (
+                              <span className="text-sm font-normal font-['Segoe_UI'] text-[#444444]">
+                                {linkedWarranty.warranty.description}
+                              </span>
+                            ) : null}
                           </div>
                           
                           <div className="w-full flex flex-col justify-center items-start gap-1">
@@ -358,7 +383,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
               {/* Header */}
               <div className="w-full p-4 bg-[#F7F9FA] border-b border-[#E5E7EB] text-center">
                 <h2 className="text-2xl font-bold font-['Segoe_UI'] text-[#222222] tracking-wider uppercase">
-                  {t('cart.summary')}
+                  {t.has('cart.yourOverview') ? t('cart.yourOverview') : 'YOUR OVERVIEW'}
                 </h2>
               </div>
               
@@ -381,7 +406,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                     </div>
                     <p className="text-base font-normal font-['Segoe_UI'] text-[#444444] leading-tight">
                       {t.rich('cart.orderWithin', {
-                        timeStyle: (chunks) => <span className="font-bold">{chunks}</span>,
+                        timeStyle: () => <span className="font-bold">{countdown.hours} {t.has('product.hours') ? t('product.hours') : 'hours'} {countdown.formattedMinutes} {t.has('product.minutes') ? t('product.minutes') : 'minutes'}</span>,
                         deliveryStyle: (chunks) => <span className="font-bold">{chunks}</span>,
                         shippedStyle: (chunks) => <span className="font-bold">{chunks}</span>,
                       })}
@@ -455,7 +480,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                   <div className="flex justify-between items-center bg-white/50">
                     <div>
                       <span className="text-lg font-bold font-['Segoe_UI'] text-[#222222]">
-                        {t('checkout.tax')}{' '}
+                        {t.has('checkout.vat') ? t('checkout.vat') : 'VAT'}{' '}
                       </span>
                       <span className="text-lg font-normal font-['Segoe_UI'] text-[#222222]">
                         (21%)
@@ -494,10 +519,10 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                 {/* Checkout CTA */}
                 <Link
                   href={localePath("/checkout", locale)}
-                  className="w-full h-13 bg-[#F18800] hover:bg-[#d87a00] active:bg-[#c26e00] rounded-[100px] flex items-center justify-center cursor-pointer transition-colors"
+                  className="w-full h-13 bg-[#F18800] hover:bg-[#d87a00] active:bg-[#c26e00] rounded-[100px] flex items-center justify-center cursor-pointer transition-colors px-6"
                 >
                   <span className="text-center text-white text-lg font-bold font-['Segoe_UI'] leading-6 whitespace-nowrap">
-                    {t('cart.checkout')}
+                    {t.has('cart.proceedToCheckout') ? t('cart.proceedToCheckout') : 'Proceed to checkout'}
                   </span>
                 </Link>
               </div>

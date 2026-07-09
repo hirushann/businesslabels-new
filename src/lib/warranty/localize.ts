@@ -102,10 +102,16 @@ export function normalizeWarrantyOptions(warranty: WarrantyInput, locale: string
       icon: type.icon || "",
       badgeText: localizedWarrantyField(type, normalizedLocale, "badge_text") || "",
       badgeColor: type.badge_color || "",
-      options: (type.options || []).map((option) => ({
-        ...normalizeWarrantyOption(option, normalizedLocale),
-        typeName: typeName || warrantyOptionTypeName(option, normalizedLocale) || undefined,
-      })),
+      options: (type.options || []).map((option) => {
+        const normalizedOpt = normalizeWarrantyOption(option, normalizedLocale);
+        if (!normalizedOpt.description && typeDescription) {
+          normalizedOpt.description = typeDescription;
+        }
+        return {
+          ...normalizedOpt,
+          typeName: typeName || warrantyOptionTypeName(option, normalizedLocale) || undefined,
+        };
+      }),
     };
   });
 
@@ -118,7 +124,7 @@ export function normalizeWarrantyOptions(warranty: WarrantyInput, locale: string
       {
         id: "legacy",
         name: normalizedLocale === "nl" ? "Garantieopties" : "Extended Warranty",
-        description: normalizedLocale === "nl" ? "Verleng de dekking van uw printer." : "Extend your printer coverage.",
+        description: "",
         icon: "shield-check",
         badgeText: "",
         badgeColor: "",
@@ -149,7 +155,7 @@ function normalizeWarrantyOption(option: WarrantyOptionInput, locale: LocaleCode
     name: localizedWarrantyField(option, locale, "name") || "Warranty",
     durationMonths,
     price: option.price || 0,
-    description: localizedWarrantyField(option, locale, "description") || fallbackWarrantyDescription(durationMonths, locale),
+    description: localizedWarrantyField(option, locale, "description") || "",
     sortOrder: option.sort_order ?? option.sort ?? 0,
     typeName: warrantyOptionTypeName(option, locale) || undefined,
   };

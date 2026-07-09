@@ -282,9 +282,11 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                                 <p className="mt-0.5 text-sm font-semibold leading-5 text-[#222222]">
                                   {linkedWarranty.name}
                                 </p>
-                                <p className="mt-0.5 text-xs leading-4 text-[#666666]">
-                                  {t.has('cart.warrantyDesc') ? t('cart.warrantyDesc') : 'Protect your printer after the standard warranty expires.'}
-                                </p>
+                                {linkedWarranty.warranty?.description ? (
+                                  <p className="mt-0.5 text-xs leading-4 text-[#666666]">
+                                    {linkedWarranty.warranty.description}
+                                  </p>
+                                ) : null}
                                 {warrantyDurationYears ? (
                                   <p className="mt-1 text-xs font-medium text-[#444444]">
                                     {t('cart.years', { count: warrantyDurationYears })}
