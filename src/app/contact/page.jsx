@@ -19,7 +19,7 @@ async function getTeamMembers() {
 }
 
 export default async function ContactPage() {
-   const t = await getTranslations();
+   const t = await getTranslations("contactPage");
    const teamMembers = await getTeamMembers();
    return (
       <>
@@ -38,11 +38,11 @@ export default async function ContactPage() {
                               </svg>
                            </div>
                            <div className="justify-start text-zinc-500 text-sm font-normal font-['Segoe_UI'] leading-5">/</div>
-                           <div className="self-stretch justify-start text-neutral-700 text-sm font-semibold font-['Segoe_UI'] leading-5">Contact</div>
+                           <div className="self-stretch justify-start text-neutral-700 text-sm font-semibold font-['Segoe_UI'] leading-5">{t("breadcrumb")}</div>
                         </div>
-                        <div className="self-stretch justify-start text-neutral-800 text-7xl font-bold font-['Segoe_UI'] leading-[86.40px]">Contact Us</div>
+                        <div className="self-stretch justify-start text-neutral-800 text-7xl font-bold font-['Segoe_UI'] leading-[86.40px]">{t("title")}</div>
                         <div className="self-stretch justify-start text-neutral-700 text-xl font-normal font-['Segoe_UI'] leading-8">
-                           No chatbots, no queues. One of our label experts will get back to you within 2 hours — or call us directly.
+                           {t("subtitle")}
                         </div>
                      </div>
                      <div className="self-stretch flex flex-col justify-start items-start gap-4">
@@ -58,10 +58,10 @@ export default async function ContactPage() {
                            </div>
                            <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
                               <div className="self-stretch flex flex-col justify-start items-start">
-                                 <div className="justify-start text-neutral-800 text-xl font-bold font-['Segoe_UI'] leading-6">Printer advice</div>
+                                 <div className="justify-start text-neutral-800 text-xl font-bold font-['Segoe_UI'] leading-6">{t("printerAdviceTitle")}</div>
                               </div>
                               <div className="self-stretch justify-start text-neutral-700 text-base font-normal font-['Segoe_UI']">
-                                 Help choosing the right Epson ColorWorks printer for your application.
+                                 {t("printerAdviceDesc")}
                               </div>
                            </div>
                         </div>
@@ -78,10 +78,10 @@ export default async function ContactPage() {
                            </div>
                            <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
                               <div className="self-stretch flex flex-col justify-start items-start">
-                                 <div className="justify-start text-neutral-800 text-xl font-bold font-['Segoe_UI'] leading-6">Label advice</div>
+                                 <div className="justify-start text-neutral-800 text-xl font-bold font-['Segoe_UI'] leading-6">{t("labelAdviceTitle")}</div>
                               </div>
                               <div className="self-stretch justify-start text-neutral-700 text-base font-normal font-['Segoe_UI']">
-                                 Advice, bulk pricing, and custom options for Diamondlabels.
+                                 {t("labelAdviceDesc")}
                               </div>
                            </div>
                         </div>
@@ -96,11 +96,11 @@ export default async function ContactPage() {
                            </div>
                            <div className="w-[523px] inline-flex flex-col justify-start items-start gap-2">
                               <div className="self-stretch flex flex-col justify-start items-start">
-                                 <div className="justify-start text-neutral-800 text-xl font-bold font-['Segoe_UI'] leading-6">Free sample pack</div>
+                                 <div className="justify-start text-neutral-800 text-xl font-bold font-['Segoe_UI'] leading-6">{t("sampleTitle")}</div>
                               </div>
                               <div className="self-stretch justify-start">
-                                 <span className="text-amber-500 text-base font-bold font-['Segoe_UI'] underline">Request a free sample</span>
-                                 <span className="text-neutral-700 text-base font-normal font-['Segoe_UI']"> to test quality before ordering.</span>
+                                 <span className="text-amber-500 text-base font-bold font-['Segoe_UI'] underline">{t("sampleLink")}</span>
+                                 <span className="text-neutral-700 text-base font-normal font-['Segoe_UI']">{t("sampleDesc")}</span>
                               </div>
                            </div>
                         </div>
@@ -118,14 +118,14 @@ export default async function ContactPage() {
                                        />
                                     </svg>
                                  </div>
-                                 <div className="text-center justify-start text-neutral-800 text-xl font-semibold font-['Segoe_UI'] leading-6">Call</div>
+                                 <div className="text-center justify-start text-neutral-800 text-xl font-semibold font-['Segoe_UI'] leading-6">{t("callTitle")}</div>
                               </div>
                               <div className="self-stretch flex flex-col justify-start items-start gap-2">
                                  <div className="self-stretch text-center justify-start text-neutral-700 text-lg font-semibold font-['Segoe_UI'] leading-6">
                                     +31 (0)318 590 465
                                  </div>
                                  <div className="self-stretch text-center justify-start text-zinc-500 text-base font-normal font-['Segoe_UI'] leading-6">
-                                    Mon – Fri, 8:30 – 17:00
+                                    {t("callTime")}
                                  </div>
                               </div>
                            </div>
@@ -140,14 +140,14 @@ export default async function ContactPage() {
                                     />
                                  </svg>
                               </div>
-                              <div className="text-center justify-start text-neutral-800 text-xl font-semibold font-['Segoe_UI'] leading-6">Email</div>
+                              <div className="text-center justify-start text-neutral-800 text-xl font-semibold font-['Segoe_UI'] leading-6">{t("emailTitle")}</div>
                            </div>
                            <div className="self-stretch flex flex-col justify-start items-center gap-2">
                               <div className="self-stretch text-center justify-start text-neutral-700 text-lg font-semibold font-['Segoe_UI'] leading-6">
                                  verkoop@businesslabels.nl
                               </div>
                               <div className="self-stretch text-center justify-start text-zinc-500 text-base font-normal font-['Segoe_UI'] leading-6">
-                                 Response within 1 business day
+                                 {t("emailTime")}
                               </div>
                            </div>
                         </div>
@@ -162,10 +162,10 @@ export default async function ContactPage() {
             <div className="w-full mx-auto px-40 py-32 bg-gray-50 inline-flex flex-col justify-start items-start gap-12">
                <div className="max-w-360 mx-auto self-stretch flex flex-col justify-start items-center gap-4">
                   <div className="self-stretch text-center justify-start text-neutral-800 text-4xl font-semibold font-['Segoe_UI'] leading-[48px]">
-                     Our Amaizing Team
+                     {t("teamTitle")}
                   </div>
                   <div className="text-center justify-start text-neutral-700 text-lg font-normal font-['Segoe_UI'] leading-7">
-                     No anonymous support desk. You always speak with the same specialist who knows your situation.
+                     {t("teamDesc")}
                   </div>
                </div>
                <div className="max-w-360 mx-auto self-stretch inline-flex flex-wrap justify-center items-stretch gap-6">
