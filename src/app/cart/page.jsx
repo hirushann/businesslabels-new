@@ -1,11 +1,16 @@
 import CartPageClient from '@/components/CartPageClient';
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
+import { getTranslations } from "next-intl/server";
 import { mapLaravelProductToCardData } from "@/lib/mappings/product";
 
-export const metadata = {
-  title: 'Your Shopping Cart | Businesslabels',
-  description: 'Review the items in your shopping cart before proceeding to checkout.',
-};
+export async function generateMetadata() {
+  const t = await getTranslations();
+
+  return {
+    title: t('pages.cartMetadataTitle'),
+    description: t('pages.cartMetadataDescription'),
+  };
+}
 
 export default async function CartPage() {
   const locale = await getServerLocale();
@@ -38,4 +43,3 @@ export default async function CartPage() {
     </main>
   );
 }
-

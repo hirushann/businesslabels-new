@@ -54,6 +54,33 @@ export type CategoryLookup = {
 
 export const CATEGORY_SOURCE_LOCALE = "nl";
 
+const CATEGORY_NAME_FALLBACKS: Record<string, Partial<Record<"en" | "nl", string>>> = {
+  labelprinters: {
+    en: "Label Printers",
+    nl: "Label Printers",
+  },
+  "kleuren labelprinters": {
+    en: "Color label printers",
+    nl: "Kleuren labelprinters",
+  },
+  "thermische labelprinters": {
+    en: "Thermal label printers",
+    nl: "Thermische labelprinters",
+  },
+  verbruiksmaterialen: {
+    en: "Consumables",
+    nl: "Verbruiksmaterialen",
+  },
+  starterkits: {
+    en: "Starter kits",
+    nl: "Starterkits",
+  },
+};
+
+export function categoryNameFallback(name: string, locale: string): string {
+  return CATEGORY_NAME_FALLBACKS[normalize(name)]?.[locale as "en" | "nl"] ?? name;
+}
+
 export function resolveLocalized(value: LocalizedValue, locale: string): string {
   if (value == null) return "";
   if (typeof value === "string") return value;
@@ -70,10 +97,12 @@ function resolveCategoryTranslation(
 }
 
 export function categoryName(category: CategoryNode, locale: string): string {
-  return (
+  const name = (
     resolveCategoryTranslation(category, locale, "name").trim() ||
     resolveLocalized(category.name, locale).trim()
   );
+
+  return categoryNameFallback(name, locale);
 }
 
 export function categorySlug(category: CategoryNode, locale: string): string {

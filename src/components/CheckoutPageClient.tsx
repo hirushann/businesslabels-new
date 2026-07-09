@@ -1,9 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useMemo, useState, useEffect } from "react";
-import EmptyState from "@/components/EmptyState";
 import { type CartItem, useCart } from "@/components/CartProvider";
 import { toast } from "sonner";
 import LoginPopup from "@/components/LoginPopup";
@@ -296,7 +294,7 @@ function CheckoutShell({
   };
 
   const breadcrumbs = [
-    { label: t('checkout.title') || 'Checkout' }
+    { label: t('checkout.title') }
   ];
 
   return (
@@ -480,7 +478,7 @@ function CheckoutShell({
                           type="text"
                           value={form.companyName}
                           onChange={(e) => handleChange("companyName", e.target.value)}
-                          placeholder="Van Dijk Labels BV"
+                          placeholder={t('checkout.companyNamePlaceholder')}
                           className={inputClasses(Boolean(errors.companyName))}
                         />
                         {errors.companyName && <span className="text-xs text-red-500">{errors.companyName}</span>}
@@ -491,7 +489,7 @@ function CheckoutShell({
                           type="text"
                           value={form.vatNumber}
                           onChange={(e) => handleChange("vatNumber", e.target.value)}
-                          placeholder="NL123456789B01"
+                          placeholder={t('checkout.vatNumberPlaceholder')}
                           className={inputClasses(Boolean(errors.vatNumber))}
                         />
                         {errors.vatNumber && <span className="text-xs text-red-500">{errors.vatNumber}</span>}
@@ -505,7 +503,7 @@ function CheckoutShell({
                           type="text"
                           value={form.firstName}
                           onChange={(e) => handleChange("firstName", e.target.value)}
-                          placeholder="Emma"
+                          placeholder={t('checkout.firstNamePlaceholder')}
                           className={inputClasses(Boolean(errors.firstName))}
                         />
                         {errors.firstName && <span className="text-xs text-red-500">{errors.firstName}</span>}
@@ -516,7 +514,7 @@ function CheckoutShell({
                           type="text"
                           value={form.lastName}
                           onChange={(e) => handleChange("lastName", e.target.value)}
-                          placeholder="van Dijk"
+                          placeholder={t('checkout.lastNamePlaceholder')}
                           className={inputClasses(Boolean(errors.lastName))}
                         />
                         {errors.lastName && <span className="text-xs text-red-500">{errors.lastName}</span>}
@@ -530,7 +528,7 @@ function CheckoutShell({
                           type="email"
                           value={form.email}
                           onChange={(e) => handleChange("email", e.target.value)}
-                          placeholder="you@example.com"
+                          placeholder={t('checkout.emailPlaceholder')}
                           className={inputClasses(Boolean(errors.email))}
                         />
                         {errors.email && <span className="text-xs text-red-500">{errors.email}</span>}
@@ -541,7 +539,7 @@ function CheckoutShell({
                           type="tel"
                           value={form.mobileNumber}
                           onChange={(e) => handleChange("mobileNumber", e.target.value)}
-                          placeholder="+31 6 1234 5678"
+                          placeholder={t('checkout.mobileNumberPlaceholder')}
                           className={inputClasses(Boolean(errors.mobileNumber))}
                         />
                         {errors.mobileNumber && <span className="text-xs text-red-500">{errors.mobileNumber}</span>}
@@ -575,7 +573,7 @@ function CheckoutShell({
                           type="text"
                           value={form.streetAddress}
                           onChange={(e) => handleChange("streetAddress", e.target.value)}
-                          placeholder="Keizersgracht 214"
+                          placeholder={t('checkout.streetAddressPlaceholder')}
                           className={inputClasses(Boolean(errors.streetAddress))}
                         />
                         {errors.streetAddress && <span className="text-xs text-red-500">{errors.streetAddress}</span>}
@@ -586,7 +584,7 @@ function CheckoutShell({
                           type="text"
                           value={form.postcode}
                           onChange={(e) => handleChange("postcode", e.target.value)}
-                          placeholder="1016 DW"
+                          placeholder={t('checkout.postcodePlaceholder')}
                           className={inputClasses(Boolean(errors.postcode))}
                         />
                         {errors.postcode && <span className="text-xs text-red-500">{errors.postcode}</span>}
@@ -600,7 +598,7 @@ function CheckoutShell({
                           type="text"
                           value={form.city}
                           onChange={(e) => handleChange("city", e.target.value)}
-                          placeholder="Amsterdam"
+                          placeholder={t('checkout.cityPlaceholder')}
                           className={inputClasses(Boolean(errors.city))}
                         />
                         {errors.city && <span className="text-xs text-red-500">{errors.city}</span>}
@@ -611,7 +609,7 @@ function CheckoutShell({
                           type="text"
                           value={form.state}
                           onChange={(e) => handleChange("state", e.target.value)}
-                          placeholder="North Holland"
+                          placeholder={t('checkout.statePlaceholder')}
                           className={inputClasses(Boolean(errors.state))}
                         />
                         {errors.state && <span className="text-xs text-red-500">{errors.state}</span>}
@@ -628,7 +626,7 @@ function CheckoutShell({
                         {t('checkout.shippingAddress')}
                       </h2>
                       <p className="text-[#444444] text-[16px] font-normal font-['Segoe_UI'] leading-[20.80px]">
-                        {t('checkout.deliveryInfoDesc') || "Enter the address where you'd like your order to be delivered."}
+                        {t('checkout.deliveryInfoDesc')}
                       </p>
                     </div>
                     <div className="h-px bg-[#EDF2F7] w-full" />
@@ -652,10 +650,10 @@ function CheckoutShell({
                       </div>
                       <div className="flex-col justify-center items-start gap-[12px] inline-flex">
                         <div className="text-[#222222] text-[18px] font-bold font-['Segoe_UI'] leading-[20px]">
-                          {t('checkout.sameAsBilling') || "Use my billing address for shipping"}
+                          {t('checkout.sameAsBilling')}
                         </div>
                         <div className="text-[#444444] text-[14px] font-normal font-['Segoe_UI'] leading-[18.20px]">
-                          {t('checkout.sameAsBillingSub') || "Fill in the fields below automatically with your billing address"}
+                          {t('checkout.sameAsBillingSub')}
                         </div>
                       </div>
                     </label>
@@ -705,7 +703,7 @@ function CheckoutShell({
                               type="text"
                               value={form.shippingFirstName}
                               onChange={(e) => handleChange("shippingFirstName", e.target.value)}
-                              placeholder="First name"
+                              placeholder={t('checkout.firstNamePlaceholder')}
                               className={inputClasses(Boolean(errors.shippingFirstName))}
                             />
                             {errors.shippingFirstName && <span className="text-xs text-red-500">{errors.shippingFirstName}</span>}
@@ -718,7 +716,7 @@ function CheckoutShell({
                               type="text"
                               value={form.shippingLastName}
                               onChange={(e) => handleChange("shippingLastName", e.target.value)}
-                              placeholder="Last name"
+                              placeholder={t('checkout.lastNamePlaceholder')}
                               className={inputClasses(Boolean(errors.shippingLastName))}
                             />
                             {errors.shippingLastName && <span className="text-xs text-red-500">{errors.shippingLastName}</span>}
@@ -735,7 +733,7 @@ function CheckoutShell({
                               type="email"
                               value={form.email}
                               onChange={(e) => handleChange("email", e.target.value)}
-                              placeholder="you@example.com"
+                              placeholder={t('checkout.emailPlaceholder')}
                               className={inputClasses(Boolean(errors.email))}
                             />
                             {errors.email && <span className="text-xs text-red-500">{errors.email}</span>}
@@ -748,7 +746,7 @@ function CheckoutShell({
                               type="tel"
                               value={form.mobileNumber}
                               onChange={(e) => handleChange("mobileNumber", e.target.value)}
-                              placeholder="+555-113324"
+                              placeholder={t('checkout.mobileNumberPlaceholder')}
                               className={inputClasses(Boolean(errors.mobileNumber))}
                             />
                             {errors.mobileNumber && <span className="text-xs text-red-500">{errors.mobileNumber}</span>}
@@ -758,7 +756,7 @@ function CheckoutShell({
                         {/* Country / Region */}
                         <div className="w-full flex-col justify-start items-start gap-2 inline-flex">
                           <div className="text-[#222222] text-[18px] font-bold font-['Segoe_UI'] leading-[20px]">
-                            {t('checkout.country') || "Country / Region"}
+                            {t('checkout.country')}
                           </div>
                           <div className="relative w-full">
                             <select
@@ -789,7 +787,7 @@ function CheckoutShell({
                               onChange={(val) => handleChange("shippingStreetAddress", val)}
                               onAddressSelect={(addr) => onAddressSelect(addr, true)}
                               className={inputClasses(Boolean(errors.shippingStreetAddress))}
-                              placeholder="Street and house number"
+                              placeholder={t('checkout.streetAddressPlaceholder')}
                             />
                             {errors.shippingStreetAddress && <span className="text-xs text-red-500">{errors.shippingStreetAddress}</span>}
                           </div>
@@ -801,7 +799,7 @@ function CheckoutShell({
                               type="text"
                               value={form.shippingPostcode}
                               onChange={(e) => handleChange("shippingPostcode", e.target.value)}
-                              placeholder="Postcode"
+                              placeholder={t('checkout.postcodePlaceholder')}
                               className={inputClasses(Boolean(errors.shippingPostcode))}
                             />
                             {errors.shippingPostcode && <span className="text-xs text-red-500">{errors.shippingPostcode}</span>}
@@ -812,26 +810,26 @@ function CheckoutShell({
                         <div className="self-stretch justify-start items-start gap-4 inline-flex w-full">
                           <div className="flex-1 flex-col justify-start items-start gap-2 inline-flex">
                             <div className="text-[#222222] text-[18px] font-bold font-['Segoe_UI'] leading-[20px]">
-                              {t('checkout.city') || "Place"} *
+                              {t('checkout.city')} *
                             </div>
                             <input
                               type="text"
                               value={form.shippingCity}
                               onChange={(e) => handleChange("shippingCity", e.target.value)}
-                              placeholder="Place"
+                              placeholder={t('checkout.cityPlaceholder')}
                               className={inputClasses(Boolean(errors.shippingCity))}
                             />
                             {errors.shippingCity && <span className="text-xs text-red-500">{errors.shippingCity}</span>}
                           </div>
                           <div className="flex-1 flex-col justify-start items-start gap-2 inline-flex">
                             <div className="text-[#222222] text-[18px] font-bold font-['Segoe_UI'] leading-[20px]">
-                              {t('checkout.state') || "State (optional)"}
+                              {t('checkout.state')}
                             </div>
                             <input
                               type="text"
                               value={form.shippingState}
                               onChange={(e) => handleChange("shippingState", e.target.value)}
-                              placeholder="State"
+                              placeholder={t('checkout.statePlaceholder')}
                               className={inputClasses(Boolean(errors.shippingState))}
                             />
                             {errors.shippingState && <span className="text-xs text-red-500">{errors.shippingState}</span>}
@@ -915,7 +913,7 @@ function CheckoutShell({
                             <img className="w-[33px] h-[28px] object-contain" src="/creditcard-logo.svg" alt="Credit Card" />
                             <div className="flex items-baseline gap-2">
                               <span className="text-[#222222] text-[22px] font-bold font-['Segoe_UI'] leading-[28px]">{t('checkout.creditCard')}</span>
-                              <span className="text-xs text-amber-600 font-medium font-['Segoe_UI']">+2.5% fee</span>
+                              <span className="text-xs text-amber-600 font-medium font-['Segoe_UI']">{t('checkout.creditCardFee')}</span>
                             </div>
                           </div>
                         </div>
@@ -1030,7 +1028,7 @@ function CheckoutShell({
                       onClick={() => setStep((step - 1) as 1 | 2)}
                       className="w-[160px] h-[52px] rounded-full border border-[rgba(0,0,0,0.10)] text-[#444444] font-bold text-[18px] hover:bg-slate-50 transition-colors flex items-center justify-center"
                     >
-                      {t('common.previous') || "Back"}
+                      {t('common.previous')}
                     </button>
                   )}
                   <button
@@ -1137,7 +1135,7 @@ function CheckoutShell({
                   value={form.purchaseReference}
                   onChange={(e) => handleChange("purchaseReference", e.target.value)}
                   disabled={!isEditingRef}
-                  placeholder={t('checkout.purchaseReferencePlaceholder') || "e.g., PO-12345"}
+                  placeholder={t('checkout.purchaseReferencePlaceholder')}
                   className={`w-full h-full pl-5 pr-14 rounded-full border bg-white font-medium outline-none transition-all ${
                     isEditingRef ? "border-[#F18800]" : "border-[#DDE1EA] text-[#888888] cursor-not-allowed"
                   }`}
@@ -1146,7 +1144,7 @@ function CheckoutShell({
                   type="button"
                   onClick={() => setIsEditingRef(!isEditingRef)}
                   className="absolute right-2 top-2 w-9 h-9 bg-[#EDF2F7] rounded-full flex items-center justify-center hover:bg-slate-200 transition-colors"
-                  aria-label="Edit Purchase Reference"
+                  aria-label={t('checkout.editPurchaseReference')}
                 >
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <mask id="mask0_2740_6734" style={{ maskType: "alpha" }} maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
@@ -1752,7 +1750,7 @@ export default function CheckoutPageClient({
           return;
         }
         
-        toast.error(json.message || json.error || "Failed to create order");
+        toast.error(json.message || json.error || t('checkout.createOrderError'));
         return;
       }
 
@@ -1801,13 +1799,13 @@ export default function CheckoutPageClient({
 
           <div className="flex flex-col gap-4 w-full pt-4">
             <Link 
-              href="/my-account" 
+              href={localePath("/my-account", locale)}
               className="h-12 w-full rounded-full bg-[#F18800] px-6 text-base font-bold text-white transition-colors hover:bg-amber-600 flex items-center justify-center"
             >
               {t('checkout.viewMyOrders')}
             </Link>
             <Link 
-              href="/product" 
+              href={localePath("/product", locale)}
               className="h-12 w-full rounded-full border border-slate-200 px-6 text-base font-bold text-neutral-700 transition-colors hover:bg-slate-50 flex items-center justify-center"
             >
               {t('common.continueShopping')}
