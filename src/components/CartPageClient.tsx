@@ -9,6 +9,7 @@ import type { ProductCardData } from '@/components/ProductCard';
 import { localePath } from '@/lib/i18n/utils';
 import { useState, useEffect } from 'react';
 import { getExpectedDeliveryMessage } from '@/lib/utils/delivery';
+import { useShippingRules } from '@/hooks/useShippingRules';
 
 function formatEuro(value: number): string {
   return new Intl.NumberFormat('nl-NL', {
@@ -48,10 +49,12 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
     decrementItemQuantity,
     setItemQuantity,
   } = useCart();
+  
+  const { defaultRule } = useShippingRules();
 
   const subtotal = totalAmount;
-  const shippingThreshold = 100;
-  const shipping = subtotal >= shippingThreshold ? 0 : 15;
+  const shippingThreshold = defaultRule ? defaultRule.free_shipping_threshold : 100;
+  const shipping = subtotal >= shippingThreshold ? 0 : (defaultRule ? defaultRule.shipping_cost : 15);
   const tax = subtotal * 0.21;
   const total = subtotal + shipping;
 

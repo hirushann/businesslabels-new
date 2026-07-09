@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { useCart } from '@/components/CartProvider';
 import { useTranslations } from 'next-intl';
 import { useLocalePath } from '@/hooks/useLocalePath';
+import { useShippingRules } from '@/hooks/useShippingRules';
 
 type CartDrawerProps = {
   onClose: () => void;
@@ -22,6 +23,9 @@ function formatEuro(value: number): string {
 export default function CartDrawer({ onClose }: CartDrawerProps) {
   const t = useTranslations();
   const lp = useLocalePath();
+  const { defaultRule } = useShippingRules();
+  const shippingThreshold = defaultRule ? defaultRule.free_shipping_threshold : 100;
+  
   const {
     items,
     totalAmount,
@@ -370,11 +374,11 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                 </Link>
 
                 {/* Free shipping progress */}
-                {totalAmount < 500 ? (
+                {totalAmount < shippingThreshold ? (
                   <div className="flex justify-center items-center">
                     <p className="text-[#888888] text-base font-['Segoe_UI'] leading-[20.8px]">
                       {t.rich('cart.freeShippingProgress', {
-                        amount: formatEuro(500 - totalAmount),
+                        amount: formatEuro(shippingThreshold - totalAmount),
                         amountStyle: (chunks) => <span className="font-bold text-[#888888]">{chunks}</span>,
                         shippingStyle: (chunks) => <span className="font-bold text-[#888888]">{chunks}</span>,
                       })}

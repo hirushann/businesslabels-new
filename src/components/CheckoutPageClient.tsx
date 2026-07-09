@@ -11,6 +11,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { localePath } from "@/lib/i18n/utils";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { useShippingRules } from "@/hooks/useShippingRules";
 
 type CheckoutFormState = {
   firstName: string;
@@ -260,7 +261,15 @@ function CheckoutShell({
 }) {
   const t = useTranslations();
   const locale = useLocale();
-  const shippingAmount = useMemo(() => (items.length > 0 ? DELIVERY_FEE : 0), [items.length]);
+  const { shippingRules, defaultRule } = useShippingRules();
+  const selectedCountry = form.sameAsBilling ? form.country : form.shippingCountry;
+  const selectedRule = shippingRules.find(r => r.country_name === selectedCountry) ?? defaultRule;
+
+  const shippingAmount = useMemo(() => {
+    if (items.length === 0) return 0;
+    if (!selectedRule) return DELIVERY_FEE;
+    return totalAmount >= selectedRule.free_shipping_threshold ? 0 : selectedRule.shipping_cost;
+  }, [items.length, totalAmount, selectedRule]);
   const paymentFee = useMemo(() => (form.paymentMethod === "creditcard" ? totalAmount * 0.025 : 0), [totalAmount, form.paymentMethod]);
   const taxAmount = useMemo(() => (totalAmount + shippingAmount + paymentFee) * 0.21, [totalAmount, shippingAmount, paymentFee]);
   const finalTotal = useMemo(() => totalAmount + shippingAmount + paymentFee + taxAmount, [totalAmount, shippingAmount, paymentFee, taxAmount]);
@@ -1349,6 +1358,8 @@ export default function CheckoutPageClient({
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  
+  const { shippingRules, defaultRule } = useShippingRules();
 
   const autofillCustomerDetails = useCallback(async () => {
     if (isDemoMode) return;
@@ -1610,7 +1621,17 @@ export default function CheckoutPageClient({
 
     setIsPending(true);
 
-    const shippingAmount = items.length > 0 ? DELIVERY_FEE : 0;
+    const selectedCountry = form.sameAsBilling ? form.country : form.shippingCountry;
+    const selectedRule = shippingRules.find(r => r.country_name === selectedCountry) ?? defaultRule;
+    
+    let shippingAmount = 0;
+    if (items.length > 0) {
+      if (selectedRule) {
+        shippingAmount = totalAmount >= selectedRule.free_shipping_threshold ? 0 : selectedRule.shipping_cost;
+      } else {
+        shippingAmount = DELIVERY_FEE;
+      }
+    }
     const paymentFee = form.paymentMethod === "creditcard" ? totalAmount * 0.025 : 0;
     const taxAmount = (totalAmount + shippingAmount + paymentFee) * 0.21;
     const finalTotal = totalAmount + shippingAmount + paymentFee + taxAmount;
