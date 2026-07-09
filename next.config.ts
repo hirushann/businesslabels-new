@@ -63,4 +63,4 @@ const nextConfig: NextConfig = {
 const withNextIntl = createNextIntlPlugin();
 
 export default withNextIntl(nextConfig);
-// Force dev server reload 1
+// Force dev server reload 2

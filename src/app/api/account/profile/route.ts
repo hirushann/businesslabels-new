@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const response = await fetch(backendUrl(API_BASE_URL, '/api/profile'), {
+    const response = await fetch(backendUrl(API_BASE_URL, '/api/user/profile'), {
       method: 'GET',
       headers: {
         Accept: 'application/json',
