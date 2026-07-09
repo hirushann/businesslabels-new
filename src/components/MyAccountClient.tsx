@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, Suspense, useSyncExternalStore, Fragment } from 'react';
+import React, { useEffect, useState, Suspense, useSyncExternalStore, Fragment, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
@@ -9,6 +9,7 @@ import AddressAutocomplete from '@/components/AddressAutocomplete';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { useTranslations, useLocale } from 'next-intl';
 import { useCart } from '@/components/CartProvider';
+import { toDisplayImageUrl } from '@/lib/utils/imageProxy';
 
 type Tab = 'dashboard' | 'orders' | 'addresses' | 'details' | 'printers' | 'favourites' | 'billing_address' | 'shipping_address' | 'change_password';
 
@@ -520,6 +521,59 @@ function MyAccountContent() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const user = useStoredUser();
   const t = useTranslations();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
+  const handleAvatarClick = () => {
+    if (isUploadingAvatar) return;
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Avatar must be an image file.');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Avatar image must be smaller than 2MB.');
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    const loadingToast = toast.loading('Uploading avatar...');
+
+    try {
+      const formData = new FormData();
+      formData.append('name', userDisplayName(user));
+      formData.append('email', userString(user, ['email']));
+      formData.append('avatar', file);
+
+      const response = await fetch('/api/account/profile', {
+        method: 'PUT',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to upload avatar.');
+      }
+
+      localStorage.setItem('auth_user', JSON.stringify(data.data || data));
+      window.dispatchEvent(new Event('auth-user-updated'));
+      toast.success('Avatar uploaded successfully.', { id: loadingToast });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to upload avatar.', { id: loadingToast });
+    } finally {
+      setIsUploadingAvatar(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
 
   useEffect(() => {
     async function syncProfile() {
@@ -565,6 +619,7 @@ function MyAccountContent() {
   };
 
   const displayName = userDisplayName(user);
+  const avatarUrl = toDisplayImageUrl(userString(user, ['avatar', 'avatar_url', 'profile_photo_url', 'image']));
 
   const sidebarItems = [
     { id: 'details', label: t('account.accountDetails') },
@@ -576,6 +631,14 @@ function MyAccountContent() {
 
   return (
     <div className="bg-slate-50 py-6 sm:py-12 px-4 sm:px-6 font-['Segoe_UI'] relative overflow-hidden z-0">
+      {/* Invisible file input for avatar upload */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        className="hidden"
+        accept="image/*"
+        onChange={handleAvatarChange}
+      />
       {/* Background orange blob on starting end */}
       <div className="absolute top-[10%] -left-[250px] w-[500px] h-[500px] rounded-full bg-gradient-to-br from-orange-400/15 to-amber-300/5 blur-[120px] pointer-events-none -z-10" />
 
@@ -601,14 +664,27 @@ function MyAccountContent() {
               <div className="self-stretch flex flex-col justify-start items-center gap-1.5">
                 <div className="size-20 relative">
                   <div className="size-20 left-0 top-0 absolute rounded-[58px] overflow-hidden bg-slate-200">
-                    <img className="w-full h-full object-cover" src={`https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`} alt={displayName} />
+                    {avatarUrl ? (
+                      <img className="w-full h-full object-cover" src={avatarUrl} alt={displayName} />
+                    ) : (
+                      <img className="w-full h-full object-cover" src={`https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`} alt={displayName} />
+                    )}
                   </div>
-                  <div className="absolute right-0 bottom-0 cursor-pointer">
-                    <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <rect x="0.75" y="0.75" width="28.5" height="28.5" rx="14.25" fill="#141718"/>
-                      <rect x="0.75" y="0.75" width="28.5" height="28.5" rx="14.25" stroke="white" strokeWidth="1.5"/>
-                      <path d="M11.2506 10.7226C11.0974 10.9524 11.1595 11.2628 11.3892 11.416C11.619 11.5692 11.9294 11.5071 12.0826 11.2774L11.6666 11L11.2506 10.7226ZM12.6041 9.59373L13.0201 9.87108V9.87108L12.6041 9.59373ZM17.3957 9.59373L17.8118 9.31638V9.31638L17.3957 9.59373ZM17.9172 11.2774C18.0704 11.5071 18.3808 11.5692 18.6106 11.416C18.8404 11.2628 18.9025 10.9524 18.7493 10.7226L18.3333 11L17.9172 11.2774ZM16.9999 16H16.4999C16.4999 16.8284 15.8283 17.5 14.9999 17.5V18V18.5C16.3806 18.5 17.4999 17.3807 17.4999 16H16.9999ZM14.9999 18V17.5C14.1715 17.5 13.4999 16.8284 13.4999 16H12.9999H12.4999C12.4999 17.3807 13.6192 18.5 14.9999 18.5V18ZM12.9999 16H13.4999C13.4999 15.1716 14.1715 14.5 14.9999 14.5V14V13.5C13.6192 13.5 12.4999 14.6193 12.4999 16H12.9999ZM14.9999 14V14.5C15.8283 14.5 16.4999 15.1716 16.4999 16H16.9999H17.4999C17.4999 14.6193 16.3806 13.5 14.9999 13.5V14ZM11.6666 11L12.0826 11.2774L13.0201 9.87108L12.6041 9.59373L12.1881 9.31638L11.2506 10.7226L11.6666 11ZM13.7135 9V9.5H16.2863V9V8.5H13.7135V9ZM17.3957 9.59373L16.9797 9.87108L17.9172 11.2774L18.3333 11L18.7493 10.7226L17.8118 9.31638L17.3957 9.59373ZM16.2863 9V9.5C16.565 9.5 16.8252 9.63925 16.9797 9.87108L17.3957 9.59373L17.8118 9.31638C17.4717 8.80635 16.8993 8.5 16.2863 8.5V9ZM12.6041 9.59373L13.0201 9.87108C13.1747 9.63925 13.4349 9.5 13.7135 9.5V9V8.5C13.1005 8.5 12.5281 8.80635 12.1881 9.31638L12.6041 9.59373ZM10.9999 11V11.5H18.9999V11V10.5H10.9999V11ZM21.6666 13.6667H21.1666V18.3333H21.6666H22.1666V13.6667H21.6666ZM18.9999 21V20.5H10.9999V21V21.5H18.9999V21ZM8.33325 18.3333H8.83325V13.6667H8.33325H7.83325V18.3333H8.33325ZM10.9999 21V20.5C9.8033 20.5 8.83325 19.53 8.83325 18.3333H8.33325H7.83325C7.83325 20.0822 9.25102 21.5 10.9999 21.5V21ZM21.6666 18.3333H21.1666C21.1666 19.53 20.1965 20.5 18.9999 20.5V21V21.5C20.7488 21.5 22.1666 20.0822 22.1666 18.3333H21.6666ZM18.9999 11V11.5C20.1965 11.5 21.1666 12.47 21.1666 13.6667H21.6666H22.1666C22.1666 11.9178 20.7488 10.5 18.9999 10.5V11ZM10.9999 11V10.5C9.25102 10.5 7.83325 11.9178 7.83325 13.6667H8.33325H8.83325C8.83325 12.47 9.8033 11.5 10.9999 11.5V11Z" fill="#FEFEFE"/>
-                    </svg>
+                  <div className="absolute right-0 bottom-0 cursor-pointer" onClick={handleAvatarClick}>
+                    {isUploadingAvatar ? (
+                      <div className="w-[30px] h-[30px] rounded-full bg-black/70 border border-white flex items-center justify-center">
+                        <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      </div>
+                    ) : (
+                      <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="0.75" y="0.75" width="28.5" height="28.5" rx="14.25" fill="#141718"/>
+                        <rect x="0.75" y="0.75" width="28.5" height="28.5" rx="14.25" stroke="white" strokeWidth="1.5"/>
+                        <path d="M11.2506 10.7226C11.0974 10.9524 11.1595 11.2628 11.3892 11.416C11.619 11.5692 11.9294 11.5071 12.0826 11.2774L11.6666 11L11.2506 10.7226ZM12.6041 9.59373L13.0201 9.87108V9.87108L12.6041 9.59373ZM17.3957 9.59373L17.8118 9.31638V9.31638L17.3957 9.59373ZM17.9172 11.2774C18.0704 11.5071 18.3808 11.5692 18.6106 11.416C18.8404 11.2628 18.9025 10.9524 18.7493 10.7226L18.3333 11L17.9172 11.2774ZM16.9999 16H16.4999C16.4999 16.8284 15.8283 17.5 14.9999 17.5V18V18.5C16.3806 18.5 17.4999 17.3807 17.4999 16H16.9999ZM14.9999 18V17.5C14.1715 17.5 13.4999 16.8284 13.4999 16H12.9999H12.4999C12.4999 17.3807 13.6192 18.5 14.9999 18.5V18ZM12.9999 16H13.4999C13.4999 15.1716 14.1715 14.5 14.9999 14.5V14V13.5C13.6192 13.5 12.4999 14.6193 12.4999 16H12.9999ZM14.9999 14V14.5C15.8283 14.5 16.4999 15.1716 16.4999 16H16.9999H17.4999C17.4999 14.6193 16.3806 13.5 14.9999 13.5V14ZM11.6666 11L12.0826 11.2774L13.0201 9.87108L12.6041 9.59373L12.1881 9.31638L11.2506 10.7226L11.6666 11ZM13.7135 9V9.5H16.2863V9V8.5H13.7135V9ZM17.3957 9.59373L16.9797 9.87108L17.9172 11.2774L18.3333 11L18.7493 10.7226L17.8118 9.31638L17.3957 9.59373ZM16.2863 9V9.5C16.565 9.5 16.8252 9.63925 16.9797 9.87108L17.3957 9.59373L17.8118 9.31638C17.4717 8.80635 16.8993 8.5 16.2863 8.5V9ZM12.6041 9.59373L13.0201 9.87108C13.1747 9.63925 13.4349 9.5 13.7135 9.5V9V8.5C13.1005 8.5 12.5281 8.80635 12.1881 9.31638L12.6041 9.59373ZM10.9999 11V11.5H18.9999V11V10.5H10.9999V11ZM21.6666 13.6667H21.1666V18.3333H21.6666H22.1666V13.6667H21.6666ZM18.9999 21V20.5H10.9999V21V21.5H18.9999V21ZM8.33325 18.3333H8.83325V13.6667H8.33325H7.83325V18.3333H8.33325ZM10.9999 21V20.5C9.8033 20.5 8.83325 19.53 8.83325 18.3333H8.33325H7.83325C7.83325 20.0822 9.25102 21.5 10.9999 21.5V21ZM21.6666 18.3333H21.1666C21.1666 19.53 20.1965 20.5 18.9999 20.5V21V21.5C20.7488 21.5 22.1666 20.0822 22.1666 18.3333H21.6666ZM18.9999 11V11.5C20.1965 11.5 21.1666 12.47 21.1666 13.6667H21.6666H22.1666C22.1666 11.9178 20.7488 10.5 18.9999 10.5V11ZM10.9999 11V10.5C9.25102 10.5 7.83325 11.9178 7.83325 13.6667H8.33325H8.83325C8.83325 12.47 9.8033 11.5 10.9999 11.5V11Z" fill="#FEFEFE"/>
+                      </svg>
+                    )}
                   </div>
                 </div>
                 <div className="justify-start text-[#222222] text-[28px] font-bold font-['Segoe_UI'] leading-8 text-center">{displayName}</div>
@@ -709,7 +785,7 @@ function DashboardView({ setActiveTab, user }: { setActiveTab: (tab: Tab) => voi
   const locale = useLocale();
   const displayName = userDisplayName(user);
   const email = userString(user, ['email']);
-  const avatarUrl = userString(user, ['avatar', 'avatar_url', 'profile_photo_url', 'image']);
+  const avatarUrl = toDisplayImageUrl(userString(user, ['avatar', 'avatar_url', 'profile_photo_url', 'image']));
   const [orders, setOrders] = useState<AccountOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -1567,7 +1643,9 @@ function ShippingAddressesView({ user }: { user: StoredUser }) {
   const [addresses, setAddresses] = useState<AccountAddress[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
-  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
+    user.default_shipping_address_id ? String(user.default_shipping_address_id) : null
+  );
 
   const fetchAddresses = async () => {
     setIsLoading(true);
@@ -1602,11 +1680,53 @@ function ShippingAddressesView({ user }: { user: StoredUser }) {
   }, [t]);
 
   useEffect(() => {
+    if (user.default_shipping_address_id) {
+      setSelectedAddressId(String(user.default_shipping_address_id));
+    }
+  }, [user.default_shipping_address_id]);
+
+  useEffect(() => {
     if (addresses.length > 0 && !selectedAddressId) {
-      const defaultSel = addresses.find(a => a.type?.toLowerCase() === 'shipping') || addresses[0];
+      const userDefaultId = user.default_shipping_address_id ? String(user.default_shipping_address_id) : undefined;
+      const defaultSel = addresses.find(a => String(a.id) === userDefaultId) || addresses.find(a => a.type?.toLowerCase() === 'shipping') || addresses[0];
       setSelectedAddressId(defaultSel.id);
     }
-  }, [addresses, selectedAddressId]);
+  }, [addresses, selectedAddressId, user.default_shipping_address_id]);
+
+  const handleSelectAddress = async (addrId: string) => {
+    setSelectedAddressId(addrId);
+    try {
+      const uName = userDisplayName(user);
+      const uEmail = userString(user, ['email']);
+      const uPhone = userString(user, ['phone', 'mobile']);
+
+      const response = await fetch('/api/account/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          name: uName,
+          email: uEmail,
+          phone: uPhone,
+          default_shipping_address_id: addrId
+        }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('auth_user', JSON.stringify(data.data || data));
+        window.dispatchEvent(new Event('auth-user-updated'));
+        toast.success(t('account.defaultShippingAddressUpdated') || 'Default shipping address updated.');
+      } else {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to update default shipping address');
+      }
+    } catch (error) {
+      console.error('Error updating default shipping address:', error);
+      toast.error(error instanceof Error ? error.message : 'Error updating default shipping address.');
+    }
+  };
 
   const shippingAddresses = addresses.filter((address) => {
     const addressType = address.type?.toLowerCase() || '';
@@ -1690,7 +1810,7 @@ function ShippingAddressesView({ user }: { user: StoredUser }) {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full self-stretch">
               {shippingAddresses.map((addr, index) => {
-                const isSelected = selectedAddressId ? addr.id === selectedAddressId : index === 0;
+                const isSelected = selectedAddressId ? String(addr.id) === String(selectedAddressId) : index === 0;
                 const name = addr.name || `${addr.firstname || ''} ${addr.lastname || ''}`.trim();
                 const addressStr = [addr.address1, addr.address2, addr.city, addr.postcode, addr.country].filter(Boolean).join(', ');
                 const isOffice = addr.company?.toLowerCase().includes('office') || addr.company?.toLowerCase().includes('company') || addr.lastname?.toLowerCase().includes('havertz') || addr.firstname?.toLowerCase().includes('jenny'); // Fallback matches for mockup icons
@@ -1707,7 +1827,7 @@ function ShippingAddressesView({ user }: { user: StoredUser }) {
                     )}
                     
                     <div className="self-stretch inline-flex justify-start items-start gap-3">
-                      <div className="w-5 h-6 relative mt-1 cursor-pointer flex items-start" onClick={() => setSelectedAddressId(addr.id)}>
+                      <div className="w-5 h-6 relative mt-1 cursor-pointer flex items-start" onClick={() => handleSelectAddress(addr.id)}>
                         {isSelected ? (
                           <div className="w-5 h-5 bg-[#F18800] rounded-full relative flex items-center justify-center">
                             <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1824,13 +1944,81 @@ function ShippingAddressEditInline({
   const [lastName, setLastName] = useState(address?.lastname || '');
   const [email, setEmail] = useState(address?.email || ''); 
   const [phone, setPhone] = useState(address?.phone || '');
-  const [country, setCountry] = useState(address?.country || 'United States US');
+  const [countryId, setCountryId] = useState('');
+  const [countriesList, setCountriesList] = useState<any[]>([]);
+  const [provinceId, setProvinceId] = useState<number | string>('');
   const [street, setStreet] = useState(address?.address1 || '');
   const [postcode, setPostcode] = useState(address?.postcode || '');
   const [city, setCity] = useState(address?.city || '');
   const [stateRegion, setStateRegion] = useState(address?.address2 || '');
   const [label, setLabel] = useState<'office' | 'home'>('home');
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    async function loadCountries() {
+      try {
+        const res = await fetch('/api/countries');
+        if (res.ok) {
+          const data = await res.json();
+          const list = data.countries || [];
+          setCountriesList(list);
+
+          const initialVal = address?.country || (address as any)?.country_id || 'NL';
+          const match = list.find((c: any) => 
+            c.id.toLowerCase() === initialVal.toLowerCase() ||
+            c.name.toLowerCase() === initialVal.toLowerCase()
+          );
+
+          if (match) {
+            setCountryId(match.id);
+          } else {
+            const nl = list.find((c: any) => c.id === 'NL' || c.name.toLowerCase() === 'netherlands');
+            if (nl) {
+              setCountryId(nl.id);
+            } else if (list.length > 0) {
+              setCountryId(list[0].id);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching countries:', err);
+      }
+    }
+    loadCountries();
+  }, [address]);
+
+  const selectedCountry = countriesList.find((c: any) => c.id === countryId);
+  const provinces = selectedCountry?.provinces || [];
+
+  useEffect(() => {
+    if (provinces.length > 0) {
+      const initialProvVal = address?.address2 || (address as any)?.state || '';
+      const match = provinces.find((p: any) => 
+        String(p.id) === String(initialProvVal) ||
+        p.name.toLowerCase() === String(initialProvVal).toLowerCase()
+      );
+      if (match) {
+        setProvinceId(match.id);
+        setStateRegion(match.name);
+      } else {
+        // If no match but we have provinces, set to first or empty
+        setProvinceId('');
+        setStateRegion('');
+      }
+    } else {
+      setProvinceId('');
+    }
+  }, [countryId, provinces, address]);
+
+  const handleProvinceChange = (provIdStr: string) => {
+    setProvinceId(provIdStr);
+    const match = provinces.find((p: any) => String(p.id) === provIdStr);
+    if (match) {
+      setStateRegion(match.name);
+    } else {
+      setStateRegion('');
+    }
+  };
 
   const inputClasses = "w-full h-12 px-4 rounded-full border border-slate-200 focus:border-amber-400 outline-none transition-all text-neutral-800 text-base bg-white font-normal";
   const labelClasses = "text-base font-bold text-neutral-800 mb-2 block";
@@ -1856,7 +2044,8 @@ function ShippingAddressEditInline({
         city: city,
         phone: phone,
         email: email,
-        country_id: 'NL',
+        country_id: countryId || 'NL',
+        province_id: provinceId ? Number(provinceId) : undefined,
       };
 
       const response = await fetch('/api/account/addresses', {
@@ -1910,10 +2099,10 @@ function ShippingAddressEditInline({
         <div>
           <label className={labelClasses}>{getLabel('account.country', 'Country / Region')}</label>
           <div className="relative">
-            <select value={country} onChange={(e) => setCountry(e.target.value)} className={`${inputClasses} appearance-none pr-10 bg-transparent`}>
-              <option value="United States US">United States US</option>
-              <option value="Netherlands NL">Netherlands NL</option>
-              <option value="United Kingdom UK">United Kingdom UK</option>
+            <select value={countryId} onChange={(e) => setCountryId(e.target.value)} className={`${inputClasses} appearance-none pr-10 bg-transparent`}>
+              {countriesList.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
             </select>
             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><path d="m6 9 6 6 6-6"/></svg>
@@ -1939,7 +2128,21 @@ function ShippingAddressEditInline({
           </div>
           <div>
             <label className={labelClasses}>{getLabel('account.stateOptional', 'State (optional)')}</label>
-            <input type="text" value={stateRegion} onChange={(e) => setStateRegion(e.target.value)} className={inputClasses} placeholder="NewYork" />
+            {provinces.length > 0 ? (
+              <div className="relative">
+                <select value={provinceId} onChange={(e) => handleProvinceChange(e.target.value)} className={`${inputClasses} appearance-none pr-10 bg-transparent`}>
+                  <option value="">-- Select Province --</option>
+                  {provinces.map((p: any) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+              </div>
+            ) : (
+              <input type="text" value={stateRegion} onChange={(e) => setStateRegion(e.target.value)} className={inputClasses} placeholder="NewYork" />
+            )}
           </div>
         </div>
 
@@ -2213,12 +2416,80 @@ function BillingAddressEditInline({
   const [company, setCompany] = useState(address?.company || '');
   const [email, setEmail] = useState(address?.email || ''); 
   const [phone, setPhone] = useState(address?.phone || '');
-  const [country, setCountry] = useState(address?.country || 'United States US');
+  const [countryId, setCountryId] = useState('');
+  const [countriesList, setCountriesList] = useState<any[]>([]);
+  const [provinceId, setProvinceId] = useState<number | string>('');
   const [street, setStreet] = useState(address?.address1 || '');
   const [postcode, setPostcode] = useState(address?.postcode || '');
   const [city, setCity] = useState(address?.city || '');
   const [stateRegion, setStateRegion] = useState(address?.address2 || '');
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    async function loadCountries() {
+      try {
+        const res = await fetch('/api/countries');
+        if (res.ok) {
+          const data = await res.json();
+          const list = data.countries || [];
+          setCountriesList(list);
+
+          const initialVal = address?.country || (address as any)?.country_id || 'NL';
+          const match = list.find((c: any) => 
+            c.id.toLowerCase() === initialVal.toLowerCase() ||
+            c.name.toLowerCase() === initialVal.toLowerCase()
+          );
+
+          if (match) {
+            setCountryId(match.id);
+          } else {
+            const nl = list.find((c: any) => c.id === 'NL' || c.name.toLowerCase() === 'netherlands');
+            if (nl) {
+              setCountryId(nl.id);
+            } else if (list.length > 0) {
+              setCountryId(list[0].id);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching countries:', err);
+      }
+    }
+    loadCountries();
+  }, [address]);
+
+  const selectedCountry = countriesList.find((c: any) => c.id === countryId);
+  const provinces = selectedCountry?.provinces || [];
+
+  useEffect(() => {
+    if (provinces.length > 0) {
+      const initialProvVal = address?.address2 || (address as any)?.state || '';
+      const match = provinces.find((p: any) => 
+        String(p.id) === String(initialProvVal) ||
+        p.name.toLowerCase() === String(initialProvVal).toLowerCase()
+      );
+      if (match) {
+        setProvinceId(match.id);
+        setStateRegion(match.name);
+      } else {
+        // If no match but we have provinces, set to first or empty
+        setProvinceId('');
+        setStateRegion('');
+      }
+    } else {
+      setProvinceId('');
+    }
+  }, [countryId, provinces, address]);
+
+  const handleProvinceChange = (provIdStr: string) => {
+    setProvinceId(provIdStr);
+    const match = provinces.find((p: any) => String(p.id) === provIdStr);
+    if (match) {
+      setStateRegion(match.name);
+    } else {
+      setStateRegion('');
+    }
+  };
 
   const inputClasses = "w-full h-12 px-4 rounded-full border border-slate-200 focus:border-amber-400 outline-none transition-all text-neutral-800 text-base bg-white font-normal";
   const labelClasses = "text-base font-bold text-neutral-800 mb-2 block";
@@ -2244,7 +2515,8 @@ function BillingAddressEditInline({
         city: city,
         phone: phone,
         email: email,
-        country_id: 'NL',
+        country_id: countryId || 'NL',
+        province_id: provinceId ? Number(provinceId) : undefined,
       };
 
       const response = await fetch('/api/account/addresses', {
@@ -2306,10 +2578,10 @@ function BillingAddressEditInline({
         <div>
           <label className={labelClasses}>{getLabel('account.country', 'Country / Region')}</label>
           <div className="relative">
-            <select value={country} onChange={(e) => setCountry(e.target.value)} className={`${inputClasses} appearance-none pr-10 bg-transparent`}>
-              <option value="United States US">United States US</option>
-              <option value="Netherlands NL">Netherlands NL</option>
-              <option value="United Kingdom UK">United Kingdom UK</option>
+            <select value={countryId} onChange={(e) => setCountryId(e.target.value)} className={`${inputClasses} appearance-none pr-10 bg-transparent`}>
+              {countriesList.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
             </select>
             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><path d="m6 9 6 6 6-6"/></svg>
@@ -2335,7 +2607,21 @@ function BillingAddressEditInline({
           </div>
           <div>
             <label className={labelClasses}>{getLabel('account.stateOptional', 'State (optional)')}</label>
-            <input type="text" value={stateRegion} onChange={(e) => setStateRegion(e.target.value)} className={inputClasses} placeholder="NewYork" />
+            {provinces.length > 0 ? (
+              <div className="relative">
+                <select value={provinceId} onChange={(e) => handleProvinceChange(e.target.value)} className={`${inputClasses} appearance-none pr-10 bg-transparent`}>
+                  <option value="">-- Select Province --</option>
+                  {provinces.map((p: any) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+              </div>
+            ) : (
+              <input type="text" value={stateRegion} onChange={(e) => setStateRegion(e.target.value)} className={inputClasses} placeholder="NewYork" />
+            )}
           </div>
         </div>
 
