@@ -108,7 +108,7 @@ export default async function ContactPage() {
                      </div>
                      <div className="self-stretch h-0 outline outline-1 outline-offset-[-0.50px] outline-slate-100"></div>
                      <div className="self-stretch inline-flex justify-start items-center gap-4">
-                        <div className="flex-1 p-6 bg-gray-50 rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-200 inline-flex flex-col justify-start items-center gap-4">
+                        <a href="tel:+31318590465" className="group flex-1 p-6 bg-gray-50 rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-200 inline-flex flex-col justify-start items-center gap-4 hover:shadow-md hover:outline-amber-400 transition-all cursor-pointer">
                            <div className="self-stretch flex flex-col justify-center items-start gap-4">
                               <div className="self-stretch inline-flex justify-center items-center gap-3">
                                  <div>
@@ -122,7 +122,7 @@ export default async function ContactPage() {
                                  <div className="text-center justify-start text-neutral-800 text-xl font-semibold font-['Segoe_UI'] leading-6">{t("callTitle")}</div>
                               </div>
                               <div className="self-stretch flex flex-col justify-start items-start gap-2">
-                                 <div className="self-stretch text-center justify-start text-neutral-700 text-lg font-semibold font-['Segoe_UI'] leading-6">
+                                 <div className="self-stretch text-center justify-start text-neutral-700 text-lg font-semibold font-['Segoe_UI'] leading-6 group-hover:text-amber-500 transition-colors">
                                     +31 (0)318 590 465
                                  </div>
                                  <div className="self-stretch text-center justify-start text-zinc-500 text-base font-normal font-['Segoe_UI'] leading-6">
@@ -130,8 +130,8 @@ export default async function ContactPage() {
                                  </div>
                               </div>
                            </div>
-                        </div>
-                        <div className="flex-1 p-6 bg-gray-50 rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-200 inline-flex flex-col justify-start items-center gap-4">
+                        </a>
+                        <a href="mailto:verkoop@businesslabels.nl" className="group flex-1 p-6 bg-gray-50 rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-200 inline-flex flex-col justify-start items-center gap-4 hover:shadow-md hover:outline-amber-400 transition-all cursor-pointer">
                            <div className="self-stretch inline-flex justify-center items-center gap-3">
                               <div>
                                  <svg width="19" height="15" viewBox="0 0 19 15" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -144,14 +144,14 @@ export default async function ContactPage() {
                               <div className="text-center justify-start text-neutral-800 text-xl font-semibold font-['Segoe_UI'] leading-6">{t("emailTitle")}</div>
                            </div>
                            <div className="self-stretch flex flex-col justify-start items-center gap-2">
-                              <div className="self-stretch text-center justify-start text-neutral-700 text-lg font-semibold font-['Segoe_UI'] leading-6">
+                              <div className="self-stretch text-center justify-start text-neutral-700 text-lg font-semibold font-['Segoe_UI'] leading-6 group-hover:text-amber-500 transition-colors">
                                  verkoop@businesslabels.nl
                               </div>
                               <div className="self-stretch text-center justify-start text-zinc-500 text-base font-normal font-['Segoe_UI'] leading-6">
                                  {t("emailTime")}
                               </div>
                            </div>
-                        </div>
+                        </a>
                      </div>
                   </div>
                </div>
