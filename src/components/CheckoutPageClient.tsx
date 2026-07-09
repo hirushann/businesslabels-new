@@ -231,16 +231,7 @@ function CheckoutShell({
   handleChange,
   isPending,
   isLoggedIn,
-  loginEmail,
-  loginPassword,
-  loginRemember,
-  loginErrors,
-  loginMessage,
-  isLoginPending,
-  onLoginEmailChange,
-  onLoginPasswordChange,
-  onLoginRememberChange,
-  onLoginSubmit,
+  onLoginSuccess,
   onAddressSelect,
   step,
   setStep,
@@ -256,16 +247,7 @@ function CheckoutShell({
   handleChange: (field: keyof CheckoutFormState, value: string | boolean) => void;
   isPending: boolean;
   isLoggedIn: boolean;
-  loginEmail: string;
-  loginPassword: string;
-  loginRemember: boolean;
-  loginErrors: { email?: string; password?: string };
-  loginMessage: string;
-  isLoginPending: boolean;
-  onLoginEmailChange: (value: string) => void;
-  onLoginPasswordChange: (value: string) => void;
-  onLoginRememberChange: (value: boolean) => void;
-  onLoginSubmit: () => void;
+  onLoginSuccess: () => void;
   onAddressSelect: (address: {
     street: string;
     city: string;
@@ -285,13 +267,6 @@ function CheckoutShell({
   const [isEditingRef, setIsEditingRef] = useState(false);
   const [isLoginPopupOpen, setIsLoginPopupOpen] = useState(false);
   const [isRegisterPopupOpen, setIsRegisterPopupOpen] = useState(false);
-
-  const handleLoginKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      onLoginSubmit();
-    }
-  };
 
   const breadcrumbs = [
     { label: t('checkout.title') }
@@ -1171,6 +1146,7 @@ function CheckoutShell({
           setIsLoginPopupOpen(false);
           setIsRegisterPopupOpen(true);
         }}
+        onLoginSuccess={onLoginSuccess}
       />
       <RegisterPopup
         open={isRegisterPopupOpen}
@@ -1373,12 +1349,6 @@ export default function CheckoutPageClient({
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
-  const [loginRemember, setLoginRemember] = useState(true);
-  const [loginErrors, setLoginErrors] = useState<{ email?: string; password?: string }>({});
-  const [loginMessage, setLoginMessage] = useState("");
-  const [isLoginPending, setIsLoginPending] = useState(false);
 
   const autofillCustomerDetails = useCallback(async () => {
     if (isDemoMode) return;
@@ -1503,45 +1473,6 @@ export default function CheckoutPageClient({
 
     setForm((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
-  };
-
-  const handleCheckoutLogin = async () => {
-    setIsLoginPending(true);
-    setLoginErrors({});
-    setLoginMessage("");
-
-    try {
-      const response = await fetch("/api/login", {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email: loginEmail, password: loginPassword, remember: loginRemember }),
-      });
-
-      const data = (await response.json()) as LoginResponse;
-
-      if (!response.ok) {
-        setLoginErrors({
-          email: data.errors?.email?.[0],
-          password: data.errors?.password?.[0],
-        });
-        setLoginMessage(data.message || t("checkout.loginError"));
-        return;
-      }
-
-      const user = extractUser(data, loginEmail);
-      localStorage.setItem("auth_user", JSON.stringify(user));
-      setIsLoggedIn(true);
-      setIsAutofilled(false);
-      window.dispatchEvent(new Event("auth-user-updated"));
-      toast.success(t("checkout.loginSuccess"));
-    } catch {
-      setLoginMessage(t("checkout.loginError"));
-    } finally {
-      setIsLoginPending(false);
-    }
   };
 
   const validateStep = (currentStep: number): boolean => {
@@ -1828,16 +1759,7 @@ export default function CheckoutPageClient({
       errors={errors}
       handleChange={handleChange}
       isPending={isPending}
-      loginEmail={loginEmail}
-      loginPassword={loginPassword}
-      loginRemember={loginRemember}
-      loginErrors={loginErrors}
-      loginMessage={loginMessage}
-      isLoginPending={isLoginPending}
-      onLoginEmailChange={setLoginEmail}
-      onLoginPasswordChange={setLoginPassword}
-      onLoginRememberChange={setLoginRemember}
-      onLoginSubmit={handleCheckoutLogin}
+      onLoginSuccess={() => setIsAutofilled(false)}
       step={step}
       setStep={setStep}
       onAddressSelect={(address, isShipping = false) => {

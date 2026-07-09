@@ -73,10 +73,12 @@ export default function LoginPopup({
   open,
   onOpenChange,
   onSwitchToRegister,
+  onLoginSuccess,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSwitchToRegister?: () => void;
+  onLoginSuccess?: () => void;
 }) {
   const t = useTranslations();
   const [email, setEmail] = useState('');
@@ -159,6 +161,7 @@ export default function LoginPopup({
       const user = extractUser(data, email);
       localStorage.setItem('auth_user', JSON.stringify(user));
       window.dispatchEvent(new Event('auth-user-updated'));
+      onLoginSuccess?.();
 
       toast.success(t('login.loginSuccess'));
       setFormMessage(data.message || t('login.loginSuccess'));
