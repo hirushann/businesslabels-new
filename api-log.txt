@@ -767,3 +767,6 @@ Printers: 230:Epson ColorWorks CW-C4000 BK glossy(featured:true), 229:Epson Colo
 [2026-07-03T06:17:02.853Z] PAGE RENDER - Query: 
 Printers: 230:Epson ColorWorks CW-C4000 BK glossy(featured:true), 229:Epson ColorWorks CW-C4000 MK Matte(featured:true), 234:Epson ColorWorks CW-C6500Ae(featured:true), 228:Epson ColorWorks CW-C8000 BK(featured:true), 227:Epson ColorWorks CW-C8000 MK(featured:true), 216:Epson ColorWorks CW-D6000Ae(featured:true), 218:Epson ColorWorks CW-D6500Ae(featured:true), 215:Epson ColorWorks CW-D6500Pe(featured:true), 231:Epson ColorWorks TM-C3500(featured:true), 226:Godex DT200(featured:true), 225:Godex DT200i(featured:true), 224:Godex DT230(featured:true), 214:Godex DT230+(featured:true), 223:Godex DT230i(featured:true), 238:Godex RT730i(featured:true), 212:Godex RT730i PRO(featured:true), 209:Godex ZX1200i+(featured:true), 409:Zebra 105SL(featured:true), 251:Zebra GK420D(featured:true), 297:Citizen CL-E300(featured:false), 295:Citizen CL-E321(featured:false), 294:Citizen CL-E331(featured:false), 296:Citizen CL-S300(featured:false), 289:Citizen CL-S400DT(featured:false)
 
+[2026-07-09T06:19:28.699Z] PAGE RENDER - Query: 
+Printers: 
+

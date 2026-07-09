@@ -51,18 +51,21 @@ async function getFaqPages(): Promise<FaqPageData[]> {
 
 type PostCategoryData = {
   id: number;
-  name: string;
-  slug: string;
+  name: any;
+  slug: any;
   post_count: number;
 };
 
-async function getPostCategories(): Promise<PostCategoryData[]> {
+async function getPostCategories(locale: string): Promise<PostCategoryData[]> {
   const apiBaseUrl = process.env.BBNL_API_BASE_URL;
   if (!apiBaseUrl) return [];
 
   try {
-    const url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts/categories`;
-    const res = await fetch(url, { next: { revalidate: 60 } });
+    const url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts/categories?locale=${locale}`;
+    const res = await fetch(url, { 
+      headers: { 'Accept-Language': locale, 'X-Locale': locale },
+      next: { revalidate: 60 } 
+    });
     if (!res.ok) return [];
     const json = await res.json();
     return (json?.data as PostCategoryData[]) ?? [];
@@ -88,13 +91,16 @@ type ArticleData = {
   }>;
 };
 
-async function getPopularArticles(): Promise<ArticleData[]> {
+async function getPopularArticles(locale: string): Promise<ArticleData[]> {
   const apiBaseUrl = process.env.BBNL_API_BASE_URL;
   if (!apiBaseUrl) return [];
 
   try {
-    const url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts?random=4`;
-    const res = await fetch(url, { next: { revalidate: 60 } });
+    const url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts?random=4&locale=${locale}`;
+    const res = await fetch(url, { 
+      headers: { 'Accept-Language': locale, 'X-Locale': locale },
+      next: { revalidate: 60 } 
+    });
     if (!res.ok) return [];
     const json = await res.json();
     return (json?.data as ArticleData[]) ?? [];
@@ -105,11 +111,11 @@ async function getPopularArticles(): Promise<ArticleData[]> {
 }
 
 export default async function KnowledgeBaseArchive() {
-  const t = await getTranslations();
+  const t = await getTranslations('knowledgePage');
   const locale = await getLocale();
   const faqPages = await getFaqPages();
-  const postCategories = await getPostCategories();
-  const popularArticles = await getPopularArticles();
+  const postCategories = await getPostCategories(locale);
+  const popularArticles = await getPopularArticles(locale);
 
   return (
     <div className="relative min-h-screen bg-gray-50 flex flex-col items-center overflow-hidden">
@@ -128,18 +134,18 @@ export default async function KnowledgeBaseArchive() {
               <Home className="w-4 h-4" />
             </Link>
             <div className="text-white/70 text-sm font-normal">/</div>
-            <div className="text-white text-sm font-semibold font-['Segoe_UI']">Knowledge Base</div>
+            <div className="text-white text-sm font-semibold font-['Segoe_UI']">{t('heroTitle')}</div>
           </div>
           
           <h1 className="text-white text-5xl md:text-6xl font-bold font-['Segoe_UI'] tracking-tight mb-8 mt-2">
-            Knowledge Base
+            {t('heroTitle')}
           </h1>
           
           <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16 w-full">
             <KnowledgeSearchBar apiBaseUrl={process.env.BBNL_API_BASE_URL || ""} />
             <div className="w-full lg:w-[45%]">
               <p className="!text-white text-base md:text-lg font-normal font-['Segoe_UI'] leading-relaxed">
-                Comprehensive setup guides, troubleshooting help, and smart workflows. Specifically for Epson ColorWorks printers and their compatible label materials, ensuring smooth operation and optimal printing results.
+                {t('heroDesc')}
               </p>
             </div>
           </div>
@@ -148,7 +154,7 @@ export default async function KnowledgeBaseArchive() {
 
       {/* What are you looking for? */}
       <div className="w-full max-w-[1440px] mx-auto mt-16 px-4 flex flex-col gap-8">
-        <h2 className="text-neutral-800 text-3xl font-bold font-['Segoe_UI']">What are you looking for? Click on the topic you need below.</h2>
+        <h2 className="text-neutral-800 text-3xl font-bold font-['Segoe_UI']">{t('whatLookingFor')}</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {faqPages.map((page) => {
@@ -167,17 +173,20 @@ export default async function KnowledgeBaseArchive() {
           
           <Link href="/contact-us" className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 flex flex-col items-center gap-4 transition-all group">
             <HelpCircle className="w-14 h-14 text-zinc-500 group-hover:text-amber-500 transition-colors" />
-            <h3 className="text-center text-neutral-800 text-xl font-semibold font-['Segoe_UI']">Want to know more or need help?</h3>
+            <h3 className="text-center text-neutral-800 text-xl font-semibold font-['Segoe_UI']">{t('wantToKnowMore')}</h3>
           </Link>
         </div>
       </div>
 
       {/* Article Categories */}
       <div className="w-full max-w-[1440px] mx-auto mt-24 px-4 flex flex-col gap-8">
-        <h2 className="text-neutral-800 text-3xl font-bold font-['Segoe_UI']">Article Categories</h2>
+        <h2 className="text-neutral-800 text-3xl font-bold font-['Segoe_UI']">{t('articleCategories')}</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {postCategories.map((category) => {
+            const categoryName = typeof category.name === 'object' && category.name !== null ? (category.name[locale] ?? category.name.en ?? category.name.nl) : category.name;
+            const categorySlug = typeof category.slug === 'object' && category.slug !== null ? (category.slug[locale] ?? category.slug.en ?? category.slug.nl) : category.slug;
+            
             const Icon = ({
               'printer-setup-installation': Settings,
               'materials-substrates': Layers,
@@ -188,13 +197,13 @@ export default async function KnowledgeBaseArchive() {
             } as Record<string, any>)[category.slug] || BookOpen;
 
             return (
-              <Link key={category.id} href={`/blogs?category=${category.slug}`} className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 flex items-center gap-6 transition-all group">
+              <Link key={category.id} href={`/blogs?category=${categorySlug}`} className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 flex items-center gap-6 transition-all group">
                 <div className="w-20 h-20 bg-orange-50 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform flex-shrink-0">
                   <Icon className="w-10 h-10 text-amber-500" />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <h3 className="text-neutral-800 text-xl font-semibold font-['Segoe_UI'] group-hover:text-amber-600 transition-colors line-clamp-2">{category.name}</h3>
-                  <p className="text-neutral-500">{category.post_count} {category.post_count === 1 ? 'Article' : 'Articles'}</p>
+                  <h3 className="text-neutral-800 text-xl font-semibold font-['Segoe_UI'] group-hover:text-amber-600 transition-colors line-clamp-2">{categoryName}</h3>
+                  <p className="text-neutral-500">{category.post_count} {category.post_count === 1 ? t('articleSingular') : t('articlePlural')}</p>
                 </div>
               </Link>
             );
@@ -204,11 +213,13 @@ export default async function KnowledgeBaseArchive() {
 
       {/* Popular Articles */}
       <div className="w-full max-w-[1440px] mx-auto mt-24 px-4 flex flex-col gap-8">
-        <h2 className="text-neutral-800 text-3xl font-bold font-['Segoe_UI']">Popular Articles</h2>
+        <h2 className="text-neutral-800 text-3xl font-bold font-['Segoe_UI']">{t('popularArticles')}</h2>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {popularArticles.map((article) => {
-            const categoryName = article.categories?.[0]?.name || "Article";
+            const rawCatName = article.categories?.[0]?.name || "Article";
+            const categoryName = typeof rawCatName === 'object' && rawCatName !== null ? (rawCatName[locale] ?? rawCatName.en ?? rawCatName.nl) : rawCatName;
+            
             return (
               <Link key={article.id} href={`/knowledge/${article.slug}`} className="bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 p-5 flex flex-col sm:flex-row gap-6 transition-all group">
                 <div className="w-full sm:w-48 aspect-square rounded-lg bg-slate-100 overflow-hidden flex-shrink-0">
@@ -237,26 +248,26 @@ export default async function KnowledgeBaseArchive() {
           <div className="flex flex-col gap-8">
             <div className="flex items-center gap-3 text-amber-500 font-semibold uppercase tracking-wider text-sm">
               <LinkIcon className="w-5 h-5" />
-              Troubleshooting Tree
+              {t('troubleshootingTree')}
             </div>
             <div className="flex flex-col gap-4">
-              <h2 className="text-4xl font-bold text-neutral-900">Printer not working?</h2>
+              <h2 className="text-4xl font-bold text-neutral-900">{t('printerNotWorking')}</h2>
               <p className="text-lg text-neutral-600 leading-relaxed max-w-md">
-                Answer each question to follow your specific path through the diagnosis. The tree branches based on your situation — not a generic checklist.
+                {t('troubleshootingDesc')}
               </p>
             </div>
             <div className="grid grid-cols-2 gap-6 mt-4">
               <div className="flex flex-col">
-                <span className="font-bold text-neutral-800">12 branches</span>
-                <span className="text-neutral-500 text-sm">in this tree</span>
+                <span className="font-bold text-neutral-800">{t('branchesCount')}</span>
+                <span className="text-neutral-500 text-sm">{t('inThisTree')}</span>
               </div>
               <div className="flex flex-col">
-                <span className="font-bold text-neutral-800">5 resolution paths</span>
-                <span className="text-neutral-500 text-sm">with specific steps</span>
+                <span className="font-bold text-neutral-800">{t('resolutionPathsCount')}</span>
+                <span className="text-neutral-500 text-sm">{t('withSpecificSteps')}</span>
               </div>
               <div className="flex flex-col">
-                <span className="font-bold text-neutral-800">0 dead ends</span>
-                <span className="text-neutral-500 text-sm">always reaches a fix or escalation</span>
+                <span className="font-bold text-neutral-800">{t('deadEndsCount')}</span>
+                <span className="text-neutral-500 text-sm">{t('alwaysReachesFix')}</span>
               </div>
             </div>
           </div>
@@ -266,20 +277,20 @@ export default async function KnowledgeBaseArchive() {
               <div className="flex gap-4 items-start">
                 <div className="w-8 h-8 rounded-full border-2 border-neutral-800 flex items-center justify-center font-bold text-neutral-800 flex-shrink-0">1</div>
                 <h3 className="text-2xl font-bold text-neutral-800 leading-tight">
-                  Is the printer showing up on your computer — in Device Manager or the Windows printer list?
+                  {t('treeQuestion1')}
                 </h3>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
                 <button className="py-4 px-6 bg-amber-500 hover:bg-amber-600 transition-colors rounded-full text-white font-bold shadow-lg shadow-amber-500/30 flex items-center justify-center gap-2">
-                  Yes, it's recognized
+                  {t('yesRecognized')}
                 </button>
                 <button className="py-4 px-6 border-2 border-amber-500 hover:bg-amber-50 transition-colors rounded-full text-amber-500 font-bold flex items-center justify-center gap-2">
-                  No, computer doesn't see it
+                  {t('noNotSeen')}
                 </button>
               </div>
             </div>
             <p className="text-center text-neutral-600">
-              Still stuck? <Link href="/contact-us" className="text-amber-500 font-bold hover:underline">Contact support</Link> — we can connect via TeamViewer and walk through it together.
+              {t('stillStuck')} <Link href="/contact-us" className="text-amber-500 font-bold hover:underline">{t('contactSupport')}</Link> {t('connectViaTeamViewer')}
             </p>
           </div>
         </div>
@@ -291,16 +302,16 @@ export default async function KnowledgeBaseArchive() {
         <div className="absolute inset-0 bg-black/40 z-20"></div>
         
         <div className="max-w-4xl mx-auto px-4 relative z-30 flex flex-col items-center gap-8 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight">Ready to find the perfect labels?</h2>
+          <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight">{t('readyToFind')}</h2>
           <p className="text-xl text-slate-200 font-light">
-            Join over 12,000 businesses who trust us for expert advice and high-quality products
+            {t('joinTrust')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 mt-4">
             <Link href="/product-finder" className="px-8 py-4 bg-amber-500 hover:bg-amber-600 transition-colors rounded-full text-white font-bold text-lg shadow-lg shadow-amber-500/20">
-              Product Finder
+              {t('productFinder')}
             </Link>
             <Link href="/custom-made" className="px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 transition-colors rounded-full text-white font-bold text-lg">
-              Custom-made Labels
+              {t('customMadeLabels')}
             </Link>
           </div>
         </div>

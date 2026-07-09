@@ -140,7 +140,7 @@ export default async function BlogsPage({
       <div className="size-48 left-0 top-[454px] absolute bg-amber-500/30 rounded-full blur-[132px] pointer-events-none"></div>
       <div className="size-48 right-[100px] top-[1012px] absolute bg-amber-500/30 rounded-full blur-[132px] pointer-events-none"></div>
 
-      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-0 pt-12 pb-24 flex flex-col gap-10 mt-12">
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-0 py-8 pb-24 flex flex-col gap-10">
         {/* Header Section */}
         <div className="flex flex-col justify-end items-start gap-4">
           <Breadcrumbs 

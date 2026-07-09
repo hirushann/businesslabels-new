@@ -18,8 +18,12 @@ import {
   Package
 } from 'lucide-react';
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { useTranslations } from 'next-intl';
+import { OpeningStatus } from "@/components/OpeningStatus";
 import CTABanner from "@/components/CTABanner";
+
 export default function SupportPage() {
+  const t = useTranslations('supportPage');
   return (
     <div className="relative bg-white min-h-screen font-sans overflow-hidden">
       {/* Ambient background glows */}
@@ -40,14 +44,14 @@ export default function SupportPage() {
             <div className="flex items-center gap-2 text-white/80 text-sm font-medium mb-6">
               <Home className="w-4 h-4" />
               <span>/</span>
-              <span>Support</span>
+              <span>{t('breadcrumbSupport')}</span>
             </div>
 
             <h1 className="text-4xl sm:text-5xl font-bold leading-tight mb-4 text-white">
-              Wij helpen u om uw printer werkend te krijgen.
+              {t('heroTitle')}
             </h1>
             <p className="text-lg text-slate-200 leading-relaxed max-w-3xl">
-              Ons supportteam is beschikbaar om u via verschillende kanalen te helpen, waaronder telefoongesprekken, e-mailcorrespondentie en sessies op afstand via TeamViewer. Houd er rekening mee dat we momenteel geen ondersteuning bieden via WhatsApp.
+              {t('heroDesc')}
             </p>
           </div>
         </section>
@@ -56,25 +60,25 @@ export default function SupportPage() {
         <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white border border-slate-100 rounded-2xl p-10 flex flex-col items-center text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-lg transition-all duration-300">
             <Phone className="w-14 h-14 text-neutral-500 mb-6" strokeWidth={1.5} />
-            <h3 className="text-2xl font-bold text-slate-800 mb-4">Bellen</h3>
+            <h3 className="text-2xl font-bold text-slate-800 mb-4">{t('callTitle')}</h3>
             <a href="tel:+31318590465" className="text-lg font-semibold text-slate-700 hover:text-sky-600 mb-2 transition-colors">+31 (0)318 590 465</a>
-            <p className="text-sm text-slate-400 font-medium">Ma – Vrij, 8:30 – 17:00</p>
+            <OpeningStatus />
           </div>
 
           <div className="bg-white border border-slate-100 rounded-2xl p-10 flex flex-col items-center text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-lg transition-all duration-300">
             <Mail className="w-14 h-14 text-neutral-500 mb-6" strokeWidth={1.5} />
-            <h3 className="text-2xl font-bold text-slate-800 mb-4">E-mail</h3>
+            <h3 className="text-2xl font-bold text-slate-800 mb-4">{t('emailTitle')}</h3>
             <a href="mailto:verkoop@businesslabels.nl" className="text-lg font-semibold text-slate-700 hover:text-sky-600 mb-2 transition-colors">verkoop@businesslabels.nl</a>
-            <p className="text-sm text-slate-400 font-medium">Reactie binnen 1 werkdag</p>
+            <p className="text-sm text-slate-400 font-medium">{t('emailTime')}</p>
           </div>
 
           <div className="bg-white border border-slate-100 rounded-2xl p-10 flex flex-col items-center text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-lg transition-all duration-300">
             <Monitor className="w-14 h-14 text-neutral-500 mb-6" strokeWidth={1.5} />
-            <h3 className="text-2xl font-bold text-slate-800 mb-4">Hulp op afstand</h3>
+            <h3 className="text-2xl font-bold text-slate-800 mb-4">{t('remoteSupportTitle')}</h3>
             <a href="https://download.teamviewer.com/download/TeamViewerQS.exe" target="_blank" rel="noopener noreferrer" className="text-lg font-semibold text-amber-500 hover:text-amber-600 mb-2 flex items-center gap-2 justify-center transition-colors">
-              <Download className="w-5 h-5" /> Download TeamViewer
+              <Download className="w-5 h-5" /> {t('downloadTeamViewer')}
             </a>
-            <p className="text-sm text-slate-400 font-medium">Gepland na contact</p>
+            <p className="text-sm text-slate-400 font-medium">{t('scheduledAfterContact')}</p>
           </div>
         </section>
 
@@ -116,7 +120,7 @@ export default function SupportPage() {
               </p>
             </div>
             <Link href="/knowledge" className="shrink-0 bg-[#ea7a0e] hover:bg-[#d66e0a] text-white px-6 py-3 rounded-full font-semibold transition-colors flex items-center gap-2">
-              <BookOpen className="w-5 h-5" /> Kennisbank doorzoeken
+              <BookOpen className="w-5 h-5" /> {t('searchKnowledgeBase')}
             </Link>
           </div>
         </section>
@@ -124,7 +128,7 @@ export default function SupportPage() {
         {/* SERVICES & PRICING */}
         <section className="flex flex-col gap-6 mt-4">
           <div>
-            <h2 className="text-[28px] font-extrabold text-slate-900 tracking-tight">Diensten & Tarieven</h2>
+            <h2 className="text-[28px] font-extrabold text-slate-900 tracking-tight">{t('servicesPricingTitle')}</h2>
           </div>
 
           <div className="flex flex-col gap-4">
@@ -133,19 +137,19 @@ export default function SupportPage() {
               <div className="flex-1 lg:max-w-[420px]">
                 <div className="flex items-center gap-4 mb-3">
                   <div className="w-10 h-10 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center shrink-0"><Monitor className="w-5 h-5"/></div>
-                  <h3 className="text-lg font-bold text-slate-800">Printerondersteuning op afstand</h3>
+                  <h3 className="text-lg font-bold text-slate-800">{t('remotePrinterSupportTitle')}</h3>
                 </div>
-                <p className="text-slate-500 text-sm leading-relaxed ml-14">We maken verbinding via TeamViewer en nemen in realtime de printerinstellingen, stuurprogrammaconfiguratie en aanpassingen van printprofielen met u door.</p>
+                <p className="text-slate-500 text-sm leading-relaxed ml-14">{t('remotePrinterSupportDesc')}</p>
               </div>
               <div className="hidden lg:block w-px h-16 bg-slate-100"></div>
               <div className="flex-1">
-                <div className="text-xs text-slate-400 font-medium mb-1">Ideaal voor</div>
-                <p className="text-sm text-slate-700 font-semibold leading-relaxed">Printer print niet correct, verkeerde kleuren, strepen,<br />of driverproblemen op Windows.</p>
+                <div className="text-xs text-slate-400 font-medium mb-1">{t('idealFor')}</div>
+                <p className="text-sm text-slate-700 font-semibold leading-relaxed">{t.rich('remotePrinterSupportIdeal', { br: () => <br /> })}</p>
               </div>
               <div className="hidden lg:block w-px h-16 bg-slate-100"></div>
               <div className="lg:w-48 lg:text-right w-full pt-4 lg:pt-0 border-t lg:border-t-0 border-slate-100">
                 <div className="text-2xl font-bold text-orange-500">€100 <span className="text-xl font-semibold text-orange-500/70">/ uur</span></div>
-                <div className="text-xs text-slate-400 mt-1 font-medium">per uur gefactureerd, excl. btw</div>
+                <div className="text-xs text-slate-400 mt-1 font-medium">{t('billedHourly')}</div>
               </div>
             </div>
 
@@ -154,14 +158,14 @@ export default function SupportPage() {
               <div className="flex-1 lg:max-w-[420px]">
                 <div className="flex items-center gap-4 mb-3">
                   <div className="w-10 h-10 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center shrink-0"><Settings className="w-5 h-5"/></div>
-                  <h3 className="text-lg font-bold text-slate-800">Softwareondersteuning op afstand</h3>
+                  <h3 className="text-lg font-bold text-slate-800">{t('remoteSoftwareSupportTitle')}</h3>
                 </div>
-                <p className="text-slate-500 text-sm leading-relaxed ml-14">Hulp bij labelontwerpsoftware zoals NiceLabel of BarTender — configuratie, sjablonen, printprofielen en integratie met uw systemen.</p>
+                <p className="text-slate-500 text-sm leading-relaxed ml-14">{t('remoteSoftwareSupportDesc')}</p>
               </div>
               <div className="hidden lg:block w-px h-16 bg-slate-100"></div>
               <div className="flex-1">
                 <div className="text-xs text-slate-400 font-medium mb-1">Ideaal voor</div>
-                <p className="text-sm text-slate-700 font-semibold leading-relaxed">Software maakt geen verbinding met de printer, labeluitvoer<br />komt niet overeen met het ontwerp, of nieuwe software-installatie.</p>
+                <p className="text-sm text-slate-700 font-semibold leading-relaxed">{t.rich('remoteSoftwareSupportIdeal', { br: () => <br /> })}</p>
               </div>
               <div className="hidden lg:block w-px h-16 bg-slate-100"></div>
               <div className="lg:w-48 lg:text-right w-full pt-4 lg:pt-0 border-t lg:border-t-0 border-slate-100">
@@ -175,14 +179,14 @@ export default function SupportPage() {
               <div className="flex-1 lg:max-w-[420px]">
                 <div className="flex items-center gap-4 mb-3">
                   <div className="w-10 h-10 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center shrink-0"><Printer className="w-5 h-5"/></div>
-                  <h3 className="text-lg font-bold text-slate-800">Hardware Reparatie & Diagnose</h3>
+                  <h3 className="text-lg font-bold text-slate-800">{t('hardwareRepairTitle')}</h3>
                 </div>
-                <p className="text-slate-500 text-sm leading-relaxed ml-14">Diagnose en reparatie van componenten voor gecertificeerde merken (Epson, Godex). Inclusief beoordeling en, waar mogelijk, oplossing in dezelfde sessie.</p>
+                <p className="text-slate-500 text-sm leading-relaxed ml-14">{t('hardwareRepairDesc')}</p>
               </div>
               <div className="hidden lg:block w-px h-16 bg-slate-100"></div>
               <div className="flex-1">
                 <div className="text-xs text-slate-400 font-medium mb-1">Ideaal voor</div>
-                <p className="text-sm text-slate-700 font-semibold leading-relaxed">Printer toont hardwarefouten, mechanische<br />storingen of schade aan componenten.</p>
+                <p className="text-sm text-slate-700 font-semibold leading-relaxed">{t.rich('hardwareRepairIdeal', { br: () => <br /> })}</p>
               </div>
               <div className="hidden lg:block w-px h-16 bg-slate-100"></div>
               <div className="lg:w-48 lg:text-right w-full pt-4 lg:pt-0 border-t lg:border-t-0 border-slate-100">
@@ -196,19 +200,19 @@ export default function SupportPage() {
               <div className="flex-1 lg:max-w-[420px]">
                 <div className="flex items-center gap-4 mb-3">
                   <div className="w-10 h-10 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center shrink-0"><Package className="w-5 h-5"/></div>
-                  <h3 className="text-lg font-bold text-slate-800">Service op locatie</h3>
+                  <h3 className="text-lg font-bold text-slate-800">{t('onSiteServiceTitle')}</h3>
                 </div>
-                <p className="text-slate-500 text-sm leading-relaxed ml-14">Een technicus komt langs voor problemen die niet op afstand kunnen worden opgelost — complexe opstellingen, multi-printer opstellingen of vervanging van hardware.</p>
+                <p className="text-slate-500 text-sm leading-relaxed ml-14">{t('onSiteServiceDesc')}</p>
               </div>
               <div className="hidden lg:block w-px h-16 bg-slate-100"></div>
               <div className="flex-1">
                 <div className="text-xs text-slate-400 font-medium mb-1">Ideaal voor</div>
-                <p className="text-sm text-slate-700 font-semibold leading-relaxed">Ondersteuning op afstand heeft het probleem niet opgelost, of<br />fysieke toegang tot de printer is vereist.</p>
+                <p className="text-sm text-slate-700 font-semibold leading-relaxed">{t.rich('onSiteServiceIdeal', { br: () => <br /> })}</p>
               </div>
               <div className="hidden lg:block w-px h-16 bg-slate-100"></div>
               <div className="lg:w-48 lg:text-right w-full pt-4 lg:pt-0 border-t lg:border-t-0 border-slate-100">
                 <div className="text-2xl font-bold text-orange-500">€145 <span className="text-xl font-semibold text-orange-500/70">/ uur</span></div>
-                <div className="text-xs text-slate-400 mt-1 font-medium">excl. reiskosten + btw</div>
+                <div className="text-xs text-slate-400 mt-1 font-medium">{t('exclTravelCosts')}</div>
               </div>
             </div>
 
@@ -217,19 +221,19 @@ export default function SupportPage() {
               <div className="flex-1 lg:max-w-[420px]">
                 <div className="flex items-center gap-4 mb-3">
                   <div className="w-10 h-10 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center shrink-0"><CheckCircle2 className="w-5 h-5"/></div>
-                  <h3 className="text-lg font-bold text-slate-800">Leenapparatuur</h3>
+                  <h3 className="text-lg font-bold text-slate-800">{t('loanEquipmentTitle')}</h3>
                 </div>
-                <p className="text-slate-500 text-sm leading-relaxed ml-14">Wij kunnen een tijdelijke vervangende printer leveren terwijl uw apparaat wordt gerepareerd. Beschikbaarheid en kosten zijn afhankelijk van het benodigde model.</p>
+                <p className="text-slate-500 text-sm leading-relaxed ml-14">{t('loanEquipmentDesc')}</p>
               </div>
               <div className="hidden lg:block w-px h-16 bg-slate-100"></div>
               <div className="flex-1">
                 <div className="text-xs text-slate-400 font-medium mb-1">Ideaal voor</div>
-                <p className="text-sm text-slate-700 font-semibold leading-relaxed">Uw printer is defect en de productie kan niet<br />wachten tot de reparatie is voltooid.</p>
+                <p className="text-sm text-slate-700 font-semibold leading-relaxed">{t.rich('loanEquipmentIdeal', { br: () => <br /> })}</p>
               </div>
               <div className="hidden lg:block w-px h-16 bg-slate-100"></div>
               <div className="lg:w-48 lg:text-right w-full pt-4 lg:pt-0 border-t lg:border-t-0 border-slate-100">
-                <div className="text-2xl font-bold text-slate-800">Op aanvraag</div>
-                <div className="text-xs text-slate-400 mt-1 font-medium">beschikbaarheid varieert per model</div>
+                <div className="text-2xl font-bold text-slate-800">{t('onRequest')}</div>
+                <div className="text-xs text-slate-400 mt-1 font-medium">{t('availabilityVaries')}</div>
               </div>
             </div>
 
@@ -248,7 +252,7 @@ export default function SupportPage() {
           {/* Top Row: What We Help With */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div className="order-2 lg:order-1 pr-0 lg:pr-12">
-              <h2 className="text-3xl lg:text-4xl font-extrabold text-slate-900 mb-8 tracking-tight">Waarmee wij u helpen</h2>
+              <h2 className="text-3xl lg:text-4xl font-extrabold text-slate-900 mb-8 tracking-tight">{t('whatWeHelpWithTitle')}</h2>
               <ul className="space-y-5">
                 {[
                   "Printer wordt niet herkend door computer of software",
@@ -277,7 +281,7 @@ export default function SupportPage() {
               <img src="/labelprinters.jpeg" alt="Remote support" className="w-full h-auto object-cover rounded-3xl shadow-lg aspect-[4/3] lg:aspect-auto lg:h-[400px]" />
             </div>
             <div className="order-2 lg:order-2 pl-0 lg:pl-12">
-              <h2 className="text-3xl lg:text-4xl font-extrabold text-slate-900 mb-8 tracking-tight">Hoe Hulp op afstand werkt</h2>
+              <h2 className="text-3xl lg:text-4xl font-extrabold text-slate-900 mb-8 tracking-tight">{t('howRemoteWorksTitle')}</h2>
               <div className="space-y-6">
                 {[
                   "U neemt telefonisch of per e-mail contact met ons op en omschrijft het probleem.",
@@ -295,7 +299,7 @@ export default function SupportPage() {
                 
                 <div className="pt-6">
                   <a href="https://download.teamviewer.com/download/TeamViewerQS.exe" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-orange-500 font-bold hover:text-orange-600 transition-colors text-[15px] underline underline-offset-4 decoration-orange-500/30 hover:decoration-orange-500">
-                    <Download className="w-5 h-5" /> Download TeamViewer QuickSupport
+                    <Download className="w-5 h-5" /> {t('downloadTeamViewerQuickSupport')}
                   </a>
                 </div>
               </div>
