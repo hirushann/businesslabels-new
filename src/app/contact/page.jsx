@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import Link from "next/link";
 import ReviewsSection from "@/components/ReviewsSection";
 import ContactForm from "./ContactForm";
 
@@ -99,7 +100,7 @@ export default async function ContactPage() {
                                  <div className="justify-start text-neutral-800 text-xl font-bold font-['Segoe_UI'] leading-6">{t("sampleTitle")}</div>
                               </div>
                               <div className="self-stretch justify-start">
-                                 <span className="text-amber-500 text-base font-bold font-['Segoe_UI'] underline">{t("sampleLink")}</span>
+                                 <Link href="/print-sample" className="text-amber-500 text-base font-bold font-['Segoe_UI'] underline">{t("sampleLink")}</Link>
                                  <span className="text-neutral-700 text-base font-normal font-['Segoe_UI']">{t("sampleDesc")}</span>
                               </div>
                            </div>
