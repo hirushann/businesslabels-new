@@ -48,7 +48,7 @@ export default async function CategorySubnav({
             href={hrefForCategory?.(category) ?? href}
             className="group flex flex-col items-center justify-center gap-6 rounded-xl border border-[#EDF0F4] bg-white px-4 py-6 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.1)] transition-colors hover:border-amber-400 hover:bg-amber-50 h-[280px]"
           >
-            <div className="relative flex h-40 w-40 shrink-0 items-center justify-center">
+            <div className="relative flex h-full w-full md:h-40 md:w-40 shrink-0 items-center justify-center">
               {imageUrl ? (
                 <Image
                   src={imageUrl}
