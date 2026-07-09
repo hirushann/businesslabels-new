@@ -21,6 +21,7 @@ import Image from "next/image";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import type { ReactNode } from "react";
 import LocaleLink from "@/components/LocaleLink";
+import { categoryNameFallback } from "@/lib/categories/tree";
 import { localizeProductSpecValue } from "@/lib/products/specValues";
 import { mapLaravelProductToCardData, type LaravelProduct } from "@/lib/mappings/product";
 export async function generateMetadata({
@@ -33,9 +34,10 @@ export async function generateMetadata({
   const { slug } = await params;
   const query = await searchParams;
   const baseUrl = process.env.BBNL_API_BASE_URL;
+  const t = await getTranslations();
 
   if (!slug) {
-    return { title: "Product — Businesslabels" };
+    return { title: t("pages.productMetadataTitle") };
   }
 
   const selectedType = normalizeType(query.type);
@@ -43,11 +45,14 @@ export async function generateMetadata({
   const product = await fetchProductBySlug(baseUrl, slug, selectedType, locale);
 
   if (!product) {
-    return { title: "Product Not Found — Businesslabels" };
+    return { title: t("pages.productNotFoundMetadataTitle") };
   }
 
-  const title = product.meta_title || `${product.title || product.name} — Businesslabels`;
-  const description = product.meta_description || product.description || product.excerpt || "Premium product from Businesslabels";
+  const productTranslation = getProductTranslation(product, locale);
+  const metaTitle = productTranslation?.meta_title || product.meta_title;
+  const titleSource = productTranslation?.title || product.title || product.name;
+  const title = metaTitle || (titleSource ? `${titleSource} — Businesslabels` : t("pages.productMetadataTitle"));
+  const description = productTranslation?.meta_description || product.meta_description || productTranslation?.description || product.description || productTranslation?.excerpt || product.excerpt || t("pages.productMetadataDescription");
   const mainImage = product.main_image || "";
   const productType = productRouteType(product, selectedType);
   const localeSlugs = getProductLocaleSlugs(product);
@@ -294,6 +299,7 @@ type TranslationLookup = {
   (key: string, values?: Record<string, string | number | Date>): string;
   has: (key: string) => boolean;
 };
+type BooleanLabels = { yes: string; no: string };
 
 const PRODUCT_LOCALES = ["en", "nl"] as const;
 
@@ -309,7 +315,7 @@ function normalizeType(raw: string | string[] | undefined, isGroupProduct?: bool
   return null;
 }
 
-function normalizeValue(value: unknown): string | null {
+function normalizeValue(value: unknown, booleanLabels?: BooleanLabels): string | null {
   if (value == null) {
     return null;
   }
@@ -318,7 +324,7 @@ function normalizeValue(value: unknown): string | null {
     return trimmed || null;
   }
   if (typeof value === "boolean") {
-    return value ? "Yes" : "No";
+    return value ? (booleanLabels?.yes ?? String(value)) : (booleanLabels?.no ?? String(value));
   }
   if (typeof value === "number") {
     return Number.isFinite(value) ? String(value) : null;
@@ -380,8 +386,8 @@ function normalizePackingGroup(value: ProductDetail["packing_group"]): string | 
   return numberValue.toFixed(2);
 }
 
-function normalizeDisplayValue(value: unknown): string | null {
-  const normalized = normalizeValue(value);
+function normalizeDisplayValue(value: unknown, booleanLabels?: BooleanLabels): string | null {
+  const normalized = normalizeValue(value, booleanLabels);
   if (!normalized) {
     return null;
   }
@@ -389,11 +395,11 @@ function normalizeDisplayValue(value: unknown): string | null {
   return toTitleCaseFromSlug(normalized);
 }
 
-function normalizePropertyDisplayValue(value: unknown): string | null {
+function normalizePropertyDisplayValue(value: unknown, booleanLabels?: BooleanLabels): string | null {
   if (Array.isArray(value)) {
     const values = value
       .map((item) => (item && typeof item === "object" && "title" in item ? item.title : item))
-      .map(normalizeDisplayValue)
+      .map((item) => normalizeDisplayValue(item, booleanLabels))
       .filter((item): item is string => Boolean(item));
 
     return values.length > 0 ? values.join(", ") : null;
@@ -401,18 +407,18 @@ function normalizePropertyDisplayValue(value: unknown): string | null {
 
   if (value && typeof value === "object") {
     if ("title" in value) {
-      return normalizeDisplayValue(value.title);
+      return normalizeDisplayValue(value.title, booleanLabels);
     }
 
     const values = Object.values(value)
       .map((item) => (item && typeof item === "object" && "title" in item ? item.title : item))
-      .map(normalizeDisplayValue)
+      .map((item) => normalizeDisplayValue(item, booleanLabels))
       .filter((item): item is string => Boolean(item));
 
     return values.length > 0 ? values.join(", ") : null;
   }
 
-  return normalizeDisplayValue(value);
+  return normalizeDisplayValue(value, booleanLabels);
 }
 
 function getSpecLabel(key: string, locale: "en" | "nl", t: TranslationLookup): string {
@@ -537,11 +543,11 @@ function localizedCategoryName(category: ProductCategory, locale: "en" | "nl"): 
   }
 
   const translated = translatedCategoryField(category.translations, locale, "name");
-  if (translated) return translated;
+  if (translated) return categoryNameFallback(translated, locale);
 
   const name = category.name;
   if (typeof name === "string") {
-    return normalizeDisplayValue(name);
+    return normalizeDisplayValue(categoryNameFallback(name, locale));
   }
 
   if (Array.isArray(name)) {
@@ -554,7 +560,7 @@ function localizedCategoryName(category: ProductCategory, locale: "en" | "nl"): 
 
   if (name && typeof name === "object") {
     const value = name[locale] ?? name.en ?? name.nl ?? null;
-    return normalizeDisplayValue(value);
+    return normalizeDisplayValue(typeof value === "string" ? categoryNameFallback(value, locale) : value);
   }
 
   return null;
@@ -600,18 +606,19 @@ function appendUnitIfMissing(value: string, unit: string = "mm"): string {
 
 function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t: TranslationLookup): Array<{ label: string; value: ReactNode }> {
   const missing = "-";
+  const booleanLabels = { yes: t("common.yes"), no: t("common.no") };
   const categoryNames = (product?.categories ?? [])
     .map((category) => localizedCategoryName(category, locale))
     .filter((name): name is string => Boolean(name))
     .join(", ");
   const specRows: Array<{ label: string; value: ReactNode }> = [
-    { label: "SKU", value: normalizeDisplayValue(product?.sku) || missing },
+    { label: "SKU", value: normalizeDisplayValue(product?.sku, booleanLabels) || missing },
     { label: getSpecLabel("category", locale, t), value: categoryNames || missing },
   ];
 
   const metaRows = Object.entries(product?.properties ?? {})
     .map(([key, value]): { label: string; value: ReactNode } | null => {
-      const normalizedValue = normalizePropertyDisplayValue(value);
+      const normalizedValue = normalizePropertyDisplayValue(value, booleanLabels);
       if (!normalizedValue) {
         return null;
       }
@@ -1185,7 +1192,7 @@ export default async function SingleProductPage({
                               {item.name}
                             </h5>
                             {item.sku && (
-                              <span className="text-xs text-neutral-400">SKU: {item.sku}</span>
+                              <span className="text-xs text-neutral-400">{t("product.sku", { sku: item.sku })}</span>
                             )}
                           </div>
                           {item.quantity && (

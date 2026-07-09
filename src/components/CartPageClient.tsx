@@ -3,9 +3,13 @@
 import Link from 'next/link';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { useCart, type CartItem } from '@/components/CartProvider';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import CartProductSlider from '@/components/CartProductSlider';
 import type { ProductCardData } from '@/components/ProductCard';
+import { localePath } from '@/lib/i18n/utils';
+import { useState, useEffect } from 'react';
+import { getExpectedDeliveryMessage } from '@/lib/utils/delivery';
+import { useShippingRules } from '@/hooks/useShippingRules';
 
 function formatEuro(value: number): string {
   return new Intl.NumberFormat('nl-NL', {
@@ -36,6 +40,7 @@ function warrantyTypeNameFor(item: CartItem | undefined): string | null {
 
 export default function CartPageClient({ popularProducts = [] }: { popularProducts?: ProductCardData[] }) {
   const t = useTranslations();
+  const locale = useLocale();
   const {
     items,
     totalAmount,
@@ -44,12 +49,35 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
     decrementItemQuantity,
     setItemQuantity,
   } = useCart();
+  
+  const { defaultRule } = useShippingRules();
 
   const subtotal = totalAmount;
-  const shippingThreshold = 100;
-  const shipping = subtotal >= shippingThreshold ? 0 : 15;
+  const shippingThreshold = defaultRule ? defaultRule.free_shipping_threshold : 100;
+  const shipping = subtotal >= shippingThreshold ? 0 : (defaultRule ? defaultRule.shipping_cost : 15);
   const tax = subtotal * 0.21;
   const total = subtotal + shipping;
+
+  const [countdown, setCountdown] = useState({ hours: 2, minutes: 34, formattedMinutes: '34' });
+
+  useEffect(() => {
+    const updateCountdown = () => {
+      try {
+        const { countdown } = getExpectedDeliveryMessage({
+          stock: 1,
+          delivery_dates_in_stock: 1,
+          delivery_dates_no_stock: 1
+        });
+        setCountdown(countdown);
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const breadcrumbs = [
     { label: t('cart.title') }
@@ -71,16 +99,16 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
               />
               <div className="w-full flex flex-col justify-start items-center gap-4">
                 <h2 className="w-full text-center text-[#222222] text-2xl md:text-[32px] lg:text-[40px] font-['Segoe_UI'] font-bold leading-tight md:leading-[48px]">
-                  {t('cart.emptyTitle') || 'Your Cart is Empty'}
+                  {t('cart.emptyTitle')}
                 </h2>
                 <p className="w-full max-w-[800px] text-center text-[#444444] text-lg font-['Segoe_UI'] font-normal leading-[26px]">
-                  {t('cart.emptyDescription') || 'Before proceed to checkout you must add some products to your shopping cart. You will find a lot of interesting products on our “Shop” page.'}
+                  {t('cart.emptyDescription')}
                 </p>
                 <Link
-                  href="/product"
+                  href={localePath("/product", locale)}
                   className="h-[52px] px-[30px] py-4 bg-[#F18800] hover:bg-[#e07d00] transition-colors rounded-[50px] flex justify-center items-center gap-2.5 text-center text-white text-lg font-['Segoe_UI'] font-semibold leading-6 mt-2"
                 >
-                  {t('common.browseProducts') || 'Browse Products'}
+                  {t('common.browseProducts')}
                 </Link>
               </div>
             </div>
@@ -107,7 +135,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
           <Breadcrumbs items={breadcrumbs} className="mb-8" />
           
           <h1 className="text-[32px] font-bold text-[#222222] font-['Segoe_UI'] mb-10 text-center md:text-center">
-            {t('cart.title') || 'My Cart'}
+            {t('cart.title')}
           </h1>
 
           <div className="w-full grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] items-start">
@@ -119,17 +147,17 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                 <div className="flex items-center gap-6 min-w-0">
                   <div className="w-4 shrink-0" />
                   <div className="text-base font-bold font-['Segoe_UI'] text-[#444444]">
-                    {t('cart.products') || 'Products'}
+                    {t('cart.products')}
                   </div>
                 </div>
                 <div className="text-sm font-bold font-['Segoe_UI'] text-[#444444]">
-                  {t('cart.unitPrice') || 'Unit Price'}
+                  {t('cart.unitPrice')}
                 </div>
                 <div className="text-sm font-bold font-['Segoe_UI'] text-[#444444]">
-                  {t('cart.quantity') || 'Quantity'}
+                  {t('cart.quantity')}
                 </div>
                 <div className="text-base font-bold font-['Segoe_UI'] text-[#444444] text-right">
-                  {t('common.total') || 'Total'}
+                  {t('common.total')}
                 </div>
               </div>
 
@@ -198,12 +226,12 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                         {/* Unit Price */}
                         <div className="flex flex-col justify-center items-start min-w-0 pl-7 md:pl-0">
                             <span className="text-xs font-semibold text-[#888888] uppercase tracking-wide lg:hidden mb-0.5">
-                              {t('cart.unitPrice') || 'Unit Price'}
+                              {t('cart.unitPrice')}
                             </span>
                             <div className="flex flex-wrap items-baseline gap-x-1">
                               {hasTierPrices && (
                                 <span className="text-[#444444] text-base font-normal font-['Segoe_UI']">
-                                  {t('product.fromPrice') || 'From'}
+                                  {t('product.fromPrice')}
                                 </span>
                               )}
                               <span className="text-lg md:text-xl font-bold font-['Segoe_UI'] text-[#222222]">
@@ -211,7 +239,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                               </span>
                             </div>
                             <span className="text-sm font-normal font-['Segoe_UI'] text-[#888888]">
-                              {t('product.exVat') || 'ex. VAT'}
+                              {t('product.exVat')}
                             </span>
                         </div>
 
@@ -252,7 +280,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                             {item.isLabelProduct && item.packingGroup && item.packingGroup > 0 ? (
                               <>
                                 <span className="text-xs font-normal font-['Segoe_UI'] text-[#888888]">
-                                  {t('cart.or') || 'Or'}
+                                  {t('cart.or')}
                                 </span>
                                 <button
                                   type="button"
@@ -268,13 +296,13 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                         {/* Line Total */}
                         <div className="flex flex-col justify-center items-start lg:items-end min-w-0 pl-7 md:pl-0">
                             <span className="text-xs font-semibold text-[#888888] uppercase tracking-wide lg:hidden mb-0.5">
-                              {t('common.total') || 'Total'}
+                              {t('common.total')}
                             </span>
                             <span className="text-lg md:text-xl font-bold font-['Segoe_UI'] text-[#222222]">
                               {formatEuro(linePrice(item))}
                             </span>
                             <span className="text-sm font-normal font-['Segoe_UI'] text-[#888888]">
-                              {t('product.exVat') || 'ex. VAT'}
+                              {t('product.exVat')}
                             </span>
                         </div>
                       </div>
@@ -291,9 +319,11 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                                 {t.has('cart.warrantyType') ? t('cart.warrantyType') : 'Warranty type'}: {warrantyTypeName}
                               </span>
                             ) : null}
-                            <span className="text-sm font-normal font-['Segoe_UI'] text-[#444444]">
-                              {t.has('cart.warrantyDesc') ? t('cart.warrantyDesc') : 'Protect your printer after the standard warranty expires.'}
-                            </span>
+                            {linkedWarranty.warranty?.description ? (
+                              <span className="text-sm font-normal font-['Segoe_UI'] text-[#444444]">
+                                {linkedWarranty.warranty.description}
+                              </span>
+                            ) : null}
                           </div>
                           
                           <div className="w-full flex flex-col justify-center items-start gap-1">
@@ -301,7 +331,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                               {formatEuro(linkedWarranty.price ?? 0)}
                             </span>
                             <span className="text-sm font-normal font-['Segoe_UI'] text-[#888888]">
-                              {t('product.exVat') || 'ex. VAT'}
+                              {t('product.exVat')}
                             </span>
                           </div>
 
@@ -310,7 +340,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                               count: linkedWarranty.warranty?.durationMonths
                                 ? Math.round(linkedWarranty.warranty.durationMonths / 12)
                                 : 3,
-                            }) || '3 Years'}
+                            })}
                           </div>
 
                           <div className="w-full flex flex-col justify-center items-start md:items-end gap-1.5 lg:pr-3">
@@ -318,14 +348,14 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                               {formatEuro(linkedWarranty.price ?? 0)}
                             </span>
                             <span className="text-sm font-normal font-['Segoe_UI'] text-[#888888]">
-                              {t('product.exVat') || 'ex. VAT'}
+                              {t('product.exVat')}
                             </span>
                             <button
                               type="button"
                               onClick={() => removeItem(linkedWarranty.key)}
                               className="text-[#DD3333] text-sm font-normal font-['Segoe_UI'] underline hover:text-red-700 transition-colors"
                             >
-                              {t('common.remove') || 'Remove'}
+                              {t('common.remove')}
                             </button>
                           </div>
                         </div>
@@ -343,7 +373,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
               {/* Subtotal Footer */}
               <div className="w-full border-t border-[#EDF2F7] px-6 py-4 bg-white flex justify-end items-center gap-6 rounded-b-xl">
                 <span className="text-lg font-normal font-['Segoe_UI'] text-[#222222]">
-                  {t('cart.subtotal') || 'Sub-total'}:
+                  {t('cart.subtotal')}:
                 </span>
                 <span className="text-2xl font-semibold font-['Segoe_UI'] text-[#222222]">
                   {formatEuro(totalAmount)}
@@ -356,7 +386,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
               {/* Header */}
               <div className="w-full p-4 bg-[#F7F9FA] border-b border-[#E5E7EB] text-center">
                 <h2 className="text-2xl font-bold font-['Segoe_UI'] text-[#222222] tracking-wider uppercase">
-                  {t('cart.summary') || 'Your overview'}
+                  {t.has('cart.yourOverview') ? t('cart.yourOverview') : 'YOUR OVERVIEW'}
                 </h2>
               </div>
               
@@ -379,7 +409,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                     </div>
                     <p className="text-base font-normal font-['Segoe_UI'] text-[#444444] leading-tight">
                       {t.rich('cart.orderWithin', {
-                        timeStyle: (chunks) => <span className="font-bold">{chunks}</span>,
+                        timeStyle: () => <span className="font-bold">{countdown.hours} {t.has('product.hours') ? t('product.hours') : 'hours'} {countdown.formattedMinutes} {t.has('product.minutes') ? t('product.minutes') : 'minutes'}</span>,
                         deliveryStyle: (chunks) => <span className="font-bold">{chunks}</span>,
                         shippedStyle: (chunks) => <span className="font-bold">{chunks}</span>,
                       })}
@@ -432,7 +462,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                   {/* Subtotal */}
                   <div className="flex justify-between items-center bg-white/50">
                     <span className="text-lg font-bold font-['Segoe_UI'] text-[#222222]">
-                      {t('cart.subtotal') || 'Subtotal'}
+                      {t('cart.subtotal')}
                     </span>
                     <span className="text-lg font-bold font-['Segoe_UI'] text-[#222222]">
                       {formatEuro(totalAmount)}
@@ -442,10 +472,10 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                   {/* Shipping */}
                   <div className="flex justify-between items-center bg-white/50">
                     <span className="text-lg font-bold font-['Segoe_UI'] text-[#222222]">
-                      {t('checkout.shipping') || 'Shipping'}
+                      {t('checkout.shipping')}
                     </span>
                     <span className="text-lg font-bold font-['Segoe_UI'] text-[#222222]">
-                      {shipping === 0 ? t('checkout.free') || 'Free' : formatEuro(shipping)}
+                      {shipping === 0 ? t('checkout.free') : formatEuro(shipping)}
                     </span>
                   </div>
 
@@ -453,7 +483,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                   <div className="flex justify-between items-center bg-white/50">
                     <div>
                       <span className="text-lg font-bold font-['Segoe_UI'] text-[#222222]">
-                        {t('checkout.tax') || 'VAT'}{' '}
+                        {t.has('checkout.vat') ? t('checkout.vat') : 'VAT'}{' '}
                       </span>
                       <span className="text-lg font-normal font-['Segoe_UI'] text-[#222222]">
                         (21%)
@@ -468,7 +498,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                   {discountTotal > 0 ? (
                     <div className="flex justify-between items-center bg-white/50">
                       <span className="text-lg font-bold font-['Segoe_UI'] text-[#222222]">
-                        {t('cart.discount') || 'Discount'}
+                        {t('cart.discount')}
                       </span>
                       <span className="text-lg font-semibold font-['Segoe_UI'] text-[#DD3333]">
                         -{formatEuro(discountTotal)}
@@ -481,7 +511,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                   {/* Total incl. VAT */}
                   <div className="flex justify-between items-center bg-white/50">
                     <span className="text-xl font-bold font-['Segoe_UI'] text-[#222222]">
-                      {t('cart.totalInclVat') || 'Total incl. VAT'}
+                      {t('cart.totalInclVat')}
                     </span>
                     <span className="text-xl font-semibold font-['Segoe_UI'] text-[#222222]">
                       {formatEuro(total * 1.21)}
@@ -491,11 +521,11 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
 
                 {/* Checkout CTA */}
                 <Link
-                  href="/checkout"
-                  className="w-full h-13 bg-[#F18800] hover:bg-[#d87a00] active:bg-[#c26e00] rounded-[100px] flex items-center justify-center cursor-pointer transition-colors"
+                  href={localePath("/checkout", locale)}
+                  className="w-full h-13 bg-[#F18800] hover:bg-[#d87a00] active:bg-[#c26e00] rounded-[100px] flex items-center justify-center cursor-pointer transition-colors px-6"
                 >
                   <span className="text-center text-white text-lg font-bold font-['Segoe_UI'] leading-6 whitespace-nowrap">
-                    {t('cart.checkout') || 'Proceed to checkout'}
+                    {t.has('cart.proceedToCheckout') ? t('cart.proceedToCheckout') : 'Proceed to checkout'}
                   </span>
                 </Link>
               </div>

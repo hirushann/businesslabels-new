@@ -1,11 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { normalizeLocale } from '@/lib/i18n/config';
 
 const API_BASE_URL = process.env.BBNL_API_BASE_URL;
 
+const API_MESSAGES = {
+  en: {
+    backendMissing: 'Backend API URL is not configured.',
+    invoiceAccountOnly: 'Pay by invoice within 30 days is only available for customers with an account.',
+    checkoutFailed: 'Failed to process checkout request',
+    orderNumberRequired: 'Order number is required',
+    internalServerError: 'Internal server error',
+  },
+  nl: {
+    backendMissing: 'Backend API-URL is niet geconfigureerd.',
+    invoiceAccountOnly: 'Op factuur betalen binnen 30 dagen is alleen beschikbaar voor klanten met een account.',
+    checkoutFailed: 'Afrekenen kon niet worden verwerkt',
+    orderNumberRequired: 'Bestelnummer is verplicht',
+    internalServerError: 'Interne serverfout',
+  },
+};
+
+function getRequestMessages(request: NextRequest) {
+  const locale = normalizeLocale(request.cookies.get('NEXT_LOCALE')?.value || request.headers.get('x-businesslabels-locale'));
+  return API_MESSAGES[locale];
+}
+
 export async function POST(request: NextRequest) {
+  const messages = getRequestMessages(request);
+
   if (!API_BASE_URL) {
     return NextResponse.json(
-      { error: 'Backend API URL is not configured.' },
+      { error: messages.backendMissing },
       { status: 500 }
     );
   }
@@ -18,9 +43,9 @@ export async function POST(request: NextRequest) {
     if (isGuestCheckout && body?.payment_method === 'banktransfer') {
       return NextResponse.json(
         {
-          message: 'Pay by invoice within 30 days is only available for customers with an account.',
+          message: messages.invoiceAccountOnly,
           errors: {
-            payment_method: ['Pay by invoice within 30 days is only available for customers with an account.'],
+            payment_method: [messages.invoiceAccountOnly],
           },
         },
         { status: 422 }
@@ -53,23 +78,24 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Checkout proxy error:', error);
     return NextResponse.json(
-      { error: 'Failed to process checkout request' },
+      { error: messages.checkoutFailed },
       { status: 500 }
     );
   }
 }
 
 export async function GET(request: NextRequest) {
+  const messages = getRequestMessages(request);
   const { searchParams } = new URL(request.url);
   const number = searchParams.get('number');
 
   if (!number) {
-    return NextResponse.json({ message: 'Order number is required' }, { status: 400 });
+    return NextResponse.json({ message: messages.orderNumberRequired }, { status: 400 });
   }
 
   if (!API_BASE_URL) {
     return NextResponse.json(
-      { error: 'Backend API URL is not configured.' },
+      { error: messages.backendMissing },
       { status: 500 }
     );
   }
@@ -92,7 +118,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Checkout status proxy error:', error);
     return NextResponse.json(
-      { message: 'Internal server error' },
+      { message: messages.internalServerError },
       { status: 500 }
     );
   }

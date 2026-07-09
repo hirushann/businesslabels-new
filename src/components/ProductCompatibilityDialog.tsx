@@ -238,7 +238,7 @@ export default function ProductCompatibilityDialog({
         slug: productSlug,
         type: normalizedProductType,
       });
-      const warrantyName = selectedOption.name || `${productName ?? ""} Extended Warranty`;
+      const warrantyName = selectedOption.name || `${productName ?? t("product.unnamedProduct")} ${t("product.extendedWarranty")}`;
 
       addItem(
         {
@@ -257,6 +257,7 @@ export default function ProductCompatibilityDialog({
             durationMonths: selectedOption.durationMonths,
             parentSku: productSku,
             parentName: productName,
+            description: selectedOption.description,
           },
         },
         1,
@@ -401,7 +402,7 @@ export default function ProductCompatibilityDialog({
                       </h4>
                       {productSku && (
                         <span className="text-xs text-neutral-400 font-medium">
-                          SKU: {productSku}
+                          {t("product.sku", { sku: productSku })}
                         </span>
                       )}
                       {typeof productPrice === 'number' && productPrice > 0 && (
@@ -434,16 +435,16 @@ export default function ProductCompatibilityDialog({
           open={isWarrantyDialogOpen}
           productName={productName ?? ""}
           warranty={normalizedWarranty}
-          title={t.has("product.chooseWarranty") ? t("product.chooseWarranty") : locale === "nl" ? "Breid uw garantie uit" : "Extend Your Warranty"}
-          defaultWarrantyDescription={locale === "nl" ? "Standaarddekking inbegrepen bij dit product." : "Standard coverage included with this product."}
-          downloadLabel={locale === "nl" ? "Downloaden als markdown" : "Download as markdown"}
-          groupLabel={t.has("product.chooseWarranty") ? t("product.chooseWarranty") : locale === "nl" ? "Breid uw garantie uit" : "Extend Your Warranty"}
-          warrantyDescription={locale === "nl" ? "Uitgebreide garantiedekking." : "Extended warranty coverage."}
-          additionalOptionsLabel={locale === "nl" ? "Extra opties" : "Additional Options"}
-          footerText={locale === "nl" ? "Verleng uw bestaande garantie met extra jaren. Deze opties zijn alleen beschikbaar voor printers met een actieve garantie." : "Extend your existing warranty with additional years. These options are only available for printers with an active warranty."}
-          noThanksLabel={locale === "nl" ? "Nee bedankt" : "No, thanks"}
-          addWarrantyLabel={locale === "nl" ? "Garantie toevoegen:" : "Add warranty:"}
-          selectWarrantyLabel={locale === "nl" ? "Selecteer een garantie" : "Select a Warranty"}
+          title={t("product.chooseWarranty")}
+          defaultWarrantyDescription={t("product.defaultWarrantyDescription")}
+          downloadLabel={t("product.downloadMarkdown")}
+          groupLabel={t("product.chooseWarranty")}
+          warrantyDescription={t("product.warrantyDescription")}
+          additionalOptionsLabel={t("product.additionalOptions")}
+          footerText={t("product.warrantyFooterText")}
+          noThanksLabel={t("product.noThanks")}
+          addWarrantyLabel={t("product.addWarranty")}
+          selectWarrantyLabel={t("product.selectWarranty")}
           addToCartLabel={t('product.addToCart')}
           onSkip={() => {
             warrantyDialogHandledRef.current = true;

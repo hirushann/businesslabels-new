@@ -201,10 +201,6 @@ export default function ProductPurchase({
 }: ProductPurchaseProps) {
   const { addItem, openCart, isCartOpen } = useCart();
   const t = useTranslations();
-  const getTrans = (key: string, fbEn: string, fbNl: string) => {
-    if (t.has(key)) return t(key);
-    return locale === "nl" ? fbNl : fbEn;
-  };
   const wishlist = useWishlist();
   const locale = useLocale();
 
@@ -240,12 +236,8 @@ export default function ProductPurchase({
       return t("product.rollsStack");
     }
     const isFanFold = typeof kernValue === "string" && kernValue.toLowerCase() === "fan-fold";
-    if (locale === "nl") {
-      return isFanFold ? "Stapel" : "Rollen";
-    } else {
-      return isFanFold ? "Stack" : "Rolls";
-    }
-  }, [kernValue, locale, t]);
+    return isFanFold ? t("product.stack") : t("product.rolls");
+  }, [kernValue, t]);
   const normalizedPackingGroup = packingGroup ? Number.parseInt(packingGroup, 10) : null;
   const hasPackingGroup =
     typeof normalizedPackingGroup === "number" &&
@@ -383,7 +375,7 @@ export default function ProductPurchase({
   };
 
   const displaySku = sku?.trim() ? sku : "-";
-  const displayName = name?.trim() ? name : "Product";
+  const displayName = name?.trim() ? name : t("product.unnamedProduct");
   const hasPrice = typeof price === "number" && Number.isFinite(price);
   const hasOriginalPrice =
     typeof originalPrice === "number" &&
@@ -579,7 +571,7 @@ export default function ProductPurchase({
 
     if (selectedOption && warrantyPrice > 0) {
       const parentKey = buildCartItemKey({ id: id ?? displaySku, slug, type });
-      const warrantyName = selectedOption.name || `${displayName} Extended Warranty`;
+      const warrantyName = selectedOption.name || `${displayName} ${t("product.extendedWarranty")}`;
 
       addItem(
         {
@@ -598,6 +590,7 @@ export default function ProductPurchase({
             durationMonths: selectedOption.durationMonths,
             parentSku: displaySku,
             parentName: displayName,
+            description: selectedOption.description,
           },
         },
         qtyToAdd,
@@ -665,7 +658,7 @@ export default function ProductPurchase({
       packingGroup: normalizedPackingGroup,
       allowSingulars: Boolean(allowSingulars),
     });
-    toast.success(t("product.savedToFavorite") || "Added to Favorite");
+    toast.success(t("product.savedToFavorite"));
   };
 
   const handleRemoveFromWishlist = () => {
@@ -676,7 +669,7 @@ export default function ProductPurchase({
     )?.key;
     if (key) {
       wishlist.removeItem(key);
-      toast.success(locale === "nl" ? "Verwijderd uit favorieten" : "Removed from Favorite");
+      toast.success(t("product.removedFromFavorite"));
     }
   };
 
@@ -796,10 +789,10 @@ export default function ProductPurchase({
                   {t("product.quantity")}
                 </span>
                 <span className="text-neutral-600 text-base font-bold">
-                  {locale === "nl" ? "Prijs / stuk" : "Unit Price"}
+                  {t("bulkDiscount.priceUnit")}
                 </span>
                 <span className="text-neutral-600 text-base font-bold">
-                  {locale === "nl" ? "Besparing" : "Savings"}
+                  {t("bulkDiscount.savings")}
                 </span>
               </div>
 
@@ -824,7 +817,7 @@ export default function ProductPurchase({
                       </span>
                       {isActive && (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#00A650] text-white text-[11px] font-bold tracking-wide">
-                          {locale === "nl" ? "Actief" : "Active"}
+                          {t("bulkDiscount.active")}
                         </span>
                       )}
                     </span>
@@ -1051,16 +1044,16 @@ export default function ProductPurchase({
               open={isWarrantyPopoverOpen}
               productName={displayName}
               warranty={normalizedWarranty}
-              title={getTrans("product.chooseWarranty", "Extend Your Warranty", "Breid uw garantie uit")}
-              defaultWarrantyDescription={getTrans("product.defaultWarrantyDescription", "Standard coverage included with this product.", "Standaarddekking inbegrepen bij dit product.")}
-              downloadLabel={locale === "nl" ? "Downloaden als markdown" : "Download as markdown"}
-              groupLabel={getTrans("product.chooseWarranty", "Extend Your Warranty", "Breid uw garantie uit")}
-              warrantyDescription={getTrans("product.warrantyDescription", "Extended warranty coverage.", "Uitgebreide garantiedekking.")}
-              additionalOptionsLabel={getTrans("product.additionalOptions", "Additional Options", "Extra opties")}
-              footerText={getTrans("product.warrantyFooterText", "Extend your existing warranty with additional years. These options are only available for printers with an active warranty.", "Verleng uw bestaande garantie met extra jaren. Deze opties zijn alleen beschikbaar voor printers met een actieve garantie.")}
-              noThanksLabel={getTrans("product.noThanks", "No, thanks", "Nee bedankt")}
-              addWarrantyLabel={locale === "nl" ? "Garantie toevoegen:" : "Add warranty:"}
-              selectWarrantyLabel={locale === "nl" ? "Selecteer een garantie" : "Select a Warranty"}
+              title={t("product.chooseWarranty")}
+              defaultWarrantyDescription={t("product.defaultWarrantyDescription")}
+              downloadLabel={t("product.downloadMarkdown")}
+              groupLabel={t("product.chooseWarranty")}
+              warrantyDescription={t("product.warrantyDescription")}
+              additionalOptionsLabel={t("product.additionalOptions")}
+              footerText={t("product.warrantyFooterText")}
+              noThanksLabel={t("product.noThanks")}
+              addWarrantyLabel={t("product.addWarranty")}
+              selectWarrantyLabel={t("product.selectWarranty")}
               addToCartLabel={t("product.addToCart")}
               onSkip={() => {
                 if (!pendingQuantity) return;
@@ -1095,7 +1088,9 @@ export default function ProductPurchase({
             <svg className="w-5 h-5" fill={isWishlisted ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.67} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
             </svg>
-            <span className="text-sm sm:text-base font-semibold">{isWishlisted ? (t("product.savedToFavorite") || "Added to Favorite") : (t("product.addToFavorite") || "Add to Favorite")}</span>
+            <span className="text-sm sm:text-base font-semibold">
+              {isWishlisted ? t("product.savedToFavorite") : t("product.addToFavorite")}
+            </span>
           </button>
           <Popover>
             <PopoverTrigger asChild>
@@ -1238,7 +1233,7 @@ export default function ProductPurchase({
         <div className="flex items-center justify-between gap-4">
           {/* Price info */}
           <div className="flex flex-col">
-            <span className="text-zinc-500 text-[10px] uppercase tracking-wider font-semibold leading-3">{t("common.total") || "Total"}</span>
+            <span className="text-zinc-500 text-[10px] uppercase tracking-wider font-semibold leading-3">{t("common.total")}</span>
             <div className="flex items-baseline gap-1">
               <span className="text-neutral-800 text-xl font-bold leading-7">
                 {hasPrice ? formatEuro((activeUnitPrice ?? price ?? 0) * quantity) : "-"}

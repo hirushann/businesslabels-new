@@ -389,12 +389,8 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
   const locale = useLocale();
   const productLocale = normalizeProductLocale(locale);
   const t = useTranslations();
-  const getTrans = (key: string, fbEn: string, fbNl: string) => {
-    if (t.has(key)) return t(key);
-    return locale === "nl" ? fbNl : fbEn;
-  };
   const { addItem, openCart } = useCart();
-  const productName = localizedProductField(product.translations, productLocale, ["title", "name"]) ?? product.name ?? product.title ?? "";
+  const productName = localizedProductField(product.translations, productLocale, ["title", "name"]) ?? product.name ?? product.title ?? t("product.unnamedProduct");
   const productSlug = localizedProductField(product.translations, productLocale, ["slug"]) ?? product.slug ?? slugFromApiPath(product.api_path_by_slug);
   const categoryBadge = lastCategoryLabel(product.categories, productLocale);
   const features = featureLines(product, productLocale);
@@ -416,12 +412,8 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
       return t("product.rollsStack");
     }
     const isFanFold = typeof kernValue === "string" && kernValue.toLowerCase() === "fan-fold";
-    if (locale === "nl") {
-      return isFanFold ? "Stapel" : "Rollen";
-    } else {
-      return isFanFold ? "Stack" : "Rolls";
-    }
-  }, [kernValue, locale, t]);
+    return isFanFold ? t("product.stack") : t("product.rolls");
+  }, [kernValue, t]);
 
   const normalizedPackingGroup = normalizePositiveInteger(product.packing_group);
   const addQuantity = normalizeBoolean(product.allow_singulars) ? 1 : normalizedPackingGroup ?? 1;
@@ -477,7 +469,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
 
     if (selectedOption && warrantyPrice > 0) {
       const parentKey = buildCartItemKey({ id: product.id, slug: productSlug, type: product.type });
-      const warrantyName = selectedOption.name || `${productName} Extended Warranty`;
+      const warrantyName = selectedOption.name || `${productName} ${t("product.extendedWarranty")}`;
 
       addItem(
         {
@@ -496,6 +488,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
             durationMonths: selectedOption.durationMonths,
             parentSku: product.sku,
             parentName: productName,
+            description: selectedOption.description,
           },
         },
         finalQty,
@@ -650,7 +643,9 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[#479EF5] text-sm font-semibold font-['Segoe_UI'] leading-5">SKU: {product.sku}</span>
+              <span className="text-[#479EF5] text-sm font-semibold font-['Segoe_UI'] leading-5">
+                {t("product.sku", { sku: product.sku })}
+              </span>
             </div>
             <Link href={localizedHref || "#"} className="block" onClick={onClick}>
             <h3 className="text-neutral-800 text-xl font-bold font-['Segoe_UI'] leading-6">{productName}</h3>
@@ -722,16 +717,16 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
                   open={isWarrantyPopoverOpen}
                   productName={productName}
                   warranty={normalizedWarranty}
-                  title={getTrans("product.chooseWarranty", "Extend Your Warranty", "Breid uw garantie uit")}
-                  defaultWarrantyDescription={getTrans("product.defaultWarrantyDescription", "Standard coverage included with this product.", "Standaarddekking inbegrepen bij dit product.")}
-                  downloadLabel={locale === "nl" ? "Downloaden als markdown" : "Download as markdown"}
-                  groupLabel={getTrans("product.chooseWarranty", "Extend Your Warranty", "Breid uw garantie uit")}
-                  warrantyDescription={getTrans("product.warrantyDescription", "Extended warranty coverage.", "Uitgebreide garantiedekking.")}
-                  additionalOptionsLabel={getTrans("product.additionalOptions", "Additional Options", "Extra opties")}
-                  footerText={getTrans("product.warrantyFooterText", "Extend your existing warranty with additional years. These options are only available for printers with an active warranty.", "Verleng uw bestaande garantie met extra jaren. Deze opties zijn alleen beschikbaar voor printers met een actieve garantie.")}
-                  noThanksLabel={getTrans("product.noThanks", "No, thanks", "Nee bedankt")}
-                  addWarrantyLabel={locale === "nl" ? "Garantie toevoegen:" : "Add warranty:"}
-                  selectWarrantyLabel={locale === "nl" ? "Selecteer een garantie" : "Select a Warranty"}
+                  title={t("product.chooseWarranty")}
+                  defaultWarrantyDescription={t("product.defaultWarrantyDescription")}
+                  downloadLabel={t("product.downloadMarkdown")}
+                  groupLabel={t("product.chooseWarranty")}
+                  warrantyDescription={t("product.warrantyDescription")}
+                  additionalOptionsLabel={t("product.additionalOptions")}
+                  footerText={t("product.warrantyFooterText")}
+                  noThanksLabel={t("product.noThanks")}
+                  addWarrantyLabel={t("product.addWarranty")}
+                  selectWarrantyLabel={t("product.selectWarranty")}
                   addToCartLabel={t("product.addToCart")}
                   onSkip={() => {
                     warrantyDialogHandledRef.current = true;
