@@ -5,8 +5,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 
 const DEFAULT_TIMEZONE = "Europe/Amsterdam";
-const BUSINESS_START_MINUTES = 8 * 60 + 30;
-const BUSINESS_END_MINUTES = 17 * 60;
+const BUSINESS_START_MINUTES = 8 * 60;
+const BUSINESS_END_MINUTES = 17 * 60 + 30;
 const LOOKAHEAD_DAYS = 14;
 
 type AvailabilitySlot = {
@@ -27,6 +27,7 @@ type AvailabilitySlot = {
    end_time?: string | null;
    available_start_time?: string | null;
    available_end_time?: string | null;
+   available_ent_time?: string | null;
    unavailable_start_time?: string | null;
    unavailable_end_time?: string | null;
 };
@@ -214,7 +215,7 @@ function getAvailableIntervals(slot: AvailabilitySlot | undefined, dateKey: stri
    }
 
    const explicitStart = parseTimeToMinutes(slot?.start_time ?? slot?.available_start_time);
-   const explicitEnd = parseTimeToMinutes(slot?.end_time ?? slot?.available_end_time);
+   const explicitEnd = parseTimeToMinutes(slot?.end_time ?? slot?.available_end_time ?? slot?.available_ent_time);
 
    if (explicitStart !== null && explicitEnd !== null && explicitStart < explicitEnd) {
       return [{ start: explicitStart, end: explicitEnd }];
