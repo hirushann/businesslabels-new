@@ -87,8 +87,8 @@ export default function ProductImage({
                 type="button"
                 aria-label={`Show image ${index + 1} for ${productName}`}
                 onClick={() => setSelectedImage(thumbnail)}
-                className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border bg-neutral-50 transition-all hover:border-amber-500 sm:h-24 sm:w-24 ${
-                  isSelected ? "border-amber-500 ring-1 ring-amber-500" : "border-neutral-100"
+                className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border bg-neutral-50 transition-all hover:border-brand sm:h-24 sm:w-24 ${
+                  isSelected ? "border-brand ring-1 ring-brand" : "border-neutral-100"
                 }`}
               >
                 <ResponsiveProductImage

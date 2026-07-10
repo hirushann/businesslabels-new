@@ -644,7 +644,7 @@ function RegisterContent() {
 
             <p className="mt-7 text-center text-sm font-semibold text-neutral-500">
               {t('register.alreadyHaveAccount')}{' '}
-              <Link href="/login" className="font-black text-amber-600 transition-colors hover:text-amber-700">
+              <Link href="/login" className="font-black text-brand transition-colors hover:text-amber-700">
                 {t('register.loginLink')}
               </Link>
             </p>

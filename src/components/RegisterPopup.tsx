@@ -552,7 +552,7 @@ export default function RegisterPopup({
                 value={streetAddress}
                 onChange={setStreetAddress}
                 onAddressSelect={onAddressSelect}
-                className="h-13 rounded-full border border-slate-200 bg-slate-50 pr-4 text-base font-semibold text-neutral-800 placeholder:font-medium placeholder:text-neutral-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                className="h-13 rounded-full border border-slate-200 bg-slate-50 pr-4 text-base font-semibold text-neutral-800 placeholder:font-medium placeholder:text-neutral-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
                 hasError={Boolean(errors.street_address)}
                 placeholder={t('register.addressAutocompletePlaceholder')}
               />
@@ -616,7 +616,7 @@ export default function RegisterPopup({
 
           <p className="text-xs font-medium leading-5 text-neutral-500">
             {t('register.privacyText')}{' '}
-            <Link href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="font-semibold text-amber-600 transition-colors hover:text-amber-700">
+            <Link href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="font-semibold text-brand transition-colors hover:text-amber-700">
               {t('register.privacyPolicy')}
             </Link>
             .
@@ -625,7 +625,7 @@ export default function RegisterPopup({
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="mt-1 h-13 rounded-full bg-amber-500 px-6 text-base font-black text-white shadow-lg shadow-amber-500/20 hover:bg-amber-600"
+            className="mt-1 h-13 rounded-full bg-brand px-6 text-base font-black text-white shadow-lg shadow-brand/20 hover:bg-brand-hover"
           >
             {isSubmitting ? (
               <>
@@ -646,7 +646,7 @@ export default function RegisterPopup({
                   handleOpenChange(false);
                   onSwitchToLogin();
                 }}
-                className="font-black text-amber-600 transition-colors hover:text-amber-700"
+                className="font-black text-brand transition-colors hover:text-amber-700"
               >
                 {t('register.popupLoginLink')}
               </button>
@@ -654,7 +654,7 @@ export default function RegisterPopup({
               <Link
                 href="/login"
                 onClick={() => handleOpenChange(false)}
-                className="font-black text-amber-600 transition-colors hover:text-amber-700"
+                className="font-black text-brand transition-colors hover:text-amber-700"
               >
                 {t('register.popupLoginLink')}
               </Link>
@@ -707,7 +707,7 @@ function TextInput({
           onChange={(event) => onChange(event.target.value)}
           autoComplete={autoComplete}
           aria-invalid={Boolean(error)}
-          className={`h-13 rounded-full border-slate-200 bg-slate-50 pr-4 text-base font-semibold text-neutral-800 placeholder:font-medium placeholder:text-neutral-400 focus-visible:border-amber-500 focus-visible:ring-amber-500/20 ${icon ? 'pl-12' : 'pl-5'}`}
+          className={`h-13 rounded-full border-slate-200 bg-slate-50 pr-4 text-base font-semibold text-neutral-800 placeholder:font-medium placeholder:text-neutral-400 focus-visible:border-brand focus-visible:ring-brand/20 ${icon ? 'pl-12' : 'pl-5'}`}
           placeholder={placeholder}
           disabled={disabled}
         />
@@ -750,7 +750,7 @@ function SelectInput({
           value={value}
           onChange={(event) => onChange(event.target.value)}
           aria-invalid={Boolean(error)}
-          className="h-13 w-full appearance-none rounded-full border border-slate-200 bg-slate-50 px-5 pr-12 text-base font-semibold text-neutral-800 outline-none transition-colors focus-visible:border-amber-500 focus-visible:ring-3 focus-visible:ring-amber-500/20 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:ring-3 aria-invalid:ring-destructive/20"
+          className="h-13 w-full appearance-none rounded-full border border-slate-200 bg-slate-50 px-5 pr-12 text-base font-semibold text-neutral-800 outline-none transition-colors focus-visible:border-brand focus-visible:ring-3 focus-visible:ring-brand/20 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:ring-3 aria-invalid:ring-destructive/20"
           disabled={disabled}
         >
           <option value="">{placeholder}</option>

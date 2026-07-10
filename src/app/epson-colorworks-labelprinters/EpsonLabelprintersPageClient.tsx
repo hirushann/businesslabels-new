@@ -66,7 +66,7 @@ export default function EpsonLabelprintersPageClient() {
                   href="https://businesslabels.nl/brand/epson-nl/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-8 py-4 text-sm font-bold uppercase tracking-wider text-white shadow-lg shadow-amber-500/25 transition-all hover:-translate-y-0.5 hover:bg-amber-600 hover:shadow-amber-500/40"
+                  className="inline-flex items-center gap-2 rounded-full bg-brand px-8 py-4 text-sm font-bold uppercase tracking-wider text-white shadow-lg shadow-brand/25 transition-all hover:-translate-y-0.5 hover:bg-brand-hover hover:shadow-brand/40"
                 >
                   Alle Epson producten bekijken
                 </a>
@@ -97,7 +97,7 @@ export default function EpsonLabelprintersPageClient() {
             anders. De opdeling wordt ook gebruikt voor de categorisering in de webshop van 
             Businesslabels onder de "Kleuren labelprinters". Het begrijpen van deze segmenten 
             kan het zoeken en kiezen van een passende printer een stuk eenvoudiger maken. Voor 
-            passend advies <Link href="/contact-us/" className="font-semibold text-amber-500 underline hover:text-amber-600">neem je eenvoudig contact op</Link>.
+            passend advies <Link href="/contact-us/" className="font-semibold text-brand underline hover:text-brand">neem je eenvoudig contact op</Link>.
           </p>
         </div>
       </section>
@@ -117,13 +117,13 @@ export default function EpsonLabelprintersPageClient() {
             <div className="mt-4 flex flex-col gap-3 text-sm leading-relaxed text-neutral-600">
               <p>Desktop kleuren labelprinters zijn de instapmodellen onder de Epson labelprinters.</p>
               <p>Het zijn compacte printers die eenvoudig op een bureau passen. Door o.a. deze compacte vormgeving zijn ze uiterst flexibel inzetbaar.</p>
-              <p>Naast de fysieke eigenschappen ligt de printsnelheid wat lager dan bij andere modellen. De resolutie van bijv. de <a href="https://businesslabels.nl/product/colorworks-tm-c3500/" className="font-semibold text-amber-500 hover:underline">Epson C3500</a> is afgestemd op deze basisbehoefte.</p>
+              <p>Naast de fysieke eigenschappen ligt de printsnelheid wat lager dan bij andere modellen. De resolutie van bijv. de <a href="https://businesslabels.nl/product/colorworks-tm-c3500/" className="font-semibold text-brand hover:underline">Epson C3500</a> is afgestemd op deze basisbehoefte.</p>
             </div>
           </div>
 
           {/* Midrange */}
           <div className="group flex flex-col items-center rounded-3xl bg-neutral-50 p-8 text-center ring-1 ring-neutral-100 transition-all hover:-translate-y-1 hover:bg-white hover:shadow-xl hover:ring-amber-200">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-amber-100 text-amber-600 transition-transform group-hover:scale-110">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-amber-100 text-brand transition-transform group-hover:scale-110">
               <Warehouse className="h-8 w-8" strokeWidth={2} />
             </div>
             <h3 className="mt-6 text-2xl font-black uppercase tracking-tight text-neutral-900">
@@ -131,7 +131,7 @@ export default function EpsonLabelprintersPageClient() {
             </h3>
             <div className="mt-4 flex flex-col gap-3 text-sm leading-relaxed text-neutral-600">
               <p>Midrange kleuren labelprinters vallen zoals het woord al zegt in het midden segment.</p>
-              <p>Sinds de komst van de <a href="https://businesslabels.nl/epson_c6000-series/" className="font-semibold text-amber-500 hover:underline">Epson C6000 series</a> is dit het meest verkochte segment. Ze combineren betaalbaarheid met naadloze schaalbaarheid.</p>
+              <p>Sinds de komst van de <a href="https://businesslabels.nl/epson_c6000-series/" className="font-semibold text-brand hover:underline">Epson C6000 series</a> is dit het meest verkochte segment. Ze combineren betaalbaarheid met naadloze schaalbaarheid.</p>
               <p>Midrange printers zijn in vele soorten en maten verkrijgbaar en de keuze tussen de verschillende modellen is hier het grootst.</p>
             </div>
           </div>
@@ -146,7 +146,7 @@ export default function EpsonLabelprintersPageClient() {
             </h3>
             <div className="mt-4 flex flex-col gap-3 text-sm leading-relaxed text-neutral-600">
               <p>Industriële kleuren labelprinters zijn de echte krachtpatsers onder de labelprinters.</p>
-              <p>Ze onderscheiden zich voornamelijk door een enorm hoge printsnelheid. Zo print een <a href="https://businesslabels.nl/product/colorworks-tm-c7500/" className="font-semibold text-amber-500 hover:underline">Epson C7500</a> met een snelheid van maar liefst 30cm per seconde zonder in te leveren op kwaliteit.</p>
+              <p>Ze onderscheiden zich voornamelijk door een enorm hoge printsnelheid. Zo print een <a href="https://businesslabels.nl/product/colorworks-tm-c7500/" className="font-semibold text-brand hover:underline">Epson C7500</a> met een snelheid van maar liefst 30cm per seconde zonder in te leveren op kwaliteit.</p>
               <p>De Epson labelprinters uit dit segment zijn speciaal gebouwd als onvermoeibare productie machines.</p>
             </div>
           </div>
@@ -169,7 +169,7 @@ export default function EpsonLabelprintersPageClient() {
               </div>
             </div>
             <div className="flex-1 text-center md:text-left">
-              <svg className="mx-auto mb-4 h-10 w-10 text-amber-500/50 md:mx-0" fill="currentColor" viewBox="0 0 32 32" aria-hidden="true">
+              <svg className="mx-auto mb-4 h-10 w-10 text-brand/50 md:mx-0" fill="currentColor" viewBox="0 0 32 32" aria-hidden="true">
                 <path d="M9.352 4C4.456 7.456 1 13.12 1 19.36c0 5.088 3.072 8.064 6.624 8.064 3.36 0 5.856-2.688 5.856-5.856 0-3.168-2.208-5.472-5.088-5.472-.576 0-1.344.096-1.536.192.48-3.264 3.552-7.104 6.624-9.024L9.352 4zm16.512 0c-4.8 3.456-8.256 9.12-8.256 15.36 0 5.088 3.072 8.064 6.624 8.064 3.264 0 5.856-2.688 5.856-5.856 0-3.168-2.304-5.472-5.184-5.472-.576 0-1.248.096-1.44.192.48-3.264 3.456-7.104 6.528-9.024L25.864 4z" />
               </svg>
               <p className="text-lg italic leading-relaxed text-neutral-300">
@@ -203,7 +203,7 @@ export default function EpsonLabelprintersPageClient() {
             
             {/* 1 */}
             <div className="flex flex-col">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 text-brand">
                 <PenTool className="h-6 w-6" strokeWidth={2} />
               </div>
               <h3 className="text-xl font-bold text-neutral-900">Eigen techniek</h3>
@@ -307,7 +307,7 @@ export default function EpsonLabelprintersPageClient() {
         <div className="mx-auto max-w-[1000px] px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center gap-10 md:flex-row md:items-start">
             <div className="shrink-0">
-              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-white text-amber-500 shadow-xl">
+              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-white text-brand shadow-xl">
                 <Headset className="h-10 w-10" strokeWidth={2} />
               </div>
             </div>
@@ -376,7 +376,7 @@ export default function EpsonLabelprintersPageClient() {
 
             {/* Coverplus */}
             <div className="flex flex-col items-center rounded-3xl bg-neutral-50 p-8 text-center ring-1 ring-neutral-100">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-amber-500 shadow-sm ring-1 ring-neutral-200">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-brand shadow-sm ring-1 ring-neutral-200">
                 <Award className="h-7 w-7" strokeWidth={2} />
               </div>
               <h3 className="mt-5 text-lg font-bold text-neutral-900">Epson Coverplus</h3>
@@ -403,7 +403,7 @@ export default function EpsonLabelprintersPageClient() {
           <div className="mt-8">
             <Link 
               href="/contact-us/"
-              className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-8 py-4 text-sm font-bold uppercase tracking-wider text-white shadow-lg shadow-amber-500/25 transition-all hover:-translate-y-0.5 hover:bg-amber-600 hover:shadow-amber-500/40"
+              className="inline-flex items-center gap-2 rounded-full bg-brand px-8 py-4 text-sm font-bold uppercase tracking-wider text-white shadow-lg shadow-brand/25 transition-all hover:-translate-y-0.5 hover:bg-brand-hover hover:shadow-brand/40"
             >
               Neem contact op voor advies
             </Link>

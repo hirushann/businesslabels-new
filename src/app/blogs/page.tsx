@@ -137,8 +137,8 @@ export default async function BlogsPage({
   return (
     <div className="relative bg-white min-h-screen overflow-hidden">
       {/* Glow Effects */}
-      <div className="size-48 left-0 top-[454px] absolute bg-amber-500/30 rounded-full blur-[132px] pointer-events-none"></div>
-      <div className="size-48 right-[100px] top-[1012px] absolute bg-amber-500/30 rounded-full blur-[132px] pointer-events-none"></div>
+      <div className="size-48 left-0 top-[454px] absolute bg-brand/30 rounded-full blur-[132px] pointer-events-none"></div>
+      <div className="size-48 right-[100px] top-[1012px] absolute bg-brand/30 rounded-full blur-[132px] pointer-events-none"></div>
 
       <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-0 py-8 pb-24 flex flex-col gap-10">
         {/* Header Section */}
@@ -151,10 +151,10 @@ export default async function BlogsPage({
             ]} 
           />
           <div className="flex flex-col justify-end items-start gap-4">
-            <h1 className="text-neutral-800 text-4xl md:text-5xl font-bold font-['Segoe_UI'] leading-tight">
+            <h1 className="text-neutral-800 text-4xl md:text-5xl font-bold leading-tight">
               A resource for people who print labels.
             </h1>
-            <p className="text-neutral-700 text-lg font-normal font-['Segoe_UI'] leading-6 max-w-3xl">
+            <p className="text-neutral-700 text-lg font-normal leading-6 max-w-3xl">
               Not a news feed. Practical knowledge about equipment, materials, settings, and standards — written to stay relevant.
             </p>
           </div>
@@ -167,11 +167,11 @@ export default async function BlogsPage({
             <div className="w-full flex overflow-x-auto no-scrollbar pb-3 items-start justify-between">
               <Link 
                 href="/blogs?category=all"
-                className={`px-2.5 pb-2 flex justify-center items-center gap-2.5 relative transition-colors ${activeCategory === "all" ? "text-amber-500 font-bold" : "text-neutral-700 font-semibold hover:text-amber-500"}`}
+                className={`px-2.5 pb-2 flex justify-center items-center gap-2.5 relative transition-colors ${activeCategory === "all" ? "text-brand font-bold" : "text-neutral-700 font-semibold hover:text-brand"}`}
               >
-                <span className="text-base font-['Segoe_UI'] leading-5 whitespace-nowrap">All</span>
+                <span className="text-base leading-5 whitespace-nowrap">All</span>
                 {activeCategory === "all" && (
-                  <div className="w-full h-0.5 absolute bottom-0 bg-amber-500 rounded-sm"></div>
+                  <div className="w-full h-0.5 absolute bottom-0 bg-brand rounded-sm"></div>
                 )}
               </Link>
               
@@ -179,11 +179,11 @@ export default async function BlogsPage({
                 <Link 
                   key={category.slug}
                   href={`/blogs?category=${category.slug}`}
-                  className={`px-2.5 pb-2 flex justify-center items-center gap-2.5 relative transition-colors ${activeCategory === category.slug ? "text-amber-500 font-bold" : "text-neutral-700 font-semibold hover:text-amber-500"}`}
+                  className={`px-2.5 pb-2 flex justify-center items-center gap-2.5 relative transition-colors ${activeCategory === category.slug ? "text-brand font-bold" : "text-neutral-700 font-semibold hover:text-brand"}`}
                 >
-                  <span className="text-base font-['Segoe_UI'] leading-5 whitespace-nowrap">{category.name}</span>
+                  <span className="text-base leading-5 whitespace-nowrap">{category.name}</span>
                   {activeCategory === category.slug && (
-                    <div className="w-full h-0.5 absolute bottom-0 bg-amber-500 rounded-sm"></div>
+                    <div className="w-full h-0.5 absolute bottom-0 bg-brand rounded-sm"></div>
                   )}
                 </Link>
               ))}
@@ -206,13 +206,13 @@ export default async function BlogsPage({
                 </div>
                 <div className="p-4 flex flex-col justify-between flex-1 gap-4">
                   <div className="flex flex-col justify-start items-start gap-2">
-                    <div className="text-blue-400 text-base font-semibold font-['Segoe_UI'] leading-5">
+                    <div className="text-blue-400 text-base font-semibold leading-5">
                       {post.categories?.[0]?.name || "Article"}
                     </div>
-                    <div className="text-neutral-800 text-xl font-semibold font-['Segoe_UI'] leading-6 group-hover:text-amber-600 transition-colors line-clamp-2">
+                    <div className="text-neutral-800 text-xl font-semibold leading-6 group-hover:text-brand transition-colors line-clamp-2">
                       {post.title}
                     </div>
-                    <div className="text-neutral-700 text-base font-normal font-['Segoe_UI'] leading-6 line-clamp-2">
+                    <div className="text-neutral-700 text-base font-normal leading-6 line-clamp-2">
                       {post.excerpt}
                     </div>
                   </div>
@@ -220,7 +220,7 @@ export default async function BlogsPage({
                     <div className="w-9 h-9 relative rounded-full overflow-hidden bg-slate-200">
                        <Image src="https://placehold.co/36x36" alt="Author" fill className="object-cover" />
                     </div>
-                    <div className="text-neutral-700 text-base font-semibold font-['Segoe_UI'] leading-6">
+                    <div className="text-neutral-700 text-base font-semibold leading-6">
                       {post.author?.name || "Admin"}
                     </div>
                   </div>
@@ -243,11 +243,11 @@ export default async function BlogsPage({
         {/* Knowledge Base Callout */}
         <div className="w-full p-6 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mt-8">
           <div className="inline-flex flex-col justify-start items-start gap-2">
-            <div className="text-neutral-800 text-2xl font-semibold font-['Segoe_UI'] leading-7">Looking for in-depth information?</div>
-            <div className="text-neutral-700 text-base font-normal font-['Segoe_UI'] leading-6">Step-by-step guides, troubleshooting trees, and printer manuals live in the Knowledge Base.</div>
+            <div className="text-neutral-800 text-2xl font-semibold leading-7">Looking for in-depth information?</div>
+            <div className="text-neutral-700 text-base font-normal leading-6">Step-by-step guides, troubleshooting trees, and printer manuals live in the Knowledge Base.</div>
           </div>
-          <Link href="/knowledge" className="h-12 px-6 py-2.5 bg-amber-500 hover:bg-amber-600 transition-colors rounded-[100px] flex justify-center items-center gap-2.5 flex-shrink-0">
-            <span className="text-white text-lg font-semibold font-['Segoe_UI'] leading-6">Browse Knowledge Base</span>
+          <Link href="/knowledge" className="h-12 px-6 py-2.5 bg-brand hover:bg-brand-hover transition-colors rounded-[100px] flex justify-center items-center gap-2.5 flex-shrink-0">
+            <span className="text-white text-lg font-semibold leading-6">Browse Knowledge Base</span>
           </Link>
         </div>
       </div>
@@ -256,14 +256,14 @@ export default async function BlogsPage({
       <div className="w-full py-24 bg-gray-50 flex flex-col justify-start items-center">
         <div className="w-full max-w-[1440px] px-4 sm:px-6 lg:px-0 flex flex-col gap-12">
           <div className="w-full flex justify-between items-center">
-            <h2 className="text-neutral-800 text-3xl md:text-4xl font-bold font-['Segoe_UI'] leading-tight">Recommended Products</h2>
+            <h2 className="text-neutral-800 text-3xl md:text-4xl font-bold leading-tight">Recommended Products</h2>
             <div className="hidden sm:flex justify-start items-center gap-6">
               <button className="w-12 h-12 flex justify-center items-center bg-gray-50 rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-gray-200 hover:bg-gray-200 transition-colors text-neutral-400 hover:text-neutral-600">
                 <svg className="w-6 h-6 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
-              <button className="w-12 h-12 flex justify-center items-center bg-white rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-amber-500 hover:bg-amber-50 transition-colors text-amber-500">
+              <button className="w-12 h-12 flex justify-center items-center bg-white rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-amber-500 hover:bg-brand-soft transition-colors text-brand">
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>

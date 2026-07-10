@@ -565,9 +565,9 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
             <div className="px-2.5 py-1 bg-white rounded-full flex items-center gap-1.5">
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <g clipPath="url(#clip0_757_440)">
-                  <path d="M3 9H2C1.73478 9 1.48043 8.89464 1.29289 8.70711C1.10536 8.51957 1 8.26522 1 8V5.5C1 5.23478 1.10536 4.98043 1.29289 4.79289C1.48043 4.60536 1.73478 4.5 2 4.5H10C10.2652 4.5 10.5196 4.60536 10.7071 4.79289C10.8946 4.98043 11 5.23478 11 5.5V8C11 8.26522 10.8946 8.51957 10.7071 8.70711C10.5196 8.89464 10.2652 9 10 9H9" stroke="#444444" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M3 4.5V1.5C3 1.36739 3.05268 1.24021 3.14645 1.14645C3.24021 1.05268 3.36739 1 3.5 1H8.5C8.63261 1 8.75979 1.05268 8.85355 1.14645C8.94732 1.24021 9 1.36739 9 1.5V4.5" stroke="#444444" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M8.5 7H3.5C3.22386 7 3 7.22386 3 7.5V10.5C3 10.7761 3.22386 11 3.5 11H8.5C8.77614 11 9 10.7761 9 10.5V7.5C9 7.22386 8.77614 7 8.5 7Z" stroke="#444444" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M3 9H2C1.73478 9 1.48043 8.89464 1.29289 8.70711C1.10536 8.51957 1 8.26522 1 8V5.5C1 5.23478 1.10536 4.98043 1.29289 4.79289C1.48043 4.60536 1.73478 4.5 2 4.5H10C10.2652 4.5 10.5196 4.60536 10.7071 4.79289C10.8946 4.98043 11 5.23478 11 5.5V8C11 8.26522 10.8946 8.51957 10.7071 8.70711C10.5196 8.89464 10.2652 9 10 9H9" stroke="var(--copy)" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M3 4.5V1.5C3 1.36739 3.05268 1.24021 3.14645 1.14645C3.24021 1.05268 3.36739 1 3.5 1H8.5C8.63261 1 8.75979 1.05268 8.85355 1.14645C8.94732 1.24021 9 1.36739 9 1.5V4.5" stroke="var(--copy)" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M8.5 7H3.5C3.22386 7 3 7.22386 3 7.5V10.5C3 10.7761 3.22386 11 3.5 11H8.5C8.77614 11 9 10.7761 9 10.5V7.5C9 7.22386 8.77614 7 8.5 7Z" stroke="var(--copy)" strokeLinecap="round" strokeLinejoin="round" />
                 </g>
                 <defs>
                   <clipPath id="clip0_757_440">
@@ -583,7 +583,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span className="text-neutral-700 text-xs font-normal font-['Segoe_UI'] leading-4 cursor-default">{truncated}</span>
+                          <span className="text-neutral-700 text-xs font-normal leading-4 cursor-default">{truncated}</span>
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>{categoryBadge}</p>
@@ -591,7 +591,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
                       </Tooltip>
                     </TooltipProvider>
                   ) : (
-                    <span className="text-neutral-700 text-xs font-normal font-['Segoe_UI'] leading-4">{categoryBadge}</span>
+                    <span className="text-neutral-700 text-xs font-normal leading-4">{categoryBadge}</span>
                   );
                 })()
               )}
@@ -612,11 +612,11 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
                   </clipPath>
                 </defs>
               </svg>
-              <span className="text-white text-xs font-normal font-['Segoe_UI'] leading-4">{t("product.inStock")}</span>
+              <span className="text-white text-xs font-normal leading-4">{t("product.inStock")}</span>
             </div>
           ) : (
             <div className="px-2.5 py-1 rounded-full flex items-center gap-1.5">
-              {/* <span className="text-gray-600 text-xs font-normal font-['Segoe_UI'] leading-4">Out of Stock</span> */}
+              {/* <span className="text-gray-600 text-xs font-normal leading-4">Out of Stock</span> */}
             </div>
           )}
         </div>
@@ -632,7 +632,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
         </Link>
         {product.is_label_product === true && product.packing_group != null && Number(product.packing_group) > 0 && (
           <div className="absolute bottom-4 right-4 z-10 px-2.5 py-1 bg-white rounded-full flex items-center gap-1.5 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.08)] border border-slate-100">
-            <span className="text-neutral-700 text-xs font-normal font-['Segoe_UI'] leading-4">
+            <span className="text-neutral-700 text-xs font-normal leading-4">
               {t("product.perBox", { count: product.packing_group })}
             </span>
           </div>
@@ -643,12 +643,12 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[#479EF5] text-sm font-semibold font-['Segoe_UI'] leading-5">
+              <span className="text-link text-sm font-semibold leading-5">
                 {t("product.sku", { sku: product.sku })}
               </span>
             </div>
             <Link href={localizedHref || "#"} className="block" onClick={onClick}>
-            <h3 className="text-neutral-800 text-xl font-bold font-['Segoe_UI'] leading-6">{productName}</h3>
+            <h3 className="text-neutral-800 text-xl font-bold leading-6">{productName}</h3>
             </Link>
           </div>
           {features.length > 0 && (
@@ -657,8 +657,8 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
                 <div key={`${feature}-${index}`} className="flex items-start gap-2">
                   <svg className="shrink-0 mt-1" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <g clipPath="url(#clip0_757_364)">
-                      <path d="M10.9013 4.99975C11.1296 6.1204 10.9669 7.28546 10.4402 8.30065C9.91352 9.31583 9.05473 10.1198 8.00704 10.5784C6.95935 11.037 5.7861 11.1226 4.68293 10.8209C3.57977 10.5192 2.61338 9.84845 1.94492 8.92046C1.27646 7.99247 0.946343 6.86337 1.00961 5.72144C1.07289 4.57952 1.52572 3.4938 2.29261 2.64534C3.05949 1.79688 4.09407 1.23697 5.22381 1.05898C6.35356 0.880989 7.51017 1.09568 8.50078 1.66725" stroke="#00C950" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M4.5 5.5L6 7L11 2" stroke="#00C950" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M10.9013 4.99975C11.1296 6.1204 10.9669 7.28546 10.4402 8.30065C9.91352 9.31583 9.05473 10.1198 8.00704 10.5784C6.95935 11.037 5.7861 11.1226 4.68293 10.8209C3.57977 10.5192 2.61338 9.84845 1.94492 8.92046C1.27646 7.99247 0.946343 6.86337 1.00961 5.72144C1.07289 4.57952 1.52572 3.4938 2.29261 2.64534C3.05949 1.79688 4.09407 1.23697 5.22381 1.05898C6.35356 0.880989 7.51017 1.09568 8.50078 1.66725" stroke="var(--success)" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M4.5 5.5L6 7L11 2" stroke="var(--success)" strokeLinecap="round" strokeLinejoin="round" />
                     </g>
                     <defs>
                       <clipPath id="clip0_757_364">
@@ -666,7 +666,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
                       </clipPath>
                     </defs>
                   </svg>
-                  <span className="line-clamp-2 break-words text-neutral-700 text-base font-normal font-['Segoe_UI'] leading-5">{feature}</span>
+                  <span className="line-clamp-2 break-words text-neutral-700 text-base font-normal leading-5">{feature}</span>
                 </div>
               ))}
             </div>
@@ -679,27 +679,27 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
             <div className="flex flex-col gap-2">
               <div className="flex items-end gap-2">
                 {hasBulkDiscounts && hasPrice ? (
-                  <span className="text-neutral-500 text-sm font-semibold font-['Segoe_UI'] leading-5">
+                  <span className="text-neutral-500 text-sm font-semibold leading-5">
                     {t("product.fromPrice")}
                   </span>
                 ) : null}
-                <span className="text-neutral-800 text-2xl font-extrabold font-['Segoe_UI'] leading-7">
+                <span className="text-neutral-800 text-2xl font-extrabold leading-7">
                   {hasPrice && overviewPrice !== null ? formatEuro(overviewPrice) : "-"}
                 </span>
                 {hasOriginalPrice ? (
-                  <span className="text-zinc-400 text-sm font-normal font-['Segoe_UI'] leading-5 line-through">
+                  <span className="text-zinc-400 text-sm font-normal leading-5 line-through">
                     {formatEuro(productOriginalPrice!)}
                   </span>
                 ) : null}
               </div>
-              <span className="text-zinc-500 text-xs font-normal font-['Segoe_UI'] leading-4">{t('product.priceExclTax')}</span>
+              <span className="text-zinc-500 text-xs font-normal leading-4">{t('product.priceExclTax')}</span>
             </div>
             <Dialog open={isWarrantyPopoverOpen} onOpenChange={handleWarrantyDialogOpenChange}>
               <DialogTrigger asChild>
                 <button
                   type="button"
                   onClick={handleAddToCart}
-                  className="px-4 py-2.5 bg-amber-500 rounded-full flex items-center gap-2 text-white text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors"
+                  className="px-4 py-2.5 bg-brand rounded-full flex items-center gap-2 text-white text-base font-semibold leading-6 hover:bg-brand-hover transition-colors"
                   aria-label={t(hasBulkDiscounts ? "product.selectProductQuantity" : "product.addProductToCart", { name: productName })}
                 >
                   {t(hasBulkDiscounts ? "common.select" : "common.add")}

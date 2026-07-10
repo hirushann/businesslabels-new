@@ -46,7 +46,7 @@ export default async function TermsAndConditions() {
             [&_ol]:list-decimal [&_ol]:ml-6 [&_ol]:mb-8 [&_ol_li]:mb-3 [&_ol_li]:pl-2 [&_ol]:marker:text-slate-400 [&_ol]:marker:font-semibold
             [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:mb-8 [&_ul_li]:mb-3 [&_ul_li]:pl-2 [&_ul]:marker:text-slate-400
             [&_strong]:font-semibold [&_strong]:text-slate-900
-            [&_a]:text-amber-600 [&_a]:font-medium hover:[&_a]:text-amber-700 [&_a]:transition-colors
+            [&_a]:text-brand [&_a]:font-medium hover:[&_a]:text-amber-700 [&_a]:transition-colors
           ">
             {isNl ? (
               <div dangerouslySetInnerHTML={{ __html: dutchContent }} />

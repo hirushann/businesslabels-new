@@ -135,7 +135,7 @@ export default function FavoritesPageClient() {
     <div className="relative min-h-[70vh] overflow-hidden px-4 md:px-8 lg:px-10">
       {/* Background warm orange circle glow on the left side */}
       <div
-        className="absolute top-1/2 -translate-y-1/2 -left-[300px] w-[600px] h-[600px] bg-amber-500/12 rounded-full blur-[140px] pointer-events-none z-0"
+        className="absolute top-1/2 -translate-y-1/2 -left-[300px] w-[600px] h-[600px] bg-brand/12 rounded-full blur-[140px] pointer-events-none z-0"
         aria-hidden="true"
       />
 
@@ -144,7 +144,7 @@ export default function FavoritesPageClient() {
 
       {isLoading && mergedItems.length === 0 ? (
         <div className="flex justify-center items-center py-20">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-500" />
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand" />
         </div>
       ) : mergedItems.length === 0 ? (
         <div className="flex flex-col items-center justify-center text-center py-12 md:py-16">
@@ -156,37 +156,37 @@ export default function FavoritesPageClient() {
             className="object-contain mb-8"
             unoptimized
           />
-          <h2 className="text-3xl md:text-4xl font-bold text-neutral-800 mb-4 font-['Segoe_UI']">
+          <h2 className="text-3xl md:text-4xl font-bold text-neutral-800 mb-4">
             {t('favoritesPage.emptyTitle') || 'Your Favorite list is Empty'}
           </h2>
-          <p className="text-neutral-500 text-sm md:text-base max-w-md mx-auto mb-8 font-normal leading-relaxed font-['Segoe_UI']">
+          <p className="text-neutral-500 text-sm md:text-base max-w-md mx-auto mb-8 font-normal leading-relaxed">
             {t('favoritesPage.emptyDescription') || "It seems you haven't saved any items yet. Explore our collection and add your favorites!"}
           </p>
           <Link
             href={localePath('/product', locale)}
-            className="h-12 px-10 rounded-full bg-[#E37A08] hover:bg-[#c76a07] text-white font-bold text-base transition-colors flex items-center justify-center font-['Segoe_UI']"
+            className="h-12 px-10 rounded-full bg-brand hover:bg-brand-active text-white font-bold text-base transition-colors flex items-center justify-center"
           >
             {t('favoritesPage.exploreProduct') || 'Explore Product'}
           </Link>
         </div>
       ) : (
         <>
-          <h1 className="text-3xl md:text-5xl font-extrabold text-neutral-800 text-center mb-8 md:mb-12 font-['Segoe_UI']">
+          <h1 className="text-3xl md:text-5xl font-extrabold text-neutral-800 text-center mb-8 md:mb-12">
             {t('account.favorites') || 'Favorites'}
           </h1>
-          <div className="w-full bg-white p-6 relative shadow-[2px_4px_20px_rgba(109,109,120,0.10)] overflow-hidden rounded-xl border border-[#EDF2F7]">
+          <div className="w-full bg-white p-6 relative shadow-[2px_4px_20px_rgba(109,109,120,0.10)] overflow-hidden rounded-xl border border-line">
           {/* Desktop Table */}
-          <div className="hidden md:block font-['Segoe_UI']">
+          <div className="hidden md:block">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-[#EDF2F7] text-neutral-500 text-sm font-semibold bg-white relative z-10">
-                  <th className="py-4 pl-[56px] pr-4 w-[600px] text-[#444444] text-[16px] font-semibold">{t('common.products') || 'Products'}</th>
-                  <th className="py-4 px-4 w-[200px] text-[#444444] text-[16px] font-semibold">{t('cart.price') || 'Price'}</th>
-                  <th className="py-4 px-4 w-[120px] text-[#444444] text-[16px] font-semibold">{t('account.status') || 'Status'}</th>
-                  <th className="py-4 pr-4 pl-4 w-[180px] text-[#444444] text-[16px] font-semibold">{t('account.status') || 'STATUS'}</th>
+                <tr className="border-b border-line text-neutral-500 text-sm font-semibold bg-white relative z-10">
+                  <th className="py-4 pl-[56px] pr-4 w-[600px] text-copy text-[16px] font-semibold">{t('common.products') || 'Products'}</th>
+                  <th className="py-4 px-4 w-[200px] text-copy text-[16px] font-semibold">{t('cart.price') || 'Price'}</th>
+                  <th className="py-4 px-4 w-[120px] text-copy text-[16px] font-semibold">{t('account.status') || 'Status'}</th>
+                  <th className="py-4 pr-4 pl-4 w-[180px] text-copy text-[16px] font-semibold">{t('account.status') || 'STATUS'}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#EDF2F7]">
+              <tbody className="divide-y divide-line">
                 {mergedItems.map((item) => {
                   const isSimple = !item.type || item.type === 'simple';
                   const isButtonAddToCart = isSimple && item.inStock;
@@ -201,12 +201,12 @@ export default function FavoritesPageClient() {
                           <button
                             type="button"
                             onClick={() => handleRemove(item)}
-                            className="text-[#888888] hover:text-red-500 transition-colors text-lg font-light leading-none w-4 h-4 flex items-center justify-center"
+                            className="text-subtle hover:text-red-500 transition-colors text-lg font-light leading-none w-4 h-4 flex items-center justify-center"
                             title={t('account.removeFromFavorites') || 'Remove from favorites'}
                           >
                             ✕
                           </button>
-                          <div className="w-20 h-20 shrink-0 bg-[#EDF2F7] flex items-center justify-center p-2 overflow-hidden rounded-none">
+                          <div className="w-20 h-20 shrink-0 bg-line flex items-center justify-center p-2 overflow-hidden rounded-none">
                             <Image
                               src={item.mainImage || 'https://placehold.co/100x100'}
                               alt={item.name}
@@ -219,13 +219,13 @@ export default function FavoritesPageClient() {
                           <div className="flex flex-col min-w-0 gap-2">
                             <Link
                               href={localizedHref}
-                              className="text-[#479EF5] hover:underline text-[14px] font-semibold text-left truncate"
+                              className="text-link hover:underline text-[14px] font-semibold text-left truncate"
                             >
                               {item.sku}
                             </Link>
                             <Link
                               href={localizedHref}
-                              className="text-[#222222] font-semibold hover:text-amber-500 transition-colors text-[18px] leading-[21.60px] text-left"
+                              className="text-ink font-semibold hover:text-brand transition-colors text-[18px] leading-[21.60px] text-left"
                             >
                               {item.name}
                             </Link>
@@ -237,14 +237,14 @@ export default function FavoritesPageClient() {
                       <td className="py-4 px-4">
                         <div className="flex items-end gap-2">
                           {!isButtonAddToCart && (
-                            <span className="text-[#444444] text-[16px] font-normal">
+                            <span className="text-copy text-[16px] font-normal">
                               {t('product.fromPrice') || 'From'}
                             </span>
                           )}
-                          <span className="text-[#222222] text-[20px] font-bold leading-normal">
+                          <span className="text-ink text-[20px] font-bold leading-normal">
                             {item.price ? formatEuro(item.price).replace(/\s+/g, '') : '-'}
                           </span>
-                          <span className="text-[#888888] text-[12px] font-normal pb-[2px]">
+                          <span className="text-subtle text-[12px] font-normal pb-[2px]">
                             {t('product.exVat') || 'ex. VAT'}
                           </span>
                         </div>
@@ -253,11 +253,11 @@ export default function FavoritesPageClient() {
                       {/* Status */}
                       <td className="py-4 px-4">
                         {item.inStock ? (
-                          <span className="text-[#00A63E] font-semibold text-[18px]">
+                          <span className="text-success font-semibold text-[18px]">
                             {t('product.inStock') || 'In Stock'}
                           </span>
                         ) : (
-                          <span className="text-[#DD3333] font-semibold text-[18px]">
+                          <span className="text-danger font-semibold text-[18px]">
                             {t('product.outOfStock') || 'Out of Stock'}
                           </span>
                         )}
@@ -268,7 +268,7 @@ export default function FavoritesPageClient() {
                         <button
                           type="button"
                           onClick={() => handleAction(item)}
-                          className="h-[38px] px-4 bg-[#F18800] hover:bg-[#d47800] text-white rounded-[100px] text-[16px] font-semibold transition-all inline-flex items-center justify-center gap-2 whitespace-nowrap"
+                          className="h-[38px] px-4 bg-brand hover:bg-brand-hover text-white rounded-[100px] text-[16px] font-semibold transition-all inline-flex items-center justify-center gap-2 whitespace-nowrap"
                         >
                           <span>
                             {isButtonAddToCart
@@ -292,7 +292,7 @@ export default function FavoritesPageClient() {
           </div>
 
           {/* Mobile Stacked Layout */}
-          <div className="md:hidden divide-y divide-slate-100 font-['Segoe_UI']">
+          <div className="md:hidden divide-y divide-slate-100">
             {mergedItems.map((item) => {
               const isSimple = !item.type || item.type === 'simple';
               const isButtonAddToCart = isSimple && item.inStock;
@@ -330,7 +330,7 @@ export default function FavoritesPageClient() {
                       </Link>
                       <Link
                         href={localizedHref}
-                        className="text-neutral-800 font-bold hover:text-amber-500 transition-colors text-sm line-clamp-2"
+                        className="text-neutral-800 font-bold hover:text-brand transition-colors text-sm line-clamp-2"
                       >
                         {item.name}
                       </Link>
@@ -372,7 +372,7 @@ export default function FavoritesPageClient() {
                   <button
                     type="button"
                     onClick={() => handleAction(item)}
-                    className="w-full h-10 bg-[#E37A08] hover:bg-[#c76a07] text-white rounded-full text-sm font-bold transition-all flex items-center justify-center gap-2 mt-2"
+                    className="w-full h-10 bg-brand hover:bg-brand-active text-white rounded-full text-sm font-bold transition-all flex items-center justify-center gap-2 mt-2"
                   >
                     <span>
                       {isButtonAddToCart

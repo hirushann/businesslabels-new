@@ -630,7 +630,7 @@ function MyAccountContent() {
   ];
 
   return (
-    <div className="bg-slate-50 py-6 sm:py-12 px-4 sm:px-6 font-['Segoe_UI'] relative overflow-hidden z-0">
+    <div className="bg-slate-50 py-6 sm:py-12 px-4 sm:px-6 relative overflow-hidden z-0">
       {/* Invisible file input for avatar upload */}
       <input
         type="file"
@@ -647,12 +647,12 @@ function MyAccountContent() {
         <div className="flex flex-col items-start gap-[30px] w-full">
           <div className="h-4 inline-flex justify-start items-center gap-2">
             <div>
-              <svg width="10" height="11" viewBox="0 0 10 11" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 9.9615H3.23083V6.6025C3.23083 6.43183 3.28856 6.28872 3.404 6.17317C3.51956 6.05772 3.66267 6 3.83333 6H6.16667C6.33733 6 6.48044 6.05772 6.596 6.17317C6.71144 6.28872 6.76917 6.43183 6.76917 6.6025V9.9615H9V4.064C9 4.02989 8.9925 3.99895 8.9775 3.97117C8.96261 3.94339 8.94233 3.91878 8.91667 3.89733L5.12183 1.04483C5.08761 1.01494 5.047 1 5 1C4.953 1 4.91239 1.01494 4.87817 1.04483L1.08333 3.89733C1.05767 3.91878 1.03739 3.94339 1.0225 3.97117C1.0075 3.99895 1 4.02989 1 4.064V9.9615ZM0 9.9615V4.064C0 3.87322 0.0426665 3.6925 0.128 3.52183C0.213444 3.35106 0.331444 3.21044 0.482 3.1L4.277 0.241C4.48756 0.0803337 4.72822 0 4.999 0C5.26978 0 5.51111 0.0803337 5.723 0.241L9.518 3.1C9.66856 3.21044 9.78656 3.35106 9.872 3.52183C9.95733 3.6925 10 3.87322 10 4.064V9.9615C10 10.2342 9.9015 10.469 9.7045 10.666C9.5075 10.863 9.27267 10.9615 9 10.9615H6.37183C6.20106 10.9615 6.05794 10.9037 5.9425 10.7882C5.82694 10.6727 5.76917 10.5296 5.76917 10.3588V7H4.23083V10.3588C4.23083 10.5296 4.17306 10.6727 4.0575 10.7882C3.94206 10.9037 3.79894 10.9615 3.62817 10.9615H1C0.727333 10.9615 0.4925 10.863 0.2955 10.666C0.0984999 10.469 0 10.2342 0 9.9615Z" fill="#888888"/></svg>
+              <svg width="10" height="11" viewBox="0 0 10 11" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 9.9615H3.23083V6.6025C3.23083 6.43183 3.28856 6.28872 3.404 6.17317C3.51956 6.05772 3.66267 6 3.83333 6H6.16667C6.33733 6 6.48044 6.05772 6.596 6.17317C6.71144 6.28872 6.76917 6.43183 6.76917 6.6025V9.9615H9V4.064C9 4.02989 8.9925 3.99895 8.9775 3.97117C8.96261 3.94339 8.94233 3.91878 8.91667 3.89733L5.12183 1.04483C5.08761 1.01494 5.047 1 5 1C4.953 1 4.91239 1.01494 4.87817 1.04483L1.08333 3.89733C1.05767 3.91878 1.03739 3.94339 1.0225 3.97117C1.0075 3.99895 1 4.02989 1 4.064V9.9615ZM0 9.9615V4.064C0 3.87322 0.0426665 3.6925 0.128 3.52183C0.213444 3.35106 0.331444 3.21044 0.482 3.1L4.277 0.241C4.48756 0.0803337 4.72822 0 4.999 0C5.26978 0 5.51111 0.0803337 5.723 0.241L9.518 3.1C9.66856 3.21044 9.78656 3.35106 9.872 3.52183C9.95733 3.6925 10 3.87322 10 4.064V9.9615C10 10.2342 9.9015 10.469 9.7045 10.666C9.5075 10.863 9.27267 10.9615 9 10.9615H6.37183C6.20106 10.9615 6.05794 10.9037 5.9425 10.7882C5.82694 10.6727 5.76917 10.5296 5.76917 10.3588V7H4.23083V10.3588C4.23083 10.5296 4.17306 10.6727 4.0575 10.7882C3.94206 10.9037 3.79894 10.9615 3.62817 10.9615H1C0.727333 10.9615 0.4925 10.863 0.2955 10.666C0.0984999 10.469 0 10.2342 0 9.9615Z" fill="var(--subtle)"/></svg>
             </div>
-            <div className="justify-start text-zinc-500 text-sm font-normal font-['Segoe_UI'] leading-5">/</div>
-            <div className="justify-start text-neutral-700 text-sm font-bold font-['Segoe_UI'] leading-5">{t('account.myAccount')}</div>
+            <div className="justify-start text-zinc-500 text-sm font-normal leading-5">/</div>
+            <div className="justify-start text-neutral-700 text-sm font-bold leading-5">{t('account.myAccount')}</div>
           </div>
-          <div className="text-center w-full text-neutral-800 text-4xl font-bold font-['Segoe_UI'] leading-[48px]">{t('account.myAccount')}</div>
+          <div className="text-center w-full text-neutral-800 text-4xl font-bold leading-[48px]">{t('account.myAccount')}</div>
         </div>
 
         {/* Main Card Wrapper */}
@@ -687,19 +687,19 @@ function MyAccountContent() {
                     )}
                   </div>
                 </div>
-                <div className="justify-start text-[#222222] text-[28px] font-bold font-['Segoe_UI'] leading-8 text-center">{displayName}</div>
+                <div className="justify-start text-ink text-[28px] font-bold leading-8 text-center">{displayName}</div>
               </div>
               
-              <div className="self-stretch border-t border-[#EDF2F7]"></div>
+              <div className="self-stretch border-t border-line"></div>
               
               <div className="self-stretch flex flex-col justify-center items-start gap-1">
                 {sidebarItems.map(item => (
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id as Tab)}
-                    className={`self-stretch py-3 inline-flex justify-start items-center gap-1.5 ${activeTab === item.id ? 'border-b border-[#F18800]' : ''}`}
+                    className={`self-stretch py-3 inline-flex justify-start items-center gap-1.5 ${activeTab === item.id ? 'border-b border-brand' : ''}`}
                   >
-                    <div className={`text-center justify-start text-[18px] font-bold font-['Segoe_UI'] leading-6 ${activeTab === item.id ? 'text-[#F18800]' : 'text-[#444444]'}`}>
+                    <div className={`text-center justify-start text-[18px] font-bold leading-6 ${activeTab === item.id ? 'text-brand' : 'text-copy'}`}>
                       {item.label}
                     </div>
                   </button>
@@ -709,7 +709,7 @@ function MyAccountContent() {
                   disabled={isLoggingOut}
                   className="self-stretch py-3 inline-flex justify-start items-center gap-1.5"
                 >
-                  <div className="text-center justify-start text-red-600 text-lg font-bold font-['Segoe_UI'] leading-6">
+                  <div className="text-center justify-start text-red-600 text-lg font-bold leading-6">
                     {isLoggingOut ? t('account.loggingOut') : 'Logout'}
                   </div>
                 </button>
@@ -745,10 +745,10 @@ function MyAccountContent() {
                 <div className="self-stretch flex flex-col justify-start items-start gap-8">
                   <div className="self-stretch flex flex-col justify-start items-center gap-6">
                     <div className="self-stretch flex flex-col justify-start items-start gap-2">
-                      <div className="self-stretch text-center justify-start text-neutral-800 text-3xl font-semibold font-['Segoe_UI'] leading-10">
+                      <div className="self-stretch text-center justify-start text-neutral-800 text-3xl font-semibold leading-10">
                         {t('account.confirmLogout') || 'Confirm Logout'}
                       </div>
-                      <div className="self-stretch text-center justify-start text-neutral-700 text-lg font-normal font-['Segoe_UI'] leading-7">
+                      <div className="self-stretch text-center justify-start text-neutral-700 text-lg font-normal leading-7">
                         {t('account.confirmLogoutDesc') || 'Are you sure to log out?'}
                       </div>
                     </div>
@@ -759,14 +759,14 @@ function MyAccountContent() {
                       disabled={isLoggingOut}
                       className="flex-1 h-12 px-4 py-2.5 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-black/10 flex justify-center items-center gap-2 hover:bg-slate-50 transition-colors"
                     >
-                      <div className="text-center justify-start text-neutral-800 text-lg font-semibold font-['Segoe_UI'] leading-6">{t('account.cancel') || 'Cancel'}</div>
+                      <div className="text-center justify-start text-neutral-800 text-lg font-semibold leading-6">{t('account.cancel') || 'Cancel'}</div>
                     </button>
                     <button 
                       onClick={handleLogout} 
                       disabled={isLoggingOut}
                       className="flex-1 h-12 px-7 py-4 bg-red-600 rounded-[50px] flex justify-center items-center gap-2.5 hover:bg-red-700 transition-colors"
                     >
-                      <div className="text-center justify-start text-white text-lg font-normal font-['Segoe_UI'] leading-6">
+                      <div className="text-center justify-start text-white text-lg font-normal leading-6">
                         {isLoggingOut ? (t('account.loggingOut') || 'Logging Out...') : (t('account.yesLogout') || 'Yes, log Out')}
                       </div>
                     </button>
@@ -824,17 +824,17 @@ function DashboardView({ setActiveTab, user }: { setActiveTab: (tab: Tab) => voi
         <p className="text-neutral-600 text-lg leading-relaxed max-w-2xl">
           {t.rich('account.dashboardDesc', {
             ordersLink: (chunks) => (
-              <button onClick={() => setActiveTab('orders')} className="text-amber-500 font-bold hover:underline">
+              <button onClick={() => setActiveTab('orders')} className="text-brand font-bold hover:underline">
                 {chunks}
               </button>
             ),
             printersLink: (chunks) => (
-              <button onClick={() => setActiveTab('printers')} className="text-amber-500 font-bold hover:underline">
+              <button onClick={() => setActiveTab('printers')} className="text-brand font-bold hover:underline">
                 {chunks}
               </button>
             ),
             favouritesLink: (chunks) => (
-              <button onClick={() => setActiveTab('favourites')} className="text-amber-500 font-bold hover:underline">
+              <button onClick={() => setActiveTab('favourites')} className="text-brand font-bold hover:underline">
                 {chunks}
               </button>
             ),
@@ -844,7 +844,7 @@ function DashboardView({ setActiveTab, user }: { setActiveTab: (tab: Tab) => voi
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {stats.map((stat) => (
-          <div key={stat.label} className="p-8 rounded-3xl bg-slate-50 border border-slate-100 flex flex-col gap-3 group hover:border-amber-200 transition-all cursor-default">
+          <div key={stat.label} className="p-8 rounded-3xl bg-slate-50 border border-slate-100 flex flex-col gap-3 group hover:border-brand/30 transition-all cursor-default">
             <span className="text-neutral-500 text-sm font-bold uppercase tracking-widest">{stat.label}</span>
             <div className="flex flex-col">
               <span className="text-3xl font-black text-neutral-800">{stat.value}</span>
@@ -860,7 +860,7 @@ function DashboardView({ setActiveTab, user }: { setActiveTab: (tab: Tab) => voi
           <h3 className="text-xl font-black text-neutral-800 tracking-tight">{t('account.recentOrders')}</h3>
           <button 
             onClick={() => setActiveTab('orders')}
-            className="text-amber-500 font-black text-xs uppercase tracking-widest hover:underline"
+            className="text-brand font-black text-xs uppercase tracking-widest hover:underline"
           >
             {t('account.viewAllOrders')}
           </button>
@@ -877,9 +877,9 @@ function DashboardView({ setActiveTab, user }: { setActiveTab: (tab: Tab) => voi
         ) : (
           <div className="flex flex-col gap-3">
             {orders.slice(0, 3).map((order) => (
-              <div key={order.id} className="group p-5 rounded-[24px] bg-white border border-slate-100 hover:border-amber-200 hover:shadow-lg hover:shadow-amber-500/5 transition-all flex items-center justify-between">
+              <div key={order.id} className="group p-5 rounded-[24px] bg-white border border-slate-100 hover:border-brand/30 hover:shadow-lg hover:shadow-brand/5 transition-all flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="size-12 rounded-2xl bg-slate-50 flex items-center justify-center text-neutral-400 group-hover:bg-amber-50 group-hover:text-amber-500 transition-colors">
+                  <div className="size-12 rounded-2xl bg-slate-50 flex items-center justify-center text-neutral-400 group-hover:bg-brand-soft group-hover:text-brand transition-colors">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/>
                     </svg>
@@ -902,7 +902,7 @@ function DashboardView({ setActiveTab, user }: { setActiveTab: (tab: Tab) => voi
                       // But for simplicity, we just link to orders tab
                       setActiveTab('orders');
                     }}
-                    className="p-2.5 rounded-full bg-slate-50 text-neutral-400 hover:bg-amber-500 hover:text-white transition-all"
+                    className="p-2.5 rounded-full bg-slate-50 text-neutral-400 hover:bg-brand hover:text-white transition-all"
                   >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                       <path d="m9 18 6-6-6-6"/>
@@ -917,7 +917,7 @@ function DashboardView({ setActiveTab, user }: { setActiveTab: (tab: Tab) => voi
 
       <div className="mt-4 p-6 sm:p-10 rounded-2xl sm:rounded-[40px] bg-sky-950 text-white relative overflow-hidden group">
         <div className="relative z-10 flex flex-col gap-6 max-w-lg">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500 rounded-full text-[10px] font-black uppercase tracking-widest w-fit">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand rounded-full text-[10px] font-black uppercase tracking-widest w-fit">
             {t('account.expertSupportBadge')}
           </div>
           <div className="flex flex-col gap-2">
@@ -926,7 +926,7 @@ function DashboardView({ setActiveTab, user }: { setActiveTab: (tab: Tab) => voi
               {t('account.expertSupportDesc')}
             </p>
           </div>
-          <Link href="/support" className="inline-flex h-12 items-center justify-center rounded-full bg-white px-8 text-sm font-black text-sky-950 hover:bg-amber-500 hover:text-white transition-all w-fit shadow-xl shadow-black/10">
+          <Link href="/support" className="inline-flex h-12 items-center justify-center rounded-full bg-white px-8 text-sm font-black text-sky-950 hover:bg-brand hover:text-white transition-all w-fit shadow-xl shadow-black/10">
             {t('account.talkToExpert')}
           </Link>
         </div>
@@ -1024,7 +1024,7 @@ function OrdersView() {
 
   return (
     <div className="flex-1 inline-flex flex-col justify-start items-start gap-6 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="justify-start text-neutral-800 text-3xl font-bold font-['Segoe_UI'] leading-8">{t('account.orderHistory') || 'Order History'}</div>
+      <div className="justify-start text-neutral-800 text-3xl font-bold leading-8">{t('account.orderHistory') || 'Order History'}</div>
 
       {isLoading ? (
         <OrderSkeleton />
@@ -1051,7 +1051,7 @@ function OrdersView() {
           <p className="mt-2 font-medium text-neutral-400 max-w-sm mx-auto">{t('account.noOrdersFoundDesc')}</p>
           <Link
             href="/product"
-            className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-sky-950 px-10 text-sm font-black text-white transition-all hover:bg-amber-500 hover:shadow-xl hover:shadow-amber-500/20"
+            className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-sky-950 px-10 text-sm font-black text-white transition-all hover:bg-brand hover:shadow-xl hover:shadow-brand/20"
           >
             {t('account.continueShopping')}
           </Link>
@@ -1062,11 +1062,11 @@ function OrdersView() {
           
           <div className="self-stretch inline-flex justify-start items-center gap-6 px-8 relative z-10 h-4 w-full">
             <div className="w-4 shrink-0"></div>
-            <div className="flex-1 justify-start text-[#444444] text-base font-bold font-['Segoe_UI'] leading-5">{t('account.tableOrder') || 'Order ID'}</div>
-            <div className="flex-1 justify-start text-[#444444] text-base font-bold font-['Segoe_UI'] leading-5">{t('account.tableDate') || 'Dates'}</div>
-            <div className="flex-1 justify-start text-[#444444] text-base font-bold font-['Segoe_UI'] leading-5">{t('account.tableStatus') || 'Status'}</div>
-            <div className="flex-1 justify-start text-[#444444] text-base font-bold font-['Segoe_UI'] leading-5">{t('account.tableTotal') || 'Price'}</div>
-            <div className="flex-1 justify-start text-[#444444] text-base font-bold font-['Segoe_UI'] leading-5">{t('account.action') || 'Action'}</div>
+            <div className="flex-1 justify-start text-copy text-base font-bold leading-5">{t('account.tableOrder') || 'Order ID'}</div>
+            <div className="flex-1 justify-start text-copy text-base font-bold leading-5">{t('account.tableDate') || 'Dates'}</div>
+            <div className="flex-1 justify-start text-copy text-base font-bold leading-5">{t('account.tableStatus') || 'Status'}</div>
+            <div className="flex-1 justify-start text-copy text-base font-bold leading-5">{t('account.tableTotal') || 'Price'}</div>
+            <div className="flex-1 justify-start text-copy text-base font-bold leading-5">{t('account.action') || 'Action'}</div>
           </div>
           
           <div className="self-stretch flex flex-col justify-start items-start gap-2.5 px-8 relative z-10 w-full">
@@ -1096,20 +1096,20 @@ function OrdersView() {
                           e.stopPropagation();
                           setSelectedOrder(order);
                         }}
-                        className="flex-1 text-left text-[#444444] text-lg font-normal font-['Segoe_UI'] leading-6 hover:text-amber-500 hover:underline"
+                        className="flex-1 text-left text-copy text-lg font-normal leading-6 hover:text-brand hover:underline"
                       >
                         {order.id}
                       </button>
 
-                      <div className="flex-1 text-[#444444] text-lg font-normal font-['Segoe_UI'] leading-6">{order.date}</div>
+                      <div className="flex-1 text-copy text-lg font-normal leading-6">{order.date}</div>
 
-                      <div className="flex-1 justify-start text-lg font-bold font-['Segoe_UI'] leading-6">
-                        <span className={order.status.toLowerCase() === 'completed' || order.status.toLowerCase() === 'delivered' ? 'text-[#00A63E]' : 'text-amber-500'}>
+                      <div className="flex-1 justify-start text-lg font-bold leading-6">
+                        <span className={order.status.toLowerCase() === 'completed' || order.status.toLowerCase() === 'delivered' ? 'text-success' : 'text-brand'}>
                           {t(`account.${order.status.toLowerCase()}`) || order.status}
                         </span>
                       </div>
 
-                      <div className="flex-1 text-[#222222] text-lg font-bold font-['Segoe_UI'] leading-6">{order.total}</div>
+                      <div className="flex-1 text-ink text-lg font-bold leading-6">{order.total}</div>
 
                       <div className="flex-1 inline-flex justify-start items-center gap-1">
                         <button 
@@ -1117,14 +1117,14 @@ function OrdersView() {
                             e.stopPropagation();
                             handleReorder(order.items_list || []);
                           }} 
-                          className="inline-flex justify-start items-center gap-1 text-[#F18800] text-lg font-bold font-['Segoe_UI'] underline leading-6 hover:text-amber-600"
+                          className="inline-flex justify-start items-center gap-1 text-brand text-lg font-bold underline leading-6 hover:text-brand"
                         >
                           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
                             <mask id="mask0_2407_16091" style={{ maskType: "alpha" }} maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
                               <rect width="20" height="20" fill="#D9D9D9"/>
                             </mask>
                             <g mask="url(#mask0_2407_16091)">
-                              <path d="M9.98474 17.0846C8.3096 17.0846 6.83175 16.5721 5.55119 15.5469C4.27078 14.5218 3.45057 13.2149 3.09057 11.6263C3.04571 11.4607 3.07536 11.3085 3.17953 11.1696C3.28369 11.0307 3.42446 10.9501 3.60182 10.9276C3.77057 10.9052 3.92251 10.9389 4.05765 11.0286C4.19279 11.1183 4.2871 11.2503 4.34057 11.4244C4.65779 12.7118 5.34126 13.7687 6.39099 14.5951C7.44071 15.4214 8.63863 15.8346 9.98474 15.8346C11.6097 15.8346 12.9882 15.2687 14.1202 14.1367C15.2521 13.0048 15.8181 11.6263 15.8181 10.0013C15.8181 8.3763 15.2521 6.99783 14.1202 5.86589C12.9882 4.73394 11.6097 4.16797 9.98474 4.16797C9.07446 4.16797 8.2214 4.37019 7.42557 4.77464C6.6296 5.17894 5.94418 5.73526 5.36932 6.44359H6.9239C7.10126 6.44359 7.24974 6.50345 7.36932 6.62318C7.48904 6.74276 7.5489 6.89123 7.5489 7.06859C7.5489 7.24595 7.48904 7.39443 7.36932 7.51401C7.24974 7.63373 7.10126 7.69359 6.9239 7.69359H4.0714C3.85668 7.69359 3.67744 7.62172 3.53369 7.47797C3.38994 7.33436 3.31807 7.15512 3.31807 6.94026V4.08776C3.31807 3.9104 3.37793 3.76193 3.49765 3.64234C3.61724 3.52262 3.76571 3.46276 3.94307 3.46276C4.12043 3.46276 4.26897 3.52262 4.38869 3.64234C4.50828 3.76193 4.56807 3.9104 4.56807 4.08776V5.43714C5.24432 4.63908 6.05418 4.0197 6.99765 3.57901C7.94099 3.13832 8.93668 2.91797 9.98474 2.91797C10.9677 2.91797 11.8886 3.10387 12.7477 3.47568C13.6065 3.84748 14.3554 4.35283 14.9943 4.99172C15.6332 5.63061 16.1386 6.37957 16.5104 7.23859C16.8822 8.09748 17.0681 9.01839 17.0681 10.0013C17.0681 10.9842 16.8822 11.9051 16.5104 12.764C16.1386 13.623 15.6332 14.372 14.9943 15.0109C14.3554 15.6498 13.6065 16.1551 12.7477 16.5269C11.8886 16.8987 10.9677 17.0846 9.98474 17.0846ZM9.98474 11.2513C9.6439 11.2513 9.35036 11.1282 9.10411 10.8819C8.85786 10.6357 8.73474 10.0013C8.73474 9.66047 8.85786 9.36693 9.10411 9.12068C9.35036 8.87443 9.6439 8.7513 9.98474 8.7513C10.3256 8.7513 10.6191 8.87443 10.8654 9.12068C11.1116 9.36693 11.2347 9.66047 11.2347 10.0013C11.2347 10.3421 11.1116 10.6357 10.8654 10.8819C10.6191 11.1282 10.3256 11.2513 9.98474 11.2513Z" fill="#F18800"/>
+                              <path d="M9.98474 17.0846C8.3096 17.0846 6.83175 16.5721 5.55119 15.5469C4.27078 14.5218 3.45057 13.2149 3.09057 11.6263C3.04571 11.4607 3.07536 11.3085 3.17953 11.1696C3.28369 11.0307 3.42446 10.9501 3.60182 10.9276C3.77057 10.9052 3.92251 10.9389 4.05765 11.0286C4.19279 11.1183 4.2871 11.2503 4.34057 11.4244C4.65779 12.7118 5.34126 13.7687 6.39099 14.5951C7.44071 15.4214 8.63863 15.8346 9.98474 15.8346C11.6097 15.8346 12.9882 15.2687 14.1202 14.1367C15.2521 13.0048 15.8181 11.6263 15.8181 10.0013C15.8181 8.3763 15.2521 6.99783 14.1202 5.86589C12.9882 4.73394 11.6097 4.16797 9.98474 4.16797C9.07446 4.16797 8.2214 4.37019 7.42557 4.77464C6.6296 5.17894 5.94418 5.73526 5.36932 6.44359H6.9239C7.10126 6.44359 7.24974 6.50345 7.36932 6.62318C7.48904 6.74276 7.5489 6.89123 7.5489 7.06859C7.5489 7.24595 7.48904 7.39443 7.36932 7.51401C7.24974 7.63373 7.10126 7.69359 6.9239 7.69359H4.0714C3.85668 7.69359 3.67744 7.62172 3.53369 7.47797C3.38994 7.33436 3.31807 7.15512 3.31807 6.94026V4.08776C3.31807 3.9104 3.37793 3.76193 3.49765 3.64234C3.61724 3.52262 3.76571 3.46276 3.94307 3.46276C4.12043 3.46276 4.26897 3.52262 4.38869 3.64234C4.50828 3.76193 4.56807 3.9104 4.56807 4.08776V5.43714C5.24432 4.63908 6.05418 4.0197 6.99765 3.57901C7.94099 3.13832 8.93668 2.91797 9.98474 2.91797C10.9677 2.91797 11.8886 3.10387 12.7477 3.47568C13.6065 3.84748 14.3554 4.35283 14.9943 4.99172C15.6332 5.63061 16.1386 6.37957 16.5104 7.23859C16.8822 8.09748 17.0681 9.01839 17.0681 10.0013C17.0681 10.9842 16.8822 11.9051 16.5104 12.764C16.1386 13.623 15.6332 14.372 14.9943 15.0109C14.3554 15.6498 13.6065 16.1551 12.7477 16.5269C11.8886 16.8987 10.9677 17.0846 9.98474 17.0846ZM9.98474 11.2513C9.6439 11.2513 9.35036 11.1282 9.10411 10.8819C8.85786 10.6357 8.73474 10.0013C8.73474 9.66047 8.85786 9.36693 9.10411 9.12068C9.35036 8.87443 9.6439 8.7513 9.98474 8.7513C10.3256 8.7513 10.6191 8.87443 10.8654 9.12068C11.1116 9.36693 11.2347 9.66047 11.2347 10.0013C11.2347 10.3421 11.1116 10.6357 10.8654 10.8819C10.6191 11.1282 10.3256 11.2513 9.98474 11.2513Z" fill="var(--brand)"/>
                             </g>
                           </svg>
                           {t.has('account.reorderAll') ? t('account.reorderAll') : 'Re-order All'}
@@ -1133,11 +1133,11 @@ function OrdersView() {
                     </div>
 
                     {isExpanded && order.items_list && order.items_list.length > 0 && (
-                      <div className="self-stretch p-4 bg-[#F7F9FA] rounded-[10px] flex flex-col justify-start items-start gap-2 w-full mt-1 border border-slate-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="self-stretch p-4 bg-surface rounded-[10px] flex flex-col justify-start items-start gap-2 w-full mt-1 border border-slate-100 animate-in fade-in slide-in-from-top-2 duration-300">
                         {order.items_list.map((item, itemIdx) => (
                           <Fragment key={`${item.id}-${itemIdx}`}>
                             <div className="self-stretch justify-start items-center gap-2 inline-flex w-full">
-                              <div className="w-10 h-10 p-1 bg-[#EDF2F7] overflow-hidden rounded-[5px] justify-center items-center flex shrink-0 relative">
+                              <div className="w-10 h-10 p-1 bg-line overflow-hidden rounded-[5px] justify-center items-center flex shrink-0 relative">
                                 {item.mainImage ? (
                                   <img className="w-full h-full object-contain" src={item.mainImage} alt={item.name} />
                                 ) : (
@@ -1150,12 +1150,12 @@ function OrdersView() {
                               </div>
                               <div className="flex-1 justify-start items-center gap-2 flex">
                                 <div className="flex-1 flex flex-col justify-start items-start gap-1">
-                                  <div className="self-stretch text-[#444444] text-base font-normal font-['Segoe_UI'] leading-[19px]">{item.name}</div>
-                                  <div className="text-[#888888] text-sm font-normal font-['Segoe_UI'] leading-5">
+                                  <div className="self-stretch text-copy text-base font-normal leading-[19px]">{item.name}</div>
+                                  <div className="text-subtle text-sm font-normal leading-5">
                                     {t('account.quantityCount', { count: item.quantity }) || `${item.quantity} Items`}
                                   </div>
                                 </div>
-                                <div className="w-[135px] text-[#444444] text-base font-normal font-['Segoe_UI'] leading-[21px] shrink-0">
+                                <div className="w-[135px] text-copy text-base font-normal leading-[21px] shrink-0">
                                   {formatEuro(item.total)}
                                 </div>
                                 <div className="w-[134px] shrink-0">
@@ -1164,7 +1164,7 @@ function OrdersView() {
                                       e.stopPropagation();
                                       handleReorder([item]);
                                     }}
-                                    className="text-[#F18800] text-lg font-bold font-['Segoe_UI'] underline leading-6 hover:text-amber-600"
+                                    className="text-brand text-lg font-bold underline leading-6 hover:text-brand"
                                   >
                                     {t.has('account.reorder') ? t('account.reorder') : 'Re-order'}
                                   </button>
@@ -1180,7 +1180,7 @@ function OrdersView() {
                     )}
                   </div>
                   {index < orders.length - 1 && (
-                    <div className="self-stretch border-t border-[#EDF2F7] my-1 w-full"></div>
+                    <div className="self-stretch border-t border-line my-1 w-full"></div>
                   )}
                 </Fragment>
               );
@@ -1312,7 +1312,7 @@ function orderStatusClass(status: string) {
     return 'bg-red-50 text-red-600';
   }
 
-  return 'bg-amber-50 text-amber-600';
+  return 'bg-brand-soft text-brand';
 }
 
 function PrintersView() {
@@ -1335,7 +1335,7 @@ function PrintersView() {
           <h2 className="text-3xl font-black text-neutral-800 tracking-tight">{t('account.myPrinters')}</h2>
           <p className="text-neutral-500 font-medium">{t('account.hardwareMonitoring')}</p>
         </div>
-        <Link href="/en/printers" className="h-11 px-8 bg-sky-950 text-white rounded-full font-bold text-sm hover:bg-amber-500 transition-all flex items-center gap-2 whitespace-nowrap">
+        <Link href="/en/printers" className="h-11 px-8 bg-sky-950 text-white rounded-full font-bold text-sm hover:bg-brand transition-all flex items-center gap-2 whitespace-nowrap">
            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
              <path d="M5 12h14"/><path d="M12 5v14"/>
            </svg>
@@ -1353,7 +1353,7 @@ function PrintersView() {
       ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {printers.map((printer) => (
-          <div key={printer.id} className="group p-8 rounded-[32px] border border-slate-200 bg-white hover:border-amber-400 hover:shadow-xl hover:shadow-amber-500/5 transition-all flex flex-col gap-6">
+          <div key={printer.id} className="group p-8 rounded-[32px] border border-slate-200 bg-white hover:border-brand hover:shadow-xl hover:shadow-brand/5 transition-all flex flex-col gap-6">
             <div className="relative h-48 bg-slate-100 rounded-2xl overflow-hidden p-6 group-hover:scale-[1.02] transition-transform">
                <Image src={printer.mainImage || "https://placehold.co/400x300"} alt={printer.name} fill className="object-contain" unoptimized />
             </div>
@@ -1365,7 +1365,7 @@ function PrintersView() {
                 ) : (
                   <span />
                 )}
-                <Link href={printer.slug ? `/materials/${printer.slug}` : "#"} className="text-amber-500 font-black text-xs uppercase tracking-wider hover:underline">{t('account.viewPrinter')}</Link>
+                <Link href={printer.slug ? `/materials/${printer.slug}` : "#"} className="text-brand font-black text-xs uppercase tracking-wider hover:underline">{t('account.viewPrinter')}</Link>
               </div>
             </div>
             <div className="h-px bg-slate-100" />
@@ -1383,7 +1383,7 @@ function PrintersView() {
                   <span className="text-sm font-bold text-neutral-800 group-hover/btn:text-red-500 transition-colors">{t('account.removeFromFavorites')}</span>
                </button>
                <Link href={printer.slug ? `/materials/${printer.slug}` : "#"} className="flex flex-col gap-1 text-left group/btn">
-                  <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest group-hover/btn:text-amber-500 transition-colors">{t('account.supplies', { fallback: 'Supplies' })}</span>
+                  <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest group-hover/btn:text-brand transition-colors">{t('account.supplies', { fallback: 'Supplies' })}</span>
                   <span className="text-sm font-bold text-neutral-800">{t('account.buyLabels')}</span>
                </Link>
             </div>
@@ -1490,7 +1490,7 @@ function FavouriteProductsView() {
              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
            </svg>
            <p className="mt-4 text-neutral-400 font-bold">{t('account.noFavourites')}</p>
-           <Link href="/product" className="mt-6 h-11 px-8 bg-amber-500 text-white rounded-full font-black text-sm hover:shadow-lg shadow-amber-500/20 transition-all flex items-center">
+           <Link href="/product" className="mt-6 h-11 px-8 bg-brand text-white rounded-full font-black text-sm hover:shadow-lg shadow-brand/20 transition-all flex items-center">
              {t('account.browseSupplies')}
            </Link>
         </div>
@@ -1784,10 +1784,10 @@ function ShippingAddressesView({ user }: { user: StoredUser }) {
 
   return (
     <div className="self-stretch flex flex-col justify-start items-start gap-6 w-full">
-      <div className="justify-start text-neutral-800 text-3xl font-bold font-['Segoe_UI'] leading-8">
+      <div className="justify-start text-neutral-800 text-3xl font-bold leading-8">
         {getLabel('account.shippingAddress', 'Shipping Address')}
       </div>
-      <div className="self-stretch border-t border-[#EDF2F7]"></div>
+      <div className="self-stretch border-t border-line"></div>
       
       {editingAddress ? (
         <ShippingAddressEditInline
@@ -1818,10 +1818,10 @@ function ShippingAddressesView({ user }: { user: StoredUser }) {
                 return (
                   <div 
                     key={addr.id || index} 
-                    className={`flex-1 p-4 relative rounded-xl outline transition-all duration-200 ${isSelected ? 'bg-[rgba(241,136,0,0.02)] outline-[1.5px] outline-[#F18800]' : 'bg-white outline-[1px] outline-[#E4EAF1]'} inline-flex flex-col justify-start items-start gap-3 w-full`}
+                    className={`flex-1 p-4 relative rounded-xl outline transition-all duration-200 ${isSelected ? 'bg-[rgba(241,136,0,0.02)] outline-[1.5px] outline-brand' : 'bg-white outline-[1px] outline-[#E4EAF1]'} inline-flex flex-col justify-start items-start gap-3 w-full`}
                   >
                     {addr.type === 'billing' && (
-                      <div className="absolute right-0 top-0 bg-[#EDF2F7] px-2 py-0.5 rounded-bl-lg text-[#444444] text-[12px] font-normal font-['Segoe_UI'] leading-[18px]">
+                      <div className="absolute right-0 top-0 bg-line px-2 py-0.5 rounded-bl-lg text-copy text-[12px] font-normal leading-[18px]">
                         Billing Address
                       </div>
                     )}
@@ -1829,7 +1829,7 @@ function ShippingAddressesView({ user }: { user: StoredUser }) {
                     <div className="self-stretch inline-flex justify-start items-start gap-3">
                       <div className="w-5 h-6 relative mt-1 cursor-pointer flex items-start" onClick={() => handleSelectAddress(addr.id)}>
                         {isSelected ? (
-                          <div className="w-5 h-5 bg-[#F18800] rounded-full relative flex items-center justify-center">
+                          <div className="w-5 h-5 bg-brand rounded-full relative flex items-center justify-center">
                             <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
                               <path d="M1.5 4L4 6.5L8.5 1.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
@@ -1841,30 +1841,30 @@ function ShippingAddressesView({ user }: { user: StoredUser }) {
                       
                       <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
                         <div className="inline-flex justify-start items-center gap-1">
-                          <div className="justify-start text-neutral-800 text-xl font-bold font-['Segoe_UI'] leading-6">{name || '-'}</div>
+                          <div className="justify-start text-neutral-800 text-xl font-bold leading-6">{name || '-'}</div>
                           {isOffice ? (
-                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-[16px] h-[16px] text-[#444444] fill-current">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-[16px] h-[16px] text-copy fill-current">
                               <mask id={`mask0_2487_8686_${addr.id}`} style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
                                 <rect width="20" height="20" fill="#D9D9D9"/>
                               </mask>
                               <g mask={`url(#mask0_2487_8686_${addr.id})`}>
-                                <path d="M3.45455 18C3.05455 18 2.71212 17.8508 2.42727 17.5524C2.14242 17.254 2 16.8952 2 16.4762V8.85714C2 8.64127 2.0697 8.46032 2.20909 8.31429C2.34848 8.16825 2.52121 8.09524 2.72727 8.09524C2.93333 8.09524 3.10606 8.16825 3.24545 8.31429C3.38485 8.46032 3.45455 8.64127 3.45455 8.85714V16.4762H15.0909C15.297 16.4762 15.4697 16.5492 15.6091 16.6952C15.7485 16.8413 15.8182 17.0222 15.8182 17.2381C15.8182 17.454 15.7485 17.6349 15.6091 17.781C15.4697 17.927 15.297 18 15.0909 18H3.45455ZM6.36364 14.9524C5.96364 14.9524 5.62121 14.8032 5.33636 14.5048C5.05152 14.2063 4.90909 13.8476 4.90909 13.4286V5.80952C4.90909 5.59365 4.97879 5.4127 5.11818 5.26667C5.25758 5.12063 5.4303 5.04762 5.63636 5.04762H8.54545V3.52381C8.54545 3.10476 8.68788 2.74603 8.97273 2.44762C9.25758 2.14921 9.6 2 10 2H12.9091C13.3091 2 13.6515 2.14921 13.9364 2.44762C14.2212 2.74603 14.3636 3.10476 14.3636 3.52381V5.04762H17.2727C17.4788 5.04762 17.6515 5.12063 17.7909 5.26667C17.9303 5.4127 18 5.59365 18 5.80952V13.4286C18 13.8476 17.8576 14.2063 17.5727 14.5048C17.2879 14.8032 16.9455 14.9524 16.5455 14.9524H6.36364ZM6.36364 13.4286H16.5455V6.57143H6.36364V13.4286ZM10 5.04762H12.9091V3.52381H10V5.04762Z" fill="#444444"/>
+                                <path d="M3.45455 18C3.05455 18 2.71212 17.8508 2.42727 17.5524C2.14242 17.254 2 16.8952 2 16.4762V8.85714C2 8.64127 2.0697 8.46032 2.20909 8.31429C2.34848 8.16825 2.52121 8.09524 2.72727 8.09524C2.93333 8.09524 3.10606 8.16825 3.24545 8.31429C3.38485 8.46032 3.45455 8.64127 3.45455 8.85714V16.4762H15.0909C15.297 16.4762 15.4697 16.5492 15.6091 16.6952C15.7485 16.8413 15.8182 17.0222 15.8182 17.2381C15.8182 17.454 15.7485 17.6349 15.6091 17.781C15.4697 17.927 15.297 18 15.0909 18H3.45455ZM6.36364 14.9524C5.96364 14.9524 5.62121 14.8032 5.33636 14.5048C5.05152 14.2063 4.90909 13.8476 4.90909 13.4286V5.80952C4.90909 5.59365 4.97879 5.4127 5.11818 5.26667C5.25758 5.12063 5.4303 5.04762 5.63636 5.04762H8.54545V3.52381C8.54545 3.10476 8.68788 2.74603 8.97273 2.44762C9.25758 2.14921 9.6 2 10 2H12.9091C13.3091 2 13.6515 2.14921 13.9364 2.44762C14.2212 2.74603 14.3636 3.10476 14.3636 3.52381V5.04762H17.2727C17.4788 5.04762 17.6515 5.12063 17.7909 5.26667C17.9303 5.4127 18 5.59365 18 5.80952V13.4286C18 13.8476 17.8576 14.2063 17.5727 14.5048C17.2879 14.8032 16.9455 14.9524 16.5455 14.9524H6.36364ZM6.36364 13.4286H16.5455V6.57143H6.36364V13.4286ZM10 5.04762H12.9091V3.52381H10V5.04762Z" fill="var(--copy)"/>
                               </g>
                             </svg>
                           ) : (
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#444444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-[15px] h-[15px]">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--copy)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-[15px] h-[15px]">
                               <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
                               <polyline points="9 22 9 12 15 12 15 22"/>
                             </svg>
                           )}
                         </div>
-                        <div className="flex justify-start items-center gap-2 flex-wrap text-[#444444] text-[16px] font-normal font-['Segoe_UI'] leading-6">
+                        <div className="flex justify-start items-center gap-2 flex-wrap text-copy text-[16px] font-normal leading-6">
                           <div>{addr.email || '-'}</div>
                           <div className="text-[#C8D2DD]">|</div>
                           <div>{addr.phone || '-'}</div>
                         </div>
-                        <div className="justify-center text-neutral-700 text-base font-normal font-['Segoe_UI'] leading-6">{addressStr}</div>
-                        <div className="self-stretch border-t border-[#EDF2F7] mt-1"></div>
+                        <div className="justify-center text-neutral-700 text-base font-normal leading-6">{addressStr}</div>
+                        <div className="self-stretch border-t border-line mt-1"></div>
                         <div className="self-stretch inline-flex justify-start items-center gap-4 mt-1">
                           <button onClick={() => setEditingAddress(addr)} className="inline-flex justify-start items-center gap-1 hover:opacity-80 transition-opacity">
                             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1872,10 +1872,10 @@ function ShippingAddressesView({ user }: { user: StoredUser }) {
                                 <rect width="20" height="20" fill="#D9D9D9"/>
                               </mask>
                               <g mask={`url(#mask0_2485_5893_${addr.id})`}>
-                                <path d="M3.33268 20.0052C2.87435 20.0052 2.48199 19.842 2.1556 19.5156C1.82921 19.1892 1.66602 18.7969 1.66602 18.3385C1.66602 17.8802 1.82921 17.4878 2.1556 17.1615C2.48199 16.8351 2.87435 16.6719 3.33268 16.6719H16.666C17.1243 16.6719 17.5167 16.8351 17.8431 17.1615C18.1695 17.4878 18.3327 17.8802 18.3327 18.3385C18.3327 18.7969 18.1695 19.1892 17.8431 19.5156C17.5167 19.842 17.1243 20.0052 16.666 20.0052H3.33268ZM4.99935 13.3385H6.16602L12.666 6.85938L11.4785 5.67188L4.99935 12.1719V13.3385ZM3.33268 14.1719V11.8177C3.33268 11.7066 3.35352 11.599 3.39518 11.4948C3.43685 11.3906 3.49935 11.2969 3.58268 11.2135L12.666 2.15104C12.8188 1.99826 12.9959 1.88021 13.1973 1.79688C13.3987 1.71354 13.6105 1.67188 13.8327 1.67188C14.0549 1.67188 14.2702 1.71354 14.4785 1.79688C14.6868 1.88021 14.8743 2.00521 15.041 2.17188L16.1868 3.33854C16.3535 3.49132 16.475 3.67188 16.5514 3.88021C16.6278 4.08854 16.666 4.30382 16.666 4.52604C16.666 4.73438 16.6278 4.93924 16.5514 5.14063C16.475 5.34201 16.3535 5.52604 16.1868 5.69271L7.12435 14.7552C7.04101 14.8385 6.94726 14.901 6.8431 14.9427C6.73893 14.9844 6.63129 15.0052 6.52018 15.0052H4.16602C3.9299 15.0052 3.73199 14.9253 3.57227 14.7656C3.41254 14.6059 3.33268 14.408 3.33268 14.1719Z" fill="#F18800"/>
+                                <path d="M3.33268 20.0052C2.87435 20.0052 2.48199 19.842 2.1556 19.5156C1.82921 19.1892 1.66602 18.7969 1.66602 18.3385C1.66602 17.8802 1.82921 17.4878 2.1556 17.1615C2.48199 16.8351 2.87435 16.6719 3.33268 16.6719H16.666C17.1243 16.6719 17.5167 16.8351 17.8431 17.1615C18.1695 17.4878 18.3327 17.8802 18.3327 18.3385C18.3327 18.7969 18.1695 19.1892 17.8431 19.5156C17.5167 19.842 17.1243 20.0052 16.666 20.0052H3.33268ZM4.99935 13.3385H6.16602L12.666 6.85938L11.4785 5.67188L4.99935 12.1719V13.3385ZM3.33268 14.1719V11.8177C3.33268 11.7066 3.35352 11.599 3.39518 11.4948C3.43685 11.3906 3.49935 11.2969 3.58268 11.2135L12.666 2.15104C12.8188 1.99826 12.9959 1.88021 13.1973 1.79688C13.3987 1.71354 13.6105 1.67188 13.8327 1.67188C14.0549 1.67188 14.2702 1.71354 14.4785 1.79688C14.6868 1.88021 14.8743 2.00521 15.041 2.17188L16.1868 3.33854C16.3535 3.49132 16.475 3.67188 16.5514 3.88021C16.6278 4.08854 16.666 4.30382 16.666 4.52604C16.666 4.73438 16.6278 4.93924 16.5514 5.14063C16.475 5.34201 16.3535 5.52604 16.1868 5.69271L7.12435 14.7552C7.04101 14.8385 6.94726 14.901 6.8431 14.9427C6.73893 14.9844 6.63129 15.0052 6.52018 15.0052H4.16602C3.9299 15.0052 3.73199 14.9253 3.57227 14.7656C3.41254 14.6059 3.33268 14.408 3.33268 14.1719Z" fill="var(--brand)"/>
                               </g>
                             </svg>
-                            <div className="text-[#F18800] text-base font-normal font-['Segoe_UI'] leading-5">{getLabel('account.edit', 'Edit')}</div>
+                            <div className="text-brand text-base font-normal leading-5">{getLabel('account.edit', 'Edit')}</div>
                           </button>
                           {addr.type !== 'billing' && (
                             <>
@@ -1886,10 +1886,10 @@ function ShippingAddressesView({ user }: { user: StoredUser }) {
                                     <rect width="21" height="21" fill="#D9D9D9"/>
                                   </mask>
                                   <g mask={`url(#mask0_2485_5881_${addr.id})`}>
-                                    <path d="M6.125 18.375C5.64375 18.375 5.23177 18.2036 4.88906 17.8609C4.54635 17.5182 4.375 17.1062 4.375 16.625V5.25C4.12708 5.25 3.91927 5.16615 3.75156 4.99844C3.58385 4.83073 3.5 4.62292 3.5 4.375C3.5 4.12708 3.58385 3.91927 3.75156 3.75156C3.91927 3.58385 4.12708 3.5 4.375 3.5H7.875C7.875 3.25208 7.95885 3.04427 8.12656 2.87656C8.29427 2.70885 8.50208 2.625 8.75 2.625H12.25C12.4979 2.625 12.7057 2.70885 12.8734 2.87656C13.0411 3.04427 13.125 3.25208 13.125 3.5H16.625C16.8729 3.5 17.0807 3.58385 17.2484 3.75156C17.4161 3.91927 17.5 4.12708 17.5 4.375C17.5 4.62292 17.4161 4.83073 17.2484 4.99844C17.0807 5.16615 16.8729 5.25 16.625 5.25V16.625C16.625 17.1062 16.4536 17.5182 16.1109 17.8609C15.7682 18.2036 15.3562 18.375 14.875 18.375H6.125ZM14.875 5.25H6.125V16.625H14.875V5.25ZM9.37344 14.6234C9.54115 14.4557 9.625 14.2479 9.625 14V7.875C9.625 7.62708 9.54115 7.41927 9.37344 7.25156C9.20573 7.08385 8.99792 7 8.75 7C8.50208 7 8.29427 7.08385 8.12656 7.25156C7.95885 7.41927 7.875 7.62708 7.875 7.875V14C7.875 14.2479 7.95885 14.4557 8.12656 14.6234C8.29427 14.7911 8.50208 14.875 8.75 14.875C8.99792 14.875 9.20573 14.7911 9.37344 14.6234ZM12.8734 14.6234C13.0411 14.4557 13.125 14.2479 13.125 14V7.875C13.125 7.62708 13.0411 7.41927 12.8734 7.25156C12.7057 7.08385 12.4979 7 12.25 7C12.0021 7 11.7943 7.08385 11.6266 7.25156C11.4589 7.41927 11.375 7.62708 11.375 7.875V14C11.375 14.2479 11.4589 14.4557 11.6266 14.6234C11.7943 14.7911 12.0021 14.875 12.25 14.875C12.4979 14.875 12.7057 14.7911 12.8734 14.6234Z" fill="#888888"/>
+                                    <path d="M6.125 18.375C5.64375 18.375 5.23177 18.2036 4.88906 17.8609C4.54635 17.5182 4.375 17.1062 4.375 16.625V5.25C4.12708 5.25 3.91927 5.16615 3.75156 4.99844C3.58385 4.83073 3.5 4.62292 3.5 4.375C3.5 4.12708 3.58385 3.91927 3.75156 3.75156C3.91927 3.58385 4.12708 3.5 4.375 3.5H7.875C7.875 3.25208 7.95885 3.04427 8.12656 2.87656C8.29427 2.70885 8.50208 2.625 8.75 2.625H12.25C12.4979 2.625 12.7057 2.70885 12.8734 2.87656C13.0411 3.04427 13.125 3.25208 13.125 3.5H16.625C16.8729 3.5 17.0807 3.58385 17.2484 3.75156C17.4161 3.91927 17.5 4.12708 17.5 4.375C17.5 4.62292 17.4161 4.83073 17.2484 4.99844C17.0807 5.16615 16.8729 5.25 16.625 5.25V16.625C16.625 17.1062 16.4536 17.5182 16.1109 17.8609C15.7682 18.2036 15.3562 18.375 14.875 18.375H6.125ZM14.875 5.25H6.125V16.625H14.875V5.25ZM9.37344 14.6234C9.54115 14.4557 9.625 14.2479 9.625 14V7.875C9.625 7.62708 9.54115 7.41927 9.37344 7.25156C9.20573 7.08385 8.99792 7 8.75 7C8.50208 7 8.29427 7.08385 8.12656 7.25156C7.95885 7.41927 7.875 7.62708 7.875 7.875V14C7.875 14.2479 7.95885 14.4557 8.12656 14.6234C8.29427 14.7911 8.50208 14.875 8.75 14.875C8.99792 14.875 9.20573 14.7911 9.37344 14.6234ZM12.8734 14.6234C13.0411 14.4557 13.125 14.2479 13.125 14V7.875C13.125 7.62708 13.0411 7.41927 12.8734 7.25156C12.7057 7.08385 12.4979 7 12.25 7C12.0021 7 11.7943 7.08385 11.6266 7.25156C11.4589 7.41927 11.375 7.62708 11.375 7.875V14C11.375 14.2479 11.4589 14.4557 11.6266 14.6234C11.7943 14.7911 12.0021 14.875 12.25 14.875C12.4979 14.875 12.7057 14.7911 12.8734 14.6234Z" fill="var(--subtle)"/>
                                   </g>
                                 </svg>
-                                <div className="text-[#888888] text-base font-normal font-['Segoe_UI'] leading-5">{getLabel('account.remove', 'Remove')}</div>
+                                <div className="text-subtle text-base font-normal leading-5">{getLabel('account.remove', 'Remove')}</div>
                               </button>
                             </>
                           )}
@@ -1904,21 +1904,21 @@ function ShippingAddressesView({ user }: { user: StoredUser }) {
 
           <div className="self-stretch justify-start items-center gap-2 inline-flex">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M9.99935 1.66536C14.5827 1.66536 18.3327 5.41536 18.3327 9.9987C18.3327 14.582 14.5827 18.332 9.99935 18.332C5.41602 18.332 1.66602 14.582 1.66602 9.9987C1.66602 5.41536 5.41602 1.66536 9.99935 1.66536Z" stroke="#888888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M10 13.332V9.16536" stroke="#888888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M9.99609 6.66797H10.0036" stroke="#888888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M9.99935 1.66536C14.5827 1.66536 18.3327 5.41536 18.3327 9.9987C18.3327 14.582 14.5827 18.332 9.99935 18.332C5.41602 18.332 1.66602 14.582 1.66602 9.9987C1.66602 5.41536 5.41602 1.66536 9.99935 1.66536Z" stroke="var(--subtle)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M10 13.332V9.16536" stroke="var(--subtle)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M9.99609 6.66797H10.0036" stroke="var(--subtle)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <div className="text-[#888888] text-[16px] font-normal font-['Segoe_UI'] leading-[20.80px]">
+            <div className="text-subtle text-[16px] font-normal leading-[20.80px]">
               {getLabel('account.selectFavoriteAddress', 'Select an address to make it your favorite.')}
             </div>
           </div>
 
           <button 
             onClick={() => setEditingAddress('new')}
-            className="h-[52px] px-8 rounded-full border-[1.5px] border-[#F18800] inline-flex justify-center items-center gap-2 hover:bg-[#F18800]/5 transition-colors mt-2"
+            className="h-[52px] px-8 rounded-full border-[1.5px] border-brand inline-flex justify-center items-center gap-2 hover:bg-brand/5 transition-colors mt-2"
           >
-            <span className="text-[#F18800] text-[22px] font-normal font-['Segoe_UI'] leading-6">+</span>
-            <span className="text-[#F18800] text-lg font-normal font-['Segoe_UI'] leading-6">{getLabel('account.addNewAddress', 'Add New Address')}</span>
+            <span className="text-brand text-[22px] font-normal leading-6">+</span>
+            <span className="text-brand text-lg font-normal leading-6">{getLabel('account.addNewAddress', 'Add New Address')}</span>
           </button>
         </>
       )}
@@ -2020,7 +2020,7 @@ function ShippingAddressEditInline({
     }
   };
 
-  const inputClasses = "w-full h-12 px-4 rounded-full border border-slate-200 focus:border-amber-400 outline-none transition-all text-neutral-800 text-base bg-white font-normal";
+  const inputClasses = "w-full h-12 px-4 rounded-full border border-slate-200 focus:border-brand outline-none transition-all text-neutral-800 text-base bg-white font-normal";
   const labelClasses = "text-base font-bold text-neutral-800 mb-2 block";
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -2152,11 +2152,11 @@ function ShippingAddressEditInline({
             <button 
               type="button" 
               onClick={() => setLabel('office')}
-              className={`flex items-center justify-start gap-3 h-12 px-6 rounded-full border transition-all duration-200 font-bold min-w-[180px] ${label === 'office' ? 'border-[#F18800] bg-[rgba(241,136,0,0.02)] ring-[0.5px] ring-[#F18800]' : 'border-slate-200 hover:border-slate-300 bg-white'}`}
+              className={`flex items-center justify-start gap-3 h-12 px-6 rounded-full border transition-all duration-200 font-bold min-w-[180px] ${label === 'office' ? 'border-brand bg-[rgba(241,136,0,0.02)] ring-[0.5px] ring-brand' : 'border-slate-200 hover:border-slate-300 bg-white'}`}
             >
               <div className="w-5 h-5 relative flex items-center justify-center flex-shrink-0">
                 {label === 'office' ? (
-                  <div className="w-5 h-5 bg-[#F18800] rounded-full relative flex items-center justify-center">
+                  <div className="w-5 h-5 bg-brand rounded-full relative flex items-center justify-center">
                     <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M1.5 4L4 6.5L8.5 1.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
@@ -2167,26 +2167,26 @@ function ShippingAddressEditInline({
               </div>
               
               <div className="flex items-center gap-2">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#444444] fill-current">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-copy fill-current">
                   <mask id="mask0_2487_8680_form" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
                     <rect width="20" height="20" fill="#D9D9D9"/>
                   </mask>
                   <g mask="url(#mask0_2487_8680_form)">
-                    <path d="M2.49967 18.332C2.04134 18.332 1.64898 18.1688 1.32259 17.8424C0.996202 17.5161 0.833008 17.1237 0.833008 16.6654V8.33203C0.833008 8.09592 0.912869 7.898 1.07259 7.73828C1.23231 7.57856 1.43023 7.4987 1.66634 7.4987C1.90245 7.4987 2.10037 7.57856 2.26009 7.73828C2.41981 7.898 2.49967 8.09592 2.49967 8.33203V16.6654H15.833C16.0691 16.6654 16.267 16.7452 16.4268 16.9049C16.5865 17.0647 16.6663 17.2626 16.6663 17.4987C16.6663 17.7348 16.5865 17.9327 16.4268 18.0924C16.267 18.2522 16.0691 18.332 15.833 18.332H2.49967ZM5.83301 14.9987C5.37467 14.9987 4.98231 14.8355 4.65592 14.5091C4.32954 14.1827 4.16634 13.7904 4.16634 13.332V4.9987C4.16634 4.76259 4.2462 4.56467 4.40592 4.40495C4.56565 4.24523 4.76356 4.16536 4.99967 4.16536H8.33301V2.4987C8.33301 2.04036 8.4962 1.648 8.82259 1.32161C9.14898 0.995226 9.54134 0.832031 9.99967 0.832031H13.333C13.7913 0.832031 14.1837 0.995226 14.5101 1.32161C14.8365 1.648 14.9997 2.04036 14.9997 2.4987V4.16536H18.333C18.5691 4.16536 18.767 4.24523 18.9268 4.40495C19.0865 4.56467 19.1663 4.76259 19.1663 4.9987V13.332C19.1663 13.7904 19.0031 14.1827 18.6768 14.5091C18.3504 14.8355 17.958 14.9987 17.4997 14.9987H5.83301ZM5.83301 13.332H17.4997V5.83203H5.83301V13.332ZM9.99967 4.16536H13.333V2.4987H9.99967V4.16536Z" fill="#444444" />
+                    <path d="M2.49967 18.332C2.04134 18.332 1.64898 18.1688 1.32259 17.8424C0.996202 17.5161 0.833008 17.1237 0.833008 16.6654V8.33203C0.833008 8.09592 0.912869 7.898 1.07259 7.73828C1.23231 7.57856 1.43023 7.4987 1.66634 7.4987C1.90245 7.4987 2.10037 7.57856 2.26009 7.73828C2.41981 7.898 2.49967 8.09592 2.49967 8.33203V16.6654H15.833C16.0691 16.6654 16.267 16.7452 16.4268 16.9049C16.5865 17.0647 16.6663 17.2626 16.6663 17.4987C16.6663 17.7348 16.5865 17.9327 16.4268 18.0924C16.267 18.2522 16.0691 18.332 15.833 18.332H2.49967ZM5.83301 14.9987C5.37467 14.9987 4.98231 14.8355 4.65592 14.5091C4.32954 14.1827 4.16634 13.7904 4.16634 13.332V4.9987C4.16634 4.76259 4.2462 4.56467 4.40592 4.40495C4.56565 4.24523 4.76356 4.16536 4.99967 4.16536H8.33301V2.4987C8.33301 2.04036 8.4962 1.648 8.82259 1.32161C9.14898 0.995226 9.54134 0.832031 9.99967 0.832031H13.333C13.7913 0.832031 14.1837 0.995226 14.5101 1.32161C14.8365 1.648 14.9997 2.04036 14.9997 2.4987V4.16536H18.333C18.5691 4.16536 18.767 4.24523 18.9268 4.40495C19.0865 4.56467 19.1663 4.76259 19.1663 4.9987V13.332C19.1663 13.7904 19.0031 14.1827 18.6768 14.5091C18.3504 14.8355 17.958 14.9987 17.4997 14.9987H5.83301ZM5.83301 13.332H17.4997V5.83203H5.83301V13.332ZM9.99967 4.16536H13.333V2.4987H9.99967V4.16536Z" fill="var(--copy)" />
                   </g>
                 </svg>
-                <span className="text-[#444444] text-[20px] font-bold font-['Segoe_UI'] leading-6">{getLabel('account.office', 'Office')}</span>
+                <span className="text-copy text-[20px] font-bold leading-6">{getLabel('account.office', 'Office')}</span>
               </div>
             </button>
             
             <button 
               type="button" 
               onClick={() => setLabel('home')}
-              className={`flex items-center justify-start gap-3 h-12 px-6 rounded-full border transition-all duration-200 font-bold min-w-[180px] ${label === 'home' ? 'border-[#F18800] bg-[rgba(241,136,0,0.02)] ring-[0.5px] ring-[#F18800]' : 'border-slate-200 hover:border-slate-300 bg-white'}`}
+              className={`flex items-center justify-start gap-3 h-12 px-6 rounded-full border transition-all duration-200 font-bold min-w-[180px] ${label === 'home' ? 'border-brand bg-[rgba(241,136,0,0.02)] ring-[0.5px] ring-brand' : 'border-slate-200 hover:border-slate-300 bg-white'}`}
             >
               <div className="w-5 h-5 relative flex items-center justify-center flex-shrink-0">
                 {label === 'home' ? (
-                  <div className="w-5 h-5 bg-[#F18800] rounded-full relative flex items-center justify-center">
+                  <div className="w-5 h-5 bg-brand rounded-full relative flex items-center justify-center">
                     <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M1.5 4L4 6.5L8.5 1.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
@@ -2196,7 +2196,7 @@ function ShippingAddressEditInline({
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#444444] fill-current">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-copy fill-current">
                   <mask id="mask0_2487_8674_form" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
                     <rect width="20" height="20" fill="#D9D9D9"/>
                   </mask>
@@ -2204,19 +2204,19 @@ function ShippingAddressEditInline({
                     <path d="M4.99967 15.8346H7.49967V11.668C7.49967 11.4319 7.57954 11.2339 7.73926 11.0742C7.89898 10.9145 8.0969 10.8346 8.33301 10.8346H11.6663C11.9025 10.8346 12.1004 10.9145 12.2601 11.0742C12.4198 11.2339 12.4997 11.4319 12.4997 11.668V15.8346H14.9997V8.33464L9.99967 4.58464L4.99967 8.33464V15.8346ZM3.33301 15.8346V8.33464C3.33301 8.07075 3.39204 7.82075 3.51009 7.58464C3.62815 7.34852 3.79134 7.15408 3.99967 7.0013L8.99967 3.2513C9.29134 3.02908 9.62467 2.91797 9.99967 2.91797C10.3747 2.91797 10.708 3.02908 10.9997 3.2513L15.9997 7.0013C16.208 7.15408 16.3712 7.34852 16.4893 7.58464C16.6073 7.82075 16.6663 8.33464 16.6663 8.33464V15.8346C16.6663 16.293 16.5031 16.6853 16.1768 17.0117C15.8504 17.3381 15.458 17.5013 14.9997 17.5013H11.6663C11.4302 17.5013 11.2323 17.4214 11.0726 17.2617C10.9129 17.102 10.833 16.9041 10.833 16.668V12.5013H9.16634V16.668C9.16634 16.9041 9.08648 17.102 8.92676 17.2617C8.76704 17.4214 8.56912 17.5013 8.33301 17.5013H4.99967C4.54134 17.5013 4.14898 17.3381 3.82259 17.0117C3.4962 16.6853 3.33301 16.293 3.33301 15.8346Z" />
                   </g>
                 </svg>
-                <span className="text-[#444444] text-[20px] font-bold font-['Segoe_UI'] leading-6">{getLabel('account.home', 'Home')}</span>
+                <span className="text-copy text-[20px] font-bold leading-6">{getLabel('account.home', 'Home')}</span>
               </div>
             </button>
           </div>
         </div>
 
-        <div className="self-stretch border-t border-[#EDF2F7] mt-4"></div>
+        <div className="self-stretch border-t border-line mt-4"></div>
 
         <div className="flex gap-4 mt-2">
           <button 
             type="submit" 
             disabled={isSaving}
-            className="h-12 px-8 rounded-full bg-[#f08c00] hover:bg-[#d97c00] text-white text-base font-normal transition-colors disabled:opacity-50"
+            className="h-12 px-8 rounded-full bg-[#f08c00] hover:bg-brand-hover text-white text-base font-normal transition-colors disabled:opacity-50"
           >
             {isSaving ? 'Saving...' : 'Save Changes'}
           </button>
@@ -2310,10 +2310,10 @@ function SingleAddressView({ type }: { type: 'billing_address' | 'shipping_addre
 
   return (
     <div className="self-stretch flex flex-col justify-start items-start gap-4 w-full">
-      <div className="justify-start text-neutral-800 text-3xl font-bold font-['Segoe_UI'] leading-8">
+      <div className="justify-start text-neutral-800 text-3xl font-bold leading-8">
         {isBilling ? getLabel('account.billingAddress', 'Billing Address') : getLabel('account.shippingAddress', 'Shipping Address')}
       </div>
-      <div className="self-stretch border-t border-[#EDF2F7] mb-2"></div>
+      <div className="self-stretch border-t border-line mb-2"></div>
       
       {editingAddress ? (
         <BillingAddressEditInline 
@@ -2329,66 +2329,66 @@ function SingleAddressView({ type }: { type: 'billing_address' | 'shipping_addre
           <div className="self-stretch flex flex-col justify-start items-start gap-6">
         <div className="self-stretch flex flex-col sm:flex-row justify-start items-start gap-6 sm:gap-4">
           <div className="flex-1 inline-flex flex-col justify-start items-start gap-3 w-full">
-            <div className="justify-center text-zinc-500 text-base font-normal font-['Segoe_UI'] leading-6">{getLabel('account.company', 'Company name')}</div>
-            <div className="justify-start text-neutral-800 text-lg font-bold font-['Segoe_UI'] leading-5">{targetAddress?.company || '-'}</div>
+            <div className="justify-center text-zinc-500 text-base font-normal leading-6">{getLabel('account.company', 'Company name')}</div>
+            <div className="justify-start text-neutral-800 text-lg font-bold leading-5">{targetAddress?.company || '-'}</div>
           </div>
           <div className="flex-1 inline-flex flex-col justify-start items-start gap-3 w-full">
-            <div className="justify-center text-zinc-500 text-base font-normal font-['Segoe_UI'] leading-6">{getLabel('account.vatNumber', 'VAT number')}</div>
-            <div className="justify-start text-neutral-800 text-lg font-bold font-['Segoe_UI'] leading-5">{'-'}</div>
-          </div>
-        </div>
-
-        <div className="self-stretch flex flex-col sm:flex-row justify-start items-start gap-6 sm:gap-4">
-          <div className="flex-1 inline-flex flex-col justify-start items-start gap-3 w-full">
-            <div className="justify-center text-zinc-500 text-base font-normal font-['Segoe_UI'] leading-6">{getLabel('account.firstName', 'First name')}</div>
-            <div className="justify-start text-neutral-800 text-lg font-bold font-['Segoe_UI'] leading-5">{firstName}</div>
-          </div>
-          <div className="flex-1 inline-flex flex-col justify-start items-start gap-3 w-full">
-            <div className="justify-center text-zinc-500 text-base font-normal font-['Segoe_UI'] leading-6">{getLabel('account.lastName', 'Last name')}</div>
-            <div className="justify-start text-neutral-800 text-lg font-bold font-['Segoe_UI'] leading-5">{lastName}</div>
+            <div className="justify-center text-zinc-500 text-base font-normal leading-6">{getLabel('account.vatNumber', 'VAT number')}</div>
+            <div className="justify-start text-neutral-800 text-lg font-bold leading-5">{'-'}</div>
           </div>
         </div>
 
         <div className="self-stretch flex flex-col sm:flex-row justify-start items-start gap-6 sm:gap-4">
           <div className="flex-1 inline-flex flex-col justify-start items-start gap-3 w-full">
-            <div className="justify-center text-zinc-500 text-base font-normal font-['Segoe_UI'] leading-6">{getLabel('account.emailAddress', 'Email address')}</div>
-            <div className="justify-start text-neutral-800 text-lg font-bold font-['Segoe_UI'] leading-5">{'-'}</div>
+            <div className="justify-center text-zinc-500 text-base font-normal leading-6">{getLabel('account.firstName', 'First name')}</div>
+            <div className="justify-start text-neutral-800 text-lg font-bold leading-5">{firstName}</div>
           </div>
           <div className="flex-1 inline-flex flex-col justify-start items-start gap-3 w-full">
-            <div className="justify-center text-zinc-500 text-base font-normal font-['Segoe_UI'] leading-6">{getLabel('account.phoneNumber', 'Phone number')}</div>
-            <div className="justify-start text-neutral-800 text-lg font-bold font-['Segoe_UI'] leading-5">{targetAddress?.phone || '-'}</div>
+            <div className="justify-center text-zinc-500 text-base font-normal leading-6">{getLabel('account.lastName', 'Last name')}</div>
+            <div className="justify-start text-neutral-800 text-lg font-bold leading-5">{lastName}</div>
           </div>
         </div>
 
         <div className="self-stretch flex flex-col sm:flex-row justify-start items-start gap-6 sm:gap-4">
           <div className="flex-1 inline-flex flex-col justify-start items-start gap-3 w-full">
-            <div className="justify-center text-zinc-500 text-base font-normal font-['Segoe_UI'] leading-6">{getLabel('account.country', 'Country/Region')}</div>
+            <div className="justify-center text-zinc-500 text-base font-normal leading-6">{getLabel('account.emailAddress', 'Email address')}</div>
+            <div className="justify-start text-neutral-800 text-lg font-bold leading-5">{'-'}</div>
+          </div>
+          <div className="flex-1 inline-flex flex-col justify-start items-start gap-3 w-full">
+            <div className="justify-center text-zinc-500 text-base font-normal leading-6">{getLabel('account.phoneNumber', 'Phone number')}</div>
+            <div className="justify-start text-neutral-800 text-lg font-bold leading-5">{targetAddress?.phone || '-'}</div>
+          </div>
+        </div>
+
+        <div className="self-stretch flex flex-col sm:flex-row justify-start items-start gap-6 sm:gap-4">
+          <div className="flex-1 inline-flex flex-col justify-start items-start gap-3 w-full">
+            <div className="justify-center text-zinc-500 text-base font-normal leading-6">{getLabel('account.country', 'Country/Region')}</div>
             {/* Displaying country placeholder for now or if we have country_id */}
-            <div className="justify-start text-neutral-800 text-lg font-bold font-['Segoe_UI'] leading-5">{'-'}</div>
+            <div className="justify-start text-neutral-800 text-lg font-bold leading-5">{'-'}</div>
           </div>
           <div className="flex-1 inline-flex flex-col justify-start items-start gap-3 w-full">
-            <div className="justify-center text-zinc-500 text-base font-normal font-['Segoe_UI'] leading-6">{getLabel('account.streetAndHouseNumber', 'Street and house number')}</div>
-            <div className="justify-start text-neutral-800 text-lg font-bold font-['Segoe_UI'] leading-5">{[targetAddress?.address1, targetAddress?.address2].filter(Boolean).join(', ') || '-'}</div>
+            <div className="justify-center text-zinc-500 text-base font-normal leading-6">{getLabel('account.streetAndHouseNumber', 'Street and house number')}</div>
+            <div className="justify-start text-neutral-800 text-lg font-bold leading-5">{[targetAddress?.address1, targetAddress?.address2].filter(Boolean).join(', ') || '-'}</div>
           </div>
         </div>
 
         <div className="self-stretch flex flex-col sm:flex-row justify-start items-start gap-6 sm:gap-4">
           <div className="flex-1 inline-flex flex-col justify-start items-start gap-3 w-full">
-            <div className="justify-center text-zinc-500 text-base font-normal font-['Segoe_UI'] leading-6">{getLabel('account.postCode', 'Post code')}</div>
-            <div className="justify-start text-neutral-800 text-lg font-bold font-['Segoe_UI'] leading-5">{targetAddress?.postcode || '-'}</div>
+            <div className="justify-center text-zinc-500 text-base font-normal leading-6">{getLabel('account.postCode', 'Post code')}</div>
+            <div className="justify-start text-neutral-800 text-lg font-bold leading-5">{targetAddress?.postcode || '-'}</div>
           </div>
           <div className="flex-1 inline-flex flex-col justify-start items-start gap-3 w-full">
-            <div className="justify-center text-zinc-500 text-base font-normal font-['Segoe_UI'] leading-6">{getLabel('account.city', 'Place')}</div>
-            <div className="justify-start text-neutral-800 text-lg font-bold font-['Segoe_UI'] leading-5">{targetAddress?.city || '-'}</div>
+            <div className="justify-center text-zinc-500 text-base font-normal leading-6">{getLabel('account.city', 'Place')}</div>
+            <div className="justify-start text-neutral-800 text-lg font-bold leading-5">{targetAddress?.city || '-'}</div>
           </div>
         </div>
           </div>
 
           <button 
             onClick={() => setEditingAddress(isBilling ? 'billing' : 'shipping')}
-            className="h-12 px-8 py-2.5 mt-4 rounded-[100px] outline outline-[1.50px] outline-offset-[-1.50px] outline-amber-500 inline-flex justify-center items-center gap-2 hover:bg-amber-50 transition-colors"
+            className="h-12 px-8 py-2.5 mt-4 rounded-[100px] outline outline-[1.50px] outline-offset-[-1.50px] outline-amber-500 inline-flex justify-center items-center gap-2 hover:bg-brand-soft transition-colors"
           >
-            <div className="text-center justify-start text-amber-500 text-lg font-normal font-['Segoe_UI'] leading-6">{t('account.editAddress') || 'Edit Address'}</div>
+            <div className="text-center justify-start text-brand text-lg font-normal leading-6">{t('account.editAddress') || 'Edit Address'}</div>
           </button>
         </>
       )}
@@ -2491,7 +2491,7 @@ function BillingAddressEditInline({
     }
   };
 
-  const inputClasses = "w-full h-12 px-4 rounded-full border border-slate-200 focus:border-amber-400 outline-none transition-all text-neutral-800 text-base bg-white font-normal";
+  const inputClasses = "w-full h-12 px-4 rounded-full border border-slate-200 focus:border-brand outline-none transition-all text-neutral-800 text-base bg-white font-normal";
   const labelClasses = "text-base font-bold text-neutral-800 mb-2 block";
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -2625,13 +2625,13 @@ function BillingAddressEditInline({
           </div>
         </div>
 
-        <div className="self-stretch border-t border-[#EDF2F7] mt-4"></div>
+        <div className="self-stretch border-t border-line mt-4"></div>
 
         <div className="flex gap-4 mt-2">
           <button 
             type="submit" 
             disabled={isSaving}
-            className="h-12 px-8 rounded-full bg-[#f08c00] hover:bg-[#d97c00] text-white text-base font-normal transition-colors disabled:opacity-50"
+            className="h-12 px-8 rounded-full bg-[#f08c00] hover:bg-brand-hover text-white text-base font-normal transition-colors disabled:opacity-50"
           >
             {isSaving ? getLabel('account.saving', 'Saving...') : getLabel('account.saveChanges', 'Save Changes')}
           </button>
@@ -2662,7 +2662,7 @@ function AddressEditModal({
   const t = useTranslations();
   const locale = useLocale();
   const isBilling = type === 'billing';
-  const inputClasses = "w-full h-14 px-6 rounded-2xl border border-slate-200 focus:border-amber-400 outline-none transition-all text-neutral-800 text-base bg-white focus:ring-[6px] focus:ring-amber-500/5 font-medium";
+  const inputClasses = "w-full h-14 px-6 rounded-2xl border border-slate-200 focus:border-brand outline-none transition-all text-neutral-800 text-base bg-white focus:ring-[6px] focus:ring-brand/5 font-medium";
   const labelClasses = "text-xs font-black text-neutral-500 uppercase tracking-widest mb-2.5 block ml-1";
 
   const [firstName, setFirstName] = useState(address?.firstname || '');
@@ -2818,7 +2818,7 @@ function AddressEditModal({
             form="address-form-modal"
             type="submit" 
             disabled={isSaving} 
-            className="flex-1 h-14 rounded-full bg-amber-500 px-8 text-base font-black text-white hover:bg-amber-600 transition-all shadow-xl shadow-amber-500/30 uppercase tracking-widest disabled:opacity-50"
+            className="flex-1 h-14 rounded-full bg-brand px-8 text-base font-black text-white hover:bg-brand-hover transition-all shadow-xl shadow-brand/30 uppercase tracking-widest disabled:opacity-50"
           >
             {isSaving ? t('account.saving') : t('account.saveAddress')}
           </button>
@@ -2859,8 +2859,8 @@ function AddressProfile({
         <button
           onClick={onEdit}
           className={isShipping
-            ? 'h-9 px-5 bg-amber-500 text-white rounded-full font-black text-xs uppercase tracking-widest hover:bg-amber-600 transition-all shadow-lg shadow-amber-500/20'
-            : 'text-amber-500 font-black text-sm uppercase tracking-wider hover:underline'}
+            ? 'h-9 px-5 bg-brand text-white rounded-full font-black text-xs uppercase tracking-widest hover:bg-brand-hover transition-all shadow-lg shadow-brand/20'
+            : 'text-brand font-black text-sm uppercase tracking-wider hover:underline'}
         >
           {actionLabel}
         </button>
@@ -2877,7 +2877,7 @@ function AddressProfile({
             <p className="font-medium">{address.address1}</p>
             {address.address2 ? <p className="font-medium">{address.address2}</p> : null}
             <p className="font-medium">{address.postcode} {address.city}</p>
-            <p className="font-bold text-amber-600">{address.country}</p>
+            <p className="font-bold text-brand">{address.country}</p>
           </div>
         </div>
       ) : (
@@ -2893,8 +2893,8 @@ function AddressProfile({
 
 function AccountDetailsView({ user }: { user: StoredUser }) {
   const t = useTranslations();
-  const inputClasses = "w-full h-12 px-4 rounded-full border border-slate-200 focus:border-amber-400 outline-none transition-all text-neutral-800 text-base bg-white font-normal";
-  const labelClasses = "text-[#222222] text-[18px] font-bold font-['Segoe_UI'] leading-[20px] mb-2.5 block ml-1 break-words";
+  const inputClasses = "w-full h-12 px-4 rounded-full border border-slate-200 focus:border-brand outline-none transition-all text-neutral-800 text-base bg-white font-normal";
+  const labelClasses = "text-ink text-[18px] font-bold leading-[20px] mb-2.5 block ml-1 break-words";
   
   const displayName = userDisplayName(user);
   const [name, setName] = useState(displayName);
@@ -2953,35 +2953,35 @@ function AccountDetailsView({ user }: { user: StoredUser }) {
   if (!isEditing) {
     return (
       <div className="self-stretch flex flex-col justify-start items-start gap-4">
-        <div className="justify-start text-neutral-800 text-3xl font-bold font-['Segoe_UI'] leading-8">{t('account.accountDetails')}</div>
-        <div className="self-stretch border-t border-[#EDF2F7]"></div>
+        <div className="justify-start text-neutral-800 text-3xl font-bold leading-8">{t('account.accountDetails')}</div>
+        <div className="self-stretch border-t border-line"></div>
         <div className="self-stretch flex flex-col justify-start items-start gap-6 mt-2">
           <div className="self-stretch flex flex-col sm:flex-row justify-start items-start gap-6 sm:gap-4">
             <div className="flex-1 inline-flex flex-col justify-start items-start gap-3 w-full">
-              <div className="justify-center text-zinc-500 text-base font-normal font-['Segoe_UI'] leading-6">{getLabel('account.firstName', 'First name')}</div>
-              <div className="justify-start text-neutral-800 text-lg font-bold font-['Segoe_UI'] leading-5">{firstName}</div>
+              <div className="justify-center text-zinc-500 text-base font-normal leading-6">{getLabel('account.firstName', 'First name')}</div>
+              <div className="justify-start text-neutral-800 text-lg font-bold leading-5">{firstName}</div>
             </div>
             <div className="flex-1 inline-flex flex-col justify-start items-start gap-3 w-full">
-              <div className="justify-center text-zinc-500 text-base font-normal font-['Segoe_UI'] leading-6">{getLabel('account.lastName', 'Last name')}</div>
-              <div className="justify-start text-neutral-800 text-lg font-bold font-['Segoe_UI'] leading-5">{name.includes(' ') ? lastName : '-'}</div>
+              <div className="justify-center text-zinc-500 text-base font-normal leading-6">{getLabel('account.lastName', 'Last name')}</div>
+              <div className="justify-start text-neutral-800 text-lg font-bold leading-5">{name.includes(' ') ? lastName : '-'}</div>
             </div>
           </div>
           <div className="self-stretch flex flex-col sm:flex-row justify-start items-start gap-6 sm:gap-4">
             <div className="flex-1 inline-flex flex-col justify-start items-start gap-3 w-full">
-              <div className="justify-center text-zinc-500 text-base font-normal font-['Segoe_UI'] leading-6">{getLabel('account.emailAddress', 'Email address')}</div>
-              <div className="justify-start text-neutral-800 text-lg font-bold font-['Segoe_UI'] leading-5">{email || '-'}</div>
+              <div className="justify-center text-zinc-500 text-base font-normal leading-6">{getLabel('account.emailAddress', 'Email address')}</div>
+              <div className="justify-start text-neutral-800 text-lg font-bold leading-5">{email || '-'}</div>
             </div>
             <div className="flex-1 inline-flex flex-col justify-start items-start gap-3 w-full">
-              <div className="justify-center text-zinc-500 text-base font-normal font-['Segoe_UI'] leading-6">{getLabel('account.phoneNumber', 'Phone number')}</div>
-              <div className="justify-start text-neutral-800 text-lg font-bold font-['Segoe_UI'] leading-5">{phone || '-'}</div>
+              <div className="justify-center text-zinc-500 text-base font-normal leading-6">{getLabel('account.phoneNumber', 'Phone number')}</div>
+              <div className="justify-start text-neutral-800 text-lg font-bold leading-5">{phone || '-'}</div>
             </div>
           </div>
         </div>
         <button 
           onClick={() => setIsEditing(true)}
-          className="h-12 px-8 py-2.5 mt-4 rounded-[100px] outline outline-[1.50px] outline-offset-[-1.50px] outline-amber-500 inline-flex justify-center items-center gap-2 hover:bg-amber-50 transition-colors"
+          className="h-12 px-8 py-2.5 mt-4 rounded-[100px] outline outline-[1.50px] outline-offset-[-1.50px] outline-amber-500 inline-flex justify-center items-center gap-2 hover:bg-brand-soft transition-colors"
         >
-          <div className="text-center justify-start text-amber-500 text-lg font-normal font-['Segoe_UI'] leading-6">{getLabel('account.editProfile', 'Edit Profile')}</div>
+          <div className="text-center justify-start text-brand text-lg font-normal leading-6">{getLabel('account.editProfile', 'Edit Profile')}</div>
         </button>
       </div>
     );
@@ -2992,7 +2992,7 @@ function AccountDetailsView({ user }: { user: StoredUser }) {
       <div className="flex flex-col gap-2">
         <h2 className="text-3xl font-black text-neutral-800 tracking-tight">{t('account.editProfile') || 'Edit Profile'}</h2>
         <p className="text-neutral-500 font-medium">{t('account.detailsSub')}</p>
-        <div className="self-stretch border-t border-[#EDF2F7] mt-4"></div>
+        <div className="self-stretch border-t border-line mt-4"></div>
       </div>
       
       <form className="flex flex-col gap-8" onSubmit={handleSaveProfile}>
@@ -3035,20 +3035,20 @@ function AccountDetailsView({ user }: { user: StoredUser }) {
           <div className="absolute top-0 left-0 right-0 h-px bg-slate-100" />
           <h3 className="text-xl font-black text-neutral-800 mb-8 mt-2 tracking-tight flex items-center gap-3">
              {t('account.securitySettings')}
-             <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+             <span className="h-1.5 w-1.5 rounded-full bg-brand animate-pulse" />
           </h3>
           
           <p className="text-neutral-500 text-sm mb-6">{t('account.securitySettingsDesc')}</p>
         </div>
 
-        <div className="self-stretch border-t border-[#EDF2F7] pt-6">
+        <div className="self-stretch border-t border-line pt-6">
           <div className="flex items-center gap-4">
             <button 
               type="submit" 
               disabled={isSaving}
-              className="h-12 px-8 py-2.5 bg-amber-500 rounded-[100px] flex justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm focus:outline-none focus:ring-4 focus:ring-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="h-12 px-8 py-2.5 bg-brand rounded-[100px] flex justify-center items-center gap-2 hover:bg-brand-hover transition-colors shadow-sm focus:outline-none focus:ring-4 focus:ring-brand/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <div className="text-center justify-start text-white text-lg font-normal font-['Segoe_UI'] leading-6">
+              <div className="text-center justify-start text-white text-lg font-normal leading-6">
                 {isSaving ? t('account.saving') : t('account.saveProfile') || 'Save Profile'}
               </div>
             </button>
@@ -3057,7 +3057,7 @@ function AccountDetailsView({ user }: { user: StoredUser }) {
               onClick={() => setIsEditing(false)}
               className="h-12 px-8 py-2.5 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-black/10 flex justify-center items-center gap-2 hover:bg-slate-50 transition-colors focus:outline-none focus:ring-4 focus:ring-slate-100"
             >
-              <div className="text-center justify-start text-neutral-700 text-lg font-normal font-['Segoe_UI'] leading-6">
+              <div className="text-center justify-start text-neutral-700 text-lg font-normal leading-6">
                 {t('account.cancel') || 'Cancel'}
               </div>
             </button>
@@ -3126,15 +3126,15 @@ function ChangePasswordView() {
 
   return (
     <form onSubmit={handleSavePassword} className="flex-1 inline-flex flex-col justify-start items-start gap-4 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="justify-start text-neutral-800 text-3xl font-bold font-['Segoe_UI'] leading-8">
+      <div className="justify-start text-neutral-800 text-3xl font-bold leading-8">
         {t('account.changePassword') || 'Change Password'}
       </div>
-      <div className="self-stretch border-t border-[#EDF2F7]"></div>
+      <div className="self-stretch border-t border-line"></div>
       
       <div className="self-stretch flex flex-col justify-start items-start gap-6 mt-2">
         {/* Current Password */}
         <div className="self-stretch flex flex-col justify-start items-start gap-2">
-          <div className="justify-start text-neutral-800 text-lg font-bold font-['Segoe_UI'] leading-5">
+          <div className="justify-start text-neutral-800 text-lg font-bold leading-5">
             {t('account.currentPassword') || 'Current Password'}
           </div>
           <div className="self-stretch h-12 px-5 py-2 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-zinc-200 inline-flex justify-start items-center gap-3 bg-white focus-within:outline-[1.5px] focus-within:outline-amber-500 transition-all">
@@ -3142,7 +3142,7 @@ function ChangePasswordView() {
               type={showCurrent ? 'text' : 'password'} 
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              className="flex-1 bg-transparent outline-none text-neutral-800 text-lg font-['Segoe_UI'] leading-7 placeholder-zinc-400 tracking-widest font-mono" 
+              className="flex-1 bg-transparent outline-none text-neutral-800 text-lg leading-7 placeholder-zinc-400 tracking-widest font-mono" 
               placeholder="••••••••" 
               required
             />
@@ -3154,7 +3154,7 @@ function ChangePasswordView() {
         
         {/* New Password */}
         <div className="self-stretch flex flex-col justify-start items-start gap-2">
-          <div className="justify-start text-neutral-800 text-lg font-bold font-['Segoe_UI'] leading-5">
+          <div className="justify-start text-neutral-800 text-lg font-bold leading-5">
             {t('account.newPassword') || 'New Password'}
           </div>
           <div className="self-stretch h-12 px-5 py-2 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-zinc-200 inline-flex justify-start items-center gap-3 bg-white focus-within:outline-[1.5px] focus-within:outline-amber-500 transition-all">
@@ -3162,7 +3162,7 @@ function ChangePasswordView() {
               type={showNew ? 'text' : 'password'} 
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="flex-1 bg-transparent outline-none text-neutral-800 text-lg font-['Segoe_UI'] leading-7 placeholder-zinc-400 tracking-widest font-mono" 
+              className="flex-1 bg-transparent outline-none text-neutral-800 text-lg leading-7 placeholder-zinc-400 tracking-widest font-mono" 
               placeholder="••••••••" 
               required
             />
@@ -3174,7 +3174,7 @@ function ChangePasswordView() {
 
         {/* Confirm New Password */}
         <div className="self-stretch flex flex-col justify-start items-start gap-2">
-          <div className="justify-start text-neutral-800 text-lg font-bold font-['Segoe_UI'] leading-5">
+          <div className="justify-start text-neutral-800 text-lg font-bold leading-5">
             {t('account.confirmNewPassword') || 'Confirm New Password'}
           </div>
           <div className="self-stretch h-12 px-5 py-2 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-zinc-200 inline-flex justify-start items-center gap-3 bg-white focus-within:outline-[1.5px] focus-within:outline-amber-500 transition-all">
@@ -3182,7 +3182,7 @@ function ChangePasswordView() {
               type={showConfirm ? 'text' : 'password'} 
               value={confirmNewPassword}
               onChange={(e) => setConfirmNewPassword(e.target.value)}
-              className="flex-1 bg-transparent outline-none text-neutral-800 text-lg font-['Segoe_UI'] leading-7 placeholder-zinc-400 tracking-widest font-mono" 
+              className="flex-1 bg-transparent outline-none text-neutral-800 text-lg leading-7 placeholder-zinc-400 tracking-widest font-mono" 
               placeholder="••••••••" 
               required
             />
@@ -3194,15 +3194,15 @@ function ChangePasswordView() {
       </div>
       
       <div className="self-stretch flex flex-col justify-start items-start gap-6 mt-6 max-w-lg">
-        <div className="self-stretch border-t border-[#EDF2F7]"></div>
+        <div className="self-stretch border-t border-line"></div>
         <div className="self-stretch inline-flex justify-start items-start gap-4">
-          <button type="submit" disabled={isSaving} className="h-12 px-8 py-2.5 bg-amber-500 rounded-[100px] flex justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm focus:outline-none focus:ring-4 focus:ring-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed">
-            <div className="text-center justify-start text-white text-lg font-normal font-['Segoe_UI'] leading-6">
+          <button type="submit" disabled={isSaving} className="h-12 px-8 py-2.5 bg-brand rounded-[100px] flex justify-center items-center gap-2 hover:bg-brand-hover transition-colors shadow-sm focus:outline-none focus:ring-4 focus:ring-brand/20 disabled:opacity-50 disabled:cursor-not-allowed">
+            <div className="text-center justify-start text-white text-lg font-normal leading-6">
               {isSaving ? t('account.saving') : t('account.saveChanges') || 'Save Changes'}
             </div>
           </button>
           <button type="button" onClick={() => { setCurrentPassword(''); setNewPassword(''); setConfirmNewPassword(''); setShowCurrent(false); setShowNew(false); setShowConfirm(false); }} className="h-12 px-8 py-2.5 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-black/10 flex justify-center items-center gap-2 hover:bg-slate-50 transition-colors focus:outline-none focus:ring-4 focus:ring-slate-100">
-            <div className="text-center justify-start text-neutral-700 text-lg font-normal font-['Segoe_UI'] leading-6">
+            <div className="text-center justify-start text-neutral-700 text-lg font-normal leading-6">
               {t('account.cancel') || 'Cancel'}
             </div>
           </button>

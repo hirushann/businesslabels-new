@@ -210,7 +210,7 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
       <button
         type="button"
         onClick={handleOpen}
-        className="inline-block text-left text-[18px] font-normal text-[#F18800] underline decoration-[#F18800] underline-offset-4 hover:text-[#d97706] hover:decoration-[#d97706] transition-colors"
+        className="inline-block text-left text-[18px] font-normal text-brand underline decoration-brand underline-offset-4 hover:text-brand-hover hover:decoration-brand-hover transition-colors"
       >
         {isNl ? "ICC-profiel aanvragen" : "Request ICC Profile"}
       </button>
@@ -271,7 +271,7 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="mt-2 rounded-full bg-[#f08500] px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#d97706]"
+                  className="mt-2 rounded-full bg-brand px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-hover"
                 >
                   {isNl ? "Sluiten" : "Close"}
                 </button>
@@ -303,7 +303,7 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
                         setForm((f) => ({ ...f, printerModel: e.target.value }));
                         setErrors((er) => ({ ...er, printerModel: "" }));
                       }}
-                      className={`w-full appearance-none rounded-full border bg-white px-5 py-3 pr-10 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[#f08500]/30 ${
+                      className={`w-full appearance-none rounded-full border bg-white px-5 py-3 pr-10 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-brand/30 ${
                         errors.printerModel
                           ? "border-red-400 text-red-600"
                           : form.printerModel
@@ -345,7 +345,7 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
                       setForm((f) => ({ ...f, email: e.target.value }));
                       setErrors((er) => ({ ...er, email: "" }));
                     }}
-                    className={`w-full rounded-full border px-5 py-3 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[#f08500]/30 ${
+                    className={`w-full rounded-full border px-5 py-3 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-brand/30 ${
                       errors.email ? "border-red-400" : "border-slate-200"
                     } placeholder:text-slate-400`}
                   />
@@ -366,7 +366,7 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
                     placeholder={isNl ? "Uw bedrijfsnaam" : "Your company name"}
                     value={form.companyName}
                     onChange={(e) => setForm((f) => ({ ...f, companyName: e.target.value }))}
-                    className={`w-full rounded-full border px-5 py-3 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[#f08500]/30 ${
+                    className={`w-full rounded-full border px-5 py-3 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-brand/30 ${
                       errors.companyName ? "border-red-400" : "border-slate-200"
                     } placeholder:text-slate-400`}
                   />
@@ -387,7 +387,7 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
                     placeholder={isNl ? "+31 6 00 00 00 00" : "+1 (555) 000-0000"}
                     value={form.phone}
                     onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                    className="w-full rounded-full border border-slate-200 px-5 py-3 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#f08500]/30 transition-colors"
+                    className="w-full rounded-full border border-slate-200 px-5 py-3 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/30 transition-colors"
                   />
                 </div>
 
@@ -402,7 +402,7 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="mt-1 w-full rounded-full bg-[#f08500] py-4 text-base font-semibold text-white shadow-sm transition-all hover:bg-[#d97706] disabled:cursor-not-allowed disabled:opacity-70"
+                  className="mt-1 w-full rounded-full bg-brand py-4 text-base font-semibold text-white shadow-sm transition-all hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {isSubmitting ? (
                     <span className="flex items-center justify-center gap-2">

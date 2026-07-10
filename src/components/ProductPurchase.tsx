@@ -732,9 +732,9 @@ export default function ProductPurchase({
         {/* Price Section */}
         <div className="flex flex-col gap-3">
           <div className="flex justify-between items-center">
-            <span className="text-[#479EF5] text-base font-bold leading-5">{t("product.sku", { sku: displaySku })}</span>
+            <span className="text-link text-base font-bold leading-5">{t("product.sku", { sku: displaySku })}</span>
             {((stockCount != null && stockCount > 0) || deliveryDatesNoStockCount == null || deliveryDatesNoStockCount < 10) ? (
-              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${resolvedInStock ? "bg-[#00A63E]" : "bg-zinc-400"}`}>
+              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${resolvedInStock ? "bg-success" : "bg-zinc-400"}`}>
                 {resolvedInStock ? (
                   <svg className="w-3 h-3 text-white" fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12">
                     <g clipPath="url(#clip0_1768_8264)">
@@ -816,7 +816,7 @@ export default function ProductPurchase({
                         {tierLabel(index)}
                       </span>
                       {isActive && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#00A650] text-white text-[11px] font-bold tracking-wide">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-success text-white text-[11px] font-bold tracking-wide">
                           {t("bulkDiscount.active")}
                         </span>
                       )}
@@ -824,7 +824,7 @@ export default function ProductPurchase({
                     <span className={`text-base font-extrabold ${isActive ? "text-neutral-900" : "text-neutral-800"}`}>
                       {formatEuro(tierUnitPrice)}
                     </span>
-                    <span className={`text-base font-medium text-[#00A650]`}>
+                    <span className={`text-base font-medium text-success`}>
                       {savingsPct > 0 ? `${savingsPct}%` : "-"}
                     </span>
                   </button>
@@ -885,7 +885,7 @@ export default function ProductPurchase({
                           handleAddToCart(quantity);
                         }}
                         aria-describedby={quantityError ? "quantity-error" : undefined}
-                        className="w-full sm:flex-1 h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm flex"
+                        className="w-full sm:flex-1 h-12 px-4 py-2.5 bg-brand rounded-[100px] justify-center items-center gap-2 hover:bg-brand-hover transition-colors shadow-sm flex"
                       >
                         <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <path d="M7.33366 20.1663C7.83992 20.1663 8.25033 19.7559 8.25033 19.2497C8.25033 18.7434 7.83992 18.333 7.33366 18.333C6.8274 18.333 6.41699 18.7434 6.41699 19.2497C6.41699 19.7559 6.8274 20.1663 7.33366 20.1663Z" stroke="white" strokeWidth="1.375" strokeLinecap="round" strokeLinejoin="round" />
@@ -915,9 +915,9 @@ export default function ProductPurchase({
                         <path d="M12.375 1.83301V6.41634" stroke="white" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
 
-                      <span className="text-amber-600 text-base font-bold whitespace-nowrap">
+                      <span className="text-brand text-base font-bold whitespace-nowrap">
                         {t("product.box")}{" "}
-                        <span className="text-xs text-amber-600">
+                        <span className="text-xs text-brand">
                           ({normalizedPackingGroup ?? 0} {rollsStackLabel})
                         </span>
                       </span>
@@ -973,9 +973,9 @@ export default function ProductPurchase({
                         <path d="M12.375 1.83301V6.41634" stroke="orange" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
 
-                      <span className="text-amber-600 text-base font-bold whitespace-nowrap">
+                      <span className="text-brand text-base font-bold whitespace-nowrap">
                         {t("product.box")}{" "}
-                        <span className="text-xs text-amber-600">
+                        <span className="text-xs text-brand">
                           ({normalizedPackingGroup ?? 0} {rollsStackLabel})
                         </span>
                       </span>
@@ -1027,7 +1027,7 @@ export default function ProductPurchase({
                       handleAddToCart(quantity);
                     }}
                     aria-describedby={quantityError ? "quantity-error" : undefined}
-                    className="flex h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm"
+                    className="flex h-12 px-4 py-2.5 bg-brand rounded-[100px] justify-center items-center gap-2 hover:bg-brand-hover transition-colors shadow-sm"
                   >
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -1081,7 +1081,7 @@ export default function ProductPurchase({
             type="button"
             onClick={handleToggleWishlist}
             className={`flex-1 h-12 px-4 py-2.5 rounded-[100px] outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2 transition-colors ${isWishlisted
-              ? "bg-orange-50 outline-[#F18800] text-[#F18800]"
+              ? "bg-brand-soft outline-brand text-brand"
               : "outline-black/10 text-neutral-700 hover:bg-slate-50"
               }`}
           >
@@ -1187,7 +1187,7 @@ export default function ProductPurchase({
                 label: t("supportPanel.callUs"),
                 href: "tel:+31318590465",
                 icon: (
-                  <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-brand" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.948V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                   </svg>
                 )
@@ -1196,7 +1196,7 @@ export default function ProductPurchase({
                 label: t("supportPanel.email"),
                 href: "mailto:verkoop@businesslabels.nl?&subject=Business%20Labels&body=" + (sku ?? ''),
                 icon: (
-                  <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-brand" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 )
@@ -1205,7 +1205,7 @@ export default function ProductPurchase({
                 label: t("supportPanel.whatsapp"),
                 href: "https://wa.me/31318590212?text=" + (sku ?? ''),
                 icon: (
-                  <svg className="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-brand" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .018 5.396.015 12.03c0 2.12.554 4.189 1.602 6.06L0 24l6.105-1.602a11.832 11.832 0 005.937 1.578h.005c6.637 0 12.032-5.396 12.035-12.03a11.85 11.85 0 00-3.529-8.511z" />
                   </svg>
                 )
@@ -1214,9 +1214,9 @@ export default function ProductPurchase({
               <Link
                 key={label}
                 href={href}
-                className="flex-1 p-3 bg-slate-100/30 rounded-xl outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col items-center gap-3 hover:bg-orange-50 transition-colors"
+                className="flex-1 p-3 bg-slate-100/30 rounded-xl outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col items-center gap-3 hover:bg-brand-soft transition-colors"
               >
-                <div className="w-8 h-8 p-1.5 bg-orange-50 rounded-lg shadow-sm flex items-center justify-center">
+                <div className="w-8 h-8 p-1.5 bg-brand-soft rounded-lg shadow-sm flex items-center justify-center">
                   {icon}
                 </div>
                 <span className="text-neutral-800 text-xs sm:text-sm md:text-base font-semibold leading-5 text-center">{label}</span>
@@ -1299,7 +1299,7 @@ export default function ProductPurchase({
                   type="button"
                   onClick={() => handleAddToCart(quantity)}
                   aria-describedby={quantityError ? "quantity-error" : undefined}
-                  className="flex-1 h-11 px-4 bg-amber-500 rounded-[100px] justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm flex"
+                  className="flex-1 h-11 px-4 bg-brand rounded-[100px] justify-center items-center gap-2 hover:bg-brand-hover transition-colors shadow-sm flex"
                 >
                   <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -1312,12 +1312,12 @@ export default function ProductPurchase({
                 onClick={() => handleAddToCart(Math.max(1, Math.ceil(quantity / (normalizedPackingGroup || 1))) * (normalizedPackingGroup || 1))}
                 className="flex-1 h-11 px-4 bg-amber-100 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-amber-300 justify-center items-center gap-2 hover:bg-amber-300 transition-colors flex"
               >
-                <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-brand" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-                <span className="text-amber-600 text-sm font-bold whitespace-nowrap">
+                <span className="text-brand text-sm font-bold whitespace-nowrap">
                   {t("product.box")}{" "}
-                  <span className="text-[10px] text-amber-600">
+                  <span className="text-[10px] text-brand">
                     ({normalizedPackingGroup ?? 0} {rollsStackLabel})
                   </span>
                 </span>
@@ -1328,7 +1328,7 @@ export default function ProductPurchase({
               type="button"
               onClick={() => handleAddToCart(quantity)}
               aria-describedby={quantityError ? "quantity-error" : undefined}
-              className="w-full h-11 bg-amber-500 rounded-[100px] justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm flex"
+              className="w-full h-11 bg-brand rounded-[100px] justify-center items-center gap-2 hover:bg-brand-hover transition-colors shadow-sm flex"
             >
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />

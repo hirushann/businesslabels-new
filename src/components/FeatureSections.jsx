@@ -56,10 +56,10 @@ export default function FeatureSections() {
             <div className="w-full lg:flex-1 flex flex-col gap-8 lg:gap-12">
               <div className="flex flex-col gap-6">
                 <div className="flex flex-col gap-4">
-                  <h3 className="text-neutral-800 text-2xl sm:text-3xl lg:text-4xl font-bold font-['Segoe_UI'] leading-tight lg:leading-[48px]">
+                  <h3 className="text-neutral-800 text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight lg:leading-[48px]">
                     {t(`features.${section.key}Title`)}
                   </h3>
-                  <p className="text-neutral-700 text-base sm:text-lg font-normal font-['Segoe_UI'] leading-relaxed sm:leading-7">
+                  <p className="text-neutral-700 text-base sm:text-lg font-normal leading-relaxed sm:leading-7">
                     {t(`features.${section.key}Desc`)}
                   </p>
                 </div>
@@ -70,7 +70,7 @@ export default function FeatureSections() {
                         <rect x="1.5" y="1.5" width="13" height="13" rx="6.5" stroke="#22C55E" />
                         <path d="M5 8l2 2 4-4" stroke="#22C55E" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
-                      <span className="text-neutral-700 text-base sm:text-lg font-normal font-['Segoe_UI'] leading-normal sm:leading-7">
+                      <span className="text-neutral-700 text-base sm:text-lg font-normal leading-normal sm:leading-7">
                         {t(`features.${section.key}Bullet${i + 1}`)}
                       </span>
                     </div>
@@ -79,7 +79,7 @@ export default function FeatureSections() {
               </div>
               <Link
                 href={localePath(section.href)}
-                className="px-7 py-4 bg-amber-500 rounded-full inline-flex items-center gap-2.5 text-white text-base sm:text-lg font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors self-start"
+                className="px-7 py-4 bg-brand rounded-full inline-flex items-center gap-2.5 text-white text-base sm:text-lg font-semibold leading-6 hover:bg-brand-hover transition-colors self-start"
               >
                 {t(`features.${section.key}Cta`)}
               </Link>

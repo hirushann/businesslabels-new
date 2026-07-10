@@ -701,7 +701,7 @@ function CatalogProductsListing({
                 type="button"
                 onClick={() => handleCategoryClick(card.id)}
                 className={`group flex flex-col overflow-hidden text-left rounded-xl border p-3 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${isActive
-                  ? "border-amber-500 ring-2 ring-amber-500/10 bg-amber-50/5"
+                  ? "border-brand ring-2 ring-brand/10 bg-brand-soft/5"
                   : "border-slate-100 bg-white"
                   }`}
               >
@@ -719,7 +719,7 @@ function CatalogProductsListing({
                     <h3 className="text-base font-bold text-slate-800 flex items-center justify-between">
                       {card.title}
                       <span
-                        className={`h-2 w-2 rounded-full transition-all duration-200 ${isActive ? "bg-amber-500 scale-125" : "bg-slate-200"
+                        className={`h-2 w-2 rounded-full transition-all duration-200 ${isActive ? "bg-brand scale-125" : "bg-slate-200"
                           }`}
                       />
                     </h3>
@@ -740,7 +740,7 @@ function CatalogProductsListing({
             type="button"
             onClick={() => setIsSidebarOpen((currentValue) => !currentValue)}
             className={`inline-flex h-[42px] w-fit items-center gap-2 px-1 py-2 transition-colors ${
-              isSidebarOpen ? "text-amber-500" : "text-neutral-800 hover:text-amber-500"
+              isSidebarOpen ? "text-brand" : "text-neutral-800 hover:text-brand"
             }`}
             aria-expanded={isSidebarOpen}
           >
@@ -760,7 +760,7 @@ function CatalogProductsListing({
               </span>
               {activeFilterCount > 0 ? (
                 <span className={`flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-semibold ${
-                  isSidebarOpen ? "bg-amber-100 text-amber-600" : "bg-amber-500 text-white"
+                  isSidebarOpen ? "bg-amber-100 text-brand" : "bg-brand text-white"
                 }`}>
                   {activeFilterCount}
                 </span>
@@ -772,7 +772,7 @@ function CatalogProductsListing({
             <button
               type="button"
               onClick={clearFilters}
-              className="text-sm font-medium text-slate-400 hover:text-amber-500 underline underline-offset-4"
+              className="text-sm font-medium text-slate-400 hover:text-brand underline underline-offset-4"
             >
               {t("search.clearAll")}
             </button>
@@ -820,7 +820,7 @@ function CatalogProductsListing({
               onChange={(event) =>
                 setSort(event.target.value as CatalogSortValue)
               }
-              className="appearance-none bg-transparent text-right text-sm font-medium font-sans outline-none cursor-pointer hover:text-amber-600 pr-6 text-neutral-800"
+              className="appearance-none bg-transparent text-right text-sm font-medium font-sans outline-none cursor-pointer hover:text-brand pr-6 text-neutral-800"
             >
               {SORT_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -850,7 +850,7 @@ function CatalogProductsListing({
                     {t("search.filters")}
                   </h2>
                   {activeFilterCount > 0 ? (
-                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-100 px-1.5 text-xs font-semibold text-amber-600">
+                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-100 px-1.5 text-xs font-semibold text-brand">
                       {activeFilterCount}
                     </span>
                   ) : null}
@@ -859,7 +859,7 @@ function CatalogProductsListing({
                   <button
                     type="button"
                     onClick={clearFilters}
-                    className="text-sm font-medium text-amber-500 hover:underline"
+                    className="text-sm font-medium text-brand hover:underline"
                   >
                     {t("search.clearAll")}
                   </button>
@@ -984,7 +984,7 @@ function CatalogProductsListing({
                                   });
                                 }
                               }}
-                              className="w-fit rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 transition-colors hover:border-amber-300 hover:bg-amber-50 hover:text-amber-600"
+                              className="w-fit rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 transition-colors hover:border-amber-300 hover:bg-brand-soft hover:text-brand"
                             >
                               {isFullScale ? t("filters.collapseScale") : t("filters.expandScale")}
                             </button>
@@ -997,8 +997,8 @@ function CatalogProductsListing({
                                 toggleOption(fanFoldFilterKey, "Fan-fold")
                               }
                               className={`inline-flex min-h-9 w-fit items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${fanFoldSelected
-                                ? "bg-amber-500 text-white shadow-sm hover:bg-amber-600"
-                                : "bg-slate-100 text-neutral-700 hover:bg-amber-50 hover:text-amber-600"
+                                ? "bg-brand text-white shadow-sm hover:bg-brand-hover"
+                                : "bg-slate-100 text-neutral-700 hover:bg-brand-soft hover:text-brand"
                                 }`}
                               aria-pressed={fanFoldSelected}
                             >
@@ -1057,8 +1057,8 @@ function CatalogProductsListing({
                                   toggleOption(filter.key, option.value)
                                 }
                                 className={`inline-flex min-h-9 items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${selected
-                                  ? "bg-amber-500 text-white shadow-sm hover:bg-amber-600"
-                                  : "bg-slate-100 text-neutral-700 hover:bg-amber-50 hover:text-amber-600"
+                                  ? "bg-brand text-white shadow-sm hover:bg-brand-hover"
+                                  : "bg-slate-100 text-neutral-700 hover:bg-brand-soft hover:text-brand"
                                   }`}
                                 aria-pressed={selected}
                               >
@@ -1090,7 +1090,7 @@ function CatalogProductsListing({
                                 [filter.key]: !prev[filter.key],
                               }))
                             }
-                            className="text-sm font-medium text-amber-600 hover:text-amber-700 transition-colors"
+                            className="text-sm font-medium text-brand hover:text-amber-700 transition-colors"
                           >
                             {showAll
                               ? t("filters.showLess")

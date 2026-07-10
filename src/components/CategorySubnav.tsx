@@ -46,7 +46,7 @@ export default async function CategorySubnav({
           <Link
             key={category.id}
             href={hrefForCategory?.(category) ?? href}
-            className="group flex flex-col items-center justify-center gap-6 rounded-xl border border-[#EDF0F4] bg-white px-4 py-6 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.1)] transition-colors hover:border-amber-400 hover:bg-amber-50 h-[280px]"
+            className="group flex flex-col items-center justify-center gap-6 rounded-xl border border-line bg-white px-4 py-6 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.1)] transition-colors hover:border-brand hover:bg-brand-soft h-[280px]"
           >
             <div className="relative flex h-full w-full md:h-40 md:w-40 shrink-0 items-center justify-center">
               {imageUrl ? (
@@ -77,7 +77,7 @@ export default async function CategorySubnav({
               )}
             </div>
             <div className="w-full text-center px-2">
-              <span className="block text-xl font-bold leading-[1.2] text-[#222222] transition-colors group-hover:text-amber-600 line-clamp-2">
+              <span className="block text-xl font-bold leading-[1.2] text-ink transition-colors group-hover:text-brand line-clamp-2">
                 {name}
               </span>
             </div>

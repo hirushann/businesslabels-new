@@ -80,7 +80,7 @@ export default async function ProductsPage({
             />
           </div>
           <div className="flex flex-col gap-5">
-            <h1 className="text-3xl font-bold font-['Segoe_UI'] leading-8 text-neutral-800">
+            <h1 className="text-3xl font-bold leading-8 text-neutral-800">
               {t("common.allProducts")}
             </h1>
             <ProductsListing

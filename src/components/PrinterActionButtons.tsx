@@ -101,7 +101,7 @@ export default function PrinterActionButtons({
             href={productUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center w-full sm:w-auto px-8 h-[52px] bg-[#f08500] hover:bg-[#d97706] text-white font-bold rounded-full transition-colors font-['Segoe_UI'] shadow-sm text-[18px] text-center whitespace-nowrap"
+            className="inline-flex items-center justify-center w-full sm:w-auto px-8 h-[52px] bg-brand hover:bg-brand-hover text-white font-bold rounded-full transition-colors shadow-sm text-[18px] text-center whitespace-nowrap"
           >
             {t("finder.viewPrinter")}
           </a>
@@ -110,10 +110,10 @@ export default function PrinterActionButtons({
         <button
           type="button"
           onClick={handleFavoriteToggle}
-          className={`inline-flex items-center justify-center gap-2 w-full sm:w-auto px-8 h-[52px] font-bold rounded-full transition-colors font-['Segoe_UI'] shadow-sm text-[18px] border whitespace-nowrap ${
+          className={`inline-flex items-center justify-center gap-2 w-full sm:w-auto px-8 h-[52px] font-bold rounded-full transition-colors shadow-sm text-[18px] border whitespace-nowrap ${
             isFavorite
-              ? "border-[#f08500] text-[#f08500] bg-orange-50 hover:bg-orange-100/50"
-              : "border-slate-300 text-neutral-700 hover:border-[#f08500] hover:text-[#f08500] bg-white hover:bg-orange-50/20"
+              ? "border-brand text-brand bg-brand-soft hover:bg-orange-100/50"
+              : "border-slate-300 text-neutral-700 hover:border-brand hover:text-brand bg-white hover:bg-brand-soft/20"
           }`}
         >
           <svg

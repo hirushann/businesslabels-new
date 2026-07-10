@@ -120,8 +120,8 @@ export default async function KnowledgeBaseArchive() {
   return (
     <div className="relative min-h-screen bg-gray-50 flex flex-col items-center overflow-hidden">
       {/* Glow Effects */}
-      <div className="size-48 left-0 top-[454px] absolute bg-amber-500/30 rounded-full blur-[132px] pointer-events-none"></div>
-      <div className="size-48 left-[315px] top-[1785px] absolute bg-amber-500/30 rounded-full blur-[132px] pointer-events-none"></div>
+      <div className="size-48 left-0 top-[454px] absolute bg-brand/30 rounded-full blur-[132px] pointer-events-none"></div>
+      <div className="size-48 left-[315px] top-[1785px] absolute bg-brand/30 rounded-full blur-[132px] pointer-events-none"></div>
 
       {/* Hero Section */}
       <div className="w-full py-12 md:py-16 px-6 md:px-12 relative mt-8 max-w-[1440px] rounded-[24px] mx-auto overflow-hidden shadow-2xl bg-zinc-800 bg-[url('/images/archive-banner.jpg')] bg-cover bg-center">
@@ -134,17 +134,17 @@ export default async function KnowledgeBaseArchive() {
               <Home className="w-4 h-4" />
             </Link>
             <div className="text-white/70 text-sm font-normal">/</div>
-            <div className="text-white text-sm font-semibold font-['Segoe_UI']">{t('heroTitle')}</div>
+            <div className="text-white text-sm font-semibold">{t('heroTitle')}</div>
           </div>
           
-          <h1 className="text-white text-5xl md:text-6xl font-bold font-['Segoe_UI'] tracking-tight mb-8 mt-2">
+          <h1 className="text-white text-5xl md:text-6xl font-bold tracking-tight mb-8 mt-2">
             {t('heroTitle')}
           </h1>
           
           <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16 w-full">
             <KnowledgeSearchBar apiBaseUrl={process.env.BBNL_API_BASE_URL || ""} />
             <div className="w-full lg:w-[45%]">
-              <p className="!text-white text-base md:text-lg font-normal font-['Segoe_UI'] leading-relaxed">
+              <p className="!text-white text-base md:text-lg font-normal leading-relaxed">
                 {t('heroDesc')}
               </p>
             </div>
@@ -154,7 +154,7 @@ export default async function KnowledgeBaseArchive() {
 
       {/* What are you looking for? */}
       <div className="w-full max-w-[1440px] mx-auto mt-16 px-4 flex flex-col gap-8">
-        <h2 className="text-neutral-800 text-3xl font-bold font-['Segoe_UI']">{t('whatLookingFor')}</h2>
+        <h2 className="text-neutral-800 text-3xl font-bold">{t('whatLookingFor')}</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {faqPages.map((page) => {
@@ -165,22 +165,22 @@ export default async function KnowledgeBaseArchive() {
             
             return (
               <Link key={page.id} href={`/faq?topic=${slug}`} className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 flex flex-col items-center gap-4 transition-all group">
-                <IconComponent className="w-14 h-14 text-zinc-500 group-hover:text-amber-500 transition-colors" />
-                <h3 className="text-center text-neutral-800 text-xl font-semibold font-['Segoe_UI']">{title}</h3>
+                <IconComponent className="w-14 h-14 text-zinc-500 group-hover:text-brand transition-colors" />
+                <h3 className="text-center text-neutral-800 text-xl font-semibold">{title}</h3>
               </Link>
             );
           })}
           
           <Link href="/contact-us" className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 flex flex-col items-center gap-4 transition-all group">
-            <HelpCircle className="w-14 h-14 text-zinc-500 group-hover:text-amber-500 transition-colors" />
-            <h3 className="text-center text-neutral-800 text-xl font-semibold font-['Segoe_UI']">{t('wantToKnowMore')}</h3>
+            <HelpCircle className="w-14 h-14 text-zinc-500 group-hover:text-brand transition-colors" />
+            <h3 className="text-center text-neutral-800 text-xl font-semibold">{t('wantToKnowMore')}</h3>
           </Link>
         </div>
       </div>
 
       {/* Article Categories */}
       <div className="w-full max-w-[1440px] mx-auto mt-24 px-4 flex flex-col gap-8">
-        <h2 className="text-neutral-800 text-3xl font-bold font-['Segoe_UI']">{t('articleCategories')}</h2>
+        <h2 className="text-neutral-800 text-3xl font-bold">{t('articleCategories')}</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {postCategories.map((category) => {
@@ -198,11 +198,11 @@ export default async function KnowledgeBaseArchive() {
 
             return (
               <Link key={category.id} href={`/blogs?category=${categorySlug}`} className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 flex items-center gap-6 transition-all group">
-                <div className="w-20 h-20 bg-orange-50 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform flex-shrink-0">
-                  <Icon className="w-10 h-10 text-amber-500" />
+                <div className="w-20 h-20 bg-brand-soft rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform flex-shrink-0">
+                  <Icon className="w-10 h-10 text-brand" />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <h3 className="text-neutral-800 text-xl font-semibold font-['Segoe_UI'] group-hover:text-amber-600 transition-colors line-clamp-2">{categoryName}</h3>
+                  <h3 className="text-neutral-800 text-xl font-semibold group-hover:text-brand transition-colors line-clamp-2">{categoryName}</h3>
                   <p className="text-neutral-500">{category.post_count} {category.post_count === 1 ? t('articleSingular') : t('articlePlural')}</p>
                 </div>
               </Link>
@@ -213,7 +213,7 @@ export default async function KnowledgeBaseArchive() {
 
       {/* Popular Articles */}
       <div className="w-full max-w-[1440px] mx-auto mt-24 px-4 flex flex-col gap-8">
-        <h2 className="text-neutral-800 text-3xl font-bold font-['Segoe_UI']">{t('popularArticles')}</h2>
+        <h2 className="text-neutral-800 text-3xl font-bold">{t('popularArticles')}</h2>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {popularArticles.map((article) => {
@@ -228,7 +228,7 @@ export default async function KnowledgeBaseArchive() {
                 <div className="flex flex-col gap-4 justify-between py-2">
                   <div className="flex flex-col gap-2">
                     <span className="text-blue-500 font-semibold text-sm uppercase tracking-wider">{categoryName}</span>
-                    <h3 className="text-neutral-800 text-xl font-bold group-hover:text-amber-600 transition-colors line-clamp-2">{article.title}</h3>
+                    <h3 className="text-neutral-800 text-xl font-bold group-hover:text-brand transition-colors line-clamp-2">{article.title}</h3>
                     <p className="text-neutral-500 line-clamp-2">{article.excerpt}</p>
                   </div>
                   <div className="flex items-center gap-3">
@@ -246,7 +246,7 @@ export default async function KnowledgeBaseArchive() {
       <div className="w-full bg-zinc-100 py-24 mt-24">
         <div className="max-w-[1440px] mx-auto px-4 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="flex flex-col gap-8">
-            <div className="flex items-center gap-3 text-amber-500 font-semibold uppercase tracking-wider text-sm">
+            <div className="flex items-center gap-3 text-brand font-semibold uppercase tracking-wider text-sm">
               <LinkIcon className="w-5 h-5" />
               {t('troubleshootingTree')}
             </div>
@@ -281,16 +281,16 @@ export default async function KnowledgeBaseArchive() {
                 </h3>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
-                <button className="py-4 px-6 bg-amber-500 hover:bg-amber-600 transition-colors rounded-full text-white font-bold shadow-lg shadow-amber-500/30 flex items-center justify-center gap-2">
+                <button className="py-4 px-6 bg-brand hover:bg-brand-hover transition-colors rounded-full text-white font-bold shadow-lg shadow-brand/30 flex items-center justify-center gap-2">
                   {t('yesRecognized')}
                 </button>
-                <button className="py-4 px-6 border-2 border-amber-500 hover:bg-amber-50 transition-colors rounded-full text-amber-500 font-bold flex items-center justify-center gap-2">
+                <button className="py-4 px-6 border-2 border-brand hover:bg-brand-soft transition-colors rounded-full text-brand font-bold flex items-center justify-center gap-2">
                   {t('noNotSeen')}
                 </button>
               </div>
             </div>
             <p className="text-center text-neutral-600">
-              {t('stillStuck')} <Link href="/contact-us" className="text-amber-500 font-bold hover:underline">{t('contactSupport')}</Link> {t('connectViaTeamViewer')}
+              {t('stillStuck')} <Link href="/contact-us" className="text-brand font-bold hover:underline">{t('contactSupport')}</Link> {t('connectViaTeamViewer')}
             </p>
           </div>
         </div>
@@ -307,7 +307,7 @@ export default async function KnowledgeBaseArchive() {
             {t('joinTrust')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 mt-4">
-            <Link href="/product-finder" className="px-8 py-4 bg-amber-500 hover:bg-amber-600 transition-colors rounded-full text-white font-bold text-lg shadow-lg shadow-amber-500/20">
+            <Link href="/product-finder" className="px-8 py-4 bg-brand hover:bg-brand-hover transition-colors rounded-full text-white font-bold text-lg shadow-lg shadow-brand/20">
               {t('productFinder')}
             </Link>
             <Link href="/custom-made" className="px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 transition-colors rounded-full text-white font-bold text-lg">

@@ -45,6 +45,24 @@ type CheckoutPageClientProps = {
   demoItems?: CartItem[];
 };
 
+type CheckoutSavedAddress = {
+  id: string;
+  type: string;
+  isDefault: boolean;
+  name: string;
+  firstname: string;
+  lastname: string;
+  company: string;
+  address1: string;
+  address2: string;
+  postcode: string;
+  city: string;
+  state: string;
+  phone: string;
+  email: string;
+  country: string;
+};
+
 const DELIVERY_FEE = 9.95;
 
 const initialFormState: CheckoutFormState = {
@@ -105,10 +123,10 @@ function formatEuro(value: number): string {
 }
 
 function inputClasses(hasError = false): string {
-  return `w-full h-[52px] px-5 py-4 rounded-full border bg-white text-neutral-800 text-[16px] outline-none transition-all placeholder-[#888888] ${
+  return `w-full h-[52px] px-5 py-4 rounded-full border bg-white text-neutral-800 text-[16px] outline-none transition-all placeholder:text-subtle ${
     hasError
       ? "border-red-300 focus:border-red-400 focus:ring-1 focus:ring-red-400"
-      : "border-[#DDE1EA] focus:border-[#F18800] focus:ring-1 focus:ring-[#F18800]"
+      : "border-[#DDE1EA] focus:border-brand focus:ring-1 focus:ring-brand"
   }`;
 }
 
@@ -234,6 +252,11 @@ function CheckoutShell({
   isLoggedIn,
   onLoginSuccess,
   onAddressSelect,
+  savedShippingAddresses,
+  selectedSavedShippingAddressId,
+  onSavedShippingAddressSelect,
+  isLoadingSavedShippingAddresses,
+  savedShippingAddressesError,
   step,
   setStep,
 }: {
@@ -256,6 +279,11 @@ function CheckoutShell({
     postcode: string;
     country: string;
   }, isShipping?: boolean) => void;
+  savedShippingAddresses: CheckoutSavedAddress[];
+  selectedSavedShippingAddressId: string | null;
+  onSavedShippingAddressSelect: (address: CheckoutSavedAddress) => void;
+  isLoadingSavedShippingAddresses: boolean;
+  savedShippingAddressesError: string;
   step: 1 | 2 | 3;
   setStep: (step: 1 | 2 | 3) => void;
 }) {
@@ -283,7 +311,7 @@ function CheckoutShell({
 
   return (
     <div className="px-4 md:px-8 lg:px-10 py-12 min-h-screen" style={{
-      background: "radial-gradient(circle at 15% 15%, rgba(241, 136, 0, 0.08) 0%, rgba(250, 251, 253, 0) 55%), #FAFBFD"
+      background: "radial-gradient(circle at 15% 15%, rgba(241, 136, 0, 0.08) 0%, rgba(250, 251, 253, 0) 55%), var(--surface)"
     }}>
       <div className="max-w-360 mx-auto w-full">
         
@@ -292,7 +320,7 @@ function CheckoutShell({
         
         {/* Page Title */}
         {items.length > 0 && (
-          <h1 className="text-[32px] font-semibold text-[#222222] font-['Segoe_UI'] mb-10 text-center">
+          <h1 className="text-[32px] font-semibold text-ink mb-10 text-center">
             {t('checkout.title')}
           </h1>
         )}
@@ -306,15 +334,15 @@ function CheckoutShell({
               className="w-[275px] h-[200px] object-contain"
             />
             <div className="w-full flex flex-col justify-start items-center gap-4">
-              <h2 className="w-full text-center text-[#222222] text-2xl md:text-[32px] lg:text-[40px] font-['Segoe_UI'] font-bold leading-tight md:leading-[48px]">
+              <h2 className="w-full text-center text-ink text-2xl md:text-[32px] lg:text-[40px] font-bold leading-tight md:leading-[48px]">
                 {t('checkout.emptyCart')}
               </h2>
-              <p className="w-full max-w-[800px] text-center text-[#444444] text-lg font-['Segoe_UI'] font-normal leading-[26px]">
+              <p className="w-full max-w-[800px] text-center text-copy text-lg font-normal leading-[26px]">
                 {t('checkout.emptyCartDescription')}
               </p>
               <Link
                 href={localePath("/product", locale)}
-                className="h-[52px] px-[30px] py-4 bg-[#F18800] hover:bg-[#e07d00] transition-colors rounded-[50px] flex justify-center items-center gap-2.5 text-center text-white text-lg font-['Segoe_UI'] font-semibold leading-6 mt-2"
+                className="h-[52px] px-[30px] py-4 bg-brand hover:bg-[#e07d00] transition-colors rounded-[50px] flex justify-center items-center gap-2.5 text-center text-white text-lg font-semibold leading-6 mt-2"
               >
                 {t('common.browseProducts')}
               </Link>
@@ -324,15 +352,15 @@ function CheckoutShell({
           <div className="flex flex-col lg:flex-row justify-between items-start gap-6">
           
           {/* Main Checkout Panel */}
-          <div className="w-full flex-1 bg-white shadow-[2px_4px_20px_rgba(109,109,120,0.10)] rounded-xl border border-[#EDF2F7] flex flex-col overflow-hidden">
+          <div className="w-full flex-1 bg-white shadow-[2px_4px_20px_rgba(109,109,120,0.10)] rounded-xl border border-line flex flex-col overflow-hidden">
             
             {/* Step Progress Bar */}
-            <div className="w-full px-4 py-4 bg-white border-b border-[#EDF2F7] flex justify-center">
+            <div className="w-full px-4 py-4 bg-white border-b border-line flex justify-center">
               <div className="w-full max-w-lg relative flex justify-between items-start">
                 {/* Progress Track */}
-                <div className="absolute h-[2px] bg-[#EDF2F7] rounded-[5px] left-[16.66%] right-[16.66%] top-4 -translate-y-1/2 -z-0">
+                <div className="absolute h-[2px] bg-line rounded-[5px] left-[16.66%] right-[16.66%] top-4 -translate-y-1/2 -z-0">
                   <div
-                    className="h-full bg-[#F18800] rounded-[5px] transition-all duration-300"
+                    className="h-full bg-brand rounded-[5px] transition-all duration-300"
                     style={{ width: step === 1 ? '0%' : step === 2 ? '50%' : '100%' }}
                   />
                 </div>
@@ -344,18 +372,18 @@ function CheckoutShell({
                   className="relative z-10 flex-1 flex flex-col items-center gap-2 focus:outline-none"
                 >
                   <div className={`w-8 h-8 rounded-full justify-center items-center inline-flex transition-all shrink-0 ${
-                    step > 1 ? "bg-[#F18800]" : "bg-white border-2 border-[#F18800]"
+                    step > 1 ? "bg-brand" : "bg-white border-2 border-brand"
                   }`}>
                     {step > 1 ? (
                       <svg width="14" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M1 5L5 9L13 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     ) : (
-                      <span className="text-[#F18800] text-[18px] font-normal">1</span>
+                      <span className="text-brand text-[18px] font-normal">1</span>
                     )}
                   </div>
-                  <div className={`text-[12px] sm:text-[14px] font-bold font-['Segoe_UI'] text-center px-1 leading-tight ${
-                    step === 1 ? "text-[#F18800]" : "text-[#888888]"
+                  <div className={`text-[12px] sm:text-[14px] font-bold text-center px-1 leading-tight ${
+                    step === 1 ? "text-brand" : "text-subtle"
                   }`}>
                     {t('checkout.billingAddress')}
                   </div>
@@ -370,9 +398,9 @@ function CheckoutShell({
                 >
                   <div className={`w-8 h-8 rounded-full justify-center items-center inline-flex transition-all shrink-0 ${
                     step > 2
-                      ? "bg-[#F18800]"
+                      ? "bg-brand"
                       : step === 2
-                        ? "bg-white border-2 border-[#F18800]"
+                        ? "bg-white border-2 border-brand"
                         : "bg-[#F3F4F6]"
                   }`}>
                     {step > 2 ? (
@@ -381,12 +409,12 @@ function CheckoutShell({
                       </svg>
                     ) : (
                       <span className={`text-[18px] font-normal ${
-                        step === 2 ? "text-[#F18800]" : "text-[#888888]"
+                        step === 2 ? "text-brand" : "text-subtle"
                       }`}>2</span>
                     )}
                   </div>
-                  <div className={`text-[12px] sm:text-[14px] font-bold font-['Segoe_UI'] text-center px-1 leading-tight ${
-                    step === 2 ? "text-[#F18800]" : "text-[#888888]"
+                  <div className={`text-[12px] sm:text-[14px] font-bold text-center px-1 leading-tight ${
+                    step === 2 ? "text-brand" : "text-subtle"
                   }`}>
                     {t('checkout.shippingAddress')}
                   </div>
@@ -395,14 +423,14 @@ function CheckoutShell({
                 {/* Step 3: Payment Method */}
                 <div className="relative z-10 flex-1 flex flex-col items-center gap-2">
                   <div className={`w-8 h-8 rounded-full justify-center items-center inline-flex transition-all shrink-0 ${
-                    step === 3 ? "bg-white border-2 border-[#F18800]" : "bg-[#F3F4F6]"
+                    step === 3 ? "bg-white border-2 border-brand" : "bg-[#F3F4F6]"
                   }`}>
                     <span className={`text-[18px] font-normal ${
-                      step === 3 ? "text-[#F18800]" : "text-[#888888]"
+                      step === 3 ? "text-brand" : "text-subtle"
                     }`}>3</span>
                   </div>
-                  <div className={`text-[12px] sm:text-[14px] font-bold font-['Segoe_UI'] text-center px-1 leading-tight ${
-                    step === 3 ? "text-[#F18800]" : "text-[#888888]"
+                  <div className={`text-[12px] sm:text-[14px] font-bold text-center px-1 leading-tight ${
+                    step === 3 ? "text-brand" : "text-subtle"
                   }`}>
                     {t('checkout.paymentMethod')}
                   </div>
@@ -415,7 +443,7 @@ function CheckoutShell({
                 
                 {/* LOGIN SECTION FOR GUESTS */}
                 {step === 1 && !isLoggedIn && (
-                  <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-5 mb-4">
+                  <div className="rounded-2xl border border-amber-100 bg-brand-soft/70 p-5 mb-4">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="flex flex-col gap-1 max-w-xl">
                         <h2 className="text-lg font-bold text-neutral-800">{t('checkout.loginTitle')}</h2>
@@ -424,7 +452,7 @@ function CheckoutShell({
                       <button
                         type="button"
                         onClick={() => setIsLoginPopupOpen(true)}
-                        className="inline-flex h-11 items-center justify-center rounded-full bg-[#F18800] px-6 text-sm font-bold text-white transition-colors hover:bg-[#d97706] shrink-0 self-start md:self-auto"
+                        className="inline-flex h-11 items-center justify-center rounded-full bg-brand px-6 text-sm font-bold text-white transition-colors hover:bg-brand-hover shrink-0 self-start md:self-auto"
                       >
                         {t('checkout.loginButton')}
                       </button>
@@ -436,16 +464,16 @@ function CheckoutShell({
                 {step === 1 && (
                   <div className="flex flex-col gap-6">
                     <div className="flex flex-col gap-2">
-                      <h2 className="text-[#222222] text-[28px] font-bold leading-[33.6px]">{t('checkout.billingAddress')}</h2>
-                      <p className="text-[#444444] text-[16px] font-normal leading-[20.8px]">
+                      <h2 className="text-ink text-[28px] font-bold leading-[33.6px]">{t('checkout.billingAddress')}</h2>
+                      <p className="text-copy text-[16px] font-normal leading-[20.8px]">
                         {t('checkout.billingDescription')}
                       </p>
                     </div>
-                    <div className="h-px bg-[#EDF2F7] w-full" />
+                    <div className="h-px bg-line w-full" />
 
                     {/* Address Autocomplete Search (Billing) */}
                     <div className="flex flex-col gap-2">
-                      <span className="text-[18px] font-bold text-[#222222]">{t('checkout.quickAddressSearch')}</span>
+                      <span className="text-[18px] font-bold text-ink">{t('checkout.quickAddressSearch')}</span>
                       <AddressAutocomplete
                         value={form.streetAddress}
                         onChange={(val) => handleChange("streetAddress", val)}
@@ -457,7 +485,7 @@ function CheckoutShell({
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex flex-col gap-2">
-                        <span className="text-[18px] font-bold text-[#222222]">{t('checkout.companyName')}</span>
+                        <span className="text-[18px] font-bold text-ink">{t('checkout.companyName')}</span>
                         <input
                           type="text"
                           value={form.companyName}
@@ -468,7 +496,7 @@ function CheckoutShell({
                         {errors.companyName && <span className="text-xs text-red-500">{errors.companyName}</span>}
                       </div>
                       <div className="flex flex-col gap-2">
-                        <span className="text-[18px] font-bold text-[#222222]">{t('checkout.vatNumber')}</span>
+                        <span className="text-[18px] font-bold text-ink">{t('checkout.vatNumber')}</span>
                         <input
                           type="text"
                           value={form.vatNumber}
@@ -482,7 +510,7 @@ function CheckoutShell({
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex flex-col gap-2">
-                        <span className="text-[18px] font-bold text-[#222222]">{t('checkout.firstName')} *</span>
+                        <span className="text-[18px] font-bold text-ink">{t('checkout.firstName')} *</span>
                         <input
                           type="text"
                           value={form.firstName}
@@ -493,7 +521,7 @@ function CheckoutShell({
                         {errors.firstName && <span className="text-xs text-red-500">{errors.firstName}</span>}
                       </div>
                       <div className="flex flex-col gap-2">
-                        <span className="text-[18px] font-bold text-[#222222]">{t('checkout.lastName')} *</span>
+                        <span className="text-[18px] font-bold text-ink">{t('checkout.lastName')} *</span>
                         <input
                           type="text"
                           value={form.lastName}
@@ -507,7 +535,7 @@ function CheckoutShell({
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex flex-col gap-2">
-                        <span className="text-[18px] font-bold text-[#222222]">{t('checkout.email')} *</span>
+                        <span className="text-[18px] font-bold text-ink">{t('checkout.email')} *</span>
                         <input
                           type="email"
                           value={form.email}
@@ -518,7 +546,7 @@ function CheckoutShell({
                         {errors.email && <span className="text-xs text-red-500">{errors.email}</span>}
                       </div>
                       <div className="flex flex-col gap-2">
-                        <span className="text-[18px] font-bold text-[#222222]">{t('checkout.mobileNumber')} *</span>
+                        <span className="text-[18px] font-bold text-ink">{t('checkout.mobileNumber')} *</span>
                         <input
                           type="tel"
                           value={form.mobileNumber}
@@ -531,7 +559,7 @@ function CheckoutShell({
                     </div>
 
                     <div className="flex flex-col gap-2">
-                      <span className="text-[18px] font-bold text-[#222222]">{t('checkout.country')}</span>
+                      <span className="text-[18px] font-bold text-ink">{t('checkout.country')}</span>
                       <div className="relative">
                         <select
                           value={form.country}
@@ -544,7 +572,7 @@ function CheckoutShell({
                         </select>
                         <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
                           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M4 6L8 10L12 6" stroke="#888888" strokeWidth="1.16667" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M4 6L8 10L12 6" stroke="var(--subtle)" strokeWidth="1.16667" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         </div>
                       </div>
@@ -552,7 +580,7 @@ function CheckoutShell({
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex flex-col gap-2">
-                        <span className="text-[18px] font-bold text-[#222222]">{t('checkout.streetAddress')} *</span>
+                        <span className="text-[18px] font-bold text-ink">{t('checkout.streetAddress')} *</span>
                         <input
                           type="text"
                           value={form.streetAddress}
@@ -563,7 +591,7 @@ function CheckoutShell({
                         {errors.streetAddress && <span className="text-xs text-red-500">{errors.streetAddress}</span>}
                       </div>
                       <div className="flex flex-col gap-2">
-                        <span className="text-[18px] font-bold text-[#222222]">{t('checkout.postcode')} *</span>
+                        <span className="text-[18px] font-bold text-ink">{t('checkout.postcode')} *</span>
                         <input
                           type="text"
                           value={form.postcode}
@@ -577,7 +605,7 @@ function CheckoutShell({
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex flex-col gap-2">
-                        <span className="text-[18px] font-bold text-[#222222]">{t('checkout.city')} *</span>
+                        <span className="text-[18px] font-bold text-ink">{t('checkout.city')} *</span>
                         <input
                           type="text"
                           value={form.city}
@@ -588,7 +616,7 @@ function CheckoutShell({
                         {errors.city && <span className="text-xs text-red-500">{errors.city}</span>}
                       </div>
                       <div className="flex flex-col gap-2">
-                        <span className="text-[18px] font-bold text-[#222222]">{t('checkout.state')}</span>
+                        <span className="text-[18px] font-bold text-ink">{t('checkout.state')}</span>
                         <input
                           type="text"
                           value={form.state}
@@ -606,14 +634,14 @@ function CheckoutShell({
                 {step === 2 && (
                   <div className="flex flex-col gap-6">
                     <div className="flex flex-col gap-2">
-                      <h2 className="text-[#222222] text-[28px] font-bold font-['Segoe_UI'] leading-[33.60px]">
+                      <h2 className="text-ink text-[28px] font-bold leading-[33.60px]">
                         {t('checkout.shippingAddress')}
                       </h2>
-                      <p className="text-[#444444] text-[16px] font-normal font-['Segoe_UI'] leading-[20.80px]">
+                      <p className="text-copy text-[16px] font-normal leading-[20.80px]">
                         {t('checkout.deliveryInfoDesc')}
                       </p>
                     </div>
-                    <div className="h-px bg-[#EDF2F7] w-full" />
+                    <div className="h-px bg-line w-full" />
 
                      {/* Toggle Same as Billing (Custom styled checkbox container) */}
                     <label className="w-full p-4 rounded-xl border border-[#DDE1EA] justify-start items-start gap-3 inline-flex cursor-pointer hover:bg-slate-50 transition-all select-none">
@@ -624,7 +652,7 @@ function CheckoutShell({
                         className="sr-only"
                       />
                       <div className={`w-[22px] h-[22px] rounded-[2px] flex items-center justify-center shrink-0 transition-all ${
-                        form.sameAsBilling ? "bg-[#F18800] border-[1.5px] border-[#F18800]" : "border-[1.5px] border-[#BBC0CC]"
+                        form.sameAsBilling ? "bg-brand border-[1.5px] border-brand" : "border-[1.5px] border-[#BBC0CC]"
                       }`}>
                         {form.sameAsBilling && (
                           <svg width="12" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -633,10 +661,10 @@ function CheckoutShell({
                         )}
                       </div>
                       <div className="flex-col justify-center items-start gap-[12px] inline-flex">
-                        <div className="text-[#222222] text-[18px] font-bold font-['Segoe_UI'] leading-[20px]">
+                        <div className="text-ink text-[18px] font-bold leading-[20px]">
                           {t('checkout.sameAsBilling')}
                         </div>
-                        <div className="text-[#444444] text-[14px] font-normal font-['Segoe_UI'] leading-[18.20px]">
+                        <div className="text-copy text-[14px] font-normal leading-[18.20px]">
                           {t('checkout.sameAsBillingSub')}
                         </div>
                       </div>
@@ -644,27 +672,27 @@ function CheckoutShell({
 
                     {/* Info Warning Banner */}
                     {!isLoggedIn && (
-                      <div className="w-full p-4 bg-gradient-to-br from-[#FFF7ED] to-white rounded-xl border border-[#E9CA9E] justify-start items-center gap-2 inline-flex">
+                      <div className="w-full p-4 bg-gradient-to-br from-[var(--brand-soft)] to-white rounded-xl border border-[#E9CA9E] justify-start items-center gap-2 inline-flex">
                         <div className="flex-1 flex-col justify-center items-start gap-2 inline-flex">
                           <div className="justify-start items-start gap-2 inline-flex">
                             <div className="w-5 h-5 relative flex items-center justify-center">
                               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <rect x="2" y="2" width="16" height="16" rx="8" stroke="#222222" strokeWidth="1.5"/>
-                                <path d="M10 6V11" stroke="#222222" strokeWidth="1.5" strokeLinecap="round"/>
-                                <circle cx="10" cy="14" r="1" fill="#222222"/>
+                                <rect x="2" y="2" width="16" height="16" rx="8" stroke="var(--ink)" strokeWidth="1.5"/>
+                                <path d="M10 6V11" stroke="var(--ink)" strokeWidth="1.5" strokeLinecap="round"/>
+                                <circle cx="10" cy="14" r="1" fill="var(--ink)"/>
                               </svg>
                             </div>
-                            <div className="text-[#222222] text-[18px] font-bold font-['Segoe_UI'] leading-[20px]">
+                            <div className="text-ink text-[18px] font-bold leading-[20px]">
                               {t('checkout.multipleShippingTitle')}
                             </div>
                           </div>
-                          <div className="self-stretch text-[#444444] text-[14px] font-normal font-['Segoe_UI'] leading-[18.20px]">
+                          <div className="self-stretch text-copy text-[14px] font-normal leading-[18.20px]">
                             {t.rich('checkout.multipleShippingDesc', {
                               registerLink: (chunks) => (
                                 <button
                                   type="button"
                                   onClick={() => setIsRegisterPopupOpen(true)}
-                                  className="text-[#F18800] underline font-['Segoe_UI'] hover:text-[#d97706] cursor-pointer bg-transparent border-none p-0 inline align-baseline font-semibold"
+                                  className="text-brand underline hover:text-brand-hover cursor-pointer bg-transparent border-none p-0 inline align-baseline font-semibold"
                                 >
                                   {chunks}
                                 </button>
@@ -677,10 +705,95 @@ function CheckoutShell({
 
                     {!form.sameAsBilling && (
                       <div className="flex flex-col gap-4 mt-2">
+                        {isLoggedIn && (
+                          <div className="flex flex-col gap-3">
+                            <div className="flex flex-col gap-1">
+                              <h3 className="text-ink text-[20px] font-bold leading-6">
+                                {t('checkout.savedShippingAddresses')}
+                              </h3>
+                              <p className="text-copy text-[14px] font-normal leading-[18.20px]">
+                                {t('checkout.savedShippingAddressesDesc')}
+                              </p>
+                            </div>
+
+                            {isLoadingSavedShippingAddresses ? (
+                              <div className="w-full p-4 rounded-xl border border-[#DDE1EA] bg-slate-50 text-copy text-[14px] font-semibold">
+                                {t('account.loadingAddresses')}
+                              </div>
+                            ) : savedShippingAddressesError ? (
+                              <div className="w-full p-4 rounded-xl border border-red-100 bg-red-50 text-red-600 text-[14px] font-semibold">
+                                {savedShippingAddressesError}
+                              </div>
+                            ) : savedShippingAddresses.length > 0 ? (
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {savedShippingAddresses.map((address) => {
+                                  const isSelected = String(address.id) === String(selectedSavedShippingAddressId);
+                                  const addressLine = [address.address1, address.address2, address.city, address.postcode, address.country]
+                                    .filter(Boolean)
+                                    .join(', ');
+
+                                  return (
+                                    <label
+                                      key={address.id}
+                                      className={`w-full p-4 rounded-xl border transition-all cursor-pointer select-none flex items-start gap-3 ${
+                                        isSelected
+                                          ? "border-brand bg-[rgba(241,136,0,0.02)] shadow-[0_0_0_1px_rgba(241,136,0,0.20)]"
+                                          : "border-[#E0E7EE] bg-white hover:border-brand/30"
+                                      }`}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        className="sr-only"
+                                        checked={isSelected}
+                                        onChange={() => onSavedShippingAddressSelect(address)}
+                                      />
+                                      <div className={`mt-0.5 w-5 h-5 rounded-[3px] flex items-center justify-center shrink-0 transition-all ${
+                                        isSelected ? "bg-brand border border-brand" : "border border-[#CAD3DF] bg-white"
+                                      }`}>
+                                        {isSelected && (
+                                          <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M1.5 4L4 6.5L8.5 1.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                                          </svg>
+                                        )}
+                                      </div>
+                                      <div className="flex min-w-0 flex-1 flex-col gap-2">
+                                        <div className="flex items-start justify-between gap-2">
+                                          <span className="text-ink text-[17px] font-bold leading-5 break-words">
+                                            {address.name || `${address.firstname} ${address.lastname}`.trim() || t('checkout.shippingAddress')}
+                                          </span>
+                                          {isSelected && (
+                                            <span className="rounded-full bg-brand-soft px-2.5 py-1 text-[12px] font-bold text-brand">
+                                              {t('common.selected')}
+                                            </span>
+                                          )}
+                                        </div>
+                                        {(address.email || address.phone) && (
+                                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-copy text-[14px] font-normal leading-5">
+                                            {address.email && <span className="break-all">{address.email}</span>}
+                                            {address.email && address.phone && <span className="text-[#C8D2DD]">|</span>}
+                                            {address.phone && <span>{address.phone}</span>}
+                                          </div>
+                                        )}
+                                        <p className="text-copy text-[15px] font-normal leading-5">
+                                          {addressLine || '-'}
+                                        </p>
+                                      </div>
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <div className="w-full p-4 rounded-xl border border-[#DDE1EA] bg-slate-50 text-copy text-[14px] font-semibold">
+                                {t('account.noShippingAddresses')}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
                         {/* First Name & Last Name */}
                         <div className="self-stretch justify-start items-start gap-4 inline-flex w-full">
                           <div className="flex-1 flex-col justify-start items-start gap-2 inline-flex">
-                            <div className="text-[#222222] text-[18px] font-bold font-['Segoe_UI'] leading-[20px]">
+                            <div className="text-ink text-[18px] font-bold leading-[20px]">
                               {t('checkout.firstName')} *
                             </div>
                             <input
@@ -693,7 +806,7 @@ function CheckoutShell({
                             {errors.shippingFirstName && <span className="text-xs text-red-500">{errors.shippingFirstName}</span>}
                           </div>
                           <div className="flex-1 flex-col justify-start items-start gap-2 inline-flex">
-                            <div className="text-[#222222] text-[18px] font-bold font-['Segoe_UI'] leading-[20px]">
+                            <div className="text-ink text-[18px] font-bold leading-[20px]">
                               {t('checkout.lastName')} *
                             </div>
                             <input
@@ -710,7 +823,7 @@ function CheckoutShell({
                         {/* Email & Phone Number */}
                         <div className="self-stretch justify-start items-start gap-4 inline-flex w-full">
                           <div className="flex-1 flex-col justify-start items-start gap-2 inline-flex">
-                            <div className="text-[#222222] text-[18px] font-bold font-['Segoe_UI'] leading-[20px]">
+                            <div className="text-ink text-[18px] font-bold leading-[20px]">
                               {t('checkout.email')} *
                             </div>
                             <input
@@ -723,7 +836,7 @@ function CheckoutShell({
                             {errors.email && <span className="text-xs text-red-500">{errors.email}</span>}
                           </div>
                           <div className="flex-1 flex-col justify-start items-start gap-2 inline-flex">
-                            <div className="text-[#222222] text-[18px] font-bold font-['Segoe_UI'] leading-[20px]">
+                            <div className="text-ink text-[18px] font-bold leading-[20px]">
                               {t('checkout.mobileNumber')} *
                             </div>
                             <input
@@ -739,7 +852,7 @@ function CheckoutShell({
 
                         {/* Country / Region */}
                         <div className="w-full flex-col justify-start items-start gap-2 inline-flex">
-                          <div className="text-[#222222] text-[18px] font-bold font-['Segoe_UI'] leading-[20px]">
+                          <div className="text-ink text-[18px] font-bold leading-[20px]">
                             {t('checkout.country')}
                           </div>
                           <div className="relative w-full">
@@ -754,7 +867,7 @@ function CheckoutShell({
                             </select>
                             <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none">
                               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M4 6L8 10L12 6" stroke="#888888" strokeWidth="1.16667" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M4 6L8 10L12 6" stroke="var(--subtle)" strokeWidth="1.16667" strokeLinecap="round" strokeLinejoin="round"/>
                               </svg>
                             </div>
                           </div>
@@ -763,7 +876,7 @@ function CheckoutShell({
                         {/* Street & Postcode */}
                         <div className="self-stretch justify-start items-start gap-4 inline-flex w-full">
                           <div className="flex-1 flex-col justify-start items-start gap-2 inline-flex">
-                            <div className="text-[#222222] text-[18px] font-bold font-['Segoe_UI'] leading-[20px]">
+                            <div className="text-ink text-[18px] font-bold leading-[20px]">
                               {t('checkout.streetAddress')} *
                             </div>
                             <AddressAutocomplete
@@ -776,7 +889,7 @@ function CheckoutShell({
                             {errors.shippingStreetAddress && <span className="text-xs text-red-500">{errors.shippingStreetAddress}</span>}
                           </div>
                           <div className="flex-1 flex-col justify-start items-start gap-2 inline-flex">
-                            <div className="text-[#222222] text-[18px] font-bold font-['Segoe_UI'] leading-[20px]">
+                            <div className="text-ink text-[18px] font-bold leading-[20px]">
                               {t('checkout.postcode')} *
                             </div>
                             <input
@@ -793,7 +906,7 @@ function CheckoutShell({
                         {/* City (Place) & State */}
                         <div className="self-stretch justify-start items-start gap-4 inline-flex w-full">
                           <div className="flex-1 flex-col justify-start items-start gap-2 inline-flex">
-                            <div className="text-[#222222] text-[18px] font-bold font-['Segoe_UI'] leading-[20px]">
+                            <div className="text-ink text-[18px] font-bold leading-[20px]">
                               {t('checkout.city')} *
                             </div>
                             <input
@@ -806,7 +919,7 @@ function CheckoutShell({
                             {errors.shippingCity && <span className="text-xs text-red-500">{errors.shippingCity}</span>}
                           </div>
                           <div className="flex-1 flex-col justify-start items-start gap-2 inline-flex">
-                            <div className="text-[#222222] text-[18px] font-bold font-['Segoe_UI'] leading-[20px]">
+                            <div className="text-ink text-[18px] font-bold leading-[20px]">
                               {t('checkout.state')}
                             </div>
                             <input
@@ -828,20 +941,20 @@ function CheckoutShell({
                 {step === 3 && (
                   <div className="flex flex-col gap-6">
                     <div className="flex flex-col gap-2">
-                      <h2 className="text-[#222222] text-[28px] font-bold leading-[33.6px]">{t('checkout.paymentMethod')} *</h2>
-                      <p className="text-[#444444] text-[16px] font-normal leading-[20.8px]">
+                      <h2 className="text-ink text-[28px] font-bold leading-[33.6px]">{t('checkout.paymentMethod')} *</h2>
+                      <p className="text-copy text-[16px] font-normal leading-[20.8px]">
                         {t('checkout.paymentMethodDesc')}
                       </p>
                     </div>
-                    <div className="h-px bg-[#EDF2F7] w-full" />
+                    <div className="h-px bg-line w-full" />
 
                     <div className="flex flex-col gap-4">
                       {/* iDEAL */}
                       <label
                         className={`flex cursor-pointer items-center justify-between p-4 rounded-xl border transition-all ${
                           form.paymentMethod === "ideal"
-                            ? "border-[#F18800] bg-[rgba(241,136,0,0.02)]"
-                            : "border-[#E0E7EE] bg-white hover:border-amber-200"
+                            ? "border-brand bg-[rgba(241,136,0,0.02)]"
+                            : "border-[#E0E7EE] bg-white hover:border-brand/30"
                         }`}
                       >
                         <input
@@ -853,7 +966,7 @@ function CheckoutShell({
                         />
                         <div className="flex items-center gap-[15px]">
                           {form.paymentMethod === "ideal" ? (
-                            <div className="w-5 h-5 rounded-full bg-[#F18800] flex items-center justify-center shrink-0">
+                            <div className="w-5 h-5 rounded-full bg-brand flex items-center justify-center shrink-0">
                               <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                               </svg>
@@ -863,7 +976,7 @@ function CheckoutShell({
                           )}
                           <div className="flex items-center gap-[10px]">
                             <img className="w-[32px] h-[28px] object-contain" src="/ideal-logo.png" alt="iDEAL" />
-                            <span className="text-[#222222] text-[22px] font-bold font-['Segoe_UI'] leading-[28px]">{t('checkout.ideal')}</span>
+                            <span className="text-ink text-[22px] font-bold leading-[28px]">{t('checkout.ideal')}</span>
                           </div>
                         </div>
                       </label>
@@ -872,8 +985,8 @@ function CheckoutShell({
                       <label
                         className={`flex cursor-pointer items-center justify-between p-4 rounded-xl border transition-all ${
                           form.paymentMethod === "creditcard"
-                            ? "border-[#F18800] bg-[rgba(241,136,0,0.02)]"
-                            : "border-[#E0E7EE] bg-white hover:border-amber-200"
+                            ? "border-brand bg-[rgba(241,136,0,0.02)]"
+                            : "border-[#E0E7EE] bg-white hover:border-brand/30"
                         }`}
                       >
                         <input
@@ -885,7 +998,7 @@ function CheckoutShell({
                         />
                         <div className="flex items-center gap-[15px]">
                           {form.paymentMethod === "creditcard" ? (
-                            <div className="w-5 h-5 rounded-full bg-[#F18800] flex items-center justify-center shrink-0">
+                            <div className="w-5 h-5 rounded-full bg-brand flex items-center justify-center shrink-0">
                               <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                               </svg>
@@ -896,8 +1009,8 @@ function CheckoutShell({
                           <div className="flex items-center gap-[10px]">
                             <img className="w-[33px] h-[28px] object-contain" src="/creditcard-logo.svg" alt="Credit Card" />
                             <div className="flex items-baseline gap-2">
-                              <span className="text-[#222222] text-[22px] font-bold font-['Segoe_UI'] leading-[28px]">{t('checkout.creditCard')}</span>
-                              <span className="text-xs text-amber-600 font-medium font-['Segoe_UI']">{t('checkout.creditCardFee')}</span>
+                              <span className="text-ink text-[22px] font-bold leading-[28px]">{t('checkout.creditCard')}</span>
+                              <span className="text-xs text-brand font-medium">{t('checkout.creditCardFee')}</span>
                             </div>
                           </div>
                         </div>
@@ -907,8 +1020,8 @@ function CheckoutShell({
                       <label
                         className={`flex cursor-pointer items-center justify-between p-4 rounded-xl border transition-all ${
                           form.paymentMethod === "bancontact"
-                            ? "border-[#F18800] bg-[rgba(241,136,0,0.02)]"
-                            : "border-[#E0E7EE] bg-white hover:border-amber-200"
+                            ? "border-brand bg-[rgba(241,136,0,0.02)]"
+                            : "border-[#E0E7EE] bg-white hover:border-brand/30"
                         }`}
                       >
                         <input
@@ -920,7 +1033,7 @@ function CheckoutShell({
                         />
                         <div className="flex items-center gap-[15px]">
                           {form.paymentMethod === "bancontact" ? (
-                            <div className="w-5 h-5 rounded-full bg-[#F18800] flex items-center justify-center shrink-0">
+                            <div className="w-5 h-5 rounded-full bg-brand flex items-center justify-center shrink-0">
                               <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                               </svg>
@@ -930,7 +1043,7 @@ function CheckoutShell({
                           )}
                           <div className="flex items-center gap-[10px]">
                             <img className="w-[33px] h-[28px] object-contain rounded" src="/bancontact-logo.webp" alt="Bancontact" />
-                            <span className="text-[#222222] text-[22px] font-bold font-['Segoe_UI'] leading-[28px]">{t('checkout.bancontact')}</span>
+                            <span className="text-ink text-[22px] font-bold leading-[28px]">{t('checkout.bancontact')}</span>
                           </div>
                         </div>
                       </label>
@@ -942,8 +1055,8 @@ function CheckoutShell({
                             className={`flex items-center justify-between p-4 rounded-xl border transition-all ${
                               isLoggedIn
                                 ? form.paymentMethod === "banktransfer"
-                                  ? "cursor-pointer border-[#F18800] bg-[rgba(241,136,0,0.02)]"
-                                  : "cursor-pointer border-[#E0E7EE] bg-white hover:border-amber-200"
+                                  ? "cursor-pointer border-brand bg-[rgba(241,136,0,0.02)]"
+                                  : "cursor-pointer border-[#E0E7EE] bg-white hover:border-brand/30"
                                 : "cursor-not-allowed border-[#E0E7EE] bg-slate-50 opacity-60"
                             }`}
                           >
@@ -961,7 +1074,7 @@ function CheckoutShell({
                             />
                             <div className="flex items-center gap-[15px]">
                               {form.paymentMethod === "banktransfer" ? (
-                                <div className="w-5 h-5 rounded-full bg-[#F18800] flex items-center justify-center shrink-0">
+                                <div className="w-5 h-5 rounded-full bg-brand flex items-center justify-center shrink-0">
                                   <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                   </svg>
@@ -980,11 +1093,11 @@ function CheckoutShell({
                                   </svg>
                                 </div>
                                 <div className="flex flex-col">
-                                  <span className={`text-[22px] font-bold font-['Segoe_UI'] leading-[28px] ${isLoggedIn ? "text-[#222222]" : "text-neutral-500"}`}>
+                                  <span className={`text-[22px] font-bold leading-[28px] ${isLoggedIn ? "text-ink" : "text-neutral-500"}`}>
                                     {t('checkout.invoice')}
                                   </span>
                                   {!isLoggedIn && (
-                                    <span className="text-xs font-semibold leading-4 text-neutral-500 font-['Segoe_UI']">
+                                    <span className="text-xs font-semibold leading-4 text-neutral-500">
                                       {t('checkout.invoiceAccountOnly')}
                                     </span>
                                   )}
@@ -994,23 +1107,23 @@ function CheckoutShell({
                           </label>
                         </TooltipTrigger>
                         <TooltipContent className="p-4 bg-white border border-slate-200 shadow-xl text-neutral-800 rounded-2xl max-w-[300px]">
-                          <p className="font-medium text-sm font-['Segoe_UI']">
+                          <p className="font-medium text-sm">
                             {isLoggedIn ? t('checkout.bankTransferTooltip') : t('checkout.invoiceAccountOnly')}
                           </p>
                         </TooltipContent>
                       </Tooltip>
                     </div>
-                    {errors.paymentMethod && <p className="text-sm text-red-500 font-medium font-['Segoe_UI']">{errors.paymentMethod}</p>}
+                    {errors.paymentMethod && <p className="text-sm text-red-500 font-medium">{errors.paymentMethod}</p>}
                   </div>
                 )}
 
                 {/* BOTTOM NAVIGATION ACTIONS */}
-                <div className="flex items-center gap-4 mt-6 pt-4 border-t border-[#EDF2F7]">
+                <div className="flex items-center gap-4 mt-6 pt-4 border-t border-line">
                   {step > 1 && (
                     <button
                       type="button"
                       onClick={() => setStep((step - 1) as 1 | 2)}
-                      className="w-[160px] h-[52px] rounded-full border border-[rgba(0,0,0,0.10)] text-[#444444] font-bold text-[18px] hover:bg-slate-50 transition-colors flex items-center justify-center"
+                      className="w-[160px] h-[52px] rounded-full border border-[rgba(0,0,0,0.10)] text-copy font-bold text-[18px] hover:bg-slate-50 transition-colors flex items-center justify-center"
                     >
                       {t('common.previous')}
                     </button>
@@ -1018,7 +1131,7 @@ function CheckoutShell({
                   <button
                     type="submit"
                     disabled={isPending}
-                    className="flex-1 h-[52px] bg-[#F18800] text-white rounded-full font-bold text-[18px] flex items-center justify-center gap-2 hover:bg-[#d97706] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 h-[52px] bg-brand text-white rounded-full font-bold text-[18px] flex items-center justify-center gap-2 hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isPending ? (
                       <>
@@ -1042,9 +1155,9 @@ function CheckoutShell({
           <div className="w-full lg:w-[360px] flex flex-col gap-6 shrink-0">
             
             {/* Your Order Card */}
-            <div className="w-full bg-white shadow-[2px_4px_20px_rgba(109,109,120,0.06)] rounded-xl border border-[#EDF2F7] flex flex-col overflow-hidden">
-              <div className="w-full p-4 bg-[#F7F9FA] border-[#E5E7EB] border flex items-center justify-center">
-                <h3 className="text-[#222222] text-xl font-bold uppercase tracking-wider">{t('checkout.yourOrder')}</h3>
+            <div className="w-full bg-white shadow-[2px_4px_20px_rgba(109,109,120,0.06)] rounded-xl border border-line flex flex-col overflow-hidden">
+              <div className="w-full p-4 bg-surface border-[#E5E7EB] border flex items-center justify-center">
+                <h3 className="text-ink text-xl font-bold uppercase tracking-wider">{t('checkout.yourOrder')}</h3>
               </div>
 
               <div className="p-4 flex flex-col gap-4">
@@ -1054,55 +1167,55 @@ function CheckoutShell({
                     const imageSrc = item.mainImage?.trim() || "https://placehold.co/62x62";
                     return (
                       <div key={item.key} className="w-full flex items-center gap-3">
-                        <div className="w-[62px] h-[62px] p-1 bg-[#EDF2F7] rounded-lg flex items-center justify-center overflow-hidden shrink-0">
+                        <div className="w-[62px] h-[62px] p-1 bg-line rounded-lg flex items-center justify-center overflow-hidden shrink-0">
                           <img src={imageSrc} alt={item.name} className="w-full h-full object-contain" />
                         </div>
                         <div className="flex-1 flex items-start justify-between gap-2 min-w-0">
                           <div className="flex flex-col min-w-0">
-                            <h4 className="text-[#444444] text-[16px] font-bold truncate leading-[19.2px]">{item.name}</h4>
-                            <span className="text-[#888888] text-sm mt-1">{item.quantity} {item.quantity === 1 ? t('checkout.item') : t('checkout.items')}</span>
+                            <h4 className="text-copy text-[16px] font-bold truncate leading-[19.2px]">{item.name}</h4>
+                            <span className="text-subtle text-sm mt-1">{item.quantity} {item.quantity === 1 ? t('checkout.item') : t('checkout.items')}</span>
                           </div>
-                          <span className="text-[#222222] text-[18px] font-bold shrink-0">{formatEuro(linePrice(item))}</span>
+                          <span className="text-ink text-[18px] font-bold shrink-0">{formatEuro(linePrice(item))}</span>
                         </div>
                       </div>
                     );
                   })}
                 </div>
 
-                <div className="h-px bg-[#EDF2F7] w-full" />
+                <div className="h-px bg-line w-full" />
 
                 {/* Subtotals */}
                 <div className="flex flex-col gap-3">
                   <div className="flex justify-between items-center text-[18px]">
-                    <span className="text-[#222222] font-bold">{t('checkout.subtotal')}</span>
-                    <span className="text-[#222222] font-bold">{formatEuro(totalAmount)}</span>
+                    <span className="text-ink font-bold">{t('checkout.subtotal')}</span>
+                    <span className="text-ink font-bold">{formatEuro(totalAmount)}</span>
                   </div>
                   <div className="flex justify-between items-center text-[18px]">
-                    <span className="text-[#222222] font-bold">{t('checkout.shipping')}</span>
-                    <span className="text-[#222222] font-bold">{formatEuro(shippingAmount)}</span>
+                    <span className="text-ink font-bold">{t('checkout.shipping')}</span>
+                    <span className="text-ink font-bold">{formatEuro(shippingAmount)}</span>
                   </div>
                   <div className="flex justify-between items-center text-[18px]">
-                    <span className="text-[#222222] font-bold">{t('checkout.vat')} (21%)</span>
-                    <span className="text-[#222222] font-bold">{formatEuro(taxAmount)}</span>
+                    <span className="text-ink font-bold">{t('checkout.vat')} (21%)</span>
+                    <span className="text-ink font-bold">{formatEuro(taxAmount)}</span>
                   </div>
                   {paymentFee > 0 && (
                     <div className="flex justify-between items-center text-[18px]">
-                      <span className="text-[#222222] font-bold">{t('checkout.paymentFeeLabel')}</span>
-                      <span className="text-[#222222] font-bold">{formatEuro(paymentFee)}</span>
+                      <span className="text-ink font-bold">{t('checkout.paymentFeeLabel')}</span>
+                      <span className="text-ink font-bold">{formatEuro(paymentFee)}</span>
                     </div>
                   )}
                   {paymentFee < 0 && (
                     <div className="flex justify-between items-center text-[18px]">
-                      <span className="text-[#222222] font-bold">{t('checkout.discount')}</span>
-                      <span className="text-[#DD3333] font-bold">-{formatEuro(Math.abs(paymentFee))}</span>
+                      <span className="text-ink font-bold">{t('checkout.discount')}</span>
+                      <span className="text-danger font-bold">-{formatEuro(Math.abs(paymentFee))}</span>
                     </div>
                   )}
 
                   <div className="h-px bg-[#D9E3ED] w-full mt-1" />
 
                   <div className="flex justify-between items-center mt-1">
-                    <span className="text-[#222222] text-[20px] font-bold">{t('checkout.totalInclVat')}</span>
-                    <span className="text-[#222222] text-[20px] font-semibold">{formatEuro(finalTotal)}</span>
+                    <span className="text-ink text-[20px] font-bold">{t('checkout.totalInclVat')}</span>
+                    <span className="text-ink text-[20px] font-semibold">{formatEuro(finalTotal)}</span>
                   </div>
                 </div>
 
@@ -1110,8 +1223,8 @@ function CheckoutShell({
             </div>
 
             {/* Purchase Reference Card */}
-            <div className="w-full p-4 bg-gradient-to-br from-[#FFF7ED] to-white rounded-xl border-2 border-[#FFEDD4] flex flex-col gap-3">
-              <h3 className="text-[#222222] text-[20px] font-bold leading-6">{t('checkout.purchaseReference')}</h3>
+            <div className="w-full p-4 bg-gradient-to-br from-[var(--brand-soft)] to-white rounded-xl border-2 border-[#FFEDD4] flex flex-col gap-3">
+              <h3 className="text-ink text-[20px] font-bold leading-6">{t('checkout.purchaseReference')}</h3>
               
               <div className="relative w-full h-[52px]">
                 <input
@@ -1121,13 +1234,13 @@ function CheckoutShell({
                   disabled={!isEditingRef}
                   placeholder={t('checkout.purchaseReferencePlaceholder')}
                   className={`w-full h-full pl-5 pr-14 rounded-full border bg-white font-medium outline-none transition-all ${
-                    isEditingRef ? "border-[#F18800]" : "border-[#DDE1EA] text-[#888888] cursor-not-allowed"
+                    isEditingRef ? "border-brand" : "border-[#DDE1EA] text-subtle cursor-not-allowed"
                   }`}
                 />
                 <button
                   type="button"
                   onClick={() => setIsEditingRef(!isEditingRef)}
-                  className="absolute right-2 top-2 w-9 h-9 bg-[#EDF2F7] rounded-full flex items-center justify-center hover:bg-slate-200 transition-colors"
+                  className="absolute right-2 top-2 w-9 h-9 bg-line rounded-full flex items-center justify-center hover:bg-slate-200 transition-colors"
                   aria-label={t('checkout.editPurchaseReference')}
                 >
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1135,7 +1248,7 @@ function CheckoutShell({
                       <rect width="20" height="20" fill="#D9D9D9"/>
                     </mask>
                     <g mask="url(#mask0_2740_6734)">
-                      <path d="M2.91699 20.0019C2.57616 20.0019 2.28262 19.8801 2.03637 19.6365C1.79012 19.3928 1.66699 19.098 1.66699 18.7519C1.66699 18.411 1.79012 18.1175 2.03637 17.8713C2.28262 17.625 2.57616 17.5019 2.91699 17.5019H17.0837C17.4245 17.5019 17.718 17.6237 17.9643 17.8673C18.2105 18.1109 18.3337 18.4058 18.3337 18.7519C18.3337 19.0927 18.2105 19.3863 17.9643 19.6325C17.718 19.8788 17.4245 20.0019 17.0837 20.0019H2.91699ZM5.00033 13.6798H6.03074L12.9474 6.77583L12.4235 6.24396L11.9043 5.73271L5.00033 12.6494V13.6798ZM3.75033 14.1765V12.4315C3.75033 12.331 3.76713 12.2354 3.80074 12.1446C3.83449 12.0538 3.89033 11.9693 3.96824 11.8913L13.0918 2.78875C13.2125 2.66806 13.3495 2.57674 13.5028 2.51479C13.656 2.45285 13.8144 2.42188 13.9778 2.42188C14.1467 2.42188 14.3073 2.45285 14.4595 2.51479C14.6117 2.57674 14.7525 2.67236 14.8818 2.80167L15.8832 3.81604C16.0125 3.93674 16.106 4.07451 16.1637 4.22938C16.2214 4.38438 16.2503 4.54625 16.2503 4.715C16.2503 4.87 16.2214 5.0241 16.1637 5.17729C16.106 5.33063 16.0125 5.47195 15.8832 5.60125L6.78074 14.7038C6.70269 14.7818 6.61831 14.839 6.52762 14.8752C6.43678 14.9116 6.34116 14.9298 6.24074 14.9298H4.50366C4.2888 14.9298 4.10956 14.8579 3.96595 14.7142C3.8222 14.5706 3.75033 14.3913 3.75033 14.1765ZM12.9474 6.77583L12.4235 6.24396L11.9043 5.73271L12.9474 6.77583Z" fill="#888888"/>
+                      <path d="M2.91699 20.0019C2.57616 20.0019 2.28262 19.8801 2.03637 19.6365C1.79012 19.3928 1.66699 19.098 1.66699 18.7519C1.66699 18.411 1.79012 18.1175 2.03637 17.8713C2.28262 17.625 2.57616 17.5019 2.91699 17.5019H17.0837C17.4245 17.5019 17.718 17.6237 17.9643 17.8673C18.2105 18.1109 18.3337 18.4058 18.3337 18.7519C18.3337 19.0927 18.2105 19.3863 17.9643 19.6325C17.718 19.8788 17.4245 20.0019 17.0837 20.0019H2.91699ZM5.00033 13.6798H6.03074L12.9474 6.77583L12.4235 6.24396L11.9043 5.73271L5.00033 12.6494V13.6798ZM3.75033 14.1765V12.4315C3.75033 12.331 3.76713 12.2354 3.80074 12.1446C3.83449 12.0538 3.89033 11.9693 3.96824 11.8913L13.0918 2.78875C13.2125 2.66806 13.3495 2.57674 13.5028 2.51479C13.656 2.45285 13.8144 2.42188 13.9778 2.42188C14.1467 2.42188 14.3073 2.45285 14.4595 2.51479C14.6117 2.57674 14.7525 2.67236 14.8818 2.80167L15.8832 3.81604C16.0125 3.93674 16.106 4.07451 16.1637 4.22938C16.2214 4.38438 16.2503 4.54625 16.2503 4.715C16.2503 4.87 16.2214 5.0241 16.1637 5.17729C16.106 5.33063 16.0125 5.47195 15.8832 5.60125L6.78074 14.7038C6.70269 14.7818 6.61831 14.839 6.52762 14.8752C6.43678 14.9116 6.34116 14.9298 6.24074 14.9298H4.50366C4.2888 14.9298 4.10956 14.8579 3.96595 14.7142C3.8222 14.5706 3.75033 14.3913 3.75033 14.1765ZM12.9474 6.77583L12.4235 6.24396L11.9043 5.73271L12.9474 6.77583Z" fill="var(--subtle)"/>
                     </g>
                   </svg>
                 </button>
@@ -1275,6 +1388,14 @@ function extractAddressList(payload: unknown): Record<string, unknown>[] {
   return [];
 }
 
+function readAddressType(address: Record<string, unknown>) {
+  return readString(address, ["type", "address_type", "kind"]);
+}
+
+function formatAddressId(address: Record<string, unknown>, index: number) {
+  return readString(address, ["id", "address_id", "uuid"]) || `address-${index}`;
+}
+
 function countryFromAddress(address: Record<string, unknown>, fallback: string) {
   const countryId = readString(address, ["country_id", "countryCode", "country_code"]).toUpperCase();
 
@@ -1283,6 +1404,62 @@ function countryFromAddress(address: Record<string, unknown>, fallback: string) 
   if (countryId === "DE") return "Germany";
 
   return readString(address, ["country_name", "country"]) || fallback;
+}
+
+function normalizeCheckoutAddress(address: Record<string, unknown>, index: number): CheckoutSavedAddress {
+  const firstName = readString(address, ["firstname", "first_name", "billing_first_name", "shipping_first_name"]);
+  const lastName = readString(address, ["lastname", "last_name", "billing_last_name", "shipping_last_name"]);
+  const explicitName = readString(address, ["name", "full_name", "display_name"]);
+  const isDefaultValue =
+    address.default_shipping === true ||
+    address.is_default_shipping === true ||
+    address.default === true ||
+    address.is_default === true ||
+    readString(address, ["default_shipping", "is_default_shipping", "default", "is_default"]) === "1";
+
+  return {
+    id: formatAddressId(address, index),
+    type: readAddressType(address) || "shipping",
+    isDefault: isDefaultValue,
+    name: explicitName || [firstName, lastName].filter(Boolean).join(" ") || "Saved address",
+    firstname: firstName,
+    lastname: lastName,
+    company: readString(address, ["company", "company_name", "business_name"]),
+    address1: readString(address, ["street", "address", "address_1", "line1", "street_address"]),
+    address2: readString(address, ["street2", "address2", "address_2", "line2", "apartment", "suite"]),
+    postcode: readString(address, ["postcode", "postalcode", "postal_code", "zip", "zip_code"]),
+    city: readString(address, ["city", "town", "locality"]),
+    state: readAddressState(address),
+    phone: readString(address, ["phone", "telephone", "mobile", "mobile_number", "mobileNumber"]),
+    email: readString(address, ["email", "billing_email", "shipping_email"]),
+    country: countryFromAddress(address, "Netherlands"),
+  };
+}
+
+function normalizeCheckoutShippingAddresses(payload: unknown) {
+  return extractAddressList(payload)
+    .map(normalizeCheckoutAddress)
+    .filter((address) => {
+      const addressType = address.type.toLowerCase();
+      return addressType === "shipping" || addressType.includes("shipping");
+    });
+}
+
+function readDefaultShippingAddressId(...sources: unknown[]) {
+  for (const source of sources) {
+    const value = readString(source, [
+      "default_shipping_address_id",
+      "defaultShippingAddressId",
+      "default_shipping_id",
+      "shipping_address_id",
+    ]);
+
+    if (value) {
+      return value;
+    }
+  }
+
+  return "";
 }
 
 function splitName(source: unknown) {
@@ -1339,6 +1516,24 @@ function valueWhenBlank(current: string, next: string) {
   return current.trim() ? current : next || current;
 }
 
+function applySavedShippingAddressToForm(
+  current: CheckoutFormState,
+  address: CheckoutSavedAddress,
+): CheckoutFormState {
+  return {
+    ...current,
+    shippingFirstName: address.firstname || current.shippingFirstName,
+    shippingLastName: address.lastname || current.shippingLastName,
+    email: address.email || current.email,
+    mobileNumber: address.phone || current.mobileNumber,
+    shippingStreetAddress: address.address1,
+    shippingCity: address.city,
+    shippingState: address.state,
+    shippingPostcode: address.postcode,
+    shippingCountry: countryFromAddress(address, current.shippingCountry),
+  };
+}
+
 export default function CheckoutPageClient({
   mode = "live",
   demoItems = [],
@@ -1358,11 +1553,19 @@ export default function CheckoutPageClient({
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [savedShippingAddresses, setSavedShippingAddresses] = useState<CheckoutSavedAddress[]>([]);
+  const [selectedSavedShippingAddressId, setSelectedSavedShippingAddressId] = useState<string | null>(null);
+  const [defaultShippingAddressId, setDefaultShippingAddressId] = useState<string>("");
+  const [isLoadingSavedShippingAddresses, setIsLoadingSavedShippingAddresses] = useState(false);
+  const [savedShippingAddressesError, setSavedShippingAddressesError] = useState("");
   
   const { shippingRules, defaultRule } = useShippingRules();
 
   const autofillCustomerDetails = useCallback(async () => {
     if (isDemoMode) return;
+
+    setIsLoadingSavedShippingAddresses(true);
+    setSavedShippingAddressesError("");
 
     const storedUser = localStorage.getItem("auth_user");
     let storedUserData: unknown = {};
@@ -1400,6 +1603,10 @@ export default function CheckoutPageClient({
     } else {
       // Not logged in either backend or frontend
       setIsLoggedIn(false);
+      setSavedShippingAddresses([]);
+      setSelectedSavedShippingAddressId(null);
+      setDefaultShippingAddressId("");
+      setIsLoadingSavedShippingAddresses(false);
       setIsAutofilled(true);
       return;
     }
@@ -1409,6 +1616,31 @@ export default function CheckoutPageClient({
       addresses.find((address) => readString(address, ["type"]) === "shipping") ??
       addresses[0] ??
       null;
+    const shippingAddresses = normalizeCheckoutShippingAddresses(addressPayload);
+    const nextDefaultShippingAddressId = readDefaultShippingAddressId(finalProfile, storedUserData);
+
+    const defaultAddress =
+      shippingAddresses.find((address) => String(address.id) === String(nextDefaultShippingAddressId)) ??
+      shippingAddresses.find((address) => address.isDefault) ??
+      shippingAddresses[0] ??
+      null;
+    const addressToLoad =
+      shippingAddresses.find((address) => String(address.id) === String(selectedSavedShippingAddressId)) ??
+      defaultAddress;
+
+    setSavedShippingAddresses(shippingAddresses);
+    setDefaultShippingAddressId(nextDefaultShippingAddressId);
+    setSelectedSavedShippingAddressId((current) => {
+      if (current && shippingAddresses.some((address) => String(address.id) === String(current))) {
+        return current;
+      }
+
+      return defaultAddress ? defaultAddress.id : null;
+    });
+    setForm((current) =>
+      current.sameAsBilling || !addressToLoad ? current : applySavedShippingAddressToForm(current, addressToLoad),
+    );
+    setIsLoadingSavedShippingAddresses(false);
 
     const profileName = splitName(finalProfile);
     const storedName = splitName(storedUserData);
@@ -1443,7 +1675,7 @@ export default function CheckoutPageClient({
     }));
 
     setIsAutofilled(true);
-  }, [isDemoMode]);
+  }, [isDemoMode, selectedSavedShippingAddressId]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1455,6 +1687,11 @@ export default function CheckoutPageClient({
       setIsLoggedIn(hasUser);
 
       if (!hasUser) {
+        setSavedShippingAddresses([]);
+        setSelectedSavedShippingAddressId(null);
+        setDefaultShippingAddressId("");
+        setIsLoadingSavedShippingAddresses(false);
+        setSavedShippingAddressesError("");
         setForm((current) =>
           current.paymentMethod === "banktransfer" ? { ...current, paymentMethod: "" } : current,
         );
@@ -1482,9 +1719,45 @@ export default function CheckoutPageClient({
       return;
     }
 
+    if (field === "sameAsBilling" && value === false) {
+      const selectedAddress =
+        savedShippingAddresses.find((address) => String(address.id) === String(selectedSavedShippingAddressId)) ??
+        savedShippingAddresses.find((address) => String(address.id) === String(defaultShippingAddressId)) ??
+        savedShippingAddresses.find((address) => address.isDefault) ??
+        savedShippingAddresses[0] ??
+        null;
+
+      if (selectedAddress) {
+        setSelectedSavedShippingAddressId(selectedAddress.id);
+      }
+
+      setForm((current) => {
+        const next = { ...current, sameAsBilling: false };
+        return selectedAddress ? applySavedShippingAddressToForm(next, selectedAddress) : next;
+      });
+      setErrors((current) => ({ ...current, sameAsBilling: undefined }));
+      return;
+    }
+
     setForm((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
   };
+
+  const handleSavedShippingAddressSelect = useCallback((address: CheckoutSavedAddress) => {
+    setSelectedSavedShippingAddressId(address.id);
+    setForm((current) => applySavedShippingAddressToForm(current, address));
+    setErrors((current) => ({
+      ...current,
+      shippingFirstName: undefined,
+      shippingLastName: undefined,
+      shippingStreetAddress: undefined,
+      shippingCity: undefined,
+      shippingState: undefined,
+      shippingPostcode: undefined,
+      email: address.email ? undefined : current.email,
+      mobileNumber: address.phone ? undefined : current.mobileNumber,
+    }));
+  }, []);
 
   const validateStep = (currentStep: number): boolean => {
     const nextErrors: Partial<Record<keyof CheckoutFormState, string>> = {};
@@ -1728,7 +2001,7 @@ export default function CheckoutPageClient({
 
   if (isSubmitted) {
     return (
-      <div className="bg-[#FAFBFD] px-5 py-24 min-h-[70vh] flex items-center justify-center">
+      <div className="bg-surface px-5 py-24 min-h-[70vh] flex items-center justify-center">
         <div className="max-w-xl w-full bg-white rounded-3xl border border-slate-200 p-12 shadow-[2px_8px_40px_0px_rgba(109,109,120,0.10)] flex flex-col items-center text-center gap-6">
           <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 mb-2">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -1745,14 +2018,14 @@ export default function CheckoutPageClient({
           {orderNumber && (
             <div className="bg-slate-50 rounded-xl px-6 py-4 border border-slate-100">
               <p className="text-sm text-neutral-500 font-medium uppercase tracking-wider">{t('checkout.orderNumberLabel')}</p>
-              <p className="text-2xl font-bold text-[#F18800]">{orderNumber}</p>
+              <p className="text-2xl font-bold text-brand">{orderNumber}</p>
             </div>
           )}
 
           <div className="flex flex-col gap-4 w-full pt-4">
             <Link 
               href={localePath("/my-account", locale)}
-              className="h-12 w-full rounded-full bg-[#F18800] px-6 text-base font-bold text-white transition-colors hover:bg-amber-600 flex items-center justify-center"
+              className="h-12 w-full rounded-full bg-brand px-6 text-base font-bold text-white transition-colors hover:bg-brand-hover flex items-center justify-center"
             >
               {t('checkout.viewMyOrders')}
             </Link>
@@ -1781,6 +2054,11 @@ export default function CheckoutPageClient({
       handleChange={handleChange}
       isPending={isPending}
       onLoginSuccess={() => setIsAutofilled(false)}
+      savedShippingAddresses={savedShippingAddresses}
+      selectedSavedShippingAddressId={selectedSavedShippingAddressId}
+      onSavedShippingAddressSelect={handleSavedShippingAddressSelect}
+      isLoadingSavedShippingAddresses={isLoadingSavedShippingAddresses}
+      savedShippingAddressesError={savedShippingAddressesError}
       step={step}
       setStep={setStep}
       onAddressSelect={(address, isShipping = false) => {

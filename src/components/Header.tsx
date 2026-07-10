@@ -379,7 +379,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                       <Link
                         href={group.href}
                         onClick={closeSearchPopover}
-                        className="inline-flex text-base font-semibold leading-6 text-orange-500 hover:text-orange-600"
+                        className="inline-flex text-base font-semibold leading-6 text-brand hover:text-orange-600"
                       >
                         {t('search.popover.showAll', { label: group.title, count: group.total })}
                       </Link>
@@ -401,7 +401,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                   <Link
                     href={searchSuggestions?.materials.href ?? '/materials'}
                     onClick={closeSearchPopover}
-                    className="inline-flex text-base font-semibold leading-6 text-orange-500 hover:text-orange-600"
+                    className="inline-flex text-base font-semibold leading-6 text-brand hover:text-orange-600"
                   >
                     {t('search.popover.showAll', {
                       label: t('search.popover.materials'),
@@ -421,7 +421,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                   <Link
                     href={searchSuggestions?.groupProducts?.href ?? productListingPath}
                     onClick={closeSearchPopover}
-                    className="inline-flex text-base font-semibold leading-6 text-orange-500 hover:text-orange-600"
+                    className="inline-flex text-base font-semibold leading-6 text-brand hover:text-orange-600"
                   >
                     {t('search.popover.showAll', {
                       label: activeGroupProductsTitle,
@@ -529,7 +529,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                 ref={desktopSearchFormRef}
                 role="search"
                 onSubmit={handleHeaderSearchSubmit}
-                className="w-full px-6 py-3 rounded-full border border-slate-200 flex items-center gap-3 overflow-hidden text-left focus-within:border-amber-300 focus-within:ring-2 focus-within:ring-amber-500/10"
+                className="w-full px-6 py-3 rounded-full border border-slate-100 flex items-center gap-3 overflow-hidden text-left focus-within:border-amber-300 focus-within:ring-2 focus-within:ring-brand/10"
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <circle cx="6.75" cy="6.75" r="5.25" stroke="#9CA3AF" strokeWidth="1.5" />
@@ -606,8 +606,8 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
             {/* User */}
             <Link href={accountHref} onClick={handleAccountClick} aria-label={t('header.accountLink')}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="cursor-pointer">
-                <circle cx="12" cy="8" r="4" stroke="#404040" strokeWidth="1.5" />
-                <path d="M4 20c0-4.42 3.58-8 8-8s8 3.58 8 8" stroke="#404040" strokeWidth="1.5" strokeLinecap="round" />
+                <circle cx="12" cy="8" r="4" stroke="var(--copy)" strokeWidth="1.5" />
+                <path d="M4 20c0-4.42 3.58-8 8-8s8 3.58 8 8" stroke="var(--copy)" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
             </Link>
             {/* Wishlist */}
@@ -617,7 +617,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
               aria-label={t('header.wishlistOpen')}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" stroke="#404040" strokeWidth="1.5" />
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" stroke="var(--copy)" strokeWidth="1.5" />
               </svg>
               {uniqueWishlistCount > 0 ? (
                 <span className="absolute -right-2 -top-2 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white">
@@ -633,9 +633,9 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
               aria-label={t('header.cartOpen')}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M8 22C8.55228 22 9 21.5523 9 21C9 20.4477 8.55228 20 8 20C7.44772 20 7 20.4477 7 21C7 21.5523 7.44772 22 8 22Z" stroke="#444444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M19 22C19.5523 22 20 21.5523 20 21C20 20.4477 19.5523 20 19 20C18.4477 20 18 20.4477 18 21C18 21.5523 18.4477 22 19 22Z" stroke="#444444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M2.05078 2.04999H4.05078L6.71078 14.47C6.80836 14.9248 7.06145 15.3315 7.42649 15.6198C7.79153 15.9082 8.24569 16.0603 8.71078 16.05H18.4908C18.946 16.0493 19.3873 15.8933 19.7418 15.6078C20.0963 15.3224 20.3429 14.9245 20.4408 14.48L22.0908 7.04999H5.12078" stroke="#444444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M8 22C8.55228 22 9 21.5523 9 21C9 20.4477 8.55228 20 8 20C7.44772 20 7 20.4477 7 21C7 21.5523 7.44772 22 8 22Z" stroke="var(--copy)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M19 22C19.5523 22 20 21.5523 20 21C20 20.4477 19.5523 20 19 20C18.4477 20 18 20.4477 18 21C18 21.5523 18.4477 22 19 22Z" stroke="var(--copy)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M2.05078 2.04999H4.05078L6.71078 14.47C6.80836 14.9248 7.06145 15.3315 7.42649 15.6198C7.79153 15.9082 8.24569 16.0603 8.71078 16.05H18.4908C18.946 16.0493 19.3873 15.8933 19.7418 15.6078C20.0963 15.3224 20.3429 14.9245 20.4408 14.48L22.0908 7.04999H5.12078" stroke="var(--copy)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               {totalItemCount > 0 ? (
                 <span className="absolute -right-2 -top-2 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white">
@@ -652,7 +652,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
         <div className="flex justify-between items-center w-full">
           {/* Left: Hamburger menu button */}
           <button onClick={() => setIsMobileMenuOpen(true)} className="p-1" aria-label={t('header.openMenu')}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#404040" strokeWidth="2">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--copy)" strokeWidth="2">
               <line x1="3" y1="12" x2="21" y2="12" />
               <line x1="3" y1="6" x2="21" y2="6" />
               <line x1="3" y1="18" x2="21" y2="18" />
@@ -676,15 +676,15 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
             <LanguageSwitcher />
             <Link href={accountHref} onClick={handleAccountClick} aria-label={t('header.accountLink')}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="8" r="4" stroke="#404040" strokeWidth="2" />
-                <path d="M4 20c0-4.42 3.58-8 8-8s8 3.58 8 8" stroke="#404040" strokeWidth="2" strokeLinecap="round" />
+                <circle cx="12" cy="8" r="4" stroke="var(--copy)" strokeWidth="2" />
+                <path d="M4 20c0-4.42 3.58-8 8-8s8 3.58 8 8" stroke="var(--copy)" strokeWidth="2" strokeLinecap="round" />
               </svg>
             </Link>
             <button onClick={openCart} className="relative p-1" aria-label={t('header.cartOpen')}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <path d="M8 22C8.55228 22 9 21.5523 9 21C9 20.4477 8.55228 20 8 20C7.44772 20 7 20.4477 7 21C7 21.5523 7.44772 22 8 22Z" stroke="#444444" strokeWidth="2" />
-                <path d="M19 22C19.5523 22 20 21.5523 20 21C20 20.4477 19.5523 20 19 20C18.4477 20 18 20.4477 18 21C18 21.5523 18.4477 22 19 22Z" stroke="#444444" strokeWidth="2" />
-                <path d="M2.05078 2.04999H4.05078L6.71078 14.47C6.80836 14.9248 7.06145 15.3315 7.42649 15.6198C7.79153 15.9082 8.24569 16.0603 8.71078 16.05H18.4908C18.946 16.0493 19.3873 15.8933 19.7418 15.6078C20.0963 15.3224 20.3429 14.9245 20.4408 14.48L22.0908 7.04999H5.12078" stroke="#444444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M8 22C8.55228 22 9 21.5523 9 21C9 20.4477 8.55228 20 8 20C7.44772 20 7 20.4477 7 21C7 21.5523 7.44772 22 8 22Z" stroke="var(--copy)" strokeWidth="2" />
+                <path d="M19 22C19.5523 22 20 21.5523 20 21C20 20.4477 19.5523 20 19 20C18.4477 20 18 20.4477 18 21C18 21.5523 18.4477 22 19 22Z" stroke="var(--copy)" strokeWidth="2" />
+                <path d="M2.05078 2.04999H4.05078L6.71078 14.47C6.80836 14.9248 7.06145 15.3315 7.42649 15.6198C7.79153 15.9082 8.24569 16.0603 8.71078 16.05H18.4908C18.946 16.0493 19.3873 15.8933 19.7418 15.6078C20.0963 15.3224 20.3429 14.9245 20.4408 14.48L22.0908 7.04999H5.12078" stroke="var(--copy)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               {totalItemCount > 0 ? (
                 <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[9px] font-bold text-white">
@@ -705,7 +705,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
               ref={mobileSearchFormRef}
               role="search"
               onSubmit={handleHeaderSearchSubmit}
-              className="w-full px-4 py-2.5 rounded-full border border-slate-100 flex items-center gap-2 overflow-hidden text-left bg-slate-50 focus-within:border-amber-300 focus-within:ring-2 focus-within:ring-amber-500/10"
+              className="w-full px-4 py-2.5 rounded-full border border-slate-100 flex items-center gap-2 overflow-hidden text-left bg-slate-50 focus-within:border-amber-300 focus-within:ring-2 focus-within:ring-brand/10"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <circle cx="6.75" cy="6.75" r="5.25" stroke="#9CA3AF" strokeWidth="1.5" />
@@ -772,7 +772,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                             item.active
                               ? 'text-sky-950 font-semibold'
                               : 'text-stone-500 font-normal group-hover:text-sky-950 transition-colors'
-                          } text-base font-['Segoe_UI'] leading-5`}
+                          } text-base leading-5`}
                         >
                           {t.has(item.labelKey) ? t(item.labelKey) : item.fallbackLabel}
                           <svg
@@ -813,7 +813,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                           item.active
                             ? 'text-sky-950 font-semibold'
                             : 'text-stone-500 font-normal group-hover:text-sky-950 transition-colors'
-                        } text-base font-['Segoe_UI'] leading-5`}
+                        } text-base leading-5`}
                       >
                         {t.has(item.labelKey) ? t(item.labelKey) : item.fallbackLabel}
                         {item.active && (
@@ -828,12 +828,12 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
             </NavigationMenuList>
           </NavigationMenu>
           <div className="flex items-center gap-4">
-            <Link href="/custom-made-form" className="text-amber-500 text-base font-bold leading-6">
+            <Link href="/custom-made-form" className="text-brand text-base font-bold leading-6">
               {t('header.customMadeForm')}
             </Link>
             <Link
               href={lp('/printers')}
-              className="px-4 py-2 bg-amber-500 rounded-full flex items-center gap-2 text-white text-base font-bold hover:bg-amber-600 transition-colors"
+              className="px-4 py-2 bg-brand rounded-full flex items-center gap-2 text-white text-base font-bold hover:bg-brand-hover transition-colors"
             >
               {t('header.productFinder')}
             </Link>
@@ -854,13 +854,13 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
           <div className="relative w-80 max-w-[85vw] h-full bg-white shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-200">
             {/* Header */}
             <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-              <span className="text-sky-950 font-bold text-lg">{t('header.menu')}</span>
+              <span className="text-[#05315D] font-bold text-lg">{t('header.menu')}</span>
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="p-1 rounded-full hover:bg-slate-200 transition-colors"
                 aria-label={t('header.closeMenu')}
               >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#404040" strokeWidth="2">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--copy)" strokeWidth="2">
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
@@ -886,7 +886,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                     item.active
                       ? 'bg-sky-50 text-sky-950 font-semibold'
                       : 'text-stone-600 font-normal hover:bg-slate-50 transition-colors'
-                  } text-base font-['Segoe_UI']`}
+                  } text-base`}
                 >
                   <span>{t.has(item.labelKey) ? t(item.labelKey) : item.fallbackLabel}</span>
                   {item.dropdown && (
@@ -903,7 +903,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
               <Link
                 href="/custom"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="px-4 py-3 text-amber-500 font-semibold text-base flex items-center gap-2 hover:bg-amber-50 rounded-lg transition-colors"
+                className="px-4 py-3 text-brand font-semibold text-base flex items-center gap-2 hover:bg-brand-soft rounded-lg transition-colors"
               >
                 {t('header.customMadeForm')}
               </Link>
@@ -911,7 +911,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
               <Link
                 href={lp('/printers')}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="px-4 py-3 bg-amber-500 text-white font-semibold text-base rounded-full flex justify-center items-center gap-2 mt-4 hover:bg-amber-600 transition-colors"
+                className="px-4 py-3 bg-brand text-white font-semibold text-base rounded-full flex justify-center items-center gap-2 mt-4 hover:bg-brand-hover transition-colors"
               >
                 {t('header.productFinder')}
               </Link>

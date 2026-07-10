@@ -100,13 +100,13 @@ export function RequestPrinterModal({
         {/* Header */}
         <div className="flex flex-col gap-1.5">
           <DialogTitle
-            className="text-[#222222] font-bold leading-[120%]"
+            className="text-ink font-bold leading-[120%]"
             style={{ fontSize: "24px" }}
           >
             {t("requestPrinter.title")}
           </DialogTitle>
           <DialogDescription
-            className="text-[#444444] font-normal leading-[150%]"
+            className="text-copy font-normal leading-[150%]"
             style={{ fontSize: "16px" }}
           >
             {t("requestPrinter.subtitle")}
@@ -178,7 +178,7 @@ export function RequestPrinterModal({
           <button
             type="submit"
             disabled={submitState === "submitting" || submitState === "success"}
-            className="mt-1 w-full flex items-center justify-center gap-2 h-11 rounded-full bg-[#F18800] text-white font-semibold text-base leading-6 hover:bg-[#d97a00] transition-colors duration-150 disabled:opacity-70 disabled:cursor-not-allowed"
+            className="mt-1 w-full flex items-center justify-center gap-2 h-11 rounded-full bg-brand text-white font-semibold text-base leading-6 hover:bg-brand-hover transition-colors duration-150 disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {submitState === "submitting" ? (
               <>
@@ -244,7 +244,7 @@ function FieldGroup({
   return (
     <div className="flex flex-col gap-2">
       <label
-        className="text-[#222222] font-semibold leading-5"
+        className="text-ink font-semibold leading-5"
         style={{ fontSize: "18px" }}
       >
         {label}
@@ -256,4 +256,4 @@ function FieldGroup({
 
 // Shared input style matching Figma: pill border, #DDE1EA, 12px/20px padding
 const inputClass =
-  "h-auto rounded-full border border-[#DDE1EA] bg-white px-5 py-3 text-base text-[#222222] placeholder:text-[#888888] focus-visible:border-[#F18800] focus-visible:ring-[#F18800]/20 shadow-none";
+  "h-auto rounded-full border border-[#DDE1EA] bg-white px-5 py-3 text-base text-ink placeholder:text-subtle focus-visible:border-brand focus-visible:ring-brand/20 shadow-none";
