@@ -90,7 +90,7 @@ type ArticleData = {
     slug: string;
   }>;
   translations?: Array<Record<string, any>>;
-};
+};      
 
 async function getPopularArticles(locale: string): Promise<ArticleData[]> {
   const apiBaseUrl = process.env.BBNL_API_BASE_URL;
