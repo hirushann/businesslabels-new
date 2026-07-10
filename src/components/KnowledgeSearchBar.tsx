@@ -66,7 +66,7 @@ export default function KnowledgeSearchBar({ apiBaseUrl }: KnowledgeSearchBarPro
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setIsFocused(true)}
           placeholder="Search for guides, tips, and recommendations..." 
-          className="flex-1 bg-transparent border-none outline-none text-zinc-700 text-lg font-['Segoe_UI'] placeholder:text-zinc-400 py-2"
+          className="flex-1 bg-transparent border-none outline-none text-zinc-700 text-lg placeholder:text-zinc-400 py-2"
           autoComplete="off"
         />
       </form>
@@ -87,8 +87,8 @@ export default function KnowledgeSearchBar({ apiBaseUrl }: KnowledgeSearchBarPro
                   <div className="flex items-center gap-4">
                     <Search className="w-5 h-5 text-gray-400 flex-shrink-0" />
                     <div className="flex flex-col">
-                      <span className="text-zinc-800 font-medium font-['Segoe_UI']">{result.title}</span>
-                      <span className="text-sm text-gray-500 font-['Segoe_UI'] mt-0.5">
+                      <span className="text-zinc-800 font-medium">{result.title}</span>
+                      <span className="text-sm text-gray-500 mt-0.5">
                         Article • {category}
                       </span>
                     </div>
@@ -98,7 +98,7 @@ export default function KnowledgeSearchBar({ apiBaseUrl }: KnowledgeSearchBarPro
               );
             })
           ) : (
-            <div className="p-6 text-center text-gray-500 font-['Segoe_UI']">
+            <div className="p-6 text-center text-gray-500">
               No articles found for "{query}"
             </div>
           )}

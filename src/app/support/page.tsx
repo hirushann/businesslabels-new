@@ -26,7 +26,7 @@ export default function SupportPage() {
   return (
     <div className="relative bg-white min-h-screen font-sans overflow-hidden">
       {/* Ambient background glows */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-amber-400/10 rounded-full blur-[120px] pointer-events-none transform translate-x-1/3 -translate-y-1/3" />
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand/10 rounded-full blur-[120px] pointer-events-none transform translate-x-1/3 -translate-y-1/3" />
       <div className="absolute top-[40%] left-0 w-[600px] h-[600px] bg-sky-400/10 rounded-full blur-[120px] pointer-events-none transform -translate-x-1/3" />
 
       {/* Container */}
@@ -79,7 +79,7 @@ export default function SupportPage() {
           <div className="bg-white border border-slate-100 rounded-2xl p-10 flex flex-col items-center text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-lg transition-all duration-300">
             <Monitor className="w-14 h-14 text-neutral-500 mb-6" strokeWidth={1.5} />
             <h3 className="text-2xl font-bold text-slate-800 mb-4">{t('remoteSupportTitle')}</h3>
-            <a href="https://download.teamviewer.com/download/TeamViewerQS.exe" target="_blank" rel="noopener noreferrer" className="text-lg font-semibold text-amber-500 hover:text-amber-600 mb-2 flex items-center gap-2 justify-center transition-colors">
+            <a href="https://download.teamviewer.com/download/TeamViewerQS.exe" target="_blank" rel="noopener noreferrer" className="text-lg font-semibold text-brand hover:text-brand mb-2 flex items-center gap-2 justify-center transition-colors">
               <Download className="w-5 h-5" /> {t('downloadTeamViewer')}
             </a>
             <p className="text-sm text-slate-400 font-medium">{t('scheduledAfterContact')}</p>
@@ -140,7 +140,7 @@ export default function SupportPage() {
             <div className="bg-white border border-slate-100 rounded-2xl p-6 flex flex-col lg:flex-row gap-6 lg:gap-10 items-start lg:items-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] hover:shadow-md transition-shadow">
               <div className="flex-1 lg:max-w-[420px]">
                 <div className="flex items-center gap-4 mb-3">
-                  <div className="w-10 h-10 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center shrink-0"><Monitor className="w-5 h-5"/></div>
+                  <div className="w-10 h-10 bg-brand-soft text-brand rounded-full flex items-center justify-center shrink-0"><Monitor className="w-5 h-5"/></div>
                   <h3 className="text-lg font-bold text-slate-800">{t('remotePrinterSupportTitle')}</h3>
                 </div>
                 <p className="text-slate-500 text-sm leading-relaxed ml-14">{t('remotePrinterSupportDesc')}</p>
@@ -152,7 +152,7 @@ export default function SupportPage() {
               </div>
               <div className="hidden lg:block w-px h-16 bg-slate-100"></div>
               <div className="lg:w-48 lg:text-right w-full pt-4 lg:pt-0 border-t lg:border-t-0 border-slate-100">
-                <div className="text-2xl font-bold text-orange-500">€100 <span className="text-xl font-semibold text-orange-500/70">/ uur</span></div>
+                <div className="text-2xl font-bold text-brand">€100 <span className="text-xl font-semibold text-brand/70">/ uur</span></div>
                 <div className="text-xs text-slate-400 mt-1 font-medium">{t('billedHourly')}</div>
               </div>
             </div>
@@ -161,7 +161,7 @@ export default function SupportPage() {
             <div className="bg-white border border-slate-100 rounded-2xl p-6 flex flex-col lg:flex-row gap-6 lg:gap-10 items-start lg:items-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] hover:shadow-md transition-shadow">
               <div className="flex-1 lg:max-w-[420px]">
                 <div className="flex items-center gap-4 mb-3">
-                  <div className="w-10 h-10 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center shrink-0"><Settings className="w-5 h-5"/></div>
+                  <div className="w-10 h-10 bg-brand-soft text-brand rounded-full flex items-center justify-center shrink-0"><Settings className="w-5 h-5"/></div>
                   <h3 className="text-lg font-bold text-slate-800">{t('remoteSoftwareSupportTitle')}</h3>
                 </div>
                 <p className="text-slate-500 text-sm leading-relaxed ml-14">{t('remoteSoftwareSupportDesc')}</p>
@@ -173,7 +173,7 @@ export default function SupportPage() {
               </div>
               <div className="hidden lg:block w-px h-16 bg-slate-100"></div>
               <div className="lg:w-48 lg:text-right w-full pt-4 lg:pt-0 border-t lg:border-t-0 border-slate-100">
-                <div className="text-2xl font-bold text-orange-500">{t('s2Price')} <span className="text-xl font-semibold text-orange-500/70">{t('s2PriceUnit')}</span></div>
+                <div className="text-2xl font-bold text-brand">{t('s2Price')} <span className="text-xl font-semibold text-brand/70">{t('s2PriceUnit')}</span></div>
                 <div className="text-xs text-slate-400 mt-1 font-medium">{t('billedHourly')}</div>
               </div>
             </div>
@@ -182,7 +182,7 @@ export default function SupportPage() {
             <div className="bg-white border border-slate-100 rounded-2xl p-6 flex flex-col lg:flex-row gap-6 lg:gap-10 items-start lg:items-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] hover:shadow-md transition-shadow">
               <div className="flex-1 lg:max-w-[420px]">
                 <div className="flex items-center gap-4 mb-3">
-                  <div className="w-10 h-10 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center shrink-0"><Printer className="w-5 h-5"/></div>
+                  <div className="w-10 h-10 bg-brand-soft text-brand rounded-full flex items-center justify-center shrink-0"><Printer className="w-5 h-5"/></div>
                   <h3 className="text-lg font-bold text-slate-800">{t('hardwareRepairTitle')}</h3>
                 </div>
                 <p className="text-slate-500 text-sm leading-relaxed ml-14">{t('hardwareRepairDesc')}</p>
@@ -194,7 +194,7 @@ export default function SupportPage() {
               </div>
               <div className="hidden lg:block w-px h-16 bg-slate-100"></div>
               <div className="lg:w-48 lg:text-right w-full pt-4 lg:pt-0 border-t lg:border-t-0 border-slate-100">
-                <div className="text-2xl font-bold text-orange-500">{t('s1Price')} <span className="text-xl font-semibold text-orange-500/70">{t('s1PriceUnit')}</span></div>
+                <div className="text-2xl font-bold text-brand">{t('s1Price')} <span className="text-xl font-semibold text-brand/70">{t('s1PriceUnit')}</span></div>
                 <div className="text-xs text-slate-400 mt-1 font-medium">{t('billedHourly')}</div>
               </div>
             </div>
@@ -203,7 +203,7 @@ export default function SupportPage() {
             <div className="bg-white border border-slate-100 rounded-2xl p-6 flex flex-col lg:flex-row gap-6 lg:gap-10 items-start lg:items-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] hover:shadow-md transition-shadow">
               <div className="flex-1 lg:max-w-[420px]">
                 <div className="flex items-center gap-4 mb-3">
-                  <div className="w-10 h-10 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center shrink-0"><Package className="w-5 h-5"/></div>
+                  <div className="w-10 h-10 bg-brand-soft text-brand rounded-full flex items-center justify-center shrink-0"><Package className="w-5 h-5"/></div>
                   <h3 className="text-lg font-bold text-slate-800">{t('onSiteServiceTitle')}</h3>
                 </div>
                 <p className="text-slate-500 text-sm leading-relaxed ml-14">{t('onSiteServiceDesc')}</p>
@@ -215,7 +215,7 @@ export default function SupportPage() {
               </div>
               <div className="hidden lg:block w-px h-16 bg-slate-100"></div>
               <div className="lg:w-48 lg:text-right w-full pt-4 lg:pt-0 border-t lg:border-t-0 border-slate-100">
-                <div className="text-2xl font-bold text-orange-500">€145 <span className="text-xl font-semibold text-orange-500/70">/ uur</span></div>
+                <div className="text-2xl font-bold text-brand">€145 <span className="text-xl font-semibold text-brand/70">/ uur</span></div>
                 <div className="text-xs text-slate-400 mt-1 font-medium">{t('exclTravelCosts')}</div>
               </div>
             </div>
@@ -224,7 +224,7 @@ export default function SupportPage() {
             <div className="bg-white border border-slate-100 rounded-2xl p-6 flex flex-col lg:flex-row gap-6 lg:gap-10 items-start lg:items-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] hover:shadow-md transition-shadow">
               <div className="flex-1 lg:max-w-[420px]">
                 <div className="flex items-center gap-4 mb-3">
-                  <div className="w-10 h-10 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center shrink-0"><CheckCircle2 className="w-5 h-5"/></div>
+                  <div className="w-10 h-10 bg-brand-soft text-brand rounded-full flex items-center justify-center shrink-0"><CheckCircle2 className="w-5 h-5"/></div>
                   <h3 className="text-lg font-bold text-slate-800">{t('loanEquipmentTitle')}</h3>
                 </div>
                 <p className="text-slate-500 text-sm leading-relaxed ml-14">{t('loanEquipmentDesc')}</p>
@@ -302,7 +302,7 @@ export default function SupportPage() {
                 ))}
                 
                 <div className="pt-6">
-                  <a href="https://download.teamviewer.com/download/TeamViewerQS.exe" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-orange-500 font-bold hover:text-orange-600 transition-colors text-[15px] underline underline-offset-4 decoration-orange-500/30 hover:decoration-orange-500">
+                  <a href="https://download.teamviewer.com/download/TeamViewerQS.exe" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-brand font-bold hover:text-orange-600 transition-colors text-[15px] underline underline-offset-4 decoration-orange-500/30 hover:decoration-orange-500">
                     <Download className="w-5 h-5" /> {t('downloadTeamViewerQuickSupport')}
                   </a>
                 </div>

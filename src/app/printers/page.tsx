@@ -186,7 +186,7 @@ function PrinterSummary({
       <div className="flex flex-col lg:flex-row lg:min-h-64">
         {/* ── Left: Content (50%) ── */}
         <div className="flex-1 basis-1/2 p-6 flex flex-col">
-          <h1 className="text-3xl font-bold font-['Segoe_UI'] leading-9 text-neutral-800">
+          <h1 className="text-3xl font-bold leading-9 text-neutral-800">
             {printer.title}
           </h1>
           {printer.subtitle ? (
@@ -199,7 +199,7 @@ function PrinterSummary({
                 {t("product.productDescription")}
               </div>
               <div
-                className="mt-2 text-sm leading-relaxed text-neutral-700 font-normal [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-[#f08500] [&_a]:underline hover:[&_a]:text-[#d97706] [&_a]:transition-colors"
+                className="mt-2 text-sm leading-relaxed text-neutral-700 font-normal [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-brand [&_a]:underline hover:[&_a]:text-[var(--brand-hover)] [&_a]:transition-colors"
                 dangerouslySetInnerHTML={{ __html: printer.content }}
               />
             </div>
@@ -209,7 +209,7 @@ function PrinterSummary({
                 {t("product.productDescription")}
               </div>
               <div
-                className="mt-2 text-sm leading-relaxed text-neutral-700 font-normal [&_p]:mb-2 [&_a]:text-[#f08500] [&_a]:underline hover:[&_a]:text-[#d97706] [&_a]:transition-colors"
+                className="mt-2 text-sm leading-relaxed text-neutral-700 font-normal [&_p]:mb-2 [&_a]:text-brand [&_a]:underline hover:[&_a]:text-[var(--brand-hover)] [&_a]:transition-colors"
                 dangerouslySetInnerHTML={{ __html: printer.excerpt }}
               />
             </div>

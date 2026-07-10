@@ -195,7 +195,7 @@ function ProductRangeFilter({
           <button
             type="button"
             onClick={toggleScale}
-            className="w-fit rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 transition-colors hover:border-amber-300 hover:bg-amber-50 hover:text-amber-600"
+            className="w-fit rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 transition-colors hover:border-amber-300 hover:bg-brand-soft hover:text-brand"
           >
             {isFullScale ? t("filters.collapseScale") : t("filters.expandScale")}
           </button>
@@ -261,8 +261,8 @@ function ProductOptionFilter({
                   }}
                   className={`inline-flex min-h-9 items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                     selected
-                      ? "bg-amber-500 text-white shadow-sm hover:bg-amber-600"
-                      : "bg-slate-100 text-neutral-700 hover:bg-amber-50 hover:text-amber-600"
+                      ? "bg-brand text-white shadow-sm hover:bg-brand-hover"
+                      : "bg-slate-100 text-neutral-700 hover:bg-brand-soft hover:text-brand"
                   }`}
                   aria-pressed={selected}
                 >
@@ -279,7 +279,7 @@ function ProductOptionFilter({
             <button
               type="button"
               onClick={() => setShowAll(!showAll)}
-              className="text-sm font-medium text-amber-600 hover:text-amber-700 transition-colors"
+              className="text-sm font-medium text-brand hover:text-amber-700 transition-colors"
             >
               {showAll ? t("filters.showLess") : t("filters.showMore", { count: options.length - DISPLAY_LIMIT })}
             </button>

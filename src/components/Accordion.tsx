@@ -15,8 +15,8 @@ type AccordionProps = {
 function AccordionIcon({ isOpen, size = "default" }: { isOpen: boolean; size?: "default" | "compact" }) {
   const iconClassName =
     size === "compact"
-      ? "relative flex h-4 w-4 shrink-0 items-center justify-center text-amber-500 transition-transform duration-300 ease-out"
-      : "relative flex h-5 w-5 shrink-0 items-center justify-center text-amber-500 transition-transform duration-300 ease-out";
+      ? "relative flex h-4 w-4 shrink-0 items-center justify-center text-brand transition-transform duration-300 ease-out"
+      : "relative flex h-5 w-5 shrink-0 items-center justify-center text-brand transition-transform duration-300 ease-out";
   const horizontalClassName = size === "compact" ? "absolute h-0.5 w-4 rounded-full bg-current" : "absolute h-0.5 w-5 rounded-full bg-current";
   const verticalClassName =
     size === "compact"
@@ -54,7 +54,7 @@ export default function Accordion({
 
   return (
     <div
-      className={`bg-[#F7F9FA] rounded-xl outline outline-1 outline-offset-[-1px] outline-black/10 ${className}`}
+      className={`bg-surface rounded-xl outline outline-1 outline-offset-[-1px] outline-black/10 ${className}`}
     >
       <button
         type="button"

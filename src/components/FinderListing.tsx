@@ -352,9 +352,9 @@ export default function FinderListing({
   return (
     <div className="flex flex-col w-full">
       {/* ── Search section ── */}
-      <div className="flex w-full flex-col gap-4 border-b border-[#EDF0F4] pb-4 lg:flex-row lg:items-center lg:justify-between max-w-[1440px] mx-auto mb-6">
+      <div className="flex w-full flex-col gap-4 border-b border-line pb-4 lg:flex-row lg:items-center lg:justify-between max-w-[1440px] mx-auto mb-6">
         <h2
-          className="shrink-0 text-3xl font-bold leading-[120%] text-[#222222]"
+          className="shrink-0 text-3xl font-bold leading-[120%] text-ink"
           style={{ fontFamily: "Segoe UI, sans-serif" }}
         >
           {t("finder.findYourPrinter")}
@@ -362,14 +362,14 @@ export default function FinderListing({
 
         <div className="flex w-full items-stretch gap-4 lg:ml-auto lg:max-w-200 lg:justify-end">
           {/* Search input */}
-          <div className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-full border border-[#EDF0F4] bg-white px-4">
+          <div className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-full border border-line bg-white px-4">
             <svg
               width="18"
               height="18"
               viewBox="0 0 18 18"
               fill="none"
               aria-hidden="true"
-              className="shrink-0 text-[#888888]"
+              className="shrink-0 text-subtle"
             >
               <circle
                 cx="7.875"
@@ -393,7 +393,7 @@ export default function FinderListing({
                 if (e.key === "Enter") commitSearchNow();
               }}
               placeholder={t("common.search")}
-              className="min-w-0 flex-1 bg-transparent text-sm text-[#222222] placeholder-[#888888] outline-none"
+              className="min-w-0 flex-1 bg-transparent text-sm text-ink placeholder:text-subtle outline-none"
               style={{ fontFamily: "Segoe UI, sans-serif" }}
             />
           </div>
@@ -402,7 +402,7 @@ export default function FinderListing({
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center justify-center whitespace-nowrap rounded-full border border-[#F18800] px-5 text-base font-semibold leading-6 text-[#F18800] transition-colors duration-150 hover:bg-orange-50"
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-full border border-brand px-5 text-base font-semibold leading-6 text-brand transition-colors duration-150 hover:bg-brand-soft"
             style={{ fontFamily: "Segoe UI, sans-serif" }}
           >
             {t("finder.requestNewPrinter")}
@@ -468,7 +468,7 @@ export default function FinderListing({
             type="button"
             onClick={loadMore}
             disabled={isLoadingMore}
-            className="inline-flex items-center justify-center gap-2 h-[52px] px-8 rounded-full border-[1.5px] border-[#F18800] text-[#F18800] font-bold text-lg leading-6 hover:bg-orange-50 transition-colors duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="inline-flex items-center justify-center gap-2 h-[52px] px-8 rounded-full border-[1.5px] border-brand text-brand font-bold text-lg leading-6 hover:bg-brand-soft transition-colors duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
             style={{ fontFamily: "Segoe UI, sans-serif" }}
           >
             {isLoadingMore ? (
@@ -485,13 +485,13 @@ export default function FinderListing({
                     cx="10"
                     cy="10"
                     r="8"
-                    stroke="#F18800"
+                    stroke="var(--brand)"
                     strokeWidth="2"
                     strokeOpacity="0.3"
                   />
                   <path
                     d="M10 2a8 8 0 0 1 8 8"
-                    stroke="#F18800"
+                    stroke="var(--brand)"
                     strokeWidth="2"
                     strokeLinecap="round"
                   />
@@ -506,21 +506,21 @@ export default function FinderListing({
       )}
 
       {/* ── FAQ / Info cards section ── */}
-      <div className="mt-16 -mx-6 px-6 py-20 bg-[#F7F9FA] sm:-mx-10 sm:px-10 lg:-mx-10 lg:px-10">
+      <div className="mt-16 -mx-6 px-6 py-20 bg-surface sm:-mx-10 sm:px-10 lg:-mx-10 lg:px-10">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3  max-w-[1440px] mx-auto">
           {faqItems.map((item) => (
             <div
               key={item.title}
-              className="bg-white rounded-xl border border-[#EDF0F4] shadow-[0px_2px_4px_0px_rgba(0,0,0,0.10)] p-6 flex flex-col gap-5"
+              className="bg-white rounded-xl border border-line shadow-[0px_2px_4px_0px_rgba(0,0,0,0.10)] p-6 flex flex-col gap-5"
             >
               <h3
-                className="text-[#222222] text-2xl font-bold leading-[120%]"
+                className="text-ink text-2xl font-bold leading-[120%]"
                 style={{ fontFamily: "Segoe UI, sans-serif" }}
               >
                 {item.title}
               </h3>
               <p
-                className="text-[#444444] text-base font-normal leading-[150%]"
+                className="text-copy text-base font-normal leading-[150%]"
                 style={{ fontFamily: "Segoe UI, sans-serif" }}
               >
                 {item.body}

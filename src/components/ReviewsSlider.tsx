@@ -74,7 +74,7 @@ export default function ReviewsSlider({ reviews, totalRatings }: ReviewsSliderPr
     <div className="flex flex-col gap-10 relative z-10 w-full max-w-360 mx-auto">
       {/* Header & Controls */}
       <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-6">
-        <h2 className="text-neutral-900 text-3xl md:text-[40px] font-bold font-['Segoe_UI'] leading-tight">
+        <h2 className="text-neutral-900 text-3xl md:text-[40px] font-bold leading-tight">
           {t('reviews.title', { count: totalRatings })}
         </h2>
         <div className="flex items-center gap-4 self-end sm:self-auto">
@@ -82,7 +82,7 @@ export default function ReviewsSlider({ reviews, totalRatings }: ReviewsSliderPr
             onClick={scrollLeft}
             disabled={!canScrollLeft}
             className={`w-12 h-12 rounded-full flex items-center justify-center border transition-colors ${canScrollLeft
-              ? "bg-white border-amber-500 text-amber-500 hover:bg-amber-50 cursor-pointer"
+              ? "bg-white border-brand text-brand hover:bg-brand-soft cursor-pointer"
               : "bg-neutral-50 border-gray-200 text-gray-400 cursor-not-allowed"
               }`}
           >
@@ -92,11 +92,11 @@ export default function ReviewsSlider({ reviews, totalRatings }: ReviewsSliderPr
             onClick={scrollRight}
             disabled={!canScrollRight}
             className={`w-12 h-12 rounded-full flex items-center justify-center border transition-colors ${canScrollRight
-              ? "bg-white border-amber-500 text-amber-500 hover:bg-amber-50 cursor-pointer"
+              ? "bg-white border-brand text-brand hover:bg-brand-soft cursor-pointer"
               : "bg-neutral-50 border-gray-200 text-gray-400 cursor-not-allowed"
               }`}
           >
-            <svg width="20" height="17" viewBox="0 0 20 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.3051 0.999474L18.5363 8.23065L11.401 15.366M1.00007 7.66497L18.3351 8.22916" stroke="#F18800" strokeWidth="2" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            <svg width="20" height="17" viewBox="0 0 20 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.3051 0.999474L18.5363 8.23065L11.401 15.366M1.00007 7.66497L18.3351 8.22916" stroke="var(--brand)" strokeWidth="2" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
         </div>
       </div>
@@ -120,13 +120,13 @@ export default function ReviewsSlider({ reviews, totalRatings }: ReviewsSliderPr
                   {r.profile_photo_url ? (
                     <img src={r.profile_photo_url} alt={r.author_name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-amber-100 text-amber-600 font-bold text-lg">
+                    <div className="w-full h-full flex items-center justify-center bg-amber-100 text-brand font-bold text-lg">
                       {r.author_name.charAt(0)}
                     </div>
                   )}
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-neutral-900 text-[17px] font-bold font-['Segoe_UI'] leading-tight">
+                  <span className="text-neutral-900 text-[17px] font-bold leading-tight">
                     {r.author_name}
                   </span>
                   <span className="text-zinc-400 text-[14px] font-normal leading-tight mt-1">
@@ -139,7 +139,7 @@ export default function ReviewsSlider({ reviews, totalRatings }: ReviewsSliderPr
               <StarRating rating={r.rating || 5} />
 
               {/* Review Text */}
-              <p className="text-zinc-500 text-[15px] font-normal font-['Segoe_UI'] leading-[1.6] line-clamp-6">
+              <p className="text-zinc-500 text-[15px] font-normal leading-[1.6] line-clamp-6">
                 {r.text}
               </p>
             </div>

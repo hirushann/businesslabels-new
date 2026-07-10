@@ -264,7 +264,7 @@ export default function BulkDiscountModal({
             ) : null}
             <div className="min-w-0 flex flex-col gap-0.5">
               {productSku ? (
-                <span className="text-[#479EF5] text-sm font-normal leading-5">
+                <span className="text-link text-sm font-normal leading-5">
                   SKU: {productSku}
                 </span>
               ) : null}
@@ -381,7 +381,7 @@ export default function BulkDiscountModal({
                       type="button"
                       id="bulk-modal-add-rolls"
                       onClick={() => handleConfirm(false)}
-                      className="w-full sm:flex-1 h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm flex"
+                      className="w-full sm:flex-1 h-12 px-4 py-2.5 bg-brand rounded-[100px] justify-center items-center gap-2 hover:bg-brand-hover transition-colors shadow-sm flex"
                     >
                       <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -396,12 +396,12 @@ export default function BulkDiscountModal({
                     onClick={() => handleConfirm(true)}
                     className="w-full h-12 px-4 py-2.5 bg-amber-100 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-amber-300 justify-center items-center gap-2 hover:bg-amber-300 transition-colors flex"
                   >
-                    <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-brand" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
-                    <span className="text-amber-600 text-base font-bold whitespace-nowrap">
+                    <span className="text-brand text-base font-bold whitespace-nowrap">
                       {t("bulkDiscount.box")}{" "}
-                      <span className="text-xs text-amber-600">
+                      <span className="text-xs text-brand">
                         ({normalizedPackingGroup} {rollsStackLabel ? rollsStackLabel.toLowerCase() : t("bulkDiscount.rollsStack").toLowerCase()})
                       </span>
                     </span>
@@ -447,12 +447,12 @@ export default function BulkDiscountModal({
                     onClick={() => handleConfirm(true)}
                     className="w-full sm:flex-1 h-12 px-4 py-2.5 bg-amber-100 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-amber-300 justify-center items-center gap-2 hover:bg-amber-300 transition-colors flex"
                   >
-                    <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-brand" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
-                    <span className="text-amber-600 text-base font-bold whitespace-nowrap">
+                    <span className="text-brand text-base font-bold whitespace-nowrap">
                       {t("bulkDiscount.box")}{" "}
-                      <span className="text-xs text-amber-600">
+                      <span className="text-xs text-brand">
                         ({normalizedPackingGroup} {rollsStackLabel ? rollsStackLabel.toLowerCase() : t("bulkDiscount.rollsStack").toLowerCase()})
                       </span>
                     </span>
@@ -499,7 +499,7 @@ export default function BulkDiscountModal({
                   type="button"
                   id="bulk-modal-add-to-cart"
                   onClick={() => handleConfirm(false)}
-                  className="w-full sm:flex-1 h-12 px-4 py-2.5 bg-amber-500 rounded-[100px] justify-center items-center gap-2 hover:bg-amber-600 transition-colors shadow-sm flex"
+                  className="w-full sm:flex-1 h-12 px-4 py-2.5 bg-brand rounded-[100px] justify-center items-center gap-2 hover:bg-brand-hover transition-colors shadow-sm flex"
                 >
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -529,8 +529,8 @@ export default function BulkDiscountModal({
 
             {/* Next-tier tip */}
             {nextTier && qtyToNextTier && qtyToNextTier > 0 ? (
-              <div className="flex items-start gap-3 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200">
-                <svg className="shrink-0 mt-0.5 text-amber-500" width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+              <div className="flex items-start gap-3 px-4 py-3 rounded-2xl bg-brand-soft border border-brand/30">
+                <svg className="shrink-0 mt-0.5 text-brand" width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
                 </svg>
                 <p className="text-amber-700 text-sm">

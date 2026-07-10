@@ -95,9 +95,9 @@ function SpeedBar({
   const hue = 210 - index * 20; // shifts from blue-ish → amber
   const barColor =
     index === 0
-      ? 'bg-amber-500'
+      ? 'bg-brand'
       : index === 1
-      ? 'bg-amber-400'
+      ? 'bg-brand'
       : index === 2
       ? 'bg-amber-300'
       : index === 3
@@ -193,7 +193,7 @@ export default function EpsonCWC4000PageClient() {
   return (
     <div className="relative overflow-hidden bg-white">
       {/* Ambient blobs */}
-      <div className="pointer-events-none absolute left-0 top-[8%] h-80 w-80 rounded-full bg-amber-400/10 blur-[140px]" />
+      <div className="pointer-events-none absolute left-0 top-[8%] h-80 w-80 rounded-full bg-brand/10 blur-[140px]" />
       <div className="pointer-events-none absolute right-0 top-[30%] h-80 w-80 rounded-full bg-blue-400/8 blur-[150px]" />
 
       {/* ── Hero ──────────────────────────────────────────────────────────────── */}
@@ -210,7 +210,7 @@ export default function EpsonCWC4000PageClient() {
         <div className="flex flex-col items-center gap-12 lg:flex-row">
           {/* Left: copy */}
           <div className="flex-1">
-            <span className="inline-block rounded-full bg-amber-50 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-amber-600 ring-1 ring-amber-200">
+            <span className="inline-block rounded-full bg-brand-soft px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-brand ring-1 ring-amber-200">
               {t('heroTag')}
             </span>
 
@@ -229,7 +229,7 @@ export default function EpsonCWC4000PageClient() {
               <Link
                 id="cwc4000-hero-cta"
                 href="/product-category/labelprinters/kleuren-labelprinters-nl/desktop-labelprinters-nl/"
-                className="inline-flex items-center gap-2.5 rounded-full bg-amber-500 px-7 py-3.5 text-sm font-bold uppercase tracking-wide text-white shadow-lg shadow-amber-500/25 transition-all duration-200 hover:bg-amber-600 hover:shadow-amber-500/40 active:scale-[0.98]"
+                className="inline-flex items-center gap-2.5 rounded-full bg-brand px-7 py-3.5 text-sm font-bold uppercase tracking-wide text-white shadow-lg shadow-brand/25 transition-all duration-200 hover:bg-brand-hover hover:shadow-brand/40 active:scale-[0.98]"
               >
                 <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M17 17H3M17 17l-4-4m4 4l-4 4M7 7h14M7 7l4-4M7 7l4 4" />
@@ -240,7 +240,7 @@ export default function EpsonCWC4000PageClient() {
               <Link
                 id="cwc4000-hero-contact"
                 href="/contact-us/"
-                className="inline-flex items-center gap-2.5 rounded-full bg-white px-7 py-3.5 text-sm font-bold uppercase tracking-wide text-neutral-700 ring-1 ring-neutral-200 transition-all duration-200 hover:bg-neutral-50 hover:ring-amber-400 active:scale-[0.98]"
+                className="inline-flex items-center gap-2.5 rounded-full bg-white px-7 py-3.5 text-sm font-bold uppercase tracking-wide text-neutral-700 ring-1 ring-neutral-200 transition-all duration-200 hover:bg-neutral-50 hover:ring-brand active:scale-[0.98]"
               >
                 {t('heroBtnContact')}
               </Link>
@@ -251,7 +251,7 @@ export default function EpsonCWC4000PageClient() {
           <div className="flex flex-1 items-center justify-center">
             <div className="relative">
               {/* Glow ring */}
-              <div className="absolute inset-[-24px] rounded-full bg-amber-400/15 blur-2xl" />
+              <div className="absolute inset-[-24px] rounded-full bg-brand/15 blur-2xl" />
               <img
                 src="https://businesslabels.nl/wp-content/uploads/2022/02/Epson-left-CW-C4000-Europe.png"
                 alt="Epson CW-C4000 ColorWorks labelprinter"
@@ -271,11 +271,11 @@ export default function EpsonCWC4000PageClient() {
           </h2>
           <p className="mx-auto mt-6 max-w-3xl leading-relaxed text-neutral-500">
             {t('overviewDescPart1')}
-            <Link href="/printers/epson-colorworks-tm-c3500/" className="font-semibold text-amber-500 underline hover:text-amber-600">
+            <Link href="/printers/epson-colorworks-tm-c3500/" className="font-semibold text-brand underline hover:text-brand">
               Epson TM-C3500
             </Link>
             {t('overviewDescPart2')}
-            <Link href="/epson_c6000-series/" className="font-semibold text-amber-500 underline hover:text-amber-600">
+            <Link href="/epson_c6000-series/" className="font-semibold text-brand underline hover:text-brand">
               Epson CW-C6000 series
             </Link>
             {t('overviewDescPart3')}
@@ -299,7 +299,7 @@ export default function EpsonCWC4000PageClient() {
             <ul className="mt-6 flex flex-col gap-3">
               {SPECS.map((s, i) => (
                 <li key={i} className="flex items-start gap-3 rounded-xl bg-neutral-50 px-4 py-3 text-sm leading-relaxed text-neutral-600 ring-1 ring-neutral-100">
-                  <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600 text-[10px] font-black">
+                  <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-amber-100 text-brand text-[10px] font-black">
                     {i + 1}
                   </span>
                   {t(s as any)}
@@ -341,7 +341,7 @@ export default function EpsonCWC4000PageClient() {
                 </thead>
                 <tbody className="divide-y divide-neutral-100">
                   {SPEED_MODES.map((m) => (
-                    <tr key={m.labelKey} className="hover:bg-amber-50/50 transition-colors">
+                    <tr key={m.labelKey} className="hover:bg-brand-soft/50 transition-colors">
                       <td className="px-4 py-2.5 font-semibold text-neutral-700">{t(m.labelKey as any)}</td>
                       <td className="px-4 py-2.5 text-neutral-500">{m.dpi}</td>
                       <td className="px-4 py-2.5 text-right font-black text-neutral-800">{m.mm}</td>
@@ -378,7 +378,7 @@ export default function EpsonCWC4000PageClient() {
                 key={item.id}
                 id={`cwc4000-price-${item.id}`}
                 href={item.href}
-                className="group flex flex-col gap-4 rounded-2xl bg-white/5 p-6 ring-1 ring-white/10 transition-all duration-300 hover:-translate-y-1 hover:bg-white/10 hover:ring-amber-400/50"
+                className="group flex flex-col gap-4 rounded-2xl bg-white/5 p-6 ring-1 ring-white/10 transition-all duration-300 hover:-translate-y-1 hover:bg-white/10 hover:ring-brand/50"
               >
                 <p className="text-sm font-bold uppercase tracking-wider text-white/60">
                   {t(item.titleKey as any)}
@@ -452,7 +452,7 @@ export default function EpsonCWC4000PageClient() {
           <div className="flex flex-col gap-6 rounded-3xl bg-gradient-to-br from-amber-50 to-white p-8 ring-1 ring-amber-200 shadow-sm">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <span className="inline-block rounded-full bg-amber-500 px-3 py-1 text-xs font-black uppercase tracking-widest text-white">
+                <span className="inline-block rounded-full bg-brand px-3 py-1 text-xs font-black uppercase tracking-widest text-white">
                   {t('mkTag')}
                 </span>
                 <h3 className="mt-3 text-2xl font-black uppercase tracking-tight text-neutral-800">
@@ -478,7 +478,7 @@ export default function EpsonCWC4000PageClient() {
               <Link
                 id="cwc4000-mk-cta"
                 href="/product/colorworks-cw-c4000-mk/"
-                className="inline-flex items-center gap-2.5 rounded-full bg-amber-500 px-6 py-3 text-sm font-bold uppercase tracking-wide text-white shadow-lg shadow-amber-500/25 transition-all duration-200 hover:bg-amber-600 active:scale-[0.98]"
+                className="inline-flex items-center gap-2.5 rounded-full bg-brand px-6 py-3 text-sm font-bold uppercase tracking-wide text-white shadow-lg shadow-brand/25 transition-all duration-200 hover:bg-brand-hover active:scale-[0.98]"
               >
                 <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m5-9v9m4-9v9m1-9l2 9" />
@@ -504,14 +504,14 @@ export default function EpsonCWC4000PageClient() {
             <Link
               id="cwc4000-cta-contact"
               href="/contact-us/"
-              className="inline-flex items-center gap-2.5 rounded-full bg-white px-8 py-3.5 text-sm font-bold uppercase tracking-wide text-amber-600 shadow-lg transition-all duration-200 hover:bg-amber-50 active:scale-[0.98]"
+              className="inline-flex items-center gap-2.5 rounded-full bg-white px-8 py-3.5 text-sm font-bold uppercase tracking-wide text-brand shadow-lg transition-all duration-200 hover:bg-brand-soft active:scale-[0.98]"
             >
               {t('ctaBtnContact')}
             </Link>
             <Link
               id="cwc4000-cta-product"
               href="/product-category/labelprinters/kleuren-labelprinters-nl/desktop-labelprinters-nl/"
-              className="inline-flex items-center gap-2.5 rounded-full bg-amber-400/30 px-8 py-3.5 text-sm font-bold uppercase tracking-wide text-white ring-1 ring-white/20 transition-all duration-200 hover:bg-amber-400/50 active:scale-[0.98]"
+              className="inline-flex items-center gap-2.5 rounded-full bg-brand/30 px-8 py-3.5 text-sm font-bold uppercase tracking-wide text-white ring-1 ring-white/20 transition-all duration-200 hover:bg-brand/50 active:scale-[0.98]"
             >
               {t('ctaBtnPrinters')}
             </Link>

@@ -254,7 +254,7 @@ export default function AddressAutocomplete({
               <li
                 key={(suggestion.isLegacy ? prediction.place_id : prediction.placeId) || index}
                 onClick={() => handleSelect(suggestion)}
-                className="cursor-pointer px-4 py-3 text-sm text-neutral-800 transition-colors hover:bg-amber-50"
+                className="cursor-pointer px-4 py-3 text-sm text-neutral-800 transition-colors hover:bg-brand-soft"
               >
                 <div className="font-semibold">{mainText}</div>
                 <div className="text-xs text-neutral-500">{secondaryText}</div>

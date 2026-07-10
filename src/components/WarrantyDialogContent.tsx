@@ -194,8 +194,8 @@ function WarrantyDialogContentBody({
               onClick={() => setSelectedWarrantyId(warranty.defaultOption?.id ?? "default")}
               className={`w-full rounded-lg border p-3.5 text-left transition-colors sm:p-4 ${
                 selectedWarrantyId === defaultWarrantyId
-                  ? "border-amber-500 bg-amber-50/60 ring-2 ring-amber-500/15"
-                  : "border-amber-400 bg-amber-50/30 hover:bg-amber-50/60"
+                  ? "border-brand bg-brand-soft/60 ring-2 ring-brand/15"
+                  : "border-brand bg-brand-soft/30 hover:bg-brand-soft/60"
               }`}
               aria-pressed={selectedWarrantyId === defaultWarrantyId}
             >
@@ -208,7 +208,7 @@ function WarrantyDialogContentBody({
                   <p className="mt-2 text-sm leading-5 text-muted-foreground">
                     {warranty.defaultOption.description || defaultWarrantyDescription}
                   </p>
-                  <span className="mt-2 flex items-center gap-1.5 text-sm font-semibold leading-normal text-amber-600 underline underline-offset-2">
+                  <span className="mt-2 flex items-center gap-1.5 text-sm font-semibold leading-normal text-brand underline underline-offset-2">
                     <DownloadIcon className="size-3.5" strokeWidth={1.8} />
                     {downloadLabel}
                   </span>
@@ -225,7 +225,7 @@ function WarrantyDialogContentBody({
                 <section key={type.id || type.name} className="flex flex-col gap-2.5">
                   <div className="flex flex-col gap-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <WarrantyIcon className="size-[1.125rem] text-amber-600" strokeWidth={2.2} />
+                      <WarrantyIcon className="size-[1.125rem] text-brand" strokeWidth={2.2} />
                       <h3 className="text-base font-extrabold leading-6 text-foreground sm:text-lg">{type.name}</h3>
                       {type.badgeText && (
                         <span
@@ -308,7 +308,7 @@ function WarrantyDialogContentBody({
             size="default"
             onClick={() => onConfirm(selectedWarrantyOption ?? null)}
             disabled={selectedWarrantyId == null}
-            className="flex h-10 w-full items-center justify-center gap-2 rounded-full bg-amber-500 px-6 text-sm font-extrabold text-white shadow-sm transition-colors hover:bg-amber-600 disabled:bg-slate-100 disabled:text-slate-500 disabled:opacity-100 sm:w-auto"
+            className="flex h-10 w-full items-center justify-center gap-2 rounded-full bg-brand px-6 text-sm font-extrabold text-white shadow-sm transition-colors hover:bg-brand-hover disabled:bg-slate-100 disabled:text-slate-500 disabled:opacity-100 sm:w-auto"
           >
             <ShoppingCart data-icon="inline-start" />
             {selectedWarrantyId == null ? selectWarrantyLabel : addToCartLabel}
@@ -339,7 +339,7 @@ function WarrantyOptionCard({
       htmlFor={inputId}
       className={`relative flex min-h-[7.5rem] cursor-pointer flex-col gap-1.5 rounded-lg border p-3 pr-8 transition-all ${
         isSelected
-          ? "border-amber-500 bg-amber-50/60 shadow-sm"
+          ? "border-brand bg-brand-soft/60 shadow-sm"
           : "border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-slate-100/70"
       }`}
     >
@@ -347,10 +347,10 @@ function WarrantyOptionCard({
         id={inputId}
         checked={isSelected}
         onCheckedChange={onSelect}
-        className="absolute right-3 top-3 size-3.5 rounded-full border-slate-300 bg-background text-white shadow-none data-checked:border-amber-500 data-checked:bg-amber-500"
+        className="absolute right-3 top-3 size-3.5 rounded-full border-slate-300 bg-background text-white shadow-none data-checked:border-brand data-checked:bg-brand"
       />
       <div className="pr-4 text-sm font-extrabold leading-5 text-foreground sm:text-[0.95rem]">{option.name}</div>
-      <div className={`text-xl font-bold leading-tight sm:text-[1.35rem] ${isSelected ? "text-amber-600" : "text-foreground"}`}>
+      <div className={`text-xl font-bold leading-tight sm:text-[1.35rem] ${isSelected ? "text-brand" : "text-foreground"}`}>
         {formatWarrantyEuro(option.price)}
       </div>
       <div className="text-xs leading-4 text-muted-foreground">{option.description || fallbackDescription}</div>

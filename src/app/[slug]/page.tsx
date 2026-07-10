@@ -101,7 +101,7 @@ export default async function DynamicCMSPage({ params }: { params: Promise<{ slu
   return (
     <div className="relative overflow-hidden bg-white min-h-screen">
       {/* Ambient glow blobs */}
-      <div className="pointer-events-none absolute left-0 top-[10%] h-64 w-64 rounded-full bg-amber-500/10 blur-[120px]" />
+      <div className="pointer-events-none absolute left-0 top-[10%] h-64 w-64 rounded-full bg-brand/10 blur-[120px]" />
       <div className="pointer-events-none absolute right-0 top-[40%] h-64 w-64 rounded-full bg-blue-500/10 blur-[120px]" />
 
       <div className="mx-auto max-w-[1440px] px-4 py-12 sm:px-6 lg:px-8">

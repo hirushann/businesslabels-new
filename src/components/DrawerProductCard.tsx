@@ -66,16 +66,16 @@ export default function DrawerProductCard({
             <div className="min-w-0 flex-1">
               <h3 className="truncate text-neutral-800 text-base font-semibold leading-6">
                 {localizedHref ? (
-                  <Link href={localizedHref} onClick={onCardClick} className="hover:text-amber-600 transition-colors">
+                  <Link href={localizedHref} onClick={onCardClick} className="hover:text-brand transition-colors">
                     {name}
                   </Link>
                 ) : (
                   name
                 )}
               </h3>
-              <p className="text-[#479EF5] text-sm leading-5">
+              <p className="text-link text-sm leading-5">
                 {localizedHref ? (
-                  <Link href={localizedHref} onClick={onCardClick} className="hover:text-amber-600 transition-colors">
+                  <Link href={localizedHref} onClick={onCardClick} className="hover:text-brand transition-colors">
                     SKU: {sku}
                   </Link>
                 ) : (

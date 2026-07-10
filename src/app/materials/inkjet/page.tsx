@@ -64,8 +64,8 @@ export default async function InkjetMaterialsPage({
     <>
       <div className="relative overflow-hidden bg-[#fafbfe]">
         {/* Ambient glow blobs */}
-        <div className="pointer-events-none absolute left-0 top-64 h-72 w-72 -translate-x-1/2 rounded-full bg-amber-500/10 blur-[132px]" />
-        <div className="pointer-events-none absolute right-0 top-225 h-72 w-72 translate-x-1/2 rounded-full bg-amber-500/10 blur-[132px]" />
+        <div className="pointer-events-none absolute left-0 top-64 h-72 w-72 -translate-x-1/2 rounded-full bg-brand/10 blur-[132px]" />
+        <div className="pointer-events-none absolute right-0 top-225 h-72 w-72 translate-x-1/2 rounded-full bg-brand/10 blur-[132px]" />
 
         <section className="px-4 py-8 sm:px-6 lg:px-10">
           <div className="mx-auto flex max-w-[1440px] flex-col gap-10 w-full">
@@ -90,8 +90,8 @@ export default async function InkjetMaterialsPage({
                   ]}
                 />
                 <div className="max-w-[768px] mt-6 sm:mt-10">
-                  <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-amber-500/20 px-3 py-1 text-xs font-semibold text-amber-300 border border-amber-500/30">
-                    <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                  <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-brand/20 px-3 py-1 text-xs font-semibold text-amber-300 border border-brand/30">
+                    <span className="h-1.5 w-1.5 rounded-full bg-brand" />
                     {isNl ? "Full-color media" : "Full color media"}
                   </div>
                   <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-3">

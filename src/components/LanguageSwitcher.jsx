@@ -109,7 +109,7 @@ export default function LanguageSwitcher() {
         aria-expanded={open}
         aria-label={t('common.languageChangeLabel', { language: activeLabel })}
       >
-        <ActiveFlag className="w-6 h-4 rounded-sm overflow-hidden" />
+        <ActiveFlag className="w-6 h-4 rounded overflow-hidden" />
         <svg
           width="16" height="16" viewBox="0 0 16 16" fill="none"
           className={`transition-transform duration-150 ${open ? 'rotate-180' : ''}`}
@@ -142,7 +142,7 @@ export default function LanguageSwitcher() {
                     isActive ? 'font-semibold text-sky-950' : 'text-neutral-700'
                   }`}
                 >
-                  <Flag className="w-5 h-3.5 rounded-sm overflow-hidden shrink-0" />
+                  <Flag className="w-5 h-3.5 rounded overflow-hidden shrink-0" />
                   <span>{LOCALE_LABELS[code].name}</span>
                 </button>
               </li>
