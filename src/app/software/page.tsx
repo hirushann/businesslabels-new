@@ -67,7 +67,7 @@ export default async function SoftwarePage({
       title: t('products.godex.title'),
       desc: t('products.godex.desc'),
       logo: '/images/Godex-log0.png',
-      bg: 'bg-amber-50',
+      bg: 'bg-brand-soft',
       border: 'border-amber-100',
       hover: 'group-hover:border-amber-300',
       links: [
@@ -77,11 +77,11 @@ export default async function SoftwarePage({
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20 font-['Segoe_UI']">
+    <div className="min-h-screen bg-slate-50 pb-20">
       {/* Hero Section */}
       <div className="relative bg-white pt-16 pb-20 overflow-hidden">
         {/* Subtle background decoration */}
-        <div className="absolute top-0 right-0 -mr-32 -mt-32 w-96 h-96 rounded-full bg-amber-50 opacity-50 blur-3xl"></div>
+        <div className="absolute top-0 right-0 -mr-32 -mt-32 w-96 h-96 rounded-full bg-brand-soft opacity-50 blur-3xl"></div>
         <div className="absolute bottom-0 left-0 -ml-32 -mb-32 w-80 h-80 rounded-full bg-blue-50 opacity-50 blur-3xl"></div>
 
         <div className="container mx-auto px-4 relative z-10">
@@ -116,7 +116,7 @@ export default async function SoftwarePage({
 
           {/* Graphical Labels */}
           <div className="bg-white p-8 lg:p-10 rounded-2xl md:rounded-[32px] shadow-sm border border-slate-100 flex flex-col items-start hover:shadow-md transition-shadow">
-            <div className="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center mb-6 text-amber-500">
+            <div className="w-14 h-14 bg-brand-soft rounded-2xl flex items-center justify-center mb-6 text-brand">
               <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="13.5" cy="6.5" r="2.5"></circle>
                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
@@ -157,7 +157,7 @@ export default async function SoftwarePage({
                   )}
                 </div>
 
-                <h3 className="text-xl font-semibold text-slate-900 mb-3 group-hover:text-amber-500 transition-colors">
+                <h3 className="text-xl font-semibold text-slate-900 mb-3 group-hover:text-brand transition-colors">
                   {product.title}
                 </h3>
 
@@ -170,7 +170,7 @@ export default async function SoftwarePage({
                     <Link
                       key={idx}
                       href={link.href}
-                      className="inline-flex items-center justify-between w-full px-4 py-2.5 rounded-lg bg-slate-50 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-amber-600 transition-colors"
+                      className="inline-flex items-center justify-between w-full px-4 py-2.5 rounded-lg bg-slate-50 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-brand transition-colors"
                     >
                       {link.label}
                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -301,7 +301,7 @@ export default function ProductCompatibilityDialog({
     <>
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="text-amber-500 text-base font-semibold underline text-left">
+        <button className="text-brand text-base font-semibold underline text-left">
           {t('compatibility.check')}
         </button>
       </DialogTrigger>
@@ -327,7 +327,7 @@ export default function ProductCompatibilityDialog({
               onValueChange={handlePrinterChange}
               inputId="compatibility-printer"
               placeholder={t('compatibility.searchPlaceholder')}
-              className="h-12 w-full min-w-0 rounded-2xl border-slate-200 bg-slate-50 px-4 text-base font-semibold text-neutral-800 placeholder:font-medium focus-visible:border-amber-500 focus-visible:ring-amber-500/20"
+              className="h-12 w-full min-w-0 rounded-2xl border-slate-200 bg-slate-50 px-4 text-base font-semibold text-neutral-800 placeholder:font-medium focus-visible:border-brand focus-visible:ring-brand/20"
               autoFocus
             />
             {!selectedPrinter ? (
@@ -339,7 +339,7 @@ export default function ProductCompatibilityDialog({
             type="button"
             onClick={handleCheckCompatibility}
             disabled={normalizedProductId === null || !selectedPrinter || isChecking}
-            className="inline-flex h-12 w-full min-w-0 items-center justify-center gap-2 rounded-full bg-amber-500 px-6 text-sm font-black text-white transition-colors hover:bg-amber-600 disabled:pointer-events-none disabled:opacity-60"
+            className="inline-flex h-12 w-full min-w-0 items-center justify-center gap-2 rounded-full bg-brand px-6 text-sm font-black text-white transition-colors hover:bg-brand-hover disabled:pointer-events-none disabled:opacity-60"
           >
             {isChecking ? (
               <>
@@ -367,7 +367,7 @@ export default function ProductCompatibilityDialog({
                   <Link
                     href={getPrinterPath(locale, selectedPrinter.slug)}
                     onClick={() => setOpen(false)}
-                    className="inline-block text-amber-500 hover:text-amber-600 font-bold text-sm underline transition-colors cursor-pointer"
+                    className="inline-block text-brand hover:text-brand font-bold text-sm underline transition-colors cursor-pointer"
                   >
                     {t('compatibility.seeFittingLabels')}
                   </Link>
@@ -375,7 +375,7 @@ export default function ProductCompatibilityDialog({
               )}
 
               {compatibilityResult.compatible && (
-                <div className="flex w-full min-w-0 flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:border-amber-200 hover:shadow-md sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex w-full min-w-0 flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:border-brand/30 hover:shadow-md sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex min-w-0 flex-1 items-center gap-3">
                     {productImage ? (
                       <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white p-1">
@@ -415,7 +415,7 @@ export default function ProductCompatibilityDialog({
                   <button
                     type="button"
                     onClick={handleAddToCart}
-                    className="inline-flex h-10 w-full shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-full bg-amber-500 px-5 text-xs font-black text-white shadow-sm transition-all duration-200 hover:bg-amber-600 hover:shadow-md active:scale-95 sm:w-auto"
+                    className="inline-flex h-10 w-full shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-full bg-brand px-5 text-xs font-black text-white shadow-sm transition-all duration-200 hover:bg-brand-hover hover:shadow-md active:scale-95 sm:w-auto"
                   >
                     <ShoppingCart className="size-3.5" />
                     {t('product.addToCart')}

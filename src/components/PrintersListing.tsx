@@ -227,7 +227,7 @@ function PrintersListingContent({ printers }: { printers: PrinterCardData[] }) {
               type="button"
               onClick={() => setIsSidebarOpen((v) => !v)}
               className={`inline-flex h-[42px] w-fit items-center gap-2 px-1 py-2 transition-colors ${
-                isSidebarOpen ? "text-amber-500" : "text-neutral-800 hover:text-amber-500"
+                isSidebarOpen ? "text-brand" : "text-neutral-800 hover:text-brand"
               }`}
               aria-expanded={isSidebarOpen}
             >
@@ -245,7 +245,7 @@ function PrintersListingContent({ printers }: { printers: PrinterCardData[] }) {
                 <span className="text-lg font-bold font-sans leading-6">{t("finder.filters")}</span>
                 {activeFilterCount > 0 ? (
                   <span className={`flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-semibold ${
-                    isSidebarOpen ? "bg-amber-100 text-amber-600" : "bg-amber-500 text-white"
+                    isSidebarOpen ? "bg-amber-100 text-brand" : "bg-brand text-white"
                   }`}>
                     {activeFilterCount}
                   </span>
@@ -257,7 +257,7 @@ function PrintersListingContent({ printers }: { printers: PrinterCardData[] }) {
               <button
                 type="button"
                 onClick={clearFilters}
-                className="text-sm font-medium text-slate-400 hover:text-amber-500 underline underline-offset-4"
+                className="text-sm font-medium text-slate-400 hover:text-brand underline underline-offset-4"
               >
                 {t("finder.clearAll")}
               </button>
@@ -268,7 +268,7 @@ function PrintersListingContent({ printers }: { printers: PrinterCardData[] }) {
             <select
               value={selectedSort}
               onChange={(e) => handleSortChange(e.target.value as PrinterListingSortValue)}
-              className="appearance-none bg-transparent text-right text-sm font-medium font-sans outline-none cursor-pointer hover:text-amber-600 pr-6 text-neutral-800"
+              className="appearance-none bg-transparent text-right text-sm font-medium font-sans outline-none cursor-pointer hover:text-brand pr-6 text-neutral-800"
             >
               {sortOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -294,7 +294,7 @@ function PrintersListingContent({ printers }: { printers: PrinterCardData[] }) {
                 <div className="flex items-center gap-2">
                   <h2 className="text-xl font-bold text-neutral-800">{t("finder.filters")}</h2>
                   {activeFilterCount > 0 ? (
-                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-100 px-1.5 text-xs font-semibold text-amber-600">
+                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-100 px-1.5 text-xs font-semibold text-brand">
                       {activeFilterCount}
                     </span>
                   ) : null}
@@ -303,7 +303,7 @@ function PrintersListingContent({ printers }: { printers: PrinterCardData[] }) {
                   <button
                     type="button"
                     onClick={clearFilters}
-                    className="text-sm font-medium text-amber-500 hover:underline"
+                    className="text-sm font-medium text-brand hover:underline"
                   >
                     {t("finder.clearAll")}
                   </button>

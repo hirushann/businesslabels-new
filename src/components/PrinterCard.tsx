@@ -59,9 +59,9 @@ export default function PrinterCard({ printer, href }: PrinterCardProps) {
   const imageSrc = normalizeText(printer.mainImage) || "https://placehold.co/600x400";
 
   const cardContent = (
-    <div className="bg-white rounded-xl border border-[#EDF0F4] shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] flex flex-col overflow-hidden hover:shadow-[2px_8px_28px_0px_rgba(109,109,120,0.18)] transition-shadow duration-200">
+    <div className="bg-white rounded-xl border border-line shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] flex flex-col overflow-hidden hover:shadow-[2px_8px_28px_0px_rgba(109,109,120,0.18)] transition-shadow duration-200">
       {/* Image area */}
-      <div className="relative h-[220px] border-b border-[#EDF2F7] flex items-center justify-center overflow-hidden bg-[#EDF2F7]">
+      <div className="relative h-[220px] border-b border-line flex items-center justify-center overflow-hidden bg-line">
         <Image
           src={imageSrc}
           alt={printerName}
@@ -76,14 +76,14 @@ export default function PrinterCard({ printer, href }: PrinterCardProps) {
       <div className="flex flex-col gap-4 p-4 flex-1">
         <div className="flex flex-col gap-2 flex-1">
           <h3
-            className="text-[#222222] text-xl font-bold leading-[120%]"
+            className="text-ink text-xl font-bold leading-[120%]"
             style={{ fontFamily: "Segoe UI, sans-serif" }}
           >
             {printerName}
           </h3>
           {subtitle && (
             <p
-              className="text-[#444444] text-base font-normal leading-[130%] line-clamp-2"
+              className="text-copy text-base font-normal leading-[130%] line-clamp-2"
               style={{ fontFamily: "Segoe UI, sans-serif" }}
             >
               {subtitle}
@@ -92,14 +92,14 @@ export default function PrinterCard({ printer, href }: PrinterCardProps) {
         </div>
 
         {/* Divider */}
-        <hr className="border-t border-[#EDF0F4]" />
+        <hr className="border-t border-line" />
 
         {/* Action row */}
         <div className="flex items-center gap-3">
           {/* View button */}
           <button
             type="button"
-            className="flex-1 flex items-center justify-center gap-1.5 h-[38px] rounded-full bg-[#F18800] text-white font-semibold text-base leading-6 hover:bg-[#d97a00] transition-colors duration-150"
+            className="flex-1 flex items-center justify-center gap-1.5 h-[38px] rounded-full bg-brand text-white font-semibold text-base leading-6 hover:bg-brand-hover transition-colors duration-150"
             style={{ fontFamily: "Segoe UI, sans-serif" }}
           >
             {/* Eye icon */}
@@ -159,8 +159,8 @@ export default function PrinterCard({ printer, href }: PrinterCardProps) {
             }}
             className={`w-[38px] h-[38px] flex items-center justify-center rounded-full border transition-colors duration-150 shrink-0 ${
               isFavorite 
-                ? 'border-[#F18800] text-[#F18800] bg-orange-50' 
-                : 'border-[#EDF0F4] text-[#666666] hover:border-[#F18800] hover:text-[#F18800]'
+                ? 'border-brand text-brand bg-brand-soft' 
+                : 'border-line text-[#666666] hover:border-brand hover:text-brand'
             }`}
           >
             <svg
@@ -210,7 +210,7 @@ export default function PrinterCard({ printer, href }: PrinterCardProps) {
           </Link>
           <Link
             href="/login"
-            className="flex-1 flex items-center justify-center h-10 rounded-full bg-[#F18800] font-semibold text-white hover:bg-[#d97a00] transition-colors"
+            className="flex-1 flex items-center justify-center h-10 rounded-full bg-brand font-semibold text-white hover:bg-brand-hover transition-colors"
             onClick={(e) => e.stopPropagation()}
           >
             {t('login.loginButton')}

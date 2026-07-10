@@ -58,10 +58,10 @@ export default async function ReviewsSection() {
 
   return (
     // <section className="relative w-full px-4 md:px-8 lg:px-10 py-16 lg:py-24 overflow-hidden" style={{ background: "linear-gradient(135deg, #FFFDF8 0%, #FFFFFF 100%)" }}>
-    <section className="relative w-full px-4 md:px-8 lg:px-10 py-16 lg:py-24 overflow-hidden bg-[#F7F9FA]">
+    <section className="relative w-full px-4 md:px-8 lg:px-10 py-16 lg:py-24 overflow-hidden bg-surface">
       {/* Decorative blobs matching the softer design background */}
-      {/* <div className="w-[600px] h-[600px] absolute -right-20 -bottom-20 bg-orange-50/60 rounded-full blur-[100px] pointer-events-none" /> */}
-      {/* <div className="w-[600px] h-[600px] absolute -left-20 -top-20 bg-amber-50/60 rounded-full blur-[100px] pointer-events-none" /> */}
+      {/* <div className="w-[600px] h-[600px] absolute -right-20 -bottom-20 bg-brand-soft/60 rounded-full blur-[100px] pointer-events-none" /> */}
+      {/* <div className="w-[600px] h-[600px] absolute -left-20 -top-20 bg-brand-soft/60 rounded-full blur-[100px] pointer-events-none" /> */}
 
       <ReviewsSlider reviews={reviews} totalRatings={totalRatings} />
     </section>

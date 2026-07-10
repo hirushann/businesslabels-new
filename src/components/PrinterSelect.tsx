@@ -57,7 +57,7 @@ export function PrinterSelect({
   if (error) {
     return (
       <div className={className}>
-        <div className="w-full px-5 py-3 rounded-full border border-red-200 bg-red-50 text-red-700 text-base font-normal font-['Segoe_UI']">
+        <div className="w-full px-5 py-3 rounded-full border border-red-200 bg-red-50 text-red-700 text-base font-normal">
           {error}
         </div>
       </div>
@@ -67,7 +67,7 @@ export function PrinterSelect({
   if (isLoading) {
     return (
       <div className={className}>
-        <div className="w-full px-5 py-3 rounded-full border border-zinc-200 text-neutral-400 text-base font-normal font-['Segoe_UI']">
+        <div className="w-full px-5 py-3 rounded-full border border-zinc-200 text-neutral-400 text-base font-normal">
           {t('finder.loadingPrinters')}
         </div>
       </div>

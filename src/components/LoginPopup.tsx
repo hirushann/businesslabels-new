@@ -296,7 +296,7 @@ export default function LoginPopup({
                   onChange={(event) => setResetEmail(event.target.value)}
                   autoComplete="email"
                   aria-invalid={Boolean(resetErrors.email)}
-                  className="h-13 rounded-full border-slate-200 bg-slate-50 pl-12 pr-4 text-base font-semibold text-neutral-800 placeholder:font-medium focus-visible:border-amber-500 focus-visible:ring-amber-500/20"
+                  className="h-13 rounded-full border-slate-200 bg-slate-50 pl-12 pr-4 text-base font-semibold text-neutral-800 placeholder:font-medium focus-visible:border-brand focus-visible:ring-brand/20"
                   placeholder={t('login.resetEmailPlaceholder')}
                   disabled={isResetSubmitting}
                 />
@@ -307,7 +307,7 @@ export default function LoginPopup({
             <Button
               type="submit"
               disabled={isResetSubmitting}
-              className="mt-2 h-13 rounded-full bg-amber-500 px-6 text-base font-black text-white shadow-lg shadow-amber-500/20 hover:bg-amber-600"
+              className="mt-2 h-13 rounded-full bg-brand px-6 text-base font-black text-white shadow-lg shadow-brand/20 hover:bg-brand-hover"
             >
               {isResetSubmitting ? (
                 <>
@@ -322,7 +322,7 @@ export default function LoginPopup({
             <button
               type="button"
               onClick={closeResetMode}
-              className="text-center text-sm font-black text-amber-600 transition-colors hover:text-amber-700"
+              className="text-center text-sm font-black text-brand transition-colors hover:text-amber-700"
               disabled={isResetSubmitting}
             >
               {t('login.backToLogin')}
@@ -357,7 +357,7 @@ export default function LoginPopup({
                   onChange={(event) => setEmail(event.target.value)}
                   autoComplete="email"
                   aria-invalid={Boolean(errors.email)}
-                  className="h-13 rounded-full border-slate-200 bg-slate-50 pl-12 pr-4 text-base font-semibold text-neutral-800 placeholder:font-medium focus-visible:border-amber-500 focus-visible:ring-amber-500/20"
+                  className="h-13 rounded-full border-slate-200 bg-slate-50 pl-12 pr-4 text-base font-semibold text-neutral-800 placeholder:font-medium focus-visible:border-brand focus-visible:ring-brand/20"
                   placeholder={t('login.emailPlaceholder')}
                   disabled={isSubmitting}
                 />
@@ -378,7 +378,7 @@ export default function LoginPopup({
                   onChange={(event) => setPassword(event.target.value)}
                   autoComplete="current-password"
                   aria-invalid={Boolean(errors.password)}
-                  className="h-13 rounded-full border-slate-200 bg-slate-50 pl-12 pr-13 text-base font-semibold text-neutral-800 placeholder:font-medium focus-visible:border-amber-500 focus-visible:ring-amber-500/20"
+                  className="h-13 rounded-full border-slate-200 bg-slate-50 pl-12 pr-13 text-base font-semibold text-neutral-800 placeholder:font-medium focus-visible:border-brand focus-visible:ring-brand/20"
                   placeholder={t('login.passwordPlaceholder')}
                   disabled={isSubmitting}
                 />
@@ -409,7 +409,7 @@ export default function LoginPopup({
               <button
                 type="button"
                 onClick={openResetMode}
-                className="text-sm font-black text-amber-600 transition-colors hover:text-amber-700"
+                className="text-sm font-black text-brand transition-colors hover:text-amber-700"
                 disabled={isSubmitting}
               >
                 {t('login.forgotPassword')}
@@ -419,7 +419,7 @@ export default function LoginPopup({
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="mt-1 h-13 rounded-full bg-amber-500 px-6 text-base font-black text-white shadow-lg shadow-amber-500/20 hover:bg-amber-600"
+              className="mt-1 h-13 rounded-full bg-brand px-6 text-base font-black text-white shadow-lg shadow-brand/20 hover:bg-brand-hover"
             >
               {isSubmitting ? (
                 <>
@@ -460,7 +460,7 @@ export default function LoginPopup({
                     handleOpenChange(false);
                     onSwitchToRegister();
                   }}
-                  className="font-black text-amber-600 transition-colors hover:text-amber-700"
+                  className="font-black text-brand transition-colors hover:text-amber-700"
                 >
                   {t('login.signUp')}
                 </button>
@@ -468,7 +468,7 @@ export default function LoginPopup({
                 <Link
                   href="/register"
                   onClick={() => handleOpenChange(false)}
-                  className="font-black text-amber-600 transition-colors hover:text-amber-700"
+                  className="font-black text-brand transition-colors hover:text-amber-700"
                 >
                   {t('login.signUp')}
                 </Link>

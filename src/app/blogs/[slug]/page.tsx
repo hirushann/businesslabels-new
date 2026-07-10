@@ -143,8 +143,8 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
   return (
     <div className="relative bg-white overflow-hidden w-full">
       {/* Glow Effects */}
-      <div className="hidden lg:block w-48 h-48 left-0 top-[454px] absolute bg-amber-500/30 rounded-full blur-[132px] pointer-events-none"></div>
-      <div className="hidden lg:block w-48 h-48 right-[100px] top-[858px] absolute bg-amber-500/30 rounded-full blur-[132px] pointer-events-none"></div>
+      <div className="hidden lg:block w-48 h-48 left-0 top-[454px] absolute bg-brand/30 rounded-full blur-[132px] pointer-events-none"></div>
+      <div className="hidden lg:block w-48 h-48 right-[100px] top-[858px] absolute bg-brand/30 rounded-full blur-[132px] pointer-events-none"></div>
       
       <div className="w-full flex flex-col justify-start items-center">
         
@@ -162,18 +162,18 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
                   ]} 
                 />
                 
-                <h1 className="text-neutral-800 text-4xl font-bold font-['Segoe_UI'] leading-[48px]">{post.title}</h1>
-                <p className="w-full text-neutral-700 text-lg font-semibold font-['Segoe_UI'] leading-7">
+                <h1 className="text-neutral-800 text-4xl font-bold leading-[48px]">{post.title}</h1>
+                <p className="w-full text-neutral-700 text-lg font-semibold leading-7">
                   {post.excerpt}
                 </p>
                 
                 <div className="flex flex-wrap justify-start items-center gap-8 mt-2">
                   {/* Author */}
                   <div className="flex flex-col justify-start items-start gap-3">
-                    <div className="text-neutral-700 text-sm font-normal font-['Segoe_UI'] leading-5">Author:</div>
+                    <div className="text-neutral-700 text-sm font-normal leading-5">Author:</div>
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-amber-100 flex items-center justify-center text-[10px] font-bold text-amber-600">BL</div>
-                      <div className="text-neutral-800 text-lg font-semibold font-['Segoe_UI'] leading-7">
+                      <div className="w-7 h-7 rounded-full bg-amber-100 flex items-center justify-center text-[10px] font-bold text-brand">BL</div>
+                      <div className="text-neutral-800 text-lg font-semibold leading-7">
                         {post.author?.name || "Businesslabels"}
                       </div>
                     </div>
@@ -183,10 +183,10 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
                   
                   {/* Date */}
                   <div className="flex flex-col justify-start items-start gap-3">
-                    <div className="text-neutral-700 text-sm font-normal font-['Segoe_UI'] leading-5">Published on:</div>
+                    <div className="text-neutral-700 text-sm font-normal leading-5">Published on:</div>
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 bg-zinc-300 rounded-sm"></div>
-                      <div className="text-neutral-800 text-lg font-semibold font-['Segoe_UI'] leading-7">{formattedDate}</div>
+                      <div className="text-neutral-800 text-lg font-semibold leading-7">{formattedDate}</div>
                     </div>
                   </div>
                   
@@ -194,9 +194,9 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
                   
                   {/* Category */}
                   <div className="flex flex-col justify-start items-start gap-3">
-                    <div className="text-neutral-700 text-sm font-normal font-['Segoe_UI'] leading-5">Category:</div>
+                    <div className="text-neutral-700 text-sm font-normal leading-5">Category:</div>
                     <div className="h-7 px-3 bg-neutral-800/10 rounded-full flex items-center">
-                      <div className="text-neutral-800 text-sm font-semibold font-['Segoe_UI']">
+                      <div className="text-neutral-800 text-sm font-semibold">
                         {post.categories?.[0]?.name || "Article"}
                       </div>
                     </div>
@@ -223,23 +223,23 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
               {/* Article Content */}
               <div className="flex-1 flex flex-col justify-start items-start gap-8 min-w-0">
                 <div 
-                  className="cms-content w-full prose prose-neutral max-w-none prose-headings:font-bold prose-headings:text-neutral-800 prose-p:text-neutral-700 prose-p:text-lg prose-p:leading-8 prose-a:text-[#f08500] hover:prose-a:text-[#d97706] prose-a:underline prose-img:rounded-xl"
+                  className="cms-content w-full prose prose-neutral max-w-none prose-headings:font-bold prose-headings:text-neutral-800 prose-p:text-neutral-700 prose-p:text-lg prose-p:leading-8 prose-a:text-brand hover:prose-a:text-[var(--brand-hover)] prose-a:underline prose-img:rounded-xl"
                   dangerouslySetInnerHTML={{ __html: unescapeHtml(post.content) }}
                 />
                 
                 {/* About Author */}
                 <div className="w-full p-6 bg-white rounded-xl shadow-sm border border-slate-100 flex flex-col items-start gap-4 mt-8">
-                  <div className="text-neutral-800 text-2xl font-semibold font-['Segoe_UI'] leading-7">About the Author</div>
+                  <div className="text-neutral-800 text-2xl font-semibold leading-7">About the Author</div>
                   <div className="w-full h-px bg-slate-100"></div>
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-                    <div className="w-32 h-32 rounded-lg bg-amber-500 flex items-center justify-center text-white text-4xl font-bold flex-shrink-0">
+                    <div className="w-32 h-32 rounded-lg bg-brand flex items-center justify-center text-white text-4xl font-bold flex-shrink-0">
                       BL
                     </div>
                     <div className="flex-1 flex flex-col justify-center items-start gap-2.5">
-                      <div className="text-neutral-800 text-2xl font-bold font-['Segoe_UI'] leading-8 line-clamp-1">
+                      <div className="text-neutral-800 text-2xl font-bold leading-8 line-clamp-1">
                         {post.author?.name || "Businesslabels Team"}
                       </div>
-                      <div className="text-neutral-700 text-base font-medium font-['Segoe_UI'] leading-6">
+                      <div className="text-neutral-700 text-base font-medium leading-6">
                         {post.author?.bio || "Support and production specialists at BusinessLabels. With a passion for printing and experience in the technical aspects of production & support, we would be happy to advise and assist you."}
                       </div>
                     </div>
@@ -248,15 +248,15 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
                 
                 {/* Was this helpful */}
                 <div className="w-full px-6 py-4 bg-white rounded-xl shadow-sm border border-slate-100 flex flex-col sm:flex-row justify-between sm:items-center gap-6">
-                  <div className="text-neutral-800 text-lg font-semibold font-['Segoe_UI'] leading-5">Was this helpful?</div>
+                  <div className="text-neutral-800 text-lg font-semibold leading-5">Was this helpful?</div>
                   <div className="flex items-center gap-3">
-                    <button className="px-4 py-2 bg-amber-500 hover:bg-amber-600 transition-colors rounded-sm flex items-center gap-2">
+                    <button className="px-4 py-2 bg-brand hover:bg-brand-hover transition-colors rounded-sm flex items-center gap-2">
                       <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2.333L7 11.666M2.333 7L11.666 7" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
-                      <span className="text-white text-base font-semibold font-['Segoe_UI'] leading-6">Yes</span>
+                      <span className="text-white text-base font-semibold leading-6">Yes</span>
                     </button>
                     <button className="px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 transition-colors rounded-sm flex items-center gap-2">
                       <svg width="14" height="2" viewBox="0 0 14 2" fill="none"><path d="M2.333 1L11.666 1" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round"/></svg>
-                      <span className="text-amber-500 text-base font-semibold font-['Segoe_UI'] leading-6">No</span>
+                      <span className="text-brand text-base font-semibold leading-6">No</span>
                     </button>
                   </div>
                 </div>
@@ -266,33 +266,33 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
               <div className="w-full lg:w-80 flex flex-col justify-start items-start gap-7 shrink-0">
                 {/* In this Article (Placeholder / static layout) */}
                 <div className="w-full p-5 relative bg-white rounded-xl shadow-sm border border-slate-100 flex flex-col items-start gap-4">
-                  <div className="text-neutral-800 text-xl font-bold font-['Segoe_UI'] leading-7">In this Article</div>
+                  <div className="text-neutral-800 text-xl font-bold leading-7">In this Article</div>
                   <div className="w-full flex flex-col items-start gap-3 pl-3 border-l-2 border-slate-100 relative">
-                    <div className="absolute left-[-2px] top-2 bottom-1/2 w-0.5 bg-amber-500"></div>
-                    <div className="text-neutral-800 text-sm font-semibold font-['Segoe_UI']">Design labels for your printer</div>
-                    <div className="text-neutral-500 text-sm font-normal font-['Segoe_UI'] hover:text-amber-500 cursor-pointer">The search for software</div>
-                    <div className="text-neutral-500 text-sm font-normal font-['Segoe_UI'] hover:text-amber-500 cursor-pointer">Testimonial</div>
-                    <div className="text-neutral-500 text-sm font-normal font-['Segoe_UI'] hover:text-amber-500 cursor-pointer">Comparing options</div>
+                    <div className="absolute left-[-2px] top-2 bottom-1/2 w-0.5 bg-brand"></div>
+                    <div className="text-neutral-800 text-sm font-semibold">Design labels for your printer</div>
+                    <div className="text-neutral-500 text-sm font-normal hover:text-brand cursor-pointer">The search for software</div>
+                    <div className="text-neutral-500 text-sm font-normal hover:text-brand cursor-pointer">Testimonial</div>
+                    <div className="text-neutral-500 text-sm font-normal hover:text-brand cursor-pointer">Comparing options</div>
                   </div>
                 </div>
                 
                 {/* Share this article */}
                 <div className="w-full p-5 bg-white rounded-xl shadow-sm border border-slate-100 flex flex-col items-start gap-5">
-                  <div className="text-neutral-800 text-xl font-bold font-['Segoe_UI'] leading-7">Share this article</div>
+                  <div className="text-neutral-800 text-xl font-bold leading-7">Share this article</div>
                   <div className="flex items-center gap-3">
-                     <button className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-amber-50 hover:text-amber-500 hover:border-amber-500 transition-all">
+                     <button className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-brand-soft hover:text-brand hover:border-brand transition-all">
                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/></svg>
                      </button>
-                     <button className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-amber-50 hover:text-amber-500 hover:border-amber-500 transition-all">
+                     <button className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-brand-soft hover:text-brand hover:border-brand transition-all">
                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
                      </button>
-                     <button className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-amber-50 hover:text-amber-500 hover:border-amber-500 transition-all">
+                     <button className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-brand-soft hover:text-brand hover:border-brand transition-all">
                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/></svg>
                      </button>
                   </div>
                   <div className="w-full h-10 bg-gray-50 rounded-full flex items-center px-4 border border-slate-100 overflow-hidden relative">
                     <span className="text-sm text-neutral-500 truncate w-full pr-8">https://businesslabel.com/blogs/{post.slug}</span>
-                    <button className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-amber-500">
+                    <button className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-brand">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                     </button>
                   </div>
@@ -301,15 +301,15 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
                 {/* Need help? */}
                 <div className="w-full p-5 bg-white rounded-xl shadow-sm border border-slate-100 flex flex-col items-center text-center gap-5">
                   <div className="flex flex-col gap-2">
-                    <div className="text-neutral-800 text-xl font-bold font-['Segoe_UI']">Need help?</div>
+                    <div className="text-neutral-800 text-xl font-bold">Need help?</div>
                     <div className="text-neutral-600 text-sm font-normal">Our team can walk through this with you over the phone or via TeamViewer.</div>
                   </div>
                   <div className="w-full flex flex-col gap-3">
-                    <button className="w-full py-3 bg-amber-500 rounded-full text-white font-semibold flex items-center justify-center gap-2 hover:bg-amber-600 transition-colors">
+                    <button className="w-full py-3 bg-brand rounded-full text-white font-semibold flex items-center justify-center gap-2 hover:bg-brand-hover transition-colors">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
                       +31 (0)318 590 465
                     </button>
-                    <button className="w-full py-3 border border-amber-500 rounded-full text-amber-500 font-semibold flex items-center justify-center gap-2 hover:bg-amber-50 transition-colors">
+                    <button className="w-full py-3 border border-brand rounded-full text-brand font-semibold flex items-center justify-center gap-2 hover:bg-brand-soft transition-colors">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
                       Send an email
                     </button>
@@ -322,7 +322,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
                     <div className="text-neutral-800 text-lg font-bold">Download as Markdown</div>
                     <div className="text-neutral-600 text-sm">Article available as structured markdown for AI tools and documentation.</div>
                   </div>
-                  <button className="text-amber-500 font-semibold flex items-center gap-2 hover:text-amber-600 underline">
+                  <button className="text-brand font-semibold flex items-center gap-2 hover:text-brand underline">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                     Download as markdown
                   </button>
@@ -338,10 +338,10 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
           <div className="w-full max-w-[1440px] px-4 sm:px-6 lg:px-8 flex flex-col gap-12">
             <Carousel opts={{ align: "start" }} className="w-full">
               <div className="w-full flex justify-between items-center mb-12">
-                <h2 className="text-neutral-800 text-3xl md:text-4xl font-bold font-['Segoe_UI'] leading-tight">Recommended Products</h2>
+                <h2 className="text-neutral-800 text-3xl md:text-4xl font-bold leading-tight">Recommended Products</h2>
                 <div className="hidden sm:flex items-center gap-4">
                   <CarouselPrevious className="static transform-none w-12 h-12 rounded-full border border-gray-300 bg-white flex items-center justify-center hover:bg-gray-50 transition-colors" />
-                  <CarouselNext className="static transform-none w-12 h-12 rounded-full border border-amber-500 bg-white text-amber-500 flex items-center justify-center hover:bg-amber-50 transition-colors" />
+                  <CarouselNext className="static transform-none w-12 h-12 rounded-full border border-brand bg-white text-brand flex items-center justify-center hover:bg-brand-soft transition-colors" />
                 </div>
               </div>
               <CarouselContent className="-ml-6">
@@ -369,10 +369,10 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
           <div className="w-full max-w-[1440px] px-4 sm:px-6 lg:px-8 flex flex-col gap-12">
             <Carousel opts={{ align: "start" }} className="w-full">
               <div className="w-full flex justify-between items-center mb-12">
-                <h2 className="text-neutral-800 text-3xl md:text-4xl font-bold font-['Segoe_UI'] leading-tight">Recommended Materials</h2>
+                <h2 className="text-neutral-800 text-3xl md:text-4xl font-bold leading-tight">Recommended Materials</h2>
                 <div className="hidden sm:flex items-center gap-4">
                   <CarouselPrevious className="static transform-none w-12 h-12 rounded-full border border-gray-300 bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-colors" />
-                  <CarouselNext className="static transform-none w-12 h-12 rounded-full border border-amber-500 bg-white text-amber-500 flex items-center justify-center hover:bg-amber-50 transition-colors" />
+                  <CarouselNext className="static transform-none w-12 h-12 rounded-full border border-brand bg-white text-brand flex items-center justify-center hover:bg-brand-soft transition-colors" />
                 </div>
               </div>
               <CarouselContent className="-ml-6">
@@ -410,12 +410,12 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
                           <div className="flex flex-col gap-1">
                             <span className="text-sm font-semibold text-blue-400">{material.code || material.title.split(' ')[0]}</span>
                             <Link href={`/materials/${material.slug}`}>
-                              <h3 className="text-xl font-bold text-neutral-800 line-clamp-1 hover:text-amber-500 transition-colors">{material.title}</h3>
+                              <h3 className="text-xl font-bold text-neutral-800 line-clamp-1 hover:text-brand transition-colors">{material.title}</h3>
                             </Link>
                             <p className="text-neutral-600 text-sm line-clamp-2 mt-1 font-medium">{material.excerpt || material.subtitle || ""}</p>
                           </div>
                           <div className="flex flex-wrap gap-2">
-                            {baseMat && <span className="px-3 py-1 bg-orange-100 text-amber-500 rounded-xl text-xs font-semibold">{baseMat}</span>}
+                            {baseMat && <span className="px-3 py-1 bg-orange-100 text-brand rounded-xl text-xs font-semibold">{baseMat}</span>}
                             {finish && <span className="px-3 py-1 bg-purple-100 text-purple-600 rounded-xl text-xs font-semibold">{finish}</span>}
                             {adhesive && <span className="px-3 py-1 bg-green-100 text-green-600 rounded-xl text-xs font-semibold">{adhesive}</span>}
                           </div>
@@ -430,7 +430,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
                               <span className="font-semibold text-neutral-700 text-sm">{thickness}</span>
                             </div>
                           </div>
-                          <Link href={`/materials/${material.slug}`} className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-center font-semibold rounded-full mt-2 transition-colors">
+                          <Link href={`/materials/${material.slug}`} className="w-full py-2.5 bg-brand hover:bg-brand-hover text-white text-center font-semibold rounded-full mt-2 transition-colors">
                             View Details
                           </Link>
                         </div>
@@ -449,11 +449,11 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
           <div className="absolute inset-0 bg-gradient-to-br from-stone-700/70 to-yellow-950/60 z-10"></div>
           <div className="relative z-20 flex flex-col items-center gap-10 px-4 max-w-[1440px] mx-auto">
             <div className="flex flex-col items-center gap-4">
-              <h2 className="text-white text-4xl md:text-5xl font-bold font-['Segoe_UI'] text-center">Ready to find the perfect labels?</h2>
+              <h2 className="text-white text-4xl md:text-5xl font-bold text-center">Ready to find the perfect labels?</h2>
               <p className="text-slate-200 text-lg md:text-xl text-center font-normal">Join over 12,000 businesses who trust us for expert advice and high-quality products</p>
             </div>
             <div className="flex flex-col sm:flex-row items-center gap-4">
-              <Link href={localePath("/printers", locale)} className="px-8 py-4 bg-amber-500 hover:bg-amber-600 rounded-full text-white text-lg font-semibold transition-colors shadow-lg">
+              <Link href={localePath("/printers", locale)} className="px-8 py-4 bg-brand hover:bg-brand-hover rounded-full text-white text-lg font-semibold transition-colors shadow-lg">
                 Product Finder
               </Link>
               <Link href="/custom" className="px-8 py-4 bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-sm rounded-full text-white text-lg font-semibold transition-colors">

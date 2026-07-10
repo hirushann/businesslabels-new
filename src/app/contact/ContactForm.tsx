@@ -58,11 +58,11 @@ export default function ContactForm() {
                    <polyline points="20 6 9 17 4 12" />
                 </svg>
              </div>
-             <h3 className="text-xl font-semibold text-neutral-800 font-['Segoe_UI']">{t("successTitle")}</h3>
-             <p className="text-neutral-600 font-['Segoe_UI']">{t("successDesc")}</p>
+             <h3 className="text-xl font-semibold text-neutral-800">{t("successTitle")}</h3>
+             <p className="text-neutral-600">{t("successDesc")}</p>
              <button
                onClick={() => setStatus('idle')}
-               className="mt-6 px-6 py-2 bg-amber-500 text-white rounded-[100px] font-semibold font-['Segoe_UI'] hover:bg-amber-600 transition-colors"
+               className="mt-6 px-6 py-2 bg-brand text-white rounded-[100px] font-semibold hover:bg-brand-hover transition-colors"
              >
                Send another message
              </button>
@@ -70,7 +70,7 @@ export default function ContactForm() {
         ) : (
           <form onSubmit={handleSubmit} className="self-stretch flex flex-col justify-start items-start gap-6 w-full">
             {status === 'error' && (
-              <div className="self-stretch p-4 bg-red-50 text-red-600 rounded-lg text-sm font-medium border border-red-100 font-['Segoe_UI']">
+              <div className="self-stretch p-4 bg-red-50 text-red-600 rounded-lg text-sm font-medium border border-red-100">
                 {errorMessage}
               </div>
             )}
@@ -78,7 +78,7 @@ export default function ContactForm() {
             <div className="self-stretch flex flex-col justify-start items-start gap-4">
               <div className="self-stretch inline-flex justify-start items-start gap-4 w-full sm:flex-row flex-col">
                 <div className="flex-1 inline-flex flex-col justify-start items-start gap-2 w-full">
-                  <label htmlFor="name" className="justify-start text-neutral-800 text-lg font-semibold font-['Segoe_UI'] leading-5">{t("nameLabel")}</label>
+                  <label htmlFor="name" className="justify-start text-neutral-800 text-lg font-semibold leading-5">{t("nameLabel")}</label>
                   <input
                     id="name"
                     name="name"
@@ -86,24 +86,24 @@ export default function ContactForm() {
                     value={formData.name}
                     onChange={handleChange}
                     placeholder={t("namePlaceholder")}
-                    className="self-stretch h-12 w-full px-5 py-3 rounded-[38px] outline outline-1 outline-offset-[-1px] outline-zinc-200 text-neutral-800 text-base font-normal font-['Segoe_UI'] focus:outline-amber-500 focus:outline-2"
+                    className="self-stretch h-12 w-full px-5 py-3 rounded-[38px] outline outline-1 outline-offset-[-1px] outline-zinc-200 text-neutral-800 text-base font-normal focus:outline-brand focus:outline-2"
                   />
                 </div>
                 <div className="flex-1 inline-flex flex-col justify-start items-start gap-2 w-full">
-                  <label htmlFor="company" className="justify-start text-neutral-800 text-lg font-semibold font-['Segoe_UI'] leading-5">{t("companyLabel")}</label>
+                  <label htmlFor="company" className="justify-start text-neutral-800 text-lg font-semibold leading-5">{t("companyLabel")}</label>
                   <input
                     id="company"
                     name="company"
                     value={formData.company}
                     onChange={handleChange}
                     placeholder={t("companyPlaceholder")}
-                    className="self-stretch h-12 w-full px-5 py-3 rounded-[38px] outline outline-1 outline-offset-[-1px] outline-zinc-200 text-neutral-800 text-base font-normal font-['Segoe_UI'] focus:outline-amber-500 focus:outline-2"
+                    className="self-stretch h-12 w-full px-5 py-3 rounded-[38px] outline outline-1 outline-offset-[-1px] outline-zinc-200 text-neutral-800 text-base font-normal focus:outline-brand focus:outline-2"
                   />
                 </div>
               </div>
               <div className="self-stretch inline-flex justify-start items-start gap-4 w-full sm:flex-row flex-col">
                 <div className="flex-1 inline-flex flex-col justify-start items-start gap-2 w-full">
-                  <label htmlFor="email" className="justify-start text-neutral-800 text-lg font-semibold font-['Segoe_UI'] leading-5">{t("emailLabel")}</label>
+                  <label htmlFor="email" className="justify-start text-neutral-800 text-lg font-semibold leading-5">{t("emailLabel")}</label>
                   <input
                     id="email"
                     name="email"
@@ -112,11 +112,11 @@ export default function ContactForm() {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder={t("emailPlaceholder")}
-                    className="self-stretch h-12 w-full px-5 py-3 rounded-[38px] outline outline-1 outline-offset-[-1px] outline-zinc-200 text-neutral-800 text-base font-normal font-['Segoe_UI'] focus:outline-amber-500 focus:outline-2"
+                    className="self-stretch h-12 w-full px-5 py-3 rounded-[38px] outline outline-1 outline-offset-[-1px] outline-zinc-200 text-neutral-800 text-base font-normal focus:outline-brand focus:outline-2"
                   />
                 </div>
                 <div className="flex-1 inline-flex flex-col justify-start items-start gap-2 w-full">
-                  <label htmlFor="phone" className="justify-start text-neutral-800 text-lg font-semibold font-['Segoe_UI'] leading-5">{t("phoneLabel")}</label>
+                  <label htmlFor="phone" className="justify-start text-neutral-800 text-lg font-semibold leading-5">{t("phoneLabel")}</label>
                   <input
                     id="phone"
                     name="phone"
@@ -124,14 +124,14 @@ export default function ContactForm() {
                     value={formData.phone}
                     onChange={handleChange}
                     placeholder={t("phonePlaceholder")}
-                    className="self-stretch h-12 w-full px-5 py-3 rounded-[38px] outline outline-1 outline-offset-[-1px] outline-zinc-200 text-neutral-800 text-base font-normal font-['Segoe_UI'] focus:outline-amber-500 focus:outline-2"
+                    className="self-stretch h-12 w-full px-5 py-3 rounded-[38px] outline outline-1 outline-offset-[-1px] outline-zinc-200 text-neutral-800 text-base font-normal focus:outline-brand focus:outline-2"
                   />
                 </div>
               </div>
               <div className="self-stretch flex flex-col justify-start items-start gap-2 w-full">
                 <div className="justify-start">
-                  <label htmlFor="subject" className="text-neutral-800 text-lg font-semibold font-['Segoe_UI'] leading-5 cursor-pointer">{t("subjectLabel")} </label>
-                  <span className="text-zinc-500 text-base font-semibold font-['Segoe_UI'] leading-5">{t("optional")}</span>
+                  <label htmlFor="subject" className="text-neutral-800 text-lg font-semibold leading-5 cursor-pointer">{t("subjectLabel")} </label>
+                  <span className="text-zinc-500 text-base font-semibold leading-5">{t("optional")}</span>
                 </div>
                 <input
                   id="subject"
@@ -139,11 +139,11 @@ export default function ContactForm() {
                   value={formData.subject}
                   onChange={handleChange}
                   placeholder={t("subjectPlaceholder")}
-                  className="self-stretch h-12 w-full px-5 py-3 rounded-[38px] outline outline-1 outline-offset-[-1px] outline-zinc-200 text-neutral-800 text-base font-normal font-['Segoe_UI'] focus:outline-amber-500 focus:outline-2"
+                  className="self-stretch h-12 w-full px-5 py-3 rounded-[38px] outline outline-1 outline-offset-[-1px] outline-zinc-200 text-neutral-800 text-base font-normal focus:outline-brand focus:outline-2"
                 />
               </div>
               <div className="self-stretch flex flex-col justify-start items-start gap-2 w-full">
-                <label htmlFor="message" className="justify-start text-neutral-800 text-lg font-semibold font-['Segoe_UI'] leading-5">{t("messageLabel")}</label>
+                <label htmlFor="message" className="justify-start text-neutral-800 text-lg font-semibold leading-5">{t("messageLabel")}</label>
                 <textarea
                   id="message"
                   name="message"
@@ -152,16 +152,16 @@ export default function ContactForm() {
                   value={formData.message}
                   onChange={handleChange}
                   placeholder={t("messagePlaceholder")}
-                  className="self-stretch px-5 py-3 rounded-xl w-full outline outline-1 outline-offset-[-1px] outline-zinc-200 text-neutral-800 text-base font-normal font-['Segoe_UI'] resize-y focus:outline-amber-500 focus:outline-2"
+                  className="self-stretch px-5 py-3 rounded-xl w-full outline outline-1 outline-offset-[-1px] outline-zinc-200 text-neutral-800 text-base font-normal resize-y focus:outline-brand focus:outline-2"
                 />
               </div>
             </div>
             <button 
               type="submit" 
               disabled={status === 'loading'}
-              className="self-stretch h-12 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 disabled:cursor-not-allowed rounded-[100px] inline-flex justify-center items-center gap-2 transition-colors w-full sm:w-auto"
+              className="self-stretch h-12 px-4 py-2.5 bg-brand hover:bg-brand-hover disabled:bg-amber-300 disabled:cursor-not-allowed rounded-[100px] inline-flex justify-center items-center gap-2 transition-colors w-full sm:w-auto"
             >
-              <span className="text-center justify-start text-white text-base font-semibold font-['Segoe_UI'] leading-6">
+              <span className="text-center justify-start text-white text-base font-semibold leading-6">
                 {status === 'loading' ? t('sending') : t('send')}
               </span>
             </button>

@@ -45,11 +45,11 @@ export default function CartProductSlider({ products }: CartProductSliderProps) 
   if (!products || products.length === 0) return null;
 
   return (
-    <section className="w-full bg-[#F7F9FA] py-16 md:py-24 border-t border-slate-100 mt-16 px-4 md:px-8 lg:px-10">
+    <section className="w-full bg-surface py-16 md:py-24 border-t border-slate-100 mt-16 px-4 md:px-8 lg:px-10">
       <div className="max-w-360 mx-auto w-full flex flex-col gap-12">
         {/* Header Row */}
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-6 w-full">
-          <h2 className="text-[#222222] text-3xl md:text-4xl font-bold font-['Segoe_UI'] leading-tight">
+          <h2 className="text-ink text-3xl md:text-4xl font-bold leading-tight">
             {t('cart.youMayAlsoLike')}
           </h2>
           <div className="flex items-center gap-6 self-end sm:self-auto">
@@ -59,8 +59,8 @@ export default function CartProductSlider({ products }: CartProductSliderProps) 
               disabled={!canScrollLeft}
               className={`w-12 h-12 rounded-full flex items-center justify-center border transition-all ${
                 canScrollLeft
-                  ? 'bg-white border-[#F18800] text-[#F18800] hover:bg-amber-50/50 shadow-[4px_4px_20px_rgba(156.78,163.05,160.34,0.2)] cursor-pointer'
-                  : 'bg-[#F7F9FA] border-[#E5E7EB] text-[#989898] cursor-not-allowed shadow-[4px_4px_20px_rgba(156.78,163.05,160.34,0.2)]'
+                  ? 'bg-white border-brand text-brand hover:bg-brand-soft/50 shadow-[4px_4px_20px_rgba(156.78,163.05,160.34,0.2)] cursor-pointer'
+                  : 'bg-surface border-[#E5E7EB] text-[#989898] cursor-not-allowed shadow-[4px_4px_20px_rgba(156.78,163.05,160.34,0.2)]'
               }`}
               aria-label="Previous products"
             >
@@ -81,8 +81,8 @@ export default function CartProductSlider({ products }: CartProductSliderProps) 
               disabled={!canScrollRight}
               className={`w-12 h-12 rounded-full flex items-center justify-center border transition-all ${
                 canScrollRight
-                  ? 'bg-white border-[#F18800] text-[#F18800] hover:bg-amber-50/50 shadow-[4px_4px_20px_rgba(156.78,163.05,160.34,0.2)] cursor-pointer'
-                  : 'bg-[#F7F9FA] border-[#E5E7EB] text-[#989898] cursor-not-allowed shadow-[4px_4px_20px_rgba(156.78,163.05,160.34,0.2)]'
+                  ? 'bg-white border-brand text-brand hover:bg-brand-soft/50 shadow-[4px_4px_20px_rgba(156.78,163.05,160.34,0.2)] cursor-pointer'
+                  : 'bg-surface border-[#E5E7EB] text-[#989898] cursor-not-allowed shadow-[4px_4px_20px_rgba(156.78,163.05,160.34,0.2)]'
               }`}
               aria-label="Next products"
             >

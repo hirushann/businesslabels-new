@@ -157,10 +157,10 @@ export default function WishlistDrawer({ onClose }: WishlistDrawerProps) {
         <div className="shrink-0 p-6 bg-slate-100 border-b border-slate-200 flex flex-col gap-5">
           <div className="flex items-start justify-between">
             <div className="flex flex-col gap-1">
-              <h2 className="text-neutral-800 text-2xl font-semibold font-['Segoe_UI'] leading-7">
+              <h2 className="text-neutral-800 text-2xl font-semibold leading-7">
                 {t('wishlist.title')}
               </h2>
-              <span className="text-neutral-600 text-sm font-normal font-['Segoe_UI'] leading-5">
+              <span className="text-neutral-600 text-sm font-normal leading-5">
                 {t('wishlist.items', { count: mergedItems.length })}
               </span>
             </div>
@@ -181,7 +181,7 @@ export default function WishlistDrawer({ onClose }: WishlistDrawerProps) {
         <div className="flex-1 overflow-y-auto px-6 py-6">
           {isLoadingFavorites && mergedItems.length === 0 ? (
             <div className="flex justify-center items-center py-14">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500" />
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand" />
             </div>
           ) : mergedItems.length === 0 ? (
             <EmptyState
@@ -226,7 +226,7 @@ export default function WishlistDrawer({ onClose }: WishlistDrawerProps) {
                         disabled={!item.inStock}
                         className={`h-10 px-4 rounded-full text-sm font-semibold leading-5 transition-colors flex items-center justify-center ${
                           item.inStock
-                            ? 'bg-amber-500 text-white hover:bg-amber-600'
+                            ? 'bg-brand text-white hover:bg-brand-hover'
                             : 'bg-slate-200 text-slate-500 cursor-not-allowed'
                         }`}
                       >
@@ -244,7 +244,7 @@ export default function WishlistDrawer({ onClose }: WishlistDrawerProps) {
           <Link
             href="/my-account?tab=favourites"
             onClick={onClose}
-            className="w-full h-11 bg-amber-500 text-white rounded-full font-black text-sm hover:shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center gap-2"
+            className="w-full h-11 bg-brand text-white rounded-full font-black text-sm hover:shadow-lg shadow-brand/20 transition-all flex items-center justify-center gap-2"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>

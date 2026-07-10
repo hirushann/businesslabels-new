@@ -56,7 +56,7 @@ export default function ProductPaginationSwitcher({
         type="button"
         onClick={() => onPageChange(Math.max(1, page - 1))}
         disabled={page <= 1}
-        className="rounded-[50px] border border-[#EAF0F5] px-6 py-2.5 text-base font-bold text-neutral-800 disabled:opacity-50 disabled:pointer-events-none hover:bg-[#f08500] hover:text-white hover:border-[#f08500] transition-colors"
+        className="rounded-[50px] border border-line px-6 py-2.5 text-base font-bold text-neutral-800 disabled:opacity-50 disabled:pointer-events-none hover:bg-brand hover:text-white hover:border-brand transition-colors"
       >
         {t("previous")}
       </button>
@@ -71,10 +71,10 @@ export default function ProductPaginationSwitcher({
             key={item}
             type="button"
             onClick={() => onPageChange(item)}
-            className={`flex h-10 min-w-10 items-center justify-center rounded-[50px] border border-[#EAF0F5] px-3 text-sm font-semibold transition-colors ${
+            className={`flex h-10 min-w-10 items-center justify-center rounded-[50px] border border-line px-3 text-sm font-semibold transition-colors ${
               item === page 
-                ? "bg-[#f08500] border-[#f08500] text-white" 
-                : "text-neutral-700 hover:bg-[#f08500] hover:text-white hover:border-[#f08500]"
+                ? "bg-brand border-brand text-white" 
+                : "text-neutral-700 hover:bg-brand hover:text-white hover:border-brand"
             }`}
             aria-current={item === page ? "page" : undefined}
           >
@@ -87,7 +87,7 @@ export default function ProductPaginationSwitcher({
         type="button"
         onClick={() => onPageChange(Math.min(pageCount, page + 1))}
         disabled={page >= pageCount}
-        className="rounded-[50px] border border-[#EAF0F5] px-6 py-2.5 text-base font-bold text-neutral-800 disabled:opacity-50 disabled:pointer-events-none hover:bg-[#f08500] hover:text-white hover:border-[#f08500] transition-colors"
+        className="rounded-[50px] border border-line px-6 py-2.5 text-base font-bold text-neutral-800 disabled:opacity-50 disabled:pointer-events-none hover:bg-brand hover:text-white hover:border-brand transition-colors"
       >
         {t("next")}
       </button>

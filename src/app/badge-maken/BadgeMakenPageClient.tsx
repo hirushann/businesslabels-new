@@ -113,7 +113,7 @@ function BenefitCard({
 }) {
   return (
     <div className="flex flex-col gap-4 rounded-2xl bg-white p-7 shadow-sm ring-1 ring-neutral-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:ring-amber-200">
-      <div className="flex size-12 items-center justify-center rounded-xl bg-amber-50 text-amber-500">
+      <div className="flex size-12 items-center justify-center rounded-xl bg-brand-soft text-brand">
         {icon}
       </div>
       <div>
@@ -163,7 +163,7 @@ function ProductCard({
       {/* Body */}
       <div className="flex flex-1 flex-col gap-4 p-6">
         <div>
-          <h3 className="text-base font-bold text-neutral-800 transition-colors group-hover:text-amber-600 leading-snug">
+          <h3 className="text-base font-bold text-neutral-800 transition-colors group-hover:text-brand leading-snug">
             {product.name}
           </h3>
           <p className="mt-1 text-xs font-medium text-neutral-400">
@@ -174,7 +174,7 @@ function ProductCard({
         <ul className="flex flex-col gap-1">
           {product.specs.map((s) => (
             <li key={s} className="flex items-start gap-2 text-xs text-neutral-500">
-              <span className="mt-0.5 size-1.5 shrink-0 rounded-full bg-amber-400" />
+              <span className="mt-0.5 size-1.5 shrink-0 rounded-full bg-brand" />
               {s}
             </li>
           ))}
@@ -185,7 +185,7 @@ function ProductCard({
           <p className="text-xs text-neutral-400">{t('productSubtitleLabel', { price: product.priceBtw })}</p>
         </div>
 
-        <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-amber-500 transition-colors group-hover:text-amber-600">
+        <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-brand transition-colors group-hover:text-brand">
           {t('viewProduct')}
           <span className="flex size-6 items-center justify-center rounded-full bg-amber-100 transition-transform group-hover:translate-x-1 group-hover:bg-amber-200">
             <svg className="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -284,7 +284,7 @@ export default function BadgeMakenPageClient() {
   return (
     <div className="relative overflow-hidden bg-white">
       {/* Ambient glow blobs */}
-      <div className="pointer-events-none absolute left-0 top-[5%] h-72 w-72 rounded-full bg-amber-400/10 blur-[140px]" />
+      <div className="pointer-events-none absolute left-0 top-[5%] h-72 w-72 rounded-full bg-brand/10 blur-[140px]" />
       <div className="pointer-events-none absolute right-0 top-[35%] h-72 w-72 rounded-full bg-blue-400/10 blur-[140px]" />
       <div className="pointer-events-none absolute left-1/2 top-[70%] h-96 w-96 -translate-x-1/2 rounded-full bg-amber-300/8 blur-[160px]" />
 
@@ -297,7 +297,7 @@ export default function BadgeMakenPageClient() {
         <div className="flex flex-col items-center gap-16 lg:flex-row">
           {/* Left: copy */}
           <div className="flex-1">
-            <span className="inline-block rounded-full bg-amber-50 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-amber-600 ring-1 ring-amber-200">
+            <span className="inline-block rounded-full bg-brand-soft px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-brand ring-1 ring-amber-200">
               {t('heroTag')}
             </span>
 
@@ -313,7 +313,7 @@ export default function BadgeMakenPageClient() {
               <Link
                 id="badge-maken-proefpakket-btn"
                 href="/print-sample"
-                className="inline-flex items-center gap-2.5 rounded-full bg-amber-500 px-7 py-3.5 text-sm font-bold text-white uppercase tracking-wide shadow-lg shadow-amber-500/25 transition-all duration-200 hover:bg-amber-600 hover:shadow-amber-500/40 active:scale-[0.98]"
+                className="inline-flex items-center gap-2.5 rounded-full bg-brand px-7 py-3.5 text-sm font-bold text-white uppercase tracking-wide shadow-lg shadow-brand/25 transition-all duration-200 hover:bg-brand-hover hover:shadow-brand/40 active:scale-[0.98]"
               >
                 <IconSend />
                 {t('heroBtnSample')}
@@ -322,7 +322,7 @@ export default function BadgeMakenPageClient() {
               <Link
                 id="badge-maken-advies-btn"
                 href="/contact-us/"
-                className="inline-flex items-center gap-2.5 rounded-full bg-white px-7 py-3.5 text-sm font-bold text-neutral-700 uppercase tracking-wide ring-1.5 ring-neutral-200 transition-all duration-200 hover:bg-neutral-50 hover:ring-amber-400 active:scale-[0.98]"
+                className="inline-flex items-center gap-2.5 rounded-full bg-white px-7 py-3.5 text-sm font-bold text-neutral-700 uppercase tracking-wide ring-1.5 ring-neutral-200 transition-all duration-200 hover:bg-neutral-50 hover:ring-brand active:scale-[0.98]"
               >
                 <IconCoffee />
                 {t('heroBtnAdvice')}
@@ -377,7 +377,7 @@ export default function BadgeMakenPageClient() {
               {t('cheaperDesc')}
             </p>
 
-            <div className="mt-8 rounded-2xl bg-amber-50 p-6 ring-1 ring-amber-100">
+            <div className="mt-8 rounded-2xl bg-brand-soft p-6 ring-1 ring-amber-100">
               <p className="text-sm font-semibold text-amber-800">
                 {t('cheaperTip', { percent: t('cheaperTipHighlight') })}
               </p>
@@ -466,7 +466,7 @@ export default function BadgeMakenPageClient() {
                   },
                 ].map((item) => (
                   <li key={item.step} className="flex items-start gap-5">
-                    <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-sm font-black text-white">
+                    <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand text-sm font-black text-white">
                       {item.step}
                     </span>
                     <div>
@@ -482,7 +482,7 @@ export default function BadgeMakenPageClient() {
               <a
                 id="badge-maken-advies-link"
                 href="/contact-us/"
-                className="inline-flex w-fit items-center gap-2.5 rounded-full bg-white px-7 py-3.5 text-sm font-bold uppercase tracking-wide text-neutral-700 ring-1.5 ring-neutral-200 shadow-sm transition-all duration-200 hover:bg-neutral-50 hover:ring-amber-400 active:scale-[0.98]"
+                className="inline-flex w-fit items-center gap-2.5 rounded-full bg-white px-7 py-3.5 text-sm font-bold uppercase tracking-wide text-neutral-700 ring-1.5 ring-neutral-200 shadow-sm transition-all duration-200 hover:bg-neutral-50 hover:ring-brand active:scale-[0.98]"
               >
                 <IconCoffee />
                 {t('adviceBtn')}
@@ -498,7 +498,7 @@ export default function BadgeMakenPageClient() {
           <div className="flex flex-col gap-0 lg:flex-row">
             {/* Text */}
             <div className="flex flex-1 flex-col justify-center gap-6 p-10 sm:p-14">
-              <span className="w-fit rounded-full bg-amber-500/20 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-amber-400">
+              <span className="w-fit rounded-full bg-brand/20 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-amber-400">
                 {t('printerTag')}
               </span>
               <h2 className="text-3xl font-black uppercase tracking-tight text-white sm:text-4xl">
@@ -531,7 +531,7 @@ export default function BadgeMakenPageClient() {
                 href="/product/colorworks-tm-c3500/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex w-fit items-center gap-2.5 rounded-full bg-amber-500 px-7 py-3.5 text-sm font-bold uppercase tracking-wide text-white shadow-lg shadow-amber-500/30 transition-all duration-200 hover:bg-amber-400 active:scale-[0.98]"
+                className="inline-flex w-fit items-center gap-2.5 rounded-full bg-brand px-7 py-3.5 text-sm font-bold uppercase tracking-wide text-white shadow-lg shadow-brand/30 transition-all duration-200 hover:bg-brand active:scale-[0.98]"
               >
                 {t('viewPrinterBtn')}
                 <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -557,7 +557,7 @@ export default function BadgeMakenPageClient() {
       <section className="bg-neutral-50 py-20">
         <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
           <div className="mb-12 text-center">
-            <span className="inline-block rounded-full bg-amber-50 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-amber-600 ring-1 ring-amber-200">
+            <span className="inline-block rounded-full bg-brand-soft px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-brand ring-1 ring-amber-200">
               {t('productsTag')}
             </span>
             <h2 className="mt-4 text-3xl font-black uppercase tracking-tight text-neutral-800 sm:text-4xl">
@@ -578,7 +578,7 @@ export default function BadgeMakenPageClient() {
 
       {/* ── Meer informatie / CTA ─────────────────────────────────────────────── */}
       <section className="mx-auto w-full max-w-[1440px] px-4 py-20 sm:px-6 lg:px-8">
-        <div className="rounded-3xl bg-gradient-to-r from-amber-500 to-amber-600 px-8 py-14 text-center shadow-2xl shadow-amber-500/30">
+        <div className="rounded-3xl bg-gradient-to-r from-amber-500 to-amber-600 px-8 py-14 text-center shadow-2xl shadow-brand/30">
           <h2 className="text-3xl font-black uppercase tracking-tight text-white sm:text-4xl">
             {t('ctaTitle')}
           </h2>
@@ -590,7 +590,7 @@ export default function BadgeMakenPageClient() {
             <a
               id="badge-maken-offerte-btn"
               href="mailto:VERKOOP@BUSINESSLABELS.NL"
-              className="inline-flex items-center gap-2.5 rounded-full bg-white px-8 py-3.5 text-sm font-bold uppercase tracking-wide text-amber-600 shadow-lg transition-all duration-200 hover:bg-amber-50 active:scale-[0.98]"
+              className="inline-flex items-center gap-2.5 rounded-full bg-white px-8 py-3.5 text-sm font-bold uppercase tracking-wide text-brand shadow-lg transition-all duration-200 hover:bg-brand-soft active:scale-[0.98]"
             >
               <IconSend />
               {t('ctaBtnQuote')}
@@ -599,7 +599,7 @@ export default function BadgeMakenPageClient() {
             <a
               id="badge-maken-tel-btn"
               href="tel:+31318590465"
-              className="inline-flex items-center gap-2.5 rounded-full bg-amber-400/30 px-8 py-3.5 text-sm font-bold uppercase tracking-wide text-white ring-1 ring-white/20 transition-all duration-200 hover:bg-amber-400/50 active:scale-[0.98]"
+              className="inline-flex items-center gap-2.5 rounded-full bg-brand/30 px-8 py-3.5 text-sm font-bold uppercase tracking-wide text-white ring-1 ring-white/20 transition-all duration-200 hover:bg-brand/50 active:scale-[0.98]"
             >
               <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -612,7 +612,7 @@ export default function BadgeMakenPageClient() {
               href="/custom-made-form/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2.5 rounded-full bg-amber-400/30 px-8 py-3.5 text-sm font-bold uppercase tracking-wide text-white ring-1 ring-white/20 transition-all duration-200 hover:bg-amber-400/50 active:scale-[0.98]"
+              className="inline-flex items-center gap-2.5 rounded-full bg-brand/30 px-8 py-3.5 text-sm font-bold uppercase tracking-wide text-white ring-1 ring-white/20 transition-all duration-200 hover:bg-brand/50 active:scale-[0.98]"
             >
               {t('ctaBtnCustom')}
             </a>

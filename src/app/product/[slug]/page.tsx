@@ -647,7 +647,7 @@ function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t:
         finalValue = (
           <LocaleLink
             href={`/materials/${encodeURIComponent(normalizedValue)}`}
-            className="text-amber-500 hover:text-amber-600 underline font-semibold transition-colors cursor-pointer"
+            className="text-brand hover:text-brand underline font-semibold transition-colors cursor-pointer"
           >
             {normalizedValue}
           </LocaleLink>
@@ -993,7 +993,7 @@ function ProductCarouselSection({
             </h2>
             <div className="flex items-center gap-6 self-end sm:self-auto">
               <CarouselPrevious className="static translate-y-0 w-12 h-12 p-3 bg-gray-50 rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-gray-200 hover:bg-white transition-colors" />
-              <CarouselNext className="static translate-y-0 w-12 h-12 p-3 bg-white rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-amber-500 hover:bg-amber-50 transition-colors" />
+              <CarouselNext className="static translate-y-0 w-12 h-12 p-3 bg-white rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-amber-500 hover:bg-brand-soft transition-colors" />
             </div>
           </div>
           <CarouselContent className="-ml-6 mt-6">
@@ -1136,12 +1136,12 @@ export default async function SingleProductPage({
             {/* Title & Description */}
             <div className="flex flex-col gap-4">
               {productName ? (
-                <h1 className="text-[#222222] text-[32px] font-semibold leading-10">
+                <h1 className="text-ink text-[32px] font-semibold leading-10">
                   {productName}
                 </h1>
               ) : null}
               {shortDescription ? (
-                <div className="text-neutral-700 text-lg font-normal leading-7 [&_a]:text-[#f08500] [&_a]:underline hover:[&_a]:text-[#d97706] [&_a]:transition-colors" dangerouslySetInnerHTML={{ __html: shortDescription }}>
+                <div className="text-neutral-700 text-lg font-normal leading-7 [&_a]:text-brand [&_a]:underline hover:[&_a]:text-[var(--brand-hover)] [&_a]:transition-colors" dangerouslySetInnerHTML={{ __html: shortDescription }}>
                 </div>
               ) : null}
             </div>
@@ -1166,7 +1166,7 @@ export default async function SingleProductPage({
                       <div key={item.id}>
                         <Link
                           href={item.slug ? productPathForSlug(item.slug, "simple", locale) : "#"}
-                          className="group flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3 text-start transition-colors hover:border-amber-200 hover:bg-amber-50"
+                          className="group flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3 text-start transition-colors hover:border-brand/30 hover:bg-brand-soft"
                         >
                           {proxiedImage ? (
                             <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white">
@@ -1205,7 +1205,7 @@ export default async function SingleProductPage({
                             height="16"
                             viewBox="0 0 16 16"
                             fill="none"
-                            className="shrink-0 text-slate-400 transition-colors group-hover:text-amber-500"
+                            className="shrink-0 text-slate-400 transition-colors group-hover:text-brand"
                             aria-hidden="true"
                           >
                             <path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -1223,7 +1223,7 @@ export default async function SingleProductPage({
               >
                 {productDescription ? (
                   <div
-                    className="text-neutral-700 text-base font-normal leading-6 cms-content [&_a]:text-[#f08500] [&_a]:underline hover:[&_a]:text-[#d97706] [&_a]:transition-colors"
+                    className="text-neutral-700 text-base font-normal leading-6 cms-content [&_a]:text-brand [&_a]:underline hover:[&_a]:text-[var(--brand-hover)] [&_a]:transition-colors"
                     dangerouslySetInnerHTML={{ __html: productDescription }}
                   />
                 ) : (
@@ -1283,7 +1283,7 @@ export default async function SingleProductPage({
               <div className="p-5 bg-gradient-to-br from-orange-50 to-white rounded-xl outline outline-2 outline-offset-[-2px] outline-orange-100">
                 <div className="flex flex-row gap-3 items-start">
                   <div className="w-8 h-8 p-2 bg-white rounded-lg shadow-sm flex-shrink-0 flex items-center justify-center">
-                    <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-brand" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0H3" />
                     </svg>
                   </div>
@@ -1317,7 +1317,7 @@ export default async function SingleProductPage({
             {/* Consumable Items — image cards (printer products only) */}
             {isPrinterProduct && (
               <div className="flex flex-col gap-4">
-                <h3 className="text-[#222222] text-2xl font-bold leading-tight">
+                <h3 className="text-ink text-2xl font-bold leading-tight">
                   {t('product.consumableItems')}
                 </h3>
                 <div className="flex gap-4">
@@ -1351,7 +1351,7 @@ export default async function SingleProductPage({
                           className="h-[60px] w-auto object-contain"
                         />
                       </span>
-                      <span className="text-[#222222] text-base font-semibold">{card.label}</span>
+                      <span className="text-ink text-base font-semibold">{card.label}</span>
                     </a>
                   ))}
                 </div>

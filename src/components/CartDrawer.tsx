@@ -68,7 +68,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
           <div className="flex flex-col h-full w-full bg-white">
             {/* Header */}
             <div className="shrink-0 px-6 py-4 bg-white shadow-[2px_6px_20px_rgba(17,17,17,0.04)] border-b border-slate-200 flex items-center justify-between">
-              <h2 className="text-[#222222] text-xl font-semibold font-['Segoe_UI'] leading-6">
+              <h2 className="text-ink text-xl font-semibold leading-6">
                 {t('cart.title')}
               </h2>
               <button
@@ -93,18 +93,18 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                   className="w-[220px] h-[160px] object-contain"
                 />
                 <div className="w-full flex flex-col items-center gap-4">
-                  <h3 className="text-center text-[#222222] text-2xl font-bold font-['Segoe_UI'] leading-[28.8px]">
+                  <h3 className="text-center text-ink text-2xl font-bold leading-[28.8px]">
                     {t('cart.emptyTitle')}
                   </h3>
-                  <p className="text-center text-[#444444] text-base font-normal font-['Segoe_UI'] leading-6">
+                  <p className="text-center text-copy text-base font-normal leading-6">
                     {t('cart.emptyDescription')}
                   </p>
                   <Link
                     href={lp('/product')}
                     onClick={onClose}
-                    className="h-[38px] px-5 py-2 rounded-[100px] bg-[#F18800] hover:bg-[#d87a00] active:bg-[#c26e00] flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                    className="h-[38px] px-5 py-2 rounded-[100px] bg-brand hover:bg-brand-hover active:bg-brand-active flex items-center justify-center gap-2 cursor-pointer transition-colors"
                   >
-                    <span className="text-center text-white text-base font-semibold font-['Segoe_UI'] leading-6 whitespace-nowrap">
+                    <span className="text-center text-white text-base font-semibold leading-6 whitespace-nowrap">
                       {t('common.browseProducts')}
                     </span>
                   </Link>
@@ -116,7 +116,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
           <>
             {/* Header */}
             <div className="shrink-0 px-6 py-4 bg-white shadow-[2px_6px_20px_rgba(17,17,17,0.04)] border-b border-slate-200 flex items-center justify-between">
-              <h2 className="text-[#222222] text-xl font-bold font-['Segoe_UI'] leading-[24px]">
+              <h2 className="text-ink text-xl font-bold leading-[24px]">
                 {t('cart.title')}
               </h2>
               <button
@@ -165,7 +165,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                       <div key={item.key} className="py-4 flex flex-col gap-3">
                         <div className="flex gap-4">
                           {/* Product Image */}
-                          <div className="w-20 h-20 relative bg-[#EDF0F4] rounded-[6px] overflow-hidden shrink-0">
+                          <div className="w-20 h-20 relative bg-line rounded-[6px] overflow-hidden shrink-0">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={imageSrc}
@@ -178,12 +178,12 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                           <div className="flex-1 flex flex-col gap-2 min-w-0">
                             <div className="flex justify-between items-start gap-2">
                               <div className="min-w-0 flex-1">
-                                <span className="text-[#479EF5] text-sm font-['Segoe_UI'] font-normal leading-[18.2px] block">
+                                <span className="text-link text-sm font-normal leading-[18.2px] block">
                                   SKU: {item.sku}
                                 </span>
-                                <h3 className="text-[#222222] text-base font-semibold font-['Segoe_UI'] leading-[21.6px] mt-0.5 line-clamp-2">
+                                <h3 className="text-ink text-base font-semibold leading-[21.6px] mt-0.5 line-clamp-2">
                                   {href ? (
-                                    <Link href={href} onClick={onClose} className="hover:text-amber-600 transition-colors">
+                                    <Link href={href} onClick={onClose} className="hover:text-brand transition-colors">
                                       {item.name}
                                     </Link>
                                   ) : (
@@ -197,7 +197,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                                 type="button"
                                 onClick={() => removeItem(item.key)}
                                 aria-label={t('cart.removeFromCart', { name: item.name })}
-                                className="w-6 h-6 bg-[#EDF2F7] rounded-[2px] flex items-center justify-center text-[#222222] hover:bg-[#e2e8f0] transition-colors shrink-0"
+                                className="w-6 h-6 bg-line rounded-[2px] flex items-center justify-center text-ink hover:bg-[#e2e8f0] transition-colors shrink-0"
                               >
                                 <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
                                   <path d="M2 2L10 10M10 2L2 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -208,14 +208,14 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                             {/* Price */}
                             <div className="flex items-center gap-1.5 flex-wrap">
                               {hasDiscount && (
-                                <span className="text-[#888888] text-base font-normal font-['Segoe_UI'] line-through leading-5">
+                                <span className="text-subtle text-base font-normal line-through leading-5">
                                   {formatEuro(baseLinePrice)}
                                 </span>
                               )}
-                              <span className="text-[#F18800] text-xl font-semibold font-['Segoe_UI'] leading-6">
+                              <span className="text-brand text-xl font-semibold leading-6">
                                 {formatEuro(linePrice)}
                               </span>
-                              <span className="text-[#888888] text-sm font-normal font-['Segoe_UI'] leading-[20.8px]">
+                              <span className="text-subtle text-sm font-normal leading-[20.8px]">
                                 {t('product.exVat') || 'ex. VAT'}
                               </span>
                             </div>
@@ -242,7 +242,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                                       setItemQuantity(item.key, val);
                                     }
                                   }}
-                                  className="w-[38px] h-[38px] border-r border-black/10 bg-transparent text-center text-base font-semibold text-[#222222] focus:outline-none focus:ring-0 p-0"
+                                  className="w-[38px] h-[38px] border-r border-black/10 bg-transparent text-center text-base font-semibold text-ink focus:outline-none focus:ring-0 p-0"
                                 />
                                 <button
                                   type="button"
@@ -256,7 +256,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                               {/* Box Option */}
                               {item.isLabelProduct && item.packingGroup && item.packingGroup > 0 && (
                                 <>
-                                  <span className="text-[#888888] text-xs font-normal font-['Segoe_UI']">
+                                  <span className="text-subtle text-xs font-normal">
                                     {t('cart.or')}
                                   </span>
                                   <button
@@ -266,7 +266,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                                       const nextBoxQty = Math.ceil((item.quantity + 1) / pg) * pg;
                                       setItemQuantity(item.key, nextBoxQty);
                                     }}
-                                    className="h-[38px] px-4 rounded-[100px] border border-[#F18800] text-[#F18800] text-sm font-semibold font-['Segoe_UI'] hover:bg-orange-50 transition-colors whitespace-nowrap"
+                                    className="h-[38px] px-4 rounded-[100px] border border-brand text-brand text-sm font-semibold hover:bg-brand-soft transition-colors whitespace-nowrap"
                                   >
                                     {t('cart.boxOption', { count: item.packingGroup })}
                                   </button>
@@ -277,13 +277,13 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                         </div>
 
                         {linkedWarranty ? (
-                          <div className="ml-24 rounded-lg border border-amber-100 bg-amber-50/60 p-3">
+                          <div className="ml-24 rounded-lg border border-amber-100 bg-brand-soft/60 p-3">
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0">
                                 <span className="text-xs font-semibold uppercase tracking-wide text-amber-700">
                                   {t('cart.linkedWarranty')}
                                 </span>
-                                <p className="mt-0.5 text-sm font-semibold leading-5 text-[#222222]">
+                                <p className="mt-0.5 text-sm font-semibold leading-5 text-ink">
                                   {linkedWarranty.name}
                                 </p>
                                 {linkedWarranty.warranty?.description ? (
@@ -292,22 +292,22 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                                   </p>
                                 ) : null}
                                 {warrantyDurationYears ? (
-                                  <p className="mt-1 text-xs font-medium text-[#444444]">
+                                  <p className="mt-1 text-xs font-medium text-copy">
                                     {t('cart.years', { count: warrantyDurationYears })}
                                   </p>
                                 ) : null}
                               </div>
                               <div className="flex shrink-0 flex-col items-end gap-1">
-                                <span className="text-base font-bold text-[#222222]">
+                                <span className="text-base font-bold text-ink">
                                   {formatEuro((linkedWarranty.price ?? 0) * linkedWarranty.quantity)}
                                 </span>
-                                <span className="text-xs text-[#888888]">
+                                <span className="text-xs text-subtle">
                                   {linkedWarranty.quantity} x {formatEuro(linkedWarranty.price ?? 0)}
                                 </span>
                                 <button
                                   type="button"
                                   onClick={() => removeItem(linkedWarranty.key)}
-                                  className="text-xs font-semibold text-[#DD3333] underline transition-colors hover:text-red-700"
+                                  className="text-xs font-semibold text-danger underline transition-colors hover:text-red-700"
                                 >
                                   {t.has('common.remove') ? t('common.remove') : 'Remove'}
                                 </button>
@@ -322,7 +322,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
             </div>
 
             {/* Footer Summary */}
-            <div className="shrink-0 border-t border-[#EDF2F7] bg-white pt-4 pb-6 flex flex-col gap-4">
+            <div className="shrink-0 border-t border-line bg-white pt-4 pb-6 flex flex-col gap-4">
               <div className="flex flex-col gap-3">
                 {/* Discount */}
                 {(() => {
@@ -335,10 +335,10 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                   if (discountTotal > 0) {
                     return (
                       <div className="px-6 flex justify-between items-center">
-                        <span className="text-[#DD3333] text-lg font-normal font-['Segoe_UI'] leading-[21.6px]">
+                        <span className="text-danger text-lg font-normal leading-[21.6px]">
                           {t('cart.discount')}
                         </span>
-                        <span className="text-[#DD3333] text-lg font-normal font-['Segoe_UI'] leading-[21.6px]">
+                        <span className="text-danger text-lg font-normal leading-[21.6px]">
                           -{formatEuro(discountTotal)}
                         </span>
                       </div>
@@ -349,10 +349,10 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
 
                 {/* Total */}
                 <div className="px-6 flex justify-between items-center">
-                  <span className="text-[#444444] text-lg font-bold font-['Segoe_UI'] leading-[21.6px]">
+                  <span className="text-copy text-lg font-bold leading-[21.6px]">
                     {t('cart.totalInclVat')}
                   </span>
-                  <span className="text-[#222222] text-lg font-semibold font-['Segoe_UI'] leading-[21.6px]">
+                  <span className="text-ink text-lg font-semibold leading-[21.6px]">
                     {formatEuro(totalAmount * 1.21)}
                   </span>
                 </div>
@@ -363,9 +363,9 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                 <Link
                   href="/cart"
                   onClick={onClose}
-                  className="w-full h-[38px] bg-[#F18800] hover:bg-[#d87a00] active:bg-[#c26e00] rounded-[100px] flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                  className="w-full h-[38px] bg-brand hover:bg-brand-hover active:bg-brand-active rounded-[100px] flex items-center justify-center gap-2 cursor-pointer transition-colors"
                 >
-                  <span className="text-center text-white text-base font-bold font-['Segoe_UI'] leading-6 whitespace-nowrap">
+                  <span className="text-center text-white text-base font-bold leading-6 whitespace-nowrap">
                     {t('cart.goToShoppingCart')}
                   </span>
                   <svg width="6" height="10" viewBox="0 0 6 10" fill="none" className="text-white">
@@ -376,17 +376,17 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                 {/* Free shipping progress */}
                 {totalAmount < shippingThreshold ? (
                   <div className="flex justify-center items-center">
-                    <p className="text-[#888888] text-base font-['Segoe_UI'] leading-[20.8px]">
+                    <p className="text-subtle text-base leading-[20.8px]">
                       {t.rich('cart.freeShippingProgress', {
                         amount: formatEuro(shippingThreshold - totalAmount),
-                        amountStyle: (chunks) => <span className="font-bold text-[#888888]">{chunks}</span>,
-                        shippingStyle: (chunks) => <span className="font-bold text-[#888888]">{chunks}</span>,
+                        amountStyle: (chunks) => <span className="font-bold text-subtle">{chunks}</span>,
+                        shippingStyle: (chunks) => <span className="font-bold text-subtle">{chunks}</span>,
                       })}
                     </p>
                   </div>
                 ) : (
                   <div className="flex justify-center items-center">
-                    <p className="text-emerald-600 text-base font-bold font-['Segoe_UI'] leading-[20.8px]">
+                    <p className="text-emerald-600 text-base font-bold leading-[20.8px]">
                       {t('cart.freeShippingQualified')}
                     </p>
                   </div>

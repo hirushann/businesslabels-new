@@ -513,7 +513,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
         <div className="shrink-0 p-6 bg-slate-100 flex flex-col gap-8">
           {/* Title + close */}
           <div className="flex justify-between items-start">
-            <h2 className="text-neutral-800 text-2xl font-semibold font-['Segoe_UI'] leading-7">
+            <h2 className="text-neutral-800 text-2xl font-semibold leading-7">
               {t('header.needHelp')}
             </h2>
             <button
@@ -557,14 +557,14 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                 href="tel:+31318590465"
                 className="flex-1 h-16 p-2.5 bg-white rounded-xl border border-slate-100 flex items-center gap-3 hover:shadow-md transition-shadow"
               >
-                <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 bg-brand rounded-lg flex items-center justify-center shrink-0">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                     <path d="M21 15.46l-5.27-.61-2.52 2.52a15.05 15.05 0 01-6.59-6.59l2.53-2.53L8.54 3H3.03C2.45 13.18 10.82 21.55 21 20.97l.0-5.51z" fill="white" />
                   </svg>
                 </div>
                 <div className="flex flex-col gap-0.5 overflow-hidden">
-                  <span className="text-neutral-800 text-base font-semibold font-['Segoe_UI'] leading-5">{t('supportPanel.callUs')}</span>
-                  <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI'] leading-5 whitespace-nowrap">
+                  <span className="text-neutral-800 text-base font-semibold leading-5">{t('supportPanel.callUs')}</span>
+                  <span className="text-neutral-700 text-sm font-normal leading-5 whitespace-nowrap">
                     +31 318 590 465
                   </span>
                 </div>
@@ -575,15 +575,15 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                 href="mailto:verkoop@businesslabels.nl"
                 className="flex-1 h-16 p-2.5 bg-white rounded-xl border border-slate-100 flex items-center gap-3 hover:shadow-md transition-shadow"
               >
-                <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 bg-brand rounded-lg flex items-center justify-center shrink-0">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                     <rect x="2" y="4" width="20" height="16" rx="2" fill="white" />
                     <path d="M2 7l10 7 10-7" stroke="#f59e0b" strokeWidth="1.5" />
                   </svg>
                 </div>
                 <div className="flex flex-col gap-0.5 overflow-hidden">
-                  <span className="text-neutral-800 text-base font-semibold font-['Segoe_UI'] leading-5">{t('supportPanel.email')}</span>
-                  <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI'] leading-5 truncate">verkoop@businesslabels.nl</span>
+                  <span className="text-neutral-800 text-base font-semibold leading-5">{t('supportPanel.email')}</span>
+                  <span className="text-neutral-700 text-sm font-normal leading-5 truncate">verkoop@businesslabels.nl</span>
                 </div>
               </a>
             </div>
@@ -599,7 +599,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
               className="flex justify-between items-center w-full text-left"
             onClick={() => toggleSection('callback')}
             >
-              <span className="text-neutral-800 text-lg font-normal font-['Segoe_UI'] leading-6">
+              <span className="text-neutral-800 text-lg font-normal leading-6">
                 {t('help.requestCallbackTeam')}
               </span>
               <CollapseIcon open={callbackOpen} />
@@ -624,7 +624,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                       }}
                       placeholder={t('help.mobileNumber')}
                       autoComplete="tel"
-                      className="h-11 px-5 py-2 rounded-xl border border-zinc-200 outline-none text-neutral-700 text-base font-normal font-['Segoe_UI'] placeholder-neutral-400 focus:border-amber-400 transition-colors w-full"
+                      className="h-11 px-5 py-2 rounded-xl border border-zinc-200 outline-none text-neutral-700 text-base font-normal placeholder-neutral-400 focus:border-brand transition-colors w-full"
                     />
                   </label>
                   {recaptchaSiteKey && (
@@ -633,16 +633,16 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                       siteKey={recaptchaSiteKey}
                     />
                   )}
-                  <p className="text-[11px] text-zinc-500 font-['Segoe_UI'] text-center">
+                  <p className="text-[11px] text-zinc-500 text-center">
                     This site is protected by reCAPTCHA and the Google{' '}
-                    <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-amber-500 hover:underline">Privacy Policy</a> and{' '}
-                    <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="text-amber-500 hover:underline">Terms of Service</a> apply.
+                    <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline">Privacy Policy</a> and{' '}
+                    <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline">Terms of Service</a> apply.
                   </p>
 
                   {bookingMessage && (
                     <p
                       role={bookingStatus === 'error' ? 'alert' : 'status'}
-                      className={`text-sm font-normal font-['Segoe_UI'] text-center ${
+                      className={`text-sm font-normal text-center ${
                         bookingStatus === 'error' ? 'text-red-600' : 'text-emerald-700'
                       }`}
                     >
@@ -655,7 +655,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                     <button
                       type="submit"
                       disabled={bookingStatus === 'submitting'}
-                      className="h-12 px-4 py-2.5 bg-amber-500 rounded-full text-white text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors disabled:cursor-not-allowed disabled:opacity-70"
+                      className="h-12 px-4 py-2.5 bg-brand rounded-full text-white text-base font-semibold leading-6 hover:bg-brand-hover transition-colors disabled:cursor-not-allowed disabled:opacity-70"
                     >
                       {bookingStatus === 'submitting' ? t('help.submitting') : t('help.requestBtn')}
                     </button>
@@ -673,7 +673,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
               className="flex justify-between items-center w-full text-left"
               onClick={() => toggleSection('moreWays')}
             >
-              <span className="text-neutral-800 text-lg font-normal font-['Segoe_UI'] leading-6">
+              <span className="text-neutral-800 text-lg font-normal leading-6">
                 {t('help.moreWaysTeam')}
               </span>
               <CollapseIcon open={moreWaysOpen} />
@@ -682,11 +682,11 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
             {moreWaysOpen && (
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1">
-                  <span className="text-neutral-800 text-base font-semibold font-['Segoe_UI']">{t('help.address')}</span>
+                  <span className="text-neutral-800 text-base font-semibold">{t('help.address')}</span>
                   <div className="flex flex-col gap-1">
-                    <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">Lenderinkweg 8,</span>
-                    <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">6733 AX Wekerom</span>
-                    <span className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">{t('countries.netherlands')}</span>
+                    <span className="text-neutral-700 text-sm font-normal">Lenderinkweg 8,</span>
+                    <span className="text-neutral-700 text-sm font-normal">6733 AX Wekerom</span>
+                    <span className="text-neutral-700 text-sm font-normal">{t('countries.netherlands')}</span>
                   </div>
                 </div>
               </div>
@@ -701,7 +701,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
               className="flex justify-between items-center w-full text-left"
               onClick={() => toggleSection('schedule')}
             >
-              <span className="text-neutral-800 text-lg font-normal font-['Segoe_UI'] leading-6">
+              <span className="text-neutral-800 text-lg font-normal leading-6">
                 {t('help.checkAvailability')}
               </span>
               <CollapseIcon open={scheduleOpen} />
@@ -712,16 +712,16 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                 <div className="w-full max-w-sm flex flex-col gap-2">
                   {schedule.map(({ date, day, hours, active }) => (
                     <div key={date} className="flex justify-between items-center gap-4">
-                      <span className={`text-sm font-normal font-['Segoe_UI'] ${active ? 'text-neutral-800' : 'text-zinc-500'}`}>
+                      <span className={`text-sm font-normal ${active ? 'text-neutral-800' : 'text-zinc-500'}`}>
                         {day} <span className="text-xs">({formatScheduleDate(date)})</span>
                       </span>
-                      <span className={`text-sm font-normal font-['Segoe_UI'] text-right ${active ? 'text-neutral-800' : 'text-zinc-500'}`}>
+                      <span className={`text-sm font-normal text-right ${active ? 'text-neutral-800' : 'text-zinc-500'}`}>
                         {hours === UNAVAILABLE_LABEL ? t('help.unavailable') : hours}
                       </span>
                     </div>
                   ))}
                 </div>
-                {/* <p className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">
+                {/* <p className="text-neutral-700 text-sm font-normal">
                   {t('help.workingHoursOnly')}
                 </p> */}
               </div>
@@ -736,7 +736,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
               className="flex justify-between items-center w-full text-left"
               onClick={() => toggleSection('message')}
             >
-              <span className="text-neutral-800 text-lg font-normal font-['Segoe_UI'] leading-6">
+              <span className="text-neutral-800 text-lg font-normal leading-6">
                 {t('help.dropMessage')}
               </span>
               <CollapseIcon open={messageOpen} />
@@ -744,7 +744,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
 
             {messageOpen && (
               <form className="flex flex-col gap-3" onSubmit={handleContactSubmit}>
-                <p className="text-neutral-700 text-sm font-normal font-['Segoe_UI']">
+                <p className="text-neutral-700 text-sm font-normal">
                   {t('help.leaveMessage')}
                 </p>
                 <input
@@ -758,7 +758,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                   placeholder={t('help.emailAddress')}
                   autoComplete="email"
                   required
-                  className="h-11 px-5 py-2 rounded-xl border border-zinc-200 outline-none text-neutral-700 text-base font-normal font-['Segoe_UI'] placeholder-neutral-400 focus:border-amber-400 transition-colors w-full"
+                  className="h-11 px-5 py-2 rounded-xl border border-zinc-200 outline-none text-neutral-700 text-base font-normal placeholder-neutral-400 focus:border-brand transition-colors w-full"
                 />
                 <textarea
                   value={contactMessage}
@@ -769,7 +769,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                   }}
                   placeholder={t('help.messagePlaceholder')}
                   rows={4}
-                  className="px-3 py-2 rounded-xl border border-zinc-200 outline-none text-neutral-700 text-sm font-normal font-['Segoe_UI'] placeholder-neutral-400 focus:border-amber-400 transition-colors w-full resize-none"
+                  className="px-3 py-2 rounded-xl border border-zinc-200 outline-none text-neutral-700 text-sm font-normal placeholder-neutral-400 focus:border-brand transition-colors w-full resize-none"
                 />
                 {recaptchaSiteKey && (
                   <ReCAPTCHA
@@ -777,16 +777,16 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                     siteKey={recaptchaSiteKey}
                   />
                 )}
-                <p className="text-[11px] text-zinc-500 font-['Segoe_UI'] text-center">
+                <p className="text-[11px] text-zinc-500 text-center">
                   This site is protected by reCAPTCHA and the Google{' '}
-                  <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-amber-500 hover:underline">Privacy Policy</a> and{' '}
-                  <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="text-amber-500 hover:underline">Terms of Service</a> apply.
+                  <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline">Privacy Policy</a> and{' '}
+                  <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline">Terms of Service</a> apply.
                 </p>
 
                 {contactStatusMessage && (
                   <p
                     role={contactStatus === 'error' ? 'alert' : 'status'}
-                    className={`text-sm font-normal font-['Segoe_UI'] ${
+                    className={`text-sm font-normal ${
                       contactStatus === 'error' ? 'text-red-600' : 'text-emerald-700'
                     }`}
                   >
@@ -797,7 +797,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                   <button
                     type="submit"
                     disabled={contactStatus === 'submitting'}
-                    className="w-auto h-12 px-4 py-2.5 bg-amber-500 rounded-full text-white text-base font-semibold font-['Segoe_UI'] leading-6 hover:bg-amber-600 transition-colors disabled:cursor-not-allowed disabled:opacity-70"
+                    className="w-auto h-12 px-4 py-2.5 bg-brand rounded-full text-white text-base font-semibold leading-6 hover:bg-brand-hover transition-colors disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     {contactStatus === 'submitting' ? t('help.sending') : t('help.sendMessage')}
                   </button>

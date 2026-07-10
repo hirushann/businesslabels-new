@@ -557,7 +557,7 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
                       activeFilters.forEach(f => removeFilter(f.field));
                       setCurrent(1);
                     }}
-                    className="text-amber-500 text-sm font-medium hover:underline"
+                    className="text-brand text-sm font-medium hover:underline"
                   >
                     {t('finder.clearAll')}
                   </button>

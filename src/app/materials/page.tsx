@@ -62,8 +62,8 @@ export default async function MaterialPage({
     <>
       <div className="relative overflow-hidden bg-[#fafbfe]">
         {/* Ambient glow blobs */}
-        <div className="pointer-events-none absolute left-0 top-64 h-72 w-72 -translate-x-1/2 rounded-full bg-amber-500/10 blur-[132px]" />
-        <div className="pointer-events-none absolute right-0 top-225 h-72 w-72 translate-x-1/2 rounded-full bg-amber-500/10 blur-[132px]" />
+        <div className="pointer-events-none absolute left-0 top-64 h-72 w-72 -translate-x-1/2 rounded-full bg-brand/10 blur-[132px]" />
+        <div className="pointer-events-none absolute right-0 top-225 h-72 w-72 translate-x-1/2 rounded-full bg-brand/10 blur-[132px]" />
 
         {/* Hero Section */}
         <section className="px-4 py-8 sm:px-6 lg:px-10">
