@@ -57,12 +57,12 @@ export default async function PopularProducts() {
       <div className="max-w-360 mx-auto w-full flex flex-col gap-12">
         {/* Header row */}
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-6">
-          <h2 className="text-neutral-800 text-3xl md:text-4xl font-bold leading-tight md:leading-[48px]">
+          <h2 className="text-neutral-800 text-3xl md:text-4xl font-semibold leading-tight md:leading-[48px]">
             {t('popularProducts.title')}
           </h2>
           <Link
             href={localePath('/product', locale)}
-            className="w-fit px-6 py-4 rounded-full border border-brand flex items-center gap-2.5 text-brand text-base font-semibold leading-6 hover:bg-brand-soft transition-colors"
+            className="w-fit px-6 py-4 rounded-full border border-brand flex items-center gap-2.5 text-brand text-base font-bold leading-6 hover:bg-brand-soft transition-colors"
           >
             {t('popularProducts.viewAll')}
           </Link>

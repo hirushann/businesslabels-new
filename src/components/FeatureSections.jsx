@@ -56,7 +56,7 @@ export default function FeatureSections() {
             <div className="w-full lg:flex-1 flex flex-col gap-8 lg:gap-12">
               <div className="flex flex-col gap-6">
                 <div className="flex flex-col gap-4">
-                  <h3 className="text-neutral-800 text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight lg:leading-[48px]">
+                  <h3 className="text-neutral-800 text-2xl sm:text-3xl lg:text-4xl font-semibold leading-tight lg:leading-[48px]">
                     {t(`features.${section.key}Title`)}
                   </h3>
                   <p className="text-neutral-700 text-base sm:text-lg font-normal leading-relaxed sm:leading-7">
@@ -79,7 +79,7 @@ export default function FeatureSections() {
               </div>
               <Link
                 href={localePath(section.href)}
-                className="px-7 py-4 bg-brand rounded-full inline-flex items-center gap-2.5 text-white text-base sm:text-lg font-semibold leading-6 hover:bg-brand-hover transition-colors self-start"
+                className="px-7 py-4 bg-brand rounded-full inline-flex items-center gap-2.5 text-white text-base sm:text-lg font-normal leading-6 hover:bg-brand-hover transition-colors self-start"
               >
                 {t(`features.${section.key}Cta`)}
               </Link>

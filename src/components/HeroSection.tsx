@@ -188,7 +188,7 @@ export default function HeroSection() {
                     strokeLinejoin="round"
                   />
                 </svg>
-                <span className="text-brand text-lg font-semibold uppercase leading-5">
+                <span className="text-brand text-lg font-normal uppercase leading-5">
                   {t('hero.badge')}
                 </span>
               </div>
@@ -206,14 +206,14 @@ export default function HeroSection() {
             <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
               <LocaleLink
                 href="/product"
-                className="w-full sm:w-auto justify-center px-7 py-4 bg-brand rounded-full flex items-center gap-2.5 text-white text-lg font-semibold leading-6 hover:bg-brand-hover transition-colors"
+                className="w-full sm:w-auto justify-center px-7 py-4 bg-brand rounded-full flex items-center gap-2.5 text-white text-lg leading-6 hover:bg-brand-hover transition-colors"
               >
                 {t('common.browseProducts')}
               </LocaleLink>
               <button
                 type="button"
                 onClick={openHelp}
-                className="w-full sm:w-auto justify-center px-7 py-4 bg-white/10 rounded-full border border-white/20 backdrop-blur-sm flex items-center gap-2.5 text-white text-lg font-semibold leading-6 hover:bg-white/20 transition-colors"
+                className="w-full sm:w-auto justify-center px-7 py-4 bg-white/10 rounded-full border border-white/20 backdrop-blur-sm flex items-center gap-2.5 text-white text-lg leading-6 hover:bg-white/20 transition-colors"
               >
                 {t('hero.talkToExpert')}
               </button>
@@ -267,13 +267,13 @@ export default function HeroSection() {
                   strokeLinejoin="round"
                 />
               </svg>
-              <span className="text-neutral-800 text-2xl font-semibold leading-7">
+              <span className="text-neutral-800 text-2xl font-bold leading-7">
                 {t('hero.finderTitle')}
               </span>
             </div>
             {/* Printer select */}
             <div className="px-6 flex flex-col gap-4">
-              <span className="text-neutral-800 text-lg font-semibold leading-5">
+              <span className="text-neutral-800 text-lg font-bold leading-5">
                 {t('hero.selectPrinter')}
               </span>
               <PrinterModelSelect
@@ -286,7 +286,7 @@ export default function HeroSection() {
             </div>
             {selectedPrinter ? (
               <div className="px-6 flex flex-col gap-4">
-                <span className="text-neutral-800 text-lg font-semibold leading-5">
+                <span className="text-neutral-800 text-lg font-bold leading-5">
                   {t('hero.availableForPrinter')}
                 </span>
                 {categoryCards.length > 0 ? (
@@ -316,7 +316,7 @@ export default function HeroSection() {
                 <Button
                   type="button"
                   onClick={handleShowCompatibleProducts}
-                  className="h-auto w-full rounded-full bg-blue-400 py-3 text-base font-semibold text-white hover:bg-blue-500"
+                  className="h-auto w-full rounded-full bg-blue-400 py-3 text-base font-bold text-white hover:bg-blue-500"
                 >
                   <Search data-icon="inline-start" />
                   {t('hero.showProducts')}
