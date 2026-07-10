@@ -45,6 +45,24 @@ type CheckoutPageClientProps = {
   demoItems?: CartItem[];
 };
 
+type CheckoutSavedAddress = {
+  id: string;
+  type: string;
+  isDefault: boolean;
+  name: string;
+  firstname: string;
+  lastname: string;
+  company: string;
+  address1: string;
+  address2: string;
+  postcode: string;
+  city: string;
+  state: string;
+  phone: string;
+  email: string;
+  country: string;
+};
+
 const DELIVERY_FEE = 9.95;
 
 const initialFormState: CheckoutFormState = {
@@ -234,6 +252,11 @@ function CheckoutShell({
   isLoggedIn,
   onLoginSuccess,
   onAddressSelect,
+  savedShippingAddresses,
+  selectedSavedShippingAddressId,
+  onSavedShippingAddressSelect,
+  isLoadingSavedShippingAddresses,
+  savedShippingAddressesError,
   step,
   setStep,
 }: {
@@ -256,6 +279,11 @@ function CheckoutShell({
     postcode: string;
     country: string;
   }, isShipping?: boolean) => void;
+  savedShippingAddresses: CheckoutSavedAddress[];
+  selectedSavedShippingAddressId: string | null;
+  onSavedShippingAddressSelect: (address: CheckoutSavedAddress) => void;
+  isLoadingSavedShippingAddresses: boolean;
+  savedShippingAddressesError: string;
   step: 1 | 2 | 3;
   setStep: (step: 1 | 2 | 3) => void;
 }) {
@@ -677,6 +705,91 @@ function CheckoutShell({
 
                     {!form.sameAsBilling && (
                       <div className="flex flex-col gap-4 mt-2">
+                        {isLoggedIn && (
+                          <div className="flex flex-col gap-3">
+                            <div className="flex flex-col gap-1">
+                              <h3 className="text-[#222222] text-[20px] font-bold font-['Segoe_UI'] leading-6">
+                                {t('checkout.savedShippingAddresses')}
+                              </h3>
+                              <p className="text-[#444444] text-[14px] font-normal font-['Segoe_UI'] leading-[18.20px]">
+                                {t('checkout.savedShippingAddressesDesc')}
+                              </p>
+                            </div>
+
+                            {isLoadingSavedShippingAddresses ? (
+                              <div className="w-full p-4 rounded-xl border border-[#DDE1EA] bg-slate-50 text-[#444444] text-[14px] font-semibold font-['Segoe_UI']">
+                                {t('account.loadingAddresses')}
+                              </div>
+                            ) : savedShippingAddressesError ? (
+                              <div className="w-full p-4 rounded-xl border border-red-100 bg-red-50 text-red-600 text-[14px] font-semibold font-['Segoe_UI']">
+                                {savedShippingAddressesError}
+                              </div>
+                            ) : savedShippingAddresses.length > 0 ? (
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {savedShippingAddresses.map((address) => {
+                                  const isSelected = String(address.id) === String(selectedSavedShippingAddressId);
+                                  const addressLine = [address.address1, address.address2, address.city, address.postcode, address.country]
+                                    .filter(Boolean)
+                                    .join(', ');
+
+                                  return (
+                                    <label
+                                      key={address.id}
+                                      className={`w-full p-4 rounded-xl border transition-all cursor-pointer select-none flex items-start gap-3 ${
+                                        isSelected
+                                          ? "border-[#F18800] bg-[rgba(241,136,0,0.02)] shadow-[0_0_0_1px_rgba(241,136,0,0.20)]"
+                                          : "border-[#E0E7EE] bg-white hover:border-amber-200"
+                                      }`}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        className="sr-only"
+                                        checked={isSelected}
+                                        onChange={() => onSavedShippingAddressSelect(address)}
+                                      />
+                                      <div className={`mt-0.5 w-5 h-5 rounded-[3px] flex items-center justify-center shrink-0 transition-all ${
+                                        isSelected ? "bg-[#F18800] border border-[#F18800]" : "border border-[#CAD3DF] bg-white"
+                                      }`}>
+                                        {isSelected && (
+                                          <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M1.5 4L4 6.5L8.5 1.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                                          </svg>
+                                        )}
+                                      </div>
+                                      <div className="flex min-w-0 flex-1 flex-col gap-2">
+                                        <div className="flex items-start justify-between gap-2">
+                                          <span className="text-[#222222] text-[17px] font-bold font-['Segoe_UI'] leading-5 break-words">
+                                            {address.name || `${address.firstname} ${address.lastname}`.trim() || t('checkout.shippingAddress')}
+                                          </span>
+                                          {isSelected && (
+                                            <span className="rounded-full bg-[#FFF7ED] px-2.5 py-1 text-[12px] font-bold text-[#F18800] font-['Segoe_UI']">
+                                              {t('common.selected')}
+                                            </span>
+                                          )}
+                                        </div>
+                                        {(address.email || address.phone) && (
+                                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[#444444] text-[14px] font-normal font-['Segoe_UI'] leading-5">
+                                            {address.email && <span className="break-all">{address.email}</span>}
+                                            {address.email && address.phone && <span className="text-[#C8D2DD]">|</span>}
+                                            {address.phone && <span>{address.phone}</span>}
+                                          </div>
+                                        )}
+                                        <p className="text-[#444444] text-[15px] font-normal font-['Segoe_UI'] leading-5">
+                                          {addressLine || '-'}
+                                        </p>
+                                      </div>
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <div className="w-full p-4 rounded-xl border border-[#DDE1EA] bg-slate-50 text-[#444444] text-[14px] font-semibold font-['Segoe_UI']">
+                                {t('account.noShippingAddresses')}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
                         {/* First Name & Last Name */}
                         <div className="self-stretch justify-start items-start gap-4 inline-flex w-full">
                           <div className="flex-1 flex-col justify-start items-start gap-2 inline-flex">
@@ -1275,6 +1388,14 @@ function extractAddressList(payload: unknown): Record<string, unknown>[] {
   return [];
 }
 
+function readAddressType(address: Record<string, unknown>) {
+  return readString(address, ["type", "address_type", "kind"]);
+}
+
+function formatAddressId(address: Record<string, unknown>, index: number) {
+  return readString(address, ["id", "address_id", "uuid"]) || `address-${index}`;
+}
+
 function countryFromAddress(address: Record<string, unknown>, fallback: string) {
   const countryId = readString(address, ["country_id", "countryCode", "country_code"]).toUpperCase();
 
@@ -1283,6 +1404,62 @@ function countryFromAddress(address: Record<string, unknown>, fallback: string) 
   if (countryId === "DE") return "Germany";
 
   return readString(address, ["country_name", "country"]) || fallback;
+}
+
+function normalizeCheckoutAddress(address: Record<string, unknown>, index: number): CheckoutSavedAddress {
+  const firstName = readString(address, ["firstname", "first_name", "billing_first_name", "shipping_first_name"]);
+  const lastName = readString(address, ["lastname", "last_name", "billing_last_name", "shipping_last_name"]);
+  const explicitName = readString(address, ["name", "full_name", "display_name"]);
+  const isDefaultValue =
+    address.default_shipping === true ||
+    address.is_default_shipping === true ||
+    address.default === true ||
+    address.is_default === true ||
+    readString(address, ["default_shipping", "is_default_shipping", "default", "is_default"]) === "1";
+
+  return {
+    id: formatAddressId(address, index),
+    type: readAddressType(address) || "shipping",
+    isDefault: isDefaultValue,
+    name: explicitName || [firstName, lastName].filter(Boolean).join(" ") || "Saved address",
+    firstname: firstName,
+    lastname: lastName,
+    company: readString(address, ["company", "company_name", "business_name"]),
+    address1: readString(address, ["street", "address", "address_1", "line1", "street_address"]),
+    address2: readString(address, ["street2", "address2", "address_2", "line2", "apartment", "suite"]),
+    postcode: readString(address, ["postcode", "postalcode", "postal_code", "zip", "zip_code"]),
+    city: readString(address, ["city", "town", "locality"]),
+    state: readAddressState(address),
+    phone: readString(address, ["phone", "telephone", "mobile", "mobile_number", "mobileNumber"]),
+    email: readString(address, ["email", "billing_email", "shipping_email"]),
+    country: countryFromAddress(address, "Netherlands"),
+  };
+}
+
+function normalizeCheckoutShippingAddresses(payload: unknown) {
+  return extractAddressList(payload)
+    .map(normalizeCheckoutAddress)
+    .filter((address) => {
+      const addressType = address.type.toLowerCase();
+      return addressType === "shipping" || addressType.includes("shipping");
+    });
+}
+
+function readDefaultShippingAddressId(...sources: unknown[]) {
+  for (const source of sources) {
+    const value = readString(source, [
+      "default_shipping_address_id",
+      "defaultShippingAddressId",
+      "default_shipping_id",
+      "shipping_address_id",
+    ]);
+
+    if (value) {
+      return value;
+    }
+  }
+
+  return "";
 }
 
 function splitName(source: unknown) {
@@ -1339,6 +1516,24 @@ function valueWhenBlank(current: string, next: string) {
   return current.trim() ? current : next || current;
 }
 
+function applySavedShippingAddressToForm(
+  current: CheckoutFormState,
+  address: CheckoutSavedAddress,
+): CheckoutFormState {
+  return {
+    ...current,
+    shippingFirstName: address.firstname || current.shippingFirstName,
+    shippingLastName: address.lastname || current.shippingLastName,
+    email: address.email || current.email,
+    mobileNumber: address.phone || current.mobileNumber,
+    shippingStreetAddress: address.address1,
+    shippingCity: address.city,
+    shippingState: address.state,
+    shippingPostcode: address.postcode,
+    shippingCountry: countryFromAddress(address, current.shippingCountry),
+  };
+}
+
 export default function CheckoutPageClient({
   mode = "live",
   demoItems = [],
@@ -1358,11 +1553,19 @@ export default function CheckoutPageClient({
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [savedShippingAddresses, setSavedShippingAddresses] = useState<CheckoutSavedAddress[]>([]);
+  const [selectedSavedShippingAddressId, setSelectedSavedShippingAddressId] = useState<string | null>(null);
+  const [defaultShippingAddressId, setDefaultShippingAddressId] = useState<string>("");
+  const [isLoadingSavedShippingAddresses, setIsLoadingSavedShippingAddresses] = useState(false);
+  const [savedShippingAddressesError, setSavedShippingAddressesError] = useState("");
   
   const { shippingRules, defaultRule } = useShippingRules();
 
   const autofillCustomerDetails = useCallback(async () => {
     if (isDemoMode) return;
+
+    setIsLoadingSavedShippingAddresses(true);
+    setSavedShippingAddressesError("");
 
     const storedUser = localStorage.getItem("auth_user");
     let storedUserData: unknown = {};
@@ -1400,6 +1603,10 @@ export default function CheckoutPageClient({
     } else {
       // Not logged in either backend or frontend
       setIsLoggedIn(false);
+      setSavedShippingAddresses([]);
+      setSelectedSavedShippingAddressId(null);
+      setDefaultShippingAddressId("");
+      setIsLoadingSavedShippingAddresses(false);
       setIsAutofilled(true);
       return;
     }
@@ -1409,6 +1616,31 @@ export default function CheckoutPageClient({
       addresses.find((address) => readString(address, ["type"]) === "shipping") ??
       addresses[0] ??
       null;
+    const shippingAddresses = normalizeCheckoutShippingAddresses(addressPayload);
+    const nextDefaultShippingAddressId = readDefaultShippingAddressId(finalProfile, storedUserData);
+
+    const defaultAddress =
+      shippingAddresses.find((address) => String(address.id) === String(nextDefaultShippingAddressId)) ??
+      shippingAddresses.find((address) => address.isDefault) ??
+      shippingAddresses[0] ??
+      null;
+    const addressToLoad =
+      shippingAddresses.find((address) => String(address.id) === String(selectedSavedShippingAddressId)) ??
+      defaultAddress;
+
+    setSavedShippingAddresses(shippingAddresses);
+    setDefaultShippingAddressId(nextDefaultShippingAddressId);
+    setSelectedSavedShippingAddressId((current) => {
+      if (current && shippingAddresses.some((address) => String(address.id) === String(current))) {
+        return current;
+      }
+
+      return defaultAddress ? defaultAddress.id : null;
+    });
+    setForm((current) =>
+      current.sameAsBilling || !addressToLoad ? current : applySavedShippingAddressToForm(current, addressToLoad),
+    );
+    setIsLoadingSavedShippingAddresses(false);
 
     const profileName = splitName(finalProfile);
     const storedName = splitName(storedUserData);
@@ -1443,7 +1675,7 @@ export default function CheckoutPageClient({
     }));
 
     setIsAutofilled(true);
-  }, [isDemoMode]);
+  }, [isDemoMode, selectedSavedShippingAddressId]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1455,6 +1687,11 @@ export default function CheckoutPageClient({
       setIsLoggedIn(hasUser);
 
       if (!hasUser) {
+        setSavedShippingAddresses([]);
+        setSelectedSavedShippingAddressId(null);
+        setDefaultShippingAddressId("");
+        setIsLoadingSavedShippingAddresses(false);
+        setSavedShippingAddressesError("");
         setForm((current) =>
           current.paymentMethod === "banktransfer" ? { ...current, paymentMethod: "" } : current,
         );
@@ -1482,9 +1719,45 @@ export default function CheckoutPageClient({
       return;
     }
 
+    if (field === "sameAsBilling" && value === false) {
+      const selectedAddress =
+        savedShippingAddresses.find((address) => String(address.id) === String(selectedSavedShippingAddressId)) ??
+        savedShippingAddresses.find((address) => String(address.id) === String(defaultShippingAddressId)) ??
+        savedShippingAddresses.find((address) => address.isDefault) ??
+        savedShippingAddresses[0] ??
+        null;
+
+      if (selectedAddress) {
+        setSelectedSavedShippingAddressId(selectedAddress.id);
+      }
+
+      setForm((current) => {
+        const next = { ...current, sameAsBilling: false };
+        return selectedAddress ? applySavedShippingAddressToForm(next, selectedAddress) : next;
+      });
+      setErrors((current) => ({ ...current, sameAsBilling: undefined }));
+      return;
+    }
+
     setForm((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
   };
+
+  const handleSavedShippingAddressSelect = useCallback((address: CheckoutSavedAddress) => {
+    setSelectedSavedShippingAddressId(address.id);
+    setForm((current) => applySavedShippingAddressToForm(current, address));
+    setErrors((current) => ({
+      ...current,
+      shippingFirstName: undefined,
+      shippingLastName: undefined,
+      shippingStreetAddress: undefined,
+      shippingCity: undefined,
+      shippingState: undefined,
+      shippingPostcode: undefined,
+      email: address.email ? undefined : current.email,
+      mobileNumber: address.phone ? undefined : current.mobileNumber,
+    }));
+  }, []);
 
   const validateStep = (currentStep: number): boolean => {
     const nextErrors: Partial<Record<keyof CheckoutFormState, string>> = {};
@@ -1781,6 +2054,11 @@ export default function CheckoutPageClient({
       handleChange={handleChange}
       isPending={isPending}
       onLoginSuccess={() => setIsAutofilled(false)}
+      savedShippingAddresses={savedShippingAddresses}
+      selectedSavedShippingAddressId={selectedSavedShippingAddressId}
+      onSavedShippingAddressSelect={handleSavedShippingAddressSelect}
+      isLoadingSavedShippingAddresses={isLoadingSavedShippingAddresses}
+      savedShippingAddressesError={savedShippingAddressesError}
       step={step}
       setStep={setStep}
       onAddressSelect={(address, isShipping = false) => {
