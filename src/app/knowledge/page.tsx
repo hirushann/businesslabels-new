@@ -89,6 +89,7 @@ type ArticleData = {
     name: string;
     slug: string;
   }>;
+  translations?: Array<Record<string, any>>;
 };
 
 async function getPopularArticles(locale: string): Promise<ArticleData[]> {
@@ -96,7 +97,7 @@ async function getPopularArticles(locale: string): Promise<ArticleData[]> {
   if (!apiBaseUrl) return [];
 
   try {
-    const url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts?random=4&locale=${locale}`;
+    const url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts?random=4&locale=${locale}&type=kennisbank`;
     const res = await fetch(url, { 
       headers: { 'Accept-Language': locale, 'X-Locale': locale },
       next: { revalidate: 60 } 
@@ -220,16 +221,22 @@ export default async function KnowledgeBaseArchive() {
             const rawCatName = article.categories?.[0]?.name || "Article";
             const categoryName = typeof rawCatName === 'object' && rawCatName !== null ? ((rawCatName as any)[locale] ?? (rawCatName as any).en ?? (rawCatName as any).nl) : rawCatName;
             
+            // Prefer explicit translations if available from the backend
+            const translation = article.translations?.find((t) => t[locale])?.[locale];
+            const title = translation?.title || article.title;
+            const excerpt = translation?.excerpt || article.excerpt;
+            const slug = translation?.slug || article.slug;
+            
             return (
-              <Link key={article.id} href={`/knowledge/${article.slug}`} className="bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 p-5 flex flex-col sm:flex-row gap-6 transition-all group">
+              <Link key={article.id} href={`/knowledge/${slug}`} className="bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 p-5 flex flex-col sm:flex-row gap-6 transition-all group">
                 <div className="w-full sm:w-48 aspect-square rounded-lg bg-slate-100 overflow-hidden flex-shrink-0">
                   <img src={article.image || "https://placehold.co/400x400"} alt="Article Thumbnail" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 </div>
                 <div className="flex flex-col gap-4 justify-between py-2">
                   <div className="flex flex-col gap-2">
                     <span className="text-blue-500 font-semibold text-sm uppercase tracking-wider">{categoryName}</span>
-                    <h3 className="text-neutral-800 text-xl font-bold group-hover:text-amber-600 transition-colors line-clamp-2">{article.title}</h3>
-                    <p className="text-neutral-500 line-clamp-2">{article.excerpt}</p>
+                    <h3 className="text-neutral-800 text-xl font-bold group-hover:text-amber-600 transition-colors line-clamp-2">{title}</h3>
+                    <p className="text-neutral-500 line-clamp-2">{excerpt}</p>
                   </div>
                   <div className="flex items-center gap-3">
                     <img src="https://placehold.co/100x100" alt="Author" className="w-9 h-9 rounded-full bg-slate-200" />
