@@ -22,6 +22,8 @@ type ResetPasswordErrors = {
 
 type LoginResponse = {
   message?: string;
+  password_reset_required?: boolean;
+  reset_email_sent?: boolean;
   user?: unknown;
   data?: unknown;
   customer?: unknown;
@@ -152,6 +154,12 @@ export default function LoginPopup({
       const data = (await response.json()) as LoginResponse;
 
       if (!response.ok) {
+        if (data.password_reset_required) {
+          setFormMessage(data.message || t('login.migratedPasswordResetSent'));
+          setFormMessageTone(data.reset_email_sent ? 'success' : 'error');
+          return;
+        }
+
         setErrors(data.errors ?? {});
         setFormMessage(data.message || t('login.loginError'));
         setFormMessageTone('error');
