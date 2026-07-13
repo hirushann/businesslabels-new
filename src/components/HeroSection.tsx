@@ -145,7 +145,7 @@ export default function HeroSection() {
   };
 
   return (
-    <section className="relative w-full min-h-[85vh] lg:h-[85vh] py-12 lg:py-0 flex items-center overflow-hidden">
+    <section className="relative w-full min-h-[85vh] lg:h-[85vh] py-12 lg:py-0 flex items-center overflow-hidden px-4 md:px-8 lg:px-10">
       {/* Background image */}
       <Image
         src="/Herobg.png"
@@ -159,7 +159,7 @@ export default function HeroSection() {
       <div className="absolute inset-0 bg-gradient-to-br from-stone-700/70 to-yellow-950/60" />
 
       {/* Content */}
-      <div className="relative z-10 max-w-360 mx-auto w-full px-4 md:px-8 lg:px-10 h-full flex items-center">
+      <div className="relative z-10 max-w-360 mx-auto w-full h-full flex items-center">
         <div className="w-full flex flex-col lg:flex-row justify-between lg:justify-start items-center gap-10 lg:gap-12">
           {/* Left: text & CTAs */}
           <div className="flex-1 flex flex-col gap-8 lg:gap-12">
@@ -197,7 +197,7 @@ export default function HeroSection() {
                 <h1 className="text-white text-4xl md:text-5xl lg:text-7xl font-bold leading-tight lg:leading-[86.4px]">
                   {t('hero.title')}
                 </h1>
-                <p className="text-white text-lg md:text-xl font-normal leading-relaxed md:leading-8">
+                <p className="text-white text-lg md:text-xl font-light leading-relaxed md:leading-8">
                   {t('hero.subtitle')}
                 </p>
               </div>

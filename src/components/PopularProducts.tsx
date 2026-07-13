@@ -51,7 +51,7 @@ export default async function PopularProducts() {
   return (
     <section className="relative w-full px-4 md:px-8 lg:px-10 py-16 lg:py-28 overflow-hidden">
       {/* Decorative blobs */}
-      <div className="w-48 h-48 absolute right-52 top-0 bg-brand/30 rounded-full blur-[132px] pointer-events-none" />
+      <div className="w-48 h-48 absolute right-0 bottom-0 bg-brand/30 rounded-full blur-[132px] pointer-events-none" />
       <div className="w-48 h-48 absolute left-0 top-0 bg-brand/30 rounded-full blur-[132px] pointer-events-none" />
 
       <div className="max-w-360 mx-auto w-full flex flex-col gap-12">

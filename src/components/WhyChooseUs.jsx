@@ -118,7 +118,7 @@ export default function WhyChooseUs() {
                <h2 className="text-center text-neutral-800 text-3xl md:text-4xl font-semibold leading-tight md:leading-[48px]">
                   {t("whyChoose.title")}
                </h2>
-               <p className="text-center text-neutral-700 text-base md:text-lg font-normal leading-relaxed md:leading-7">
+               <p className="text-center text-neutral-700 text-base md:text-lg font-light leading-relaxed md:leading-7">
                   {t("whyChoose.subtitle")}
                </p>
             </div>
@@ -152,7 +152,7 @@ export default function WhyChooseUs() {
                         <div className="p-4 bg-brand-soft rounded-lg shadow-sm flex items-center justify-center shrink-0">{f.icon}</div>
                         <div className="flex flex-col gap-2 flex-1">
                            <h3 className="text-neutral-800 text-xl sm:text-2xl font-bold leading-snug sm:leading-7">{f.title}</h3>
-                           <p className="text-neutral-700 text-sm sm:text-base font-normal leading-relaxed sm:leading-6">{f.desc}</p>
+                           <p className="text-neutral-700 text-sm sm:text-base font-light leading-relaxed sm:leading-6">{f.desc}</p>
                         </div>
                      </div>
                   ))}

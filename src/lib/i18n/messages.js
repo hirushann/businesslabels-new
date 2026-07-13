@@ -433,7 +433,7 @@ export const MESSAGES_V4 = {
         shippingTitle: 'Fast Shipping',
         shippingSub: 'Next day available',
       },
-      companyText: 'Businesslabels is part of Smart2B BV',
+      companyText: 'Businesslabels is part of <smart2b>Smart2B BV</smart2b>',
       columns: {
         products: 'Products',
         printers: 'Popular Printers',
@@ -2372,7 +2372,7 @@ export const MESSAGES_V4 = {
         shippingTitle: 'Snelle verzending',
         shippingSub: 'Levering volgende dag mogelijk',
       },
-      companyText: 'Businesslabels is onderdeel van Smart2B BV',
+      companyText: 'Businesslabels is onderdeel van <smart2b>Smart2B BV</smart2b>',
       columns: {
         products: 'Producten',
         printers: 'Populaire printers',

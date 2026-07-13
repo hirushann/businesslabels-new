@@ -28,21 +28,21 @@ export default function CTABanner() {
             <h2 className="text-center text-white text-3xl md:text-4xl font-bold leading-tight md:leading-[48px]">
               {t('cta.title')}
             </h2>
-            <p className="text-center text-slate-100 text-base md:text-lg font-normal leading-relaxed md:leading-7">
+            <p className="text-center text-slate-100 text-base md:text-lg font-light leading-relaxed md:leading-7">
               {t('cta.subtitle')}
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
             <LocaleLink
               href="/product"
-              className="w-full sm:w-auto justify-center px-7 py-4 bg-brand rounded-full flex items-center gap-2.5 text-white text-lg font-semibold leading-6 hover:bg-brand-hover transition-colors"
+              className="w-full sm:w-auto justify-center px-7 py-4 bg-brand rounded-full flex items-center gap-2.5 text-white text-lg font-medium leading-6 hover:bg-brand-hover transition-colors"
             >
               {t('cta.browseProducts')}
             </LocaleLink>
             <button
               type="button"
               onClick={openHelp}
-              className="w-full sm:w-auto justify-center px-7 py-4 bg-white/10 rounded-full border border-white/20 backdrop-blur-sm flex items-center gap-2.5 text-white text-lg font-semibold leading-6 hover:bg-white/20 transition-colors"
+              className="w-full sm:w-auto justify-center px-7 py-4 bg-white/10 rounded-full border border-white/20 backdrop-blur-sm flex items-center gap-2.5 text-white text-lg font-medium leading-6 hover:bg-white/20 transition-colors"
             >
               {t('cta.talkToExpert')}
             </button>

@@ -643,7 +643,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-link text-sm font-semibold leading-5">
+              <span className="text-link text-sm font-medium leading-5">
                 {t("product.sku", { sku: product.sku })}
               </span>
             </div>
@@ -699,7 +699,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
                 <button
                   type="button"
                   onClick={handleAddToCart}
-                  className="px-4 py-2.5 bg-brand rounded-full flex items-center gap-2 text-white text-base font-semibold leading-6 hover:bg-brand-hover transition-colors"
+                  className="px-4 py-2.5 bg-brand rounded-full flex items-center gap-2 text-white text-base font-medium leading-6 hover:bg-brand-hover transition-colors"
                   aria-label={t(hasBulkDiscounts ? "product.selectProductQuantity" : "product.addProductToCart", { name: productName })}
                 >
                   {t(hasBulkDiscounts ? "common.select" : "common.add")}

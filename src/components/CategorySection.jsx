@@ -17,8 +17,8 @@ export default function CategorySection() {
   return (
     <section className="w-full px-4 md:px-8 lg:px-10 py-16 lg:py-28 relative overflow-hidden">
       {/* Decorative blobs */}
-      <div className="w-48 absolute left-0 top-0 bg-brand/30 rounded-full blur-[132px] pointer-events-none" />
-      <div className="w-48 absolute right-52 bottom-0 bg-brand/30 rounded-full blur-[132px] pointer-events-none" />
+      <div className="w-[600px] h-[600px] absolute -top-48 -left-48 bg-gradient-to-br from-orange-300/25 to-amber-200/5 rounded-full blur-[130px] pointer-events-none" />
+      <div className="w-[600px] h-[600px] absolute -bottom-48 -right-48 bg-gradient-to-br from-orange-300/25 to-amber-200/5 rounded-full blur-[130px] pointer-events-none" />
 
       <div className="max-w-360 mx-auto w-full flex flex-col gap-12">
         <h2 className="text-center text-neutral-800 text-3xl md:text-4xl font-semibold leading-tight md:leading-[48px]">

@@ -85,7 +85,7 @@ export default function Footer() {
               </div>
               <div className="flex flex-col gap-1">
                 <span className="text-slate-100 text-xl font-bold">{t(item.titleKey)}</span>
-                <span className="text-white/80 text-base font-normal leading-6">{t(item.subKey)}</span>
+                <span className="text-white/80 text-base font-light leading-6">{t(item.subKey)}</span>
               </div>
             </div>
           ))}
@@ -110,8 +110,14 @@ export default function Footer() {
               </div>
 
               <div>
-                <p className="text-white/80 text-base font-normal leading-5">
-                  {t('footer.companyText')}
+                <p className="text-white/80 text-base font-light leading-5">
+                  {t.rich('footer.companyText', {
+                    smart2b: (chunks) => (
+                      <a href="https://www.smart2b.nl" target="_blank" rel="noopener noreferrer" className="font-normal underline text-white hover:text-white/80 transition-colors">
+                        {chunks}
+                      </a>
+                    )
+                  })}
                 </p>
               </div>
             </div>
@@ -141,7 +147,7 @@ export default function Footer() {
               <div key={section} className="flex flex-col gap-5">
                 <Link 
                   href={section === 'products' ? '/product' : '#'} 
-                  className={`text-white text-lg font-semibold leading-6 ${section === 'products' ? 'hover:text-brand transition-colors' : 'pointer-events-none'}`}
+                  className={`text-white text-lg font-medium leading-6 ${section === 'products' ? 'hover:text-brand transition-colors' : 'pointer-events-none'}`}
                 >
                   {t(`footer.columns.${section}`)}
                 </Link>
@@ -150,7 +156,7 @@ export default function Footer() {
                     <Link
                       key={item.href + (item.nameKey || item.name)}
                       href={item.href}
-                      className="text-white/80 text-base font-normal leading-5 hover:text-white transition-colors"
+                      className="text-white/80 text-base font-light leading-5 hover:text-white transition-colors"
                     >
                       {item.nameKey ? t(item.nameKey) : item.name}
                     </Link>
@@ -162,8 +168,8 @@ export default function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="max-w-[1512px] mx-auto w-full px-4 md:px-8 lg:px-10 pt-6 pb-32 md:pb-10 border-t border-slate-800 flex flex-col md:flex-row gap-6 md:gap-0 justify-between items-center text-center md:text-left">
-          <span className="text-white/60 text-sm font-normal leading-5">
+        <div className="max-w-[1512px] mx-auto w-full px-4 md:px-8 lg:px-10 pt-6 pb-6 md:pb-10 border-t border-slate-800 flex flex-col md:flex-row gap-6 md:gap-0 justify-between items-center text-center md:text-left">
+          <span className="text-white/60 text-sm font-light leading-5">
             {t('footer.legal.copyright')}
           </span>
           <div className="flex flex-wrap justify-center gap-5">
@@ -177,7 +183,7 @@ export default function Footer() {
                 href={item.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-white/60 text-sm font-normal leading-5 hover:text-white/80 transition-colors"
+                className="text-white/60 text-sm font-light leading-5 hover:text-white/80 transition-colors"
               >
                 {t(item.key)}
               </Link>
