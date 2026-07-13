@@ -726,7 +726,7 @@ export default function MaterialsCatalogClient({
             </h2>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#EDF2F7]">
             <div className="flex items-center gap-4">
               {/* Filters Toggle Button */}
               <button
@@ -815,7 +815,7 @@ export default function MaterialsCatalogClient({
               </div>
 
               {/* Sort select indicator */}
-              <div className="relative flex shrink-0 items-center h-10">
+              <div className="relative flex shrink-0 items-center h-10 self-end sm:self-auto">
                 <select
                   value={sort}
                   onChange={(e) => updateQuery({ sort: e.target.value })}

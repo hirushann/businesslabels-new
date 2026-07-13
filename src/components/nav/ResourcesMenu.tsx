@@ -81,7 +81,7 @@ function MenuColumn({ items, t, locale }: { items: typeof columnOne; t: (key: st
               {item.icon}
             </div>
             <div className="flex-1 flex flex-col justify-start items-start gap-1">
-              <div className="text-neutral-800 text-[20px] font-semibold group-hover:text-brand transition-colors">
+              <div className="text-neutral-800 text-[20px] font-bold group-hover:text-brand transition-colors">
                 {t(item.titleKey)}
               </div>
               <div className="text-neutral-500 text-[15px] font-normal">

@@ -66,7 +66,7 @@ export default function PrintersMenu() {
                   {item.icon}
                 </div>
                 <div className="flex-1 flex flex-col justify-start items-start gap-1">
-                  <div className="text-neutral-800 text-[20px] font-semibold group-hover:text-brand transition-colors">
+                  <div className="text-neutral-800 text-[20px] font-bold group-hover:text-brand transition-colors">
                     {t(item.titleKey)}
                   </div>
                   <div className="text-neutral-500 text-[15px] font-normal">
@@ -133,7 +133,7 @@ export default function PrintersMenu() {
         href={getPrinterCategoryPath(locale)}
         className="self-stretch px-6 py-4 bg-brand rounded-bl-xl rounded-br-xl inline-flex justify-between items-center hover:bg-brand-hover transition-colors"
       >
-        <span className="text-white text-base font-semibold leading-6">
+        <span className="text-white text-base font-medium leading-6">
           {t('menus.printers.cta')}
         </span>
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.8225 4.44751L15.375 9.00001L10.8225 13.5525" stroke="white" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/><path d="M2.625 9H15.2475" stroke="white" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/></svg>
