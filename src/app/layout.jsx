@@ -12,10 +12,18 @@ import { getMessages } from '@/lib/i18n/getMessages';
 import { cookies } from "next/headers";
 import { ScrollToTop } from "@/components/ScrollToTop";
 
+const isStaging = process.env.NEXT_PUBLIC_APP_ENV === 'staging' || process.env.VERCEL_ENV === 'preview';
+
 export const metadata = {
   title: "Businesslabels — Labels for Epson ColorWorks Printers",
   description:
     "Expert-selected labels, accessories and printers. Epson ColorWorks Gold Partner. Order from 1 roll with free support.",
+  ...(isStaging && {
+    robots: {
+      index: false,
+      follow: false,
+    },
+  }),
 };
 
 export const viewport = {

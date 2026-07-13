@@ -24,6 +24,8 @@ type ResetPasswordErrors = {
 
 type LoginResponse = {
   message?: string;
+  password_reset_required?: boolean;
+  reset_email_sent?: boolean;
   user?: unknown;
   data?: unknown;
   customer?: unknown;
@@ -83,6 +85,8 @@ function LoginContent() {
   const t = useTranslations();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const resetStatus = searchParams.get('reset');
+  const initialFormMessage = resetStatus === 'success' ? t('login.passwordResetComplete') : '';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [resetEmail, setResetEmail] = useState('');
@@ -93,14 +97,15 @@ function LoginContent() {
   const [isResetSubmitting, setIsResetSubmitting] = useState(false);
   const [errors, setErrors] = useState<LoginErrors>({});
   const [resetErrors, setResetErrors] = useState<ResetPasswordErrors>({});
-  const [formMessage, setFormMessage] = useState('');
+  const [formMessage, setFormMessage] = useState(initialFormMessage);
+  const [formMessageTone, setFormMessageTone] = useState<'success' | 'error' | null>(
+    resetStatus === 'success' ? 'success' : null
+  );
   const [resetMessage, setResetMessage] = useState('');
   const [resetMessageTone, setResetMessageTone] = useState<'success' | 'error' | null>(null);
 
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const isActionTaken = useRef(false);
-
-  const redirectTo = searchParams.get('redirect') || '/my-account';
 
   const handleGoToHome = () => {
     isActionTaken.current = true;
@@ -131,6 +136,7 @@ function LoginContent() {
     setIsSubmitting(true);
     setErrors({});
     setFormMessage('');
+    setFormMessageTone(null);
 
     try {
       const response = await fetch('/api/login', {
@@ -145,8 +151,15 @@ function LoginContent() {
       const data = (await response.json()) as LoginResponse;
 
       if (!response.ok) {
+        if (data.password_reset_required) {
+          setFormMessage(data.message || t('login.migratedPasswordResetSent'));
+          setFormMessageTone(data.reset_email_sent ? 'success' : 'error');
+          return;
+        }
+
         setErrors(data.errors ?? {});
         setFormMessage(data.message || t('login.loginError'));
+        setFormMessageTone('error');
         return;
       }
 
@@ -159,6 +172,7 @@ function LoginContent() {
       router.refresh();
     } catch {
       setFormMessage(t('login.loginError'));
+      setFormMessageTone('error');
     } finally {
       setIsSubmitting(false);
     }
@@ -357,7 +371,15 @@ function LoginContent() {
             ) : (
               <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
               {formMessage ? (
-                <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                <div
+                  className={`rounded-2xl border px-4 py-3 text-sm font-semibold ${
+                    formMessageTone === 'success'
+                      ? 'border-green-100 bg-green-50 text-green-700'
+                      : 'border-red-100 bg-red-50 text-red-700'
+                  }`}
+                  role="status"
+                  aria-live="polite"
+                >
                   {formMessage}
                 </div>
               ) : null}
