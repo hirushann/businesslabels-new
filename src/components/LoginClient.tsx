@@ -85,6 +85,8 @@ function LoginContent() {
   const t = useTranslations();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const resetStatus = searchParams.get('reset');
+  const initialFormMessage = resetStatus === 'success' ? t('login.passwordResetComplete') : '';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [resetEmail, setResetEmail] = useState('');
@@ -95,15 +97,15 @@ function LoginContent() {
   const [isResetSubmitting, setIsResetSubmitting] = useState(false);
   const [errors, setErrors] = useState<LoginErrors>({});
   const [resetErrors, setResetErrors] = useState<ResetPasswordErrors>({});
-  const [formMessage, setFormMessage] = useState('');
-  const [formMessageTone, setFormMessageTone] = useState<'success' | 'error' | null>(null);
+  const [formMessage, setFormMessage] = useState(initialFormMessage);
+  const [formMessageTone, setFormMessageTone] = useState<'success' | 'error' | null>(
+    resetStatus === 'success' ? 'success' : null
+  );
   const [resetMessage, setResetMessage] = useState('');
   const [resetMessageTone, setResetMessageTone] = useState<'success' | 'error' | null>(null);
 
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const isActionTaken = useRef(false);
-
-  const redirectTo = searchParams.get('redirect') || '/my-account';
 
   const handleGoToHome = () => {
     isActionTaken.current = true;

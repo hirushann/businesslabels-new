@@ -19,51 +19,6 @@ function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-function splitSetCookieHeader(header: string) {
-  return header
-    .split(/,(?=\s*[^;,=\s]+=[^;,]+)/)
-    .map((cookie) => cookie.trim())
-    .filter(Boolean);
-}
-
-function getSetCookieHeaders(headers: Headers) {
-  const withGetSetCookie = headers as Headers & { getSetCookie?: () => string[] };
-  const setCookies = withGetSetCookie.getSetCookie?.();
-
-  if (setCookies?.length) {
-    return setCookies;
-  }
-
-  const setCookie = headers.get('set-cookie');
-
-  return setCookie ? splitSetCookieHeader(setCookie) : [];
-}
-
-function getCookieHeader(setCookies: string[]) {
-  return setCookies
-    .map((cookie) => cookie.split(';')[0]?.trim())
-    .filter(Boolean)
-    .join('; ');
-}
-
-function getXsrfToken(setCookies: string[]) {
-  const xsrfCookie = setCookies
-    .map((cookie) => cookie.split(';')[0]?.trim() ?? '')
-    .find((cookie) => cookie.startsWith('XSRF-TOKEN='));
-
-  if (!xsrfCookie) {
-    return null;
-  }
-
-  const token = xsrfCookie.slice('XSRF-TOKEN='.length);
-
-  try {
-    return decodeURIComponent(token);
-  } catch {
-    return token;
-  }
-}
-
 async function readResponseBody(response: Response) {
   const text = await response.text();
 
@@ -116,38 +71,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const csrfResponse = await fetch(backendUrl(apiBaseUrl, '/sanctum/csrf-cookie'), {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-      },
-      cache: 'no-store',
-    });
-
-    const csrfSetCookies = getSetCookieHeaders(csrfResponse.headers);
-    const cookieHeader = getCookieHeader(csrfSetCookies);
-    const xsrfToken = getXsrfToken(csrfSetCookies);
-
-    if (!csrfResponse.ok || !cookieHeader || !xsrfToken) {
-      const data = await readResponseBody(csrfResponse);
-
-      return NextResponse.json(
-        {
-          message: data.message || 'Unable to initialize password reset security token.',
-        },
-        { status: csrfResponse.ok ? 500 : csrfResponse.status }
-      );
-    }
-
-    const response = await fetch(backendUrl(apiBaseUrl, '/forgot-password'), {
+    const response = await fetch(backendUrl(apiBaseUrl, '/api/reset/password'), {
       method: 'POST',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
-        Cookie: cookieHeader,
-        'X-Requested-With': 'XMLHttpRequest',
-        'X-XSRF-TOKEN': xsrfToken,
       },
       body: JSON.stringify({ email }),
       cache: 'no-store',
@@ -162,9 +90,7 @@ export async function POST(request: NextRequest) {
       },
       { status: response.status }
     );
-  } catch (error) {
-    console.error('Error requesting password reset:', error);
-
+  } catch {
     return NextResponse.json(
       { message: 'Unable to request a password reset right now.' },
       { status: 500 }
