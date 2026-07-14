@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import CTABanner from '@/components/CTABanner';
 
 // Simple SVG Icons for Accordion state
 const ChevronIcon = ({ open }) => (
@@ -248,24 +249,7 @@ export default function FaqClient({ pagesList, initialPageData, locale }) {
       </div>
 
       {/* Pre-footer CTA */}
-      <div className="w-full h-80 relative bg-black/20 overflow-hidden mt-10">
-          <div className="absolute inset-0 bg-gradient-to-t from-black/0 via-black/50 to-black/50"></div>
-          <div className="absolute inset-0 bg-gradient-to-tr from-stone-700/70 to-yellow-950/60"></div>
-          <div className="relative w-full max-w-[1440px] px-[156px] mx-auto h-full flex flex-col justify-center items-center gap-10 z-10">
-              <div className="flex flex-col items-center gap-4">
-                  <h3 className="text-center text-white text-4xl font-bold leading-[48px]">Ready to find the perfect labels?</h3>
-                  <p className="text-center text-slate-100 text-lg font-normal leading-7">Join over 12,000 businesses who trust us for expert advice and high-quality products</p>
-              </div>
-              <div className="flex justify-center items-center gap-4">
-                  <Link href="/product-finder" className="h-12 px-7 py-4 bg-brand rounded-[50px] flex justify-center items-center hover:bg-brand-hover transition-colors">
-                      <span className="text-white text-lg font-semibold leading-6">Product Finder</span>
-                  </Link>
-                  <Link href="/custom-made" className="h-12 px-7 py-4 bg-white/10 rounded-[50px] outline outline-1 outline-offset-[-1px] outline-white/20 backdrop-blur-[5px] flex justify-center items-center hover:bg-white/20 transition-colors">
-                      <span className="text-white text-lg font-semibold leading-6">Custom-made Labels</span>
-                  </Link>
-              </div>
-          </div>
-      </div>
+      <CTABanner />
     </div>
   );
 }
