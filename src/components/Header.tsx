@@ -80,6 +80,14 @@ const navItems = [
   { labelKey: 'header.nav.support', fallbackLabel: 'Support', href: '/support', dropdownKey: null },
 ];
 
+const getViewAllText = (key: DropdownKey, locale: string) => {
+  if (key === 'printers') return locale === 'nl' ? 'Alle labelprinters' : 'All label printers';
+  if (key === 'labels') return locale === 'nl' ? 'Alle etiketten en tickets' : 'All labels and tickets';
+  if (key === 'accessories') return locale === 'nl' ? 'Alle accessoires' : 'All accessories';
+  if (key === 'brands') return locale === 'nl' ? 'Alle merken' : 'All brands';
+  return locale === 'nl' ? 'Alles bekijken' : 'View all';
+};
+
 export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolean }) {
   const t = useTranslations();
   const locale = useLocale();
@@ -933,24 +941,26 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                   
                   {item.dropdownKey && openMobileDropdown === item.dropdownKey && (
                     <div className="pl-4 pr-2 py-1 flex flex-col gap-1 bg-slate-50/50 rounded-lg mt-1 border border-slate-100/50">
-                      <Link
-                        href={
-                          item.dropdownKey === 'printers'
-                            ? printerCategoryHref
-                            : item.dropdownKey === 'labels'
-                              ? labelCategoryHref
-                              : item.dropdownKey === 'accessories'
-                                ? accessoryCategoryHref
-                              : item.href
-                        }
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className="px-3 py-2 text-sm font-semibold text-[#05315D] hover:bg-slate-100 rounded-md transition-colors flex items-center justify-between"
-                      >
-                        <span>{locale === 'nl' ? 'Alles bekijken' : 'View all'}</span>
-                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor">
-                          <path d="M6 12L10 8L6 4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </Link>
+                      {item.dropdownKey !== 'resources' && (
+                        <Link
+                          href={
+                            item.dropdownKey === 'printers'
+                              ? printerCategoryHref
+                              : item.dropdownKey === 'labels'
+                                ? labelCategoryHref
+                                : item.dropdownKey === 'accessories'
+                                  ? accessoryCategoryHref
+                                : item.href
+                          }
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="px-3 py-2 text-sm font-semibold text-[#05315D] hover:bg-slate-100 rounded-md transition-colors flex items-center justify-between"
+                        >
+                          <span>{getViewAllText(item.dropdownKey, locale)}</span>
+                          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor">
+                            <path d="M6 12L10 8L6 4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </Link>
+                      )}
                       
                       {item.dropdownKey === 'printers' && printerMenuItems.map((sub) => (
                         <Link

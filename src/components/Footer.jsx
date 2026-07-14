@@ -57,11 +57,10 @@ const footerLinks = {
     // { nameKey: 'footer.links.compareModels', href: '#' },
   ],
   support: [
-    { nameKey: 'footer.links.expertAdvice', href: '/support/expert' },
-    { nameKey: 'footer.links.testLoan', href: '/support/loan' },
-    { nameKey: 'footer.links.samplePrints', href: '/support/samples' },
-    { nameKey: 'footer.links.inkCalculator', href: '/resources/ink-calculator' },
-    { nameKey: 'footer.links.helpCenter', href: '/contact' },
+    { nameKey: 'footer.links.contact', href: '/contact' },
+    { nameKey: 'footer.links.support', href: '/support' },
+    { nameKey: 'footer.links.knowledgeBase', href: '/knowledge' },
+    { nameKey: 'footer.links.faq', href: '/faq' },
   ],
 };
 
@@ -94,7 +93,7 @@ export default function Footer() {
 
       {/* Main footer */}
       <div className="w-full pt-14 bg-gray-900 flex flex-col gap-4">
-        <div className="max-w-[1512px] mx-auto w-full px-4 md:px-8 lg:px-10 flex flex-col lg:flex-row gap-12 lg:gap-8">
+        <div className="max-w-[1512px] mx-auto w-full px-4 md:px-8 lg:px-10 flex flex-col lg:flex-row gap-12 lg:gap-8 pb-14">
           {/* Brand column */}
           <div className="w-full lg:w-[400px] xl:w-[480px] flex flex-col gap-5">
             <div className="flex flex-col gap-4">
