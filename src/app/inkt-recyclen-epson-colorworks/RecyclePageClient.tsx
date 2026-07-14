@@ -570,8 +570,12 @@ export default function RecyclePageClient() {
       </section>
 
       {/* ── Forms (tabbed) ────────────────────────────────────────────────── */}
-      <div className="w-full px-4 sm:px-6 lg:px-10">
-        <section id="recycle-form" className="w-full max-w-360 mx-auto py-24">
+      <div className="relative w-full px-4 sm:px-6 lg:px-10 overflow-hidden">
+        {/* Decorative orange patches */}
+        <div className="w-72 h-72 absolute -left-20 -top-20 bg-brand/20 rounded-full blur-[100px] pointer-events-none z-0" />
+        <div className="w-72 h-72 absolute -right-20 -bottom-20 bg-brand/20 rounded-full blur-[100px] pointer-events-none z-0" />
+
+        <section id="recycle-form" className="relative z-10 w-full max-w-360 mx-auto py-24">
         <div className="bg-white rounded-xl shadow-lg outline outline-1 outline-offset-[-1px] outline-black/10 overflow-hidden">
           {/* Tab switcher */}
           <div className="flex border-b border-gray-200">
