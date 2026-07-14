@@ -6,7 +6,7 @@ import type { ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { getLabelCategoryPath, type LabelCategoryKey } from '@/lib/routes/labelCategories';
 
-const menuItems = [
+export const menuItems = [
   {
     titleKey: 'menus.labels.title1',
     descriptionKey: 'menus.labels.desc1',

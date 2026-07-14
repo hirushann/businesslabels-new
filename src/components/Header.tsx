@@ -17,11 +17,11 @@ import WishlistDrawer from './WishlistDrawer';
 import { useWishlist } from './WishlistProvider';
 import HelpDrawer from './HelpDrawer';
 import { useHelp } from './HelpProvider';
-import PrintersMenu from './nav/PrintersMenu';
-import LabelsMenu from './nav/LabelsMenu';
-import AccessoriesMenu from './nav/AccessoriesMenu';
-import ResourcesMenu from './nav/ResourcesMenu';
-import BrandsMenu from './nav/BrandsMenu';
+import PrintersMenu, { menuItems as printerMenuItems } from './nav/PrintersMenu';
+import LabelsMenu, { menuItems as labelMenuItems } from './nav/LabelsMenu';
+import AccessoriesMenu, { menuItems as accessoryMenuItems } from './nav/AccessoriesMenu';
+import ResourcesMenu, { columnOne as resourceColumnOne, columnTwo as resourceColumnTwo } from './nav/ResourcesMenu';
+import BrandsMenu, { brands as brandMenuItems } from './nav/BrandsMenu';
 import { useLocale, useTranslations } from 'next-intl';
 import { useLocalePath } from '@/hooks/useLocalePath';
 import { getAccessoryCategoryPath } from '@/lib/routes/accessoryCategories';
@@ -165,6 +165,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
 
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [openMobileDropdown, setOpenMobileDropdown] = useState<DropdownKey>(null);
   const desktopSearchFormRef = useRef<HTMLFormElement>(null);
   const mobileSearchFormRef = useRef<HTMLFormElement>(null);
   const desktopSearchInputRef = useRef<HTMLInputElement>(null);
@@ -755,37 +756,62 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                 {item.dropdownKey ? (
                   <>
                     <NavigationMenuTrigger asChild>
-                      <Link
-                        href={
-                          item.dropdownKey === 'printers'
-                            ? printerCategoryHref
-                            : item.dropdownKey === 'labels'
-                              ? labelCategoryHref
-                              : item.dropdownKey === 'accessories'
-                                ? accessoryCategoryHref
-                              : item.href
-                        }
-                        className="group -m-3 block p-3"
-                      >
-                        <span
-                          className={`flex items-end gap-2 relative ${
-                            item.active
-                              ? 'text-sky-950 font-semibold'
-                              : 'text-stone-500 font-normal group-hover:text-sky-950 transition-colors'
-                          } text-base leading-5`}
+                      {item.dropdownKey === 'resources' ? (
+                        <div
+                          className="group -m-3 block p-3 cursor-pointer"
                         >
-                          {t.has(item.labelKey) ? t(item.labelKey) : item.fallbackLabel}
-                          <svg
-                            width="16" height="16" viewBox="0 0 16 16" fill="none"
-                            className="transition-transform duration-200 group-data-[state=open]:rotate-180"
+                          <span
+                            className={`flex items-end gap-2 relative ${
+                              item.active
+                                ? 'text-sky-950 font-semibold'
+                                : 'text-stone-500 font-normal group-hover:text-sky-950 transition-colors'
+                            } text-base leading-5`}
                           >
-                            <path d="M4 6L8 10L12 6" stroke="currentColor" />
-                          </svg>
-                          {item.active && (
-                            <span className="absolute -bottom-4 left-0 w-11 h-0.5 bg-sky-950 rounded" />
-                          )}
-                        </span>
-                      </Link>
+                            {t.has(item.labelKey) ? t(item.labelKey) : item.fallbackLabel}
+                            <svg
+                              width="16" height="16" viewBox="0 0 16 16" fill="none"
+                              className="transition-transform duration-200 group-data-[state=open]:rotate-180"
+                            >
+                              <path d="M4 6L8 10L12 6" stroke="currentColor" />
+                            </svg>
+                            {item.active && (
+                              <span className="absolute -bottom-4 left-0 w-11 h-0.5 bg-sky-950 rounded" />
+                            )}
+                          </span>
+                        </div>
+                      ) : (
+                        <Link
+                          href={
+                            item.dropdownKey === 'printers'
+                              ? printerCategoryHref
+                              : item.dropdownKey === 'labels'
+                                ? labelCategoryHref
+                                : item.dropdownKey === 'accessories'
+                                  ? accessoryCategoryHref
+                                : item.href
+                          }
+                          className="group -m-3 block p-3"
+                        >
+                          <span
+                            className={`flex items-end gap-2 relative ${
+                              item.active
+                                ? 'text-sky-950 font-semibold'
+                                : 'text-stone-500 font-normal group-hover:text-sky-950 transition-colors'
+                            } text-base leading-5`}
+                          >
+                            {t.has(item.labelKey) ? t(item.labelKey) : item.fallbackLabel}
+                            <svg
+                              width="16" height="16" viewBox="0 0 16 16" fill="none"
+                              className="transition-transform duration-200 group-data-[state=open]:rotate-180"
+                            >
+                              <path d="M4 6L8 10L12 6" stroke="currentColor" />
+                            </svg>
+                            {item.active && (
+                              <span className="absolute -bottom-4 left-0 w-11 h-0.5 bg-sky-950 rounded" />
+                            )}
+                          </span>
+                        </Link>
+                      )}
                     </NavigationMenuTrigger>
 
                     <NavigationMenuContent
@@ -866,35 +892,143 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                 </svg>
               </button>
             </div>
-            
             {/* Nav links */}
             <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-1">
               {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={
-                    item.dropdownKey === 'printers'
-                      ? printerCategoryHref
-                      : item.dropdownKey === 'labels'
-                        ? labelCategoryHref
-                        : item.dropdownKey === 'accessories'
-                          ? accessoryCategoryHref
-                        : item.href
-                  }
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`px-4 py-3 rounded-lg flex justify-between items-center ${
-                    item.active
-                      ? 'bg-sky-50 text-sky-950 font-semibold'
-                      : 'text-stone-600 font-normal hover:bg-slate-50 transition-colors'
-                  } text-base`}
-                >
-                  <span>{t.has(item.labelKey) ? t(item.labelKey) : item.fallbackLabel}</span>
-                  {item.dropdown && (
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor">
-                      <path d="M6 12L10 8L6 4" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+                <div key={item.labelKey} className="flex flex-col">
+                  {item.dropdownKey ? (
+                    <button
+                      onClick={() => setOpenMobileDropdown(openMobileDropdown === item.dropdownKey ? null : item.dropdownKey)}
+                      className={`w-full px-4 py-3 rounded-lg flex justify-between items-center text-left ${
+                        item.active
+                          ? 'bg-sky-50 text-sky-950 font-semibold'
+                          : 'text-stone-600 font-normal hover:bg-slate-50 transition-colors'
+                      } text-base`}
+                    >
+                      <span>{t.has(item.labelKey) ? t(item.labelKey) : item.fallbackLabel}</span>
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        stroke="currentColor"
+                        className={`transition-transform duration-200 ${openMobileDropdown === item.dropdownKey ? 'rotate-90' : ''}`}
+                      >
+                        <path d="M6 12L10 8L6 4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
+                  ) : (
+                    <Link
+                      href={item.href}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`px-4 py-3 rounded-lg flex justify-between items-center ${
+                        item.active
+                          ? 'bg-sky-50 text-sky-950 font-semibold'
+                          : 'text-stone-600 font-normal hover:bg-slate-50 transition-colors'
+                      } text-base`}
+                    >
+                      <span>{t.has(item.labelKey) ? t(item.labelKey) : item.fallbackLabel}</span>
+                    </Link>
                   )}
-                </Link>
+                  
+                  {item.dropdownKey && openMobileDropdown === item.dropdownKey && (
+                    <div className="pl-4 pr-2 py-1 flex flex-col gap-1 bg-slate-50/50 rounded-lg mt-1 border border-slate-100/50">
+                      <Link
+                        href={
+                          item.dropdownKey === 'printers'
+                            ? printerCategoryHref
+                            : item.dropdownKey === 'labels'
+                              ? labelCategoryHref
+                              : item.dropdownKey === 'accessories'
+                                ? accessoryCategoryHref
+                              : item.href
+                        }
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="px-3 py-2 text-sm font-semibold text-[#05315D] hover:bg-slate-100 rounded-md transition-colors flex items-center justify-between"
+                      >
+                        <span>{locale === 'nl' ? 'Alles bekijken' : 'View all'}</span>
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor">
+                          <path d="M6 12L10 8L6 4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </Link>
+                      
+                      {item.dropdownKey === 'printers' && printerMenuItems.map((sub) => (
+                        <Link
+                          key={sub.titleKey}
+                          href={getPrinterCategoryPath(locale, sub.categoryKey)}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="px-3 py-2 text-sm text-stone-600 hover:bg-slate-100 rounded-md transition-colors flex items-center gap-2"
+                        >
+                          <span className="w-5 h-5 flex items-center justify-center shrink-0 [&>svg]:size-4 [&>svg]:text-brand">{sub.icon}</span>
+                          <span>{t(sub.titleKey)}</span>
+                        </Link>
+                      ))}
+
+                      {item.dropdownKey === 'labels' && labelMenuItems.map((sub) => (
+                        <Link
+                          key={sub.titleKey}
+                          href={getLabelCategoryPath(locale, sub.categoryKey)}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="px-3 py-2 text-sm text-stone-600 hover:bg-slate-100 rounded-md transition-colors flex items-center gap-2"
+                        >
+                          <span className="w-5 h-5 flex items-center justify-center shrink-0 [&>svg]:size-4 [&>svg]:text-brand">{sub.icon}</span>
+                          <span>{t(sub.titleKey)}</span>
+                        </Link>
+                      ))}
+
+                      {item.dropdownKey === 'accessories' && accessoryMenuItems.map((sub) => (
+                        <Link
+                          key={sub.titleKey}
+                          href={getAccessoryCategoryPath(locale, sub.categoryKey)}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="px-3 py-2 text-sm text-stone-600 hover:bg-slate-100 rounded-md transition-colors flex items-center gap-2"
+                        >
+                          <span className="w-5 h-5 flex items-center justify-center shrink-0 [&>svg]:size-4 [&>svg]:text-brand">{sub.icon}</span>
+                          <span>{t(sub.titleKey)}</span>
+                        </Link>
+                      ))}
+
+                      {item.dropdownKey === 'resources' && (
+                        <>
+                          {[...resourceColumnOne, ...resourceColumnTwo].map((sub) => {
+                            const href = sub.href === '/sitemap.xml' ? sub.href : lp(sub.href);
+                            return (
+                              <Link
+                                key={sub.titleKey}
+                                href={href}
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="px-3 py-2 text-sm text-stone-600 hover:bg-slate-100 rounded-md transition-colors flex items-center gap-2"
+                              >
+                                <span className="w-5 h-5 flex items-center justify-center shrink-0 [&>svg]:size-4 [&>svg]:text-brand">{sub.icon}</span>
+                                <span>{t(sub.titleKey)}</span>
+                              </Link>
+                            );
+                          })}
+                        </>
+                      )}
+
+                      {item.dropdownKey === 'brands' && brandMenuItems.map((sub) => (
+                        <Link
+                          key={sub.name}
+                          href={sub.href}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="px-3 py-2 text-sm text-stone-600 hover:bg-slate-100 rounded-md transition-colors flex items-center gap-2"
+                        >
+                          <span className="w-6 h-4 relative shrink-0 overflow-hidden bg-slate-50 border border-slate-100 rounded">
+                            <Image
+                              src={sub.logo}
+                              alt={sub.name}
+                              fill
+                              className="object-contain p-0.5"
+                              unoptimized
+                            />
+                          </span>
+                          <span>{sub.name}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ))}
               
               {/* Extra drawer items */}

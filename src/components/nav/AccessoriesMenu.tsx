@@ -6,7 +6,7 @@ import type { ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { getAccessoryCategoryPath, type AccessoryCategoryKey } from '@/lib/routes/accessoryCategories';
 
-const menuItems = [
+export const menuItems = [
   {
     titleKey: 'menus.accessories.title1',
     descriptionKey: 'menus.accessories.desc1',

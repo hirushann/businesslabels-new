@@ -6,7 +6,7 @@ import type { ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { getPrinterCategoryPath, type PrinterCategoryKey } from '@/lib/routes/printerCategories';
 
-const menuItems = [
+export const menuItems = [
   {
     titleKey: 'menus.printers.title1',
     descriptionKey: 'menus.printers.desc1',

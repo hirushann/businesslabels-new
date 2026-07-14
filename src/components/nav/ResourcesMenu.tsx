@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
 import { localePath } from '@/lib/i18n/utils';
 
-const columnOne = [
+export const columnOne = [
   {
     titleKey: 'menus.resources.softwareTitle',
     descriptionKey: 'menus.resources.softwareDesc',
@@ -39,7 +39,7 @@ const columnOne = [
   },
 ];
 
-const columnTwo = [
+export const columnTwo = [
   {
     titleKey: 'menus.resources.blogsTitle',
     descriptionKey: 'menus.resources.blogsDesc',

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 
-const brands = [
+export const brands = [
   {
     name: 'EPSON',
     href: '/brand/epson',
