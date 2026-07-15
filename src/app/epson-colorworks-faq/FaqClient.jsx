@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import CTABanner from '@/components/CTABanner';
+import { useLocalePath } from '@/hooks/useLocalePath';
 
 // Simple SVG Icons for Accordion state
 const ChevronIcon = ({ open }) => (
@@ -48,6 +49,7 @@ const FaqItem = ({ question, answer, defaultOpen = false }) => {
 };
 
 export default function FaqClient({ pagesList, initialPageData, locale }) {
+  const lp = useLocalePath();
   const [activePageData, setActivePageData] = useState(initialPageData);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -142,7 +144,7 @@ export default function FaqClient({ pagesList, initialPageData, locale }) {
               <p className="text-neutral-700 text-lg font-normal leading-6">
                 {activeContent?.support?.title || "Still unsure? Or is your question not listed?"}
               </p>
-              <Link href="/contact" className="h-12 px-7 py-4 bg-brand rounded-[50px] inline-flex justify-center items-center hover:bg-brand-hover transition-colors">
+              <Link href={lp('/contact-us')} className="h-12 px-7 py-4 bg-brand rounded-[50px] inline-flex justify-center items-center hover:bg-brand-hover transition-colors">
                 <span className="text-white text-lg font-semibold leading-6">Talk to Expert</span>
               </Link>
             </div>

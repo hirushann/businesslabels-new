@@ -31,7 +31,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes = [
     '',
     '/about',
-    '/contact',
+    '/contact-us',
     '/epson-colorworks-faq',
     '/material',
     '/material/inkjet',

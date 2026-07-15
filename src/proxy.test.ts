@@ -168,4 +168,19 @@ describe("proxy locale routing", () => {
     expect(response.headers.get("location")).toBe("http://localhost/en/checkout");
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
+
+  it("redirects /contact to /contact-us", () => {
+    const response = proxy(makeRequest("/contact"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/contact-us");
+  });
+
+  it("redirects /en/contact to /en/contact-us", () => {
+    const response = proxy(makeRequest("/en/contact"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/en/contact-us");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
 });

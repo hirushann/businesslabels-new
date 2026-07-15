@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { useLocalePath } from '@/hooks/useLocalePath';
 
 const trustItems = [
   {
@@ -57,7 +58,7 @@ const footerLinks = {
     // { nameKey: 'footer.links.compareModels', href: '#' },
   ],
   support: [
-    { nameKey: 'footer.links.contact', href: '/contact' },
+    { nameKey: 'footer.links.contact', href: '/contact-us' },
     { nameKey: 'footer.links.support', href: '/support' },
     { nameKey: 'footer.links.knowledgeBase', href: '/kennisbank-overzicht' },
     { nameKey: 'footer.links.faq', href: '/epson-colorworks-faq' },
@@ -66,6 +67,7 @@ const footerLinks = {
 
 export default function Footer() {
   const t = useTranslations();
+  const lp = useLocalePath();
   return (
     <footer className="w-full flex flex-col">
       {/* Trust bar */}
@@ -151,15 +153,18 @@ export default function Footer() {
                   {t(`footer.columns.${section}`)}
                 </Link>
                 <div className="flex flex-col gap-4">
-                  {links.map((item) => (
-                    <Link
-                      key={item.href + (item.nameKey || item.name)}
-                      href={item.href}
-                      className="text-white/80 text-base font-light leading-5 hover:text-white transition-colors"
-                    >
-                      {item.nameKey ? t(item.nameKey) : item.name}
-                    </Link>
-                  ))}
+                  {links.map((item) => {
+                    const isContact = item.href === '/contact-us';
+                    return (
+                      <Link
+                        key={item.href + (item.nameKey || item.name)}
+                        href={isContact ? lp(item.href) : item.href}
+                        className="text-white/80 text-base font-light leading-5 hover:text-white transition-colors"
+                      >
+                        {item.nameKey ? t(item.nameKey) : item.name}
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
             ))}

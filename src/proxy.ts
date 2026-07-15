@@ -84,6 +84,16 @@ export function proxy(request: NextRequest) {
     return persistLocale(NextResponse.redirect(redirectUrl), 'en');
   }
 
+  if (pathname === '/contact' || pathname === '/contact/') {
+    const redirectUrl = new URL(`/contact-us${search}`, request.url);
+    return persistLocale(NextResponse.redirect(redirectUrl), locale);
+  }
+
+  if (pathname === '/en/contact' || pathname === '/en/contact/') {
+    const redirectUrl = new URL(`${EN_PREFIX}/contact-us${search}`, request.url);
+    return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+  }
+
   // ── Locale routing ──────────────────────────────────────────────────────────
 
   // ── Auth guard (/my-account) ─────────────────────────────────────────────────

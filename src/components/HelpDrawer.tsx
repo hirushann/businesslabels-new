@@ -820,7 +820,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
 
           {/* ── Contact Support ── */}
           <div className="flex flex-col gap-4">
-            <LocaleLink href="/contact" className="w-full" onClick={onClose}>
+            <LocaleLink href="/contact-us" className="w-full" onClick={onClose}>
               <div style={{ width: '100%', height: '100%', justifyContent: 'space-between', alignItems: 'center', display: 'inline-flex' }}>
                 <div style={{ color: '#F18800', fontSize: '18px', fontFamily: 'Segoe UI', fontWeight: 700, lineHeight: '27px', wordWrap: 'break-word' }}>Contact Support</div>
                 <svg width="20" height="17" viewBox="0 0 20 17" fill="none" xmlns="http://www.w3.org/2000/svg">

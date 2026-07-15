@@ -30,6 +30,8 @@ describe("i18n routing utilities", () => {
     expect(localePath("/afrekenen", "en")).toBe("/en/checkout");
     expect(localePath("/checkout", "nl")).toBe("/afrekenen");
     expect(localePath("/afrekenen", "nl")).toBe("/afrekenen");
+    expect(localePath("/contact", "en")).toBe("/en/contact-us");
+    expect(localePath("/contact", "nl")).toBe("/contact-us");
   });
 
   it("strips the English prefix before switching back to Dutch", () => {
@@ -48,5 +50,7 @@ describe("i18n routing utilities", () => {
     expect(stripLocalePath("/winkelmand")).toBe("/cart");
     expect(stripLocalePath("/en/checkout")).toBe("/afrekenen");
     expect(stripLocalePath("/afrekenen")).toBe("/checkout");
+    expect(stripLocalePath("/en/contact")).toBe("/contact-us");
+    expect(stripLocalePath("/contact")).toBe("/contact-us");
   });
 });

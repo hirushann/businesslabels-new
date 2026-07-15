@@ -14,5 +14,5 @@ export const ROUTES = {
   checkoutResult: '/afrekenen/result',
   search: '/search',
   about: '/about',
-  contact: '/contact',
+  contact: '/contact-us',
 };

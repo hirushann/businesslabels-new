@@ -87,6 +87,9 @@ export function localePath(path, locale) {
     if (basePath === '/afrekenen') {
       return '/en/checkout' + searchSuffix;
     }
+    if (basePath === '/contact') {
+      return '/en/contact-us' + searchSuffix;
+    }
     return '/en' + path;
   }
   if (basePath === '/brands') {
@@ -97,6 +100,9 @@ export function localePath(path, locale) {
   }
   if (basePath === '/checkout') {
     return '/afrekenen' + searchSuffix;
+  }
+  if (basePath === '/contact') {
+    return '/contact-us' + searchSuffix;
   }
   return path;
 }
@@ -132,6 +138,9 @@ export function stripLocalePath(path) {
     if (rest === '/checkout') {
       return '/afrekenen' + searchSuffix;
     }
+    if (rest === '/contact') {
+      return '/contact-us' + searchSuffix;
+    }
     return rest + searchSuffix;
   }
   if (basePath === '/en') return '/' + searchSuffix;
@@ -143,6 +152,9 @@ export function stripLocalePath(path) {
   }
   if (basePath === '/afrekenen') {
     return '/checkout' + searchSuffix;
+  }
+  if (basePath === '/contact') {
+    return '/contact-us' + searchSuffix;
   }
   return path;
 }

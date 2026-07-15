@@ -20,7 +20,7 @@ import {
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { useTranslations, useLocale } from 'next-intl';
 import { localePath } from '@/lib/i18n/utils';
-import AvailabilityStatus from "@/app/contact/AvailabilityStatus";
+import AvailabilityStatus from "@/app/contact-us/AvailabilityStatus";
 import CTABanner from "@/components/CTABanner";
 export default function SupportPage() {
   const t = useTranslations('supportPage');
