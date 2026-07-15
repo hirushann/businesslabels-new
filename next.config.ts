@@ -42,8 +42,8 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
-        source: '/en/software-2',
-        destination: '/en/software',
+        source: '/en/software',
+        destination: '/en/software-2',
         permanent: true,
       },
       {

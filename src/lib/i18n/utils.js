@@ -67,6 +67,9 @@ export function pickLocale(value, locale) {
 export function localePath(path, locale) {
   const normalized = normalizeLocale(locale);
   if (normalized === 'en') {
+    if (path === '/software') {
+      return '/en/software-2';
+    }
     return '/en' + path;
   }
   return path;
@@ -81,7 +84,13 @@ export function localePath(path, locale) {
  * @returns {string}
  */
 export function stripLocalePath(path) {
-  if (path.startsWith('/en/')) return path.slice(3);
+  if (path.startsWith('/en/')) {
+    const rest = path.slice(3);
+    if (rest === '/software-2') {
+      return '/software';
+    }
+    return rest;
+  }
   if (path === '/en') return '/';
   return path;
 }

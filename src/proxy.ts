@@ -31,7 +31,10 @@ export function proxy(request: NextRequest) {
   const hasEnglishPrefix = pathname.startsWith(EN_PREFIX + '/') || pathname === EN_PREFIX;
   const persistedLocale = normalizeLocale(request.cookies.get(LOCALE_COOKIE)?.value);
   const locale = hasEnglishPrefix ? 'en' : persistedLocale;
-  const cleanPathname = hasEnglishPrefix ? (pathname.slice(EN_PREFIX.length) || '/') : pathname;
+  let cleanPathname = hasEnglishPrefix ? (pathname.slice(EN_PREFIX.length) || '/') : pathname;
+  if (cleanPathname === '/software-2') {
+    cleanPathname = '/software';
+  }
 
   // ── Locale routing ──────────────────────────────────────────────────────────
 

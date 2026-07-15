@@ -13,11 +13,14 @@ describe("i18n routing utilities", () => {
   it("adds the English prefix only for English routes", () => {
     expect(localePath("/product?focus=true", "en")).toBe("/en/product?focus=true");
     expect(localePath("/product?focus=true", "nl")).toBe("/product?focus=true");
+    expect(localePath("/software", "en")).toBe("/en/software-2");
+    expect(localePath("/software", "nl")).toBe("/software");
   });
 
   it("strips the English prefix before switching back to Dutch", () => {
     expect(stripLocalePath("/en/product")).toBe("/product");
     expect(stripLocalePath("/en")).toBe("/");
     expect(stripLocalePath("/product")).toBe("/product");
+    expect(stripLocalePath("/en/software-2")).toBe("/software");
   });
 });

@@ -56,4 +56,11 @@ describe("proxy locale routing", () => {
     expect(response.headers.get("location")).toBe("http://localhost/en/login?redirect=%2Fen%2Fmy-account");
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
+
+  it("rewrites /en/software-2 internally to /software", () => {
+    const response = proxy(makeRequest("/en/software-2"));
+
+    expect(response.headers.get("x-middleware-rewrite")).toBe("http://localhost/software");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
 });
