@@ -38,9 +38,17 @@ export function proxy(request: NextRequest) {
   if (cleanPathname === '/knowledge-base') {
     cleanPathname = '/kennisbank-overzicht';
   }
+  if (cleanPathname === '/brands') {
+    cleanPathname = '/merken';
+  }
 
   if (pathname === '/en/kennisbank-overzicht') {
     const redirectUrl = new URL(`${EN_PREFIX}/knowledge-base${search}`, request.url);
+    return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+  }
+
+  if (pathname === '/en/merken') {
+    const redirectUrl = new URL(`${EN_PREFIX}/brands${search}`, request.url);
     return persistLocale(NextResponse.redirect(redirectUrl), 'en');
   }
 

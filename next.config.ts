@@ -81,6 +81,16 @@ const nextConfig: NextConfig = {
         destination: '/en/knowledge-base',
         permanent: true,
       },
+      {
+        source: '/brands',
+        destination: '/merken',
+        permanent: true,
+      },
+      {
+        source: '/en/merken',
+        destination: '/en/brands',
+        permanent: true,
+      },
     ];
   },
 };

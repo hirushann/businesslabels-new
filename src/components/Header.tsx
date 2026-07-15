@@ -796,7 +796,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                                 ? labelCategoryHref
                                 : item.dropdownKey === 'accessories'
                                   ? accessoryCategoryHref
-                                : item.href
+                                : lp(item.href)
                           }
                           className="group -m-3 block p-3"
                         >
@@ -839,7 +839,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                 ) : (
                   <NavigationMenuLink asChild>
                     <Link
-                      href={item.href}
+                      href={lp(item.href)}
                       className="group -m-3 block p-3"
                     >
                       <span
@@ -927,7 +927,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                     </button>
                   ) : (
                     <Link
-                      href={item.href}
+                      href={lp(item.href)}
                       onClick={() => setIsMobileMenuOpen(false)}
                       className={`px-4 py-3 rounded-lg flex justify-between items-center ${
                         item.active
@@ -950,7 +950,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                                 ? labelCategoryHref
                                 : item.dropdownKey === 'accessories'
                                   ? accessoryCategoryHref
-                                : item.href
+                                : lp(item.href)
                           }
                           onClick={() => setIsMobileMenuOpen(false)}
                           className="px-3 py-2 text-sm font-semibold text-[#05315D] hover:bg-slate-100 rounded-md transition-colors flex items-center justify-between"

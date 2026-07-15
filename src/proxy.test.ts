@@ -78,4 +78,19 @@ describe("proxy locale routing", () => {
     expect(response.headers.get("location")).toBe("http://localhost/en/knowledge-base");
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
+
+  it("rewrites /en/brands internally to /merken", () => {
+    const response = proxy(makeRequest("/en/brands"));
+
+    expect(response.headers.get("x-middleware-rewrite")).toBe("http://localhost/merken");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("redirects /en/merken to /en/brands", () => {
+    const response = proxy(makeRequest("/en/merken"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/en/brands");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
 });

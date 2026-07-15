@@ -17,6 +17,8 @@ describe("i18n routing utilities", () => {
     expect(localePath("/software", "nl")).toBe("/software");
     expect(localePath("/kennisbank-overzicht", "en")).toBe("/en/knowledge-base");
     expect(localePath("/kennisbank-overzicht", "nl")).toBe("/kennisbank-overzicht");
+    expect(localePath("/brands", "en")).toBe("/en/brands");
+    expect(localePath("/brands", "nl")).toBe("/merken");
   });
 
   it("strips the English prefix before switching back to Dutch", () => {
@@ -25,5 +27,7 @@ describe("i18n routing utilities", () => {
     expect(stripLocalePath("/product")).toBe("/product");
     expect(stripLocalePath("/en/software-2")).toBe("/software");
     expect(stripLocalePath("/en/knowledge-base")).toBe("/kennisbank-overzicht");
+    expect(stripLocalePath("/merken")).toBe("/brands");
+    expect(stripLocalePath("/en/brands")).toBe("/brands");
   });
 });

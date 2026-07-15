@@ -75,6 +75,9 @@ export function localePath(path, locale) {
     }
     return '/en' + path;
   }
+  if (path === '/brands') {
+    return '/merken';
+  }
   return path;
 }
 
@@ -98,5 +101,8 @@ export function stripLocalePath(path) {
     return rest;
   }
   if (path === '/en') return '/';
+  if (path === '/merken') {
+    return '/brands';
+  }
   return path;
 }
