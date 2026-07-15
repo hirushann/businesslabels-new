@@ -56,6 +56,16 @@ const nextConfig: NextConfig = {
         destination: '/en/brand/diamondlabels-nl',
         permanent: true,
       },
+      {
+        source: '/faq',
+        destination: '/epson-colorworks-faq',
+        permanent: true,
+      },
+      {
+        source: '/en/faq',
+        destination: '/en/epson-colorworks-faq',
+        permanent: true,
+      },
     ];
   },
 };

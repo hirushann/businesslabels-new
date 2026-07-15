@@ -32,7 +32,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '',
     '/about',
     '/contact',
-    '/faq',
+    '/epson-colorworks-faq',
     '/material',
     '/material/inkjet',
     '/material/thermal-direct',

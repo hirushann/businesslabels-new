@@ -60,7 +60,7 @@ const footerLinks = {
     { nameKey: 'footer.links.contact', href: '/contact' },
     { nameKey: 'footer.links.support', href: '/support' },
     { nameKey: 'footer.links.knowledgeBase', href: '/knowledge' },
-    { nameKey: 'footer.links.faq', href: '/faq' },
+    { nameKey: 'footer.links.faq', href: '/epson-colorworks-faq' },
   ],
 };
 
