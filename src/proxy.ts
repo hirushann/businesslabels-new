@@ -41,6 +41,14 @@ export function proxy(request: NextRequest) {
   if (cleanPathname === '/brands') {
     cleanPathname = '/merken';
   }
+  if (cleanPathname === '/support-2' || cleanPathname === '/support-2/') {
+    cleanPathname = '/support';
+  }
+
+  if (pathname === '/en/support' || pathname === '/en/support/') {
+    const redirectUrl = new URL(`${EN_PREFIX}/support-2/${search}`, request.url);
+    return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+  }
 
   if (pathname === '/en/kennisbank-overzicht') {
     const redirectUrl = new URL(`${EN_PREFIX}/knowledge-base${search}`, request.url);

@@ -47,6 +47,11 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: '/en/support',
+        destination: '/en/support-2/',
+        permanent: true,
+      },
+      {
         source: '/brand/diamondlabels',
         destination: '/brand/diamondlabels-nl',
         permanent: true,

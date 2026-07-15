@@ -93,4 +93,26 @@ describe("proxy locale routing", () => {
     expect(response.headers.get("location")).toBe("http://localhost/en/brands");
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
+
+  it("rewrites /en/support-2/ internally to /support", () => {
+    const response = proxy(makeRequest("/en/support-2/"));
+
+    expect(response.headers.get("x-middleware-rewrite")).toBe("http://localhost/support");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("rewrites /en/support-2 internally to /support", () => {
+    const response = proxy(makeRequest("/en/support-2"));
+
+    expect(response.headers.get("x-middleware-rewrite")).toBe("http://localhost/support");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("redirects /en/support to /en/support-2/", () => {
+    const response = proxy(makeRequest("/en/support"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/en/support-2/");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
 });

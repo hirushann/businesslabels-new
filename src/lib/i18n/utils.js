@@ -73,6 +73,9 @@ export function localePath(path, locale) {
     if (path === '/kennisbank-overzicht') {
       return '/en/knowledge-base';
     }
+    if (path === '/support') {
+      return '/en/support-2/';
+    }
     return '/en' + path;
   }
   if (path === '/brands') {
@@ -97,6 +100,9 @@ export function stripLocalePath(path) {
     }
     if (rest === '/knowledge-base') {
       return '/kennisbank-overzicht';
+    }
+    if (rest === '/support-2/' || rest === '/support-2') {
+      return '/support';
     }
     return rest;
   }
