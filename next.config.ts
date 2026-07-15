@@ -66,6 +66,21 @@ const nextConfig: NextConfig = {
         destination: '/en/epson-colorworks-faq',
         permanent: true,
       },
+      {
+        source: '/knowledge',
+        destination: '/kennisbank-overzicht',
+        permanent: true,
+      },
+      {
+        source: '/en/knowledge',
+        destination: '/en/knowledge-base',
+        permanent: true,
+      },
+      {
+        source: '/en/kennisbank-overzicht',
+        destination: '/en/knowledge-base',
+        permanent: true,
+      },
     ];
   },
 };

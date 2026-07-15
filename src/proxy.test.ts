@@ -63,4 +63,19 @@ describe("proxy locale routing", () => {
     expect(response.headers.get("x-middleware-rewrite")).toBe("http://localhost/software");
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
+
+  it("rewrites /en/knowledge-base internally to /kennisbank-overzicht", () => {
+    const response = proxy(makeRequest("/en/knowledge-base"));
+
+    expect(response.headers.get("x-middleware-rewrite")).toBe("http://localhost/kennisbank-overzicht");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("redirects /en/kennisbank-overzicht to /en/knowledge-base", () => {
+    const response = proxy(makeRequest("/en/kennisbank-overzicht"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/en/knowledge-base");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
 });

@@ -5,6 +5,7 @@ import { getTranslations } from "next-intl/server";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import ProductCard from "@/components/ProductCard";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
+import { localePath } from "@/lib/i18n/utils";
 import { mapLaravelProductToCardData, type LaravelProduct } from "@/lib/mappings/product";
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 
@@ -146,7 +147,7 @@ export default async function BlogsPage({
           <Breadcrumbs 
             className="text-zinc-500"
             items={[
-              { label: "Knowledge Center", href: "/knowledge" },
+              { label: "Knowledge Center", href: localePath("/kennisbank-overzicht", locale) },
               { label: "Articles & Guides" }
             ]} 
           />
@@ -246,7 +247,7 @@ export default async function BlogsPage({
             <div className="text-neutral-800 text-2xl font-semibold leading-7">Looking for in-depth information?</div>
             <div className="text-neutral-700 text-base font-normal leading-6">Step-by-step guides, troubleshooting trees, and printer manuals live in the Knowledge Base.</div>
           </div>
-          <Link href="/knowledge" className="h-12 px-6 py-2.5 bg-brand hover:bg-brand-hover transition-colors rounded-[100px] flex justify-center items-center gap-2.5 flex-shrink-0">
+          <Link href={localePath("/kennisbank-overzicht", locale)} className="h-12 px-6 py-2.5 bg-brand hover:bg-brand-hover transition-colors rounded-[100px] flex justify-center items-center gap-2.5 flex-shrink-0">
             <span className="text-white text-lg font-semibold leading-6">Browse Knowledge Base</span>
           </Link>
         </div>

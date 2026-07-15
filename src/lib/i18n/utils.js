@@ -70,6 +70,9 @@ export function localePath(path, locale) {
     if (path === '/software') {
       return '/en/software-2';
     }
+    if (path === '/kennisbank-overzicht') {
+      return '/en/knowledge-base';
+    }
     return '/en' + path;
   }
   return path;
@@ -88,6 +91,9 @@ export function stripLocalePath(path) {
     const rest = path.slice(3);
     if (rest === '/software-2') {
       return '/software';
+    }
+    if (rest === '/knowledge-base') {
+      return '/kennisbank-overzicht';
     }
     return rest;
   }

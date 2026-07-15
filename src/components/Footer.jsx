@@ -59,7 +59,7 @@ const footerLinks = {
   support: [
     { nameKey: 'footer.links.contact', href: '/contact' },
     { nameKey: 'footer.links.support', href: '/support' },
-    { nameKey: 'footer.links.knowledgeBase', href: '/knowledge' },
+    { nameKey: 'footer.links.knowledgeBase', href: '/kennisbank-overzicht' },
     { nameKey: 'footer.links.faq', href: '/epson-colorworks-faq' },
   ],
 };

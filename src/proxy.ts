@@ -35,6 +35,14 @@ export function proxy(request: NextRequest) {
   if (cleanPathname === '/software-2') {
     cleanPathname = '/software';
   }
+  if (cleanPathname === '/knowledge-base') {
+    cleanPathname = '/kennisbank-overzicht';
+  }
+
+  if (pathname === '/en/kennisbank-overzicht') {
+    const redirectUrl = new URL(`${EN_PREFIX}/knowledge-base${search}`, request.url);
+    return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+  }
 
   // ── Locale routing ──────────────────────────────────────────────────────────
 
