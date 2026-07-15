@@ -50,7 +50,7 @@ export default function ContactForm() {
 
   return (
     <div className="flex-1 bg-white rounded-xl shadow-[0px_4px_6px_-4px_rgba(0,0,0,0.10)] shadow-lg outline outline-1 outline-offset-[-1px] outline-black/10 inline-flex flex-col justify-start items-start overflow-hidden w-full">
-      <div className="self-stretch p-10 flex flex-col justify-center items-center gap-8">
+      <div className="self-stretch p-5 md:p-10 flex flex-col justify-center items-center gap-8">
         {status === 'success' ? (
           <div className="self-stretch flex flex-col items-center justify-center py-10 gap-4 text-center">
              <div className="size-16 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 mb-4">

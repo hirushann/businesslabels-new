@@ -180,7 +180,7 @@ export default function FavoritesPageClient() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-line text-neutral-500 text-sm font-semibold bg-white relative z-10">
-                  <th className="py-4 pl-[56px] pr-4 w-[600px] text-copy text-[16px] font-semibold">{t('common.products') || 'Products'}</th>
+                  <th className="py-4 pl-[56px] pr-4 w-[600px] text-copy text-[16px] font-bold">{t('common.products') || 'Products'}</th>
                   <th className="py-4 px-4 w-[200px] text-copy text-[16px] font-semibold">{t('cart.price') || 'Price'}</th>
                   <th className="py-4 px-4 w-[120px] text-copy text-[16px] font-semibold">{t('account.status') || 'Status'}</th>
                   <th className="py-4 pr-4 pl-4 w-[180px] text-copy text-[16px] font-semibold">{t('account.status') || 'STATUS'}</th>
@@ -219,13 +219,13 @@ export default function FavoritesPageClient() {
                           <div className="flex flex-col min-w-0 gap-2">
                             <Link
                               href={localizedHref}
-                              className="text-link hover:underline text-[14px] font-semibold text-left truncate"
+                              className="text-link hover:underline text-[14px] font-light text-left truncate"
                             >
                               {item.sku}
                             </Link>
                             <Link
                               href={localizedHref}
-                              className="text-ink font-semibold hover:text-brand transition-colors text-[18px] leading-[21.60px] text-left"
+                              className="text-ink font-bold hover:text-brand transition-colors text-[18px] leading-[21.60px] text-left"
                             >
                               {item.name}
                             </Link>
@@ -235,7 +235,7 @@ export default function FavoritesPageClient() {
 
                       {/* Price */}
                       <td className="py-4 px-4">
-                        <div className="flex items-end gap-2">
+                        <div className="flex flex-wrap items-end gap-x-1 gap-y-0.5">
                           {!isButtonAddToCart && (
                             <span className="text-copy text-[16px] font-normal">
                               {t('product.fromPrice') || 'From'}
@@ -253,11 +253,11 @@ export default function FavoritesPageClient() {
                       {/* Status */}
                       <td className="py-4 px-4">
                         {item.inStock ? (
-                          <span className="text-success font-semibold text-[18px]">
+                          <span className="text-success font-medium text-[18px]">
                             {t('product.inStock') || 'In Stock'}
                           </span>
                         ) : (
-                          <span className="text-danger font-semibold text-[18px]">
+                          <span className="text-danger font-medium text-[18px]">
                             {t('product.outOfStock') || 'Out of Stock'}
                           </span>
                         )}
@@ -268,7 +268,7 @@ export default function FavoritesPageClient() {
                         <button
                           type="button"
                           onClick={() => handleAction(item)}
-                          className="h-[38px] px-4 bg-brand hover:bg-brand-hover text-white rounded-[100px] text-[16px] font-semibold transition-all inline-flex items-center justify-center gap-2 whitespace-nowrap"
+                          className="h-[38px] px-4 bg-brand hover:bg-brand-hover text-white rounded-[100px] text-[16px] font-medium transition-all inline-flex items-center justify-center gap-2 whitespace-nowrap"
                         >
                           <span>
                             {isButtonAddToCart
@@ -277,9 +277,9 @@ export default function FavoritesPageClient() {
                           </span>
                           <div className="w-[22px] height-[16px] relative overflow-hidden flex items-center">
                             <svg width="22" height="16" viewBox="0 0 22 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <circle cx="6.42" cy="13.33" r="1.5" stroke="currentColor" strokeWidth="1.5"/>
-                              <circle cx="16.50" cy="13.33" r="1.5" stroke="currentColor" strokeWidth="1.5"/>
-                              <path d="M1.88 1.37H3.71L6.15 11.26H16.95L18.74 1.37H1.88Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M7.33268 14.6654C7.83894 14.6654 8.24935 14.3669 8.24935 13.9987C8.24935 13.6305 7.83894 13.332 7.33268 13.332C6.82642 13.332 6.41602 13.6305 6.41602 13.9987C6.41602 14.3669 6.82642 14.6654 7.33268 14.6654Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M17.4167 14.6654C17.9229 14.6654 18.3333 14.3669 18.3333 13.9987C18.3333 13.6305 17.9229 13.332 17.4167 13.332C16.9104 13.332 16.5 13.6305 16.5 13.9987C16.5 14.3669 16.9104 14.6654 17.4167 14.6654Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M1.87891 1.36719H3.71224L6.15057 9.64719C6.24002 9.95043 6.47202 10.2215 6.80664 10.4138C7.14126 10.606 7.55757 10.7074 7.9839 10.7005H16.9489C17.3661 10.7 17.7707 10.596 18.0957 10.4057C18.4207 10.2154 18.6467 9.95021 18.7364 9.65385L20.2489 4.70052H4.69307" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
                           </div>
                         </button>
@@ -379,10 +379,10 @@ export default function FavoritesPageClient() {
                         ? t('wishlist.moveToCart') || 'Add to cart'
                         : t('common.select') || 'Select option'}
                     </span>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="9" cy="21" r="1"/>
-                      <circle cx="20" cy="21" r="1"/>
-                      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                    <svg width="22" height="16" viewBox="0 0 22 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M7.33268 14.6654C7.83894 14.6654 8.24935 14.3669 8.24935 13.9987C8.24935 13.6305 7.83894 13.332 7.33268 13.332C6.82642 13.332 6.41602 13.6305 6.41602 13.9987C6.41602 14.3669 6.82642 14.6654 7.33268 14.6654Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M17.4167 14.6654C17.9229 14.6654 18.3333 14.3669 18.3333 13.9987C18.3333 13.6305 17.9229 13.332 17.4167 13.332C16.9104 13.332 16.5 13.6305 16.5 13.9987C16.5 14.3669 16.9104 14.6654 17.4167 14.6654Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M1.87891 1.36719H3.71224L6.15057 9.64719C6.24002 9.95043 6.47202 10.2215 6.80664 10.4138C7.14126 10.606 7.55757 10.7074 7.9839 10.7005H16.9489C17.3661 10.7 17.7707 10.596 18.0957 10.4057C18.4207 10.2154 18.6467 9.95021 18.7364 9.65385L20.2489 4.70052H4.69307" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </button>
                 </div>
