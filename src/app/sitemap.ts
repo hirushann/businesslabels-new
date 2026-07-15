@@ -40,7 +40,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/product',
     '/categories',
     getPrinterCategoryPath('nl'),
-    '/blogs',
+    '/blog',
     '/brand',
     '/printers',
     '/custom-made-form',
@@ -120,7 +120,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   blogs.forEach((blog) => {
     if (blog.slug) {
       sitemapEntries.push({
-        url: `${frontendUrl}/blogs/${blog.slug}`,
+        url: `${frontendUrl}/blog/${blog.slug}`,
         lastModified: new Date(blog.updated_at || new Date()),
         changeFrequency: 'monthly',
         priority: 0.6,

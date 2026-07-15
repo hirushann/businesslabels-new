@@ -157,7 +157,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
               <div className="w-full flex flex-col justify-start items-start gap-4">
                 <Breadcrumbs 
                   items={[
-                    { label: t("common.blogs"), href: "/blogs" },
+                    { label: t("common.blogs"), href: "/blog" },
                     { label: post.title }
                   ]} 
                 />
@@ -291,7 +291,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
                      </button>
                   </div>
                   <div className="w-full h-10 bg-gray-50 rounded-full flex items-center px-4 border border-slate-100 overflow-hidden relative">
-                    <span className="text-sm text-neutral-500 truncate w-full pr-8">https://businesslabel.com/blogs/{post.slug}</span>
+                    <span className="text-sm text-neutral-500 truncate w-full pr-8">https://businesslabel.com/blog/{post.slug}</span>
                     <button className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-brand">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                     </button>

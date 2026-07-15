@@ -57,7 +57,7 @@ export default function KnowledgeSearchBar({ apiBaseUrl }: KnowledgeSearchBarPro
 
   return (
     <div className="relative w-full lg:w-[55%]" ref={dropdownRef}>
-      <form action="/blogs" method="GET" className="w-full bg-white rounded-full p-2 pl-6 flex items-center gap-3 shadow-lg hover:shadow-xl transition-shadow focus-within:ring-4 focus-within:ring-white/20 relative z-20">
+      <form action="/blog" method="GET" className="w-full bg-white rounded-full p-2 pl-6 flex items-center gap-3 shadow-lg hover:shadow-xl transition-shadow focus-within:ring-4 focus-within:ring-white/20 relative z-20">
         <Search className="w-6 h-6 text-gray-400 flex-shrink-0" />
         <input 
           type="text" 
@@ -79,7 +79,7 @@ export default function KnowledgeSearchBar({ apiBaseUrl }: KnowledgeSearchBarPro
               const category = result.categories?.[0]?.name || 'Uncategorized';
               return (
                 <Link 
-                  href={`/blogs/${result.slug}`} 
+                  href={`/blog/${result.slug}`} 
                   key={result.id}
                   className="flex items-center justify-between p-4 border-b border-gray-100 last:border-0 hover:bg-slate-50 transition-colors"
                   onClick={() => setIsFocused(false)}
