@@ -33,10 +33,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/about',
     '/contact',
     '/faq',
-    '/materials',
-    '/materials/inkjet',
-    '/materials/thermal-direct',
-    '/materials/thermal-transfer',
+    '/material',
+    '/material/inkjet',
+    '/material/thermal-direct',
+    '/material/thermal-transfer',
     '/product',
     '/categories',
     getPrinterCategoryPath('nl'),
@@ -72,7 +72,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   materials.forEach((material) => {
     if (material.slug) {
       sitemapEntries.push({
-        url: `${frontendUrl}/materials/${material.slug}`,
+        url: `${frontendUrl}/material/${material.slug}`,
         lastModified: new Date(material.updated_at || new Date()),
         changeFrequency: 'weekly',
         priority: 0.7,

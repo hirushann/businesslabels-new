@@ -480,7 +480,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
         <div className="mx-auto flex max-w-[1440px] flex-col gap-6">
           <Breadcrumbs
             items={[
-              { label: t("common.materials"), href: "/materials" },
+              { label: t("common.materials"), href: "/material" },
               ...(category ? [{ label: category.name, href: `/category/${category.slug || category.id}` }] : []),
               { label: material.title },
             ]}

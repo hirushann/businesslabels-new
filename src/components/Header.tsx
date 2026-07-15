@@ -74,7 +74,7 @@ const navItems = [
   { labelKey: 'header.nav.printers', fallbackLabel: 'Label Printers', href: '/product-category/labelprinters', dropdown: true, dropdownKey: 'printers' as DropdownKey },
   { labelKey: 'header.nav.labels', fallbackLabel: 'Labels and tickets', href: '/category/labels-en-tickets', dropdown: true, dropdownKey: 'labels' as DropdownKey },
   { labelKey: 'header.nav.accessories', fallbackLabel: 'Accessories', href: '/category/accessoires', dropdown: true, dropdownKey: 'accessories' as DropdownKey },
-  { labelKey: 'header.nav.materials', fallbackLabel: 'Materials', href: '/materials', dropdownKey: null },
+  { labelKey: 'header.nav.materials', fallbackLabel: 'Materials', href: '/material', dropdownKey: null },
   { labelKey: 'header.nav.resources', fallbackLabel: 'Resources', href: '/resources', dropdown: true, dropdownKey: 'resources' as DropdownKey },
   { labelKey: 'header.nav.brands', fallbackLabel: 'Brands', href: '/brands', dropdown: true, dropdownKey: 'brands' as DropdownKey },
   { labelKey: 'header.nav.support', fallbackLabel: 'Support', href: '/support', dropdownKey: null },
@@ -221,7 +221,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
         console.error('Header search suggestions failed:', error);
         setSearchSuggestions({
           productGroups: [],
-          materials: { id: 'materials', title: t('search.popover.materials'), href: '/materials', total: 0, items: [] },
+          materials: { id: 'materials', title: t('search.popover.materials'), href: '/material', total: 0, items: [] },
           groupProducts: { id: 'group-products', title: groupProductsTitle, href: productListingPath, total: 0, items: [] },
           error: t('search.popover.unavailable'),
         });
@@ -408,7 +408,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                     {searchSuggestions?.materials.items.map(renderSearchItem)}
                   </div>
                   <Link
-                    href={searchSuggestions?.materials.href ?? '/materials'}
+                    href={searchSuggestions?.materials.href ?? '/material'}
                     onClick={closeSearchPopover}
                     className="inline-flex text-base font-medium leading-6 text-brand hover:text-orange-600"
                   >

@@ -1365,7 +1365,7 @@ function PrintersView() {
                 ) : (
                   <span />
                 )}
-                <Link href={printer.slug ? `/materials/${printer.slug}` : "#"} className="text-brand font-black text-xs uppercase tracking-wider hover:underline">{t('account.viewPrinter')}</Link>
+                <Link href={printer.slug ? `/material/${printer.slug}` : "#"} className="text-brand font-black text-xs uppercase tracking-wider hover:underline">{t('account.viewPrinter')}</Link>
               </div>
             </div>
             <div className="h-px bg-slate-100" />
@@ -1382,7 +1382,7 @@ function PrintersView() {
                   <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest group-hover/btn:text-red-500 transition-colors">{t('account.action', { fallback: 'Action' })}</span>
                   <span className="text-sm font-bold text-neutral-800 group-hover/btn:text-red-500 transition-colors">{t('account.removeFromFavorites')}</span>
                </button>
-               <Link href={printer.slug ? `/materials/${printer.slug}` : "#"} className="flex flex-col gap-1 text-left group/btn">
+               <Link href={printer.slug ? `/material/${printer.slug}` : "#"} className="flex flex-col gap-1 text-left group/btn">
                   <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest group-hover/btn:text-brand transition-colors">{t('account.supplies', { fallback: 'Supplies' })}</span>
                   <span className="text-sm font-bold text-neutral-800">{t('account.buyLabels')}</span>
                </Link>
