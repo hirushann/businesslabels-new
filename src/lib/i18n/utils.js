@@ -66,20 +66,37 @@ export function pickLocale(value, locale) {
  */
 export function localePath(path, locale) {
   const normalized = normalizeLocale(locale);
+  const [basePath, search] = path.split('?');
+  const searchSuffix = search ? '?' + search : '';
   if (normalized === 'en') {
-    if (path === '/software') {
-      return '/en/software-2';
+    if (basePath === '/software') {
+      return '/en/software-2' + searchSuffix;
     }
-    if (path === '/kennisbank-overzicht') {
-      return '/en/knowledge-base';
+    if (basePath === '/kennisbank-overzicht') {
+      return '/en/knowledge-base' + searchSuffix;
     }
-    if (path === '/support') {
-      return '/en/support-2/';
+    if (basePath === '/support') {
+      return '/en/support-2/' + searchSuffix;
+    }
+    if (basePath === '/maatwerk') {
+      return '/en/custom-made-labels' + searchSuffix;
+    }
+    if (basePath === '/winkelmand') {
+      return '/en/cart' + searchSuffix;
+    }
+    if (basePath === '/afrekenen') {
+      return '/en/checkout' + searchSuffix;
     }
     return '/en' + path;
   }
-  if (path === '/brands') {
-    return '/merken';
+  if (basePath === '/brands') {
+    return '/merken' + searchSuffix;
+  }
+  if (basePath === '/cart') {
+    return '/winkelmand' + searchSuffix;
+  }
+  if (basePath === '/checkout') {
+    return '/afrekenen' + searchSuffix;
   }
   return path;
 }
@@ -93,22 +110,39 @@ export function localePath(path, locale) {
  * @returns {string}
  */
 export function stripLocalePath(path) {
-  if (path.startsWith('/en/')) {
-    const rest = path.slice(3);
+  const [basePath, search] = path.split('?');
+  const searchSuffix = search ? '?' + search : '';
+  if (basePath.startsWith('/en/')) {
+    const rest = basePath.slice(3);
     if (rest === '/software-2') {
-      return '/software';
+      return '/software' + searchSuffix;
     }
     if (rest === '/knowledge-base') {
-      return '/kennisbank-overzicht';
+      return '/kennisbank-overzicht' + searchSuffix;
     }
     if (rest === '/support-2/' || rest === '/support-2') {
-      return '/support';
+      return '/support' + searchSuffix;
     }
-    return rest;
+    if (rest === '/custom-made-labels') {
+      return '/maatwerk' + searchSuffix;
+    }
+    if (rest === '/cart') {
+      return '/winkelmand' + searchSuffix;
+    }
+    if (rest === '/checkout') {
+      return '/afrekenen' + searchSuffix;
+    }
+    return rest + searchSuffix;
   }
-  if (path === '/en') return '/';
-  if (path === '/merken') {
-    return '/brands';
+  if (basePath === '/en') return '/' + searchSuffix;
+  if (basePath === '/merken') {
+    return '/brands' + searchSuffix;
+  }
+  if (basePath === '/winkelmand') {
+    return '/cart' + searchSuffix;
+  }
+  if (basePath === '/afrekenen') {
+    return '/checkout' + searchSuffix;
   }
   return path;
 }

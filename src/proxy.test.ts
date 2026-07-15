@@ -115,4 +115,57 @@ describe("proxy locale routing", () => {
     expect(response.headers.get("location")).toBe("http://localhost/en/support-2/");
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
+
+  it("redirects /en/custom-made-form to /en/custom-made-labels", () => {
+    const response = proxy(makeRequest("/en/custom-made-form"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/en/custom-made-labels");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("redirects /en/maatwerk to /en/custom-made-labels", () => {
+    const response = proxy(makeRequest("/en/maatwerk"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/en/custom-made-labels");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("rewrites /en/custom-made-labels internally to /maatwerk", () => {
+    const response = proxy(makeRequest("/en/custom-made-labels"));
+
+    expect(response.headers.get("x-middleware-rewrite")).toBe("http://localhost/maatwerk");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("rewrites /en/cart internally to /winkelmand", () => {
+    const response = proxy(makeRequest("/en/cart"));
+
+    expect(response.headers.get("x-middleware-rewrite")).toBe("http://localhost/winkelmand");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("redirects /en/winkelmand to /en/cart", () => {
+    const response = proxy(makeRequest("/en/winkelmand"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/en/cart");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("rewrites /en/checkout internally to /afrekenen", () => {
+    const response = proxy(makeRequest("/en/checkout"));
+
+    expect(response.headers.get("x-middleware-rewrite")).toBe("http://localhost/afrekenen");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("redirects /en/afrekenen to /en/checkout", () => {
+    const response = proxy(makeRequest("/en/afrekenen"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/en/checkout");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
 });

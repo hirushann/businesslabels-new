@@ -361,7 +361,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
               {/* Action Buttons */}
               <div className="px-6 flex flex-col gap-4">
                 <Link
-                  href="/cart"
+                  href={lp('/winkelmand')}
                   onClick={onClose}
                   className="w-full h-[38px] bg-brand hover:bg-brand-hover active:bg-brand-active rounded-[100px] flex items-center justify-center gap-2 cursor-pointer transition-colors"
                 >

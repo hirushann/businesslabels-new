@@ -1971,7 +1971,7 @@ export default function CheckoutPageClient({
         if (response.status === 401 || json.message === "Unauthenticated.") {
           toast.error(t('checkout.sessionExpired'));
           localStorage.removeItem('auth_user');
-          window.location.href = `${localePath("/login", locale)}?redirect=${encodeURIComponent(localePath("/checkout", locale))}`;
+          window.location.href = `${localePath("/login", locale)}?redirect=${encodeURIComponent(localePath("/afrekenen", locale))}`;
           return;
         }
         

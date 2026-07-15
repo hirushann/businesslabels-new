@@ -52,6 +52,21 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: '/custom-made-form',
+        destination: '/maatwerk',
+        permanent: true,
+      },
+      {
+        source: '/en/custom-made-form',
+        destination: '/en/custom-made-labels',
+        permanent: true,
+      },
+      {
+        source: '/en/maatwerk',
+        destination: '/en/custom-made-labels',
+        permanent: true,
+      },
+      {
         source: '/brand/diamondlabels',
         destination: '/brand/diamondlabels-nl',
         permanent: true,

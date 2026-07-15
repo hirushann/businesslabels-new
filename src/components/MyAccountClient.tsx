@@ -10,6 +10,7 @@ import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { useTranslations, useLocale } from 'next-intl';
 import { useCart } from '@/components/CartProvider';
 import { toDisplayImageUrl } from '@/lib/utils/imageProxy';
+import { localePath } from '@/lib/i18n/utils';
 
 type Tab = 'dashboard' | 'orders' | 'addresses' | 'details' | 'printers' | 'favourites' | 'billing_address' | 'shipping_address' | 'change_password';
 
@@ -942,6 +943,7 @@ function DashboardView({ setActiveTab, user }: { setActiveTab: (tab: Tab) => voi
 
 function OrdersView() {
   const t = useTranslations();
+  const locale = useLocale();
   const cart = useCart();
   const [orders, setOrders] = useState<AccountOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -976,7 +978,7 @@ function OrdersView() {
       );
     });
     toast.success(t.has('account.reorderSuccess') ? t('account.reorderSuccess') : 'Items added to cart!');
-    window.location.href = '/checkout';
+    window.location.href = localePath('/afrekenen', locale);
   };
 
   const fetchOrders = async () => {

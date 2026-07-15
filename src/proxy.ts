@@ -44,9 +44,23 @@ export function proxy(request: NextRequest) {
   if (cleanPathname === '/support-2' || cleanPathname === '/support-2/') {
     cleanPathname = '/support';
   }
+  if (cleanPathname === '/custom-made-labels') {
+    cleanPathname = '/maatwerk';
+  }
+  if (cleanPathname === '/cart') {
+    cleanPathname = '/winkelmand';
+  }
+  if (cleanPathname === '/checkout') {
+    cleanPathname = '/afrekenen';
+  }
 
   if (pathname === '/en/support' || pathname === '/en/support/') {
     const redirectUrl = new URL(`${EN_PREFIX}/support-2/${search}`, request.url);
+    return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+  }
+
+  if (pathname === '/en/custom-made-form' || pathname === '/en/custom-made-form/' || pathname === '/en/maatwerk' || pathname === '/en/maatwerk/') {
+    const redirectUrl = new URL(`${EN_PREFIX}/custom-made-labels${search}`, request.url);
     return persistLocale(NextResponse.redirect(redirectUrl), 'en');
   }
 
@@ -57,6 +71,16 @@ export function proxy(request: NextRequest) {
 
   if (pathname === '/en/merken') {
     const redirectUrl = new URL(`${EN_PREFIX}/brands${search}`, request.url);
+    return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+  }
+
+  if (pathname === '/en/winkelmand') {
+    const redirectUrl = new URL(`${EN_PREFIX}/cart${search}`, request.url);
+    return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+  }
+
+  if (pathname === '/en/afrekenen') {
+    const redirectUrl = new URL(`${EN_PREFIX}/checkout${search}`, request.url);
     return persistLocale(NextResponse.redirect(redirectUrl), 'en');
   }
 

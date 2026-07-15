@@ -43,7 +43,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/blog',
     '/brand',
     '/printers',
-    '/custom-made-form',
+    '/maatwerk',
   ];
 
   const sitemapEntries: MetadataRoute.Sitemap = [];

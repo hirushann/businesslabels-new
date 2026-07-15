@@ -862,7 +862,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
             </NavigationMenuList>
           </NavigationMenu>
           <div className="flex items-center gap-4">
-            <Link href="/custom-made-form" className="text-brand text-base font-medium leading-6">
+            <Link href={lp('/maatwerk')} className="text-brand text-base font-medium leading-6">
               {t('header.customMadeForm')}
             </Link>
             <Link
