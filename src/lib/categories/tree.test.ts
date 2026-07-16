@@ -67,6 +67,30 @@ describe("category tree helpers", () => {
     );
   });
 
+  it("normalizes mixed-locale English archive segments at every level", () => {
+    expect(
+      localizedProductCategoryPath(
+        nestedCategoryGroups,
+        "/en/product-category/labelprinters/color-labelprinters/midrange-label-printers",
+        "en",
+      ),
+    ).toBe(
+      "/en/product-category/label-printers/color-labelprinters/midrange-label-printers",
+    );
+  });
+
+  it("normalizes mixed-locale Dutch archive segments at every level", () => {
+    expect(
+      localizedProductCategoryPath(
+        nestedCategoryGroups,
+        "/product-categorie/labelprinters/color-labelprinters/starterkit-full-color-labelprinters",
+        "nl",
+      ),
+    ).toBe(
+      "/product-categorie/labelprinters/kleuren-labelprinters-nl/starterkit-kleuren-labelprinters",
+    );
+  });
+
   it("only falls back to the stored slug for a category missing a translation", () => {
     const missingLeafTranslation = structuredClone(nestedCategoryGroups);
     missingLeafTranslation[0].categories[0].children![0].children![0].translations!.en!.slug = null;
@@ -138,6 +162,30 @@ const nestedCategoryGroups: CategoryGroup[] = [
                 translations: {
                   nl: { name: "Desktop Labelprinters", slug: "desktop-labelprinters-nl" },
                   en: { name: "Desktop Label printers", slug: "desktop-label-printers" },
+                },
+                parent_id: 56,
+                count: 3,
+                children: [],
+              },
+              {
+                id: 75,
+                name: "Midrange Labelprinters",
+                slug: "midrange-labelprinters-nl",
+                translations: {
+                  nl: { name: "Midrange Labelprinters", slug: "midrange-labelprinters-nl" },
+                  en: { name: "Midrange Label printers", slug: "midrange-label-printers" },
+                },
+                parent_id: 56,
+                count: 3,
+                children: [],
+              },
+              {
+                id: 76,
+                name: "Starterkit kleuren labelprinters",
+                slug: "starterkit-kleuren-labelprinters",
+                translations: {
+                  nl: { name: "Starterkit kleuren labelprinters", slug: "starterkit-kleuren-labelprinters" },
+                  en: { name: "Starterkit full color labelprinters", slug: "starterkit-full-color-labelprinters" },
                 },
                 parent_id: 56,
                 count: 3,
