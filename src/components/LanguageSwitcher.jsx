@@ -44,7 +44,7 @@ export default function LanguageSwitcher() {
   const [isPending, startTransition] = useTransition();
   const containerRef = useRef(null);
 
-  const setLocale = (nextLocale) => {
+  const setLocale = async (nextLocale) => {
     const normalized = normalizeLocale(nextLocale);
     if (normalized === locale) return;
 
@@ -53,6 +53,31 @@ export default function LanguageSwitcher() {
     // Build the target URL: EN gets /en prefix, NL gets clean path
     const currentPath = window.location.pathname;
     const cleanPath = stripLocalePath(currentPath);
+
+    if (/^\/(?:en\/)?product-(?:category|categorie)(?:\/|$)/.test(currentPath)) {
+      try {
+        const params = new URLSearchParams({
+          pathname: currentPath,
+          locale: normalized,
+        });
+        const response = await fetch(`/api/category-localized-path?${params.toString()}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (typeof data.path === 'string' && data.path.startsWith('/')) {
+            const targetPath = data.path + window.location.search + window.location.hash;
+            startTransition(() => {
+              router.push(targetPath);
+              router.refresh();
+            });
+            return;
+          }
+        }
+      } catch {
+        // The existing route-specific and pathname fallbacks below keep the
+        // language switch usable when the category API is temporarily down.
+      }
+    }
+
     const alternateHref = document
       .querySelector(`link[rel="alternate"][hreflang="${normalized}"]`)
       ?.getAttribute('href');
@@ -70,7 +95,13 @@ export default function LanguageSwitcher() {
       getLocalizedPrinterCategoryPathForPath(currentPath, normalized) ??
       getLocalizedLabelCategoryPathForPath(currentPath, normalized) ??
       getLocalizedAccessoryCategoryPathForPath(currentPath, normalized);
-    const targetPath = (translatedPath ?? (normalized === 'en' ? '/en' + cleanPath : cleanPath)) + window.location.search + window.location.hash;
+    let fallbackPath = normalized === 'en' ? '/en' + cleanPath : cleanPath;
+    if (normalized === 'en') {
+      fallbackPath = fallbackPath.replace(/^\/en\/product-categorie(?=\/|$)/, '/en/product-category');
+    } else {
+      fallbackPath = fallbackPath.replace(/^\/product-category(?=\/|$)/, '/product-categorie');
+    }
+    const targetPath = (translatedPath ?? fallbackPath) + window.location.search + window.location.hash;
     startTransition(() => {
       router.push(targetPath);
       router.refresh();

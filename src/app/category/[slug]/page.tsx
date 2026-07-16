@@ -189,11 +189,16 @@ export async function renderCategoryArchivePage({
   const virtualLabelParentSegments = virtualLabelGroup
     ? getLabelCategoryLookupSegments(categorySourceLocale, virtualLabelGroup.parentKey)
     : null;
+  const localizedRouteLookup = routeMode === "productCategory" && routeSegments?.length
+    ? findCategoryByPath(categoryGroups, routeSegments, locale)
+    : null;
 
   const lookup = virtualAccessoryParentSegments
     ? findCategoryByPath(categoryGroups, virtualAccessoryParentSegments, categorySourceLocale)
     : virtualLabelParentSegments
     ? findCategoryByPath(categoryGroups, virtualLabelParentSegments, categorySourceLocale)
+    : localizedRouteLookup
+    ? localizedRouteLookup
     : categoryLookupSegments
     ? findCategoryByPath(categoryGroups, categoryLookupSegments, categorySourceLocale)
       ?? findCategoryBySlug(categoryGroups, categoryLookupSlug, categorySourceLocale)

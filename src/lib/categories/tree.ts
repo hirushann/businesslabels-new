@@ -275,6 +275,61 @@ export function findCategoryByPath(
   return best;
 }
 
+type ProductCategoryLocale = "en" | "nl";
+
+function productCategoryRoute(pathname: string): {
+  sourceLocale: ProductCategoryLocale;
+  segments: string[];
+} | null {
+  const pathOnly = pathname.split(/[?#]/, 1)[0];
+  const parts = pathOnly.split("/").filter(Boolean);
+
+  if (parts[0] === "en") parts.shift();
+
+  const base = parts.shift();
+  if (base !== "product-category" && base !== "product-categorie") return null;
+
+  return {
+    sourceLocale: base === "product-categorie" ? "nl" : "en",
+    segments: parts.map(decodeSegment),
+  };
+}
+
+/**
+ * Rebuild a product-category URL from category identities in the API tree.
+ * This deliberately translates every hierarchy level instead of carrying
+ * route segments from the current URL into the selected locale.
+ */
+export function localizedProductCategoryPath(
+  groups: CategoryGroup[],
+  pathname: string,
+  targetLocale: ProductCategoryLocale,
+): string | null {
+  const route = productCategoryRoute(pathname);
+  if (!route || route.segments.length === 0) return null;
+
+  // The route base identifies the source language. Trying the other locale is
+  // useful for malformed legacy URLs such as `/en/product-categorie/...` and
+  // for links created before the localized base segment was introduced.
+  const sourceLocales: ProductCategoryLocale[] = route.sourceLocale === "nl"
+    ? ["nl", "en"]
+    : ["en", "nl"];
+  const lookup = sourceLocales
+    .map((locale) => findCategoryByPath(groups, route.segments, locale))
+    .find((candidate) => candidate !== null);
+
+  if (!lookup) return null;
+
+  const translatedSegments = [...lookup.ancestors, lookup.category]
+    .map((category) => categoryRouteSlug(category, targetLocale))
+    .filter(Boolean)
+    .map((slug) => encodeURIComponent(slug));
+  if (translatedSegments.length === 0) return null;
+
+  const base = targetLocale === "en" ? "/en/product-category" : "/product-categorie";
+  return `${base}/${translatedSegments.join("/")}`;
+}
+
 /**
  * Walks every node in the tree and returns the set of live category slugs
  * (current locale). Used to drop stale slugs from the catalog's category
