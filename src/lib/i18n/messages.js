@@ -192,6 +192,8 @@ export const MESSAGES_V4 = {
       unknown: 'Unknown'
     },
     recycle: {
+      metadataTitle: "Epson’s ColorWorks Ink Recycling Program • BusinessLabels.nl",
+      metadataDescription: "Epson recycling program Following Epson's philosophy regarding recycling “To preserve valuable environmental resources and reduce waste, we strive to collect and recycle as many products and consumables as possible”, Epson has established collection and recycling programs for cartridges. The programs consist of single returns (by post) and […]",
       breadcrumb: 'Recycling Program',
       heroTitle: 'Recycle your empty printer cartridges',
       heroDesc: "Label printers consume ink. That's part of the process. But empty cartridges and maintenance boxes don't belong in the trash — they can be reused or responsibly processed. This program handles the return logistics for you, free of charge.",
@@ -737,7 +739,7 @@ export const MESSAGES_V4 = {
       pdfTotal: 'Total',
     },
     blogsPage: {
-      metadataTitle: 'Blogs | Businesslabels',
+      metadataTitle: 'Blog • BusinessLabels.nl',
       metadataDescription: 'Stay updated with the latest tips, guides, and news about labeling and printing solutions.',
       titlePrefix: 'Our',
       titleHighlight: 'Blogs',
@@ -791,7 +793,7 @@ export const MESSAGES_V4 = {
       permanent: 'Permanent',
     },
     materialsPage: {
-      metadataTitle: 'Material Overview — Businesslabels',
+      metadataTitle: 'Archive Materials • BusinessLabels.nl',
       metadataDescription: 'Discover printer media materials selected for precision, durability, color accuracy, and reliable professional output.',
       title: 'Material Overview',
       subtitle: 'Explore our printer media materials, engineered for precision, durability, and high-quality output. From standard to specialty stocks, each is chosen to boost performance, color accuracy, and reliability-ensuring professional results without compromise.',
@@ -1525,6 +1527,8 @@ export const MESSAGES_V4 = {
       },
     },
     software: {
+      metadataTitle: 'Software • BusinessLabels.nl',
+      metadataDescription: 'To make the most beautiful and smartest labels, you often have to use special software to do this efficiently. Because a label often differs greatly functionally from a traditional A4 piece of paper, the needs and ways to create it are also different. But there are also various applications in label design that require a […]',
       title: 'Software',
       intro: 'To create the most beautiful and smart labels, you often need to use special software to work efficiently. Because a label is often functionally very different from a traditional A4 paper, the needs and ways to create them are also different.',
       logical: {
@@ -2157,6 +2161,8 @@ export const MESSAGES_V4 = {
       unknown: 'Onbekend'
     },
     recycle: {
+      metadataTitle: "Epson’s ColorWorks inkt Recycling Programma • BusinessLabels.nl",
+      metadataDescription: "Recycling programma Epson In navolging van de filosofie van Epson ten aanzien van recycling “Om waardevolle milieu bronnen te behouden en afval te verminderen”, streven we ernaar zoveel mogelijk producten en verbruiksartikelen in te zamelen en te recyclen”, heeft Epson de inzamelings- en recyclingprogramma’s voor cartridges opgesteld.De programma’s bestaan uit enkelvoudige retour (via post) en […]",
       breadcrumb: 'Recyclingprogramma',
       heroTitle: 'Recycleer uw lege inktpatronen',
       heroDesc: 'Labelprinters verbruiken inkt. Dat hoort er nu eenmaal bij. Maar lege inktpatronen en onderhoudsboxen horen niet bij het restafval — ze kunnen worden hergebruikt of op verantwoorde wijze worden verwerkt. Dit programma regelt de retourlogistiek voor u, geheel kosteloos.',
@@ -2702,7 +2708,7 @@ export const MESSAGES_V4 = {
       pdfTotal: 'Totaal',
     },
     blogsPage: {
-      metadataTitle: 'Blogs | Businesslabels',
+      metadataTitle: 'Blog • BusinessLabels.nl',
       metadataDescription: 'Blijf op de hoogte van de nieuwste tips, gidsen en nieuwtjes over etiketteren en printoplossingen.',
       titlePrefix: 'Onze',
       titleHighlight: 'Blogs',
@@ -2756,7 +2762,7 @@ export const MESSAGES_V4 = {
       permanent: 'Permanent',
     },
     materialsPage: {
-      metadataTitle: 'Materiaaloverzicht — Businesslabels',
+      metadataTitle: 'Archief Materials • BusinessLabels.nl',
       metadataDescription: 'Ontdek printermaterialen geselecteerd voor precisie, duurzaamheid, kleurnauwkeurigheid en betrouwbare professionele output.',
       title: 'Materiaaloverzicht',
       subtitle: 'Ontdek onze printermaterialen, ontwikkeld voor precisie, duurzaamheid en hoogwaardige output. Van standaard tot speciale materialen: elk materiaal is gekozen om prestaties, kleurnauwkeurigheid en betrouwbaarheid te verbeteren, voor professionele resultaten zonder compromis.',
@@ -3491,6 +3497,8 @@ export const MESSAGES_V4 = {
       },
     },
     software: {
+      metadataTitle: 'Software • BusinessLabels.nl',
+      metadataDescription: 'Om de mooiste en slimste labels te maken moet je vaak gebruik maken van speciale software om efficiënt te kunnen werken. Omdat een label functioneel vaak enorm verschild met een  traditioneel A4 papiertje zijn de behoeften en manieren om deze te creëren ook anders. Maar ook in label design zijn er uiteenlopende toepassingen die om […]',
       title: 'Software',
       intro: 'Om de mooiste en slimste labels te maken moet je vaak gebruik maken van speciale software om efficiënt te kunnen werken. Omdat een label functioneel vaak enorm verschild met een traditioneel A4 papiertje zijn de behoeften en manieren om deze te creëren ook anders.',
       logical: {

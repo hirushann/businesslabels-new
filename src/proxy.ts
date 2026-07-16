@@ -62,6 +62,13 @@ export function proxy(request: NextRequest) {
     return persistLocale(NextResponse.redirect(redirectUrl), 'en');
   }
 
+  if (pathname === '/inkt-recyclen-epson-colorworks' || pathname === '/inkt-recyclen-epson-colorworks/') {
+    if (locale === 'en') {
+      const redirectUrl = new URL(`${EN_PREFIX}/inkt-recyclen-epson-colorworks${search}`, request.url);
+      return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+    }
+  }
+
   if (pathname === '/en/custom-made-form' || pathname === '/en/custom-made-form/' || pathname === '/en/maatwerk' || pathname === '/en/maatwerk/') {
     const redirectUrl = new URL(`${EN_PREFIX}/custom-made-labels${search}`, request.url);
     return persistLocale(NextResponse.redirect(redirectUrl), 'en');

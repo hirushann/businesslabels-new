@@ -1,11 +1,14 @@
 import { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import RecyclePageClient from './RecyclePageClient';
 
-export const metadata: Metadata = {
-  title: 'Inkt Recyclen — Epson ColorWorks | Businesslabels',
-  description:
-    'Recycle your empty Epson ColorWorks ink cartridges and maintenance boxes for free. Request a collection box and arrange a free pickup through our recycling program.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('recycle');
+  return {
+    title: t('metadataTitle'),
+    description: t('metadataDescription'),
+  };
+}
 
 export default function RecyclePage() {
   return <RecyclePageClient />;

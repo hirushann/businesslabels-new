@@ -116,6 +116,14 @@ describe("proxy locale routing", () => {
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
 
+  it("redirects /inkt-recyclen-epson-colorworks to /en/inkt-recyclen-epson-colorworks when cookie is en", () => {
+    const response = proxy(makeRequest("/inkt-recyclen-epson-colorworks", `${LOCALE_COOKIE}=en`));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/en/inkt-recyclen-epson-colorworks");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
   it("redirects /en/custom-made-form to /en/custom-made-labels", () => {
     const response = proxy(makeRequest("/en/custom-made-form"));
 
