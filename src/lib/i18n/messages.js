@@ -658,6 +658,8 @@ export const MESSAGES_V4 = {
       discount: 'Discount',
     },
     pages: {
+      homeMetadataTitle: 'Home • BusinessLabels.nl',
+      homeMetadataDescription: 'Professional and personal advice on the best color label printers and thermal label printers. Check out our range!',
       about: 'About',
       contact: 'Contact',
       cart: 'Cart',
@@ -2621,6 +2623,8 @@ export const MESSAGES_V4 = {
       discount: 'Korting',
     },
     pages: {
+      homeMetadataTitle: 'Al uw kleuren en thermische label printoplossingen | Business labels',
+      homeMetadataDescription: 'Professioneel en persoonlijk advies over de beste kleuren label printers en thermische label printers. Bekijk ons aanbod!',
       about: 'Over ons',
       contact: 'Contact',
       cart: 'Winkelwagen',
