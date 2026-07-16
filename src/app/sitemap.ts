@@ -3,7 +3,17 @@ import { getPrinterCategoryPath } from '@/lib/routes/printerCategories';
 
 // Define the API base URL
 const baseUrl = process.env.BBNL_API_BASE_URL || 'http://localhost:8000';
-const frontendUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://businesslabels.nl';
+const getBaseUrl = () => {
+  if (process.env.NEXT_PUBLIC_APP_URL && process.env.NEXT_PUBLIC_APP_ENV !== 'staging') {
+    return process.env.NEXT_PUBLIC_APP_URL;
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  return process.env.NEXT_PUBLIC_APP_URL || 'https://businesslabels.nl';
+};
+
+const frontendUrl = getBaseUrl();
 
 type SitemapApiItem = {
   slug?: string;
