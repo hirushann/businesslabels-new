@@ -101,12 +101,12 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                 <h2 className="w-full text-center text-ink text-2xl md:text-[32px] lg:text-[40px] font-bold leading-tight md:leading-[48px]">
                   {t('cart.emptyTitle')}
                 </h2>
-                <p className="w-full max-w-[800px] text-center text-copy text-lg font-normal leading-[26px]">
+                <p className="w-full max-w-[800px] text-center text-copy text-lg font-light leading-[26px]">
                   {t('cart.emptyDescription')}
                 </p>
                 <Link
                   href={localePath("/product", locale)}
-                  className="h-[52px] px-[30px] py-4 bg-brand hover:bg-[#e07d00] transition-colors rounded-[50px] flex justify-center items-center gap-2.5 text-center text-white text-lg font-semibold leading-6 mt-2"
+                  className="h-[52px] px-[30px] py-4 bg-brand hover:bg-[#e07d00] transition-colors rounded-[50px] flex justify-center items-center gap-2.5 text-center text-white text-lg font-medium leading-6 mt-2"
                 >
                   {t('common.browseProducts')}
                 </Link>
@@ -146,17 +146,17 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
               <div className="hidden lg:grid w-full min-h-[68px] grid-cols-[minmax(16rem,1fr)_minmax(6rem,0.28fr)_minmax(12rem,0.42fr)_minmax(6rem,0.22fr)] gap-6 border-b border-line items-center px-6">
                 <div className="flex items-center gap-6 min-w-0">
                   <div className="w-4 shrink-0" />
-                  <div className="text-base font-bold text-copy">
+                  <div className="text-base font-medium text-copy">
                     {t('cart.products')}
                   </div>
                 </div>
-                <div className="text-sm font-bold text-copy">
+                <div className="text-sm font-medium text-copy">
                   {t('cart.unitPrice')}
                 </div>
-                <div className="text-sm font-bold text-copy">
+                <div className="text-sm font-medium text-copy">
                   {t('cart.quantity')}
                 </div>
-                <div className="text-base font-bold text-copy text-right">
+                <div className="text-base font-medium text-copy text-right">
                   {t('common.total')}
                 </div>
               </div>
@@ -207,7 +207,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                             
                             {/* SKU & Name */}
                             <div className="flex-1 flex flex-col gap-1 min-w-0">
-                              <span className="text-sm font-semibold text-link truncate">
+                              <span className="text-sm font-light text-link truncate">
                                 {item.sku}
                               </span>
                               <h3 className="text-lg font-bold text-ink leading-tight min-w-0">
@@ -386,7 +386,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
               {/* Header */}
               <div className="w-full p-4 bg-surface border-b border-[#E5E7EB] text-center">
                 <h2 className="text-2xl font-bold text-ink tracking-wider uppercase">
-                  {t.has('cart.yourOverview') ? t('cart.yourOverview') : 'YOUR OVERVIEW'}
+                  {t('cart.yourOverview')}
                 </h2>
               </div>
               
@@ -524,8 +524,8 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                   href={localePath("/afrekenen", locale)}
                   className="w-full h-13 bg-brand hover:bg-brand-hover active:bg-brand-active rounded-[100px] flex items-center justify-center cursor-pointer transition-colors px-6"
                 >
-                  <span className="text-center text-white text-lg font-bold leading-6 whitespace-nowrap">
-                    {t.has('cart.proceedToCheckout') ? t('cart.proceedToCheckout') : 'Proceed to checkout'}
+                  <span className="text-center text-white text-lg font-medium leading-6 whitespace-nowrap">
+                    {t('cart.proceedToCheckout')}
                   </span>
                 </Link>
               </div>
