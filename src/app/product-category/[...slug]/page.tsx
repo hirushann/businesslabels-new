@@ -22,10 +22,13 @@ export async function generateMetadata({ params }: ProductCategoryPageProps) {
   return generateCategoryArchiveMetadata(await resolveCurrentSlug(params));
 }
 
-export default async function ProductCategoryPage({
+export async function ProductCategoryPage({
   params,
   searchParams,
-}: ProductCategoryPageProps) {
+  requestedRouteBase = "product-category",
+}: ProductCategoryPageProps & {
+  requestedRouteBase?: "product-category" | "product-categorie";
+}) {
   const routeSegments = await resolveRouteSegments(params);
 
   return renderCategoryArchivePage({
@@ -33,5 +36,8 @@ export default async function ProductCategoryPage({
     routeSegments,
     searchParams,
     routeMode: "productCategory",
+    requestedRouteBase,
   });
 }
+
+export default ProductCategoryPage;

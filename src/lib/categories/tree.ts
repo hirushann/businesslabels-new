@@ -275,10 +275,55 @@ export function findCategoryByPath(
   return best;
 }
 
+/**
+ * Resolve a hierarchy that may contain a mixture of NL and EN slugs. Legacy
+ * links and previously generated child links can have a different locale at
+ * each depth, so matching the entire path as one locale is not sufficient.
+ */
+export function findCategoryByLocalizedPath(
+  groups: CategoryGroup[],
+  segments: string[],
+): CategoryLookup | null {
+  const targetSegments = segments.map(decodeSegment).filter((segment) => segment.trim().length > 0);
+  if (!targetSegments.length) return null;
+
+  const visit = (
+    nodes: CategoryNode[],
+    index: number,
+    ancestors: CategoryNode[],
+  ): CategoryLookup | null => {
+    let best: CategoryLookup | null = null;
+
+    for (const node of nodes) {
+      const matches = (["nl", "en"] as const).some((locale) =>
+        categoryMatchesSlug(node, targetSegments[index], locale),
+      );
+      if (!matches) continue;
+
+      if (index === targetSegments.length - 1) {
+        best = betterCategoryLookup(best, { category: node, ancestors });
+        continue;
+      }
+
+      const deeper = visit(node.children ?? [], index + 1, [...ancestors, node]);
+      if (deeper) best = betterCategoryLookup(best, deeper);
+    }
+
+    return best;
+  };
+
+  let best: CategoryLookup | null = null;
+  for (const group of groups ?? []) {
+    const found = visit(group.categories ?? [], 0, []);
+    if (found) best = betterCategoryLookup(best, found);
+  }
+
+  return best;
+}
+
 type ProductCategoryLocale = "en" | "nl";
 
 function productCategoryRoute(pathname: string): {
-  sourceLocale: ProductCategoryLocale;
   segments: string[];
 } | null {
   const pathOnly = pathname.split(/[?#]/, 1)[0];
@@ -290,7 +335,6 @@ function productCategoryRoute(pathname: string): {
   if (base !== "product-category" && base !== "product-categorie") return null;
 
   return {
-    sourceLocale: base === "product-categorie" ? "nl" : "en",
     segments: parts.map(decodeSegment),
   };
 }
@@ -308,15 +352,7 @@ export function localizedProductCategoryPath(
   const route = productCategoryRoute(pathname);
   if (!route || route.segments.length === 0) return null;
 
-  // The route base identifies the source language. Trying the other locale is
-  // useful for malformed legacy URLs such as `/en/product-categorie/...` and
-  // for links created before the localized base segment was introduced.
-  const sourceLocales: ProductCategoryLocale[] = route.sourceLocale === "nl"
-    ? ["nl", "en"]
-    : ["en", "nl"];
-  const lookup = sourceLocales
-    .map((locale) => findCategoryByPath(groups, route.segments, locale))
-    .find((candidate) => candidate !== null);
+  const lookup = findCategoryByLocalizedPath(groups, route.segments);
 
   if (!lookup) return null;
 
