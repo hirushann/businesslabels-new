@@ -750,6 +750,8 @@ export const MESSAGES_V4 = {
       noPostsDescription: "We're currently working on new content. Please check back later!",
     },
     faqPage: {
+      metadataTitle: "Frequently asked questions about Epson ColorWorks color label printers",
+      metadataDescription: "Everything about Epson ColorWorks color label printers: find answers to frequently asked questions about costs, print quality, maintenance, and more.",
       breadcrumb: 'FAQ',
       helpCenter: 'Help center',
       questionsAnswered: 'Questions answered',
@@ -1777,6 +1779,8 @@ export const MESSAGES_V4 = {
       sunday: "Sunday"
     },
     knowledgePage: {
+      metadataTitle: "Knowledge base • BusinessLabels.nl",
+      metadataDescription: "Inkjet or thermal. Labels, tickets or tags. Where to start. Not seeing the forest for the trees. It seems so simple, buying a label printer and some labels and printing away. But why is there so much available? Every application, user, and way of use has its own set of wishes and requirements. […]",
       heroTitle: "Knowledge Base",
       heroDesc: "Comprehensive setup guides, troubleshooting help, and smart workflows. Specifically for Epson ColorWorks printers and their compatible label materials, ensuring smooth operation and optimal printing results.",
       whatLookingFor: "What are you looking for? Click on the topic you need below.",
@@ -2719,6 +2723,8 @@ export const MESSAGES_V4 = {
       noPostsDescription: 'We werken momenteel aan nieuwe content. Kom later nog eens terug!',
     },
     faqPage: {
+      metadataTitle: "Veelgestelde vragen over Epson ColorWorks kleurenlabelprinters",
+      metadataDescription: "Alles over Epson ColorWorks kleurenlabelprinters: vind antwoorden op veelgestelde vragen over kosten, printkwaliteit, onderhoud en meer.",
       breadcrumb: 'Veelgestelde vragen',
       helpCenter: 'Helpcentrum',
       questionsAnswered: 'Beantwoorde vragen',
@@ -3747,6 +3753,8 @@ export const MESSAGES_V4 = {
       sunday: "zondag"
     },
     knowledgePage: {
+      metadataTitle: "Kennisbank overzicht • BusinessLabels.nl",
+      metadataDescription: "Inkjet of thermisch. Labels, tickets of etiketten. Waar moet je beginnen Door de bomen het bos niet meer zien. Het lijkt zo simpel, een labelprinter en wat label kopen en printen maar. Maar waarom is er dan zoveel te krijgen? Elke toepassing, gebruiker en manier van gebruik heeft een eigen set aan wensen en eisen. […]",
       heroTitle: "Kennisbank",
       heroDesc: "Uitgebreide installatiehandleidingen, hulp bij probleemoplossing en slimme workflows. Speciaal voor Epson ColorWorks-printers en hun compatibele labelmaterialen, wat zorgt voor een soepele werking en optimale printresultaten.",
       whatLookingFor: "Waar bent u naar op zoek? Klik hieronder op het onderwerp dat u nodig heeft.",

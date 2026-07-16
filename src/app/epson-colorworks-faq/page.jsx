@@ -1,5 +1,14 @@
 import { getServerLocale } from "@/lib/i18n/server";
+import { getTranslations } from "next-intl/server";
 import FaqClient from "./FaqClient";
+
+export async function generateMetadata() {
+  const t = await getTranslations('faqPage');
+  return {
+    title: t('metadataTitle'),
+    description: t('metadataDescription'),
+  };
+}
 
 async function getFaqPagesList() {
   const apiBaseUrl = process.env.BBNL_API_BASE_URL;
