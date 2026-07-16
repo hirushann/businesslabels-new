@@ -53,6 +53,9 @@ export function proxy(request: NextRequest) {
   if (cleanPathname === '/checkout') {
     cleanPathname = '/afrekenen';
   }
+  if (cleanPathname === '/terms-and-conditions' || cleanPathname === '/terms-and-conditions/') {
+    cleanPathname = '/algemene-voorwaarden';
+  }
 
   if (pathname === '/en/support' || pathname === '/en/support/') {
     const redirectUrl = new URL(`${EN_PREFIX}/support-2/${search}`, request.url);
@@ -82,6 +85,16 @@ export function proxy(request: NextRequest) {
   if (pathname === '/en/afrekenen') {
     const redirectUrl = new URL(`${EN_PREFIX}/checkout${search}`, request.url);
     return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+  }
+
+  if (pathname === '/en/algemene-voorwaarden' || pathname === '/en/algemene-voorwaarden/') {
+    const redirectUrl = new URL(`${EN_PREFIX}/terms-and-conditions${search}`, request.url);
+    return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+  }
+
+  if (pathname === '/terms-and-conditions' || pathname === '/terms-and-conditions/') {
+    const redirectUrl = new URL(`/algemene-voorwaarden${search}`, request.url);
+    return persistLocale(NextResponse.redirect(redirectUrl), locale);
   }
 
   if (pathname === '/contact' || pathname === '/contact/') {
