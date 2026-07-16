@@ -4,6 +4,14 @@ import ReviewsSection from "@/components/ReviewsSection";
 import AvailabilityStatus from "./AvailabilityStatus";
 import ContactForm from "./ContactForm";
 
+export async function generateMetadata() {
+   const t = await getTranslations("contactPage");
+   return {
+      title: t("metadataTitle"),
+      description: t("metadataDescription"),
+   };
+}
+
 async function getTeamMembers() {
    const apiBaseUrl = process.env.BBNL_API_BASE_URL;
    if (!apiBaseUrl) return [];

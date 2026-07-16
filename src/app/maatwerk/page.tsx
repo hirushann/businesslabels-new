@@ -1,11 +1,14 @@
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import CustomMadeFormClient from './CustomMadeFormClient';
 
-export const metadata: Metadata = {
-  title: 'Custom-made Form — Businesslabels',
-  description:
-    'Need a custom label? Fill in our easy form and we will get back to you within 1 business day with a free, no-obligation quote.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("customForm");
+  return {
+    title: t("metadataTitle"),
+    description: t("metadataDescription"),
+  };
+}
 
 type CustomMadeFormPageProps = {
   searchParams: Promise<{

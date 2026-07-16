@@ -17,11 +17,22 @@ import {
   Printer,
   Package
 } from 'lucide-react';
+import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { useTranslations, useLocale } from 'next-intl';
 import { localePath } from '@/lib/i18n/utils';
 import AvailabilityStatus from "@/app/contact-us/AvailabilityStatus";
 import CTABanner from "@/components/CTABanner";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("supportPage");
+  return {
+    title: t("metadataTitle"),
+    description: t("metadataDescription"),
+  };
+}
+
 export default function SupportPage() {
   const t = useTranslations('supportPage');
   const locale = useLocale();

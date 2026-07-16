@@ -189,7 +189,9 @@ export const MESSAGES_V4 = {
       matSilverPoly: 'Silver polyester',
       subSilverPoly: '(Metallic appearance)',
       stepContact: 'Contact',
-      unknown: 'Unknown'
+      unknown: 'Unknown',
+      metadataTitle: "Custom-made • BusinessLabels.nl",
+      metadataDescription: "If the desired label is not among our stock items, we can have the product made exactly as you wish. This can be very interesting with the right volumes, with customization the price is always very dependent on the order volume. However, we need all the right information to be able to make an appropriate […]"
     },
     recycle: {
       metadataTitle: "Epson’s ColorWorks Ink Recycling Program • BusinessLabels.nl",
@@ -1907,9 +1909,10 @@ export const MESSAGES_V4 = {
         send: "Send",
         errorFailed: "Failed to send message.",
         errorUnexpected: "An unexpected error occurred. Please try again."
-      }
-    }
-,
+      },
+      metadataTitle: "Contact us • BusinessLabels.nl",
+      metadataDescription: "Contact We love to help you in any way possible Phone: +31 (0)318 590 465Email: verkoop@businesslabels.nl Opening hours:Monday till Friday08:30 to 17:00 (GMT +1) Email us Call us BusinesslabelsLenderinkweg 86733 AX WekeromTHE NETHERLANDS IBAN: NL62 RABO 0347 6231 74BIC-code: RABONL2UKVK: 71774599BtwNr: NL858844217B01 Route"
+    },
     supportPage: {
       breadcrumbSupport: "Support",
       heroTitle: "We help you get your printer working.",
@@ -1969,7 +1972,25 @@ export const MESSAGES_V4 = {
       how2: "We schedule a TeamViewer session at a time that suits you.",
       how3: "You install TeamViewer QuickSupport — no account needed.",
       how4: "We connect, view your screen, and walk through the settings together.",
-      downloadQs: "Download TeamViewer QuickSupport"
+      downloadQs: "Download TeamViewer QuickSupport",
+      metadataTitle: "Support • BusinessLabels.nl",
+      metadataDescription: "Support Are label printer issues casing a headache? Businesslabels support is ready to help! Experiencing problems with your label printer? If your label printer does not function properly, it’s often very annoying. Especially since label printers are often used in critical places that are crucial for business processes and there can’t stand still for to […]"
+    },
+    videos: {
+      metadataTitle: "Videos • BusinessLabels.nl",
+      metadataDescription: "The video database of Businesslabels – Smart2B Not everyone likes to read everything. Also not everything can be conveyed well in a piece of text. That is why videos are sometimes ideal. By showing something, no matter how simple or straightforward, many things can be conveyed better. That is why Businesslabels in […]"
+    },
+    brands: {
+      metadataTitle: "Brands • BusinessLabels.nl",
+      metadataDescription: "You can find the following brands on BusinessLabels"
+    },
+    terms: {
+      metadataTitle: "Terms and conditions • BusinessLabels.nl",
+      metadataDescription: "Read the terms and conditions of Businesslabels here. Clear agreements on delivery, warranty and service for your label solutions. View them directly online."
+    },
+    privacyPolicy: {
+      metadataTitle: "Privacy Policy • BusinessLabels.nl",
+      metadataDescription: "Smart2B respects the privacy of you as a visitor to one of our websites and ensures that the personal information you provide to us is treated confidentially. Introduction and applicability of privacy statementTo carry out our activities properly, it is sometimes necessary to process your personal data. We always do this carefully [...]"
     }
   },
   nl: {
@@ -2162,7 +2183,9 @@ export const MESSAGES_V4 = {
       matSilverPoly: 'Zilver polyester',
       subSilverPoly: '(Metallic uitstraling)',
       stepContact: 'Contact',
-      unknown: 'Onbekend'
+      unknown: 'Onbekend',
+      metadataTitle: "Maatwerk • BusinessLabels.nl",
+      metadataDescription: "Wanneer het gewenste label niet tussen onze voorraad artikelen zit kunnen wij het product precies zoals u wenst laten maken. Dit kan bij juiste volumes erg interessant zijn, bij maatwerk is echter de prijs altijd zeer afhankelijk van het bestel volume. We hebben wel alle juiste informatie nodig om een passend voorstel te kunnen maken […]"
     },
     recycle: {
       metadataTitle: "Epson’s ColorWorks inkt Recycling Programma • BusinessLabels.nl",
@@ -3042,7 +3065,7 @@ export const MESSAGES_V4 = {
       unavailable: 'Niet beschikbaar',
       workingHoursOnly: 'Bedankt voor je begrip. We reageren alleen tijdens onze werktijden.',
       dropMessage: 'Stuur ons een bericht',
-      leaveMessage: 'Laat een bericht achter en we nemen zo snel mogelijk contact met je op.',
+      leaveMessage: 'Laat een bericht achter en we nemen zo snel mogelijk contact met u op.',
       emailAddress: 'Je e-mailadres',
       messagePlaceholder: 'Schrijf je bericht hier...',
     },
@@ -3881,9 +3904,10 @@ export const MESSAGES_V4 = {
         send: "Versturen",
         errorFailed: "Bericht verzenden mislukt.",
         errorUnexpected: "Er is een onverwachte fout opgetreden. Probeer het opnieuw."
-      }
-    }
-,
+      },
+      metadataTitle: "Contact • BusinessLabels.nl",
+      metadataDescription: "Contact Wij helpen u graag persoonlijk! Telefoon: +31(0) 318 590 465Email: verkoop@businesslabels.nl Openingstijden:Maandag t/m vrijdag08:30 tot 17:00 Mail ons Bel ons BusinesslabelsLenderinkweg 86733 AX WekeromTHE NETHERLANDS IBAN: NL62 RABO 0347 6231 74BIC-code: RABONL2UKVK: 71774599BtwNr: NL858844217B01 Route"
+    },
     supportPage: {
       breadcrumbSupport: "Support",
       heroTitle: "Wij helpen u om uw printer werkend te krijgen.",
@@ -3943,7 +3967,25 @@ export const MESSAGES_V4 = {
       how2: "We plannen een TeamViewer-sessie op een moment dat het u uitkomt.",
       how3: "U installeert TeamViewer QuickSupport — geen account nodig.",
       how4: "We maken verbinding, bekijken uw scherm en nemen samen de instellingen door.",
-      downloadQs: "Download TeamViewer QuickSupport"
+      downloadQs: "Download TeamViewer QuickSupport",
+      metadataTitle: "Support • BusinessLabels.nl",
+      metadataDescription: "Support Wanneer het allemaal tegen zit doen wij ons best voor u! Heeft u een probleem met uw printer? Als uw labelprinter niet naar behoren functioneert, is dat erg vervelend. Zeker omdat deze vaak op cruciale plekken staat binnen bedrijfsprocessen. Wij beschikken over de kennis en ervaring om problemen snel op te lossen. Ook bij […]"
+    },
+    videos: {
+      metadataTitle: "Video's • BusinessLabels.nl",
+      metadataDescription: "De video database van Businesslabels – Smart2B Niet iedereen houdt er van om alles maar te lezen. Ook niet alles is goed over te brengen in een stuk tekst. Daarom zijn video’s soms ideaal. Door iets te laten zien, hoe simpel of eenvoudig ook, zijn veel zaken beter over te brengen. Daarom is Businesslabels in […]"
+    },
+    brands: {
+      metadataTitle: "Merken • BusinessLabels.nl",
+      metadataDescription: "Deze merken komt u tegen in de webshop van Businesslabels"
+    },
+    terms: {
+      metadataTitle: "Algemene voorwaarden • BusinessLabels.nl",
+      metadataDescription: "Lees hier de algemene voorwaarden van Businesslabels. Heldere afspraken over levering, garantie en service voor uw labeloplossingen. Bekijk ze direct online."
+    },
+    privacyPolicy: {
+      metadataTitle: "Privacy Policy • BusinessLabels.nl",
+      metadataDescription: "Smart2B respecteert de privacy van u als bezoeker op 1 van onze websites en draagt er zorg voor dat de persoonlijke informatie die u ons verschaft vertrouwelijk wordt behandeld.  Inleiding en toepasselijkheid privacyverklaringOm onze activiteiten goed uit te kunnen voeren, is het soms nodig om persoonsgegevens van u te verwerken. Dat doen we altijd zorgvuldig […]"
     }
   },
 };
