@@ -324,7 +324,7 @@ export async function renderCategoryArchivePage({
 
   return (
     <div className="bg-white">
-      <div className="px-10 py-10">
+      <div className="px-4 py-10 sm:px-6 lg:px-10">
         <div className="mx-auto flex max-w-360 flex-col gap-12">
           <div className="relative h-56 w-full overflow-hidden rounded-xl shadow-md">
             <Image

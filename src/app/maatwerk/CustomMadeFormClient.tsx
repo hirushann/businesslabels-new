@@ -439,7 +439,7 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
           <div className="h-4 flex items-center gap-2">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><mask id="mask0_1909_10965" maskUnits="userSpaceOnUse" x="0" y="0" width="16" height="16"><rect width="16" height="16" fill="#D9D9D9" /></mask><g mask="url(#mask0_1909_10965)"><path d="M4 12.6666H6.23083V9.30758C6.23083 9.13691 6.28856 8.9938 6.404 8.87825C6.51956 8.7628 6.66267 8.70508 6.83333 8.70508H9.16667C9.33733 8.70508 9.48044 8.7628 9.596 8.87825C9.71144 8.9938 9.76917 9.13691 9.76917 9.30758V12.6666H12V6.76908C12 6.73497 11.9925 6.70402 11.9775 6.67625C11.9626 6.64847 11.9423 6.62386 11.9167 6.60241L8.12183 3.74991C8.08761 3.72002 8.047 3.70508 8 3.70508C7.953 3.70508 7.91239 3.72002 7.87817 3.74991L4.08333 6.60241C4.05767 6.62386 4.03739 6.64847 4.0225 6.67625C4.0075 6.70402 4 6.73497 4 6.76908V12.6666ZM3 12.6666V6.76908C3 6.5783 3.04267 6.39758 3.128 6.22691C3.21344 6.05613 3.33144 5.91552 3.482 5.80508L7.277 2.94608C7.48756 2.78541 7.72822 2.70508 7.999 2.70508C8.26978 2.70508 8.51111 2.78541 8.723 2.94608L12.518 5.80508C12.6686 5.91552 12.7866 6.05613 12.872 6.22691C12.9573 6.39758 13 6.5783 13 6.76908V12.6666C13 12.9392 12.9015 13.1741 12.7045 13.3711C12.5075 13.5681 12.2727 13.6666 12 13.6666H9.37183C9.20106 13.6666 9.05794 13.6088 8.9425 13.4932C8.82694 13.3778 8.76917 13.2347 8.76917 13.0639V9.70508H7.23083V13.0639C7.23083 13.2347 7.17306 13.3778 7.0575 13.4932C6.94206 13.6088 6.79894 13.6666 6.62817 13.6666H4C3.72733 13.6666 3.4925 13.5681 3.2955 13.3711C3.0985 13.1741 3 12.9392 3 12.6666Z" fill="var(--subtle)" /></g></svg>
             <span className="text-zinc-500 text-sm font-sans leading-5">/</span>
-            <span className="text-neutral-700 text-sm font-semibold font-sans leading-5">{t('breadcrumb')}</span>
+            <span className="text-neutral-700 text-sm font-bold font-sans leading-5">{t('breadcrumb')}</span>
           </div>
           <h1 className="text-neutral-800 text-2xl sm:text-3xl lg:text-4xl font-bold font-sans leading-tight sm:leading-[48px]">{t('title')}</h1>
           <p className="max-w-full lg:max-w-[1203px] text-neutral-700 text-base sm:text-lg font-sans leading-6">
@@ -475,7 +475,7 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
                           <span className={`text-sm sm:text-lg font-semibold font-sans ${isActive ? 'text-brand' : 'text-zinc-500'}`}>{stepNum}</span>
                         )}
                       </div>
-                      <span className={`hidden sm:block text-xs sm:text-sm font-semibold font-sans text-center leading-none ${isActive || isCompleted ? 'text-brand' : 'text-zinc-500'}`}>
+                      <span className={`hidden sm:block text-xs sm:text-sm font-bold font-sans text-center leading-none ${isActive || isCompleted ? 'text-brand' : 'text-zinc-500'}`}>
                         {step === 'Contact' ? t('stepContact') : t('step' + step as any)}
                       </span>
                     </div>

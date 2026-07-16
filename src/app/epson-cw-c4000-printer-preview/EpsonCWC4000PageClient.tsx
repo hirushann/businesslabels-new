@@ -201,7 +201,7 @@ export default function EpsonCWC4000PageClient() {
         <div className="mb-8">
           <Breadcrumbs
             items={[
-              { label: t('breadcrumbKnowledge'), href: '/knowledge' },
+              { label: t('breadcrumbKnowledge'), href: '/kennisbank-overzicht' },
               { label: t('breadcrumbCurrent') },
             ]}
           />

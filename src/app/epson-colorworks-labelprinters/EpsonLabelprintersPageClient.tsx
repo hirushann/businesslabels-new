@@ -31,7 +31,7 @@ export default function EpsonLabelprintersPageClient() {
           <div className="mb-8">
             <Breadcrumbs
               items={[
-                { label: 'Kennis', href: '/knowledge' },
+                { label: 'Kennis', href: '/kennisbank-overzicht' },
                 { label: 'Epson labelprinters' },
               ]}
             />

@@ -17,11 +17,11 @@ import WishlistDrawer from './WishlistDrawer';
 import { useWishlist } from './WishlistProvider';
 import HelpDrawer from './HelpDrawer';
 import { useHelp } from './HelpProvider';
-import PrintersMenu from './nav/PrintersMenu';
-import LabelsMenu from './nav/LabelsMenu';
-import AccessoriesMenu from './nav/AccessoriesMenu';
-import ResourcesMenu from './nav/ResourcesMenu';
-import BrandsMenu from './nav/BrandsMenu';
+import PrintersMenu, { menuItems as printerMenuItems } from './nav/PrintersMenu';
+import LabelsMenu, { menuItems as labelMenuItems } from './nav/LabelsMenu';
+import AccessoriesMenu, { menuItems as accessoryMenuItems } from './nav/AccessoriesMenu';
+import ResourcesMenu, { columnOne as resourceColumnOne, columnTwo as resourceColumnTwo } from './nav/ResourcesMenu';
+import BrandsMenu, { brands as brandMenuItems } from './nav/BrandsMenu';
 import { useLocale, useTranslations } from 'next-intl';
 import { useLocalePath } from '@/hooks/useLocalePath';
 import { getAccessoryCategoryPath } from '@/lib/routes/accessoryCategories';
@@ -74,11 +74,19 @@ const navItems = [
   { labelKey: 'header.nav.printers', fallbackLabel: 'Label Printers', href: '/product-category/labelprinters', dropdown: true, dropdownKey: 'printers' as DropdownKey },
   { labelKey: 'header.nav.labels', fallbackLabel: 'Labels and tickets', href: '/category/labels-en-tickets', dropdown: true, dropdownKey: 'labels' as DropdownKey },
   { labelKey: 'header.nav.accessories', fallbackLabel: 'Accessories', href: '/category/accessoires', dropdown: true, dropdownKey: 'accessories' as DropdownKey },
-  { labelKey: 'header.nav.materials', fallbackLabel: 'Materials', href: '/materials', dropdownKey: null },
+  { labelKey: 'header.nav.materials', fallbackLabel: 'Materials', href: '/material', dropdownKey: null },
   { labelKey: 'header.nav.resources', fallbackLabel: 'Resources', href: '/resources', dropdown: true, dropdownKey: 'resources' as DropdownKey },
   { labelKey: 'header.nav.brands', fallbackLabel: 'Brands', href: '/brands', dropdown: true, dropdownKey: 'brands' as DropdownKey },
   { labelKey: 'header.nav.support', fallbackLabel: 'Support', href: '/support', dropdownKey: null },
 ];
+
+const getViewAllText = (key: DropdownKey, locale: string) => {
+  if (key === 'printers') return locale === 'nl' ? 'Alle labelprinters' : 'All label printers';
+  if (key === 'labels') return locale === 'nl' ? 'Alle etiketten en tickets' : 'All labels and tickets';
+  if (key === 'accessories') return locale === 'nl' ? 'Alle accessoires' : 'All accessories';
+  if (key === 'brands') return locale === 'nl' ? 'Alle merken' : 'All brands';
+  return locale === 'nl' ? 'Alles bekijken' : 'View all';
+};
 
 export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolean }) {
   const t = useTranslations();
@@ -165,6 +173,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
 
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [openMobileDropdown, setOpenMobileDropdown] = useState<DropdownKey>(null);
   const desktopSearchFormRef = useRef<HTMLFormElement>(null);
   const mobileSearchFormRef = useRef<HTMLFormElement>(null);
   const desktopSearchInputRef = useRef<HTMLInputElement>(null);
@@ -212,7 +221,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
         console.error('Header search suggestions failed:', error);
         setSearchSuggestions({
           productGroups: [],
-          materials: { id: 'materials', title: t('search.popover.materials'), href: '/materials', total: 0, items: [] },
+          materials: { id: 'materials', title: t('search.popover.materials'), href: '/material', total: 0, items: [] },
           groupProducts: { id: 'group-products', title: groupProductsTitle, href: productListingPath, total: 0, items: [] },
           error: t('search.popover.unavailable'),
         });
@@ -301,9 +310,9 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
       </span>
       <span className="min-w-0 flex-1">
         {item.meta ? (
-          <span className="block truncate text-sm font-normal leading-5 text-blue-400">{item.meta}</span>
+          <span className="block truncate text-sm font-light leading-5 text-blue-400">{item.meta}</span>
         ) : null}
-        <span className="block truncate text-base font-semibold leading-5 text-neutral-800 group-hover:text-sky-950">
+        <span className="block truncate text-base font-medium leading-5 text-neutral-800 group-hover:text-sky-950">
           {item.title}
         </span>
       </span>
@@ -334,7 +343,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
             ? t('search.searching')
             : t('search.popover.noResultsTitle')}
       </p>
-      <p className="mt-2 text-base font-normal leading-6 text-zinc-500">
+      <p className="mt-2 text-base font-light leading-6 text-zinc-500">
         {state === 'idle'
           ? t('search.popover.idleDescription')
           : state === 'loading'
@@ -379,7 +388,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                       <Link
                         href={group.href}
                         onClick={closeSearchPopover}
-                        className="inline-flex text-base font-semibold leading-6 text-brand hover:text-orange-600"
+                        className="inline-flex text-base font-medium leading-6 text-brand hover:text-orange-600"
                       >
                         {t('search.popover.showAll', { label: group.title, count: group.total })}
                       </Link>
@@ -399,9 +408,9 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                     {searchSuggestions?.materials.items.map(renderSearchItem)}
                   </div>
                   <Link
-                    href={searchSuggestions?.materials.href ?? '/materials'}
+                    href={searchSuggestions?.materials.href ?? '/material'}
                     onClick={closeSearchPopover}
-                    className="inline-flex text-base font-semibold leading-6 text-brand hover:text-orange-600"
+                    className="inline-flex text-base font-medium leading-6 text-brand hover:text-orange-600"
                   >
                     {t('search.popover.showAll', {
                       label: t('search.popover.materials'),
@@ -421,7 +430,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                   <Link
                     href={searchSuggestions?.groupProducts?.href ?? productListingPath}
                     onClick={closeSearchPopover}
-                    className="inline-flex text-base font-semibold leading-6 text-brand hover:text-orange-600"
+                    className="inline-flex text-base font-medium leading-6 text-brand hover:text-orange-600"
                   >
                     {t('search.popover.showAll', {
                       label: activeGroupProductsTitle,
@@ -462,7 +471,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                 <path d="M11.3333 13.3337C12.0697 13.3337 12.6667 12.7367 12.6667 12.0003C12.6667 11.2639 12.0697 10.667 11.3333 10.667C10.597 10.667 10 11.2639 10 12.0003C10 12.7367 10.597 13.3337 11.3333 13.3337Z" stroke="#F1F4F8" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M4.66732 13.3337C5.4037 13.3337 6.00065 12.7367 6.00065 12.0003C6.00065 11.2639 5.4037 10.667 4.66732 10.667C3.93094 10.667 3.33398 11.2639 3.33398 12.0003C3.33398 12.7367 3.93094 13.3337 4.66732 13.3337Z" stroke="#F1F4F8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <span className="text-white text-sm leading-5">
+              <span className="text-white text-sm leading-5 font-light">
                 {t('header.shippingBanner')}
               </span>
             </div>
@@ -470,7 +479,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
               <svg width="13" height="15" viewBox="0 0 13 15" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M1.16894 8.50174C1.04278 8.50217 0.919094 8.46679 0.812242 8.39972C0.705391 8.33265 0.619763 8.23664 0.565307 8.12284C0.510851 8.00904 0.489802 7.88213 0.504606 7.75684C0.519411 7.63156 0.56946 7.51304 0.64894 7.41507L7.24894 0.615071C7.29845 0.557925 7.36591 0.519308 7.44026 0.505559C7.51461 0.49181 7.59142 0.503746 7.65809 0.539407C7.72476 0.575068 7.77733 0.632335 7.80716 0.701809C7.837 0.771283 7.84233 0.848836 7.82227 0.921737L6.54227 4.93507C6.50453 5.03609 6.49185 5.14475 6.50533 5.25174C6.51881 5.35873 6.55805 5.46086 6.61967 5.54936C6.68129 5.63785 6.76346 5.71008 6.85912 5.75984C6.95479 5.80961 7.0611 5.83542 7.16894 5.83507H11.8356C11.9618 5.83464 12.0855 5.87002 12.1923 5.93709C12.2992 6.00416 12.3848 6.10017 12.4392 6.21397C12.4937 6.32777 12.5147 6.45468 12.4999 6.57997C12.4851 6.70525 12.4351 6.82376 12.3556 6.92174L5.75561 13.7217C5.7061 13.7789 5.63863 13.8175 5.56429 13.8312C5.48994 13.845 5.41312 13.8331 5.34645 13.7974C5.27978 13.7617 5.22722 13.7045 5.19738 13.635C5.16755 13.5655 5.16222 13.488 5.18227 13.4151L6.46227 9.40174C6.50002 9.30072 6.51269 9.19206 6.49921 9.08507C6.48573 8.97808 6.4465 8.87595 6.38488 8.78745C6.32326 8.69896 6.24109 8.62673 6.14542 8.57696C6.04976 8.5272 5.94344 8.50139 5.83561 8.50174H1.16894Z" stroke="#F1F4F8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <span className="text-white text-sm leading-5">
+              <span className="text-white text-sm leading-5 font-light">
                 {t('header.fastDelivery')}
               </span>
             </div>
@@ -605,9 +614,9 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
             <LanguageSwitcher />
             {/* User */}
             <Link href={accountHref} onClick={handleAccountClick} aria-label={t('header.accountLink')}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="cursor-pointer">
-                <circle cx="12" cy="8" r="4" stroke="var(--copy)" strokeWidth="1.5" />
-                <path d="M4 20c0-4.42 3.58-8 8-8s8 3.58 8 8" stroke="var(--copy)" strokeWidth="1.5" strokeLinecap="round" />
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="cursor-pointer" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19 21V19C19 17.9391 18.5786 16.9217 17.8284 16.1716C17.0783 15.4214 16.0609 15 15 15H9C7.93913 15 6.92172 15.4214 6.17157 16.1716C5.42143 16.9217 5 17.9391 5 19V21" stroke="var(--copy)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="var(--copy)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </Link>
             {/* Wishlist */}
@@ -675,9 +684,9 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
             <Link href={accountHref} onClick={handleAccountClick} aria-label={t('header.accountLink')}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="8" r="4" stroke="var(--copy)" strokeWidth="2" />
-                <path d="M4 20c0-4.42 3.58-8 8-8s8 3.58 8 8" stroke="var(--copy)" strokeWidth="2" strokeLinecap="round" />
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19 21V19C19 17.9391 18.5786 16.9217 17.8284 16.1716C17.0783 15.4214 16.0609 15 15 15H9C7.93913 15 6.92172 15.4214 6.17157 16.1716C5.42143 16.9217 5 17.9391 5 19V21" stroke="var(--copy)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="var(--copy)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </Link>
             <button onClick={openCart} className="relative p-1" aria-label={t('header.cartOpen')}>
@@ -755,37 +764,62 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                 {item.dropdownKey ? (
                   <>
                     <NavigationMenuTrigger asChild>
-                      <Link
-                        href={
-                          item.dropdownKey === 'printers'
-                            ? printerCategoryHref
-                            : item.dropdownKey === 'labels'
-                              ? labelCategoryHref
-                              : item.dropdownKey === 'accessories'
-                                ? accessoryCategoryHref
-                              : item.href
-                        }
-                        className="group -m-3 block p-3"
-                      >
-                        <span
-                          className={`flex items-end gap-2 relative ${
-                            item.active
-                              ? 'text-sky-950 font-semibold'
-                              : 'text-stone-500 font-normal group-hover:text-sky-950 transition-colors'
-                          } text-base leading-5`}
+                      {item.dropdownKey === 'resources' ? (
+                        <div
+                          className="group -m-3 block p-3 cursor-pointer"
                         >
-                          {t.has(item.labelKey) ? t(item.labelKey) : item.fallbackLabel}
-                          <svg
-                            width="16" height="16" viewBox="0 0 16 16" fill="none"
-                            className="transition-transform duration-200 group-data-[state=open]:rotate-180"
+                          <span
+                            className={`flex items-end gap-2 relative ${
+                              item.active
+                                ? 'text-sky-950 font-semibold'
+                                : 'text-stone-500 font-normal group-hover:text-sky-950 transition-colors'
+                            } text-base leading-5`}
                           >
-                            <path d="M4 6L8 10L12 6" stroke="currentColor" />
-                          </svg>
-                          {item.active && (
-                            <span className="absolute -bottom-4 left-0 w-11 h-0.5 bg-sky-950 rounded" />
-                          )}
-                        </span>
-                      </Link>
+                            {t.has(item.labelKey) ? t(item.labelKey) : item.fallbackLabel}
+                            <svg
+                              width="16" height="16" viewBox="0 0 16 16" fill="none"
+                              className="transition-transform duration-200 group-data-[state=open]:rotate-180"
+                            >
+                              <path d="M4 6L8 10L12 6" stroke="currentColor" />
+                            </svg>
+                            {item.active && (
+                              <span className="absolute -bottom-4 left-0 w-11 h-0.5 bg-sky-950 rounded" />
+                            )}
+                          </span>
+                        </div>
+                      ) : (
+                        <Link
+                          href={
+                            item.dropdownKey === 'printers'
+                              ? printerCategoryHref
+                              : item.dropdownKey === 'labels'
+                                ? labelCategoryHref
+                                : item.dropdownKey === 'accessories'
+                                  ? accessoryCategoryHref
+                                : lp(item.href)
+                          }
+                          className="group -m-3 block p-3"
+                        >
+                          <span
+                            className={`flex items-end gap-2 relative ${
+                              item.active
+                                ? 'text-sky-950 font-semibold'
+                                : 'text-stone-500 font-normal group-hover:text-sky-950 transition-colors'
+                            } text-base leading-5`}
+                          >
+                            {t.has(item.labelKey) ? t(item.labelKey) : item.fallbackLabel}
+                            <svg
+                              width="16" height="16" viewBox="0 0 16 16" fill="none"
+                              className="transition-transform duration-200 group-data-[state=open]:rotate-180"
+                            >
+                              <path d="M4 6L8 10L12 6" stroke="currentColor" />
+                            </svg>
+                            {item.active && (
+                              <span className="absolute -bottom-4 left-0 w-11 h-0.5 bg-sky-950 rounded" />
+                            )}
+                          </span>
+                        </Link>
+                      )}
                     </NavigationMenuTrigger>
 
                     <NavigationMenuContent
@@ -805,7 +839,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                 ) : (
                   <NavigationMenuLink asChild>
                     <Link
-                      href={item.href}
+                      href={lp(item.href)}
                       className="group -m-3 block p-3"
                     >
                       <span
@@ -828,12 +862,12 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
             </NavigationMenuList>
           </NavigationMenu>
           <div className="flex items-center gap-4">
-            <Link href="/custom-made-form" className="text-brand text-base font-bold leading-6">
+            <Link href={lp('/maatwerk')} className="text-brand text-base font-medium leading-6">
               {t('header.customMadeForm')}
             </Link>
             <Link
               href={lp('/printers')}
-              className="px-4 py-2 bg-brand rounded-full flex items-center gap-2 text-white text-base font-bold hover:bg-brand-hover transition-colors"
+              className="px-4 py-2 bg-brand rounded-full flex items-center gap-2 text-white text-base font-medium hover:bg-brand-hover transition-colors"
             >
               {t('header.productFinder')}
             </Link>
@@ -866,35 +900,145 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                 </svg>
               </button>
             </div>
-            
             {/* Nav links */}
             <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-1">
               {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={
-                    item.dropdownKey === 'printers'
-                      ? printerCategoryHref
-                      : item.dropdownKey === 'labels'
-                        ? labelCategoryHref
-                        : item.dropdownKey === 'accessories'
-                          ? accessoryCategoryHref
-                        : item.href
-                  }
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`px-4 py-3 rounded-lg flex justify-between items-center ${
-                    item.active
-                      ? 'bg-sky-50 text-sky-950 font-semibold'
-                      : 'text-stone-600 font-normal hover:bg-slate-50 transition-colors'
-                  } text-base`}
-                >
-                  <span>{t.has(item.labelKey) ? t(item.labelKey) : item.fallbackLabel}</span>
-                  {item.dropdown && (
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor">
-                      <path d="M6 12L10 8L6 4" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+                <div key={item.labelKey} className="flex flex-col">
+                  {item.dropdownKey ? (
+                    <button
+                      onClick={() => setOpenMobileDropdown(openMobileDropdown === item.dropdownKey ? null : item.dropdownKey)}
+                      className={`w-full px-4 py-3 rounded-lg flex justify-between items-center text-left ${
+                        item.active
+                          ? 'bg-sky-50 text-sky-950 font-semibold'
+                          : 'text-stone-600 font-normal hover:bg-slate-50 transition-colors'
+                      } text-base`}
+                    >
+                      <span>{t.has(item.labelKey) ? t(item.labelKey) : item.fallbackLabel}</span>
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        stroke="currentColor"
+                        className={`transition-transform duration-200 ${openMobileDropdown === item.dropdownKey ? 'rotate-90' : ''}`}
+                      >
+                        <path d="M6 12L10 8L6 4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
+                  ) : (
+                    <Link
+                      href={lp(item.href)}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`px-4 py-3 rounded-lg flex justify-between items-center ${
+                        item.active
+                          ? 'bg-sky-50 text-sky-950 font-semibold'
+                          : 'text-stone-600 font-normal hover:bg-slate-50 transition-colors'
+                      } text-base`}
+                    >
+                      <span>{t.has(item.labelKey) ? t(item.labelKey) : item.fallbackLabel}</span>
+                    </Link>
                   )}
-                </Link>
+                  
+                  {item.dropdownKey && openMobileDropdown === item.dropdownKey && (
+                    <div className="pl-4 pr-2 py-1 flex flex-col gap-1 bg-slate-50/50 rounded-lg mt-1 border border-slate-100/50">
+                      {item.dropdownKey !== 'resources' && (
+                        <Link
+                          href={
+                            item.dropdownKey === 'printers'
+                              ? printerCategoryHref
+                              : item.dropdownKey === 'labels'
+                                ? labelCategoryHref
+                                : item.dropdownKey === 'accessories'
+                                  ? accessoryCategoryHref
+                                : lp(item.href)
+                          }
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="px-3 py-2 text-sm font-semibold text-[#05315D] hover:bg-slate-100 rounded-md transition-colors flex items-center justify-between"
+                        >
+                          <span>{getViewAllText(item.dropdownKey, locale)}</span>
+                          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor">
+                            <path d="M6 12L10 8L6 4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </Link>
+                      )}
+                      
+                      {item.dropdownKey === 'printers' && printerMenuItems.map((sub) => (
+                        <Link
+                          key={sub.titleKey}
+                          href={getPrinterCategoryPath(locale, sub.categoryKey)}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="px-3 py-2 text-sm text-stone-600 hover:bg-slate-100 rounded-md transition-colors flex items-center gap-2"
+                        >
+                          <span className="w-5 h-5 flex items-center justify-center shrink-0 [&>svg]:size-4 [&>svg]:text-brand">{sub.icon}</span>
+                          <span>{t(sub.titleKey)}</span>
+                        </Link>
+                      ))}
+
+                      {item.dropdownKey === 'labels' && labelMenuItems.map((sub) => (
+                        <Link
+                          key={sub.titleKey}
+                          href={getLabelCategoryPath(locale, sub.categoryKey)}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="px-3 py-2 text-sm text-stone-600 hover:bg-slate-100 rounded-md transition-colors flex items-center gap-2"
+                        >
+                          <span className="w-5 h-5 flex items-center justify-center shrink-0 [&>svg]:size-4 [&>svg]:text-brand">{sub.icon}</span>
+                          <span>{t(sub.titleKey)}</span>
+                        </Link>
+                      ))}
+
+                      {item.dropdownKey === 'accessories' && accessoryMenuItems.map((sub) => (
+                        <Link
+                          key={sub.titleKey}
+                          href={getAccessoryCategoryPath(locale, sub.categoryKey)}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="px-3 py-2 text-sm text-stone-600 hover:bg-slate-100 rounded-md transition-colors flex items-center gap-2"
+                        >
+                          <span className="w-5 h-5 flex items-center justify-center shrink-0 [&>svg]:size-4 [&>svg]:text-brand">{sub.icon}</span>
+                          <span>{t(sub.titleKey)}</span>
+                        </Link>
+                      ))}
+
+                      {item.dropdownKey === 'resources' && (
+                        <>
+                          {[...resourceColumnOne, ...resourceColumnTwo].map((sub) => {
+                            const href = sub.href === '/sitemap.xml' ? sub.href : lp(sub.href);
+                            return (
+                              <Link
+                                key={sub.titleKey}
+                                href={href}
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="px-3 py-2 text-sm text-stone-600 hover:bg-slate-100 rounded-md transition-colors flex items-center gap-2"
+                              >
+                                <span className="w-5 h-5 flex items-center justify-center shrink-0 [&>svg]:size-4 [&>svg]:text-brand">{sub.icon}</span>
+                                <span>{t(sub.titleKey)}</span>
+                              </Link>
+                            );
+                          })}
+                        </>
+                      )}
+
+                      {item.dropdownKey === 'brands' && brandMenuItems.map((sub) => (
+                        <Link
+                          key={sub.name}
+                          href={sub.href}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="px-3 py-2 text-sm text-stone-600 hover:bg-slate-100 rounded-md transition-colors flex items-center gap-2"
+                        >
+                          <span className="w-6 h-4 relative shrink-0 overflow-hidden bg-slate-50 border border-slate-100 rounded">
+                            <Image
+                              src={sub.logo}
+                              alt={sub.name}
+                              fill
+                              className="object-contain p-0.5"
+                              unoptimized
+                            />
+                          </span>
+                          <span>{sub.name}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ))}
               
               {/* Extra drawer items */}

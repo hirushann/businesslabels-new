@@ -11,7 +11,7 @@ import type { MaterialSearchResponse } from "@/lib/search/materials";
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations();
   return {
-    title: `Thermal Transfer ${t("common.materials")} — Businesslabels`,
+    title: `Thermal Direct ${t("common.materials")} — Businesslabels`,
     description: t("materialsPage.metadataDescription"),
   };
 }
@@ -40,7 +40,7 @@ function toUrlSearchParams(query: SearchParams): URLSearchParams {
   return params;
 }
 
-export default async function ThermalTransferMaterialsPage({
+export default async function ThermalDirectMaterialsPage({
   searchParams,
 }: {
   searchParams?: Promise<SearchParams>;
@@ -49,13 +49,13 @@ export default async function ThermalTransferMaterialsPage({
   const locale = await getServerLocale();
   const rawParams = (await searchParams) ?? {};
   const routeQuery = toUrlSearchParams(rawParams);
-  routeQuery.set("print_method", "thermal-transfer");
+  routeQuery.set("print_method", "thermal-direct");
   let initialCatalog = emptyMaterialsResponse;
 
   try {
     initialCatalog = await searchMaterials(parseMaterialSearchParams(routeQuery, locale));
   } catch (error) {
-    console.error("Failed to load thermal transfer material catalog.", error);
+    console.error("Failed to load thermal direct material catalog.", error);
   }
 
   const isNl = locale === "nl";
@@ -64,8 +64,8 @@ export default async function ThermalTransferMaterialsPage({
     <>
       <div className="relative overflow-hidden bg-[#fafbfe]">
         {/* Ambient glow blobs */}
-        <div className="pointer-events-none absolute left-0 top-64 h-72 w-72 -translate-x-1/2 rounded-full bg-slate-500/10 blur-[132px]" />
-        <div className="pointer-events-none absolute right-0 top-225 h-72 w-72 translate-x-1/2 rounded-full bg-slate-500/10 blur-[132px]" />
+        <div className="pointer-events-none absolute left-0 top-64 h-72 w-72 -translate-x-1/2 rounded-full bg-emerald-500/10 blur-[132px]" />
+        <div className="pointer-events-none absolute right-0 top-225 h-72 w-72 translate-x-1/2 rounded-full bg-emerald-500/10 blur-[132px]" />
 
         <section className="px-4 py-8 sm:px-6 lg:px-10">
           <div className="mx-auto flex max-w-[1440px] flex-col gap-10 w-full">
@@ -73,7 +73,7 @@ export default async function ThermalTransferMaterialsPage({
             <div className="relative min-h-[260px] overflow-hidden rounded-2xl bg-neutral-900 shadow-[0_15px_40px_rgba(0,0,0,0.06)]">
               <Image
                 src="/images/archive-banner.jpg"
-                alt="Thermal Transfer Materials Banner"
+                alt="Thermal Direct Materials Banner"
                 fill
                 priority
                 sizes="(max-width: 1440px) 100vw, 1440px"
@@ -85,33 +85,33 @@ export default async function ThermalTransferMaterialsPage({
                   className="text-white/60 hover:text-white/80"
                   items={[
                     { label: t("common.categories"), href: "/categories" },
-                    { label: t("common.materials"), href: "/materials" },
-                    { label: isNl ? "Thermal Transfer" : "Thermal Transfer" },
+                    { label: t("common.materials"), href: "/material" },
+                    { label: isNl ? "Thermal Direct" : "Thermal Direct" },
                   ]}
                 />
                 <div className="max-w-[768px] mt-6 sm:mt-10">
-                  <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-slate-700/40 px-3 py-1 text-xs font-semibold text-slate-300 border border-slate-600/40">
-                    <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-                    {isNl ? "Printen met lint" : "Print with ribbon"}
+                  <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-emerald-600/20 px-3 py-1 text-xs font-semibold text-emerald-300 border border-emerald-500/30">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                    {isNl ? "Printen zonder lint" : "Print without ribbon"}
                   </div>
                   <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-3">
-                    {isNl ? "Thermal Transfer Materialen" : "Thermal Transfer Materials"}
+                    {isNl ? "Thermal Direct Materialen" : "Thermal Direct Materials"}
                   </h1>
                   <p className="text-sm sm:text-base leading-relaxed text-slate-200">
                     {isNl
-                      ? "Ontdek ons assortiment thermisch-transfer labelmaterialen, ontworpen voor duurzame afdrukken met lint."
-                      : "Explore our range of thermal transfer label materials, designed for durable ribbon-based printing."}
+                      ? "Ontdek ons assortiment thermisch-direct labelmaterialen voor lint-vrij printen."
+                      : "Explore our range of thermal direct label materials for ribbon-free printing."}
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Interactive Materials Catalog — pre-filtered to Thermal Transfer */}
+            {/* Interactive Materials Catalog — pre-filtered to Thermal Direct */}
             <MaterialsCatalogClient
               initialCatalog={initialCatalog}
               initialQueryString={routeQuery.toString()}
               locale={locale}
-              defaultPrintMethod="thermal-transfer"
+              defaultPrintMethod="thermal-direct"
             />
           </div>
         </section>

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
+import { useLocalePath } from '@/hooks/useLocalePath';
 
 // ─── SVG Icons ────────────────────────────────────────────────────────────────
 
@@ -202,6 +203,7 @@ function ProductCard({
 
 export default function BadgeMakenPageClient() {
   const t = useTranslations('badgePage');
+  const lp = useLocalePath();
 
   const BENEFITS = [
     {
@@ -607,15 +609,13 @@ export default function BadgeMakenPageClient() {
               +31 318 590 465
             </a>
 
-            <a
+            <Link
               id="badge-maken-maatwerk-btn"
-              href="/custom-made-form/"
-              target="_blank"
-              rel="noopener noreferrer"
+              href={lp('/maatwerk')}
               className="inline-flex items-center gap-2.5 rounded-full bg-brand/30 px-8 py-3.5 text-sm font-bold uppercase tracking-wide text-white ring-1 ring-white/20 transition-all duration-200 hover:bg-brand/50 active:scale-[0.98]"
             >
               {t('ctaBtnCustom')}
-            </a>
+            </Link>
           </div>
         </div>
       </section>

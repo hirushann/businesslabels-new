@@ -5,6 +5,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { toast } from 'sonner';
 import { ReCAPTCHA, ReCAPTCHARef } from './ui/ReCAPTCHA';
+import LocaleLink from './LocaleLink';
 
 interface HelpDrawerProps {
   onClose: () => void;
@@ -216,8 +217,8 @@ function CollapseIcon({ open }: { open: boolean }) {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="shrink-0">
       {open
-        ? <path d="M5 12h14" stroke="#f59e0b" strokeWidth="1.33" strokeLinecap="round" />
-        : <path d="M12 5v14M5 12h14" stroke="#f59e0b" strokeWidth="1.33" strokeLinecap="round" />}
+        ? <path d="M5 12h14" stroke="#F18800" strokeWidth="1.33" strokeLinecap="round" />
+        : <path d="M12 5v14M5 12h14" stroke="#444444" strokeWidth="1.33" strokeLinecap="round" />}
     </svg>
   );
 }
@@ -513,7 +514,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
         <div className="shrink-0 p-6 bg-slate-100 flex flex-col gap-8">
           {/* Title + close */}
           <div className="flex justify-between items-start">
-            <h2 className="text-neutral-800 text-2xl font-semibold leading-7">
+            <h2 className="text-neutral-800 text-2xl font-bold leading-7">
               {t('header.needHelp')}
             </h2>
             <button
@@ -557,13 +558,18 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                 href="tel:+31318590465"
                 className="flex-1 h-16 p-2.5 bg-white rounded-xl border border-slate-100 flex items-center gap-3 hover:shadow-md transition-shadow"
               >
-                <div className="w-8 h-8 bg-brand rounded-lg flex items-center justify-center shrink-0">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path d="M21 15.46l-5.27-.61-2.52 2.52a15.05 15.05 0 01-6.59-6.59l2.53-2.53L8.54 3H3.03C2.45 13.18 10.82 21.55 21 20.97l.0-5.51z" fill="white" />
+                <div className="w-8 h-8 bg-[#F18800] rounded-lg flex items-center justify-center shrink-0">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <mask id="mask0_663_1044" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="16" height="16">
+                      <rect width="16" height="16" fill="#D9D9D9"/>
+                    </mask>
+                    <g mask="url(#mask0_663_1044)">
+                      <path d="M12.9591 13.6624C11.7028 13.6624 10.4406 13.3703 9.17261 12.786C7.90472 12.2018 6.73978 11.3777 5.67778 10.3137C4.61589 9.2496 3.79283 8.0846 3.20861 6.81871C2.62439 5.55293 2.33228 4.29187 2.33228 3.03554C2.33228 2.83365 2.39894 2.66543 2.53228 2.53087C2.66561 2.39632 2.83228 2.32904 3.03228 2.32904H5.20661C5.37494 2.32904 5.52344 2.38399 5.65211 2.49387C5.78078 2.60365 5.86261 2.73932 5.89761 2.90087L6.27978 4.86237C6.30622 5.04437 6.30066 5.20076 6.26311 5.33154C6.22544 5.46232 6.15789 5.57215 6.06044 5.66104L4.52078 7.15987C4.76855 7.61365 5.05166 8.04293 5.37011 8.44771C5.68844 8.85238 6.03311 9.23887 6.40411 9.60721C6.76989 9.9731 7.15878 10.3129 7.57078 10.6265C7.98278 10.9402 8.42767 11.2321 8.90544 11.5022L10.4014 9.99321C10.5058 9.88465 10.6321 9.80854 10.7804 9.76487C10.9287 9.72132 11.0827 9.71065 11.2426 9.73287L13.0938 10.1099C13.2621 10.1543 13.3995 10.2402 13.5059 10.3675C13.6124 10.4949 13.6656 10.6393 13.6656 10.8009V12.9624C13.6656 13.1624 13.5983 13.329 13.4638 13.4624C13.3292 13.5957 13.161 13.6624 12.9591 13.6624ZM4.04761 6.21371L5.23744 5.07521C5.25878 5.0581 5.27266 5.0346 5.27911 5.00471C5.28555 4.97482 5.2845 4.94704 5.27594 4.92137L4.98611 3.43154C4.97755 3.39743 4.96261 3.37182 4.94128 3.35471C4.91994 3.3376 4.89216 3.32904 4.85794 3.32904H3.43228C3.40661 3.32904 3.38522 3.3376 3.36811 3.35471C3.35111 3.37182 3.34261 3.39321 3.34261 3.41887C3.37672 3.87443 3.45128 4.33721 3.56628 4.80721C3.68116 5.27732 3.84161 5.74615 4.04761 6.21371ZM9.84761 11.9752C10.2895 12.1812 10.7504 12.3387 11.2303 12.4477C11.7103 12.5566 12.1588 12.6213 12.5758 12.6419C12.6014 12.6419 12.6228 12.6333 12.6399 12.6162C12.6571 12.5991 12.6656 12.5777 12.6656 12.552V11.1495C12.6656 11.1153 12.6571 11.0875 12.6399 11.0662C12.6228 11.0449 12.5972 11.0299 12.5631 11.0214L11.1631 10.7367C11.1374 10.7282 11.115 10.7271 11.0958 10.7335C11.0766 10.74 11.0562 10.7539 11.0348 10.7752L9.84761 11.9752Z" fill="white"/>
+                    </g>
                   </svg>
                 </div>
                 <div className="flex flex-col gap-0.5 overflow-hidden">
-                  <span className="text-neutral-800 text-base font-semibold leading-5">{t('supportPanel.callUs')}</span>
+                  <span className="text-neutral-800 text-base font-bold leading-5">{t('supportPanel.callUs')}</span>
                   <span className="text-neutral-700 text-sm font-normal leading-5 whitespace-nowrap">
                     +31 318 590 465
                   </span>
@@ -575,14 +581,18 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                 href="mailto:verkoop@businesslabels.nl"
                 className="flex-1 h-16 p-2.5 bg-white rounded-xl border border-slate-100 flex items-center gap-3 hover:shadow-md transition-shadow"
               >
-                <div className="w-8 h-8 bg-brand rounded-lg flex items-center justify-center shrink-0">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <rect x="2" y="4" width="20" height="16" rx="2" fill="white" />
-                    <path d="M2 7l10 7 10-7" stroke="#f59e0b" strokeWidth="1.5" />
+                <div className="w-8 h-8 bg-[#F18800] rounded-lg flex items-center justify-center shrink-0">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <mask id="mask0_663_1053" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="16" height="16">
+                      <rect width="16" height="16" fill="#D9D9D9"/>
+                    </mask>
+                    <g mask="url(#mask0_663_1053)">
+                      <path d="M2.87289 13C2.53611 13 2.25106 12.8833 2.01772 12.65C1.78439 12.4167 1.66772 12.1316 1.66772 11.7948V4.20517C1.66772 3.86839 1.78439 3.58333 2.01772 3.35C2.25106 3.11667 2.53611 3 2.87289 3H13.1292C13.466 3 13.7511 3.11667 13.9844 3.35C14.2177 3.58333 14.3344 3.86839 14.3344 4.20517V11.7948C14.3344 12.1316 14.2177 12.4167 13.9844 12.65C13.7511 12.8833 13.466 13 13.1292 13H2.87289ZM13.3344 4.9615L8.32539 8.168C8.27417 8.197 8.22117 8.21983 8.16639 8.2365C8.11172 8.25317 8.05661 8.2615 8.00106 8.2615C7.9455 8.2615 7.89039 8.25317 7.83572 8.2365C7.78095 8.21983 7.72795 8.197 7.67672 8.168L2.66772 4.9615V11.7948C2.66772 11.8547 2.68695 11.9039 2.72539 11.9423C2.76384 11.9808 2.813 12 2.87289 12H13.1292C13.1891 12 13.2383 11.9808 13.2767 11.9423C13.3152 11.9039 13.3344 11.8547 13.3344 11.7948V4.9615ZM8.00106 7.33333L13.2319 4H2.77022L8.00106 7.33333ZM2.66772 5.11533V4.35317V4.373V4.35183V5.11533Z" fill="white"/>
+                    </g>
                   </svg>
                 </div>
                 <div className="flex flex-col gap-0.5 overflow-hidden">
-                  <span className="text-neutral-800 text-base font-semibold leading-5">{t('supportPanel.email')}</span>
+                  <span className="text-neutral-800 text-base font-bold leading-5">{t('supportPanel.email')}</span>
                   <span className="text-neutral-700 text-sm font-normal leading-5 truncate">verkoop@businesslabels.nl</span>
                 </div>
               </a>
@@ -599,7 +609,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
               className="flex justify-between items-center w-full text-left"
             onClick={() => toggleSection('callback')}
             >
-              <span className="text-neutral-800 text-lg font-normal leading-6">
+              <span className="text-neutral-800 text-lg font-bold leading-6">
                 {t('help.requestCallbackTeam')}
               </span>
               <CollapseIcon open={callbackOpen} />
@@ -655,7 +665,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                     <button
                       type="submit"
                       disabled={bookingStatus === 'submitting'}
-                      className="h-12 px-4 py-2.5 bg-brand rounded-full text-white text-base font-semibold leading-6 hover:bg-brand-hover transition-colors disabled:cursor-not-allowed disabled:opacity-70"
+                      className="h-12 px-4 py-2.5 bg-brand rounded-full text-white text-base font-medium leading-6 hover:bg-brand-hover transition-colors disabled:cursor-not-allowed disabled:opacity-70"
                     >
                       {bookingStatus === 'submitting' ? t('help.submitting') : t('help.requestBtn')}
                     </button>
@@ -673,7 +683,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
               className="flex justify-between items-center w-full text-left"
               onClick={() => toggleSection('moreWays')}
             >
-              <span className="text-neutral-800 text-lg font-normal leading-6">
+              <span className="text-neutral-800 text-lg font-bold leading-6">
                 {t('help.moreWaysTeam')}
               </span>
               <CollapseIcon open={moreWaysOpen} />
@@ -682,7 +692,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
             {moreWaysOpen && (
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1">
-                  <span className="text-neutral-800 text-base font-semibold">{t('help.address')}</span>
+                  <span className="text-neutral-800 text-base font-bold">{t('help.address')}</span>
                   <div className="flex flex-col gap-1">
                     <span className="text-neutral-700 text-sm font-normal">Lenderinkweg 8,</span>
                     <span className="text-neutral-700 text-sm font-normal">6733 AX Wekerom</span>
@@ -701,7 +711,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
               className="flex justify-between items-center w-full text-left"
               onClick={() => toggleSection('schedule')}
             >
-              <span className="text-neutral-800 text-lg font-normal leading-6">
+              <span className="text-neutral-800 text-lg font-bold leading-6">
                 {t('help.checkAvailability')}
               </span>
               <CollapseIcon open={scheduleOpen} />
@@ -731,12 +741,12 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
           <div className="h-px bg-zinc-100" />
 
           {/* ── Drop Us a Message ── */}
-          <div className="flex flex-col gap-4 pb-6">
+          <div className="flex flex-col gap-4">
             <button
               className="flex justify-between items-center w-full text-left"
               onClick={() => toggleSection('message')}
             >
-              <span className="text-neutral-800 text-lg font-normal leading-6">
+              <span className="text-neutral-800 text-lg font-bold leading-6">
                 {t('help.dropMessage')}
               </span>
               <CollapseIcon open={messageOpen} />
@@ -797,13 +807,27 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                   <button
                     type="submit"
                     disabled={contactStatus === 'submitting'}
-                    className="w-auto h-12 px-4 py-2.5 bg-brand rounded-full text-white text-base font-semibold leading-6 hover:bg-brand-hover transition-colors disabled:cursor-not-allowed disabled:opacity-70"
+                    className="w-auto h-12 px-4 py-2.5 bg-brand rounded-full text-white text-base font-medium leading-6 hover:bg-brand-hover transition-colors disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     {contactStatus === 'submitting' ? t('help.sending') : t('help.sendMessage')}
                   </button>
                 </div>
               </form>
             )}
+          </div>
+
+          <div className="h-px bg-zinc-100" />
+
+          {/* ── Contact Support ── */}
+          <div className="flex flex-col gap-4">
+            <LocaleLink href="/contact-us" className="w-full" onClick={onClose}>
+              <div style={{ width: '100%', height: '100%', justifyContent: 'space-between', alignItems: 'center', display: 'inline-flex' }}>
+                <div style={{ color: '#F18800', fontSize: '18px', fontFamily: 'Segoe UI', fontWeight: 700, lineHeight: '27px', wordWrap: 'break-word' }}>Contact Support</div>
+                <svg width="20" height="17" viewBox="0 0 20 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M11.3051 1.00002L18.5363 8.2312L11.401 15.3666M1.00007 7.66552L18.3351 8.22971" stroke="#F18800" strokeWidth="2" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            </LocaleLink>
           </div>
 
           <div className="h-px bg-slate-100" />

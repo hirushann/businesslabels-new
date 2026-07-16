@@ -42,8 +42,28 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
-        source: '/en/software-2',
-        destination: '/en/software',
+        source: '/en/software',
+        destination: '/en/software-2',
+        permanent: true,
+      },
+      {
+        source: '/en/support',
+        destination: '/en/support-2/',
+        permanent: true,
+      },
+      {
+        source: '/custom-made-form',
+        destination: '/maatwerk',
+        permanent: true,
+      },
+      {
+        source: '/en/custom-made-form',
+        destination: '/en/custom-made-labels',
+        permanent: true,
+      },
+      {
+        source: '/en/maatwerk',
+        destination: '/en/custom-made-labels',
         permanent: true,
       },
       {
@@ -54,6 +74,41 @@ const nextConfig: NextConfig = {
       {
         source: '/en/brand/diamondlabels',
         destination: '/en/brand/diamondlabels-nl',
+        permanent: true,
+      },
+      {
+        source: '/faq',
+        destination: '/epson-colorworks-faq',
+        permanent: true,
+      },
+      {
+        source: '/en/faq',
+        destination: '/en/epson-colorworks-faq',
+        permanent: true,
+      },
+      {
+        source: '/knowledge',
+        destination: '/kennisbank-overzicht',
+        permanent: true,
+      },
+      {
+        source: '/en/knowledge',
+        destination: '/en/knowledge-base',
+        permanent: true,
+      },
+      {
+        source: '/en/kennisbank-overzicht',
+        destination: '/en/knowledge-base',
+        permanent: true,
+      },
+      {
+        source: '/brands',
+        destination: '/merken',
+        permanent: true,
+      },
+      {
+        source: '/en/merken',
+        destination: '/en/brands',
         permanent: true,
       },
     ];

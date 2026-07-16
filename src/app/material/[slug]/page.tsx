@@ -10,6 +10,7 @@ import IccProfileModal from "@/components/materials/IccProfileModal";
 import ScrollToMaterialProductsButton from "@/components/materials/ScrollToMaterialProductsButton";
 import ProductsListing from "@/components/ProductsListing";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
+import { localePath } from "@/lib/i18n/utils";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 import DownloadSpecSheetButton from "@/components/materials/DownloadSpecSheetButton";
@@ -480,7 +481,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
         <div className="mx-auto flex max-w-[1440px] flex-col gap-6">
           <Breadcrumbs
             items={[
-              { label: t("common.materials"), href: "/materials" },
+              { label: t("common.materials"), href: "/material" },
               ...(category ? [{ label: category.name, href: `/category/${category.slug || category.id}` }] : []),
               { label: material.title },
             ]}
@@ -541,7 +542,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
               </SidebarCard>
 
               <SidebarCard title={t("materialDetail.customSizeTitle")} description={t("materialDetail.customSizeDesc")}>
-                <Link href={`/custom-made-form?materialId=${material.code}`} className="flex h-12 items-center justify-center rounded-full border border-brand bg-white px-4 text-base font-bold leading-6 text-brand transition-colors hover:bg-brand/20">
+                <Link href={localePath(`/maatwerk?materialId=${material.code}`, locale)} className="flex h-12 items-center justify-center rounded-full border border-brand bg-white px-4 text-base font-bold leading-6 text-brand transition-colors hover:bg-brand/20">
                   {t("materialDetail.requestCustomMade")}
                 </Link>
                 <div className="h-px w-full bg-line" />

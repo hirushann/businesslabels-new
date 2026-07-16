@@ -18,11 +18,13 @@ import {
   Package
 } from 'lucide-react';
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
-import { useTranslations } from 'next-intl';
-import AvailabilityStatus from "@/app/contact/AvailabilityStatus";
+import { useTranslations, useLocale } from 'next-intl';
+import { localePath } from '@/lib/i18n/utils';
+import AvailabilityStatus from "@/app/contact-us/AvailabilityStatus";
 import CTABanner from "@/components/CTABanner";
 export default function SupportPage() {
   const t = useTranslations('supportPage');
+  const locale = useLocale();
   return (
     <div className="relative bg-white min-h-screen font-sans overflow-hidden">
       {/* Ambient background glows */}
@@ -118,7 +120,7 @@ export default function SupportPage() {
                 {t('kbDesc')}
               </p>
             </div>
-            <Link href="/knowledge" className="shrink-0 bg-[#ea7a0e] hover:bg-[#d66e0a] text-white px-6 py-3 rounded-full font-semibold transition-colors flex items-center gap-2">
+            <Link href={localePath('/kennisbank-overzicht', locale)} className="shrink-0 bg-[#ea7a0e] hover:bg-[#d66e0a] text-white px-6 py-3 rounded-full font-semibold transition-colors flex items-center gap-2">
               <BookOpen className="w-5 h-5" /> {t('kbButton')}
             </Link>
           </div>

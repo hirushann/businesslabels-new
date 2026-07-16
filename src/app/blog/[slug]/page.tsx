@@ -157,7 +157,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
               <div className="w-full flex flex-col justify-start items-start gap-4">
                 <Breadcrumbs 
                   items={[
-                    { label: t("common.blogs"), href: "/blogs" },
+                    { label: t("common.blogs"), href: "/blog" },
                     { label: post.title }
                   ]} 
                 />
@@ -291,7 +291,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
                      </button>
                   </div>
                   <div className="w-full h-10 bg-gray-50 rounded-full flex items-center px-4 border border-slate-100 overflow-hidden relative">
-                    <span className="text-sm text-neutral-500 truncate w-full pr-8">https://businesslabel.com/blogs/{post.slug}</span>
+                    <span className="text-sm text-neutral-500 truncate w-full pr-8">https://businesslabel.com/blog/{post.slug}</span>
                     <button className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-brand">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                     </button>
@@ -399,7 +399,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
                   return (
                     <CarouselItem key={material.id} className="pl-6 md:basis-1/2 lg:basis-1/3 flex">
                       <div className="w-full h-full bg-white rounded-xl shadow-[0_4px_20px_rgba(109,109,120,0.05)] border border-slate-100 flex flex-col overflow-hidden group hover:shadow-[0_12px_30px_rgba(109,109,120,0.12)] transition-all duration-300 hover:-translate-y-1">
-                        <Link href={`/materials/${material.slug}`} className="h-56 relative bg-slate-100 overflow-hidden block">
+                        <Link href={`/material/${material.slug}`} className="h-56 relative bg-slate-100 overflow-hidden block">
                           <Image src={cardImage} alt={material.title} fill className="object-contain p-4 group-hover:scale-105 transition-transform duration-500" unoptimized />
                           <div className="absolute left-4 top-4 bg-white rounded-full px-3 py-1 flex items-center gap-2 shadow-sm">
                             <div className="w-2 h-2 rounded-full bg-neutral-700"></div>
@@ -409,7 +409,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
                         <div className="p-5 flex flex-col gap-4 flex-1">
                           <div className="flex flex-col gap-1">
                             <span className="text-sm font-semibold text-blue-400">{material.code || material.title.split(' ')[0]}</span>
-                            <Link href={`/materials/${material.slug}`}>
+                            <Link href={`/material/${material.slug}`}>
                               <h3 className="text-xl font-bold text-neutral-800 line-clamp-1 hover:text-brand transition-colors">{material.title}</h3>
                             </Link>
                             <p className="text-neutral-600 text-sm line-clamp-2 mt-1 font-medium">{material.excerpt || material.subtitle || ""}</p>
@@ -430,7 +430,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
                               <span className="font-semibold text-neutral-700 text-sm">{thickness}</span>
                             </div>
                           </div>
-                          <Link href={`/materials/${material.slug}`} className="w-full py-2.5 bg-brand hover:bg-brand-hover text-white text-center font-semibold rounded-full mt-2 transition-colors">
+                          <Link href={`/material/${material.slug}`} className="w-full py-2.5 bg-brand hover:bg-brand-hover text-white text-center font-semibold rounded-full mt-2 transition-colors">
                             View Details
                           </Link>
                         </div>

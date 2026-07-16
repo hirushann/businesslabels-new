@@ -18,6 +18,7 @@ export const MESSAGES_V4 = {
       printers: 'Printers',
       blogs: 'Blogs',
       brands: 'Brands',
+      brandsDescription: 'You can find the following brands on BusinessLabels',
       category: 'Category',
       details: 'Details',
       home: 'Home',
@@ -437,7 +438,7 @@ export const MESSAGES_V4 = {
       columns: {
         products: 'Products',
         printers: 'Popular Printers',
-        support: 'Support & Services',
+        support: 'Need help?',
       },
       legal: {
         copyright: '© 2026 Businesslabels. All rights reserved.',
@@ -456,6 +457,10 @@ export const MESSAGES_V4 = {
         samplePrints: 'Sample Prints',
         inkCalculator: 'Ink Calculator',
         helpCenter: 'Help Center',
+        contact: 'Contact',
+        support: 'Support',
+        knowledgeBase: 'Knowledge base',
+        faq: 'FAQ',
       },
     },
     cart: {
@@ -1974,6 +1979,7 @@ export const MESSAGES_V4 = {
       printers: 'Printers',
       blogs: 'Blogs',
       brands: 'Merken',
+      brandsDescription: 'U kunt de volgende merken vinden op BusinessLabels',
       category: 'Categorie',
       details: 'Details',
       home: 'Home',
@@ -2393,7 +2399,7 @@ export const MESSAGES_V4 = {
       columns: {
         products: 'Producten',
         printers: 'Populaire printers',
-        support: 'Support en services',
+        support: 'Hulp nodig?',
       },
       legal: {
         copyright: '© 2026 Businesslabels. Alle rechten voorbehouden.',
@@ -2412,6 +2418,10 @@ export const MESSAGES_V4 = {
         samplePrints: 'Proefdrukken',
         inkCalculator: 'Inktcalculator',
         helpCenter: 'Helpcentrum',
+        contact: 'Contact',
+        support: 'Support',
+        knowledgeBase: 'Kennisbank',
+        faq: 'FAQ',
       },
     },
     cart: {

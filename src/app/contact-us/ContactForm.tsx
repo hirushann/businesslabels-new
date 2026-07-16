@@ -50,7 +50,7 @@ export default function ContactForm() {
 
   return (
     <div className="flex-1 bg-white rounded-xl shadow-[0px_4px_6px_-4px_rgba(0,0,0,0.10)] shadow-lg outline outline-1 outline-offset-[-1px] outline-black/10 inline-flex flex-col justify-start items-start overflow-hidden w-full">
-      <div className="self-stretch p-10 flex flex-col justify-center items-center gap-8">
+      <div className="self-stretch p-5 md:p-10 flex flex-col justify-center items-center gap-8">
         {status === 'success' ? (
           <div className="self-stretch flex flex-col items-center justify-center py-10 gap-4 text-center">
              <div className="size-16 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 mb-4">
@@ -78,7 +78,7 @@ export default function ContactForm() {
             <div className="self-stretch flex flex-col justify-start items-start gap-4">
               <div className="self-stretch inline-flex justify-start items-start gap-4 w-full sm:flex-row flex-col">
                 <div className="flex-1 inline-flex flex-col justify-start items-start gap-2 w-full">
-                  <label htmlFor="name" className="justify-start text-neutral-800 text-lg font-semibold leading-5">{t("nameLabel")}</label>
+                  <label htmlFor="name" className="justify-start text-neutral-800 text-lg font-bold leading-5">{t("nameLabel")}</label>
                   <input
                     id="name"
                     name="name"
@@ -90,7 +90,7 @@ export default function ContactForm() {
                   />
                 </div>
                 <div className="flex-1 inline-flex flex-col justify-start items-start gap-2 w-full">
-                  <label htmlFor="company" className="justify-start text-neutral-800 text-lg font-semibold leading-5">{t("companyLabel")}</label>
+                  <label htmlFor="company" className="justify-start text-neutral-800 text-lg font-bold leading-5">{t("companyLabel")}</label>
                   <input
                     id="company"
                     name="company"
@@ -103,7 +103,7 @@ export default function ContactForm() {
               </div>
               <div className="self-stretch inline-flex justify-start items-start gap-4 w-full sm:flex-row flex-col">
                 <div className="flex-1 inline-flex flex-col justify-start items-start gap-2 w-full">
-                  <label htmlFor="email" className="justify-start text-neutral-800 text-lg font-semibold leading-5">{t("emailLabel")}</label>
+                  <label htmlFor="email" className="justify-start text-neutral-800 text-lg font-bold leading-5">{t("emailLabel")}</label>
                   <input
                     id="email"
                     name="email"
@@ -116,7 +116,7 @@ export default function ContactForm() {
                   />
                 </div>
                 <div className="flex-1 inline-flex flex-col justify-start items-start gap-2 w-full">
-                  <label htmlFor="phone" className="justify-start text-neutral-800 text-lg font-semibold leading-5">{t("phoneLabel")}</label>
+                  <label htmlFor="phone" className="justify-start text-neutral-800 text-lg font-bold leading-5">{t("phoneLabel")}</label>
                   <input
                     id="phone"
                     name="phone"
@@ -143,7 +143,7 @@ export default function ContactForm() {
                 />
               </div>
               <div className="self-stretch flex flex-col justify-start items-start gap-2 w-full">
-                <label htmlFor="message" className="justify-start text-neutral-800 text-lg font-semibold leading-5">{t("messageLabel")}</label>
+                <label htmlFor="message" className="justify-start text-neutral-800 text-lg font-bold leading-5">{t("messageLabel")}</label>
                 <textarea
                   id="message"
                   name="message"
@@ -161,7 +161,7 @@ export default function ContactForm() {
               disabled={status === 'loading'}
               className="self-stretch h-12 px-4 py-2.5 bg-brand hover:bg-brand-hover disabled:bg-amber-300 disabled:cursor-not-allowed rounded-[100px] inline-flex justify-center items-center gap-2 transition-colors w-full sm:w-auto"
             >
-              <span className="text-center justify-start text-white text-base font-semibold leading-6">
+              <span className="text-center justify-start text-white text-base font-medium leading-6">
                 {status === 'loading' ? t('sending') : t('send')}
               </span>
             </button>

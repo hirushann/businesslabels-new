@@ -290,7 +290,7 @@ function MaterialCard({
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_4px_20px_rgba(109,109,120,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(109,109,120,0.12)]">
-      <Link href={`/materials/${material.slug}`} className="relative block h-60 w-full overflow-hidden bg-slate-50">
+      <Link href={`/material/${material.slug}`} className="relative block h-60 w-full overflow-hidden bg-slate-50">
         <Image
           src={cardImage}
           alt={material.title}
@@ -329,14 +329,14 @@ function MaterialCard({
       <div className="flex flex-1 flex-col p-5">
         <div className="flex-1">
           <div className="mb-2 flex items-center gap-2">
-            <Link href={`/materials/${material.slug}`} className="inline-block text-lg rounded-md font-bold uppercase tracking-wide text-link transition-colors">
+            <Link href={`/material/${material.slug}`} className="inline-block text-lg rounded-md font-bold uppercase tracking-wide text-link transition-colors">
               {material.code}
             </Link>
             <span className="text-xs text-slate-400 font-medium">{material.brand || "Diamondlabels"}</span>
           </div>
 
           <h3 className="mb-2 text-lg font-bold leading-snug line-clamp-1">
-            <Link href={`/materials/${material.slug}`} className="text-slate-800 hover:text-brand transition-colors">
+            <Link href={`/material/${material.slug}`} className="text-slate-800 hover:text-brand transition-colors">
               {material.subtitle ? material.subtitle : material.title}
             </Link>
           </h3>
@@ -377,7 +377,7 @@ function MaterialCard({
 
         <div className="pt-4">
           <Link
-            href={`/materials/${material.slug}`}
+            href={`/material/${material.slug}`}
             className="flex h-11 items-center justify-center rounded-full bg-brand px-5 text-normal font-bold text-white shadow-sm transition-all duration-200 hover:bg-brand-hover hover:shadow-md hover:shadow-brand/10"
           >
             {getLocalizedLabel("view_details", locale)}
@@ -397,7 +397,7 @@ export default function MaterialsCatalogClient({
   initialCatalog: MaterialSearchResponse;
   initialQueryString: string;
   locale: string;
-  /** When set, the print method is locked to this value via the URL path (e.g. /materials/inkjet). */
+  /** When set, the print method is locked to this value via the URL path (e.g. /material/inkjet). */
   defaultPrintMethod?: string;
 }) {
   const router = useRouter();
@@ -464,10 +464,10 @@ export default function MaterialsCatalogClient({
     updateQuery({ [type]: current.join(",") });
   };
 
-  // Toggle Print Method — navigates to /materials/{method} path URLs
+  // Toggle Print Method — navigates to /material/{method} path URLs
   const togglePrintMethod = (method: string) => {
-    // Resolve the /materials base preserving any locale prefix (e.g. /en/materials)
-    const materialsBase = pathname.replace(/\/materials.*$/, "/materials");
+    // Resolve the /material base preserving any locale prefix (e.g. /en/material)
+    const materialsBase = pathname.replace(/\/material.*$/, "/material");
     if (printMethod === method) {
       // Deselect: go back to the main materials page
       router.push(materialsBase);
@@ -726,7 +726,7 @@ export default function MaterialsCatalogClient({
             </h2>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#EDF2F7]">
             <div className="flex items-center gap-4">
               {/* Filters Toggle Button */}
               <button
@@ -815,7 +815,7 @@ export default function MaterialsCatalogClient({
               </div>
 
               {/* Sort select indicator */}
-              <div className="relative flex shrink-0 items-center h-10">
+              <div className="relative flex shrink-0 items-center h-10 self-end sm:self-auto">
                 <select
                   value={sort}
                   onChange={(e) => updateQuery({ sort: e.target.value })}

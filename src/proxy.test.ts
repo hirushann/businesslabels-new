@@ -56,4 +56,131 @@ describe("proxy locale routing", () => {
     expect(response.headers.get("location")).toBe("http://localhost/en/login?redirect=%2Fen%2Fmy-account");
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
+
+  it("rewrites /en/software-2 internally to /software", () => {
+    const response = proxy(makeRequest("/en/software-2"));
+
+    expect(response.headers.get("x-middleware-rewrite")).toBe("http://localhost/software");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("rewrites /en/knowledge-base internally to /kennisbank-overzicht", () => {
+    const response = proxy(makeRequest("/en/knowledge-base"));
+
+    expect(response.headers.get("x-middleware-rewrite")).toBe("http://localhost/kennisbank-overzicht");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("redirects /en/kennisbank-overzicht to /en/knowledge-base", () => {
+    const response = proxy(makeRequest("/en/kennisbank-overzicht"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/en/knowledge-base");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("rewrites /en/brands internally to /merken", () => {
+    const response = proxy(makeRequest("/en/brands"));
+
+    expect(response.headers.get("x-middleware-rewrite")).toBe("http://localhost/merken");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("redirects /en/merken to /en/brands", () => {
+    const response = proxy(makeRequest("/en/merken"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/en/brands");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("rewrites /en/support-2/ internally to /support", () => {
+    const response = proxy(makeRequest("/en/support-2/"));
+
+    expect(response.headers.get("x-middleware-rewrite")).toBe("http://localhost/support");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("rewrites /en/support-2 internally to /support", () => {
+    const response = proxy(makeRequest("/en/support-2"));
+
+    expect(response.headers.get("x-middleware-rewrite")).toBe("http://localhost/support");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("redirects /en/support to /en/support-2/", () => {
+    const response = proxy(makeRequest("/en/support"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/en/support-2/");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("redirects /en/custom-made-form to /en/custom-made-labels", () => {
+    const response = proxy(makeRequest("/en/custom-made-form"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/en/custom-made-labels");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("redirects /en/maatwerk to /en/custom-made-labels", () => {
+    const response = proxy(makeRequest("/en/maatwerk"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/en/custom-made-labels");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("rewrites /en/custom-made-labels internally to /maatwerk", () => {
+    const response = proxy(makeRequest("/en/custom-made-labels"));
+
+    expect(response.headers.get("x-middleware-rewrite")).toBe("http://localhost/maatwerk");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("rewrites /en/cart internally to /winkelmand", () => {
+    const response = proxy(makeRequest("/en/cart"));
+
+    expect(response.headers.get("x-middleware-rewrite")).toBe("http://localhost/winkelmand");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("redirects /en/winkelmand to /en/cart", () => {
+    const response = proxy(makeRequest("/en/winkelmand"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/en/cart");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("rewrites /en/checkout internally to /afrekenen", () => {
+    const response = proxy(makeRequest("/en/checkout"));
+
+    expect(response.headers.get("x-middleware-rewrite")).toBe("http://localhost/afrekenen");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("redirects /en/afrekenen to /en/checkout", () => {
+    const response = proxy(makeRequest("/en/afrekenen"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/en/checkout");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("redirects /contact to /contact-us", () => {
+    const response = proxy(makeRequest("/contact"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/contact-us");
+  });
+
+  it("redirects /en/contact to /en/contact-us", () => {
+    const response = proxy(makeRequest("/en/contact"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/en/contact-us");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
 });

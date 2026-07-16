@@ -10,6 +10,7 @@ import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { useTranslations, useLocale } from 'next-intl';
 import { useCart } from '@/components/CartProvider';
 import { toDisplayImageUrl } from '@/lib/utils/imageProxy';
+import { localePath } from '@/lib/i18n/utils';
 
 type Tab = 'dashboard' | 'orders' | 'addresses' | 'details' | 'printers' | 'favourites' | 'billing_address' | 'shipping_address' | 'change_password';
 
@@ -942,6 +943,7 @@ function DashboardView({ setActiveTab, user }: { setActiveTab: (tab: Tab) => voi
 
 function OrdersView() {
   const t = useTranslations();
+  const locale = useLocale();
   const cart = useCart();
   const [orders, setOrders] = useState<AccountOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -976,7 +978,7 @@ function OrdersView() {
       );
     });
     toast.success(t.has('account.reorderSuccess') ? t('account.reorderSuccess') : 'Items added to cart!');
-    window.location.href = '/checkout';
+    window.location.href = localePath('/afrekenen', locale);
   };
 
   const fetchOrders = async () => {
@@ -1365,7 +1367,7 @@ function PrintersView() {
                 ) : (
                   <span />
                 )}
-                <Link href={printer.slug ? `/materials/${printer.slug}` : "#"} className="text-brand font-black text-xs uppercase tracking-wider hover:underline">{t('account.viewPrinter')}</Link>
+                <Link href={printer.slug ? `/material/${printer.slug}` : "#"} className="text-brand font-black text-xs uppercase tracking-wider hover:underline">{t('account.viewPrinter')}</Link>
               </div>
             </div>
             <div className="h-px bg-slate-100" />
@@ -1382,7 +1384,7 @@ function PrintersView() {
                   <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest group-hover/btn:text-red-500 transition-colors">{t('account.action', { fallback: 'Action' })}</span>
                   <span className="text-sm font-bold text-neutral-800 group-hover/btn:text-red-500 transition-colors">{t('account.removeFromFavorites')}</span>
                </button>
-               <Link href={printer.slug ? `/materials/${printer.slug}` : "#"} className="flex flex-col gap-1 text-left group/btn">
+               <Link href={printer.slug ? `/material/${printer.slug}` : "#"} className="flex flex-col gap-1 text-left group/btn">
                   <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest group-hover/btn:text-brand transition-colors">{t('account.supplies', { fallback: 'Supplies' })}</span>
                   <span className="text-sm font-bold text-neutral-800">{t('account.buyLabels')}</span>
                </Link>

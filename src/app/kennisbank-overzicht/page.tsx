@@ -5,7 +5,7 @@ import {
   AlertTriangle, Wrench, Lightbulb, HelpCircle,
   Settings, Sliders, PlayCircle, BookOpen, Link as LinkIcon, PhoneCall, Home
 } from "lucide-react";
-import { sectionIcon } from "@/app/faq/section-icon";
+import { sectionIcon } from "@/app/epson-colorworks-faq/section-icon";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import KnowledgeSearchBar from "@/components/KnowledgeSearchBar";
@@ -165,7 +165,7 @@ export default async function KnowledgeBaseArchive() {
             const IconComponent = sectionIcon(page.icon) || HelpCircle;
             
             return (
-              <Link key={page.id} href={`/faq?topic=${slug}`} className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 flex flex-col items-center gap-4 transition-all group">
+              <Link key={page.id} href={`/epson-colorworks-faq?topic=${slug}`} className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 flex flex-col items-center gap-4 transition-all group">
                 <IconComponent className="w-14 h-14 text-zinc-500 group-hover:text-brand transition-colors" />
                 <h3 className="text-center text-neutral-800 text-xl font-semibold">{title}</h3>
               </Link>
@@ -198,7 +198,7 @@ export default async function KnowledgeBaseArchive() {
             } as Record<string, any>)[category.slug] || BookOpen;
 
             return (
-              <Link key={category.id} href={`/blogs?category=${categorySlug}`} className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 flex items-center gap-6 transition-all group">
+              <Link key={category.id} href={`/blog?category=${categorySlug}`} className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 flex items-center gap-6 transition-all group">
                 <div className="w-20 h-20 bg-brand-soft rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform flex-shrink-0">
                   <Icon className="w-10 h-10 text-brand" />
                 </div>

@@ -734,7 +734,7 @@ function CatalogProductsListing({
         </div>
       )}
 
-      <div ref={listingControlsRef} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+      <div ref={listingControlsRef} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#EDF2F7]">
         <div className="flex items-center gap-4">
           <button
             type="button"
@@ -814,7 +814,7 @@ function CatalogProductsListing({
             </div>
           ) : null}
 
-          <div className="relative flex shrink-0 items-center h-10">
+          <div className="relative flex shrink-0 items-center h-10 self-end sm:self-auto">
             <select
               value={selectedSort}
               onChange={(event) =>

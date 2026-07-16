@@ -5,6 +5,7 @@ import { getTranslations } from "next-intl/server";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import ProductCard from "@/components/ProductCard";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
+import { localePath } from "@/lib/i18n/utils";
 import { mapLaravelProductToCardData, type LaravelProduct } from "@/lib/mappings/product";
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 
@@ -146,7 +147,7 @@ export default async function BlogsPage({
           <Breadcrumbs 
             className="text-zinc-500"
             items={[
-              { label: "Knowledge Center", href: "/knowledge" },
+              { label: "Knowledge Center", href: localePath("/kennisbank-overzicht", locale) },
               { label: "Articles & Guides" }
             ]} 
           />
@@ -166,7 +167,7 @@ export default async function BlogsPage({
           <div className="w-full flex flex-col justify-end items-start">
             <div className="w-full flex overflow-x-auto no-scrollbar pb-3 items-start justify-between">
               <Link 
-                href="/blogs?category=all"
+                href="/blog?category=all"
                 className={`px-2.5 pb-2 flex justify-center items-center gap-2.5 relative transition-colors ${activeCategory === "all" ? "text-brand font-bold" : "text-neutral-700 font-semibold hover:text-brand"}`}
               >
                 <span className="text-base leading-5 whitespace-nowrap">All</span>
@@ -178,7 +179,7 @@ export default async function BlogsPage({
               {categories.map(category => (
                 <Link 
                   key={category.slug}
-                  href={`/blogs?category=${category.slug}`}
+                  href={`/blog?category=${category.slug}`}
                   className={`px-2.5 pb-2 flex justify-center items-center gap-2.5 relative transition-colors ${activeCategory === category.slug ? "text-brand font-bold" : "text-neutral-700 font-semibold hover:text-brand"}`}
                 >
                   <span className="text-base leading-5 whitespace-nowrap">{category.name}</span>
@@ -194,7 +195,7 @@ export default async function BlogsPage({
           {/* Articles Grid */}
           <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {posts.length > 0 ? posts.map((post) => (
-              <Link key={post.id} href={`/blogs/${post.slug}`} className="flex flex-col bg-white rounded-2xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-100 overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+              <Link key={post.id} href={`/blog/${post.slug}`} className="flex flex-col bg-white rounded-2xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-100 overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                 <div className="w-full h-48 relative overflow-hidden bg-slate-100">
                   <Image 
                     src={toDisplayImageUrl(post.image_preview || post.image) || "https://placehold.co/384x192"} 
@@ -246,7 +247,7 @@ export default async function BlogsPage({
             <div className="text-neutral-800 text-2xl font-semibold leading-7">Looking for in-depth information?</div>
             <div className="text-neutral-700 text-base font-normal leading-6">Step-by-step guides, troubleshooting trees, and printer manuals live in the Knowledge Base.</div>
           </div>
-          <Link href="/knowledge" className="h-12 px-6 py-2.5 bg-brand hover:bg-brand-hover transition-colors rounded-[100px] flex justify-center items-center gap-2.5 flex-shrink-0">
+          <Link href={localePath("/kennisbank-overzicht", locale)} className="h-12 px-6 py-2.5 bg-brand hover:bg-brand-hover transition-colors rounded-[100px] flex justify-center items-center gap-2.5 flex-shrink-0">
             <span className="text-white text-lg font-semibold leading-6">Browse Knowledge Base</span>
           </Link>
         </div>

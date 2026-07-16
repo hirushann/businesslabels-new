@@ -646,7 +646,7 @@ function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t:
       ) {
         finalValue = (
           <LocaleLink
-            href={`/materials/${encodeURIComponent(normalizedValue)}`}
+            href={`/material/${encodeURIComponent(normalizedValue)}`}
             className="text-brand hover:text-brand underline font-semibold transition-colors cursor-pointer"
           >
             {normalizedValue}

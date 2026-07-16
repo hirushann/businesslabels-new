@@ -41,19 +41,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes = [
     '',
     '/about',
-    '/contact',
-    '/faq',
-    '/materials',
-    '/materials/inkjet',
-    '/materials/thermal-direct',
-    '/materials/thermal-transfer',
+    '/contact-us',
+    '/epson-colorworks-faq',
+    '/material',
+    '/material/inkjet',
+    '/material/thermal-direct',
+    '/material/thermal-transfer',
     '/product',
     '/categories',
     getPrinterCategoryPath('nl'),
-    '/blogs',
+    '/blog',
     '/brand',
     '/printers',
-    '/custom-made-form',
+    '/maatwerk',
   ];
 
   const sitemapEntries: MetadataRoute.Sitemap = [];
@@ -82,7 +82,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   materials.forEach((material) => {
     if (material.slug) {
       sitemapEntries.push({
-        url: `${frontendUrl}/materials/${material.slug}`,
+        url: `${frontendUrl}/material/${material.slug}`,
         lastModified: new Date(material.updated_at || new Date()),
         changeFrequency: 'weekly',
         priority: 0.7,
@@ -130,7 +130,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   blogs.forEach((blog) => {
     if (blog.slug) {
       sitemapEntries.push({
-        url: `${frontendUrl}/blogs/${blog.slug}`,
+        url: `${frontendUrl}/blog/${blog.slug}`,
         lastModified: new Date(blog.updated_at || new Date()),
         changeFrequency: 'monthly',
         priority: 0.6,

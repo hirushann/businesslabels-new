@@ -217,7 +217,7 @@ function CategoryListingContent({ products }: { products: CategoryCardData[] }) 
             ) : null}
           </div>
 
-          <div className="relative flex shrink-0 items-center h-10">
+          <div className="relative flex shrink-0 items-center h-10 self-end md:self-auto">
             <select
               value={selectedSort}
               onChange={(e) => handleSortChange(e.target.value as CategoryListingSortValue)}

@@ -31,7 +31,68 @@ export function proxy(request: NextRequest) {
   const hasEnglishPrefix = pathname.startsWith(EN_PREFIX + '/') || pathname === EN_PREFIX;
   const persistedLocale = normalizeLocale(request.cookies.get(LOCALE_COOKIE)?.value);
   const locale = hasEnglishPrefix ? 'en' : persistedLocale;
-  const cleanPathname = hasEnglishPrefix ? (pathname.slice(EN_PREFIX.length) || '/') : pathname;
+  let cleanPathname = hasEnglishPrefix ? (pathname.slice(EN_PREFIX.length) || '/') : pathname;
+  if (cleanPathname === '/software-2') {
+    cleanPathname = '/software';
+  }
+  if (cleanPathname === '/knowledge-base') {
+    cleanPathname = '/kennisbank-overzicht';
+  }
+  if (cleanPathname === '/brands') {
+    cleanPathname = '/merken';
+  }
+  if (cleanPathname === '/support-2' || cleanPathname === '/support-2/') {
+    cleanPathname = '/support';
+  }
+  if (cleanPathname === '/custom-made-labels') {
+    cleanPathname = '/maatwerk';
+  }
+  if (cleanPathname === '/cart') {
+    cleanPathname = '/winkelmand';
+  }
+  if (cleanPathname === '/checkout') {
+    cleanPathname = '/afrekenen';
+  }
+
+  if (pathname === '/en/support' || pathname === '/en/support/') {
+    const redirectUrl = new URL(`${EN_PREFIX}/support-2/${search}`, request.url);
+    return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+  }
+
+  if (pathname === '/en/custom-made-form' || pathname === '/en/custom-made-form/' || pathname === '/en/maatwerk' || pathname === '/en/maatwerk/') {
+    const redirectUrl = new URL(`${EN_PREFIX}/custom-made-labels${search}`, request.url);
+    return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+  }
+
+  if (pathname === '/en/kennisbank-overzicht') {
+    const redirectUrl = new URL(`${EN_PREFIX}/knowledge-base${search}`, request.url);
+    return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+  }
+
+  if (pathname === '/en/merken') {
+    const redirectUrl = new URL(`${EN_PREFIX}/brands${search}`, request.url);
+    return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+  }
+
+  if (pathname === '/en/winkelmand') {
+    const redirectUrl = new URL(`${EN_PREFIX}/cart${search}`, request.url);
+    return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+  }
+
+  if (pathname === '/en/afrekenen') {
+    const redirectUrl = new URL(`${EN_PREFIX}/checkout${search}`, request.url);
+    return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+  }
+
+  if (pathname === '/contact' || pathname === '/contact/') {
+    const redirectUrl = new URL(`/contact-us${search}`, request.url);
+    return persistLocale(NextResponse.redirect(redirectUrl), locale);
+  }
+
+  if (pathname === '/en/contact' || pathname === '/en/contact/') {
+    const redirectUrl = new URL(`${EN_PREFIX}/contact-us${search}`, request.url);
+    return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+  }
 
   // ── Locale routing ──────────────────────────────────────────────────────────
 

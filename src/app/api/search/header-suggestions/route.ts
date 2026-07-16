@@ -129,7 +129,7 @@ function mapMaterialItem(material: Material): HeaderSuggestionItem {
     id: String(material.id),
     title: material.title,
     meta: material.code || undefined,
-    href: material.slug ? `/materials/${material.slug}` : "/materials",
+    href: material.slug ? `/material/${material.slug}` : "/material",
     image: material.main_image,
   };
 }
@@ -139,7 +139,7 @@ export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get("search") || request.nextUrl.searchParams.get("q") || "";
   const materialTitle = locale === "nl" ? "Materialen" : "Materials";
   const groupProductsTitle = locale === "nl" ? "Groepsproducten" : "Group Products";
-  const materialPath = localizedPath("/materials", locale);
+  const materialPath = localizedPath("/material", locale);
   const productListingPath = localizedPath("/product", locale);
 
   if (!query.trim()) {

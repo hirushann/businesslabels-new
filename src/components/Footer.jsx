@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { useLocalePath } from '@/hooks/useLocalePath';
 
 const trustItems = [
   {
@@ -57,16 +58,16 @@ const footerLinks = {
     // { nameKey: 'footer.links.compareModels', href: '#' },
   ],
   support: [
-    { nameKey: 'footer.links.expertAdvice', href: '/support/expert' },
-    { nameKey: 'footer.links.testLoan', href: '/support/loan' },
-    { nameKey: 'footer.links.samplePrints', href: '/support/samples' },
-    { nameKey: 'footer.links.inkCalculator', href: '/resources/ink-calculator' },
-    { nameKey: 'footer.links.helpCenter', href: '/contact' },
+    { nameKey: 'footer.links.contact', href: '/contact-us' },
+    { nameKey: 'footer.links.support', href: '/support' },
+    { nameKey: 'footer.links.knowledgeBase', href: '/kennisbank-overzicht' },
+    { nameKey: 'footer.links.faq', href: '/epson-colorworks-faq' },
   ],
 };
 
 export default function Footer() {
   const t = useTranslations();
+  const lp = useLocalePath();
   return (
     <footer className="w-full flex flex-col">
       {/* Trust bar */}
@@ -94,7 +95,7 @@ export default function Footer() {
 
       {/* Main footer */}
       <div className="w-full pt-14 bg-gray-900 flex flex-col gap-4">
-        <div className="max-w-[1512px] mx-auto w-full px-4 md:px-8 lg:px-10 flex flex-col lg:flex-row gap-12 lg:gap-8">
+        <div className="max-w-[1512px] mx-auto w-full px-4 md:px-8 lg:px-10 flex flex-col lg:flex-row gap-12 lg:gap-8 pb-14">
           {/* Brand column */}
           <div className="w-full lg:w-[400px] xl:w-[480px] flex flex-col gap-5">
             <div className="flex flex-col gap-4">
@@ -152,15 +153,18 @@ export default function Footer() {
                   {t(`footer.columns.${section}`)}
                 </Link>
                 <div className="flex flex-col gap-4">
-                  {links.map((item) => (
-                    <Link
-                      key={item.href + (item.nameKey || item.name)}
-                      href={item.href}
-                      className="text-white/80 text-base font-light leading-5 hover:text-white transition-colors"
-                    >
-                      {item.nameKey ? t(item.nameKey) : item.name}
-                    </Link>
-                  ))}
+                  {links.map((item) => {
+                    const isContact = item.href === '/contact-us';
+                    return (
+                      <Link
+                        key={item.href + (item.nameKey || item.name)}
+                        href={isContact ? lp(item.href) : item.href}
+                        className="text-white/80 text-base font-light leading-5 hover:text-white transition-colors"
+                      >
+                        {item.nameKey ? t(item.nameKey) : item.name}
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
             ))}

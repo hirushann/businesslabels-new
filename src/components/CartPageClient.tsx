@@ -521,7 +521,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
 
                 {/* Checkout CTA */}
                 <Link
-                  href={localePath("/checkout", locale)}
+                  href={localePath("/afrekenen", locale)}
                   className="w-full h-13 bg-brand hover:bg-brand-hover active:bg-brand-active rounded-[100px] flex items-center justify-center cursor-pointer transition-colors px-6"
                 >
                   <span className="text-center text-white text-lg font-bold leading-6 whitespace-nowrap">
