@@ -110,144 +110,146 @@ export default function FaqClient({ pagesList, initialPageData, locale }) {
       <div className="size-48 left-0 top-[454px] absolute bg-brand/30 rounded-full blur-[132px] pointer-events-none" />
       <div className="size-48 right-0 top-[1200px] absolute bg-brand/30 rounded-full blur-[132px] pointer-events-none" />
 
-      <div className="max-w-[1440px] mx-auto py-10 flex flex-col gap-4">
-        {/* Breadcrumb */}
-        <div className="h-4 inline-flex justify-start items-center gap-2">
-          <div className="size-4 bg-zinc-300 rounded-sm" />
-          <div className="size-2.5 bg-zinc-500 rounded-sm" />
-          <span className="text-zinc-500 text-sm font-normal leading-5">/</span>
-          <span className="text-zinc-500 text-sm font-normal leading-5">Knowledge Center</span>
-          <span className="text-zinc-500 text-sm font-normal leading-5">/</span>
-          <span className="text-neutral-700 text-sm font-semibold leading-5">FAQ</span>
-        </div>
+      <div className="w-full px-4 sm:px-6 lg:px-10">
+        <div className="max-w-360 mx-auto py-10 flex flex-col gap-4">
+          {/* Breadcrumb */}
+          <div className="h-4 inline-flex justify-start items-center gap-2">
+            <div className="size-4 bg-zinc-300 rounded-sm" />
+            <div className="size-2.5 bg-zinc-500 rounded-sm" />
+            <span className="text-zinc-500 text-sm font-normal leading-5">/</span>
+            <span className="text-zinc-500 text-sm font-normal leading-5">Knowledge Center</span>
+            <span className="text-zinc-500 text-sm font-normal leading-5">/</span>
+            <span className="text-neutral-700 text-sm font-semibold leading-5">FAQ</span>
+          </div>
 
-        {/* Hero Section */}
-        <div className="w-full max-w-[1440px] mx-auto mt-6 p-6 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-100 flex justify-between items-stretch gap-10">
-          <div className="w-[620px] flex flex-col justify-between items-start">
-            <div className="flex flex-col items-start gap-4">
-              <h1 className="text-neutral-800 text-4xl font-bold capitalize leading-[48px]">
-                {activeContent?.title || "Frequently asked questions"}
-              </h1>
-              {activeContent?.intro ? (
-                <div 
-                  className="text-neutral-700 text-lg font-normal leading-6 cms-content" 
-                  dangerouslySetInnerHTML={{ __html: activeContent.intro }}
+          {/* Hero Section */}
+          <div className="w-full mt-6 p-6 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-100 flex justify-between items-stretch gap-10">
+            <div className="w-[620px] flex flex-col justify-between items-start">
+              <div className="flex flex-col items-start gap-4">
+                <h1 className="text-neutral-800 text-4xl font-bold capitalize leading-[48px]">
+                  {activeContent?.title || "Frequently asked questions"}
+                </h1>
+                {activeContent?.intro ? (
+                  <div 
+                    className="text-neutral-700 text-lg font-normal leading-6 cms-content" 
+                    dangerouslySetInnerHTML={{ __html: activeContent.intro }}
+                  />
+                ) : (
+                  <p className="text-neutral-700 text-lg font-normal leading-6">
+                    It seems so easy: buy a printer and just start printing. But which printer should you get? What should you look out for? Do I really want to print my own labels, and if so, why or why not? <br/><br/>
+                    On this page, we have listed as many questions as possible that we deal with and answer almost daily.
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-col items-start gap-4 mt-8">
+                <p className="text-neutral-700 text-lg font-normal leading-6">
+                  {activeContent?.support?.title || "Still unsure? Or is your question not listed?"}
+                </p>
+                <Link href={lp('/contact-us')} className="h-12 px-7 py-4 bg-brand rounded-[50px] inline-flex justify-center items-center hover:bg-brand-hover transition-colors">
+                  <span className="text-white text-lg font-semibold leading-6">Talk to Expert</span>
+                </Link>
+              </div>
+            </div>
+            <div className="flex-1 relative rounded-xl overflow-hidden min-h-[390px] bg-slate-100 flex items-center justify-center">
+              {activePageData?.hero_image || activePageData?.hero_image_preview ? (
+                <img 
+                  src={activePageData.hero_image_preview || activePageData.hero_image} 
+                  alt="FAQ Hero" 
+                  className="w-full h-full object-cover"
                 />
               ) : (
-                <p className="text-neutral-700 text-lg font-normal leading-6">
-                  It seems so easy: buy a printer and just start printing. But which printer should you get? What should you look out for? Do I really want to print my own labels, and if so, why or why not? <br/><br/>
-                  On this page, we have listed as many questions as possible that we deal with and answer almost daily.
-                </p>
+                <div className="text-slate-400">
+                  [ FAQ Hero Image ]
+                </div>
               )}
             </div>
-            <div className="flex flex-col items-start gap-4 mt-8">
-              <p className="text-neutral-700 text-lg font-normal leading-6">
-                {activeContent?.support?.title || "Still unsure? Or is your question not listed?"}
-              </p>
-              <Link href={lp('/contact-us')} className="h-12 px-7 py-4 bg-brand rounded-[50px] inline-flex justify-center items-center hover:bg-brand-hover transition-colors">
-                <span className="text-white text-lg font-semibold leading-6">Talk to Expert</span>
-              </Link>
-            </div>
-          </div>
-          <div className="flex-1 relative rounded-xl overflow-hidden min-h-[390px] bg-slate-100 flex items-center justify-center">
-            {activePageData?.hero_image || activePageData?.hero_image_preview ? (
-              <img 
-                src={activePageData.hero_image_preview || activePageData.hero_image} 
-                alt="FAQ Hero" 
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="text-slate-400">
-                [ FAQ Hero Image ]
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Main Content Area: Sidebar + FAQ List */}
-        <div className="w-full max-w-[1440px] mx-auto mt-12 flex items-start gap-10">
-          
-          {/* Sidebar */}
-          <div className="w-80 p-6 sticky top-24 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col items-start gap-4 overflow-hidden shrink-0">
-            <div className="relative pl-4 flex flex-col items-start w-full">
-              {/* Active Indicator Line */}
-              <div 
-                className="w-0.5 absolute bg-brand left-0 transition-all duration-300 rounded-full"
-                style={{ 
-                  height: '24px',
-                  top: `${pagesList.findIndex(p => p.id === activePageData?.id) * 44 + 8}px` 
-                }}
-              ></div>
-
-              {pagesList.map((page, index) => {
-                const isActive = activePageData?.id === page.id;
-                return (
-                  <div 
-                    key={page.id}
-                    onClick={() => loadFaqPage(page)}
-                    className={`py-3 w-full text-base cursor-pointer transition-colors ${isActive ? 'text-neutral-700 font-semibold' : 'text-zinc-500 font-normal hover:text-brand'}`}
-                  >
-                    {getPageTitle(page)}
-                  </div>
-                );
-              })}
-            </div>
           </div>
 
-          {/* FAQ Sections */}
-          <div className="flex-1 flex flex-col gap-14 pb-20 relative">
-            {loading && (
-              <div className="absolute inset-0 bg-white/60 backdrop-blur-sm z-10 flex items-start justify-center pt-20">
-                <div className="w-8 h-8 border-4 border-brand border-t-transparent rounded-full animate-spin"></div>
-              </div>
-            )}
+          {/* Main Content Area: Sidebar + FAQ List */}
+          <div className="w-full mt-12 flex items-start gap-10">
             
-            {error && (
-              <div className="p-4 bg-red-50 text-red-600 rounded-lg outline outline-red-100">
-                {error}
-              </div>
-            )}
+            {/* Sidebar */}
+            <div className="w-80 p-6 sticky top-24 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col items-start gap-4 overflow-hidden shrink-0">
+              <div className="relative pl-4 flex flex-col items-start w-full">
+                {/* Active Indicator Line */}
+                <div 
+                  className="w-0.5 absolute bg-brand left-0 transition-all duration-300 rounded-full"
+                  style={{ 
+                    height: '24px',
+                    top: `${pagesList.findIndex(p => p.id === activePageData?.id) * 44 + 8}px` 
+                  }}
+                ></div>
 
-            {!loading && !error && sections.length === 0 && (
-              <div className="p-10 border border-dashed border-slate-200 bg-slate-50/50 rounded-2xl text-center text-slate-500">
-                No sections available for this topic yet.
+                {pagesList.map((page, index) => {
+                  const isActive = activePageData?.id === page.id;
+                  return (
+                    <div 
+                      key={page.id}
+                      onClick={() => loadFaqPage(page)}
+                      className={`py-3 w-full text-base cursor-pointer transition-colors ${isActive ? 'text-neutral-700 font-semibold' : 'text-zinc-500 font-normal hover:text-brand'}`}
+                    >
+                      {getPageTitle(page)}
+                    </div>
+                  );
+                })}
               </div>
-            )}
+            </div>
 
-            {!loading && !error && sections.map((section) => (
-              <div 
-                key={section.id} 
-                id={section.anchor || `section-${section.id}`}
-                className="flex flex-col items-start gap-6 pt-4"
-              >
-                {/* Hiding section name and subtitle as requested */}
-                {/*
-                <div className="flex flex-col items-start gap-4">
-                  <h2 className="text-neutral-800 text-3xl font-bold leading-10">
-                    {section.name}
-                  </h2>
-                  {section.subtitle && (
-                    <p className="text-neutral-700 text-base font-normal leading-6">
-                      {section.subtitle}
-                    </p>
-                  )}
+            {/* FAQ Sections */}
+            <div className="flex-1 flex flex-col gap-14 pb-20 relative">
+              {loading && (
+                <div className="absolute inset-0 bg-white/60 backdrop-blur-sm z-10 flex items-start justify-center pt-20">
+                  <div className="w-8 h-8 border-4 border-brand border-t-transparent rounded-full animate-spin"></div>
                 </div>
-                */}
-                <div className="w-full flex flex-col items-start gap-4">
-                  {(section.items || []).map((item, index) => (
-                    <FaqItem 
-                      key={item.id || index} 
-                      question={item.question} 
-                      answer={item.answer} 
-                      defaultOpen={index === 0} 
-                    />
-                  ))}
+              )}
+              
+              {error && (
+                <div className="p-4 bg-red-50 text-red-600 rounded-lg outline outline-red-100">
+                  {error}
                 </div>
-              </div>
-            ))}
+              )}
+
+              {!loading && !error && sections.length === 0 && (
+                <div className="p-10 border border-dashed border-slate-200 bg-slate-50/50 rounded-2xl text-center text-slate-500">
+                  No sections available for this topic yet.
+                </div>
+              )}
+
+              {!loading && !error && sections.map((section) => (
+                <div 
+                  key={section.id} 
+                  id={section.anchor || `section-${section.id}`}
+                  className="flex flex-col items-start gap-6 pt-4"
+                >
+                  {/* Hiding section name and subtitle as requested */}
+                  {/*
+                  <div className="flex flex-col items-start gap-4">
+                    <h2 className="text-neutral-800 text-3xl font-bold leading-10">
+                      {section.name}
+                    </h2>
+                    {section.subtitle && (
+                      <p className="text-neutral-700 text-base font-normal leading-6">
+                        {section.subtitle}
+                      </p>
+                    )}
+                  </div>
+                  */}
+                  <div className="w-full flex flex-col items-start gap-4">
+                    {(section.items || []).map((item, index) => (
+                      <FaqItem 
+                        key={item.id || index} 
+                        question={item.question} 
+                        answer={item.answer} 
+                        defaultOpen={index === 0} 
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
 
+        </div>
       </div>
 
       {/* Pre-footer CTA */}

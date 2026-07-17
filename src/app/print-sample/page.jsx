@@ -166,11 +166,11 @@ export default function PrintSamplePage() {
   }
 
   return (
-    <div className="relative bg-white overflow-hidden min-h-screen">
+    <div className="relative bg-white overflow-hidden min-h-screen w-full px-4 sm:px-6 lg:px-10">
       <div className="size-48 right-0 top-[780px] absolute bg-brand/30 rounded-full blur-[132px] pointer-events-none" />
       <div className="size-48 left-0 top-[454px] absolute bg-brand/30 rounded-full blur-[132px] pointer-events-none" />
 
-      <div className="max-w-[1440px] mx-auto py-10 flex flex-col gap-4">
+      <div className="max-w-360 mx-auto py-10 flex flex-col gap-4">
 
         {/* Breadcrumb */}
         <div className="h-4 inline-flex justify-start items-center gap-2">
@@ -178,15 +178,14 @@ export default function PrintSamplePage() {
           <span className="text-zinc-500 text-sm font-normal leading-5">/</span>
           <span className="text-zinc-500 text-sm font-normal leading-5">{t('breadcrumbSupport')}</span>
           <span className="text-zinc-500 text-sm font-normal leading-5">/</span>
-          <span className="text-neutral-700 text-sm font-semibold leading-5">{t('breadcrumbSample')}</span>
+          <span className="text-neutral-700 text-sm font-bold leading-5">{t('breadcrumbSample')}</span>
         </div>
 
         {/* Page header */}
         <div className="flex flex-col gap-4">
           <h1 className="text-ink text-[40px] font-bold leading-[48px]">{t('title')}</h1>
           <p className="w-full max-w-[939px] text-neutral-700 text-lg font-normal leading-6">
-            Request a printed sample of your own label design on an Epson ColorWorks printer. Fill in the form below and
-            we will print and ship your sample free of charge. We will contact you if we need to discuss any specific requirements.
+            {t('description')}
           </p>
         </div>
 
@@ -201,7 +200,7 @@ export default function PrintSamplePage() {
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
                   <h2 className="text-ink text-[24px] font-normal leading-[28px]">{t('designFile')}</h2>
-                  <p className="text-neutral-700 text-sm font-normal leading-5">{t('uploadDesc')}</p>
+                  <p className="text-neutral-700 text-sm font-light leading-5">{t('uploadDesc')}</p>
                 </div>
                 <label htmlFor="file-upload" className="self-stretch h-48 min-h-36 bg-white rounded-md outline-dashed outline-2 outline-offset-[-2px] outline-black/10 flex flex-col justify-center items-center cursor-pointer hover:bg-slate-50 transition-colors">
                   <div className="flex flex-col items-center gap-3">
@@ -211,12 +210,12 @@ export default function PrintSamplePage() {
                         <path d="M10 2.5L10 11.5M10 2.5L7 5.5M10 2.5L13 5.5" stroke="var(--subtle)" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     </div>
-                    <div className="w-56 flex flex-col items-start gap-1">
+                    <div className="w-full md:w-80 flex flex-col items-center justify-center gap-1">
                       {fileName ? (
-                        <p className="text-brand text-base font-semibold">{fileName}</p>
+                        <p className="text-brand text-base font-medium">{fileName}</p>
                       ) : (
                         <>
-                          <p className="text-neutral-700 text-base font-semibold">{t('dropFile')} <span className="text-brand underline">{t('browse')}</span></p>
+                          <p className="text-neutral-700 text-base font-medium">{t('dropFile')} <span className="text-brand underline">{t('browse')}</span></p>
                           <p className="text-zinc-500 text-sm font-normal leading-5">{t('fileTypes')}</p>
                         </>
                       )}
@@ -231,8 +230,8 @@ export default function PrintSamplePage() {
               {/* Printer */}
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
-                  <h2 className="text-neutral-800 text-2xl font-semibold leading-7">{t('printerTitle')}</h2>
-                  <p className="text-neutral-700 text-sm font-normal leading-5">{t('printerSubtitle')}</p>
+                  <h2 className="text-neutral-800 text-2xl font-medium leading-7">{t('printerTitle')}</h2>
+                  <p className="text-neutral-700 text-sm font-light leading-5">{t('printerSubtitle')}</p>
                 </div>
                 
                 <div className="relative">
@@ -278,8 +277,8 @@ export default function PrintSamplePage() {
               {/* Material */}
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
-                  <h2 className="text-neutral-800 text-2xl font-semibold leading-7">{t('materialTitle')}</h2>
-                  <p className="text-neutral-700 text-sm font-normal leading-5">{t('materialSubtitle')}</p>
+                  <h2 className="text-neutral-800 text-2xl font-bold leading-7">{t('materialTitle')}</h2>
+                  <p className="text-neutral-700 text-sm font-light leading-5">{t('materialSubtitle')}</p>
                 </div>
                 
                 <div className="relative">
@@ -320,7 +319,7 @@ export default function PrintSamplePage() {
                 </div>
 
                 <div className="flex flex-col gap-2 mt-2">
-                  <p className="text-neutral-800 text-lg font-semibold leading-5">{t('specialMaterialNeeds')}</p>
+                  <p className="text-neutral-800 text-lg font-medium leading-5">{t('specialMaterialNeeds')}</p>
                   <textarea name="special_material" value={form.special_material} onChange={handleChange} rows={4} placeholder={t('specialMaterialPlaceholder')} className="self-stretch px-5 py-4 rounded-xl outline outline-1 outline-offset-[-1px] outline-zinc-200 text-base text-neutral-800 placeholder:text-zinc-500 leading-6 resize-none focus:outline-amber-400 focus:outline-2 transition-all" />
                 </div>
               </div>
@@ -330,12 +329,12 @@ export default function PrintSamplePage() {
               {/* Request Details */}
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
-                  <h2 className="text-neutral-800 text-2xl font-semibold leading-7">{t('requestDetails')}</h2>
-                  <p className="text-neutral-700 text-sm font-normal leading-5">{t('requestDetailsDesc')}</p>
+                  <h2 className="text-neutral-800 text-2xl font-bold leading-7">{t('requestDetails')}</h2>
+                  <p className="text-neutral-700 text-sm font-light leading-5">{t('requestDetailsDesc')}</p>
                 </div>
                 <div className="flex flex-col gap-4">
                   <div className="flex flex-col gap-2">
-                    <label className="text-neutral-800 text-lg font-semibold leading-5">{t('application')}</label>
+                    <label className="text-neutral-800 text-lg font-medium leading-5">{t('application')}</label>
                     <textarea name="application" value={form.application} onChange={handleChange} rows={4} placeholder={t('applicationPlaceholder')} className="self-stretch px-5 py-4 rounded-xl outline outline-1 outline-offset-[-1px] outline-zinc-200 text-base text-neutral-800 placeholder:text-zinc-500 leading-6 resize-none focus:outline-amber-400 focus:outline-2 transition-all" />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -349,7 +348,7 @@ export default function PrintSamplePage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField label={t('company')} name="company" value={form.company} onChange={handleChange} placeholder="ABCD" />
                     <div className="flex flex-col gap-2">
-                      <label className="text-neutral-800 text-lg font-semibold leading-5">{t('country')}</label>
+                      <label className="text-neutral-800 text-lg font-medium leading-5">{t('country')}</label>
                       <input name="country" value={form.country} onChange={handleChange} placeholder={t('countryPlaceholder')} className="self-stretch h-12 px-5 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-zinc-200 text-base text-neutral-800 placeholder:text-zinc-500 leading-6 focus:outline-amber-400 focus:outline-2 transition-all" />
                     </div>
                   </div>
@@ -362,7 +361,7 @@ export default function PrintSamplePage() {
                     <FormField label={t('stateOptional')} name="state" value={form.state} onChange={handleChange} placeholder={t('state')} />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label className="text-neutral-800 text-lg font-semibold leading-5">{t('comments')}</label>
+                    <label className="text-neutral-800 text-lg font-medium leading-5">{t('comments')}</label>
                     <textarea name="comments" value={form.comments} onChange={handleChange} rows={4} placeholder={t('commentsPlaceholder')} className="self-stretch px-5 py-4 rounded-xl outline outline-1 outline-offset-[-1px] outline-zinc-200 text-base text-neutral-800 placeholder:text-zinc-500 leading-6 resize-none focus:outline-amber-400 focus:outline-2 transition-all" />
                   </div>
                 </div>
@@ -370,11 +369,11 @@ export default function PrintSamplePage() {
 
               {/* Disclaimer */}
               <div className="flex flex-col gap-4">
-                <p className="text-sm leading-5 text-neutral-700">
-                  <span className="font-semibold text-neutral-800">{t('disclaimerTitle')} </span>
+                <p className="text-sm leading-5 text-neutral-700 font-light">
+                  <span className="font-bold text-neutral-800">{t('disclaimerTitle')} </span>
                   {t('disclaimerText')}
                 </p>
-                <p className="text-neutral-700 text-sm font-normal leading-5">{t('emailConfirm')}</p>
+                <p className="text-neutral-700 text-sm font-light leading-5">{t('emailConfirm')}</p>
               </div>
 
               {error && (
@@ -393,10 +392,10 @@ export default function PrintSamplePage() {
                     <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none">
                       <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="3" strokeDasharray="31.4" strokeDashoffset="10"/>
                     </svg>
-                    <span className="text-white text-base font-semibold leading-6">{t('sending')}</span>
+                    <span className="text-white text-base font-medium leading-6">{t('sending')}</span>
                   </>
                 ) : (
-                  <span className="text-white text-base font-semibold leading-6">{t('submitRequest')}</span>
+                  <span className="text-white text-base font-medium leading-6">{t('submitRequest')}</span>
                 )}
               </button>
             </div>
@@ -406,7 +405,7 @@ export default function PrintSamplePage() {
           <div className="w-full lg:w-[360px] flex-shrink-0 flex flex-col gap-6">
             <div className="p-4 bg-gray-50 rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col gap-4 overflow-hidden">
               <div className="flex flex-col gap-2">
-                <h3 className="text-neutral-800 text-xl font-semibold leading-7">{t('preparePdfTitle')}</h3>
+                <h3 className="text-neutral-800 text-xl font-bold leading-7">{t('preparePdfTitle')}</h3>
                 <p className="text-neutral-700 text-base font-normal leading-5">{t('preparePdfDesc')}</p>
               </div>
               <div className="h-px bg-slate-100" />
@@ -424,8 +423,8 @@ export default function PrintSamplePage() {
                     </svg>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <p className="text-neutral-800 text-base font-semibold leading-5">{item.title}</p>
-                    <p className="text-neutral-700 text-sm font-normal leading-5">{item.desc}</p>
+                    <p className="text-neutral-800 text-base font-bold leading-5">{item.title}</p>
+                    <p className="text-neutral-700 text-sm font-light leading-5">{item.desc}</p>
                   </div>
                 </div>
               ))}
@@ -439,7 +438,7 @@ export default function PrintSamplePage() {
                   <circle cx="8" cy="10.67" r="0.67" fill="#ca8a04"/>
                 </svg>
               </div>
-              <p className={`text-yellow-600 text-base leading-[26px] ${dmSans.className}`}>
+              <p className={`text-yellow-600 text-base font-light leading-[26px] ${dmSans.className}`}>
                 <span className="font-bold">{t('noteTitle')} </span>
                 {t('noteDesc')}
               </p>
@@ -467,7 +466,7 @@ function SelectOption({ option, selected, onChange }) {
         </div>
       </div>
       <div className="flex-1 flex flex-col gap-1 text-left">
-        <p className="text-neutral-800 text-lg font-semibold leading-5">{option.name}</p>
+        <p className="text-neutral-800 text-lg font-medium leading-5">{option.name}</p>
         <p className="text-zinc-500 text-sm font-normal leading-5">{option.desc}</p>
       </div>
     </button>
@@ -494,7 +493,7 @@ function RadioChip({ label, selected, onChange }) {
 function FormField({ label, name, value, onChange, placeholder, type, required }) {
   return (
     <div className="flex flex-col gap-2">
-      <label className="text-neutral-800 text-lg font-semibold leading-5">{label}</label>
+      <label className="text-neutral-800 text-lg font-medium leading-5">{label}</label>
       <input type={type || 'text'} name={name} value={value} onChange={onChange} placeholder={placeholder} required={required} className="self-stretch h-12 px-5 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-zinc-200 text-base text-neutral-800 placeholder:text-zinc-500 leading-6 focus:outline-amber-400 focus:outline-2 transition-all" />
     </div>
   );

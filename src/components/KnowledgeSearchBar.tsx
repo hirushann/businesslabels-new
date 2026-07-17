@@ -13,9 +13,10 @@ type SearchResult = {
 
 type KnowledgeSearchBarProps = {
   apiBaseUrl: string;
+  placeholder?: string;
 };
 
-export default function KnowledgeSearchBar({ apiBaseUrl }: KnowledgeSearchBarProps) {
+export default function KnowledgeSearchBar({ apiBaseUrl, placeholder }: KnowledgeSearchBarProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isFocused, setIsFocused] = useState(false);
@@ -56,7 +57,7 @@ export default function KnowledgeSearchBar({ apiBaseUrl }: KnowledgeSearchBarPro
   }, [query, apiBaseUrl]);
 
   return (
-    <div className="relative w-full lg:w-[55%]" ref={dropdownRef}>
+    <div className="relative w-full" ref={dropdownRef}>
       <form action="/blog" method="GET" className="w-full bg-white rounded-full p-2 pl-6 flex items-center gap-3 shadow-lg hover:shadow-xl transition-shadow focus-within:ring-4 focus-within:ring-white/20 relative z-20">
         <Search className="w-6 h-6 text-gray-400 flex-shrink-0" />
         <input 
@@ -65,7 +66,7 @@ export default function KnowledgeSearchBar({ apiBaseUrl }: KnowledgeSearchBarPro
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setIsFocused(true)}
-          placeholder="Search for guides, tips, and recommendations..." 
+          placeholder={placeholder || "Search for guides, tips, and recommendations..."}
           className="flex-1 bg-transparent border-none outline-none text-zinc-700 text-lg placeholder:text-zinc-400 py-2"
           autoComplete="off"
         />
