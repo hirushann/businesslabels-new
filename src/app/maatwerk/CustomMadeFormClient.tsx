@@ -768,11 +768,11 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-neutral-700 text-base font-sans">{t('forgotMaterialCode')}</span>
+              <p className="text-neutral-700 text-base font-sans leading-normal">
+                {t('forgotMaterialCode')}{' '}
                 <Dialog>
                   <DialogTrigger asChild>
-                    <button type="button" className="text-brand text-base font-bold font-sans underline hover:text-brand transition-colors">
+                    <button type="button" className="inline text-brand text-base font-bold font-sans underline hover:text-brand transition-colors ml-1">
                       {t('seeMaterialOverview')}
                     </button>
                   </DialogTrigger>
@@ -904,7 +904,7 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
                     </div>
                   </DialogContent>
                 </Dialog>
-              </div>
+              </p>
             </section>
 
             <div className="h-px bg-gray-100" />

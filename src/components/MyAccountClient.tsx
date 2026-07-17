@@ -746,7 +746,7 @@ function MyAccountContent() {
                 <div className="self-stretch flex flex-col justify-start items-start gap-8">
                   <div className="self-stretch flex flex-col justify-start items-center gap-6">
                     <div className="self-stretch flex flex-col justify-start items-start gap-2">
-                      <div className="self-stretch text-center justify-start text-neutral-800 text-3xl font-semibold leading-10">
+                      <div className="self-stretch text-center justify-start text-neutral-800 text-3xl font-bold leading-10">
                         {t('account.confirmLogout') || 'Confirm Logout'}
                       </div>
                       <div className="self-stretch text-center justify-start text-neutral-700 text-lg font-normal leading-7">
@@ -760,14 +760,14 @@ function MyAccountContent() {
                       disabled={isLoggingOut}
                       className="flex-1 h-12 px-4 py-2.5 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-black/10 flex justify-center items-center gap-2 hover:bg-slate-50 transition-colors"
                     >
-                      <div className="text-center justify-start text-neutral-800 text-lg font-semibold leading-6">{t('account.cancel') || 'Cancel'}</div>
+                      <div className="text-center justify-start text-neutral-800 text-lg font-medium leading-6">{t('account.cancel') || 'Cancel'}</div>
                     </button>
                     <button 
                       onClick={handleLogout} 
                       disabled={isLoggingOut}
                       className="flex-1 h-12 px-7 py-4 bg-red-600 rounded-[50px] flex justify-center items-center gap-2.5 hover:bg-red-700 transition-colors"
                     >
-                      <div className="text-center justify-start text-white text-lg font-normal leading-6">
+                      <div className="text-center justify-start text-white text-lg font-medium leading-6">
                         {isLoggingOut ? (t('account.loggingOut') || 'Logging Out...') : (t('account.yesLogout') || 'Yes, log Out')}
                       </div>
                     </button>
@@ -1062,131 +1062,135 @@ function OrdersView() {
         <div className="self-stretch py-6 relative bg-white rounded-xl flex flex-col justify-start items-start gap-6 overflow-hidden outline outline-1 outline-slate-200 shadow-sm w-full">
           <div className="w-full h-16 left-0 top-0 absolute bg-white border-b border-slate-100"></div>
           
-          <div className="self-stretch inline-flex justify-start items-center gap-6 px-8 relative z-10 h-4 w-full">
-            <div className="w-4 shrink-0"></div>
-            <div className="flex-1 justify-start text-copy text-base font-bold leading-5">{t('account.tableOrder') || 'Order ID'}</div>
-            <div className="flex-1 justify-start text-copy text-base font-bold leading-5">{t('account.tableDate') || 'Dates'}</div>
-            <div className="flex-1 justify-start text-copy text-base font-bold leading-5">{t('account.tableStatus') || 'Status'}</div>
-            <div className="flex-1 justify-start text-copy text-base font-bold leading-5">{t('account.tableTotal') || 'Price'}</div>
-            <div className="flex-1 justify-start text-copy text-base font-bold leading-5">{t('account.action') || 'Action'}</div>
-          </div>
-          
-          <div className="self-stretch flex flex-col justify-start items-start gap-2.5 px-8 relative z-10 w-full">
-            {orders.map((order, index) => {
-              const isExpanded = !!expandedOrders[order.id];
-              return (
-                <Fragment key={`${order.id}-${order.date}-${index}`}>
-                  <div className="self-stretch flex flex-col justify-start items-start w-full">
-                    <div 
-                      className="self-stretch py-4 inline-flex justify-start items-center gap-6 group hover:bg-slate-50/50 transition-colors w-full cursor-pointer"
-                      onClick={() => toggleExpand(order.id)}
-                    >
-                      <div className="w-4 h-4 flex items-center justify-center shrink-0">
-                        {isExpanded ? (
-                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M4 10L8 6L12 10" stroke="#717182" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        ) : (
-                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M4 6L8 10L12 6" stroke="#717182" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        )}
-                      </div>
-
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedOrder(order);
-                        }}
-                        className="flex-1 text-left text-copy text-lg font-normal leading-6 hover:text-brand hover:underline"
-                      >
-                        {order.id}
-                      </button>
-
-                      <div className="flex-1 text-copy text-lg font-normal leading-6">{order.date}</div>
-
-                      <div className="flex-1 justify-start text-lg font-bold leading-6">
-                        <span className={order.status.toLowerCase() === 'completed' || order.status.toLowerCase() === 'delivered' ? 'text-success' : 'text-brand'}>
-                          {t(`account.${order.status.toLowerCase()}`) || order.status}
-                        </span>
-                      </div>
-
-                      <div className="flex-1 text-ink text-lg font-bold leading-6">{order.total}</div>
-
-                      <div className="flex-1 inline-flex justify-start items-center gap-1">
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleReorder(order.items_list || []);
-                          }} 
-                          className="inline-flex justify-start items-center gap-1 text-brand text-lg font-bold underline leading-6 hover:text-brand"
+          <div className="w-full overflow-x-auto">
+            <div className="min-w-[800px] w-full flex flex-col gap-6">
+              <div className="self-stretch inline-flex justify-start items-center gap-6 px-8 relative z-10 h-4 w-full">
+                <div className="w-4 shrink-0"></div>
+                <div className="flex-1 justify-start text-copy text-base font-bold leading-5">{t('account.tableOrder') || 'Order ID'}</div>
+                <div className="flex-1 justify-start text-copy text-base font-bold leading-5">{t('account.tableDate') || 'Dates'}</div>
+                <div className="flex-1 justify-start text-copy text-base font-bold leading-5">{t('account.tableStatus') || 'Status'}</div>
+                <div className="w-[120px] justify-start text-copy text-base font-bold leading-5 shrink-0">{t('account.tableTotal') || 'Price'}</div>
+                <div className="w-[160px] justify-start text-copy text-base font-bold leading-5 shrink-0">{t('account.action') || 'Action'}</div>
+              </div>
+              
+              <div className="self-stretch flex flex-col justify-start items-start gap-2.5 px-8 relative z-10 w-full">
+                {orders.map((order, index) => {
+                  const isExpanded = !!expandedOrders[order.id];
+                  return (
+                    <Fragment key={`${order.id}-${order.date}-${index}`}>
+                      <div className="self-stretch flex flex-col justify-start items-start w-full">
+                        <div 
+                          className="self-stretch py-4 inline-flex justify-start items-center gap-6 group hover:bg-slate-50/50 transition-colors w-full cursor-pointer"
+                          onClick={() => toggleExpand(order.id)}
                         >
-                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
-                            <mask id="mask0_2407_16091" style={{ maskType: "alpha" }} maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
-                              <rect width="20" height="20" fill="#D9D9D9"/>
-                            </mask>
-                            <g mask="url(#mask0_2407_16091)">
-                              <path d="M9.98474 17.0846C8.3096 17.0846 6.83175 16.5721 5.55119 15.5469C4.27078 14.5218 3.45057 13.2149 3.09057 11.6263C3.04571 11.4607 3.07536 11.3085 3.17953 11.1696C3.28369 11.0307 3.42446 10.9501 3.60182 10.9276C3.77057 10.9052 3.92251 10.9389 4.05765 11.0286C4.19279 11.1183 4.2871 11.2503 4.34057 11.4244C4.65779 12.7118 5.34126 13.7687 6.39099 14.5951C7.44071 15.4214 8.63863 15.8346 9.98474 15.8346C11.6097 15.8346 12.9882 15.2687 14.1202 14.1367C15.2521 13.0048 15.8181 11.6263 15.8181 10.0013C15.8181 8.3763 15.2521 6.99783 14.1202 5.86589C12.9882 4.73394 11.6097 4.16797 9.98474 4.16797C9.07446 4.16797 8.2214 4.37019 7.42557 4.77464C6.6296 5.17894 5.94418 5.73526 5.36932 6.44359H6.9239C7.10126 6.44359 7.24974 6.50345 7.36932 6.62318C7.48904 6.74276 7.5489 6.89123 7.5489 7.06859C7.5489 7.24595 7.48904 7.39443 7.36932 7.51401C7.24974 7.63373 7.10126 7.69359 6.9239 7.69359H4.0714C3.85668 7.69359 3.67744 7.62172 3.53369 7.47797C3.38994 7.33436 3.31807 7.15512 3.31807 6.94026V4.08776C3.31807 3.9104 3.37793 3.76193 3.49765 3.64234C3.61724 3.52262 3.76571 3.46276 3.94307 3.46276C4.12043 3.46276 4.26897 3.52262 4.38869 3.64234C4.50828 3.76193 4.56807 3.9104 4.56807 4.08776V5.43714C5.24432 4.63908 6.05418 4.0197 6.99765 3.57901C7.94099 3.13832 8.93668 2.91797 9.98474 2.91797C10.9677 2.91797 11.8886 3.10387 12.7477 3.47568C13.6065 3.84748 14.3554 4.35283 14.9943 4.99172C15.6332 5.63061 16.1386 6.37957 16.5104 7.23859C16.8822 8.09748 17.0681 9.01839 17.0681 10.0013C17.0681 10.9842 16.8822 11.9051 16.5104 12.764C16.1386 13.623 15.6332 14.372 14.9943 15.0109C14.3554 15.6498 13.6065 16.1551 12.7477 16.5269C11.8886 16.8987 10.9677 17.0846 9.98474 17.0846ZM9.98474 11.2513C9.6439 11.2513 9.35036 11.1282 9.10411 10.8819C8.85786 10.6357 8.73474 10.0013C8.73474 9.66047 8.85786 9.36693 9.10411 9.12068C9.35036 8.87443 9.6439 8.7513 9.98474 8.7513C10.3256 8.7513 10.6191 8.87443 10.8654 9.12068C11.1116 9.36693 11.2347 9.66047 11.2347 10.0013C11.2347 10.3421 11.1116 10.6357 10.8654 10.8819C10.6191 11.1282 10.3256 11.2513 9.98474 11.2513Z" fill="var(--brand)"/>
-                            </g>
-                          </svg>
-                          {t.has('account.reorderAll') ? t('account.reorderAll') : 'Re-order All'}
-                        </button>
-                      </div>
-                    </div>
+                          <div className="w-4 h-4 flex items-center justify-center shrink-0">
+                            {isExpanded ? (
+                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M4 10L8 6L12 10" stroke="#717182" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            ) : (
+                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M4 6L8 10L12 6" stroke="#717182" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            )}
+                          </div>
 
-                    {isExpanded && order.items_list && order.items_list.length > 0 && (
-                      <div className="self-stretch p-4 bg-surface rounded-[10px] flex flex-col justify-start items-start gap-2 w-full mt-1 border border-slate-100 animate-in fade-in slide-in-from-top-2 duration-300">
-                        {order.items_list.map((item, itemIdx) => (
-                          <Fragment key={`${item.id}-${itemIdx}`}>
-                            <div className="self-stretch justify-start items-center gap-2 inline-flex w-full">
-                              <div className="w-10 h-10 p-1 bg-line overflow-hidden rounded-[5px] justify-center items-center flex shrink-0 relative">
-                                {item.mainImage ? (
-                                  <img className="w-full h-full object-contain" src={item.mainImage} alt={item.name} />
-                                ) : (
-                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#717182" strokeWidth="1.5" className="opacity-40">
-                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                                    <circle cx="8.5" cy="8.5" r="1.5" />
-                                    <polyline points="21 15 16 10 5 21" />
-                                  </svg>
-                                )}
-                              </div>
-                              <div className="flex-1 justify-start items-center gap-2 flex">
-                                <div className="flex-1 flex flex-col justify-start items-start gap-1">
-                                  <div className="self-stretch text-copy text-base font-normal leading-[19px]">{item.name}</div>
-                                  <div className="text-subtle text-sm font-normal leading-5">
-                                    {t('account.quantityCount', { count: item.quantity }) || `${item.quantity} Items`}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedOrder(order);
+                            }}
+                            className="flex-1 text-left text-copy text-lg font-normal leading-6 hover:text-brand hover:underline"
+                          >
+                            {order.id}
+                          </button>
+
+                          <div className="flex-1 text-copy text-lg font-normal leading-6">{order.date}</div>
+
+                          <div className="flex-1 justify-start text-lg font-medium leading-6">
+                            <span className={order.status.toLowerCase() === 'completed' || order.status.toLowerCase() === 'delivered' ? 'text-success' : 'text-brand'}>
+                              {t(`account.${order.status.toLowerCase()}`) || order.status}
+                            </span>
+                          </div>
+
+                          <div className="w-[120px] text-ink text-lg font-bold leading-6 shrink-0">{order.total}</div>
+
+                          <div className="w-[160px] inline-flex justify-start items-center gap-1 shrink-0">
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleReorder(order.items_list || []);
+                              }} 
+                              className="inline-flex justify-start items-center gap-1 text-brand text-lg font-medium underline leading-6 hover:text-brand whitespace-nowrap"
+                            >
+                              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
+                                <mask id="mask0_2407_16091" style={{ maskType: "alpha" }} maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
+                                  <rect width="20" height="20" fill="#D9D9D9"/>
+                                </mask>
+                                <g mask="url(#mask0_2407_16091)">
+                                  <path d="M9.98474 17.0846C8.3096 17.0846 6.83175 16.5721 5.55119 15.5469C4.27078 14.5218 3.45057 13.2149 3.09057 11.6263C3.04571 11.4607 3.07536 11.3085 3.17953 11.1696C3.28369 11.0307 3.42446 10.9501 3.60182 10.9276C3.77057 10.9052 3.92251 10.9389 4.05765 11.0286C4.19279 11.1183 4.2871 11.2503 4.34057 11.4244C4.65779 12.7118 5.34126 13.7687 6.39099 14.5951C7.44071 15.4214 8.63863 15.8346 9.98474 15.8346C11.6097 15.8346 12.9882 15.2687 14.1202 14.1367C15.2521 13.0048 15.8181 11.6263 15.8181 10.0013C15.8181 8.3763 15.2521 6.99783 14.1202 5.86589C12.9882 4.73394 11.6097 4.16797 9.98474 4.16797C9.07446 4.16797 8.2214 4.37019 7.42557 4.77464C6.6296 5.17894 5.94418 5.73526 5.36932 6.44359H6.9239C7.10126 6.44359 7.24974 6.50345 7.36932 6.62318C7.48904 6.74276 7.5489 6.89123 7.5489 7.06859C7.5489 7.24595 7.48904 7.39443 7.36932 7.51401C7.24974 7.63373 7.10126 7.69359 6.9239 7.69359H4.0714C3.85668 7.69359 3.67744 7.62172 3.53369 7.47797C3.38994 7.33436 3.31807 7.15512 3.31807 6.94026V4.08776C3.31807 3.9104 3.37793 3.76193 3.49765 3.64234C3.61724 3.52262 3.76571 3.46276 3.94307 3.46276C4.12043 3.46276 4.26897 3.52262 4.38869 3.64234C4.50828 3.76193 4.56807 3.9104 4.56807 4.08776V5.43714C5.24432 4.63908 6.05418 4.0197 6.99765 3.57901C7.94099 3.13832 8.93668 2.91797 9.98474 2.91797C10.9677 2.91797 11.8886 3.10387 12.7477 3.47568C13.6065 3.84748 14.3554 4.35283 14.9943 4.99172C15.6332 5.63061 16.1386 6.37957 16.5104 7.23859C16.8822 8.09748 17.0681 9.01839 17.0681 10.0013C17.0681 10.9842 16.8822 11.9051 16.5104 12.764C16.1386 13.623 15.6332 14.372 14.9943 15.0109C14.3554 15.6498 13.6065 16.1551 12.7477 16.5269C11.8886 16.8987 10.9677 17.0846 9.98474 17.0846ZM9.98474 11.2513C9.6439 11.2513 9.35036 11.1282 9.10411 10.8819C8.85786 10.6357 8.73474 10.0013C8.73474 9.66047 8.85786 9.36693 9.10411 9.12068C9.35036 8.87443 9.6439 8.7513 9.98474 8.7513C10.3256 8.7513 10.6191 8.87443 10.8654 9.12068C11.1116 9.36693 11.2347 9.66047 11.2347 10.0013C11.2347 10.3421 11.1116 10.6357 10.8654 10.8819C10.6191 11.1282 10.3256 11.2513 9.98474 11.2513Z" fill="var(--brand)"/>
+                                </g>
+                              </svg>
+                              {t.has('account.reorderAll') ? t('account.reorderAll') : 'Re-order All'}
+                            </button>
+                          </div>
+                        </div>
+
+                        {isExpanded && order.items_list && order.items_list.length > 0 && (
+                          <div className="self-stretch p-4 bg-surface rounded-[10px] flex flex-col justify-start items-start gap-2 w-full mt-1 border border-slate-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                            {order.items_list.map((item, itemIdx) => (
+                              <Fragment key={`${item.id}-${itemIdx}`}>
+                                <div className="self-stretch justify-start items-center gap-2 inline-flex w-full">
+                                  <div className="w-10 h-10 p-1 bg-line overflow-hidden rounded-[5px] justify-center items-center flex shrink-0 relative">
+                                    {item.mainImage ? (
+                                      <img className="w-full h-full object-contain" src={item.mainImage} alt={item.name} />
+                                    ) : (
+                                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#717182" strokeWidth="1.5" className="opacity-40">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                        <circle cx="8.5" cy="8.5" r="1.5" />
+                                        <polyline points="21 15 16 10 5 21" />
+                                      </svg>
+                                    )}
+                                  </div>
+                                  <div className="flex-1 justify-start items-center gap-2 flex">
+                                    <div className="flex-1 flex flex-col justify-start items-start gap-1">
+                                      <div className="self-stretch text-copy text-base font-normal leading-[19px]">{item.name}</div>
+                                      <div className="text-subtle text-sm font-normal leading-5">
+                                        {t('account.quantityCount', { count: item.quantity }) || `${item.quantity} Items`}
+                                      </div>
+                                    </div>
+                                    <div className="w-[120px] text-copy text-base font-normal leading-[21px] shrink-0">
+                                      {formatEuro(item.total)}
+                                    </div>
+                                    <div className="w-[160px] shrink-0">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleReorder([item]);
+                                        }}
+                                        className="text-brand text-lg font-medium underline leading-6 hover:text-brand whitespace-nowrap"
+                                      >
+                                        {t.has('account.reorder') ? t('account.reorder') : 'Re-order'}
+                                      </button>
+                                    </div>
                                   </div>
                                 </div>
-                                <div className="w-[135px] text-copy text-base font-normal leading-[21px] shrink-0">
-                                  {formatEuro(item.total)}
-                                </div>
-                                <div className="w-[134px] shrink-0">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleReorder([item]);
-                                    }}
-                                    className="text-brand text-lg font-bold underline leading-6 hover:text-brand"
-                                  >
-                                    {t.has('account.reorder') ? t('account.reorder') : 'Re-order'}
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                            {itemIdx < (order.items_list?.length || 0) - 1 && (
-                              <div className="self-stretch h-[1px] bg-[#E5E7EB] my-1"></div>
-                            )}
-                          </Fragment>
-                        ))}
+                                {itemIdx < (order.items_list?.length || 0) - 1 && (
+                                  <div className="self-stretch h-[1px] bg-[#E5E7EB] my-1"></div>
+                                )}
+                              </Fragment>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  {index < orders.length - 1 && (
-                    <div className="self-stretch border-t border-line my-1 w-full"></div>
-                  )}
-                </Fragment>
-              );
-            })}
+                      {index < orders.length - 1 && (
+                        <div className="self-stretch border-t border-line my-1 w-full"></div>
+                      )}
+                    </Fragment>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -1917,7 +1921,7 @@ function ShippingAddressesView({ user }: { user: StoredUser }) {
 
           <button 
             onClick={() => setEditingAddress('new')}
-            className="h-[52px] px-8 rounded-full border-[1.5px] border-brand inline-flex justify-center items-center gap-2 hover:bg-brand/5 transition-colors mt-2"
+            className="h-[52px] px-8 rounded-full border-[1.5px] border-brand flex w-full sm:inline-flex sm:w-auto justify-center items-center gap-2 hover:bg-brand/5 transition-colors mt-2"
           >
             <span className="text-brand text-[22px] font-normal leading-6">+</span>
             <span className="text-brand text-lg font-normal leading-6">{getLabel('account.addNewAddress', 'Add New Address')}</span>
@@ -2150,11 +2154,11 @@ function ShippingAddressEditInline({
 
         <div>
           <label className={labelClasses}>{getLabel('account.selectLabelForDelivery', 'Select a label for effective delivery:')}</label>
-          <div className="flex gap-4 justify-start items-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-start items-stretch sm:items-center">
             <button 
               type="button" 
               onClick={() => setLabel('office')}
-              className={`flex items-center justify-start gap-3 h-12 px-6 rounded-full border transition-all duration-200 font-bold min-w-[180px] ${label === 'office' ? 'border-brand bg-[rgba(241,136,0,0.02)] ring-[0.5px] ring-brand' : 'border-slate-200 hover:border-slate-300 bg-white'}`}
+              className={`flex items-center justify-start gap-3 h-12 px-6 rounded-full border transition-all duration-200 font-bold w-full sm:w-auto sm:min-w-[180px] ${label === 'office' ? 'border-brand bg-[rgba(241,136,0,0.02)] ring-[0.5px] ring-brand' : 'border-slate-200 hover:border-slate-300 bg-white'}`}
             >
               <div className="w-5 h-5 relative flex items-center justify-center flex-shrink-0">
                 {label === 'office' ? (
@@ -2184,7 +2188,7 @@ function ShippingAddressEditInline({
             <button 
               type="button" 
               onClick={() => setLabel('home')}
-              className={`flex items-center justify-start gap-3 h-12 px-6 rounded-full border transition-all duration-200 font-bold min-w-[180px] ${label === 'home' ? 'border-brand bg-[rgba(241,136,0,0.02)] ring-[0.5px] ring-brand' : 'border-slate-200 hover:border-slate-300 bg-white'}`}
+              className={`flex items-center justify-start gap-3 h-12 px-6 rounded-full border transition-all duration-200 font-bold w-full sm:w-auto sm:min-w-[180px] ${label === 'home' ? 'border-brand bg-[rgba(241,136,0,0.02)] ring-[0.5px] ring-brand' : 'border-slate-200 hover:border-slate-300 bg-white'}`}
             >
               <div className="w-5 h-5 relative flex items-center justify-center flex-shrink-0">
                 {label === 'home' ? (
@@ -2214,20 +2218,20 @@ function ShippingAddressEditInline({
 
         <div className="self-stretch border-t border-line mt-4"></div>
 
-        <div className="flex gap-4 mt-2">
+        <div className="flex flex-col sm:flex-row gap-4 mt-2">
           <button 
             type="submit" 
             disabled={isSaving}
-            className="h-12 px-8 rounded-full bg-[#f08c00] hover:bg-brand-hover text-white text-base font-normal transition-colors disabled:opacity-50"
+            className="h-12 px-8 rounded-full bg-[#f08c00] hover:bg-brand-hover text-white text-base font-normal transition-colors disabled:opacity-50 w-full sm:w-auto"
           >
-            {isSaving ? 'Saving...' : 'Save Changes'}
+            {isSaving ? getLabel('account.saving', 'Saving...') : getLabel('account.saveChanges', 'Save Changes')}
           </button>
           <button 
             type="button" 
             onClick={onClose}
-            className="h-12 px-8 rounded-full bg-white border border-slate-200 text-neutral-600 text-base font-normal hover:bg-slate-50 transition-colors"
+            className="h-12 px-8 rounded-full bg-white border border-slate-200 text-neutral-600 text-base font-normal hover:bg-slate-50 transition-colors w-full sm:w-auto"
           >
-            Cancel
+            {getLabel('account.cancel', 'Cancel')}
           </button>
         </div>
       </form>
@@ -2388,7 +2392,7 @@ function SingleAddressView({ type }: { type: 'billing_address' | 'shipping_addre
 
           <button 
             onClick={() => setEditingAddress(isBilling ? 'billing' : 'shipping')}
-            className="h-12 px-8 py-2.5 mt-4 rounded-[100px] outline outline-[1.50px] outline-offset-[-1.50px] outline-amber-500 inline-flex justify-center items-center gap-2 hover:bg-brand-soft transition-colors"
+            className="h-12 px-8 py-2.5 mt-4 rounded-[100px] outline outline-[1.50px] outline-offset-[-1.50px] outline-amber-500 flex w-full sm:inline-flex sm:w-auto justify-center items-center gap-2 hover:bg-brand-soft transition-colors"
           >
             <div className="text-center justify-start text-brand text-lg font-normal leading-6">{t('account.editAddress') || 'Edit Address'}</div>
           </button>
@@ -2629,18 +2633,18 @@ function BillingAddressEditInline({
 
         <div className="self-stretch border-t border-line mt-4"></div>
 
-        <div className="flex gap-4 mt-2">
+        <div className="flex flex-col sm:flex-row gap-4 mt-2">
           <button 
             type="submit" 
             disabled={isSaving}
-            className="h-12 px-8 rounded-full bg-[#f08c00] hover:bg-brand-hover text-white text-base font-normal transition-colors disabled:opacity-50"
+            className="h-12 px-8 rounded-full bg-[#f08c00] hover:bg-brand-hover text-white text-base font-normal transition-colors disabled:opacity-50 w-full sm:w-auto"
           >
             {isSaving ? getLabel('account.saving', 'Saving...') : getLabel('account.saveChanges', 'Save Changes')}
           </button>
           <button 
             type="button" 
             onClick={onClose}
-            className="h-12 px-8 rounded-full bg-white border border-slate-200 text-neutral-600 text-base font-normal hover:bg-slate-50 transition-colors"
+            className="h-12 px-8 rounded-full bg-white border border-slate-200 text-neutral-600 text-base font-normal hover:bg-slate-50 transition-colors w-full sm:w-auto"
           >
             {getLabel('account.cancel', 'Cancel')}
           </button>
@@ -2981,7 +2985,7 @@ function AccountDetailsView({ user }: { user: StoredUser }) {
         </div>
         <button 
           onClick={() => setIsEditing(true)}
-          className="h-12 px-8 py-2.5 mt-4 rounded-[100px] outline outline-[1.50px] outline-offset-[-1.50px] outline-amber-500 inline-flex justify-center items-center gap-2 hover:bg-brand-soft transition-colors"
+          className="h-12 px-8 py-2.5 mt-4 rounded-[100px] outline outline-[1.50px] outline-offset-[-1.50px] outline-amber-500 flex w-full sm:inline-flex sm:w-auto justify-center items-center gap-2 hover:bg-brand-soft transition-colors"
         >
           <div className="text-center justify-start text-brand text-lg font-normal leading-6">{getLabel('account.editProfile', 'Edit Profile')}</div>
         </button>
@@ -3044,11 +3048,11 @@ function AccountDetailsView({ user }: { user: StoredUser }) {
         </div>
 
         <div className="self-stretch border-t border-line pt-6">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row gap-4 w-full">
             <button 
               type="submit" 
               disabled={isSaving}
-              className="h-12 px-8 py-2.5 bg-brand rounded-[100px] flex justify-center items-center gap-2 hover:bg-brand-hover transition-colors shadow-sm focus:outline-none focus:ring-4 focus:ring-brand/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="h-12 px-8 py-2.5 bg-brand rounded-[100px] flex justify-center items-center gap-2 hover:bg-brand-hover transition-colors shadow-sm focus:outline-none focus:ring-4 focus:ring-brand/20 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
             >
               <div className="text-center justify-start text-white text-lg font-normal leading-6">
                 {isSaving ? t('account.saving') : t('account.saveProfile') || 'Save Profile'}
@@ -3057,7 +3061,7 @@ function AccountDetailsView({ user }: { user: StoredUser }) {
             <button 
               type="button" 
               onClick={() => setIsEditing(false)}
-              className="h-12 px-8 py-2.5 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-black/10 flex justify-center items-center gap-2 hover:bg-slate-50 transition-colors focus:outline-none focus:ring-4 focus:ring-slate-100"
+              className="h-12 px-8 py-2.5 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-black/10 flex justify-center items-center gap-2 hover:bg-slate-50 transition-colors focus:outline-none focus:ring-4 focus:ring-slate-100 w-full sm:w-auto"
             >
               <div className="text-center justify-start text-neutral-700 text-lg font-normal leading-6">
                 {t('account.cancel') || 'Cancel'}
@@ -3197,13 +3201,13 @@ function ChangePasswordView() {
       
       <div className="self-stretch flex flex-col justify-start items-start gap-6 mt-6 max-w-lg">
         <div className="self-stretch border-t border-line"></div>
-        <div className="self-stretch inline-flex justify-start items-start gap-4">
-          <button type="submit" disabled={isSaving} className="h-12 px-8 py-2.5 bg-brand rounded-[100px] flex justify-center items-center gap-2 hover:bg-brand-hover transition-colors shadow-sm focus:outline-none focus:ring-4 focus:ring-brand/20 disabled:opacity-50 disabled:cursor-not-allowed">
+        <div className="self-stretch flex flex-col sm:flex-row gap-4 w-full">
+          <button type="submit" disabled={isSaving} className="h-12 px-8 py-2.5 bg-brand rounded-[100px] flex justify-center items-center gap-2 hover:bg-brand-hover transition-colors shadow-sm focus:outline-none focus:ring-4 focus:ring-brand/20 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto">
             <div className="text-center justify-start text-white text-lg font-normal leading-6">
               {isSaving ? t('account.saving') : t('account.saveChanges') || 'Save Changes'}
             </div>
           </button>
-          <button type="button" onClick={() => { setCurrentPassword(''); setNewPassword(''); setConfirmNewPassword(''); setShowCurrent(false); setShowNew(false); setShowConfirm(false); }} className="h-12 px-8 py-2.5 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-black/10 flex justify-center items-center gap-2 hover:bg-slate-50 transition-colors focus:outline-none focus:ring-4 focus:ring-slate-100">
+          <button type="button" onClick={() => { setCurrentPassword(''); setNewPassword(''); setConfirmNewPassword(''); setShowCurrent(false); setShowNew(false); setShowConfirm(false); }} className="h-12 px-8 py-2.5 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-black/10 flex justify-center items-center gap-2 hover:bg-slate-50 transition-colors focus:outline-none focus:ring-4 focus:ring-slate-100 w-full sm:w-auto">
             <div className="text-center justify-start text-neutral-700 text-lg font-normal leading-6">
               {t('account.cancel') || 'Cancel'}
             </div>

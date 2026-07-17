@@ -941,7 +941,7 @@ function CheckoutShell({
                 {step === 3 && (
                   <div className="flex flex-col gap-6">
                     <div className="flex flex-col gap-2">
-                      <h2 className="text-ink text-[28px] font-bold leading-[33.6px]">{t('checkout.paymentMethod')} *</h2>
+                      <h2 className="text-ink text-[28px] font-bold leading-[33.6px]">{t('checkout.paymentMethod')}</h2>
                       <p className="text-copy text-[16px] font-normal leading-[20.8px]">
                         {t('checkout.paymentMethodDesc')}
                       </p>
@@ -976,7 +976,7 @@ function CheckoutShell({
                           )}
                           <div className="flex items-center gap-[10px]">
                             <img className="w-[32px] h-[28px] object-contain" src="/ideal-logo.png" alt="iDEAL" />
-                            <span className="text-ink text-[22px] font-bold leading-[28px]">{t('checkout.ideal')}</span>
+                            <span className="text-ink text-lg sm:text-[22px] font-bold leading-6 sm:leading-[28px]">{t('checkout.ideal')}</span>
                           </div>
                         </div>
                       </label>
@@ -1009,7 +1009,7 @@ function CheckoutShell({
                           <div className="flex items-center gap-[10px]">
                             <img className="w-[33px] h-[28px] object-contain" src="/creditcard-logo.svg" alt="Credit Card" />
                             <div className="flex items-baseline gap-2">
-                              <span className="text-ink text-[22px] font-bold leading-[28px]">{t('checkout.creditCard')}</span>
+                              <span className="text-ink text-lg sm:text-[22px] font-bold leading-6 sm:leading-[28px]">{t('checkout.creditCard')}</span>
                               <span className="text-xs text-brand font-medium">{t('checkout.creditCardFee')}</span>
                             </div>
                           </div>
@@ -1043,7 +1043,7 @@ function CheckoutShell({
                           )}
                           <div className="flex items-center gap-[10px]">
                             <img className="w-[33px] h-[28px] object-contain rounded" src="/bancontact-logo.webp" alt="Bancontact" />
-                            <span className="text-ink text-[22px] font-bold leading-[28px]">{t('checkout.bancontact')}</span>
+                            <span className="text-ink text-lg sm:text-[22px] font-bold leading-6 sm:leading-[28px]">{t('checkout.bancontact')}</span>
                           </div>
                         </div>
                       </label>
@@ -1093,7 +1093,7 @@ function CheckoutShell({
                                   </svg>
                                 </div>
                                 <div className="flex flex-col">
-                                  <span className={`text-[22px] font-bold leading-[28px] ${isLoggedIn ? "text-ink" : "text-neutral-500"}`}>
+                                  <span className={`text-lg sm:text-[22px] font-bold leading-6 sm:leading-[28px] ${isLoggedIn ? "text-ink" : "text-neutral-500"}`}>
                                     {t('checkout.invoice')}
                                   </span>
                                   {!isLoggedIn && (
@@ -1123,7 +1123,7 @@ function CheckoutShell({
                     <button
                       type="button"
                       onClick={() => setStep((step - 1) as 1 | 2)}
-                      className="w-[160px] h-[52px] rounded-full border border-[rgba(0,0,0,0.10)] text-copy font-bold text-[18px] hover:bg-slate-50 transition-colors flex items-center justify-center"
+                      className="w-[120px] sm:w-[160px] h-[52px] rounded-full border border-[rgba(0,0,0,0.10)] text-copy font-medium text-base sm:text-[18px] hover:bg-slate-50 transition-colors flex items-center justify-center shrink-0"
                     >
                       {t('common.previous')}
                     </button>
@@ -1131,7 +1131,7 @@ function CheckoutShell({
                   <button
                     type="submit"
                     disabled={isPending}
-                    className="flex-1 h-[52px] bg-brand text-white rounded-full font-bold text-[18px] flex items-center justify-center gap-2 hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 h-[52px] bg-brand text-white rounded-full font-medium text-base sm:text-[18px] flex items-center justify-center gap-1.5 sm:gap-2 hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed px-3 min-w-0"
                   >
                     {isPending ? (
                       <>

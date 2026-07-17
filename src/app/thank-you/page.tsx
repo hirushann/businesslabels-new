@@ -436,7 +436,7 @@ export default function ThankYouPage() {
           
           {/* Left Column: Order Summary */}
           <div className="flex-1 flex flex-col gap-6">
-            <h2 className="text-[#000000] text-xl md:text-[22px] font-bold tracking-tight border-b border-line pb-3">
+            <h2 className="text-[#000000] text-xl md:text-[22px] font-bold tracking-tight border-line pb-3">
               {t("thankYou.orderSummary")}
             </h2>
             
@@ -517,7 +517,7 @@ export default function ThankYouPage() {
 
           {/* Right Column: Delivery Details */}
           <div className="flex-1 flex flex-col gap-4">
-            <h2 className="text-[#000000] text-xl md:text-[22px] font-bold tracking-tight border-b border-line pb-3">
+            <h2 className="text-[#000000] text-xl md:text-[22px] font-bold tracking-tight border-line pb-3">
               {t("thankYou.deliveryDetails")}
             </h2>
 
@@ -604,7 +604,7 @@ export default function ThankYouPage() {
             {/* Continue Shopping Action */}
             <Link
               href={localePath("/product", locale)}
-              className="mt-4 w-full h-[52px] bg-brand rounded-full justify-center items-center flex text-white text-[18px] font-bold transition-all hover:bg-brand-hover hover:shadow-lg hover:shadow-brand/10 active:scale-[0.98] cursor-pointer"
+              className="mt-4 w-full h-[52px] bg-brand rounded-full justify-center items-center flex text-white text-[18px] font-medium transition-all hover:bg-brand-hover hover:shadow-lg hover:shadow-brand/10 active:scale-[0.98] cursor-pointer"
             >
               {t("thankYou.continueShopping")}
             </Link>
@@ -620,7 +620,7 @@ export default function ThankYouPage() {
                 <path d="M11.2844 13.5547H6.76562C6.47449 13.5547 6.23828 13.7908 6.23828 14.082C6.23828 14.3732 6.47449 14.6094 6.76562 14.6094H11.2844C11.5756 14.6094 11.8118 14.3732 11.8118 14.082C11.8118 13.7908 11.5757 13.5547 11.2844 13.5547Z" className="fill-brand group-hover:fill-brand-hover transition-colors"/>
                 <path d="M14.1093 0H6.20151C6.06171 0 5.92754 0.0556183 5.82866 0.154495L2.43965 3.5435C2.34077 3.64238 2.28516 3.77655 2.28516 3.91635V16.343C2.28516 17.2566 3.02852 18 3.94217 18H14.1093C15.0204 18 15.7663 17.2634 15.7663 16.343V1.65701C15.7663 0.745972 15.0298 0 14.1093 0ZM6.239 1.23555V3.35152C6.239 3.68372 5.96887 3.95384 5.63667 3.95384H3.52071L6.239 1.23555ZM14.7117 16.343C14.7117 16.6711 14.4465 16.9453 14.1093 16.9453H3.94217C3.61011 16.9453 3.33984 16.675 3.33984 16.343V5.00867H5.63667C6.55032 5.00867 7.29369 4.2653 7.29369 3.35165V1.05469H14.1093C14.4375 1.05469 14.7117 1.32001 14.7117 1.65701V16.343Z" className="fill-brand group-hover:fill-brand-hover transition-colors"/>
               </svg>
-              <span className="text-brand text-[18px] font-bold underline decoration-solid group-hover:text-brand-hover transition-colors">
+              <span className="text-brand text-[18px] font-medium underline decoration-solid group-hover:text-brand-hover transition-colors">
                 {isPdfGenerating ? t("common.loading") : t("thankYou.downloadConfirmation")}
               </span>
             </button>
