@@ -8,6 +8,8 @@ import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 import { localePath } from "@/lib/i18n/utils";
 import { mapLaravelProductToCardData, type LaravelProduct } from "@/lib/mappings/product";
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
+import { searchMaterials } from "@/lib/search/materials";
+import MaterialCard from "@/components/materials/MaterialCard";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations();
@@ -25,12 +27,15 @@ type PostCategoryData = {
   post_count: number;
 };
 
-async function getPostCategories(): Promise<PostCategoryData[]> {
+async function getPostCategories(locale?: string): Promise<PostCategoryData[]> {
   const apiBaseUrl = process.env.BBNL_API_BASE_URL;
   if (!apiBaseUrl) return [];
 
   try {
-    const url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts/categories`;
+    let url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts/categories`;
+    if (locale) {
+      url += `?locale=${encodeURIComponent(locale)}`;
+    }
     const res = await fetch(url, { next: { revalidate: 60 } });
     if (!res.ok) return [];
     const json = await res.json();
@@ -59,14 +64,19 @@ type Post = {
   }>;
 };
 
-async function getPosts(search?: string): Promise<Post[]> {
+async function getPosts(search?: string, locale?: string): Promise<Post[]> {
   try {
     const apiBaseUrl = process.env.BBNL_API_BASE_URL;
     if (!apiBaseUrl) return [];
 
     let url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts`;
-    if (search) {
-      url += `?search=${encodeURIComponent(search)}`;
+    const urlParams = new URLSearchParams();
+    if (search) urlParams.append("search", search);
+    if (locale) urlParams.append("locale", locale);
+
+    const queryString = urlParams.toString();
+    if (queryString) {
+      url += `?${queryString}`;
     }
 
     const res = await fetch(url, {
@@ -106,13 +116,33 @@ async function getRecommendedProducts(locale: "en" | "nl"): Promise<LaravelProdu
     if (response.ok) {
       const json = await response.json();
       if (json.data && Array.isArray(json.data)) {
-        return shuffleArray(json.data as LaravelProduct[]).slice(0, 4);
+        return shuffleArray(json.data as LaravelProduct[]).slice(0, 3);
       }
     }
   } catch (error) {
     console.error('Error fetching recommended products:', error);
   }
   return [];
+}
+
+async function getRecommendedMaterials(locale: "en" | "nl"): Promise<any[]> {
+  try {
+    const res = await searchMaterials({
+      search: "",
+      page: 1,
+      perPage: 3,
+      sort: "name_asc",
+      printMethod: "",
+      baseMaterial: [],
+      finish: [],
+      adhesive: [],
+      locale,
+    });
+    return res.materials || [];
+  } catch (error) {
+    console.error("Failed to fetch recommended materials:", error);
+    return [];
+  }
 }
 
 export default async function BlogsPage({
@@ -126,14 +156,15 @@ export default async function BlogsPage({
   const search = searchParamsResolved.search;
   const activeCategory = searchParamsResolved.category || "all";
   
-  const allPosts = await getPosts(search);
-  const categories = await getPostCategories();
+  const allPosts = await getPosts(search, locale);
+  const categories = await getPostCategories(locale);
   
   const posts = activeCategory === "all" 
     ? allPosts 
     : allPosts.filter(p => p.categories?.some(c => c.slug === activeCategory));
 
   const recommendedProducts = await getRecommendedProducts(locale as "en" | "nl");
+  const recommendedMaterials = await getRecommendedMaterials(locale as "en" | "nl");
 
   return (
     <div className="relative bg-white min-h-screen overflow-hidden">
@@ -141,138 +172,144 @@ export default async function BlogsPage({
       <div className="size-48 left-0 top-[454px] absolute bg-brand/30 rounded-full blur-[132px] pointer-events-none"></div>
       <div className="size-48 right-[100px] top-[1012px] absolute bg-brand/30 rounded-full blur-[132px] pointer-events-none"></div>
 
-      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-0 py-8 pb-24 flex flex-col gap-10">
-        {/* Header Section */}
-        <div className="flex flex-col justify-end items-start gap-4">
-          <Breadcrumbs 
-            className="text-zinc-500"
-            items={[
-              { label: "Knowledge Center", href: localePath("/kennisbank-overzicht", locale) },
-              { label: "Articles & Guides" }
-            ]} 
-          />
+      <div className="w-full px-4 sm:px-6 lg:px-10 py-8 pb-24">
+        <div className="max-w-360 mx-auto flex flex-col gap-10">
+          {/* Header Section */}
           <div className="flex flex-col justify-end items-start gap-4">
-            <h1 className="text-neutral-800 text-4xl md:text-5xl font-bold leading-tight">
-              A resource for people who print labels.
-            </h1>
-            <p className="text-neutral-700 text-lg font-normal leading-6 max-w-3xl">
-              Not a news feed. Practical knowledge about equipment, materials, settings, and standards — written to stay relevant.
-            </p>
+            <Breadcrumbs 
+              className="text-zinc-500"
+              items={[
+                { label: "Knowledge Center", href: localePath("/kennisbank-overzicht", locale) },
+                { label: "Articles & Guides" }
+              ]} 
+            />
+            <div className="flex flex-col justify-end items-start gap-4">
+              <h1 className="text-neutral-800 text-4xl md:text-5xl font-bold leading-tight">
+                A resource for people who print labels.
+              </h1>
+              <p className="text-neutral-700 text-lg font-normal leading-6 max-w-3xl">
+                Not a news feed. Practical knowledge about equipment, materials, settings, and standards — written to stay relevant.
+              </p>
+            </div>
           </div>
-        </div>
 
-        {/* Content Section */}
-        <div className="flex flex-col justify-start items-start gap-6">
-          {/* Categories Tab */}
-          <div className="w-full flex flex-col justify-end items-start">
-            <div className="w-full flex overflow-x-auto no-scrollbar pb-3 items-start justify-between">
-              <Link 
-                href="/blog?category=all"
-                className={`px-2.5 pb-2 flex justify-center items-center gap-2.5 relative transition-colors ${activeCategory === "all" ? "text-brand font-bold" : "text-neutral-700 font-semibold hover:text-brand"}`}
-              >
-                <span className="text-base leading-5 whitespace-nowrap">All</span>
-                {activeCategory === "all" && (
-                  <div className="w-full h-0.5 absolute bottom-0 bg-brand rounded-sm"></div>
-                )}
-              </Link>
-              
-              {categories.map(category => (
+          {/* Content Section */}
+          <div className="flex flex-col justify-start items-start gap-6">
+            {/* Categories Tab */}
+            <div className="w-full flex flex-col justify-end items-start">
+              <div className="w-full flex overflow-x-auto no-scrollbar items-start justify-between">
                 <Link 
-                  key={category.slug}
-                  href={`/blog?category=${category.slug}`}
-                  className={`px-2.5 pb-2 flex justify-center items-center gap-2.5 relative transition-colors ${activeCategory === category.slug ? "text-brand font-bold" : "text-neutral-700 font-semibold hover:text-brand"}`}
+                  href="/blog?category=all"
+                  className={`px-2.5 flex justify-center items-center gap-2.5 relative transition-colors ${activeCategory === "all" ? "text-brand font-bold" : "text-neutral-700 font-semibold hover:text-brand"}`}
                 >
-                  <span className="text-base leading-5 whitespace-nowrap">{category.name}</span>
-                  {activeCategory === category.slug && (
-                    <div className="w-full h-0.5 absolute bottom-0 bg-brand rounded-sm"></div>
+                  <span className="text-base leading-5 whitespace-nowrap p-3">All</span>
+                  {activeCategory === "all" && (
+                    <div className="w-full h-0.5 absolute bottom-0 bg-brand rounded-sm z-10"></div>
                   )}
                 </Link>
-              ))}
-            </div>
-            <div className="w-full h-px bg-slate-200"></div>
-          </div>
-
-          {/* Articles Grid */}
-          <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {posts.length > 0 ? posts.map((post) => (
-              <Link key={post.id} href={`/blog/${post.slug}`} className="flex flex-col bg-white rounded-2xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-100 overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                <div className="w-full h-48 relative overflow-hidden bg-slate-100">
-                  <Image 
-                    src={toDisplayImageUrl(post.image_preview || post.image) || "https://placehold.co/384x192"} 
-                    alt={post.title}
-                    fill
-                    unoptimized
-                    className="object-cover group-hover:scale-105 transition-transform duration-500" 
-                  />
-                </div>
-                <div className="p-4 flex flex-col justify-between flex-1 gap-4">
-                  <div className="flex flex-col justify-start items-start gap-2">
-                    <div className="text-blue-400 text-base font-semibold leading-5">
-                      {post.categories?.[0]?.name || "Article"}
-                    </div>
-                    <div className="text-neutral-800 text-xl font-semibold leading-6 group-hover:text-brand transition-colors line-clamp-2">
-                      {post.title}
-                    </div>
-                    <div className="text-neutral-700 text-base font-normal leading-6 line-clamp-2">
-                      {post.excerpt}
-                    </div>
-                  </div>
-                  <div className="inline-flex justify-start items-center gap-2 mt-4">
-                    <div className="w-9 h-9 relative rounded-full overflow-hidden bg-slate-200">
-                       <Image src="https://placehold.co/36x36" alt="Author" fill className="object-cover" />
-                    </div>
-                    <div className="text-neutral-700 text-base font-semibold leading-6">
-                      {post.author?.name || "Admin"}
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            )) : (
-              <div className="col-span-1 md:col-span-2 lg:col-span-3 flex flex-col items-center justify-center py-24 text-center">
-                <div className="mb-6 rounded-full bg-slate-50 p-6">
-                  <svg className="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l4 4v10a2 2 0 01-2 2zM14 4v4h4" />
-                  </svg>
-                </div>
-                <h2 className="text-2xl font-bold text-neutral-800">{t("blogsPage.noPostsTitle") || "No articles found"}</h2>
-                <p className="mt-2 text-neutral-500 font-medium">{t("blogsPage.noPostsDescription") || "Try selecting a different category."}</p>
+                
+                {categories.map(category => (
+                  <Link 
+                    key={category.slug}
+                    href={`/blog?category=${category.slug}`}
+                    className={`px-2.5 flex justify-center items-center gap-2.5 relative transition-colors ${activeCategory === category.slug ? "text-brand font-bold" : "text-neutral-700 font-semibold hover:text-brand"}`}
+                  >
+                    <span className="text-base leading-5 whitespace-nowrap p-3">{category.name}</span>
+                    {activeCategory === category.slug && (
+                      <div className="w-full h-0.5 absolute bottom-0 bg-brand rounded-sm z-10"></div>
+                    )}
+                  </Link>
+                ))}
               </div>
-            )}
-          </div>
-        </div>
+              <div className="w-full h-px bg-slate-200"></div>
+            </div>
 
-        {/* Knowledge Base Callout */}
-        <div className="w-full p-6 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mt-8">
-          <div className="inline-flex flex-col justify-start items-start gap-2">
-            <div className="text-neutral-800 text-2xl font-semibold leading-7">Looking for in-depth information?</div>
-            <div className="text-neutral-700 text-base font-normal leading-6">Step-by-step guides, troubleshooting trees, and printer manuals live in the Knowledge Base.</div>
+            {/* Articles Grid */}
+            <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {posts.length > 0 ? posts.map((post) => (
+                <Link key={post.id} href={`/blog/${post.slug}`} className="flex flex-col bg-white rounded-2xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-100 overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                  <div className="w-full h-48 relative overflow-hidden bg-slate-100">
+                    <Image 
+                      src={toDisplayImageUrl(post.image_preview || post.image) || "https://placehold.co/384x192"} 
+                      alt={post.title}
+                      fill
+                      unoptimized
+                      className="object-cover group-hover:scale-105 transition-transform duration-500" 
+                    />
+                  </div>
+                  <div className="p-4 flex flex-col justify-between flex-1 gap-4">
+                    <div className="flex flex-col justify-start items-start gap-2">
+                      <div className="text-blue-400 text-base font-semibold leading-5">
+                        {post.categories?.[0]?.name || "Article"}
+                      </div>
+                      <div className="text-neutral-800 text-xl font-semibold leading-6 group-hover:text-brand transition-colors line-clamp-2">
+                        {post.title}
+                      </div>
+                      <div className="text-neutral-700 text-base font-normal leading-6 line-clamp-2">
+                        {post.excerpt}
+                      </div>
+                    </div>
+                    <div className="inline-flex justify-start items-center gap-2 mt-4">
+                      <div className="w-9 h-9 relative rounded-full overflow-hidden bg-slate-200">
+                         <Image src="https://placehold.co/36x36" alt="Author" fill className="object-cover" />
+                      </div>
+                      <div className="text-neutral-700 text-base font-semibold leading-6">
+                        {post.author?.name || "Admin"}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              )) : (
+                <div className="col-span-1 md:col-span-2 lg:col-span-3 flex flex-col items-center justify-center py-24 text-center">
+                  <div className="mb-6 rounded-full bg-slate-50 p-6">
+                    <svg className="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l4 4v10a2 2 0 01-2 2zM14 4v4h4" />
+                    </svg>
+                  </div>
+                  <h2 className="text-2xl font-bold text-neutral-800">{t("blogsPage.noPostsTitle") || "No articles found"}</h2>
+                  <p className="mt-2 text-neutral-500 font-medium">{t("blogsPage.noPostsDescription") || "Try selecting a different category."}</p>
+                </div>
+              )}
+            </div>
           </div>
-          <Link href={localePath("/kennisbank-overzicht", locale)} className="h-12 px-6 py-2.5 bg-brand hover:bg-brand-hover transition-colors rounded-[100px] flex justify-center items-center gap-2.5 flex-shrink-0">
-            <span className="text-white text-lg font-semibold leading-6">Browse Knowledge Base</span>
-          </Link>
+
+          {/* Knowledge Base Callout */}
+          <div className="w-full p-6 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mt-8">
+            <div className="inline-flex flex-col justify-start items-start gap-2">
+              <div className="text-neutral-800 text-2xl font-bold leading-7">Looking for in-depth information?</div>
+              <div className="text-neutral-700 text-base font-normal leading-6">Step-by-step guides, troubleshooting trees, and printer manuals live in the Knowledge Base.</div>
+            </div>
+            <Link href={localePath("/kennisbank-overzicht", locale)} className="h-12 px-6 py-2.5 bg-brand hover:bg-brand-hover transition-colors rounded-[100px] flex justify-center items-center gap-2.5 flex-shrink-0">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 5.25V15.75" stroke="#F5F1EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M2.25 13.5C2.05109 13.5 1.86032 13.421 1.71967 13.2803C1.57902 13.1397 1.5 12.9489 1.5 12.75V3C1.5 2.80109 1.57902 2.61032 1.71967 2.46967C1.86032 2.32902 2.05109 2.25 2.25 2.25H6C6.79565 2.25 7.55871 2.56607 8.12132 3.12868C8.68393 3.69129 9 4.45435 9 5.25C9 4.45435 9.31607 3.69129 9.87868 3.12868C10.4413 2.56607 11.2043 2.25 12 2.25H15.75C15.9489 2.25 16.1397 2.32902 16.2803 2.46967C16.421 2.61032 16.5 2.80109 16.5 3V12.75C16.5 12.9489 16.421 13.1397 16.2803 13.2803C16.1397 13.421 15.9489 13.5 15.75 13.5H11.25C10.6533 13.5 10.081 13.7371 9.65901 14.159C9.23705 14.581 9 15.1533 9 15.75C9 15.1533 8.76295 14.581 8.34099 14.159C7.91903 13.7371 7.34674 13.5 6.75 13.5H2.25Z" stroke="#F5F1EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <span className="text-white text-lg font-medium leading-6">Browse Knowledge Base</span>
+            </Link>
+          </div>
         </div>
       </div>
 
       {/* Recommended Products */}
-      <div className="w-full py-24 bg-gray-50 flex flex-col justify-start items-center">
-        <div className="w-full max-w-[1440px] px-4 sm:px-6 lg:px-0 flex flex-col gap-12">
+      <div className="w-full py-24 bg-gray-50 flex flex-col justify-start items-center px-4 sm:px-6 lg:px-10">
+        <div className="w-full max-w-360 mx-auto flex flex-col gap-12">
           <div className="w-full flex justify-between items-center">
             <h2 className="text-neutral-800 text-3xl md:text-4xl font-bold leading-tight">Recommended Products</h2>
             <div className="hidden sm:flex justify-start items-center gap-6">
               <button className="w-12 h-12 flex justify-center items-center bg-gray-50 rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-gray-200 hover:bg-gray-200 transition-colors text-neutral-400 hover:text-neutral-600">
-                <svg className="w-6 h-6 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                <svg width="20" height="17" viewBox="0 0 20 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M8.231 0.999474L0.999815 8.23065L8.13517 15.366M18.5361 7.66497L1.20108 8.22916" stroke="currentColor" strokeWidth="2" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </button>
               <button className="w-12 h-12 flex justify-center items-center bg-white rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-amber-500 hover:bg-brand-soft transition-colors text-brand">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                <svg width="20" height="17" viewBox="0 0 20 17" fill="none" xmlns="http://www.w3.org/2000/svg" className="rotate-180">
+                  <path d="M8.231 0.999474L0.999815 8.23065L8.13517 15.366M18.5361 7.66497L1.20108 8.22916" stroke="currentColor" strokeWidth="2" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </button>
             </div>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {recommendedProducts.map((product) => {
               const cardProduct = mapLaravelProductToCardData(product, locale as "en" | "nl");
 
@@ -284,6 +321,33 @@ export default async function BlogsPage({
 
               return <ProductCard key={cardProduct.sku} product={cardProduct} href={href} />;
             })}
+          </div>
+        </div>
+      </div>
+
+      {/* Recommended Materials */}
+      <div className="w-full py-24 bg-white border-t border-slate-100 flex flex-col justify-start items-center px-4 sm:px-6 lg:px-10">
+        <div className="w-full max-w-360 mx-auto flex flex-col gap-12">
+          <div className="w-full flex justify-between items-center">
+            <h2 className="text-neutral-800 text-3xl md:text-4xl font-bold leading-tight">Recommended Materials</h2>
+            <div className="hidden sm:flex justify-start items-center gap-6">
+              <button className="w-12 h-12 flex justify-center items-center bg-gray-50 rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-gray-200 hover:bg-gray-200 transition-colors text-neutral-400 hover:text-neutral-600">
+                <svg width="20" height="17" viewBox="0 0 20 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M8.231 0.999474L0.999815 8.23065L8.13517 15.366M18.5361 7.66497L1.20108 8.22916" stroke="currentColor" strokeWidth="2" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+              <button className="w-12 h-12 flex justify-center items-center bg-white rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-amber-500 hover:bg-brand-soft transition-colors text-brand">
+                <svg width="20" height="17" viewBox="0 0 20 17" fill="none" xmlns="http://www.w3.org/2000/svg" className="rotate-180">
+                  <path d="M8.231 0.999474L0.999815 8.23065L8.13517 15.366M18.5361 7.66497L1.20108 8.22916" stroke="currentColor" strokeWidth="2" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {recommendedMaterials.map((material) => (
+              <MaterialCard key={material.id} material={material} locale={locale} />
+            ))}
           </div>
         </div>
       </div>
