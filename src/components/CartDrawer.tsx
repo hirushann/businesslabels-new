@@ -104,7 +104,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                     onClick={onClose}
                     className="h-[38px] px-5 py-2 rounded-[100px] bg-brand hover:bg-brand-hover active:bg-brand-active flex items-center justify-center gap-2 cursor-pointer transition-colors"
                   >
-                    <span className="text-center text-white text-base font-semibold leading-6 whitespace-nowrap">
+                    <span className="text-center text-white text-base font-medium leading-6 whitespace-nowrap">
                       {t('common.browseProducts')}
                     </span>
                   </Link>
@@ -181,7 +181,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                                 <span className="text-link text-sm font-normal leading-[18.2px] block">
                                   SKU: {item.sku}
                                 </span>
-                                <h3 className="text-ink text-base font-semibold leading-[21.6px] mt-0.5 line-clamp-2">
+                                <h3 className="text-ink text-base font-bold leading-[21.6px] mt-0.5 line-clamp-2">
                                   {href ? (
                                     <Link href={href} onClick={onClose} className="hover:text-brand transition-colors">
                                       {item.name}
@@ -242,7 +242,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                                       setItemQuantity(item.key, val);
                                     }
                                   }}
-                                  className="w-[38px] h-[38px] border-r border-black/10 bg-transparent text-center text-base font-semibold text-ink focus:outline-none focus:ring-0 p-0"
+                                  className="w-[38px] h-[38px] border-r border-black/10 bg-transparent text-center text-base font-bold text-ink focus:outline-none focus:ring-0 p-0"
                                 />
                                 <button
                                   type="button"
@@ -349,7 +349,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
 
                 {/* Total */}
                 <div className="px-6 flex justify-between items-center">
-                  <span className="text-copy text-lg font-bold leading-[21.6px]">
+                  <span className="text-copy text-lg font-medium leading-[21.6px]">
                     {t('cart.totalInclVat')}
                   </span>
                   <span className="text-ink text-lg font-semibold leading-[21.6px]">
@@ -365,7 +365,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                   onClick={onClose}
                   className="w-full h-[38px] bg-brand hover:bg-brand-hover active:bg-brand-active rounded-[100px] flex items-center justify-center gap-2 cursor-pointer transition-colors"
                 >
-                  <span className="text-center text-white text-base font-bold leading-6 whitespace-nowrap">
+                  <span className="text-center text-white text-base font-medium leading-6 whitespace-nowrap">
                     {t('cart.goToShoppingCart')}
                   </span>
                   <svg width="6" height="10" viewBox="0 0 6 10" fill="none" className="text-white">

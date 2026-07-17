@@ -1,4 +1,5 @@
 import "./globals.css";
+import { GoogleTagManager } from "@next/third-parties/google";
 import { CartProvider } from "@/components/CartProvider";
 import { WishlistProvider } from "@/components/WishlistProvider";
 import { HelpProvider } from "@/components/HelpProvider";
@@ -13,6 +14,7 @@ import { cookies } from "next/headers";
 import { ScrollToTop } from "@/components/ScrollToTop";
 
 const isStaging = process.env.NEXT_PUBLIC_APP_ENV === 'staging' || process.env.VERCEL_ENV === 'preview';
+const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
 
 export const metadata = {
   title: "Businesslabels — Labels for Epson ColorWorks Printers",
@@ -42,6 +44,16 @@ export default async function RootLayout({ children }) {
   return (
     <html lang={locale} className="font-sans" suppressHydrationWarning>
       <body className="bg-white min-h-screen flex flex-col" suppressHydrationWarning>
+        {gtmId && (
+          <noscript>
+            <iframe
+              src={`https://www.googletagmanager.com/ns.html?id=${gtmId}`}
+              height="0"
+              width="0"
+              style={{ display: "none", visibility: "hidden" }}
+            />
+          </noscript>
+        )}
         <ScrollToTop />
         <NextIntlClientProvider locale={locale} messages={messages}>
           <CartProvider>
@@ -56,6 +68,7 @@ export default async function RootLayout({ children }) {
         </NextIntlClientProvider>
         <Toaster />
       </body>
+      {gtmId && <GoogleTagManager gtmId={gtmId} />}
     </html>
   );
 }

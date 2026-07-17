@@ -11,10 +11,10 @@ import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import KnowledgeSearchBar from "@/components/KnowledgeSearchBar";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations();
+  const t = await getTranslations('knowledgePage');
   return {
-    title: `${t("menus.resources.knowledgeTitle")} — Businesslabels`,
-    description: t("menus.resources.knowledgeDesc"),
+    title: t('metadataTitle'),
+    description: t('metadataDescription'),
   };
 }
 

@@ -3,11 +3,11 @@ import { getTranslations } from "next-intl/server";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations();
+  const t = await getTranslations("videos");
 
   return {
-    title: `${t("menus.resources.videosTitle")} — Businesslabels`,
-    description: t("menus.resources.videosDesc"),
+    title: t("metadataTitle"),
+    description: t("metadataDescription"),
   };
 }
 

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import { permanentRedirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import CategorySubnav from "@/components/CategorySubnav";
@@ -17,6 +18,7 @@ import {
   categoryRouteSlug,
   categorySlug,
   fetchCategoryGroups,
+  findCategoryByLocalizedPath,
   findCategoryByPath,
   findCategoryBySlug,
   flattenCategorySlugs,
@@ -106,6 +108,7 @@ const emptyCatalogResponse: CatalogSearchResponse = {
 };
 
 type CategoryArchiveRouteMode = "legacy" | "productCategory";
+type ProductCategoryRouteBase = "product-category" | "product-categorie";
 
 function liveProductCategoryPath(locale: string, segments: string[]): string {
   const basePath = locale === "nl" ? "/product-categorie" : "/product-category";
@@ -115,6 +118,14 @@ function liveProductCategoryPath(locale: string, segments: string[]): string {
 
 function lastSegment(segments: string[]): string {
   return segments.at(-1) ?? "";
+}
+
+function decodeRouteSegment(segment: string): string {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
 }
 
 function visibleSubcategories({
@@ -145,11 +156,13 @@ export async function renderCategoryArchivePage({
   routeSegments,
   searchParams,
   routeMode = "legacy",
+  requestedRouteBase,
 }: {
   slug: string;
   routeSegments?: string[];
   searchParams: Promise<CategoryPageSearchParams>;
   routeMode?: CategoryArchiveRouteMode;
+  requestedRouteBase?: ProductCategoryRouteBase;
 }) {
   const rawParams = await searchParams;
   const t = await getTranslations();
@@ -189,17 +202,38 @@ export async function renderCategoryArchivePage({
   const virtualLabelParentSegments = virtualLabelGroup
     ? getLabelCategoryLookupSegments(categorySourceLocale, virtualLabelGroup.parentKey)
     : null;
+  const localizedRouteLookup = routeMode === "productCategory" && routeSegments?.length
+    ? findCategoryByLocalizedPath(categoryGroups, routeSegments)
+    : null;
 
   const lookup = virtualAccessoryParentSegments
     ? findCategoryByPath(categoryGroups, virtualAccessoryParentSegments, categorySourceLocale)
     : virtualLabelParentSegments
     ? findCategoryByPath(categoryGroups, virtualLabelParentSegments, categorySourceLocale)
+    : localizedRouteLookup
+    ? localizedRouteLookup
     : categoryLookupSegments
     ? findCategoryByPath(categoryGroups, categoryLookupSegments, categorySourceLocale)
       ?? findCategoryBySlug(categoryGroups, categoryLookupSlug, categorySourceLocale)
     : findCategoryBySlug(categoryGroups, categoryLookupSlug, categorySourceLocale);
   const currentCategory = lookup?.category;
   const ancestors = lookup?.ancestors ?? [];
+
+  if (routeMode === "productCategory" && localizedRouteLookup && routeSegments?.length) {
+    const canonicalSegments = [...localizedRouteLookup.ancestors, localizedRouteLookup.category]
+      .map((category) => categoryRouteSlug(category, locale));
+    const expectedRouteBase: ProductCategoryRouteBase = locale === "en"
+      ? "product-category"
+      : "product-categorie";
+    const hasCanonicalSegments = canonicalSegments.length === routeSegments.length
+      && canonicalSegments.every((segment, index) => segment === decodeRouteSegment(routeSegments[index]));
+
+    if (!hasCanonicalSegments || requestedRouteBase !== expectedRouteBase) {
+      const canonicalPath = liveProductCategoryPath(locale, canonicalSegments);
+      const queryString = routeQuery.toString();
+      permanentRedirect(queryString ? `${canonicalPath}?${queryString}` : canonicalPath);
+    }
+  }
   const virtualChildSlugs = virtualAccessoryGroup
     ? new Set(
         virtualAccessoryGroup.childKeys.map((key) =>
@@ -266,9 +300,6 @@ export async function renderCategoryArchivePage({
   const currentSegments = currentCategory
     ? [...ancestors, currentCategory].map((category) => categoryRouteSlug(category, locale))
     : [categoryLookupSlug];
-  const publicCurrentSegments = routeMode === "productCategory" && routeSegments?.length
-    ? routeSegments
-    : currentSegments;
 
   const hrefForCategory =
     routeMode === "productCategory"
@@ -290,7 +321,7 @@ export async function renderCategoryArchivePage({
           }
 
           return liveProductCategoryPath(locale, [
-            ...publicCurrentSegments,
+            ...currentSegments,
             categoryRouteSlug(category, locale),
           ]);
         }

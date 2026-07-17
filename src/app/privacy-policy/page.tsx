@@ -3,9 +3,10 @@ import { getTranslations, getLocale } from "next-intl/server";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations();
+  const t = await getTranslations("privacyPolicy");
   return {
-    title: `${t("footer.legal.privacy")} — Businesslabels`,
+    title: t("metadataTitle"),
+    description: t("metadataDescription"),
   };
 }
 

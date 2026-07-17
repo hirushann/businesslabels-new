@@ -179,12 +179,12 @@ export default function Footer() {
           <div className="flex flex-wrap justify-center gap-5">
             {[
               { key: 'footer.legal.privacy', href: '/privacy-policy' },
-              { key: 'footer.legal.terms', href: '/terms-and-conditions' },
+              { key: 'footer.legal.terms', href: '/algemene-voorwaarden' },
               // { key: 'footer.legal.cookies', href: '#' },
             ].map((item) => (
               <Link
                 key={item.key}
-                href={item.href}
+                href={lp(item.href)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-white/60 text-sm font-light leading-5 hover:text-white/80 transition-colors"

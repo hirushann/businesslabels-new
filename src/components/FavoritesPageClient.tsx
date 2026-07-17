@@ -139,7 +139,7 @@ export default function FavoritesPageClient() {
         aria-hidden="true"
       />
 
-      <div className="relative max-w-360 mx-auto w-full py-8 md:py-12 z-10">
+      <div className="relative max-w-360 mx-auto w-full pt-8 pb-20 md:pt-12 z-10">
         <Breadcrumbs items={breadcrumbs} className="mb-6 md:mb-8" />
 
       {isLoading && mergedItems.length === 0 ? (
@@ -164,7 +164,7 @@ export default function FavoritesPageClient() {
           </p>
           <Link
             href={localePath('/product', locale)}
-            className="h-12 px-10 rounded-full bg-brand hover:bg-brand-active text-white font-bold text-base transition-colors flex items-center justify-center"
+            className="h-12 px-10 rounded-full bg-brand hover:bg-brand-active text-white font-medium text-base transition-colors flex items-center justify-center"
           >
             {t('favoritesPage.exploreProduct') || 'Explore Product'}
           </Link>

@@ -116,6 +116,14 @@ describe("proxy locale routing", () => {
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
 
+  it("redirects /inkt-recyclen-epson-colorworks to /en/inkt-recyclen-epson-colorworks when cookie is en", () => {
+    const response = proxy(makeRequest("/inkt-recyclen-epson-colorworks", `${LOCALE_COOKIE}=en`));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/en/inkt-recyclen-epson-colorworks");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
   it("redirects /en/custom-made-form to /en/custom-made-labels", () => {
     const response = proxy(makeRequest("/en/custom-made-form"));
 
@@ -182,5 +190,27 @@ describe("proxy locale routing", () => {
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe("http://localhost/en/contact-us");
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("rewrites /en/terms-and-conditions internally to /algemene-voorwaarden", () => {
+    const response = proxy(makeRequest("/en/terms-and-conditions"));
+
+    expect(response.headers.get("x-middleware-rewrite")).toBe("http://localhost/algemene-voorwaarden");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("redirects /en/algemene-voorwaarden to /en/terms-and-conditions", () => {
+    const response = proxy(makeRequest("/en/algemene-voorwaarden"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/en/terms-and-conditions");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("redirects /terms-and-conditions to /algemene-voorwaarden", () => {
+    const response = proxy(makeRequest("/terms-and-conditions"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/algemene-voorwaarden");
   });
 });

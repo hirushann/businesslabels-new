@@ -90,6 +90,9 @@ export function localePath(path, locale) {
     if (basePath === '/contact') {
       return '/en/contact-us' + searchSuffix;
     }
+    if (basePath === '/algemene-voorwaarden') {
+      return '/en/terms-and-conditions' + searchSuffix;
+    }
     return '/en' + path;
   }
   if (basePath === '/brands') {
@@ -103,6 +106,9 @@ export function localePath(path, locale) {
   }
   if (basePath === '/contact') {
     return '/contact-us' + searchSuffix;
+  }
+  if (basePath === '/terms-and-conditions') {
+    return '/algemene-voorwaarden' + searchSuffix;
   }
   return path;
 }

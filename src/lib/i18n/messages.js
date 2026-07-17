@@ -189,9 +189,13 @@ export const MESSAGES_V4 = {
       matSilverPoly: 'Silver polyester',
       subSilverPoly: '(Metallic appearance)',
       stepContact: 'Contact',
-      unknown: 'Unknown'
+      unknown: 'Unknown',
+      metadataTitle: "Custom-made • BusinessLabels.nl",
+      metadataDescription: "If the desired label is not among our stock items, we can have the product made exactly as you wish. This can be very interesting with the right volumes, with customization the price is always very dependent on the order volume. However, we need all the right information to be able to make an appropriate […]"
     },
     recycle: {
+      metadataTitle: "Epson’s ColorWorks Ink Recycling Program • BusinessLabels.nl",
+      metadataDescription: "Epson recycling program Following Epson's philosophy regarding recycling “To preserve valuable environmental resources and reduce waste, we strive to collect and recycle as many products and consumables as possible”, Epson has established collection and recycling programs for cartridges. The programs consist of single returns (by post) and […]",
       breadcrumb: 'Recycling Program',
       heroTitle: 'Recycle your empty printer cartridges',
       heroDesc: "Label printers consume ink. That's part of the process. But empty cartridges and maintenance boxes don't belong in the trash — they can be reused or responsibly processed. This program handles the return logistics for you, free of charge.",
@@ -658,6 +662,8 @@ export const MESSAGES_V4 = {
       discount: 'Discount',
     },
     pages: {
+      homeMetadataTitle: 'Home • BusinessLabels.nl',
+      homeMetadataDescription: 'Professional and personal advice on the best color label printers and thermal label printers. Check out our range!',
       about: 'About',
       contact: 'Contact',
       cart: 'Cart',
@@ -735,7 +741,7 @@ export const MESSAGES_V4 = {
       pdfTotal: 'Total',
     },
     blogsPage: {
-      metadataTitle: 'Blogs | Businesslabels',
+      metadataTitle: 'Blog • BusinessLabels.nl',
       metadataDescription: 'Stay updated with the latest tips, guides, and news about labeling and printing solutions.',
       titlePrefix: 'Our',
       titleHighlight: 'Blogs',
@@ -746,6 +752,8 @@ export const MESSAGES_V4 = {
       noPostsDescription: "We're currently working on new content. Please check back later!",
     },
     faqPage: {
+      metadataTitle: "Frequently asked questions about Epson ColorWorks color label printers",
+      metadataDescription: "Everything about Epson ColorWorks color label printers: find answers to frequently asked questions about costs, print quality, maintenance, and more.",
       breadcrumb: 'FAQ',
       helpCenter: 'Help center',
       questionsAnswered: 'Questions answered',
@@ -789,7 +797,7 @@ export const MESSAGES_V4 = {
       permanent: 'Permanent',
     },
     materialsPage: {
-      metadataTitle: 'Material Overview — Businesslabels',
+      metadataTitle: 'Archive Materials • BusinessLabels.nl',
       metadataDescription: 'Discover printer media materials selected for precision, durability, color accuracy, and reliable professional output.',
       title: 'Material Overview',
       subtitle: 'Explore our printer media materials, engineered for precision, durability, and high-quality output. From standard to specialty stocks, each is chosen to boost performance, color accuracy, and reliability-ensuring professional results without compromise.',
@@ -983,7 +991,7 @@ export const MESSAGES_V4 = {
       item: 'item',
       items: 'items',
       emptyTitle: 'Your cart is empty',
-      emptyDescription: 'Add products to your cart to get started.',
+      emptyDescription: 'Before proceed to checkout you must add some products to your shopping cart. You will find a lot of interesting products on our “Shop” page.',
       removeFromCart: 'Remove {name} from cart',
       linkedWarranty: 'Linked warranty',
       qty: 'Qty: {count}',
@@ -1015,6 +1023,8 @@ export const MESSAGES_V4 = {
       freeShippingQualified: 'Your order qualifies for free shipping!',
       orderWithin: 'Order within <timeStyle>2 hours 34 minutes</timeStyle> for delivery <deliveryStyle>today → </deliveryStyle>shipped <shippedStyle>today</shippedStyle>',
       freeDeliveryThreshold: 'Free delivery on orders over <amountStyle>€100</amountStyle>',
+      yourOverview: 'Your Overview',
+      proceedToCheckout: 'Proceed to checkout',
     },
     help: {
       title: 'How can we help?',
@@ -1521,6 +1531,8 @@ export const MESSAGES_V4 = {
       },
     },
     software: {
+      metadataTitle: 'Software • BusinessLabels.nl',
+      metadataDescription: 'To make the most beautiful and smartest labels, you often have to use special software to do this efficiently. Because a label often differs greatly functionally from a traditional A4 piece of paper, the needs and ways to create it are also different. But there are also various applications in label design that require a […]',
       title: 'Software',
       intro: 'To create the most beautiful and smart labels, you often need to use special software to work efficiently. Because a label is often functionally very different from a traditional A4 paper, the needs and ways to create them are also different.',
       logical: {
@@ -1769,6 +1781,8 @@ export const MESSAGES_V4 = {
       sunday: "Sunday"
     },
     knowledgePage: {
+      metadataTitle: "Knowledge base • BusinessLabels.nl",
+      metadataDescription: "Inkjet or thermal. Labels, tickets or tags. Where to start. Not seeing the forest for the trees. It seems so simple, buying a label printer and some labels and printing away. But why is there so much available? Every application, user, and way of use has its own set of wishes and requirements. […]",
       heroTitle: "Knowledge Base",
       heroDesc: "Comprehensive setup guides, troubleshooting help, and smart workflows. Specifically for Epson ColorWorks printers and their compatible label materials, ensuring smooth operation and optimal printing results.",
       whatLookingFor: "What are you looking for? Click on the topic you need below.",
@@ -1895,9 +1909,10 @@ export const MESSAGES_V4 = {
         send: "Send",
         errorFailed: "Failed to send message.",
         errorUnexpected: "An unexpected error occurred. Please try again."
-      }
-    }
-,
+      },
+      metadataTitle: "Contact us • BusinessLabels.nl",
+      metadataDescription: "Contact We love to help you in any way possible Phone: +31 (0)318 590 465Email: verkoop@businesslabels.nl Opening hours:Monday till Friday08:30 to 17:00 (GMT +1) Email us Call us BusinesslabelsLenderinkweg 86733 AX WekeromTHE NETHERLANDS IBAN: NL62 RABO 0347 6231 74BIC-code: RABONL2UKVK: 71774599BtwNr: NL858844217B01 Route"
+    },
     supportPage: {
       breadcrumbSupport: "Support",
       heroTitle: "We help you get your printer working.",
@@ -1957,7 +1972,25 @@ export const MESSAGES_V4 = {
       how2: "We schedule a TeamViewer session at a time that suits you.",
       how3: "You install TeamViewer QuickSupport — no account needed.",
       how4: "We connect, view your screen, and walk through the settings together.",
-      downloadQs: "Download TeamViewer QuickSupport"
+      downloadQs: "Download TeamViewer QuickSupport",
+      metadataTitle: "Support • BusinessLabels.nl",
+      metadataDescription: "Support Are label printer issues casing a headache? Businesslabels support is ready to help! Experiencing problems with your label printer? If your label printer does not function properly, it’s often very annoying. Especially since label printers are often used in critical places that are crucial for business processes and there can’t stand still for to […]"
+    },
+    videos: {
+      metadataTitle: "Videos • BusinessLabels.nl",
+      metadataDescription: "The video database of Businesslabels – Smart2B Not everyone likes to read everything. Also not everything can be conveyed well in a piece of text. That is why videos are sometimes ideal. By showing something, no matter how simple or straightforward, many things can be conveyed better. That is why Businesslabels in […]"
+    },
+    brands: {
+      metadataTitle: "Brands • BusinessLabels.nl",
+      metadataDescription: "You can find the following brands on BusinessLabels"
+    },
+    terms: {
+      metadataTitle: "Terms and conditions • BusinessLabels.nl",
+      metadataDescription: "Read the terms and conditions of Businesslabels here. Clear agreements on delivery, warranty and service for your label solutions. View them directly online."
+    },
+    privacyPolicy: {
+      metadataTitle: "Privacy Policy • BusinessLabels.nl",
+      metadataDescription: "Smart2B respects the privacy of you as a visitor to one of our websites and ensures that the personal information you provide to us is treated confidentially. Introduction and applicability of privacy statementTo carry out our activities properly, it is sometimes necessary to process your personal data. We always do this carefully [...]"
     }
   },
   nl: {
@@ -2150,9 +2183,13 @@ export const MESSAGES_V4 = {
       matSilverPoly: 'Zilver polyester',
       subSilverPoly: '(Metallic uitstraling)',
       stepContact: 'Contact',
-      unknown: 'Onbekend'
+      unknown: 'Onbekend',
+      metadataTitle: "Maatwerk • BusinessLabels.nl",
+      metadataDescription: "Wanneer het gewenste label niet tussen onze voorraad artikelen zit kunnen wij het product precies zoals u wenst laten maken. Dit kan bij juiste volumes erg interessant zijn, bij maatwerk is echter de prijs altijd zeer afhankelijk van het bestel volume. We hebben wel alle juiste informatie nodig om een passend voorstel te kunnen maken […]"
     },
     recycle: {
+      metadataTitle: "Epson’s ColorWorks inkt Recycling Programma • BusinessLabels.nl",
+      metadataDescription: "Recycling programma Epson In navolging van de filosofie van Epson ten aanzien van recycling “Om waardevolle milieu bronnen te behouden en afval te verminderen”, streven we ernaar zoveel mogelijk producten en verbruiksartikelen in te zamelen en te recyclen”, heeft Epson de inzamelings- en recyclingprogramma’s voor cartridges opgesteld.De programma’s bestaan uit enkelvoudige retour (via post) en […]",
       breadcrumb: 'Recyclingprogramma',
       heroTitle: 'Recycleer uw lege inktpatronen',
       heroDesc: 'Labelprinters verbruiken inkt. Dat hoort er nu eenmaal bij. Maar lege inktpatronen en onderhoudsboxen horen niet bij het restafval — ze kunnen worden hergebruikt of op verantwoorde wijze worden verwerkt. Dit programma regelt de retourlogistiek voor u, geheel kosteloos.',
@@ -2619,6 +2656,8 @@ export const MESSAGES_V4 = {
       discount: 'Korting',
     },
     pages: {
+      homeMetadataTitle: 'Al uw kleuren en thermische label printoplossingen | Business labels',
+      homeMetadataDescription: 'Professioneel en persoonlijk advies over de beste kleuren label printers en thermische label printers. Bekijk ons aanbod!',
       about: 'Over ons',
       contact: 'Contact',
       cart: 'Winkelwagen',
@@ -2696,7 +2735,7 @@ export const MESSAGES_V4 = {
       pdfTotal: 'Totaal',
     },
     blogsPage: {
-      metadataTitle: 'Blogs | Businesslabels',
+      metadataTitle: 'Blog • BusinessLabels.nl',
       metadataDescription: 'Blijf op de hoogte van de nieuwste tips, gidsen en nieuwtjes over etiketteren en printoplossingen.',
       titlePrefix: 'Onze',
       titleHighlight: 'Blogs',
@@ -2707,6 +2746,8 @@ export const MESSAGES_V4 = {
       noPostsDescription: 'We werken momenteel aan nieuwe content. Kom later nog eens terug!',
     },
     faqPage: {
+      metadataTitle: "Veelgestelde vragen over Epson ColorWorks kleurenlabelprinters",
+      metadataDescription: "Alles over Epson ColorWorks kleurenlabelprinters: vind antwoorden op veelgestelde vragen over kosten, printkwaliteit, onderhoud en meer.",
       breadcrumb: 'Veelgestelde vragen',
       helpCenter: 'Helpcentrum',
       questionsAnswered: 'Beantwoorde vragen',
@@ -2750,7 +2791,7 @@ export const MESSAGES_V4 = {
       permanent: 'Permanent',
     },
     materialsPage: {
-      metadataTitle: 'Materiaaloverzicht — Businesslabels',
+      metadataTitle: 'Archief Materials • BusinessLabels.nl',
       metadataDescription: 'Ontdek printermaterialen geselecteerd voor precisie, duurzaamheid, kleurnauwkeurigheid en betrouwbare professionele output.',
       title: 'Materiaaloverzicht',
       subtitle: 'Ontdek onze printermaterialen, ontwikkeld voor precisie, duurzaamheid en hoogwaardige output. Van standaard tot speciale materialen: elk materiaal is gekozen om prestaties, kleurnauwkeurigheid en betrouwbaarheid te verbeteren, voor professionele resultaten zonder compromis.',
@@ -2944,7 +2985,7 @@ export const MESSAGES_V4 = {
       item: 'item',
       items: 'items',
       emptyTitle: 'Je winkelwagen is leeg',
-      emptyDescription: 'Voeg producten toe aan je winkelwagen om te beginnen.',
+      emptyDescription: 'Voordat u kunt afrekenen, moet u eerst producten aan uw winkelwagen toevoegen. U vindt veel interessante producten op onze "Shop" pagina.',
       removeFromCart: '{name} verwijderen uit winkelwagen',
       linkedWarranty: 'Gekoppelde garantie',
       qty: 'Aantal: {count}',
@@ -2976,6 +3017,8 @@ export const MESSAGES_V4 = {
       freeShippingQualified: 'Je bestelling komt in aanmerking voor gratis verzending!',
       orderWithin: 'Bestel binnen <timeStyle>2 uur 34 minuten</timeStyle> voor levering <deliveryStyle>vandaag → </deliveryStyle><shippedStyle>vandaag</shippedStyle> verzonden',
       freeDeliveryThreshold: 'Gratis verzending bij bestellingen vanaf <amountStyle>€100</amountStyle>',
+      yourOverview: 'Jouw overzicht',
+      proceedToCheckout: 'Doorgaan naar afrekenen',
     },
     help: {
       title: 'Hoe kunnen we helpen?',
@@ -3022,7 +3065,7 @@ export const MESSAGES_V4 = {
       unavailable: 'Niet beschikbaar',
       workingHoursOnly: 'Bedankt voor je begrip. We reageren alleen tijdens onze werktijden.',
       dropMessage: 'Stuur ons een bericht',
-      leaveMessage: 'Laat een bericht achter en we nemen zo snel mogelijk contact met je op.',
+      leaveMessage: 'Laat een bericht achter en we nemen zo snel mogelijk contact met u op.',
       emailAddress: 'Je e-mailadres',
       messagePlaceholder: 'Schrijf je bericht hier...',
     },
@@ -3483,6 +3526,8 @@ export const MESSAGES_V4 = {
       },
     },
     software: {
+      metadataTitle: 'Software • BusinessLabels.nl',
+      metadataDescription: 'Om de mooiste en slimste labels te maken moet je vaak gebruik maken van speciale software om efficiënt te kunnen werken. Omdat een label functioneel vaak enorm verschild met een  traditioneel A4 papiertje zijn de behoeften en manieren om deze te creëren ook anders. Maar ook in label design zijn er uiteenlopende toepassingen die om […]',
       title: 'Software',
       intro: 'Om de mooiste en slimste labels te maken moet je vaak gebruik maken van speciale software om efficiënt te kunnen werken. Omdat een label functioneel vaak enorm verschild met een traditioneel A4 papiertje zijn de behoeften en manieren om deze te creëren ook anders.',
       logical: {
@@ -3731,6 +3776,8 @@ export const MESSAGES_V4 = {
       sunday: "zondag"
     },
     knowledgePage: {
+      metadataTitle: "Kennisbank overzicht • BusinessLabels.nl",
+      metadataDescription: "Inkjet of thermisch. Labels, tickets of etiketten. Waar moet je beginnen Door de bomen het bos niet meer zien. Het lijkt zo simpel, een labelprinter en wat label kopen en printen maar. Maar waarom is er dan zoveel te krijgen? Elke toepassing, gebruiker en manier van gebruik heeft een eigen set aan wensen en eisen. […]",
       heroTitle: "Kennisbank",
       heroDesc: "Uitgebreide installatiehandleidingen, hulp bij probleemoplossing en slimme workflows. Speciaal voor Epson ColorWorks-printers en hun compatibele labelmaterialen, wat zorgt voor een soepele werking en optimale printresultaten.",
       whatLookingFor: "Waar bent u naar op zoek? Klik hieronder op het onderwerp dat u nodig heeft.",
@@ -3857,9 +3904,10 @@ export const MESSAGES_V4 = {
         send: "Versturen",
         errorFailed: "Bericht verzenden mislukt.",
         errorUnexpected: "Er is een onverwachte fout opgetreden. Probeer het opnieuw."
-      }
-    }
-,
+      },
+      metadataTitle: "Contact • BusinessLabels.nl",
+      metadataDescription: "Contact Wij helpen u graag persoonlijk! Telefoon: +31(0) 318 590 465Email: verkoop@businesslabels.nl Openingstijden:Maandag t/m vrijdag08:30 tot 17:00 Mail ons Bel ons BusinesslabelsLenderinkweg 86733 AX WekeromTHE NETHERLANDS IBAN: NL62 RABO 0347 6231 74BIC-code: RABONL2UKVK: 71774599BtwNr: NL858844217B01 Route"
+    },
     supportPage: {
       breadcrumbSupport: "Support",
       heroTitle: "Wij helpen u om uw printer werkend te krijgen.",
@@ -3919,7 +3967,25 @@ export const MESSAGES_V4 = {
       how2: "We plannen een TeamViewer-sessie op een moment dat het u uitkomt.",
       how3: "U installeert TeamViewer QuickSupport — geen account nodig.",
       how4: "We maken verbinding, bekijken uw scherm en nemen samen de instellingen door.",
-      downloadQs: "Download TeamViewer QuickSupport"
+      downloadQs: "Download TeamViewer QuickSupport",
+      metadataTitle: "Support • BusinessLabels.nl",
+      metadataDescription: "Support Wanneer het allemaal tegen zit doen wij ons best voor u! Heeft u een probleem met uw printer? Als uw labelprinter niet naar behoren functioneert, is dat erg vervelend. Zeker omdat deze vaak op cruciale plekken staat binnen bedrijfsprocessen. Wij beschikken over de kennis en ervaring om problemen snel op te lossen. Ook bij […]"
+    },
+    videos: {
+      metadataTitle: "Video's • BusinessLabels.nl",
+      metadataDescription: "De video database van Businesslabels – Smart2B Niet iedereen houdt er van om alles maar te lezen. Ook niet alles is goed over te brengen in een stuk tekst. Daarom zijn video’s soms ideaal. Door iets te laten zien, hoe simpel of eenvoudig ook, zijn veel zaken beter over te brengen. Daarom is Businesslabels in […]"
+    },
+    brands: {
+      metadataTitle: "Merken • BusinessLabels.nl",
+      metadataDescription: "Deze merken komt u tegen in de webshop van Businesslabels"
+    },
+    terms: {
+      metadataTitle: "Algemene voorwaarden • BusinessLabels.nl",
+      metadataDescription: "Lees hier de algemene voorwaarden van Businesslabels. Heldere afspraken over levering, garantie en service voor uw labeloplossingen. Bekijk ze direct online."
+    },
+    privacyPolicy: {
+      metadataTitle: "Privacy Policy • BusinessLabels.nl",
+      metadataDescription: "Smart2B respecteert de privacy van u als bezoeker op 1 van onze websites en draagt er zorg voor dat de persoonlijke informatie die u ons verschaft vertrouwelijk wordt behandeld.  Inleiding en toepasselijkheid privacyverklaringOm onze activiteiten goed uit te kunnen voeren, is het soms nodig om persoonsgegevens van u te verwerken. Dat doen we altijd zorgvuldig […]"
     }
   },
 };

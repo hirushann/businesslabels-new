@@ -5,10 +5,10 @@ import { getTranslations } from 'next-intl/server';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations();
+  const t = await getTranslations("brands");
   return {
-    title: `${t('common.brands')} — Businesslabels`,
-    description: t('common.brandsDescription'),
+    title: t("metadataTitle"),
+    description: t("metadataDescription"),
   };
 }
 
