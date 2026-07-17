@@ -62,10 +62,10 @@ export async function generateMetadata({
     title,
     description,
     alternates: {
-      canonical: productPathForSlug(canonicalSlug, productType, locale),
+      canonical: productPathForSlug(canonicalSlug, null, locale),
       languages: {
-        en: productPathForSlug(localeSlugs.en ?? canonicalSlug, productType, "en"),
-        nl: productPathForSlug(localeSlugs.nl ?? canonicalSlug, productType, "nl"),
+        en: productPathForSlug(localeSlugs.en ?? canonicalSlug, null, "en"),
+        nl: productPathForSlug(localeSlugs.nl ?? canonicalSlug, null, "nl"),
       },
     },
     openGraph: {
@@ -79,6 +79,10 @@ export async function generateMetadata({
       title,
       description,
       images: mainImage ? [mainImage] : [],
+    },
+    robots: {
+      index: true,
+      follow: true,
     },
   };
 }
