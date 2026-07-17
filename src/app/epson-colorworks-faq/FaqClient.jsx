@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import { Home } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import CTABanner from '@/components/CTABanner';
 import { useLocalePath } from '@/hooks/useLocalePath';
 
@@ -27,7 +29,7 @@ const FaqItem = ({ question, answer, defaultOpen = false }) => {
       onClick={() => setOpen(!open)}
     >
       <div className="self-stretch inline-flex justify-between items-start">
-        <div className="flex-1 justify-start text-neutral-800 text-xl font-semibold leading-6 pr-4">{question}</div>
+        <div className="flex-1 justify-start text-neutral-800 text-lg md:text-xl font-bold leading-6 pr-4">{question}</div>
         <div className="size-6 relative overflow-hidden flex-shrink-0 flex items-center justify-center">
             {open ? (
               <div className="w-4 h-[1.50px] absolute bg-brand transition-all duration-300 transform rotate-180"></div>
@@ -40,7 +42,8 @@ const FaqItem = ({ question, answer, defaultOpen = false }) => {
         </div>
       </div>
       <div 
-        className={`w-full overflow-hidden transition-all duration-300 ease-in-out ${open ? 'max-h-[1000px] opacity-100 mt-4' : 'max-h-0 opacity-0 mt-0'}`}
+        className="w-full overflow-hidden transition-all duration-300 ease-in-out"
+        style={{ maxHeight: open ? '1000px' : '0px', opacity: open ? 1 : 0, marginTop: open ? '16px' : '0px' }}
       >
         <div className="text-neutral-700 text-base font-normal leading-6 cms-content prose prose-slate max-w-none prose-headings:font-bold prose-headings:text-slate-900 prose-p:text-base prose-p:leading-relaxed prose-p:text-slate-600 prose-a:font-semibold prose-a:text-brand prose-a:no-underline hover:prose-a:underline prose-strong:text-slate-900 prose-ul:my-3 prose-li:my-1 prose-li:text-slate-600 prose-li:marker:text-brand" dangerouslySetInnerHTML={{ __html: answer || "More information about this topic will be provided soon." }} />
       </div>
@@ -50,6 +53,7 @@ const FaqItem = ({ question, answer, defaultOpen = false }) => {
 
 export default function FaqClient({ pagesList, initialPageData, locale }) {
   const lp = useLocalePath();
+  const t = useTranslations('faqPage');
   const [activePageData, setActivePageData] = useState(initialPageData);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -112,45 +116,48 @@ export default function FaqClient({ pagesList, initialPageData, locale }) {
 
       <div className="w-full px-4 sm:px-6 lg:px-10">
         <div className="max-w-360 mx-auto py-10 flex flex-col gap-4">
-          {/* Breadcrumb */}
-          <div className="h-4 inline-flex justify-start items-center gap-2">
-            <div className="size-4 bg-zinc-300 rounded-sm" />
-            <div className="size-2.5 bg-zinc-500 rounded-sm" />
-            <span className="text-zinc-500 text-sm font-normal leading-5">/</span>
-            <span className="text-zinc-500 text-sm font-normal leading-5">Knowledge Center</span>
-            <span className="text-zinc-500 text-sm font-normal leading-5">/</span>
-            <span className="text-neutral-700 text-sm font-semibold leading-5">FAQ</span>
-          </div>
+            {/* Breadcrumb */}
+            <div className="h-4 inline-flex justify-start items-center gap-2">
+              <Link href={lp('/')} className="text-zinc-500 hover:text-brand transition-colors flex items-center">
+                <Home className="w-4 h-4" />
+              </Link>
+              <span className="text-zinc-500 text-sm font-normal leading-5">/</span>
+              <Link href={lp('/kennisbank-overzicht')} className="text-zinc-500 hover:text-brand transition-colors text-sm font-normal leading-5">
+                {t('knowledgeCenter')}
+              </Link>
+              <span className="text-zinc-500 text-sm font-normal leading-5">/</span>
+              <span className="text-neutral-700 text-sm font-bold leading-5">{t('breadcrumb')}</span>
+            </div>
 
           {/* Hero Section */}
-          <div className="w-full mt-6 p-6 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-100 flex justify-between items-stretch gap-10">
-            <div className="w-[620px] flex flex-col justify-between items-start">
+          <div className="w-full mt-6 p-6 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col lg:flex-row justify-between items-stretch gap-10">
+            <div className="w-full lg:w-[620px] flex flex-col justify-between items-start gap-8 lg:gap-0">
               <div className="flex flex-col items-start gap-4">
-                <h1 className="text-neutral-800 text-4xl font-bold capitalize leading-[48px]">
+                <h1 className="text-neutral-800 text-3xl md:text-4xl font-bold capitalize leading-tight md:leading-[48px]">
                   {activeContent?.title || "Frequently asked questions"}
                 </h1>
                 {activeContent?.intro ? (
                   <div 
-                    className="text-neutral-700 text-lg font-normal leading-6 cms-content" 
+                    className="text-neutral-700 text-base md:text-lg font-normal leading-6 cms-content" 
                     dangerouslySetInnerHTML={{ __html: activeContent.intro }}
                   />
                 ) : (
-                  <p className="text-neutral-700 text-lg font-normal leading-6">
+                  <p className="text-neutral-700 text-base md:text-lg font-normal leading-6">
                     It seems so easy: buy a printer and just start printing. But which printer should you get? What should you look out for? Do I really want to print my own labels, and if so, why or why not? <br/><br/>
                     On this page, we have listed as many questions as possible that we deal with and answer almost daily.
                   </p>
                 )}
               </div>
               <div className="flex flex-col items-start gap-4 mt-8">
-                <p className="text-neutral-700 text-lg font-normal leading-6">
+                <p className="text-neutral-700 text-base md:text-lg font-normal leading-6">
                   {activeContent?.support?.title || "Still unsure? Or is your question not listed?"}
                 </p>
                 <Link href={lp('/contact-us')} className="h-12 px-7 py-4 bg-brand rounded-[50px] inline-flex justify-center items-center hover:bg-brand-hover transition-colors">
-                  <span className="text-white text-lg font-semibold leading-6">Talk to Expert</span>
+                  <span className="text-white text-base md:text-lg font-medium leading-6">Talk to Expert</span>
                 </Link>
               </div>
             </div>
-            <div className="flex-1 relative rounded-xl overflow-hidden min-h-[390px] bg-slate-100 flex items-center justify-center">
+            <div className="w-full lg:flex-1 relative rounded-xl overflow-hidden h-64 lg:h-auto min-h-[240px] lg:min-h-[390px] bg-slate-100 flex items-center justify-center">
               {activePageData?.hero_image || activePageData?.hero_image_preview ? (
                 <img 
                   src={activePageData.hero_image_preview || activePageData.hero_image} 
@@ -166,37 +173,58 @@ export default function FaqClient({ pagesList, initialPageData, locale }) {
           </div>
 
           {/* Main Content Area: Sidebar + FAQ List */}
-          <div className="w-full mt-12 flex items-start gap-10">
+          <div className="w-full mt-12 flex flex-col lg:flex-row items-start gap-10">
             
-            {/* Sidebar */}
-            <div className="w-80 p-6 sticky top-24 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col items-start gap-4 overflow-hidden shrink-0">
-              <div className="relative pl-4 flex flex-col items-start w-full">
+            {/* Sidebar / Tabs */}
+            <div className="w-full lg:w-80 p-4 lg:p-6 lg:sticky lg:top-24 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col items-start gap-4 overflow-hidden shrink-0">
+              {/* Desktop view (Vertical with active indicator line) */}
+              <div className="hidden lg:flex relative pl-4 flex-col items-start w-full">
                 {/* Active Indicator Line */}
                 <div 
                   className="w-0.5 absolute bg-brand left-0 transition-all duration-300 rounded-full"
                   style={{ 
                     height: '24px',
-                    top: `${pagesList.findIndex(p => p.id === activePageData?.id) * 44 + 8}px` 
+                    top: `${pagesList.findIndex(p => p.id === activePageData?.id) * 48 + 12}px` 
                   }}
                 ></div>
 
-                {pagesList.map((page, index) => {
+                {pagesList.map((page) => {
                   const isActive = activePageData?.id === page.id;
                   return (
                     <div 
                       key={page.id}
                       onClick={() => loadFaqPage(page)}
-                      className={`py-3 w-full text-base cursor-pointer transition-colors ${isActive ? 'text-neutral-700 font-semibold' : 'text-zinc-500 font-normal hover:text-brand'}`}
+                      className={`h-12 flex items-center w-full text-base cursor-pointer transition-colors ${isActive ? 'text-neutral-700 font-bold' : 'text-zinc-500 font-normal hover:text-brand'}`}
                     >
                       {getPageTitle(page)}
                     </div>
                   );
                 })}
               </div>
+
+              {/* Mobile/Tablet view (Horizontal tabs) */}
+              <div className="flex lg:hidden flex-row gap-2 overflow-x-auto w-full pb-1 scrollbar-thin snap-x snap-mandatory">
+                {pagesList.map((page) => {
+                  const isActive = activePageData?.id === page.id;
+                  return (
+                    <button 
+                      key={page.id}
+                      onClick={() => loadFaqPage(page)}
+                      className={`px-4 py-2 text-sm rounded-full whitespace-nowrap snap-align-none transition-colors border ${
+                        isActive 
+                          ? 'bg-brand text-white border-brand font-medium' 
+                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      {getPageTitle(page)}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* FAQ Sections */}
-            <div className="flex-1 flex flex-col gap-14 pb-20 relative">
+            <div className="flex-1 w-full flex flex-col gap-14 pb-20 relative">
               {loading && (
                 <div className="absolute inset-0 bg-white/60 backdrop-blur-sm z-10 flex items-start justify-center pt-20">
                   <div className="w-8 h-8 border-4 border-brand border-t-transparent rounded-full animate-spin"></div>
