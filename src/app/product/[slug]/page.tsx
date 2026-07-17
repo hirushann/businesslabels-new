@@ -1107,11 +1107,50 @@ export default async function SingleProductPage({
     // But for now, we'll just fix the 0 price for group products.
     price = price - (price * (discount / 100));
   }
-  console.log(product)
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://businesslabels.nl";
+  const productUrl = `${siteUrl}${productPathForSlug(canonicalSlug || slug, productRouteType(product, selectedType), locale)}`;
+  
+  let brandName = "Businesslabels";
+  if (product?.make) {
+    brandName = normalizeValue(product.make) || "Businesslabels";
+  } else if (product?.properties && typeof product.properties === 'object') {
+    const props = product.properties as any;
+    brandName = normalizePropertyDisplayValue(props.brand || props.merk) || "Businesslabels";
+  }
+
+  const jsonLd = {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": productName,
+    "image": [mainImage, ...galleryImages].filter(Boolean),
+    "description": product?.meta_description || shortDescription || t("pages.productMetadataDescription"),
+    "sku": product?.sku,
+    "mpn": product?.sku || product?.article_number,
+    "brand": {
+      "@type": "Brand",
+      "name": brandName
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": productUrl,
+      "priceCurrency": "EUR",
+      "price": price.toFixed(2),
+      "itemCondition": "https://schema.org/NewCondition",
+      "availability": product?.in_stock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      "seller": {
+        "@type": "Organization",
+        "name": "Businesslabels"
+      }
+    }
+  };
 
   return (
     <div className="bg-white pb-28 lg:pb-0">
-
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
       <div className="px-4 md:px-8 lg:px-10 py-6 lg:py-10">
         {/* Breadcrumb */}
