@@ -6,10 +6,11 @@ import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import ProductCard from "@/components/ProductCard";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 import { localePath } from "@/lib/i18n/utils";
-import { mapLaravelProductToCardData, type LaravelProduct } from "@/lib/mappings/product";
+import { type LaravelProduct } from "@/lib/mappings/product";
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 import { searchMaterials } from "@/lib/search/materials";
-import MaterialCard from "@/components/materials/MaterialCard";
+import RecommendedProductsSlider from "@/components/blog/RecommendedProductsSlider";
+import RecommendedMaterialsSlider from "@/components/materials/RecommendedMaterialsSlider";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations();
@@ -116,7 +117,7 @@ async function getRecommendedProducts(locale: "en" | "nl"): Promise<LaravelProdu
     if (response.ok) {
       const json = await response.json();
       if (json.data && Array.isArray(json.data)) {
-        return shuffleArray(json.data as LaravelProduct[]).slice(0, 3);
+        return shuffleArray(json.data as LaravelProduct[]).slice(0, 6);
       }
     }
   } catch (error) {
@@ -130,7 +131,7 @@ async function getRecommendedMaterials(locale: "en" | "nl"): Promise<any[]> {
     const res = await searchMaterials({
       search: "",
       page: 1,
-      perPage: 3,
+      perPage: 6,
       sort: "name_asc",
       printMethod: "",
       baseMaterial: [],
@@ -292,63 +293,19 @@ export default async function BlogsPage({
 
       {/* Recommended Products */}
       <div className="w-full py-24 bg-gray-50 flex flex-col justify-start items-center px-4 sm:px-6 lg:px-10">
-        <div className="w-full max-w-360 mx-auto flex flex-col gap-12">
-          <div className="w-full flex justify-between items-center">
-            <h2 className="text-neutral-800 text-3xl md:text-4xl font-bold leading-tight">Recommended Products</h2>
-            <div className="hidden sm:flex justify-start items-center gap-6">
-              <button className="w-12 h-12 flex justify-center items-center bg-gray-50 rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-gray-200 hover:bg-gray-200 transition-colors text-neutral-400 hover:text-neutral-600">
-                <svg width="20" height="17" viewBox="0 0 20 17" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M8.231 0.999474L0.999815 8.23065L8.13517 15.366M18.5361 7.66497L1.20108 8.22916" stroke="currentColor" strokeWidth="2" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-              <button className="w-12 h-12 flex justify-center items-center bg-white rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-amber-500 hover:bg-brand-soft transition-colors text-brand">
-                <svg width="20" height="17" viewBox="0 0 20 17" fill="none" xmlns="http://www.w3.org/2000/svg" className="rotate-180">
-                  <path d="M8.231 0.999474L0.999815 8.23065L8.13517 15.366M18.5361 7.66497L1.20108 8.22916" stroke="currentColor" strokeWidth="2" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {recommendedProducts.map((product) => {
-              const cardProduct = mapLaravelProductToCardData(product, locale as "en" | "nl");
-
-              const href = cardProduct.slug
-                ? (cardProduct.type === "simple" || cardProduct.type === "variable")
-                  ? { pathname: `/product/${cardProduct.slug}`, query: { type: cardProduct.type } }
-                  : { pathname: `/product/${cardProduct.slug}` }
-                : undefined;
-
-              return <ProductCard key={cardProduct.sku} product={cardProduct} href={href} />;
-            })}
-          </div>
+        <div className="w-full max-w-360 mx-auto">
+          {recommendedProducts.length > 0 && (
+            <RecommendedProductsSlider products={recommendedProducts} locale={locale} />
+          )}
         </div>
       </div>
 
       {/* Recommended Materials */}
       <div className="w-full py-24 bg-white border-t border-slate-100 flex flex-col justify-start items-center px-4 sm:px-6 lg:px-10">
-        <div className="w-full max-w-360 mx-auto flex flex-col gap-12">
-          <div className="w-full flex justify-between items-center">
-            <h2 className="text-neutral-800 text-3xl md:text-4xl font-bold leading-tight">Recommended Materials</h2>
-            <div className="hidden sm:flex justify-start items-center gap-6">
-              <button className="w-12 h-12 flex justify-center items-center bg-gray-50 rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-gray-200 hover:bg-gray-200 transition-colors text-neutral-400 hover:text-neutral-600">
-                <svg width="20" height="17" viewBox="0 0 20 17" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M8.231 0.999474L0.999815 8.23065L8.13517 15.366M18.5361 7.66497L1.20108 8.22916" stroke="currentColor" strokeWidth="2" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-              <button className="w-12 h-12 flex justify-center items-center bg-white rounded-[100px] shadow-[4px_4px_20px_0px_rgba(157,163,160,0.20)] outline outline-1 outline-offset-[-1px] outline-amber-500 hover:bg-brand-soft transition-colors text-brand">
-                <svg width="20" height="17" viewBox="0 0 20 17" fill="none" xmlns="http://www.w3.org/2000/svg" className="rotate-180">
-                  <path d="M8.231 0.999474L0.999815 8.23065L8.13517 15.366M18.5361 7.66497L1.20108 8.22916" stroke="currentColor" strokeWidth="2" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {recommendedMaterials.map((material) => (
-              <MaterialCard key={material.id} material={material} locale={locale} />
-            ))}
-          </div>
+        <div className="w-full max-w-360 mx-auto">
+          {recommendedMaterials.length > 0 && (
+            <RecommendedMaterialsSlider materials={recommendedMaterials} locale={locale} />
+          )}
         </div>
       </div>
     </div>
