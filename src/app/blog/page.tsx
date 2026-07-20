@@ -202,7 +202,7 @@ export default async function BlogsPage({
           <div className="flex flex-col justify-start items-start gap-6">
             {/* Categories Tab */}
             <div className="w-full flex flex-col justify-end items-start">
-              <div className="w-full flex overflow-x-auto no-scrollbar items-start justify-between">
+              <div className="w-full flex overflow-x-auto no-scrollbar items-start">
                 <Link 
                   href="/blog?category=all"
                   className={`px-2.5 flex justify-center items-center gap-2.5 relative transition-colors ${activeCategory === "all" ? "text-brand font-bold" : "text-neutral-700 font-semibold hover:text-brand"}`}
