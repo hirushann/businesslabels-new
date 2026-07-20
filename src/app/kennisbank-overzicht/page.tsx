@@ -10,6 +10,7 @@ import { sectionIcon } from "@/app/epson-colorworks-faq/section-icon";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import KnowledgeSearchBar from "@/components/KnowledgeSearchBar";
+import { localePath } from "@/lib/i18n/utils";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('knowledgePage');
@@ -127,7 +128,7 @@ export default async function KnowledgeBaseArchive() {
 
       {/* Hero Section */}
       <div className="w-full px-4 sm:px-6 lg:px-10">
-        <div className="w-full py-12 md:py-16 px-6 md:px-12 relative mt-8 max-w-360 rounded-[24px] mx-auto overflow-hidden shadow-2xl bg-zinc-800 bg-[url('/images/archive-banner.jpg')] bg-cover bg-center">
+        <div className="w-full py-12 md:py-16 px-6 md:px-12 relative z-20 mt-8 max-w-360 rounded-[24px] mx-auto overflow-visible shadow-2xl bg-zinc-800 bg-[url('/images/archive-banner.jpg')] bg-cover bg-center">
           <div className="absolute inset-0 bg-black/20 z-0" />
           <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent z-0" />
           
@@ -240,15 +241,15 @@ export default async function KnowledgeBaseArchive() {
               const slug = translation?.slug || article.slug;
               
               return (
-                <Link key={article.id} href={`/knowledge/${slug}`} className="bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 p-5 flex flex-col sm:flex-row gap-6 transition-all group">
+                <Link key={article.id} href={localePath(`/blog/${slug}`, locale)} className="bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 p-5 flex flex-col sm:flex-row gap-6 transition-all group">
                   <div className="w-full sm:w-48 aspect-square rounded-lg bg-slate-100 overflow-hidden flex-shrink-0">
                     <img src={article.image || "https://placehold.co/400x400"} alt="Article Thumbnail" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   </div>
                   <div className="flex flex-col gap-4 justify-between py-2">
                     <div className="flex flex-col gap-2">
                       <span className="text-blue-500 font-medium text-sm uppercase tracking-wider">{categoryName}</span>
-                      <h3 className="text-neutral-800 text-xl font-bold group-hover:text-brand transition-colors line-clamp-2">{article.title}</h3>
-                      <p className="text-neutral-500 line-clamp-2">{article.excerpt}</p>
+                      <h3 className="text-neutral-800 text-xl font-bold group-hover:text-brand transition-colors line-clamp-2">{title}</h3>
+                      <p className="text-neutral-500 line-clamp-2">{excerpt}</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <img src="https://placehold.co/100x100" alt="Author" className="w-9 h-9 rounded-full bg-slate-200" />

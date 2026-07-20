@@ -58,11 +58,14 @@ type Post = {
   author?: {
     name: string;
     email: string;
+    avatar?: string;
+    about?: string;
   } | null;
   categories?: Array<{
     name: string;
     slug: string;
   }>;
+  translations?: Array<Record<string, any>>;
 };
 
 async function getPosts(search?: string, locale?: string): Promise<Post[]> {
@@ -72,6 +75,7 @@ async function getPosts(search?: string, locale?: string): Promise<Post[]> {
 
     let url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts`;
     const urlParams = new URLSearchParams();
+    urlParams.append("type", "kennisbank");
     if (search) urlParams.append("search", search);
     if (locale) urlParams.append("locale", locale);
 
@@ -173,7 +177,7 @@ export default async function BlogsPage({
       <div className="size-48 left-0 top-[454px] absolute bg-brand/30 rounded-full blur-[132px] pointer-events-none"></div>
       <div className="size-48 right-[100px] top-[1012px] absolute bg-brand/30 rounded-full blur-[132px] pointer-events-none"></div>
 
-      <div className="w-full px-4 sm:px-6 lg:px-10 py-8 pb-24">
+      <div className="w-full px-4 sm:px-6 lg:px-10 py-8 pb-24 relative z-10">
         <div className="max-w-360 mx-auto flex flex-col gap-10">
           {/* Header Section */}
           <div className="flex flex-col justify-end items-start gap-4">
@@ -227,40 +231,55 @@ export default async function BlogsPage({
 
             {/* Articles Grid */}
             <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {posts.length > 0 ? posts.map((post) => (
-                <Link key={post.id} href={`/blog/${post.slug}`} className="flex flex-col bg-white rounded-2xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-100 overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                  <div className="w-full h-48 relative overflow-hidden bg-slate-100">
-                    <Image 
-                      src={toDisplayImageUrl(post.image_preview || post.image) || "https://placehold.co/384x192"} 
-                      alt={post.title}
-                      fill
-                      unoptimized
-                      className="object-cover group-hover:scale-105 transition-transform duration-500" 
-                    />
-                  </div>
-                  <div className="p-4 flex flex-col justify-between flex-1 gap-4">
-                    <div className="flex flex-col justify-start items-start gap-2">
-                      <div className="text-blue-400 text-base font-semibold leading-5">
-                        {post.categories?.[0]?.name || "Article"}
+              {posts.length > 0 ? posts.map((post) => {
+                const translation = post.translations?.find((t) => t[locale])?.[locale];
+                const title = translation?.title || post.title;
+                const excerpt = translation?.excerpt || post.excerpt;
+                const slug = translation?.slug || post.slug;
+
+                return (
+                  <Link key={post.id} href={localePath(`/blog/${slug}`, locale)} className="flex flex-col bg-white rounded-2xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-100 overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div className="w-full h-48 relative overflow-hidden bg-slate-100">
+                      <Image 
+                        src={toDisplayImageUrl(post.image_preview || post.image) || "https://placehold.co/384x192"} 
+                        alt={title}
+                        fill
+                        unoptimized
+                        className="object-cover group-hover:scale-105 transition-transform duration-500" 
+                      />
+                    </div>
+                    <div className="p-4 flex flex-col justify-between flex-1 gap-4">
+                      <div className="flex flex-col justify-start items-start gap-2">
+                        <div className="text-blue-400 text-base font-light leading-5">
+                          {post.categories?.[0]?.name || "Article"}
+                        </div>
+                        <div className="text-neutral-800 text-xl font-bold leading-6 group-hover:text-brand transition-colors line-clamp-2">
+                          {title}
+                        </div>
+                        <div className="text-neutral-700 text-base font-normal leading-6 line-clamp-2">
+                          {excerpt}
+                        </div>
                       </div>
-                      <div className="text-neutral-800 text-xl font-semibold leading-6 group-hover:text-brand transition-colors line-clamp-2">
-                        {post.title}
-                      </div>
-                      <div className="text-neutral-700 text-base font-normal leading-6 line-clamp-2">
-                        {post.excerpt}
+                      <div className="inline-flex justify-start items-center gap-2 mt-4">
+                        {post.author?.avatar ? (
+                          <div className="w-9 h-9 relative rounded-full overflow-hidden">
+                            <Image src={toDisplayImageUrl(post.author.avatar) as string} alt={post.author.name} fill className="object-cover" unoptimized />
+                          </div>
+                        ) : (
+                          <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center text-[10px] font-bold text-brand">
+                            {post.author?.name
+                              ? post.author.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
+                              : "BL"}
+                          </div>
+                        )}
+                        <div className="text-neutral-700 text-base font-bold leading-6">
+                          {post.author?.name || "Admin"}
+                        </div>
                       </div>
                     </div>
-                    <div className="inline-flex justify-start items-center gap-2 mt-4">
-                      <div className="w-9 h-9 relative rounded-full overflow-hidden bg-slate-200">
-                         <Image src="https://placehold.co/36x36" alt="Author" fill className="object-cover" />
-                      </div>
-                      <div className="text-neutral-700 text-base font-semibold leading-6">
-                        {post.author?.name || "Admin"}
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              )) : (
+                  </Link>
+                );
+              }) : (
                 <div className="col-span-1 md:col-span-2 lg:col-span-3 flex flex-col items-center justify-center py-24 text-center">
                   <div className="mb-6 rounded-full bg-slate-50 p-6">
                     <svg className="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -295,7 +314,7 @@ export default async function BlogsPage({
       <div className="w-full py-24 bg-gray-50 flex flex-col justify-start items-center px-4 sm:px-6 lg:px-10">
         <div className="w-full max-w-360 mx-auto">
           {recommendedProducts.length > 0 && (
-            <RecommendedProductsSlider products={recommendedProducts} locale={locale} />
+            <RecommendedProductsSlider products={recommendedProducts} locale={locale} title={t("blogDetail.recommendedProducts")} />
           )}
         </div>
       </div>
@@ -304,7 +323,7 @@ export default async function BlogsPage({
       <div className="w-full py-24 bg-white border-t border-slate-100 flex flex-col justify-start items-center px-4 sm:px-6 lg:px-10">
         <div className="w-full max-w-360 mx-auto">
           {recommendedMaterials.length > 0 && (
-            <RecommendedMaterialsSlider materials={recommendedMaterials} locale={locale} />
+            <RecommendedMaterialsSlider materials={recommendedMaterials} locale={locale} title={t("blogDetail.recommendedMaterials")} />
           )}
         </div>
       </div>

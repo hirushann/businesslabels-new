@@ -7,11 +7,13 @@ import MaterialCard from "@/components/materials/MaterialCard";
 interface RecommendedMaterialsSliderProps {
   materials: any[];
   locale: string;
+  title?: string;
 }
 
 export default function RecommendedMaterialsSlider({
   materials,
   locale,
+  title = "Recommended Materials",
 }: RecommendedMaterialsSliderProps) {
   const [api, setApi] = React.useState<CarouselApi>();
   const [canScrollPrev, setCanScrollPrev] = React.useState(false);
@@ -43,7 +45,7 @@ export default function RecommendedMaterialsSlider({
       className="w-full flex flex-col gap-12"
     >
       <div className="w-full flex justify-between items-center gap-4">
-        <h2 className="text-neutral-800 text-3xl md:text-4xl font-bold leading-tight">Recommended Materials</h2>
+        <h2 className="text-neutral-800 text-3xl md:text-4xl font-bold leading-tight">{title}</h2>
         <div className="flex justify-start items-center gap-3 sm:gap-6">
           <button
             type="button"

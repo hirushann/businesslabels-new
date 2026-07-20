@@ -8,11 +8,13 @@ import { mapLaravelProductToCardData, type LaravelProduct } from "@/lib/mappings
 interface RecommendedProductsSliderProps {
   products: LaravelProduct[];
   locale: string;
+  title?: string;
 }
 
 export default function RecommendedProductsSlider({
   products,
   locale,
+  title = "Recommended Products",
 }: RecommendedProductsSliderProps) {
   const [api, setApi] = React.useState<CarouselApi>();
   const [canScrollPrev, setCanScrollPrev] = React.useState(false);
@@ -44,7 +46,7 @@ export default function RecommendedProductsSlider({
       className="w-full flex flex-col gap-12"
     >
       <div className="w-full flex justify-between items-center gap-4">
-        <h2 className="text-neutral-800 text-3xl md:text-4xl font-bold leading-tight">Recommended Products</h2>
+        <h2 className="text-neutral-800 text-3xl md:text-4xl font-bold leading-tight">{title}</h2>
         <div className="flex justify-start items-center gap-3 sm:gap-6">
           <button
             type="button"
