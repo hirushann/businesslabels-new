@@ -83,20 +83,7 @@ export default function KnowledgeSearchBar({ apiBaseUrl, placeholder }: Knowledg
       {/* Dropdown */}
       {isFocused && query.length >= 2 && (
         <div 
-          className="absolute top-[100%] mt-2 left-0 right-0 z-30"
-          style={{
-            width: '100%',
-            background: 'white',
-            boxShadow: '0px 4px 6px -4px rgba(0, 0, 0, 0.10), 0px 10px 15px -3px rgba(0, 0, 0, 0.10)',
-            overflow: 'hidden',
-            borderRadius: '12px',
-            outline: '1px #EDF2F7 solid',
-            outlineOffset: '-1px',
-            flexDirection: 'column',
-            justifyContent: 'flex-start',
-            alignItems: 'flex-start',
-            display: 'flex'
-          }}
+          className="absolute top-[100%] mt-2 left-0 right-0 md:-right-16 z-30 bg-white shadow-lg overflow-hidden rounded-xl border border-[#EDF2F7] flex flex-col justify-start items-start"
         >
           {results.length > 0 ? (
             results.map((result) => {
@@ -115,41 +102,29 @@ export default function KnowledgeSearchBar({ apiBaseUrl, placeholder }: Knowledg
                   href={localePath(`/blog/${slug}`, locale)} 
                   key={result.id}
                   onClick={() => setIsFocused(false)}
-                  className="w-full hover:bg-slate-50 transition-colors"
-                  style={{
-                    alignSelf: 'stretch',
-                    paddingLeft: '16px',
-                    paddingRight: '16px',
-                    paddingTop: '14px',
-                    paddingBottom: '14px',
-                    borderBottom: '1px #EDF2F7 solid',
-                    justifyContent: 'flex-start',
-                    alignItems: 'flex-start',
-                    gap: '12px',
-                    display: 'inline-flex'
-                  }}
+                  className="w-full hover:bg-slate-50 transition-colors self-stretch px-4 py-3.5 border-b border-[#EDF2F7] justify-start items-start gap-3 inline-flex"
                 >
-                  <div style={{ paddingTop: '4px', justifyContent: 'flex-start', alignItems: 'flex-start', display: 'flex' }}>
+                  <div className="pt-1 justify-start items-start flex">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M7.33333 12.6667C10.2789 12.6667 12.6667 10.2789 12.6667 7.33333C12.6667 4.38781 10.2789 2 7.33333 2C4.38781 2 2 4.38781 2 7.33333C2 10.2789 4.38781 12.6667 7.33333 12.6667Z" stroke="#888888" strokeLinecap="round" strokeLinejoin="round"/>
                       <path d="M14 13.9995L11.1334 11.1328" stroke="#888888" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </div>
-                  <div style={{ flex: '1 1 0%', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', gap: '6px', display: 'inline-flex' }}>
-                    <div style={{ color: '#222222', fontSize: '16px', fontFamily: 'Segoe UI', fontWeight: 600, lineHeight: '19.20px', wordWrap: 'break-word' }}>
+                  <div className="flex-1 flex flex-col justify-start items-start gap-1.5 inline-flex">
+                    <div className="text-[#222222] text-base font-bold leading-[19.2px] break-words">
                       {title}
                     </div>
-                    <div style={{ justifyContent: 'flex-start', alignItems: 'center', gap: '8px', display: 'inline-flex' }}>
-                      <div style={{ color: '#888888', fontSize: '14px', fontFamily: 'Segoe UI', fontWeight: 400, lineHeight: '18.20px', wordWrap: 'break-word' }}>
+                    <div className="justify-start items-center gap-2 inline-flex">
+                      <div className="text-[#888888] text-sm font-normal leading-[18.2px] break-words">
                         {typeLabel}
                       </div>
-                      <div style={{ width: '4px', height: '4px', opacity: 0.50, background: '#888888', borderRadius: '9999px' }}></div>
-                      <div style={{ color: categoryColor, fontSize: '14px', fontFamily: 'Segoe UI', fontWeight: 400, lineHeight: '18.20px', wordWrap: 'break-word' }}>
+                      <div className="w-1 h-1 opacity-50 bg-[#888888] rounded-full"></div>
+                      <div className="text-sm font-normal leading-[18.2px] break-words" style={{ color: categoryColor }}>
                         {category}
                       </div>
                     </div>
                   </div>
-                  <div style={{ paddingTop: '2px', justifyContent: 'flex-start', alignItems: 'flex-start', display: 'flex' }}>
+                  <div className="pt-0.5 justify-start items-start flex">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M5.25 10.5L8.75 7L5.25 3.5" stroke="#888888" strokeWidth="1.16667" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>

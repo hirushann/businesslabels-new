@@ -570,6 +570,9 @@ export const MESSAGES_V4 = {
     },
     checkout: {
       title: 'Checkout',
+      edit: 'Edit',
+      save: 'Save',
+      cancel: 'Cancel',
       emptyCart: 'Your cart is empty',
       emptyCartDescription: 'Add products to your cart before moving to checkout.',
       goBackToCart: 'Go Back to Cart',
@@ -2580,6 +2583,9 @@ export const MESSAGES_V4 = {
     },
     checkout: {
       title: 'Afrekenen',
+      edit: 'Bewerken',
+      save: 'Opslaan',
+      cancel: 'Annuleren',
       emptyCart: 'Je winkelwagen is leeg',
       emptyCartDescription: 'Voeg producten toe aan je winkelwagen voordat je naar de kassa gaat.',
       goBackToCart: 'Terug naar winkelwagen',

@@ -11,6 +11,7 @@ import Link from "next/link";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import KnowledgeSearchBar from "@/components/KnowledgeSearchBar";
 import { localePath } from "@/lib/i18n/utils";
+import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('knowledgePage');
@@ -86,6 +87,7 @@ type ArticleData = {
   author: {
     name: string;
     email: string;
+    avatar?: string | null;
   } | null;
   categories: Array<{
     name: string;
@@ -129,8 +131,8 @@ export default async function KnowledgeBaseArchive() {
       {/* Hero Section */}
       <div className="w-full px-4 sm:px-6 lg:px-10">
         <div className="w-full py-12 md:py-16 px-6 md:px-12 relative z-20 mt-8 max-w-360 rounded-[24px] mx-auto overflow-visible shadow-2xl bg-zinc-800 bg-[url('/images/archive-banner.jpg')] bg-cover bg-center">
-          <div className="absolute inset-0 bg-black/20 z-0" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent z-0" />
+          <div className="absolute inset-0 bg-black/20 z-0 rounded-[24px]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent z-0 rounded-[24px]" />
           
           <div className="max-w-360 mx-auto flex flex-col relative z-10">
             <div className="inline-flex justify-start items-center gap-2 mb-4">
@@ -242,17 +244,39 @@ export default async function KnowledgeBaseArchive() {
               
               return (
                 <Link key={article.id} href={localePath(`/blog/${slug}`, locale)} className="bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 p-5 flex flex-col sm:flex-row gap-6 transition-all group">
-                  <div className="w-full sm:w-48 aspect-square rounded-lg bg-slate-100 overflow-hidden flex-shrink-0">
-                    <img src={article.image || "https://placehold.co/400x400"} alt="Article Thumbnail" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <div className="w-full sm:w-48 aspect-square rounded-lg bg-slate-100 overflow-hidden flex-shrink-0 relative">
+                    <Image 
+                      src={toDisplayImageUrl(article.image) || "https://placehold.co/400x400"} 
+                      alt={title} 
+                      fill 
+                      unoptimized
+                      className="object-cover group-hover:scale-105 transition-transform duration-500" 
+                    />
                   </div>
-                  <div className="flex flex-col gap-4 justify-between py-2">
+                  <div className="flex flex-col gap-4 justify-between py-2 flex-1">
                     <div className="flex flex-col gap-2">
                       <span className="text-blue-500 font-medium text-sm uppercase tracking-wider">{categoryName}</span>
                       <h3 className="text-neutral-800 text-xl font-bold group-hover:text-brand transition-colors line-clamp-2">{title}</h3>
                       <p className="text-neutral-500 line-clamp-2">{excerpt}</p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <img src="https://placehold.co/100x100" alt="Author" className="w-9 h-9 rounded-full bg-slate-200" />
+                      {article.author?.avatar ? (
+                        <div className="w-9 h-9 relative rounded-full overflow-hidden">
+                          <Image 
+                            src={toDisplayImageUrl(article.author.avatar) as string} 
+                            alt={article.author.name} 
+                            fill 
+                            className="object-cover" 
+                            unoptimized 
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center text-[10px] font-bold text-brand">
+                          {article.author?.name
+                            ? article.author.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
+                            : "BL"}
+                        </div>
+                      )}
                       <span className="font-medium text-neutral-700">{article.author?.name || "Admin"}</span>
                     </div>
                   </div>

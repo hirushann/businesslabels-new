@@ -12,6 +12,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip
 import { localePath } from "@/lib/i18n/utils";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { useShippingRules } from "@/hooks/useShippingRules";
+import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
 
 type CheckoutFormState = {
   firstName: string;
@@ -259,6 +260,12 @@ function CheckoutShell({
   savedShippingAddressesError,
   step,
   setStep,
+  isEditingBilling,
+  startEditingBilling,
+  cancelEditingBilling,
+  saveEditingBilling,
+  countriesList,
+  onAddressAdded,
 }: {
   items: CartItem[];
   totalAmount: number;
@@ -286,12 +293,25 @@ function CheckoutShell({
   savedShippingAddressesError: string;
   step: 1 | 2 | 3;
   setStep: (step: 1 | 2 | 3) => void;
+  isEditingBilling: boolean;
+  startEditingBilling: () => void;
+  cancelEditingBilling: () => void;
+  saveEditingBilling: () => void;
+  countriesList: any[];
+  onAddressAdded: (savedAddressId?: string | number) => Promise<void>;
 }) {
   const t = useTranslations();
   const locale = useLocale();
   const { shippingRules, defaultRule } = useShippingRules();
   const selectedCountry = form.sameAsBilling ? form.country : form.shippingCountry;
   const selectedRule = shippingRules.find(r => r.country_name === selectedCountry) ?? defaultRule;
+
+  const selectedBillingCountryObj = countriesList.find(
+    (c: any) =>
+      c.name.toLowerCase() === form.country.toLowerCase() ||
+      c.id.toLowerCase() === form.country.toLowerCase()
+  );
+  const billingProvinces = selectedBillingCountryObj?.provinces || [];
 
   const shippingAmount = useMemo(() => {
     if (items.length === 0) return 0;
@@ -304,6 +324,8 @@ function CheckoutShell({
   const [isEditingRef, setIsEditingRef] = useState(false);
   const [isLoginPopupOpen, setIsLoginPopupOpen] = useState(false);
   const [isRegisterPopupOpen, setIsRegisterPopupOpen] = useState(false);
+  const [isAddAddressPopupOpen, setIsAddAddressPopupOpen] = useState(false);
+  const showBillingEditForm = !isLoggedIn || isEditingBilling;
 
   const breadcrumbs = [
     { label: t('checkout.title') }
@@ -471,161 +493,240 @@ function CheckoutShell({
                     </div>
                     <div className="h-px bg-line w-full" />
 
-                    {/* Address Autocomplete Search (Billing) */}
-                    <div className="flex flex-col gap-2">
-                      <span className="text-[18px] font-bold text-ink">{t('checkout.quickAddressSearch')}</span>
-                      <AddressAutocomplete
-                        value={form.streetAddress}
-                        onChange={(val) => handleChange("streetAddress", val)}
-                        onAddressSelect={(addr) => onAddressSelect(addr, false)}
-                        className={inputClasses(Boolean(errors.streetAddress))}
-                        placeholder={t('checkout.quickAddressSearch')}
-                      />
-                    </div>
+                    <div className={showBillingEditForm ? "w-full p-4 bg-[rgba(241,136,0,0.02)] rounded-xl border-[1.5px] border-[#F18800] flex flex-col gap-6" : "flex flex-col gap-6"}>
+                      {/* Address Autocomplete Search (Billing) */}
+                      {showBillingEditForm && (
+                        <div className="flex flex-col gap-2">
+                          <span className="text-[18px] font-bold text-ink">{t('checkout.quickAddressSearch')}</span>
+                          <AddressAutocomplete
+                            value={form.streetAddress}
+                            onChange={(val) => handleChange("streetAddress", val)}
+                            onAddressSelect={(addr) => onAddressSelect(addr, false)}
+                            className={inputClasses(Boolean(errors.streetAddress))}
+                            placeholder={t('checkout.quickAddressSearch')}
+                          />
+                        </div>
+                      )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="flex flex-col gap-2">
-                        <span className="text-[18px] font-bold text-ink">{t('checkout.companyName')}</span>
-                        <input
-                          type="text"
-                          value={form.companyName}
-                          onChange={(e) => handleChange("companyName", e.target.value)}
-                          placeholder={t('checkout.companyNamePlaceholder')}
-                          className={inputClasses(Boolean(errors.companyName))}
-                        />
-                        {errors.companyName && <span className="text-xs text-red-500">{errors.companyName}</span>}
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        <span className="text-[18px] font-bold text-ink">{t('checkout.vatNumber')}</span>
-                        <input
-                          type="text"
-                          value={form.vatNumber}
-                          onChange={(e) => handleChange("vatNumber", e.target.value)}
-                          placeholder={t('checkout.vatNumberPlaceholder')}
-                          className={inputClasses(Boolean(errors.vatNumber))}
-                        />
-                        {errors.vatNumber && <span className="text-xs text-red-500">{errors.vatNumber}</span>}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="flex flex-col gap-2">
-                        <span className="text-[18px] font-bold text-ink">{t('checkout.firstName')} *</span>
-                        <input
-                          type="text"
-                          value={form.firstName}
-                          onChange={(e) => handleChange("firstName", e.target.value)}
-                          placeholder={t('checkout.firstNamePlaceholder')}
-                          className={inputClasses(Boolean(errors.firstName))}
-                        />
-                        {errors.firstName && <span className="text-xs text-red-500">{errors.firstName}</span>}
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        <span className="text-[18px] font-bold text-ink">{t('checkout.lastName')} *</span>
-                        <input
-                          type="text"
-                          value={form.lastName}
-                          onChange={(e) => handleChange("lastName", e.target.value)}
-                          placeholder={t('checkout.lastNamePlaceholder')}
-                          className={inputClasses(Boolean(errors.lastName))}
-                        />
-                        {errors.lastName && <span className="text-xs text-red-500">{errors.lastName}</span>}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="flex flex-col gap-2">
-                        <span className="text-[18px] font-bold text-ink">{t('checkout.email')} *</span>
-                        <input
-                          type="email"
-                          value={form.email}
-                          onChange={(e) => handleChange("email", e.target.value)}
-                          placeholder={t('checkout.emailPlaceholder')}
-                          className={inputClasses(Boolean(errors.email))}
-                        />
-                        {errors.email && <span className="text-xs text-red-500">{errors.email}</span>}
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        <span className="text-[18px] font-bold text-ink">{t('checkout.mobileNumber')} *</span>
-                        <input
-                          type="tel"
-                          value={form.mobileNumber}
-                          onChange={(e) => handleChange("mobileNumber", e.target.value)}
-                          placeholder={t('checkout.mobileNumberPlaceholder')}
-                          className={inputClasses(Boolean(errors.mobileNumber))}
-                        />
-                        {errors.mobileNumber && <span className="text-xs text-red-500">{errors.mobileNumber}</span>}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <span className="text-[18px] font-bold text-ink">{t('checkout.country')}</span>
-                      <div className="relative">
-                        <select
-                          value={form.country}
-                          onChange={(e) => handleChange("country", e.target.value)}
-                          className={`${inputClasses()} appearance-none pr-10`}
-                        >
-                          <option value="Netherlands">{t('countries.netherlands')}</option>
-                          <option value="Belgium">{t('countries.belgium')}</option>
-                          <option value="Germany">{t('countries.germany')}</option>
-                        </select>
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M4 6L8 10L12 6" stroke="var(--subtle)" strokeWidth="1.16667" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-2">
+                          <span className="text-[18px] font-bold text-ink">{t('checkout.companyName')}</span>
+                          <input
+                            type="text"
+                            value={form.companyName}
+                            disabled={isLoggedIn && !isEditingBilling}
+                            onChange={(e) => handleChange("companyName", e.target.value)}
+                            placeholder={t('checkout.companyNamePlaceholder')}
+                            className={inputClasses(Boolean(errors.companyName))}
+                          />
+                          {errors.companyName && <span className="text-xs text-red-500">{errors.companyName}</span>}
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <span className="text-[18px] font-bold text-ink">{t('checkout.vatNumber')}</span>
+                          <input
+                            type="text"
+                            value={form.vatNumber}
+                            disabled={isLoggedIn && !isEditingBilling}
+                            onChange={(e) => handleChange("vatNumber", e.target.value)}
+                            placeholder={t('checkout.vatNumberPlaceholder')}
+                            className={inputClasses(Boolean(errors.vatNumber))}
+                          />
+                          {errors.vatNumber && <span className="text-xs text-red-500">{errors.vatNumber}</span>}
                         </div>
                       </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="flex flex-col gap-2">
-                        <span className="text-[18px] font-bold text-ink">{t('checkout.streetAddress')} *</span>
-                        <input
-                          type="text"
-                          value={form.streetAddress}
-                          onChange={(e) => handleChange("streetAddress", e.target.value)}
-                          placeholder={t('checkout.streetAddressPlaceholder')}
-                          className={inputClasses(Boolean(errors.streetAddress))}
-                        />
-                        {errors.streetAddress && <span className="text-xs text-red-500">{errors.streetAddress}</span>}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-2">
+                          <span className="text-[18px] font-bold text-ink">{t('checkout.firstName')} *</span>
+                          <input
+                            type="text"
+                            value={form.firstName}
+                            disabled={isLoggedIn && !isEditingBilling}
+                            onChange={(e) => handleChange("firstName", e.target.value)}
+                            placeholder={t('checkout.firstNamePlaceholder')}
+                            className={inputClasses(Boolean(errors.firstName))}
+                          />
+                          {errors.firstName && <span className="text-xs text-red-500">{errors.firstName}</span>}
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <span className="text-[18px] font-bold text-ink">{t('checkout.lastName')} *</span>
+                          <input
+                            type="text"
+                            value={form.lastName}
+                            disabled={isLoggedIn && !isEditingBilling}
+                            onChange={(e) => handleChange("lastName", e.target.value)}
+                            placeholder={t('checkout.lastNamePlaceholder')}
+                            className={inputClasses(Boolean(errors.lastName))}
+                          />
+                          {errors.lastName && <span className="text-xs text-red-500">{errors.lastName}</span>}
+                        </div>
                       </div>
-                      <div className="flex flex-col gap-2">
-                        <span className="text-[18px] font-bold text-ink">{t('checkout.postcode')} *</span>
-                        <input
-                          type="text"
-                          value={form.postcode}
-                          onChange={(e) => handleChange("postcode", e.target.value)}
-                          placeholder={t('checkout.postcodePlaceholder')}
-                          className={inputClasses(Boolean(errors.postcode))}
-                        />
-                        {errors.postcode && <span className="text-xs text-red-500">{errors.postcode}</span>}
-                      </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="flex flex-col gap-2">
-                        <span className="text-[18px] font-bold text-ink">{t('checkout.city')} *</span>
-                        <input
-                          type="text"
-                          value={form.city}
-                          onChange={(e) => handleChange("city", e.target.value)}
-                          placeholder={t('checkout.cityPlaceholder')}
-                          className={inputClasses(Boolean(errors.city))}
-                        />
-                        {errors.city && <span className="text-xs text-red-500">{errors.city}</span>}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-2">
+                          <span className="text-[18px] font-bold text-ink">{t('checkout.email')} *</span>
+                          <input
+                            type="email"
+                            value={form.email}
+                            disabled={isLoggedIn && !isEditingBilling}
+                            onChange={(e) => handleChange("email", e.target.value)}
+                            placeholder={t('checkout.emailPlaceholder')}
+                            className={inputClasses(Boolean(errors.email))}
+                          />
+                          {errors.email && <span className="text-xs text-red-500">{errors.email}</span>}
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <span className="text-[18px] font-bold text-ink">{t('checkout.mobileNumber')} *</span>
+                          <input
+                            type="tel"
+                            value={form.mobileNumber}
+                            disabled={isLoggedIn && !isEditingBilling}
+                            onChange={(e) => handleChange("mobileNumber", e.target.value)}
+                            placeholder={t('checkout.mobileNumberPlaceholder')}
+                            className={inputClasses(Boolean(errors.mobileNumber))}
+                          />
+                          {errors.mobileNumber && <span className="text-xs text-red-500">{errors.mobileNumber}</span>}
+                        </div>
                       </div>
+
                       <div className="flex flex-col gap-2">
-                        <span className="text-[18px] font-bold text-ink">{t('checkout.state')}</span>
-                        <input
-                          type="text"
-                          value={form.state}
-                          onChange={(e) => handleChange("state", e.target.value)}
-                          placeholder={t('checkout.statePlaceholder')}
-                          className={inputClasses(Boolean(errors.state))}
-                        />
-                        {errors.state && <span className="text-xs text-red-500">{errors.state}</span>}
+                        <span className="text-[18px] font-bold text-ink">{t('checkout.country')}</span>
+                        <div className="relative">
+                          <select
+                            value={form.country}
+                            disabled={isLoggedIn && !isEditingBilling}
+                            onChange={(e) => handleChange("country", e.target.value)}
+                            className={`${inputClasses()} appearance-none pr-10`}
+                          >
+                            {countriesList.length > 0 ? (
+                              countriesList.map((c: any) => (
+                                <option key={c.id} value={c.name}>
+                                  {c.name}
+                                </option>
+                              ))
+                            ) : (
+                              <>
+                                <option value="Netherlands">{t('countries.netherlands')}</option>
+                                <option value="Belgium">{t('countries.belgium')}</option>
+                                <option value="Germany">{t('countries.germany')}</option>
+                              </>
+                            )}
+                          </select>
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M4 6L8 10L12 6" stroke="var(--subtle)" strokeWidth="1.16667" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
+                        </div>
                       </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-2">
+                          <span className="text-[18px] font-bold text-ink">{t('checkout.streetAddress')} *</span>
+                          <input
+                            type="text"
+                            value={form.streetAddress}
+                            disabled={isLoggedIn && !isEditingBilling}
+                            onChange={(e) => handleChange("streetAddress", e.target.value)}
+                            placeholder={t('checkout.streetAddressPlaceholder')}
+                            className={inputClasses(Boolean(errors.streetAddress))}
+                          />
+                          {errors.streetAddress && <span className="text-xs text-red-500">{errors.streetAddress}</span>}
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <span className="text-[18px] font-bold text-ink">{t('checkout.postcode')} *</span>
+                          <input
+                            type="text"
+                            value={form.postcode}
+                            disabled={isLoggedIn && !isEditingBilling}
+                            onChange={(e) => handleChange("postcode", e.target.value)}
+                            placeholder={t('checkout.postcodePlaceholder')}
+                            className={inputClasses(Boolean(errors.postcode))}
+                          />
+                          {errors.postcode && <span className="text-xs text-red-500">{errors.postcode}</span>}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-2">
+                          <span className="text-[18px] font-bold text-ink">{t('checkout.city')} *</span>
+                          <input
+                            type="text"
+                            value={form.city}
+                            disabled={isLoggedIn && !isEditingBilling}
+                            onChange={(e) => handleChange("city", e.target.value)}
+                            placeholder={t('checkout.cityPlaceholder')}
+                            className={inputClasses(Boolean(errors.city))}
+                          />
+                          {errors.city && <span className="text-xs text-red-500">{errors.city}</span>}
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <span className="text-[18px] font-bold text-ink">{t('checkout.state')}</span>
+                          {billingProvinces.length > 0 ? (
+                            <div className="relative">
+                              <select
+                                value={form.state}
+                                disabled={isLoggedIn && !isEditingBilling}
+                                onChange={(e) => handleChange("state", e.target.value)}
+                                className={`${inputClasses(Boolean(errors.state))} appearance-none pr-10`}
+                              >
+                                <option value="">-- Select Province --</option>
+                                {billingProvinces.map((p: any) => (
+                                  <option key={p.id} value={p.name}>
+                                    {p.name}
+                                  </option>
+                                ))}
+                              </select>
+                              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M4 6L8 10L12 6" stroke="var(--subtle)" strokeWidth="1.16667" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              </div>
+                            </div>
+                          ) : (
+                            <input
+                              type="text"
+                              value={form.state}
+                              disabled={isLoggedIn && !isEditingBilling}
+                              onChange={(e) => handleChange("state", e.target.value)}
+                              placeholder={t('checkout.statePlaceholder')}
+                              className={inputClasses(Boolean(errors.state))}
+                            />
+                          )}
+                          {errors.state && <span className="text-xs text-red-500">{errors.state}</span>}
+                        </div>
+                      </div>
+
+                      {isLoggedIn && (
+                        isEditingBilling ? (
+                          <div className="flex items-center gap-4">
+                            <button
+                              type="button"
+                              onClick={saveEditingBilling}
+                              className="w-[120px] h-[52px] bg-[#F18800] text-white rounded-full font-medium text-[18px] hover:opacity-90 transition-all flex items-center justify-center shrink-0"
+                            >
+                              {t('checkout.save')}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={cancelEditingBilling}
+                              className="w-[120px] h-[52px] rounded-full border border-[rgba(0,0,0,0.10)] text-[#444444] font-medium text-[18px] hover:bg-slate-50 transition-all flex items-center justify-center shrink-0"
+                            >
+                              {t('checkout.cancel')}
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={startEditingBilling}
+                            className="w-[120px] h-[52px] rounded-full border-[1.5px] border-[#F18800] inline-flex items-center justify-center gap-2 hover:bg-orange-50/50 transition-all focus:outline-none shrink-0"
+                          >
+                            <span className="text-center text-[#F18800] text-[18px] font-bold leading-6 font-['Segoe_UI'] break-words">
+                              {t('checkout.edit')}
+                            </span>
+                          </button>
+                        )
+                      )}
                     </div>
                   </div>
                 )}
@@ -707,14 +808,7 @@ function CheckoutShell({
                       <div className="flex flex-col gap-4 mt-2">
                         {isLoggedIn && (
                           <div className="flex flex-col gap-3">
-                            <div className="flex flex-col gap-1">
-                              <h3 className="text-ink text-[20px] font-bold leading-6">
-                                {t('checkout.savedShippingAddresses')}
-                              </h3>
-                              <p className="text-copy text-[14px] font-normal leading-[18.20px]">
-                                {t('checkout.savedShippingAddressesDesc')}
-                              </p>
-                            </div>
+
 
                             {isLoadingSavedShippingAddresses ? (
                               <div className="w-full p-4 rounded-xl border border-[#DDE1EA] bg-slate-50 text-copy text-[14px] font-semibold">
@@ -725,7 +819,7 @@ function CheckoutShell({
                                 {savedShippingAddressesError}
                               </div>
                             ) : savedShippingAddresses.length > 0 ? (
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              <div className="grid grid-cols-1 gap-3">
                                 {savedShippingAddresses.map((address) => {
                                   const isSelected = String(address.id) === String(selectedSavedShippingAddressId);
                                   const addressLine = [address.address1, address.address2, address.city, address.postcode, address.country]
@@ -747,7 +841,7 @@ function CheckoutShell({
                                         checked={isSelected}
                                         onChange={() => onSavedShippingAddressSelect(address)}
                                       />
-                                      <div className={`mt-0.5 w-5 h-5 rounded-[3px] flex items-center justify-center shrink-0 transition-all ${
+                                      <div className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-all ${
                                         isSelected ? "bg-brand border border-brand" : "border border-[#CAD3DF] bg-white"
                                       }`}>
                                         {isSelected && (
@@ -787,151 +881,19 @@ function CheckoutShell({
                                 {t('account.noShippingAddresses')}
                               </div>
                             )}
+
+                            <button
+                              type="button"
+                              onClick={() => setIsAddAddressPopupOpen(true)}
+                              className="w-fit min-w-[170px] h-[52px] px-8 rounded-full border-[1.5px] border-[#F18800] inline-flex justify-center items-center gap-2 hover:bg-orange-50/50 transition-all focus:outline-none mt-2"
+                            >
+                              <span className="text-center font-['Segoe_UI'] font-medium leading-6">
+                                <span className="text-[#F18800] text-[22px] align-middle mr-1">+</span>
+                                <span className="text-[#F18800] text-[18px] align-middle">{t('account.addNewAddress')}</span>
+                              </span>
+                            </button>
                           </div>
                         )}
-
-                        {/* First Name & Last Name */}
-                        <div className="self-stretch justify-start items-start gap-4 inline-flex w-full">
-                          <div className="flex-1 flex-col justify-start items-start gap-2 inline-flex">
-                            <div className="text-ink text-[18px] font-bold leading-[20px]">
-                              {t('checkout.firstName')} *
-                            </div>
-                            <input
-                              type="text"
-                              value={form.shippingFirstName}
-                              onChange={(e) => handleChange("shippingFirstName", e.target.value)}
-                              placeholder={t('checkout.firstNamePlaceholder')}
-                              className={inputClasses(Boolean(errors.shippingFirstName))}
-                            />
-                            {errors.shippingFirstName && <span className="text-xs text-red-500">{errors.shippingFirstName}</span>}
-                          </div>
-                          <div className="flex-1 flex-col justify-start items-start gap-2 inline-flex">
-                            <div className="text-ink text-[18px] font-bold leading-[20px]">
-                              {t('checkout.lastName')} *
-                            </div>
-                            <input
-                              type="text"
-                              value={form.shippingLastName}
-                              onChange={(e) => handleChange("shippingLastName", e.target.value)}
-                              placeholder={t('checkout.lastNamePlaceholder')}
-                              className={inputClasses(Boolean(errors.shippingLastName))}
-                            />
-                            {errors.shippingLastName && <span className="text-xs text-red-500">{errors.shippingLastName}</span>}
-                          </div>
-                        </div>
-
-                        {/* Email & Phone Number */}
-                        <div className="self-stretch justify-start items-start gap-4 inline-flex w-full">
-                          <div className="flex-1 flex-col justify-start items-start gap-2 inline-flex">
-                            <div className="text-ink text-[18px] font-bold leading-[20px]">
-                              {t('checkout.email')} *
-                            </div>
-                            <input
-                              type="email"
-                              value={form.email}
-                              onChange={(e) => handleChange("email", e.target.value)}
-                              placeholder={t('checkout.emailPlaceholder')}
-                              className={inputClasses(Boolean(errors.email))}
-                            />
-                            {errors.email && <span className="text-xs text-red-500">{errors.email}</span>}
-                          </div>
-                          <div className="flex-1 flex-col justify-start items-start gap-2 inline-flex">
-                            <div className="text-ink text-[18px] font-bold leading-[20px]">
-                              {t('checkout.mobileNumber')} *
-                            </div>
-                            <input
-                              type="tel"
-                              value={form.mobileNumber}
-                              onChange={(e) => handleChange("mobileNumber", e.target.value)}
-                              placeholder={t('checkout.mobileNumberPlaceholder')}
-                              className={inputClasses(Boolean(errors.mobileNumber))}
-                            />
-                            {errors.mobileNumber && <span className="text-xs text-red-500">{errors.mobileNumber}</span>}
-                          </div>
-                        </div>
-
-                        {/* Country / Region */}
-                        <div className="w-full flex-col justify-start items-start gap-2 inline-flex">
-                          <div className="text-ink text-[18px] font-bold leading-[20px]">
-                            {t('checkout.country')}
-                          </div>
-                          <div className="relative w-full">
-                            <select
-                              value={form.shippingCountry}
-                              onChange={(e) => handleChange("shippingCountry", e.target.value)}
-                              className={`${inputClasses()} appearance-none pr-10`}
-                            >
-                              <option value="Netherlands">{t('countries.netherlands')}</option>
-                              <option value="Belgium">{t('countries.belgium')}</option>
-                              <option value="Germany">{t('countries.germany')}</option>
-                            </select>
-                            <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none">
-                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M4 6L8 10L12 6" stroke="var(--subtle)" strokeWidth="1.16667" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Street & Postcode */}
-                        <div className="self-stretch justify-start items-start gap-4 inline-flex w-full">
-                          <div className="flex-1 flex-col justify-start items-start gap-2 inline-flex">
-                            <div className="text-ink text-[18px] font-bold leading-[20px]">
-                              {t('checkout.streetAddress')} *
-                            </div>
-                            <AddressAutocomplete
-                              value={form.shippingStreetAddress}
-                              onChange={(val) => handleChange("shippingStreetAddress", val)}
-                              onAddressSelect={(addr) => onAddressSelect(addr, true)}
-                              className={inputClasses(Boolean(errors.shippingStreetAddress))}
-                              placeholder={t('checkout.streetAddressPlaceholder')}
-                            />
-                            {errors.shippingStreetAddress && <span className="text-xs text-red-500">{errors.shippingStreetAddress}</span>}
-                          </div>
-                          <div className="flex-1 flex-col justify-start items-start gap-2 inline-flex">
-                            <div className="text-ink text-[18px] font-bold leading-[20px]">
-                              {t('checkout.postcode')} *
-                            </div>
-                            <input
-                              type="text"
-                              value={form.shippingPostcode}
-                              onChange={(e) => handleChange("shippingPostcode", e.target.value)}
-                              placeholder={t('checkout.postcodePlaceholder')}
-                              className={inputClasses(Boolean(errors.shippingPostcode))}
-                            />
-                            {errors.shippingPostcode && <span className="text-xs text-red-500">{errors.shippingPostcode}</span>}
-                          </div>
-                        </div>
-
-                        {/* City (Place) & State */}
-                        <div className="self-stretch justify-start items-start gap-4 inline-flex w-full">
-                          <div className="flex-1 flex-col justify-start items-start gap-2 inline-flex">
-                            <div className="text-ink text-[18px] font-bold leading-[20px]">
-                              {t('checkout.city')} *
-                            </div>
-                            <input
-                              type="text"
-                              value={form.shippingCity}
-                              onChange={(e) => handleChange("shippingCity", e.target.value)}
-                              placeholder={t('checkout.cityPlaceholder')}
-                              className={inputClasses(Boolean(errors.shippingCity))}
-                            />
-                            {errors.shippingCity && <span className="text-xs text-red-500">{errors.shippingCity}</span>}
-                          </div>
-                          <div className="flex-1 flex-col justify-start items-start gap-2 inline-flex">
-                            <div className="text-ink text-[18px] font-bold leading-[20px]">
-                              {t('checkout.state')}
-                            </div>
-                            <input
-                              type="text"
-                              value={form.shippingState}
-                              onChange={(e) => handleChange("shippingState", e.target.value)}
-                              placeholder={t('checkout.statePlaceholder')}
-                              className={inputClasses(Boolean(errors.shippingState))}
-                            />
-                            {errors.shippingState && <span className="text-xs text-red-500">{errors.shippingState}</span>}
-                          </div>
-                        </div>
                       </div>
                     )}
                   </div>
@@ -1117,37 +1079,38 @@ function CheckoutShell({
                   </div>
                 )}
 
-                {/* BOTTOM NAVIGATION ACTIONS */}
-                <div className="flex items-center gap-4 mt-6 pt-4 border-t border-line">
-                  {step > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => setStep((step - 1) as 1 | 2)}
-                      className="w-[120px] sm:w-[160px] h-[52px] rounded-full border border-[rgba(0,0,0,0.10)] text-copy font-medium text-base sm:text-[18px] hover:bg-slate-50 transition-colors flex items-center justify-center shrink-0"
-                    >
-                      {t('common.previous')}
-                    </button>
+                  {!isEditingBilling && (
+                    <div className="flex items-center gap-4 pt-4 border-t border-line">
+                      {step > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setStep((step - 1) as 1 | 2)}
+                          className="w-[120px] sm:w-[160px] h-[52px] rounded-full border border-[rgba(0,0,0,0.10)] text-copy font-medium text-base sm:text-[18px] hover:bg-slate-50 transition-colors flex items-center justify-center shrink-0"
+                        >
+                          {t('common.previous')}
+                        </button>
+                      )}
+                      <button
+                        type="submit"
+                        disabled={isPending}
+                        className="flex-1 h-[52px] bg-brand text-white rounded-full font-medium text-base sm:text-[18px] flex items-center justify-center gap-1.5 sm:gap-2 hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed px-3 min-w-0"
+                      >
+                        {isPending ? (
+                          <>
+                            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            {t('checkout.calculating')}
+                          </>
+                        ) : step < 3 ? (
+                          t('common.next')
+                        ) : (
+                          t('checkout.makePayment', { amount: formatEuro(finalTotal) })
+                        )}
+                      </button>
+                    </div>
                   )}
-                  <button
-                    type="submit"
-                    disabled={isPending}
-                    className="flex-1 h-[52px] bg-brand text-white rounded-full font-medium text-base sm:text-[18px] flex items-center justify-center gap-1.5 sm:gap-2 hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed px-3 min-w-0"
-                  >
-                    {isPending ? (
-                      <>
-                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        {t('checkout.calculating')}
-                      </>
-                    ) : step < 3 ? (
-                      t('common.next')
-                    ) : (
-                      t('checkout.makePayment', { amount: formatEuro(finalTotal) })
-                    )}
-                  </button>
-                </div>
               </form>
             </div>
 
@@ -1276,6 +1239,14 @@ function CheckoutShell({
         onSwitchToLogin={() => {
           setIsRegisterPopupOpen(false);
           setIsLoginPopupOpen(true);
+        }}
+      />
+      <AddShippingAddressPopup
+        open={isAddAddressPopupOpen}
+        onOpenChange={setIsAddAddressPopupOpen}
+        onSuccess={async (savedAddressId) => {
+          setIsAddAddressPopupOpen(false);
+          await onAddressAdded(savedAddressId);
         }}
       />
     </div>
@@ -1558,6 +1529,130 @@ export default function CheckoutPageClient({
   const [defaultShippingAddressId, setDefaultShippingAddressId] = useState<string>("");
   const [isLoadingSavedShippingAddresses, setIsLoadingSavedShippingAddresses] = useState(false);
   const [savedShippingAddressesError, setSavedShippingAddressesError] = useState("");
+  const [isEditingBilling, setIsEditingBilling] = useState(false);
+  const [billingSnapshot, setBillingSnapshot] = useState<Partial<CheckoutFormState> | null>(null);
+  const [countriesList, setCountriesList] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function loadCountries() {
+      try {
+        const res = await fetch("/api/countries");
+        if (res.ok) {
+          const data = await res.json();
+          const list = data.countries || [];
+          setCountriesList(list);
+        }
+      } catch (err) {
+        console.error("Error fetching countries:", err);
+      }
+    }
+    loadCountries();
+  }, []);
+
+  const [loadedBillingAddressId, setLoadedBillingAddressId] = useState<string | number | null>(null);
+
+  const startEditingBilling = () => {
+    setBillingSnapshot({
+      firstName: form.firstName,
+      lastName: form.lastName,
+      email: form.email,
+      mobileNumber: form.mobileNumber,
+      companyName: form.companyName,
+      vatNumber: form.vatNumber,
+      streetAddress: form.streetAddress,
+      country: form.country,
+      city: form.city,
+      state: form.state,
+      postcode: form.postcode,
+    });
+    setIsEditingBilling(true);
+  };
+
+  const cancelEditingBilling = () => {
+    if (billingSnapshot) {
+      setForm((current) => ({
+        ...current,
+        ...billingSnapshot,
+      }));
+    }
+    setIsEditingBilling(false);
+  };
+
+  const saveEditingBilling = async () => {
+    if (isLoggedIn) {
+      try {
+        let finalAddressId = loadedBillingAddressId;
+        if (!finalAddressId) {
+          const resAddr = await fetch("/api/account/addresses", { cache: "no-store" }).catch(() => null);
+          if (resAddr?.ok) {
+            const addrPayload = await resAddr.json().catch(() => ({}));
+            const addressesList = extractAddressList(addrPayload);
+            const existingBilling = addressesList.find((address) => readString(address, ["type"]) === "billing");
+            if (existingBilling) {
+              finalAddressId = (existingBilling.id || existingBilling.address_id) as string | number;
+              setLoadedBillingAddressId(finalAddressId);
+            }
+          }
+        }
+
+        const countryObj = countriesList.find(
+          (c: any) =>
+            c.name.toLowerCase() === form.country.toLowerCase() ||
+            c.id.toLowerCase() === form.country.toLowerCase()
+        );
+        const countryIdVal = countryObj?.id || "NL";
+        const provinceObj = countryObj?.provinces?.find(
+          (p: any) => p.name.toLowerCase() === form.state.toLowerCase() || String(p.id) === String(form.state)
+        );
+        const provinceIdVal = provinceObj?.id ? Number(provinceObj.id) : undefined;
+
+        const payload = {
+          id: finalAddressId || undefined,
+          type: "billing",
+          name: `${form.firstName} ${form.lastName}`,
+          firstname: form.firstName,
+          lastname: form.lastName,
+          company_name: form.companyName,
+          address: form.streetAddress,
+          postalcode: form.postcode,
+          city: form.city,
+          phone: form.mobileNumber,
+          email: form.email,
+          country_id: countryIdVal,
+          province_id: provinceIdVal,
+        };
+
+        const res = await fetch("/api/account/addresses", {
+          method: finalAddressId ? "PUT" : "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || "Failed to update address");
+        }
+
+        const data = await res.json().catch(() => ({}));
+        const newId = data?.id || data?.data?.id || finalAddressId;
+        if (newId) {
+          setLoadedBillingAddressId(newId);
+        }
+
+        toast.success(t("account.addressSavedSuccess", { type: "Billing" }));
+      } catch (err: any) {
+        console.error("Failed to save billing address:", err);
+        toast.error(err.message || "Failed to save billing address");
+        return;
+      }
+    }
+
+    setBillingSnapshot(null);
+    setIsEditingBilling(false);
+  };
   
   const { shippingRules, defaultRule } = useShippingRules();
 
@@ -1616,6 +1711,11 @@ export default function CheckoutPageClient({
       addresses.find((address) => readString(address, ["type"]) === "shipping") ??
       addresses[0] ??
       null;
+
+    if (preferredAddress && readString(preferredAddress, ["type"]) === "billing") {
+      const pId = preferredAddress.id || preferredAddress.address_id;
+      setLoadedBillingAddressId((pId as string | number | null) || null);
+    }
     const shippingAddresses = normalizeCheckoutShippingAddresses(addressPayload);
     const nextDefaultShippingAddressId = readDefaultShippingAddressId(finalProfile, storedUserData);
 
@@ -1713,6 +1813,12 @@ export default function CheckoutPageClient({
   }, [autofillCustomerDetails, isAutofilled]);
 
   const handleChange = (field: keyof CheckoutFormState, value: string | boolean) => {
+    if (field === "country") {
+      setForm((current) => ({ ...current, country: value as string, state: "" }));
+      setErrors((current) => ({ ...current, country: undefined, state: undefined }));
+      return;
+    }
+
     if (field === "paymentMethod" && value === "banktransfer" && !isLoggedIn) {
       setForm((current) => ({ ...current, paymentMethod: "" }));
       setErrors((current) => ({ ...current, paymentMethod: t("checkout.invoiceAccountOnly") }));
@@ -2041,10 +2147,18 @@ export default function CheckoutPageClient({
     );
   }
 
+  const handleAddressAdded = async (savedAddressId?: string | number) => {
+    await autofillCustomerDetails();
+    if (savedAddressId) {
+      setSelectedSavedShippingAddressId(String(savedAddressId));
+    }
+  };
+
   return (
     <CheckoutShell
       items={items}
       totalAmount={totalAmount}
+      onAddressAdded={handleAddressAdded}
       removeItem={removeItem}
       incrementItemQuantity={incrementItemQuantity}
       decrementItemQuantity={decrementItemQuantity}
@@ -2110,6 +2224,381 @@ export default function CheckoutPageClient({
         });
       }}
       isLoggedIn={isLoggedIn}
+      isEditingBilling={isEditingBilling}
+      startEditingBilling={startEditingBilling}
+      cancelEditingBilling={cancelEditingBilling}
+      saveEditingBilling={saveEditingBilling}
+      countriesList={countriesList}
     />
+  );
+}
+
+interface AddShippingAddressPopupProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: (savedId?: string | number) => void;
+}
+
+function AddShippingAddressPopup({ open, onOpenChange, onSuccess }: AddShippingAddressPopupProps) {
+  const t = useTranslations();
+  const getLabel = (key: string, fallback: string) => {
+    const val = t(key);
+    return val === key ? fallback : val;
+  };
+
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [countryId, setCountryId] = useState('NL');
+  const [countriesList, setCountriesList] = useState<any[]>([]);
+  const [provinceId, setProvinceId] = useState<number | string>('');
+  const [street, setStreet] = useState('');
+  const [postcode, setPostcode] = useState('');
+  const [city, setCity] = useState('');
+  const [stateRegion, setStateRegion] = useState('');
+  const [label, setLabel] = useState<'office' | 'home'>('home');
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    async function loadCountries() {
+      try {
+        const res = await fetch('/api/countries');
+        if (res.ok) {
+          const data = await res.json();
+          const list = data.countries || [];
+          setCountriesList(list);
+          const nl = list.find((c: any) => c.id === 'NL' || c.name.toLowerCase() === 'netherlands');
+          if (nl) {
+            setCountryId(nl.id);
+          } else if (list.length > 0) {
+            setCountryId(list[0].id);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching countries:', err);
+      }
+    }
+    if (open) {
+      loadCountries();
+    }
+  }, [open]);
+
+  const selectedCountry = countriesList.find((c: any) => c.id === countryId);
+  const provinces = selectedCountry?.provinces || [];
+
+  useEffect(() => {
+    const provincesList = selectedCountry?.provinces || [];
+    if (provincesList.length > 0) {
+      setProvinceId('');
+      setStateRegion('');
+    } else {
+      setProvinceId('');
+    }
+  }, [countryId, selectedCountry]);
+
+  const handleProvinceChange = (provIdStr: string) => {
+    setProvinceId(provIdStr);
+    const match = provinces.find((p: any) => String(p.id) === provIdStr);
+    if (match) {
+      setStateRegion(match.name);
+    } else {
+      setStateRegion('');
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    try {
+      const payload = {
+        type: 'shipping',
+        name: `${firstName} ${lastName}`,
+        firstname: firstName,
+        lastname: lastName,
+        company_name: label === 'office' ? 'Office' : '',
+        address: street,
+        address2: stateRegion,
+        postalcode: postcode,
+        city: city,
+        phone: phone,
+        email: email,
+        country_id: countryId || 'NL',
+        province_id: provinceId ? Number(provinceId) : undefined,
+      };
+
+      const response = await fetch('/api/account/addresses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Save failed');
+      }
+      const responseData = await response.json().catch(() => ({}));
+      const savedAddressId = responseData?.id || responseData?.data?.id;
+
+      toast.success(t('account.addressSavedSuccess', { type: 'Shipping' }));
+      onSuccess(savedAddressId);
+    } catch (error) {
+      console.error("Shipping save error:", error);
+      toast.error(t('account.addressesLoadError'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const labelClasses = "text-[#222222] text-[18px] font-bold font-['Segoe_UI'] leading-5 mb-2 block";
+  const inputClasses = "w-full h-[52px] px-5 py-4 rounded-full border border-[#DDE1EA] focus:border-[#F18800] focus:ring-[0.5px] focus:ring-[#F18800] outline-none text-[16px] font-normal leading-6 font-['Segoe_UI'] text-neutral-800 placeholder-[#888888] bg-white transition-all";
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent showCloseButton={false} className="max-h-[90vh] overflow-y-auto rounded-[28px] border-slate-100 bg-white p-8 shadow-2xl sm:max-w-2xl">
+        <div className="flex flex-col gap-8 w-full">
+          <DialogTitle className="w-full text-center text-[#222222] text-[32px] font-semibold font-['Segoe_UI'] leading-[38.40px]">
+            {getLabel('account.addNewAddress', 'Add New Shipping Address')}
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            Form to add a new shipping address
+          </DialogDescription>
+          
+          <form onSubmit={handleSubmit} className="w-full flex flex-col gap-6">
+            <div className="flex gap-4 w-full">
+              <div className="flex-1 flex flex-col gap-2">
+                <label className={labelClasses}>{getLabel('account.firstName', 'First name')}</label>
+                <input 
+                  type="text" 
+                  value={firstName} 
+                  onChange={(e) => setFirstName(e.target.value)} 
+                  className={inputClasses} 
+                  required 
+                  placeholder={getLabel('account.firstName', 'First name')} 
+                />
+              </div>
+              <div className="flex-1 flex flex-col gap-2">
+                <label className={labelClasses}>{getLabel('account.lastName', 'Last name')}</label>
+                <input 
+                  type="text" 
+                  value={lastName} 
+                  onChange={(e) => setLastName(e.target.value)} 
+                  className={inputClasses} 
+                  required 
+                  placeholder={getLabel('account.lastName', 'Last name')} 
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-4 w-full">
+              <div className="flex-1 flex flex-col gap-2">
+                <label className={labelClasses}>{getLabel('account.email', 'Email')}</label>
+                <input 
+                  type="email" 
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)} 
+                  className={inputClasses} 
+                  required 
+                  placeholder="you@example.com" 
+                />
+              </div>
+              <div className="flex-1 flex flex-col gap-2">
+                <label className={labelClasses}>{getLabel('account.phoneNumber', 'Phone number')}</label>
+                <input 
+                  type="tel" 
+                  value={phone} 
+                  onChange={(e) => setPhone(e.target.value)} 
+                  className={inputClasses} 
+                  required 
+                  placeholder={getLabel('account.phoneNumber', 'Phone number')} 
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2 w-full">
+              <label className={labelClasses}>{getLabel('account.country', 'Country / Region')}</label>
+              <div className="relative w-full">
+                <select 
+                  value={countryId} 
+                  onChange={(e) => setCountryId(e.target.value)} 
+                  className={`${inputClasses} appearance-none pr-10 bg-transparent`}
+                >
+                  {countriesList.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+                <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 6L8 10L12 6" stroke="#888888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-4 w-full">
+              <div className="flex-1 flex flex-col gap-2">
+                <label className={labelClasses}>{getLabel('account.streetAndHouseNumber', 'Street and house number')}</label>
+                <input 
+                  type="text" 
+                  value={street} 
+                  onChange={(e) => setStreet(e.target.value)} 
+                  className={inputClasses} 
+                  required 
+                  placeholder={getLabel('account.streetAndHouseNumber', 'Street and house number')} 
+                />
+              </div>
+              <div className="flex-1 flex flex-col gap-2">
+                <label className={labelClasses}>{getLabel('account.postCode', 'Postcode')}</label>
+                <input 
+                  type="text" 
+                  value={postcode} 
+                  onChange={(e) => setPostcode(e.target.value)} 
+                  className={inputClasses} 
+                  required 
+                  placeholder={getLabel('account.postCode', 'Postcode')} 
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-4 w-full">
+              <div className="flex-1 flex flex-col gap-2">
+                <label className={labelClasses}>{getLabel('account.city', 'Place')}</label>
+                <input 
+                  type="text" 
+                  value={city} 
+                  onChange={(e) => setCity(e.target.value)} 
+                  className={inputClasses} 
+                  required 
+                  placeholder={getLabel('account.city', 'Place')} 
+                />
+              </div>
+              <div className="flex-1 flex flex-col gap-2">
+                <label className={labelClasses}>{getLabel('account.stateOptional', 'State (optional)')}</label>
+                {provinces.length > 0 ? (
+                  <div className="relative w-full">
+                    <select 
+                      value={provinceId} 
+                      onChange={(e) => handleProvinceChange(e.target.value)} 
+                      className={`${inputClasses} appearance-none pr-10 bg-transparent`}
+                    >
+                      <option value="">-- {getLabel('account.stateOptional', 'Select Province')} --</option>
+                      {provinces.map((p: any) => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                    <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M4 6L8 10L12 6" stroke="#888888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                  </div>
+                ) : (
+                  <input 
+                    type="text" 
+                    value={stateRegion} 
+                    onChange={(e) => setStateRegion(e.target.value)} 
+                    className={inputClasses} 
+                    placeholder={getLabel('account.stateOptional', 'State')} 
+                  />
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2 w-full">
+              <label className={labelClasses}>{getLabel('account.selectLabelForDelivery', 'Select a label for effective delivery:')}</label>
+              <div className="flex gap-2 w-full">
+                <button 
+                  type="button" 
+                  onClick={() => setLabel('office')}
+                  className={`flex-1 p-4 bg-white border rounded-[52px] justify-start items-center gap-3 inline-flex cursor-pointer select-none transition-all ${
+                    label === 'office' ? 'border-[#F18800] bg-[rgba(241,136,0,0.02)] border-[1.5px]' : 'border-[#E4EAF1]'
+                  }`}
+                >
+                  <div className="w-5 h-5 relative flex items-center justify-center flex-shrink-0">
+                    {label === 'office' ? (
+                      <div className="w-5 h-5 bg-[#F18800] rounded-full relative flex items-center justify-center">
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M1.5 4L4 6.5L8.5 1.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
+                    ) : (
+                      <div className="w-5 h-5 rounded-full border border-[#CAD3DF]"></div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#444444] fill-current">
+                      <mask id="mask_office" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
+                        <rect width="20" height="20" fill="#D9D9D9"/>
+                      </mask>
+                      <g mask="url(#mask_office)">
+                        <path d="M2.49967 18.332C2.04134 18.332 1.64898 18.1688 1.32259 17.8424C0.996202 17.5161 0.833008 17.1237 0.833008 16.6654V8.33203C0.833008 8.09592 0.912869 7.898 1.07259 7.73828C1.23231 7.57856 1.43023 7.4987 1.66634 7.4987C1.90245 7.4987 2.10037 7.57856 2.26009 7.73828C2.41981 7.898 2.49967 8.09592 2.49967 8.33203V16.6654H15.833C16.0691 16.6654 16.267 16.7452 16.4268 16.9049C16.5865 17.0647 16.6663 17.2626 16.6663 17.4987C16.6663 17.7348 16.5865 17.9327 16.4268 18.0924C16.267 18.2522 16.0691 18.332 15.833 18.332H2.49967ZM5.83301 14.9987C5.37467 14.9987 4.98231 14.8355 4.65592 14.5091C4.32954 14.1827 4.16634 13.7904 4.16634 13.332V4.9987C4.16634 4.76259 4.2462 4.56467 4.40592 4.40495C4.56565 4.24523 4.76356 4.16536 4.99967 4.16536H8.33301V2.4987C8.33301 2.04036 8.4962 1.648 8.82259 1.32161C9.14898 0.995226 9.54134 0.832031 9.99967 0.832031H13.333C13.7913 0.832031 14.1837 0.995226 14.5101 1.32161C14.8365 1.648 14.9997 2.04036 14.9997 2.4987V4.16536H18.333C18.5691 4.16536 18.767 4.24523 18.9268 4.40495C19.0865 4.56467 19.1663 4.76259 19.1663 4.9987V13.332C19.1663 13.7904 19.0031 14.1827 18.6768 14.5091C18.3504 14.8355 17.958 14.9987 17.4997 14.9987H5.83301ZM5.83301 13.332H17.4997V5.83203H5.83301V13.332ZM9.99967 4.16536H13.333V2.4987H9.99967V4.16536Z" fill="#444444" />
+                      </g>
+                    </svg>
+                    <span className="text-[#444444] text-[20px] font-bold leading-6 font-['Segoe_UI']">{getLabel('account.office', 'Office')}</span>
+                  </div>
+                </button>
+
+                <button 
+                  type="button" 
+                  onClick={() => setLabel('home')}
+                  className={`flex-1 p-4 bg-white border rounded-[52px] justify-start items-center gap-3 inline-flex cursor-pointer select-none transition-all ${
+                    label === 'home' ? 'border-[#F18800] bg-[rgba(241,136,0,0.02)] border-[1.5px]' : 'border-[#E4EAF1]'
+                  }`}
+                >
+                  <div className="w-5 h-5 relative flex items-center justify-center flex-shrink-0">
+                    {label === 'home' ? (
+                      <div className="w-5 h-5 bg-[#F18800] rounded-full relative flex items-center justify-center">
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M1.5 4L4 6.5L8.5 1.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
+                    ) : (
+                      <div className="w-5 h-5 rounded-full border border-[#CAD3DF]"></div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#444444] fill-current">
+                      <mask id="mask_home" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
+                        <rect width="20" height="20" fill="#D9D9D9"/>
+                      </mask>
+                      <g mask="url(#mask_home)">
+                        <path d="M4.99967 15.8346H7.49967V11.668C7.49967 11.4319 7.57954 11.2339 7.73926 11.0742C7.89898 10.9145 8.0969 10.8346 8.33301 10.8346H11.6663C11.9025 10.8346 12.1004 10.9145 12.2601 11.0742C12.4198 11.2339 12.4997 11.4319 12.4997 11.668V15.8346H14.9997V8.33464L9.99967 4.58464L4.99967 8.33464V15.8346ZM3.33301 15.8346V8.33464C3.33301 8.07075 3.39204 7.82075 3.51009 7.58464C3.62815 7.34852 3.79134 7.15408 3.99967 7.0013L8.99967 3.2513C9.29134 3.02908 9.62467 2.91797 9.99967 2.91797C10.3747 2.91797 10.708 3.02908 10.9997 3.2513L15.9997 7.0013C16.208 7.15408 16.3712 7.34852 16.4893 7.58464C16.6073 7.82075 16.6663 8.33464 16.6663 8.33464V15.8346C16.6663 16.293 16.5031 16.6853 16.1768 17.0117C15.8504 17.3381 15.458 17.5013 14.9997 17.5013H11.6663C11.4302 17.5013 11.2323 17.4214 11.0726 17.2617C10.9129 17.102 10.833 16.9041 10.833 16.668V12.5013H9.16634V16.668C9.16634 16.9041 9.08648 17.102 8.92676 17.2617C8.76704 17.4214 8.56912 17.5013 8.33301 17.5013H4.99967C4.54134 17.5013 4.14898 17.3381 3.82259 17.0117C3.4962 16.6853 3.33301 16.293 3.33301 15.8346Z" fill="#444444" />
+                      </g>
+                    </svg>
+                    <span className="text-[#444444] text-[20px] font-bold leading-6 font-['Segoe_UI']">{getLabel('account.home', 'Home')}</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <div className="w-full h-px bg-[#EDF2F7] my-2" />
+
+            <div className="flex flex-col sm:flex-row gap-4 w-full">
+              <button 
+                type="button" 
+                onClick={() => onOpenChange(false)}
+                className="h-[52px] px-8 rounded-full border border-black/10 text-[#444444] text-[18px] font-medium leading-6 font-['Segoe_UI'] inline-flex justify-center items-center hover:bg-slate-50 transition-all cursor-pointer w-full sm:w-[160px] shrink-0"
+              >
+                {getLabel('checkout.cancel', 'Cancel')}
+              </button>
+              <button 
+                type="submit" 
+                disabled={isSaving}
+                className="w-full sm:flex-1 h-[52px] px-4 rounded-full bg-[#F18800] hover:bg-brand-hover text-white text-[18px] font-medium leading-6 font-['Segoe_UI'] inline-flex justify-center items-center hover:opacity-95 transition-all cursor-pointer disabled:opacity-50"
+              >
+                {isSaving ? getLabel('account.saving', 'Saving...') : getLabel('account.saveChanges', 'Save')}
+              </button>
+            </div>
+          </form>
+        </div>
+        <DialogClose className="absolute right-6 top-6 opacity-70 transition-opacity hover:opacity-100 focus:outline-none rounded-sm">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 6L6 18" stroke="#888888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M6 6L18 18" stroke="#888888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span className="sr-only">Close</span>
+        </DialogClose>
+      </DialogContent>
+    </Dialog>
   );
 }
