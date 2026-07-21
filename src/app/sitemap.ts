@@ -27,10 +27,30 @@ function publicBrandSlug(slug: string): string {
 
 async function fetchApi<T extends SitemapApiItem>(path: string): Promise<T[]> {
   try {
-    const res = await fetch(`${baseUrl}${path}`, { next: { revalidate: 3600 } });
-    if (!res.ok) return [];
-    const json = (await res.json()) as { data?: T[] };
-    return Array.isArray(json.data) ? json.data : [];
+    const separator = path.includes('?') ? '&' : '?';
+    let page = 1;
+    let allData: T[] = [];
+    let hasMore = true;
+
+    while (hasMore) {
+      const url = `${baseUrl}${path}${separator}page=${page}`;
+      const res = await fetch(url, { next: { revalidate: 3600 } });
+      if (!res.ok) break;
+      const json = (await res.json()) as { data?: T[]; meta?: { last_page?: number; current_page?: number } };
+      
+      if (Array.isArray(json.data)) {
+        allData = allData.concat(json.data);
+      }
+
+      const lastPage = json.meta?.last_page;
+      const currentPage = json.meta?.current_page || page;
+      if (lastPage && currentPage < lastPage) {
+        page++;
+      } else {
+        hasMore = false;
+      }
+    }
+    return allData;
   } catch (e) {
     console.error(`Failed to fetch ${path} for sitemap:`, e);
     return [];
@@ -49,10 +69,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/material/thermal-direct' },
     { path: '/material/thermal-transfer' },
     { path: '/product' },
+    { path: '/winkel' },
     { path: '/categories' },
     { path: '/blog' },
+    { path: '/kennisbank-overzicht' },
     { path: '/brands' },
     { path: '/printers' },
+    { path: '/cart' },
+    { path: '/checkout' },
+    { path: '/my-account' },
     { path: '/maatwerk' },
     { path: '/support' },
     { path: '/support/samples' },
