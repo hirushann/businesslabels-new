@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
-import { getPrinterCategoryPath } from '@/lib/routes/printerCategories';
+import { localePath } from '@/lib/i18n/utils';
+import { fetchCategoryGroups, categoryRouteSlug, type CategoryNode } from '@/lib/categories/tree';
 
 // Define the API base URL
 const baseUrl = process.env.BBNL_API_BASE_URL || 'http://localhost:8000';
@@ -10,7 +11,7 @@ const getBaseUrl = () => {
   if (process.env.VERCEL_URL) {
     return `https://${process.env.VERCEL_URL}`;
   }
-  return process.env.NEXT_PUBLIC_APP_URL || 'https://businesslabels.nl';
+  return process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://businesslabels.nl';
 };
 
 const frontendUrl = getBaseUrl();
@@ -39,116 +40,150 @@ async function fetchApi<T extends SitemapApiItem>(path: string): Promise<T[]> {
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Static routes
   const staticRoutes = [
-    '',
-    '/about',
-    '/contact-us',
-    '/epson-colorworks-faq',
-    '/material',
-    '/material/inkjet',
-    '/material/thermal-direct',
-    '/material/thermal-transfer',
-    '/product',
-    '/categories',
-    getPrinterCategoryPath('nl'),
-    '/blog',
-    '/brand',
-    '/printers',
-    '/maatwerk',
+    { path: '' },
+    { path: '/about' },
+    { path: '/contact-us' },
+    { path: '/epson-colorworks-faq' },
+    { path: '/material' },
+    { path: '/material/inkjet' },
+    { path: '/material/thermal-direct' },
+    { path: '/material/thermal-transfer' },
+    { path: '/product' },
+    { path: '/categories' },
+    { path: '/blog' },
+    { path: '/brand' },
+    { path: '/printers' },
+    { path: '/maatwerk' },
+    { path: '/support' },
+    { path: '/support/samples' },
+    { path: '/privacy-policy' },
+    { path: '/algemene-voorwaarden' },
+    { path: '/badge-maken' },
+    { path: '/epson-colorworks-labelprinters' },
+    { path: '/epson-cw-c4000-printer-preview' },
+    { path: '/inkt-recyclen-epson-colorworks' },
+    { path: '/print-sample' },
+    { path: '/software' },
+    { path: '/videos' },
   ];
 
-  const sitemapEntries: MetadataRoute.Sitemap = [];
+  const nlEntries: MetadataRoute.Sitemap = [];
+  const enEntries: MetadataRoute.Sitemap = [];
+
+  // Helper to add matching NL/EN entries
+  const addEntry = (
+    nlPath: string,
+    enPath: string,
+    lastModified: Date = new Date(),
+    priority: number = 0.8,
+    changeFrequency: 'daily' | 'weekly' | 'monthly' = 'weekly'
+  ) => {
+    nlEntries.push({
+      url: `${frontendUrl}${nlPath}`,
+      lastModified,
+      changeFrequency,
+      priority,
+    });
+
+    enEntries.push({
+      url: `${frontendUrl}${enPath}`,
+      lastModified,
+      changeFrequency,
+      priority,
+    });
+  };
 
   // Add static routes
   for (const route of staticRoutes) {
-    sitemapEntries.push({
-      url: `${frontendUrl}${route}`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: route === '' ? 1 : 0.8,
-    });
+    const nlPath = localePath(route.path, 'nl');
+    const enPath = localePath(route.path, 'en');
+    const priority = route.path === '' ? 1.0 : 0.8;
+    addEntry(nlPath, enPath, new Date(), priority, 'daily');
   }
 
   // Fetch dynamic content
-  const [materials, products, categories, printers, blogs, brands] = await Promise.all([
+  const [materials, products, printers, blogs, brands] = await Promise.all([
     fetchApi<SitemapApiItem>('/api/materials?per_page=1000'),
     fetchApi<SitemapApiItem>('/api/products?per_page=1000'),
-    fetchApi<SitemapApiItem>('/api/categories?per_page=1000'),
     fetchApi<SitemapApiItem>('/api/printers?per_page=1000'),
     fetchApi<SitemapApiItem>('/api/blogs?per_page=1000'),
-    fetchApi<SitemapApiItem>('/api/brands?per_page=1000'), // Assuming brands endpoint exists
+    fetchApi<SitemapApiItem>('/api/brands?per_page=1000'),
   ]);
 
   // Add Materials
   materials.forEach((material) => {
     if (material.slug) {
-      sitemapEntries.push({
-        url: `${frontendUrl}/material/${material.slug}`,
-        lastModified: new Date(material.updated_at || new Date()),
-        changeFrequency: 'weekly',
-        priority: 0.7,
-      });
+      const path = `/material/${material.slug}`;
+      addEntry(localePath(path, 'nl'), localePath(path, 'en'), new Date(material.updated_at || new Date()), 0.7, 'weekly');
     }
   });
 
   // Add Products
   products.forEach((product) => {
     if (product.slug) {
-      sitemapEntries.push({
-        url: `${frontendUrl}/products/${product.slug}`,
-        lastModified: new Date(product.updated_at || new Date()),
-        changeFrequency: 'weekly',
-        priority: 0.9,
-      });
+      const path = `/product/${product.slug}`;
+      addEntry(localePath(path, 'nl'), localePath(path, 'en'), new Date(product.updated_at || new Date()), 0.9, 'weekly');
     }
   });
 
-  // Add Categories
-  categories.forEach((category) => {
-    if (category.slug) {
-      sitemapEntries.push({
-        url: `${frontendUrl}/category/${category.slug}`,
-        lastModified: new Date(),
-        changeFrequency: 'weekly',
-        priority: 0.8,
-      });
-    }
-  });
+    // Add Categories from tree structure
+  try {
+    const categoryGroups = await fetchCategoryGroups();
+    
+    const getCategoryPath = (node: CategoryNode, ancestors: CategoryNode[], locale: 'nl' | 'en') => {
+      const segments = [...ancestors, node]
+        .map((category) => categoryRouteSlug(category, locale))
+        .filter(Boolean)
+        .map((slug) => encodeURIComponent(slug));
+      
+      const base = locale === 'en' ? '/en/product-category' : '/product-categorie';
+      return `${base}/${segments.join('/')}`;
+    };
+
+    const walkCategoryTree = (node: CategoryNode, ancestors: CategoryNode[]) => {
+      if (node.slug) {
+        const nlPath = getCategoryPath(node, ancestors, 'nl');
+        const enPath = getCategoryPath(node, ancestors, 'en');
+        addEntry(nlPath, enPath, new Date(), 0.8, 'weekly');
+      }
+      if (node.children) {
+        node.children.forEach((child) => walkCategoryTree(child, [...ancestors, node]));
+      }
+    };
+
+    categoryGroups.forEach((group) => {
+      if (group.categories) {
+        group.categories.forEach((category) => walkCategoryTree(category, []));
+      }
+    });
+  } catch (e) {
+    console.error('Failed to parse categories for sitemap:', e);
+  }
 
   // Add Printers
   printers.forEach((printer) => {
     if (printer.slug) {
-      sitemapEntries.push({
-        url: `${frontendUrl}/printers/${printer.slug}`,
-        lastModified: new Date(printer.updated_at || new Date()),
-        changeFrequency: 'weekly',
-        priority: 0.7,
-      });
+      const path = `/printers/${printer.slug}`;
+      addEntry(localePath(path, 'nl'), localePath(path, 'en'), new Date(printer.updated_at || new Date()), 0.7, 'weekly');
     }
   });
 
   // Add Blogs
   blogs.forEach((blog) => {
     if (blog.slug) {
-      sitemapEntries.push({
-        url: `${frontendUrl}/blog/${blog.slug}`,
-        lastModified: new Date(blog.updated_at || new Date()),
-        changeFrequency: 'monthly',
-        priority: 0.6,
-      });
+      const path = `/blog/${blog.slug}`;
+      addEntry(localePath(path, 'nl'), localePath(path, 'en'), new Date(blog.updated_at || new Date()), 0.6, 'monthly');
     }
   });
 
   // Add Brands
   brands.forEach((brand) => {
     if (brand.slug) {
-      sitemapEntries.push({
-        url: `${frontendUrl}/brand/${publicBrandSlug(brand.slug)}`,
-        lastModified: new Date(),
-        changeFrequency: 'weekly',
-        priority: 0.7,
-      });
+      const path = `/brand/${publicBrandSlug(brand.slug)}`;
+      addEntry(localePath(path, 'nl'), localePath(path, 'en'), new Date(), 0.7, 'weekly');
     }
   });
 
-  return sitemapEntries;
+  return [...nlEntries, ...enEntries];
 }
+
