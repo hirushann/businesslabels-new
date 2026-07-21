@@ -47,6 +47,9 @@ export function proxy(request: NextRequest) {
   if (cleanPathname === '/custom-made-labels') {
     cleanPathname = '/maatwerk';
   }
+  if (cleanPathname === '/shop') {
+    cleanPathname = '/winkel';
+  }
   if (cleanPathname === '/cart') {
     cleanPathname = '/winkelmand';
   }
@@ -82,6 +85,18 @@ export function proxy(request: NextRequest) {
   if (pathname === '/en/merken') {
     const redirectUrl = new URL(`${EN_PREFIX}/brands${search}`, request.url);
     return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+  }
+
+  if (pathname === '/en/winkel' || pathname === '/en/winkel/') {
+    const redirectUrl = new URL(`${EN_PREFIX}/shop${search}`, request.url);
+    return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+  }
+
+  if (pathname === '/winkel' || pathname === '/winkel/') {
+    if (locale === 'en') {
+      const redirectUrl = new URL(`${EN_PREFIX}/shop${search}`, request.url);
+      return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+    }
   }
 
   if (pathname === '/en/winkelmand') {

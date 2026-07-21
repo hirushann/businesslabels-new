@@ -147,6 +147,29 @@ describe("proxy locale routing", () => {
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
 
+  it("rewrites /en/shop internally to /winkel", () => {
+    const response = proxy(makeRequest("/en/shop"));
+
+    expect(response.headers.get("x-middleware-rewrite")).toBe("http://localhost/winkel");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("redirects /en/winkel to /en/shop", () => {
+    const response = proxy(makeRequest("/en/winkel"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/en/shop");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("redirects /winkel to /en/shop when cookie is en", () => {
+    const response = proxy(makeRequest("/winkel", `${LOCALE_COOKIE}=en`));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/en/shop");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
   it("rewrites /en/cart internally to /winkelmand", () => {
     const response = proxy(makeRequest("/en/cart"));
 

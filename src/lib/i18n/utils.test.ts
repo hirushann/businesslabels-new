@@ -27,6 +27,9 @@ describe("i18n routing utilities", () => {
     expect(localePath("/winkelmand", "en")).toBe("/en/cart");
     expect(localePath("/cart", "nl")).toBe("/winkelmand");
     expect(localePath("/winkelmand", "nl")).toBe("/winkelmand");
+    expect(localePath("/winkel", "en")).toBe("/en/shop");
+    expect(localePath("/shop", "nl")).toBe("/winkel");
+    expect(localePath("/winkel", "nl")).toBe("/winkel");
     expect(localePath("/afrekenen", "en")).toBe("/en/checkout");
     expect(localePath("/checkout", "nl")).toBe("/afrekenen");
     expect(localePath("/afrekenen", "nl")).toBe("/afrekenen");
@@ -46,6 +49,8 @@ describe("i18n routing utilities", () => {
     expect(stripLocalePath("/en/support-2")).toBe("/support");
     expect(stripLocalePath("/en/custom-made-labels")).toBe("/maatwerk");
     expect(stripLocalePath("/en/custom-made-labels?materialId=123")).toBe("/maatwerk?materialId=123");
+    expect(stripLocalePath("/en/shop")).toBe("/winkel");
+    expect(stripLocalePath("/winkel")).toBe("/shop");
     expect(stripLocalePath("/en/cart")).toBe("/winkelmand");
     expect(stripLocalePath("/winkelmand")).toBe("/cart");
     expect(stripLocalePath("/en/checkout")).toBe("/afrekenen");

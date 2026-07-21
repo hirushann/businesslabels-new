@@ -81,6 +81,9 @@ export function localePath(path, locale) {
     if (basePath === '/maatwerk') {
       return '/en/custom-made-labels' + searchSuffix;
     }
+    if (basePath === '/winkel') {
+      return '/en/shop' + searchSuffix;
+    }
     if (basePath === '/winkelmand') {
       return '/en/cart' + searchSuffix;
     }
@@ -97,6 +100,9 @@ export function localePath(path, locale) {
   }
   if (basePath === '/brands') {
     return '/merken' + searchSuffix;
+  }
+  if (basePath === '/shop') {
+    return '/winkel' + searchSuffix;
   }
   if (basePath === '/cart') {
     return '/winkelmand' + searchSuffix;
@@ -138,6 +144,9 @@ export function stripLocalePath(path) {
     if (rest === '/custom-made-labels') {
       return '/maatwerk' + searchSuffix;
     }
+    if (rest === '/shop') {
+      return '/winkel' + searchSuffix;
+    }
     if (rest === '/cart') {
       return '/winkelmand' + searchSuffix;
     }
@@ -152,6 +161,9 @@ export function stripLocalePath(path) {
   if (basePath === '/en') return '/' + searchSuffix;
   if (basePath === '/merken') {
     return '/brands' + searchSuffix;
+  }
+  if (basePath === '/winkel') {
+    return '/shop' + searchSuffix;
   }
   if (basePath === '/winkelmand') {
     return '/cart' + searchSuffix;
