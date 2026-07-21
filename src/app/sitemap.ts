@@ -51,7 +51,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/product' },
     { path: '/categories' },
     { path: '/blog' },
-    { path: '/brand' },
+    { path: '/brands' },
     { path: '/printers' },
     { path: '/maatwerk' },
     { path: '/support' },
