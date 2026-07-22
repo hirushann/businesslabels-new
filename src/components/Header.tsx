@@ -160,7 +160,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
   }, []);
 
   const isAuthenticated = clientAuthState ?? hasAuthToken;
-  const accountHref = '/my-account';
+  const accountHref = lp('/my-account');
   const [isLoginPopupOpen, setIsLoginPopupOpen] = useState(false);
   const [isRegisterPopupOpen, setIsRegisterPopupOpen] = useState(false);
 

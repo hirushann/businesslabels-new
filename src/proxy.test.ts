@@ -57,6 +57,14 @@ describe("proxy locale routing", () => {
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
 
+  it("redirects /my-account to /en/my-account when user is authenticated with an English cookie", () => {
+    const response = proxy(makeRequest("/my-account", `${LOCALE_COOKIE}=en; auth_token=test_token`));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/en/my-account");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
   it("rewrites /en/software-2 internally to /software", () => {
     const response = proxy(makeRequest("/en/software-2"));
 

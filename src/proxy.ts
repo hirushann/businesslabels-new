@@ -138,6 +138,11 @@ export function proxy(request: NextRequest) {
       loginUrl.searchParams.set('redirect', locale === 'en' && !hasEnglishPrefix ? `${EN_PREFIX}${pathname}${search}` : pathname + search);
       return persistLocale(NextResponse.redirect(loginUrl), locale);
     }
+
+    if (locale === 'en' && !hasEnglishPrefix) {
+      const redirectUrl = new URL(`${EN_PREFIX}${pathname}${search}`, request.url);
+      return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+    }
   }
 
   if (hasEnglishPrefix) {
