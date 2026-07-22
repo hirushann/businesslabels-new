@@ -321,7 +321,6 @@ function CheckoutShell({
   const paymentFee = useMemo(() => (form.paymentMethod === "creditcard" ? totalAmount * 0.025 : 0), [totalAmount, form.paymentMethod]);
   const taxAmount = useMemo(() => (totalAmount + shippingAmount + paymentFee) * 0.21, [totalAmount, shippingAmount, paymentFee]);
   const finalTotal = useMemo(() => totalAmount + shippingAmount + paymentFee + taxAmount, [totalAmount, shippingAmount, paymentFee, taxAmount]);
-  const [isEditingRef, setIsEditingRef] = useState(false);
   const [isLoginPopupOpen, setIsLoginPopupOpen] = useState(false);
   const [isRegisterPopupOpen, setIsRegisterPopupOpen] = useState(false);
   const [isAddAddressPopupOpen, setIsAddAddressPopupOpen] = useState(false);
@@ -1128,14 +1127,31 @@ function CheckoutShell({
                 <div className="flex flex-col gap-4">
                   {items.map((item) => {
                     const imageSrc = item.mainImage?.trim() || "https://placehold.co/62x62";
+                    const productSlug = item.slug?.trim();
+                    const productHref = productSlug ? localePath(`/product/${productSlug}`, locale) : null;
+
                     return (
                       <div key={item.key} className="w-full flex items-center gap-3">
                         <div className="w-[62px] h-[62px] p-1 bg-line rounded-lg flex items-center justify-center overflow-hidden shrink-0">
-                          <img src={imageSrc} alt={item.name} className="w-full h-full object-contain" />
+                          {productHref ? (
+                            <Link href={productHref} className="w-full h-full block">
+                              <img src={imageSrc} alt={item.name} className="w-full h-full object-contain" />
+                            </Link>
+                          ) : (
+                            <img src={imageSrc} alt={item.name} className="w-full h-full object-contain" />
+                          )}
                         </div>
                         <div className="flex-1 flex items-start justify-between gap-2 min-w-0">
                           <div className="flex flex-col min-w-0">
-                            <h4 className="text-copy text-[16px] font-bold truncate leading-[19.2px]">{item.name}</h4>
+                            <h4 className="text-copy text-[16px] font-bold break-words whitespace-normal leading-[19.2px]">
+                              {productHref ? (
+                                <Link href={productHref} className="hover:text-brand hover:underline transition-colors">
+                                  {item.name}
+                                </Link>
+                              ) : (
+                                item.name
+                              )}
+                            </h4>
                             <span className="text-subtle text-sm mt-1">{item.quantity} {item.quantity === 1 ? t('checkout.item') : t('checkout.items')}</span>
                           </div>
                           <span className="text-ink text-[18px] font-bold shrink-0">{formatEuro(linePrice(item))}</span>
@@ -1194,17 +1210,12 @@ function CheckoutShell({
                   type="text"
                   value={form.purchaseReference}
                   onChange={(e) => handleChange("purchaseReference", e.target.value)}
-                  disabled={!isEditingRef}
                   placeholder={t('checkout.purchaseReferencePlaceholder')}
-                  className={`w-full h-full pl-5 pr-14 rounded-full border bg-white font-medium outline-none transition-all ${
-                    isEditingRef ? "border-brand" : "border-[#DDE1EA] text-subtle cursor-not-allowed"
-                  }`}
+                  className="w-full h-full pl-5 pr-14 rounded-full border border-[#DDE1EA] bg-white font-medium text-neutral-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all"
                 />
-                <button
-                  type="button"
-                  onClick={() => setIsEditingRef(!isEditingRef)}
-                  className="absolute right-2 top-2 w-9 h-9 bg-line rounded-full flex items-center justify-center hover:bg-slate-200 transition-colors"
-                  aria-label={t('checkout.editPurchaseReference')}
+                <div
+                  className="absolute right-2 top-2 w-9 h-9 bg-line rounded-full flex items-center justify-center pointer-events-none"
+                  aria-hidden="true"
                 >
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <mask id="mask0_2740_6734" style={{ maskType: "alpha" }} maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
@@ -1214,7 +1225,7 @@ function CheckoutShell({
                       <path d="M2.91699 20.0019C2.57616 20.0019 2.28262 19.8801 2.03637 19.6365C1.79012 19.3928 1.66699 19.098 1.66699 18.7519C1.66699 18.411 1.79012 18.1175 2.03637 17.8713C2.28262 17.625 2.57616 17.5019 2.91699 17.5019H17.0837C17.4245 17.5019 17.718 17.6237 17.9643 17.8673C18.2105 18.1109 18.3337 18.4058 18.3337 18.7519C18.3337 19.0927 18.2105 19.3863 17.9643 19.6325C17.718 19.8788 17.4245 20.0019 17.0837 20.0019H2.91699ZM5.00033 13.6798H6.03074L12.9474 6.77583L12.4235 6.24396L11.9043 5.73271L5.00033 12.6494V13.6798ZM3.75033 14.1765V12.4315C3.75033 12.331 3.76713 12.2354 3.80074 12.1446C3.83449 12.0538 3.89033 11.9693 3.96824 11.8913L13.0918 2.78875C13.2125 2.66806 13.3495 2.57674 13.5028 2.51479C13.656 2.45285 13.8144 2.42188 13.9778 2.42188C14.1467 2.42188 14.3073 2.45285 14.4595 2.51479C14.6117 2.57674 14.7525 2.67236 14.8818 2.80167L15.8832 3.81604C16.0125 3.93674 16.106 4.07451 16.1637 4.22938C16.2214 4.38438 16.2503 4.54625 16.2503 4.715C16.2503 4.87 16.2214 5.0241 16.1637 5.17729C16.106 5.33063 16.0125 5.47195 15.8832 5.60125L6.78074 14.7038C6.70269 14.7818 6.61831 14.839 6.52762 14.8752C6.43678 14.9116 6.34116 14.9298 6.24074 14.9298H4.50366C4.2888 14.9298 4.10956 14.8579 3.96595 14.7142C3.8222 14.5706 3.75033 14.3913 3.75033 14.1765ZM12.9474 6.77583L12.4235 6.24396L11.9043 5.73271L12.9474 6.77583Z" fill="var(--subtle)"/>
                     </g>
                   </svg>
-                </button>
+                </div>
               </div>
             </div>
 
@@ -1751,10 +1762,10 @@ export default function CheckoutPageClient({
 
     setForm((prev) => ({
       ...prev,
-      firstName: valueWhenBlank(prev.firstName, profileName.firstName || storedName.firstName || addressName.firstName),
-      lastName: valueWhenBlank(prev.lastName, profileName.lastName || storedName.lastName || addressName.lastName),
-      email: valueWhenBlank(prev.email, readString(finalProfile, ["email"]) || readString(storedUserData, ["email"]) || readString(preferredAddress, ["email"])),
-      mobileNumber: valueWhenBlank(prev.mobileNumber, profilePhone || storedPhone || addressPhone),
+      firstName: valueWhenBlank(prev.firstName, addressName.firstName || profileName.firstName || storedName.firstName),
+      lastName: valueWhenBlank(prev.lastName, addressName.lastName || profileName.lastName || storedName.lastName),
+      email: valueWhenBlank(prev.email, readString(preferredAddress, ["email"]) || readString(finalProfile, ["email"]) || readString(storedUserData, ["email"])),
+      mobileNumber: valueWhenBlank(prev.mobileNumber, addressPhone || profilePhone || storedPhone),
       companyName: valueWhenBlank(
         prev.companyName,
         readString(preferredAddress, ["company", "company_name", "business_name"]) ||
@@ -1764,8 +1775,7 @@ export default function CheckoutPageClient({
       vatNumber: valueWhenBlank(
         prev.vatNumber,
         readString(preferredAddress, ["vat_number", "btw_number", "vatNumber"]) ||
-          readString(finalProfile, ["vat_number", "btw_number", "vatNumber"]) ||
-          readString(storedUserData, ["company", "company_name", "business_name"]),
+          readString(finalProfile, ["vat_number", "btw_number", "vatNumber"]),
       ),
       streetAddress: valueWhenBlank(prev.streetAddress, readString(preferredAddress, ["address", "street", "address_1", "street_address"])),
       city: valueWhenBlank(prev.city, readString(preferredAddress, ["city", "town", "locality"])),

@@ -400,7 +400,7 @@ export default function ThankYouPage() {
   };
 
   return (
-    <div className="bg-white min-h-screen flex flex-col items-center relative overflow-hidden">
+    <div className="bg-white min-h-screen flex flex-col items-center relative overflow-x-hidden">
       {/* Blurred background orange circle on the left */}
       <div className="absolute left-[-150px] top-[15%] w-[380px] h-[380px] rounded-full bg-brand/10 blur-[120px] pointer-events-none z-0" />
 
@@ -413,7 +413,7 @@ export default function ThankYouPage() {
         />
       </div>
 
-      <div className="w-full max-w-[816px] px-4 pb-16 flex flex-col justify-start items-center gap-10 z-10">
+      <div className="w-full max-w-[1180px] px-4 sm:px-6 lg:px-8 pb-16 flex flex-col justify-start items-center gap-10 z-10">
         {/* Success Header */}
         <div className="flex flex-col justify-start items-center gap-6 text-center animate-in fade-in slide-in-from-top-4 duration-500">
           <img
@@ -432,10 +432,10 @@ export default function ThankYouPage() {
         </div>
 
         {/* main container card */}
-        <div className="w-full bg-white shadow-[2px_4px_20px_rgba(109,109,120,0.10)] rounded-2xl md:rounded-[12px] border border-line p-6 md:p-8 flex flex-col md:flex-row gap-8 md:gap-10 animate-in fade-in zoom-in-95 duration-500 relative">
+        <div className="w-full bg-white shadow-[2px_4px_20px_rgba(109,109,120,0.10)] rounded-2xl md:rounded-[12px] border border-line p-5 sm:p-6 md:p-8 flex flex-col lg:flex-row gap-8 lg:gap-10 animate-in fade-in zoom-in-95 duration-500 relative">
           
           {/* Left Column: Order Summary */}
-          <div className="flex-1 flex flex-col gap-6">
+          <div className="w-full lg:flex-[1.35] flex flex-col gap-6 min-w-0">
             <h2 className="text-[#000000] text-xl md:text-[22px] font-bold tracking-tight border-line pb-3">
               {t("thankYou.orderSummary")}
             </h2>
@@ -449,8 +449,8 @@ export default function ThankYouPage() {
                     : "");
                 const imageSrc = toDisplayImageUrl(rawImage);
                 return (
-                  <div key={item.id || index} className="flex items-center gap-3">
-                    <div className="w-[62px] h-[62px] p-1.5 bg-line overflow-hidden rounded-lg justify-center align-items-center flex shrink-0 border border-slate-100">
+                  <div key={item.id || index} className="grid grid-cols-[62px_minmax(0,1fr)] sm:grid-cols-[72px_minmax(0,1fr)_88px_96px_104px] items-center gap-3 sm:gap-4 rounded-xl border border-transparent py-1">
+                    <div className="w-[62px] h-[62px] sm:w-[72px] sm:h-[72px] p-1.5 bg-line overflow-hidden rounded-lg justify-center items-center flex shrink-0 border border-slate-100">
                       {imageSrc ? (
                         <img className="w-full h-full object-contain" src={imageSrc} alt={item.name} />
                       ) : (
@@ -459,18 +459,36 @@ export default function ThankYouPage() {
                         </svg>
                       )}
                     </div>
-                    <div className="flex-1 flex justify-between items-start gap-4">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-copy text-[15px] md:text-[16px] font-bold leading-tight line-clamp-2">
-                          {item.name}
-                        </span>
-                        <span className="text-subtle text-[13px] md:text-[14px]">
-                          {item.quantity} {item.quantity === 1 ? t("checkout.item") : t("checkout.items")}
-                        </span>
-                      </div>
-                      <span className="text-ink text-[16px] md:text-[18px] font-bold shrink-0">
-                        {formatEuro(item.total)}
+                    <div className="min-w-0 flex flex-col gap-2">
+                      <span className="text-copy text-[15px] md:text-[16px] font-bold leading-snug break-words">
+                        {item.name}
                       </span>
+                      <div className="grid grid-cols-3 gap-2 sm:hidden text-[13px] leading-tight">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-subtle">{t("thankYou.pdfQuantity")}</span>
+                          <span className="text-ink font-bold">{item.quantity}</span>
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-subtle">{t("thankYou.pdfPrice")}</span>
+                          <span className="text-ink font-bold">{formatEuro(item.price)}</span>
+                        </div>
+                        <div className="flex flex-col gap-0.5 text-right">
+                          <span className="text-subtle">{t("thankYou.pdfTotal")}</span>
+                          <span className="text-ink font-bold">{formatEuro(item.total)}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="hidden sm:flex flex-col gap-1 text-right">
+                      <span className="text-subtle text-[12px] font-medium">{t("thankYou.pdfQuantity")}</span>
+                      <span className="text-ink text-[15px] md:text-[16px] font-bold">{item.quantity}</span>
+                    </div>
+                    <div className="hidden sm:flex flex-col gap-1 text-right">
+                      <span className="text-subtle text-[12px] font-medium">{t("thankYou.pdfPrice")}</span>
+                      <span className="text-ink text-[15px] md:text-[16px] font-bold">{formatEuro(item.price)}</span>
+                    </div>
+                    <div className="hidden sm:flex flex-col gap-1 text-right">
+                      <span className="text-subtle text-[12px] font-medium">{t("thankYou.pdfTotal")}</span>
+                      <span className="text-ink text-[16px] md:text-[18px] font-bold">{formatEuro(item.total)}</span>
                     </div>
                   </div>
                 );
@@ -513,10 +531,10 @@ export default function ThankYouPage() {
           </div>
 
           {/* Desktop Vertical divider */}
-          <div className="hidden md:block w-px bg-[#D9E3ED] self-stretch"></div>
+          <div className="hidden lg:block w-px bg-[#D9E3ED] self-stretch"></div>
 
           {/* Right Column: Delivery Details */}
-          <div className="flex-1 flex flex-col gap-4">
+          <div className="w-full lg:flex-1 flex flex-col gap-4 min-w-0">
             <h2 className="text-[#000000] text-xl md:text-[22px] font-bold tracking-tight border-line pb-3">
               {t("thankYou.deliveryDetails")}
             </h2>
