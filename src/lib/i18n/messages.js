@@ -3439,7 +3439,7 @@ export const MESSAGES_V4 = {
       defaultShippingAddressUpdated: 'Standaard afleveradres bijgewerkt.',
     },
     requestPrinter: {
-      title: 'Vraag ICC-profiel aan',
+      title: 'Vraag printer aan',
       subtitle: 'Zodra we de aanvraag ontvangen, voegen we je printer toe aan de "productzoeker".',
       brand: 'Merk',
       brandPlaceholder: 'Merknaam',
