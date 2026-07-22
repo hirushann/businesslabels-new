@@ -295,7 +295,14 @@ function normalizeOrders(payload: unknown): AccountOrder[] {
             sku: readStringValue(itemRecord, ['sku']) || readStringValue(product, ['sku']) || undefined,
             slug: readStringValue(product, ['slug', 'post_name']) || readStringValue(itemRecord, ['slug']) || undefined,
             type: readStringValue(product, ['type']) || readStringValue(itemRecord, ['type', 'product_type']) || 'simple',
-            mainImage: readStringValue(product, ['main_image', 'image', 'thumbnail']) || readStringValue(itemRecord, ['image', 'main_image']) || null,
+            mainImage: toDisplayImageUrl(
+              readStringValue(product, ['main_image', 'image', 'image_url', 'thumbnail', 'thumbnail_url', 'url']) ||
+              readStringValue(itemRecord, ['image', 'main_image', 'image_url', 'thumbnail', 'thumbnail_url', 'url']) ||
+              (isPlainObject(product.main_image) ? readStringValue(product.main_image, ['url', 'src']) : '') ||
+              (isPlainObject(product.image) ? readStringValue(product.image, ['url', 'src']) : '') ||
+              (isPlainObject(itemRecord.image) ? readStringValue(itemRecord.image, ['url', 'src']) : '') ||
+              (isPlainObject(itemRecord.main_image) ? readStringValue(itemRecord.main_image, ['url', 'src']) : '')
+            ) || null,
             packingGroup: readNumberValue(product, ['packingGroup', 'packing_group']) || null,
             allowSingulars: product.allow_singulars !== undefined ? Boolean(product.allow_singulars) : null,
             isLabelProduct: Boolean(product.is_label_product ?? product.is_label ?? false),
@@ -1232,12 +1239,25 @@ function OrdersView() {
                 <h4 className="text-xs font-black text-neutral-400 uppercase tracking-widest px-1">{t('account.orderItems')}</h4>
                 <div className="flex flex-col gap-3">
                   {selectedOrder.items_list?.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="font-bold text-neutral-800">{item.name}</span>
-                        <span className="text-xs font-medium text-neutral-400">{t('account.quantityCount', { count: item.quantity })}</span>
+                    <div key={item.id} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100 gap-3">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="w-12 h-12 p-1 bg-white border border-slate-200 overflow-hidden rounded-xl justify-center items-center flex shrink-0 relative shadow-sm">
+                          {item.mainImage ? (
+                            <img className="w-full h-full object-contain" src={item.mainImage} alt={item.name} />
+                          ) : (
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#717182" strokeWidth="1.5" className="opacity-40">
+                              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                              <circle cx="8.5" cy="8.5" r="1.5" />
+                              <polyline points="21 15 16 10 5 21" />
+                            </svg>
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                          <span className="font-bold text-neutral-800 truncate">{item.name}</span>
+                          <span className="text-xs font-medium text-neutral-400">{t('account.quantityCount', { count: item.quantity })}</span>
+                        </div>
                       </div>
-                      <span className="font-black text-neutral-800">{formatEuro(item.total)}</span>
+                      <span className="font-black text-neutral-800 shrink-0">{formatEuro(item.total)}</span>
                     </div>
                   ))}
                 </div>
