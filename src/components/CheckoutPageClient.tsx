@@ -324,6 +324,7 @@ function CheckoutShell({
   const [isLoginPopupOpen, setIsLoginPopupOpen] = useState(false);
   const [isRegisterPopupOpen, setIsRegisterPopupOpen] = useState(false);
   const [isAddAddressPopupOpen, setIsAddAddressPopupOpen] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<CheckoutSavedAddress | null>(null);
   const showBillingEditForm = !isLoggedIn || isEditingBilling;
 
   const breadcrumbs = [
@@ -743,32 +744,34 @@ function CheckoutShell({
                     </div>
                     <div className="h-px bg-line w-full" />
 
-                     {/* Toggle Same as Billing (Custom styled checkbox container) */}
-                    <label className="w-full p-4 rounded-xl border border-[#DDE1EA] justify-start items-start gap-3 inline-flex cursor-pointer hover:bg-slate-50 transition-all select-none">
-                      <input
-                        type="checkbox"
-                        checked={form.sameAsBilling}
-                        onChange={(e) => handleChange("sameAsBilling", e.target.checked)}
-                        className="sr-only"
-                      />
-                      <div className={`w-[22px] h-[22px] rounded-[2px] flex items-center justify-center shrink-0 transition-all ${
-                        form.sameAsBilling ? "bg-brand border-[1.5px] border-brand" : "border-[1.5px] border-[#BBC0CC]"
-                      }`}>
-                        {form.sameAsBilling && (
-                          <svg width="12" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M1 5L5 9L13 1" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        )}
-                      </div>
-                      <div className="flex-col justify-center items-start gap-[12px] inline-flex">
-                        <div className="text-ink text-[18px] font-bold leading-[20px]">
-                          {t('checkout.sameAsBilling')}
+                     {/* Toggle Same as Billing (Custom styled checkbox container) - only shown when user has no saved shipping addresses */}
+                    {savedShippingAddresses.length === 0 && (
+                      <label className="w-full p-4 rounded-xl border border-[#DDE1EA] justify-start items-start gap-3 inline-flex cursor-pointer hover:bg-slate-50 transition-all select-none">
+                        <input
+                          type="checkbox"
+                          checked={form.sameAsBilling}
+                          onChange={(e) => handleChange("sameAsBilling", e.target.checked)}
+                          className="sr-only"
+                        />
+                        <div className={`w-[22px] h-[22px] rounded-[2px] flex items-center justify-center shrink-0 transition-all ${
+                          form.sameAsBilling ? "bg-brand border-[1.5px] border-brand" : "border-[1.5px] border-[#BBC0CC]"
+                        }`}>
+                          {form.sameAsBilling && (
+                            <svg width="12" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M1 5L5 9L13 1" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          )}
                         </div>
-                        <div className="text-copy text-[14px] font-normal leading-[18.20px]">
-                          {t('checkout.sameAsBillingSub')}
+                        <div className="flex-col justify-center items-start gap-[12px] inline-flex">
+                          <div className="text-ink text-[18px] font-bold leading-[20px]">
+                            {t('checkout.sameAsBilling')}
+                          </div>
+                          <div className="text-copy text-[14px] font-normal leading-[18.20px]">
+                            {t('checkout.sameAsBillingSub')}
+                          </div>
                         </div>
-                      </div>
-                    </label>
+                      </label>
+                    )}
 
                     {/* Info Warning Banner */}
                     {!isLoggedIn && (
@@ -803,7 +806,7 @@ function CheckoutShell({
                       </div>
                     )}
 
-                    {!form.sameAsBilling && (
+                    {(!form.sameAsBilling || savedShippingAddresses.length > 0) && (
                       <div className="flex flex-col gap-4 mt-2">
                         {isLoggedIn && (
                           <div className="flex flex-col gap-3">
@@ -849,30 +852,52 @@ function CheckoutShell({
                                           </svg>
                                         )}
                                       </div>
-                                      <div className="flex min-w-0 flex-1 flex-col gap-2">
-                                        <div className="flex items-start justify-between gap-2">
-                                          <span className="text-ink text-[17px] font-bold leading-5 break-words">
-                                            {address.name || `${address.firstname} ${address.lastname}`.trim() || t('checkout.shippingAddress')}
-                                          </span>
-                                          {isSelected && (
-                                            <span className="rounded-full bg-brand-soft px-2.5 py-1 text-[12px] font-bold text-brand">
-                                              {t('common.selected')}
-                                            </span>
-                                          )}
-                                        </div>
-                                        {(address.email || address.phone) && (
-                                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-copy text-[14px] font-normal leading-5">
-                                            {address.email && <span className="break-all">{address.email}</span>}
-                                            {address.email && address.phone && <span className="text-[#C8D2DD]">|</span>}
-                                            {address.phone && <span>{address.phone}</span>}
-                                          </div>
-                                        )}
-                                        <p className="text-copy text-[15px] font-normal leading-5">
-                                          {addressLine || '-'}
-                                        </p>
-                                      </div>
-                                    </label>
-                                  );
+                                       <div className="flex min-w-0 flex-1 flex-col gap-2">
+                                         <div className="flex items-start justify-between gap-2">
+                                           <span className="text-ink text-[17px] font-bold leading-5 break-words">
+                                             {address.name || `${address.firstname} ${address.lastname}`.trim() || t('checkout.shippingAddress')}
+                                           </span>
+                                           {isSelected && (
+                                             <span className="rounded-full bg-brand-soft px-2.5 py-1 text-[12px] font-bold text-brand">
+                                               {t('common.selected')}
+                                             </span>
+                                           )}
+                                         </div>
+                                         {(address.email || address.phone) && (
+                                           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-copy text-[14px] font-normal leading-5">
+                                             {address.email && <span className="break-all">{address.email}</span>}
+                                             {address.email && address.phone && <span className="text-[#C8D2DD]">|</span>}
+                                             {address.phone && <span>{address.phone}</span>}
+                                           </div>
+                                         )}
+                                         <div className="flex items-end justify-between gap-2">
+                                           <p className="text-copy text-[15px] font-normal leading-5 flex-1">
+                                             {addressLine || '-'}
+                                           </p>
+                                           <button
+                                             type="button"
+                                             onClick={(e) => {
+                                               e.preventDefault();
+                                               e.stopPropagation();
+                                               setEditingAddress(address);
+                                               setIsAddAddressPopupOpen(true);
+                                             }}
+                                             className="inline-flex justify-start items-center gap-1 hover:opacity-80 transition-opacity cursor-pointer shrink-0 ml-auto"
+                                           >
+                                             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                               <mask id={`mask0_edit_${address.id}`} maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20" style={{ maskType: 'alpha' }}>
+                                                 <rect width="20" height="20" fill="#D9D9D9"></rect>
+                                               </mask>
+                                               <g mask={`url(#mask0_edit_${address.id})`}>
+                                                 <path d="M3.33268 20.0052C2.87435 20.0052 2.48199 19.842 2.1556 19.5156C1.82921 19.1892 1.66602 18.7969 1.66602 18.3385C1.66602 17.8802 1.82921 17.4878 2.1556 17.1615C2.48199 16.8351 2.87435 16.6719 3.33268 16.6719H16.666C17.1243 16.6719 17.5167 16.8351 17.8431 17.1615C18.1695 17.4878 18.3327 17.8802 18.3327 18.3385C18.3327 18.7969 18.1695 19.1892 17.8431 19.5156C17.5167 19.842 17.1243 20.0052 16.666 20.0052H3.33268ZM4.99935 13.3385H6.16602L12.666 6.85938L11.4785 5.67188L4.99935 12.1719V13.3385ZM3.33268 14.1719V11.8177C3.33268 11.7066 3.35352 11.599 3.39518 11.4948C3.43685 11.3906 3.49935 11.2969 3.58268 11.2135L12.666 2.15104C12.8188 1.99826 12.9959 1.88021 13.1973 1.79688C13.3987 1.71354 13.6105 1.67188 13.8327 1.67188C14.0549 1.67188 14.2702 1.71354 14.4785 1.79688C14.6868 1.88021 14.8743 2.00521 15.041 2.17188L16.1868 3.33854C16.3535 3.49132 16.475 3.67188 16.5514 3.88021C16.6278 4.08854 16.666 4.30382 16.666 4.52604C16.666 4.73438 16.6278 4.93924 16.5514 5.14063C16.475 5.34201 16.3535 5.52604 16.1868 5.69271L7.12435 14.7552C7.04101 14.8385 6.94726 14.901 6.8431 14.9427C6.73893 14.9844 6.63129 15.0052 6.52018 15.0052H4.16602C3.9299 15.0052 3.73199 14.9253 3.57227 14.7656C3.41254 14.6059 3.33268 14.408 3.33268 14.1719Z" fill="var(--brand)"></path>
+                                               </g>
+                                             </svg>
+                                             <div className="text-brand text-base font-normal leading-5">Edit</div>
+                                           </button>
+                                         </div>
+                                       </div>
+                                     </label>
+                                   );
                                 })}
                               </div>
                             ) : (
@@ -883,7 +908,10 @@ function CheckoutShell({
 
                             <button
                               type="button"
-                              onClick={() => setIsAddAddressPopupOpen(true)}
+                              onClick={() => {
+                                setEditingAddress(null);
+                                setIsAddAddressPopupOpen(true);
+                              }}
                               className="w-fit min-w-[170px] h-[52px] px-8 rounded-full border-[1.5px] border-[#F18800] inline-flex justify-center items-center gap-2 hover:bg-orange-50/50 transition-all focus:outline-none mt-2"
                             >
                               <span className="text-center font-['Segoe_UI'] font-medium leading-6">
@@ -1254,9 +1282,16 @@ function CheckoutShell({
       />
       <AddShippingAddressPopup
         open={isAddAddressPopupOpen}
-        onOpenChange={setIsAddAddressPopupOpen}
+        editingAddress={editingAddress}
+        onOpenChange={(open) => {
+          setIsAddAddressPopupOpen(open);
+          if (!open) {
+            setEditingAddress(null);
+          }
+        }}
         onSuccess={async (savedAddressId) => {
           setIsAddAddressPopupOpen(false);
+          setEditingAddress(null);
           await onAddressAdded(savedAddressId);
         }}
       />
@@ -1727,14 +1762,19 @@ export default function CheckoutPageClient({
       const pId = preferredAddress.id || preferredAddress.address_id;
       setLoadedBillingAddressId((pId as string | number | null) || null);
     }
-    const shippingAddresses = normalizeCheckoutShippingAddresses(addressPayload);
+    const rawShippingAddresses = normalizeCheckoutShippingAddresses(addressPayload);
     const nextDefaultShippingAddressId = readDefaultShippingAddressId(finalProfile, storedUserData);
 
     const defaultAddress =
-      shippingAddresses.find((address) => String(address.id) === String(nextDefaultShippingAddressId)) ??
-      shippingAddresses.find((address) => address.isDefault) ??
-      shippingAddresses[0] ??
+      rawShippingAddresses.find((address) => String(address.id) === String(nextDefaultShippingAddressId)) ??
+      rawShippingAddresses.find((address) => address.isDefault) ??
+      rawShippingAddresses[0] ??
       null;
+
+    const shippingAddresses = defaultAddress
+      ? [defaultAddress, ...rawShippingAddresses.filter((address) => String(address.id) !== String(defaultAddress.id))]
+      : rawShippingAddresses;
+
     const addressToLoad =
       shippingAddresses.find((address) => String(address.id) === String(selectedSavedShippingAddressId)) ??
       defaultAddress;
@@ -1748,9 +1788,12 @@ export default function CheckoutPageClient({
 
       return defaultAddress ? defaultAddress.id : null;
     });
-    setForm((current) =>
-      current.sameAsBilling || !addressToLoad ? current : applySavedShippingAddressToForm(current, addressToLoad),
-    );
+    setForm((current) => {
+      if (shippingAddresses.length > 0 && addressToLoad) {
+        return applySavedShippingAddressToForm({ ...current, sameAsBilling: false }, addressToLoad);
+      }
+      return current.sameAsBilling || !addressToLoad ? current : applySavedShippingAddressToForm(current, addressToLoad);
+    });
     setIsLoadingSavedShippingAddresses(false);
 
     const profileName = splitName(finalProfile);
@@ -2247,9 +2290,10 @@ interface AddShippingAddressPopupProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: (savedId?: string | number) => void;
+  editingAddress?: CheckoutSavedAddress | null;
 }
 
-function AddShippingAddressPopup({ open, onOpenChange, onSuccess }: AddShippingAddressPopupProps) {
+function AddShippingAddressPopup({ open, onOpenChange, onSuccess, editingAddress }: AddShippingAddressPopupProps) {
   const t = useTranslations();
   const getLabel = (key: string, fallback: string) => {
     const val = t(key);
@@ -2269,6 +2313,34 @@ function AddShippingAddressPopup({ open, onOpenChange, onSuccess }: AddShippingA
   const [stateRegion, setStateRegion] = useState('');
   const [label, setLabel] = useState<'office' | 'home'>('home');
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      if (editingAddress) {
+        setFirstName(editingAddress.firstname || '');
+        setLastName(editingAddress.lastname || '');
+        setEmail(editingAddress.email || '');
+        setPhone(editingAddress.phone || '');
+        setCountryId(editingAddress.country || 'NL');
+        setStreet(editingAddress.address1 || '');
+        setStateRegion(editingAddress.address2 || '');
+        setPostcode(editingAddress.postcode || '');
+        setCity(editingAddress.city || '');
+        setLabel(editingAddress.company === 'Office' ? 'office' : 'home');
+      } else {
+        setFirstName('');
+        setLastName('');
+        setEmail('');
+        setPhone('');
+        setCountryId('NL');
+        setStreet('');
+        setStateRegion('');
+        setPostcode('');
+        setCity('');
+        setLabel('home');
+      }
+    }
+  }, [open, editingAddress]);
 
   useEffect(() => {
     async function loadCountries() {
@@ -2321,7 +2393,7 @@ function AddShippingAddressPopup({ open, onOpenChange, onSuccess }: AddShippingA
     e.preventDefault();
     setIsSaving(true);
     try {
-      const payload = {
+      const payload: Record<string, unknown> = {
         type: 'shipping',
         name: `${firstName} ${lastName}`,
         firstname: firstName,
@@ -2337,8 +2409,12 @@ function AddShippingAddressPopup({ open, onOpenChange, onSuccess }: AddShippingA
         province_id: provinceId ? Number(provinceId) : undefined,
       };
 
+      if (editingAddress?.id) {
+        payload.id = editingAddress.id;
+      }
+
       const response = await fetch('/api/account/addresses', {
-        method: 'POST',
+        method: editingAddress ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload),
       });
@@ -2348,7 +2424,7 @@ function AddShippingAddressPopup({ open, onOpenChange, onSuccess }: AddShippingA
         throw new Error(errorData.message || 'Save failed');
       }
       const responseData = await response.json().catch(() => ({}));
-      const savedAddressId = responseData?.id || responseData?.data?.id;
+      const savedAddressId = responseData?.id || responseData?.data?.id || editingAddress?.id;
 
       toast.success(t('account.addressSavedSuccess', { type: 'Shipping' }));
       onSuccess(savedAddressId);
@@ -2368,7 +2444,7 @@ function AddShippingAddressPopup({ open, onOpenChange, onSuccess }: AddShippingA
       <DialogContent showCloseButton={false} className="max-h-[90vh] overflow-y-auto rounded-[28px] border-slate-100 bg-white p-8 shadow-2xl sm:max-w-2xl">
         <div className="flex flex-col gap-8 w-full">
           <DialogTitle className="w-full text-center text-[#222222] text-[32px] font-semibold font-['Segoe_UI'] leading-[38.40px]">
-            {getLabel('account.addNewAddress', 'Add New Shipping Address')}
+            {editingAddress ? getLabel('account.editAddress', 'Edit Shipping Address') : getLabel('account.addNewAddress', 'Add New Shipping Address')}
           </DialogTitle>
           <DialogDescription className="sr-only">
             Form to add a new shipping address
