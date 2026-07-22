@@ -20,7 +20,7 @@ describe("proxy locale routing", () => {
   });
 
   it("keeps checkout return URLs in the user's persisted English locale", () => {
-    const response = proxy(makeRequest("/thank-you?order_number=BL-123", `${LOCALE_COOKIE}=en`));
+    const response = proxy(makeRequest("/bedankt?order_number=BL-123", `${LOCALE_COOKIE}=en`));
 
     expect(response.status).not.toBeGreaterThanOrEqual(300);
     expect(response.headers.get("location")).toBeNull();
