@@ -258,6 +258,9 @@ function CheckoutShell({
   onSavedShippingAddressSelect,
   isLoadingSavedShippingAddresses,
   savedShippingAddressesError,
+  savedBillingAddresses = [],
+  selectedSavedBillingAddressId = null,
+  onSavedBillingAddressSelect = () => {},
   step,
   setStep,
   isEditingBilling,
@@ -291,6 +294,9 @@ function CheckoutShell({
   onSavedShippingAddressSelect: (address: CheckoutSavedAddress) => void;
   isLoadingSavedShippingAddresses: boolean;
   savedShippingAddressesError: string;
+  savedBillingAddresses?: CheckoutSavedAddress[];
+  selectedSavedBillingAddressId?: string | null;
+  onSavedBillingAddressSelect?: (address: CheckoutSavedAddress) => void;
   step: 1 | 2 | 3;
   setStep: (step: 1 | 2 | 3) => void;
   isEditingBilling: boolean;
@@ -298,7 +304,7 @@ function CheckoutShell({
   cancelEditingBilling: () => void;
   saveEditingBilling: () => void;
   countriesList: any[];
-  onAddressAdded: (savedAddressId?: string | number) => Promise<void>;
+  onAddressAdded: (savedAddressId?: string | number, type?: 'billing' | 'shipping') => Promise<void>;
 }) {
   const t = useTranslations();
   const locale = useLocale();
@@ -324,8 +330,9 @@ function CheckoutShell({
   const [isLoginPopupOpen, setIsLoginPopupOpen] = useState(false);
   const [isRegisterPopupOpen, setIsRegisterPopupOpen] = useState(false);
   const [isAddAddressPopupOpen, setIsAddAddressPopupOpen] = useState(false);
+  const [addressPopupType, setAddressPopupType] = useState<'billing' | 'shipping'>('shipping');
   const [editingAddress, setEditingAddress] = useState<CheckoutSavedAddress | null>(null);
-  const showBillingEditForm = !isLoggedIn || isEditingBilling;
+  const showBillingEditForm = !isLoggedIn || isEditingBilling || savedBillingAddresses.length === 0;
 
   const breadcrumbs = [
     { label: t('checkout.title') }
@@ -349,12 +356,6 @@ function CheckoutShell({
 
         {items.length === 0 ? (
           <div className="w-full flex flex-col justify-start items-center gap-10 py-12">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/cart-empty.png"
-              alt=""
-              className="w-[275px] h-[200px] object-contain"
-            />
             <div className="w-full flex flex-col justify-start items-center gap-4">
               <h2 className="w-full text-center text-ink text-2xl md:text-[32px] lg:text-[40px] font-bold leading-tight md:leading-[48px]">
                 {t('checkout.emptyCart')}
@@ -493,9 +494,118 @@ function CheckoutShell({
                     </div>
                     <div className="h-px bg-line w-full" />
 
-                    <div className={showBillingEditForm ? "w-full p-4 bg-[rgba(241,136,0,0.02)] rounded-xl border-[1.5px] border-[#F18800] flex flex-col gap-6" : "flex flex-col gap-6"}>
-                      {/* Address Autocomplete Search (Billing) */}
-                      {showBillingEditForm && (
+                    {/* Saved Billing Addresses section for logged in user */}
+                    {isLoggedIn && (
+                      <div className="flex flex-col gap-4">
+                        {isLoadingSavedShippingAddresses ? (
+                          <div className="w-full p-4 rounded-xl border border-[#DDE1EA] bg-slate-50 text-copy text-[14px] font-semibold">
+                            {t('account.loadingAddresses')}
+                          </div>
+                        ) : savedBillingAddresses.length > 0 ? (
+                          <div className="grid grid-cols-1 gap-3">
+                            {savedBillingAddresses.map((address) => {
+                              const isSelected = String(address.id) === String(selectedSavedBillingAddressId);
+                              const addressLine = [address.address1, address.address2, address.city, address.postcode, address.country]
+                                .filter(Boolean)
+                                .join(', ');
+
+                              return (
+                                <label
+                                  key={address.id}
+                                  className={`w-full p-4 rounded-xl border transition-all cursor-pointer select-none flex items-start gap-3 ${
+                                    isSelected
+                                      ? "border-brand bg-[rgba(241,136,0,0.02)] shadow-[0_0_0_1px_rgba(241,136,0,0.20)]"
+                                      : "border-[#E0E7EE] bg-white hover:border-brand/30"
+                                  }`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    className="sr-only"
+                                    checked={isSelected}
+                                    onChange={() => onSavedBillingAddressSelect(address)}
+                                  />
+                                  <div className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-all ${
+                                    isSelected ? "bg-brand border border-brand" : "border border-[#CAD3DF] bg-white"
+                                  }`}>
+                                    {isSelected && (
+                                      <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M1.5 4L4 6.5L8.5 1.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                                      </svg>
+                                    )}
+                                  </div>
+                                  <div className="flex min-w-0 flex-1 flex-col gap-2">
+                                    <div className="flex items-start justify-between gap-2">
+                                      <span className="text-ink text-[17px] font-bold leading-5 break-words">
+                                        {address.name || `${address.firstname} ${address.lastname}`.trim() || t('checkout.billingAddress')}
+                                      </span>
+                                      {isSelected && (
+                                        <span className="rounded-full bg-brand-soft px-2.5 py-1 text-[12px] font-bold text-brand">
+                                          {t('common.selected')}
+                                        </span>
+                                      )}
+                                    </div>
+                                    {(address.email || address.phone) && (
+                                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-copy text-[14px] font-normal leading-5">
+                                        {address.email && <span className="break-all">{address.email}</span>}
+                                        {address.email && address.phone && <span className="text-[#C8D2DD]">|</span>}
+                                        {address.phone && <span>{address.phone}</span>}
+                                      </div>
+                                    )}
+                                    <div className="flex items-end justify-between gap-2">
+                                      <p className="text-copy text-[15px] font-normal leading-5 flex-1">
+                                        {addressLine || '-'}
+                                      </p>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          setEditingAddress(address);
+                                          setAddressPopupType('billing');
+                                          setIsAddAddressPopupOpen(true);
+                                        }}
+                                        className="inline-flex justify-start items-center gap-1 hover:opacity-80 transition-opacity cursor-pointer shrink-0 ml-auto"
+                                      >
+                                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                          <mask id={`mask0_edit_billing_${address.id}`} maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20" style={{ maskType: 'alpha' }}>
+                                            <rect width="20" height="20" fill="#D9D9D9"></rect>
+                                          </mask>
+                                          <g mask={`url(#mask0_edit_billing_${address.id})`}>
+                                            <path d="M3.33268 20.0052C2.87435 20.0052 2.48199 19.842 2.1556 19.5156C1.82921 19.1892 1.66602 18.7969 1.66602 18.3385C1.66602 17.8802 1.82921 17.4878 2.1556 17.1615C2.48199 16.8351 2.87435 16.6719 3.33268 16.6719H16.666C17.1243 16.6719 17.5167 16.8351 17.8431 17.1615C18.1695 17.4878 18.3327 17.8802 18.3327 18.3385C18.3327 18.7969 18.1695 19.1892 17.8431 19.5156C17.5167 19.842 17.1243 20.0052 16.666 20.0052H3.33268ZM4.99935 13.3385H6.16602L12.666 6.85938L11.4785 5.67188L4.99935 12.1719V13.3385ZM3.33268 14.1719V11.8177C3.33268 11.7066 3.35352 11.599 3.39518 11.4948C3.43685 11.3906 3.49935 11.2969 3.58268 11.2135L12.666 2.15104C12.8188 1.99826 12.9959 1.88021 13.1973 1.79688C13.3987 1.71354 13.6105 1.67188 13.8327 1.67188C14.0549 1.67188 14.2702 1.71354 14.4785 1.79688C14.6868 1.88021 14.8743 2.00521 15.041 2.17188L16.1868 3.33854C16.3535 3.49132 16.475 3.67188 16.5514 3.88021C16.6278 4.08854 16.666 4.30382 16.666 4.52604C16.666 4.73438 16.6278 4.93924 16.5514 5.14063C16.475 5.34201 16.5514 5.52604 16.1868 5.69271L7.12435 14.7552C7.04101 14.8385 6.94726 14.901 6.8431 14.9427C6.73893 14.9844 6.63129 15.0052 6.52018 15.0052H4.16602C3.9299 15.0052 3.73199 14.9253 3.57227 14.7656C3.41254 14.6059 3.33268 14.408 3.33268 14.1719Z" fill="var(--brand)"></path>
+                                          </g>
+                                        </svg>
+                                        <div className="text-brand text-base font-normal leading-5">Edit</div>
+                                      </button>
+                                    </div>
+                                  </div>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        ) : null}
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingAddress(null);
+                            setAddressPopupType('billing');
+                            setIsAddAddressPopupOpen(true);
+                          }}
+                          className="w-fit min-w-[170px] h-[52px] px-8 rounded-full border-[1.5px] border-[#F18800] inline-flex justify-center items-center gap-2 hover:bg-orange-50/50 transition-all focus:outline-none"
+                        >
+                          <span className="text-center font-['Segoe_UI'] font-medium leading-6">
+                            <span className="text-[#F18800] text-[22px] align-middle mr-1">+</span>
+                            <span className="text-[#F18800] text-[18px] align-middle">
+                              {t('account.addNewAddress')}
+                            </span>
+                          </span>
+                        </button>
+                      </div>
+                    )}
+
+                    {showBillingEditForm && (
+                      <div className="w-full p-4 bg-[rgba(241,136,0,0.02)] rounded-xl border-[1.5px] border-[#F18800] flex flex-col gap-6">
+                        {/* Address Autocomplete Search (Billing) */}
                         <div className="flex flex-col gap-2">
                           <span className="text-[18px] font-bold text-ink">{t('checkout.quickAddressSearch')}</span>
                           <AddressAutocomplete
@@ -506,119 +616,118 @@ function CheckoutShell({
                             placeholder={t('checkout.quickAddressSearch')}
                           />
                         </div>
-                      )}
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="flex flex-col gap-2">
-                          <span className="text-[18px] font-bold text-ink">{t('checkout.companyName')}</span>
-                          <input
-                            type="text"
-                            value={form.companyName}
-                            disabled={isLoggedIn && !isEditingBilling}
-                            onChange={(e) => handleChange("companyName", e.target.value)}
-                            placeholder={t('checkout.companyNamePlaceholder')}
-                            className={inputClasses(Boolean(errors.companyName))}
-                          />
-                          {errors.companyName && <span className="text-xs text-red-500">{errors.companyName}</span>}
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <span className="text-[18px] font-bold text-ink">{t('checkout.vatNumber')}</span>
-                          <input
-                            type="text"
-                            value={form.vatNumber}
-                            disabled={isLoggedIn && !isEditingBilling}
-                            onChange={(e) => handleChange("vatNumber", e.target.value)}
-                            placeholder={t('checkout.vatNumberPlaceholder')}
-                            className={inputClasses(Boolean(errors.vatNumber))}
-                          />
-                          {errors.vatNumber && <span className="text-xs text-red-500">{errors.vatNumber}</span>}
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="flex flex-col gap-2">
-                          <span className="text-[18px] font-bold text-ink">{t('checkout.firstName')} *</span>
-                          <input
-                            type="text"
-                            value={form.firstName}
-                            disabled={isLoggedIn && !isEditingBilling}
-                            onChange={(e) => handleChange("firstName", e.target.value)}
-                            placeholder={t('checkout.firstNamePlaceholder')}
-                            className={inputClasses(Boolean(errors.firstName))}
-                          />
-                          {errors.firstName && <span className="text-xs text-red-500">{errors.firstName}</span>}
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <span className="text-[18px] font-bold text-ink">{t('checkout.lastName')} *</span>
-                          <input
-                            type="text"
-                            value={form.lastName}
-                            disabled={isLoggedIn && !isEditingBilling}
-                            onChange={(e) => handleChange("lastName", e.target.value)}
-                            placeholder={t('checkout.lastNamePlaceholder')}
-                            className={inputClasses(Boolean(errors.lastName))}
-                          />
-                          {errors.lastName && <span className="text-xs text-red-500">{errors.lastName}</span>}
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="flex flex-col gap-2">
-                          <span className="text-[18px] font-bold text-ink">{t('checkout.email')} *</span>
-                          <input
-                            type="email"
-                            value={form.email}
-                            disabled={isLoggedIn && !isEditingBilling}
-                            onChange={(e) => handleChange("email", e.target.value)}
-                            placeholder={t('checkout.emailPlaceholder')}
-                            className={inputClasses(Boolean(errors.email))}
-                          />
-                          {errors.email && <span className="text-xs text-red-500">{errors.email}</span>}
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <span className="text-[18px] font-bold text-ink">{t('checkout.mobileNumber')} *</span>
-                          <input
-                            type="tel"
-                            value={form.mobileNumber}
-                            disabled={isLoggedIn && !isEditingBilling}
-                            onChange={(e) => handleChange("mobileNumber", e.target.value)}
-                            placeholder={t('checkout.mobileNumberPlaceholder')}
-                            className={inputClasses(Boolean(errors.mobileNumber))}
-                          />
-                          {errors.mobileNumber && <span className="text-xs text-red-500">{errors.mobileNumber}</span>}
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col gap-2">
-                        <span className="text-[18px] font-bold text-ink">{t('checkout.country')}</span>
-                        <div className="relative">
-                          <select
-                            value={form.country}
-                            disabled={isLoggedIn && !isEditingBilling}
-                            onChange={(e) => handleChange("country", e.target.value)}
-                            className={`${inputClasses()} appearance-none pr-10`}
-                          >
-                            {countriesList.length > 0 ? (
-                              countriesList.map((c: any) => (
-                                <option key={c.id} value={c.name}>
-                                  {c.name}
-                                </option>
-                              ))
-                            ) : (
-                              <>
-                                <option value="Netherlands">{t('countries.netherlands')}</option>
-                                <option value="Belgium">{t('countries.belgium')}</option>
-                                <option value="Germany">{t('countries.germany')}</option>
-                              </>
-                            )}
-                          </select>
-                          <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M4 6L8 10L12 6" stroke="var(--subtle)" strokeWidth="1.16667" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="flex flex-col gap-2">
+                            <span className="text-[18px] font-bold text-ink">{t('checkout.companyName')}</span>
+                            <input
+                              type="text"
+                              value={form.companyName}
+                              disabled={isLoggedIn && !isEditingBilling}
+                              onChange={(e) => handleChange("companyName", e.target.value)}
+                              placeholder={t('checkout.companyNamePlaceholder')}
+                              className={inputClasses(Boolean(errors.companyName))}
+                            />
+                            {errors.companyName && <span className="text-xs text-red-500">{errors.companyName}</span>}
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <span className="text-[18px] font-bold text-ink">{t('checkout.vatNumber')}</span>
+                            <input
+                              type="text"
+                              value={form.vatNumber}
+                              disabled={isLoggedIn && !isEditingBilling}
+                              onChange={(e) => handleChange("vatNumber", e.target.value)}
+                              placeholder={t('checkout.vatNumberPlaceholder')}
+                              className={inputClasses(Boolean(errors.vatNumber))}
+                            />
+                            {errors.vatNumber && <span className="text-xs text-red-500">{errors.vatNumber}</span>}
                           </div>
                         </div>
-                      </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="flex flex-col gap-2">
+                            <span className="text-[18px] font-bold text-ink">{t('checkout.firstName')} *</span>
+                            <input
+                              type="text"
+                              value={form.firstName}
+                              disabled={isLoggedIn && !isEditingBilling}
+                              onChange={(e) => handleChange("firstName", e.target.value)}
+                              placeholder={t('checkout.firstNamePlaceholder')}
+                              className={inputClasses(Boolean(errors.firstName))}
+                            />
+                            {errors.firstName && <span className="text-xs text-red-500">{errors.firstName}</span>}
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <span className="text-[18px] font-bold text-ink">{t('checkout.lastName')} *</span>
+                            <input
+                              type="text"
+                              value={form.lastName}
+                              disabled={isLoggedIn && !isEditingBilling}
+                              onChange={(e) => handleChange("lastName", e.target.value)}
+                              placeholder={t('checkout.lastNamePlaceholder')}
+                              className={inputClasses(Boolean(errors.lastName))}
+                            />
+                            {errors.lastName && <span className="text-xs text-red-500">{errors.lastName}</span>}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="flex flex-col gap-2">
+                            <span className="text-[18px] font-bold text-ink">{t('checkout.email')} *</span>
+                            <input
+                              type="email"
+                              value={form.email}
+                              disabled={isLoggedIn && !isEditingBilling}
+                              onChange={(e) => handleChange("email", e.target.value)}
+                              placeholder={t('checkout.emailPlaceholder')}
+                              className={inputClasses(Boolean(errors.email))}
+                            />
+                            {errors.email && <span className="text-xs text-red-500">{errors.email}</span>}
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <span className="text-[18px] font-bold text-ink">{t('checkout.mobileNumber')} *</span>
+                            <input
+                              type="tel"
+                              value={form.mobileNumber}
+                              disabled={isLoggedIn && !isEditingBilling}
+                              onChange={(e) => handleChange("mobileNumber", e.target.value)}
+                              placeholder={t('checkout.mobileNumberPlaceholder')}
+                              className={inputClasses(Boolean(errors.mobileNumber))}
+                            />
+                            {errors.mobileNumber && <span className="text-xs text-red-500">{errors.mobileNumber}</span>}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                          <span className="text-[18px] font-bold text-ink">{t('checkout.country')}</span>
+                          <div className="relative">
+                            <select
+                              value={form.country}
+                              disabled={isLoggedIn && !isEditingBilling}
+                              onChange={(e) => handleChange("country", e.target.value)}
+                              className={`${inputClasses()} appearance-none pr-10`}
+                            >
+                              {countriesList.length > 0 ? (
+                                countriesList.map((c: any) => (
+                                  <option key={c.id} value={c.name}>
+                                    {c.name}
+                                  </option>
+                                ))
+                              ) : (
+                                <>
+                                  <option value="Netherlands">{t('countries.netherlands')}</option>
+                                  <option value="Belgium">{t('countries.belgium')}</option>
+                                  <option value="Germany">{t('countries.germany')}</option>
+                                </>
+                              )}
+                            </select>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M4 6L8 10L12 6" stroke="var(--subtle)" strokeWidth="1.16667" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="flex flex-col gap-2">
@@ -727,7 +836,8 @@ function CheckoutShell({
                           </button>
                         )
                       )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -1280,9 +1390,10 @@ function CheckoutShell({
           setIsLoginPopupOpen(true);
         }}
       />
-      <AddShippingAddressPopup
+      <AddAddressPopup
         open={isAddAddressPopupOpen}
         editingAddress={editingAddress}
+        addressType={addressPopupType}
         onOpenChange={(open) => {
           setIsAddAddressPopupOpen(open);
           if (!open) {
@@ -1292,7 +1403,7 @@ function CheckoutShell({
         onSuccess={async (savedAddressId) => {
           setIsAddAddressPopupOpen(false);
           setEditingAddress(null);
-          await onAddressAdded(savedAddressId);
+          await onAddressAdded(savedAddressId, addressPopupType);
         }}
       />
     </div>
@@ -1413,17 +1524,36 @@ function formatAddressId(address: Record<string, unknown>, index: number) {
   return readString(address, ["id", "address_id", "uuid"]) || `address-${index}`;
 }
 
-function countryFromAddress(address: Record<string, unknown>, fallback: string) {
-  const countryId = readString(address, ["country_id", "countryCode", "country_code"]).toUpperCase();
+function countryFromAddress(address: Record<string, unknown>, fallback: string, countriesList?: any[]) {
+  const rawVal = readString(address, ["country_id", "countryCode", "country_code", "country_name", "country"]);
+  const countryId = rawVal.toUpperCase();
 
-  if (countryId === "NL") return "Netherlands";
-  if (countryId === "BE") return "Belgium";
-  if (countryId === "DE") return "Germany";
+  if (countriesList && countriesList.length > 0 && rawVal) {
+    const found = countriesList.find((c: any) =>
+      c.id.toLowerCase() === rawVal.toLowerCase() ||
+      c.name.toLowerCase() === rawVal.toLowerCase()
+    );
+    if (found) {
+      return found.name;
+    }
+  }
 
-  return readString(address, ["country_name", "country"]) || fallback;
+  if (countryId === "NL" || countryId === "NEDERLAND") return "Netherlands";
+  if (countryId === "BE" || countryId === "BELGIË" || countryId === "BELGIQUE") return "Belgium";
+  if (countryId === "DE" || countryId === "DEUTSCHLAND") return "Germany";
+  if (countryId === "NG" || countryId === "NIGERIA") return "Nigeria";
+  if (countryId === "FR" || countryId === "FRANCE") return "France";
+  if (countryId === "ES" || countryId === "ESPAÑA" || countryId === "SPAIN") return "Spain";
+  if (countryId === "IT" || countryId === "ITALIA" || countryId === "ITALY") return "Italy";
+  if (countryId === "AT" || countryId === "AUSTRIA" || countryId === "ÖSTERREICH") return "Austria";
+  if (countryId === "GB" || countryId === "UK" || countryId === "UNITED KINGDOM") return "United Kingdom";
+  if (countryId === "US" || countryId === "USA" || countryId === "UNITED STATES") return "United States";
+
+  const explicitCountry = readString(address, ["country_name", "country"]);
+  return explicitCountry || fallback;
 }
 
-function normalizeCheckoutAddress(address: Record<string, unknown>, index: number): CheckoutSavedAddress {
+function normalizeCheckoutAddress(address: Record<string, unknown>, index: number, countriesList?: any[]): CheckoutSavedAddress {
   const firstName = readString(address, ["firstname", "first_name", "billing_first_name", "shipping_first_name"]);
   const lastName = readString(address, ["lastname", "last_name", "billing_last_name", "shipping_last_name"]);
   const explicitName = readString(address, ["name", "full_name", "display_name"]);
@@ -1449,16 +1579,25 @@ function normalizeCheckoutAddress(address: Record<string, unknown>, index: numbe
     state: readAddressState(address),
     phone: readString(address, ["phone", "telephone", "mobile", "mobile_number", "mobileNumber"]),
     email: readString(address, ["email", "billing_email", "shipping_email"]),
-    country: countryFromAddress(address, "Netherlands"),
+    country: countryFromAddress(address, "Netherlands", countriesList),
   };
 }
 
-function normalizeCheckoutShippingAddresses(payload: unknown) {
+function normalizeCheckoutShippingAddresses(payload: unknown, countriesList?: any[]) {
   return extractAddressList(payload)
-    .map(normalizeCheckoutAddress)
+    .map((addr, idx) => normalizeCheckoutAddress(addr, idx, countriesList))
     .filter((address) => {
       const addressType = address.type.toLowerCase();
       return addressType === "shipping" || addressType.includes("shipping");
+    });
+}
+
+function normalizeCheckoutBillingAddresses(payload: unknown, countriesList?: any[]) {
+  return extractAddressList(payload)
+    .map((addr, idx) => normalizeCheckoutAddress(addr, idx, countriesList))
+    .filter((address) => {
+      const addressType = address.type.toLowerCase();
+      return addressType === "billing" || addressType.includes("billing");
     });
 }
 
@@ -1469,6 +1608,23 @@ function readDefaultShippingAddressId(...sources: unknown[]) {
       "defaultShippingAddressId",
       "default_shipping_id",
       "shipping_address_id",
+    ]);
+
+    if (value) {
+      return value;
+    }
+  }
+
+  return "";
+}
+
+function readDefaultBillingAddressId(...sources: unknown[]) {
+  for (const source of sources) {
+    const value = readString(source, [
+      "default_billing_address_id",
+      "defaultBillingAddressId",
+      "default_billing_id",
+      "billing_address_id",
     ]);
 
     if (value) {
@@ -1536,6 +1692,7 @@ function valueWhenBlank(current: string, next: string) {
 function applySavedShippingAddressToForm(
   current: CheckoutFormState,
   address: CheckoutSavedAddress,
+  countriesList?: any[],
 ): CheckoutFormState {
   return {
     ...current,
@@ -1547,7 +1704,27 @@ function applySavedShippingAddressToForm(
     shippingCity: address.city,
     shippingState: address.state,
     shippingPostcode: address.postcode,
-    shippingCountry: countryFromAddress(address, current.shippingCountry),
+    shippingCountry: countryFromAddress(address, current.shippingCountry, countriesList),
+  };
+}
+
+function applySavedBillingAddressToForm(
+  current: CheckoutFormState,
+  address: CheckoutSavedAddress,
+  countriesList?: any[],
+): CheckoutFormState {
+  return {
+    ...current,
+    firstName: address.firstname || current.firstName,
+    lastName: address.lastname || current.lastName,
+    companyName: address.company || current.companyName,
+    email: address.email || current.email,
+    mobileNumber: address.phone || current.mobileNumber,
+    streetAddress: address.address1,
+    city: address.city,
+    state: address.state,
+    postcode: address.postcode,
+    country: countryFromAddress(address, current.country, countriesList),
   };
 }
 
@@ -1573,6 +1750,9 @@ export default function CheckoutPageClient({
   const [savedShippingAddresses, setSavedShippingAddresses] = useState<CheckoutSavedAddress[]>([]);
   const [selectedSavedShippingAddressId, setSelectedSavedShippingAddressId] = useState<string | null>(null);
   const [defaultShippingAddressId, setDefaultShippingAddressId] = useState<string>("");
+  const [savedBillingAddresses, setSavedBillingAddresses] = useState<CheckoutSavedAddress[]>([]);
+  const [selectedSavedBillingAddressId, setSelectedSavedBillingAddressId] = useState<string | null>(null);
+  const [defaultBillingAddressId, setDefaultBillingAddressId] = useState<string>("");
   const [isLoadingSavedShippingAddresses, setIsLoadingSavedShippingAddresses] = useState(false);
   const [savedShippingAddressesError, setSavedShippingAddressesError] = useState("");
   const [isEditingBilling, setIsEditingBilling] = useState(false);
@@ -1747,6 +1927,9 @@ export default function CheckoutPageClient({
       setSavedShippingAddresses([]);
       setSelectedSavedShippingAddressId(null);
       setDefaultShippingAddressId("");
+      setSavedBillingAddresses([]);
+      setSelectedSavedBillingAddressId(null);
+      setDefaultBillingAddressId("");
       setIsLoadingSavedShippingAddresses(false);
       setIsAutofilled(true);
       return;
@@ -1762,7 +1945,33 @@ export default function CheckoutPageClient({
       const pId = preferredAddress.id || preferredAddress.address_id;
       setLoadedBillingAddressId((pId as string | number | null) || null);
     }
-    const rawShippingAddresses = normalizeCheckoutShippingAddresses(addressPayload);
+
+    // Saved Billing Addresses
+    const rawBillingAddresses = normalizeCheckoutBillingAddresses(addressPayload, countriesList);
+    const nextDefaultBillingAddressId = readDefaultBillingAddressId(finalProfile, storedUserData);
+    const defaultBillingAddress =
+      rawBillingAddresses.find((address) => String(address.id) === String(nextDefaultBillingAddressId)) ??
+      rawBillingAddresses.find((address) => address.isDefault) ??
+      rawBillingAddresses[0] ??
+      null;
+    const billingAddresses = defaultBillingAddress
+      ? [defaultBillingAddress, ...rawBillingAddresses.filter((address) => String(address.id) !== String(defaultBillingAddress.id))]
+      : rawBillingAddresses;
+    const billingAddressToLoad =
+      billingAddresses.find((address) => String(address.id) === String(selectedSavedBillingAddressId)) ??
+      defaultBillingAddress;
+
+    setSavedBillingAddresses(billingAddresses);
+    setDefaultBillingAddressId(nextDefaultBillingAddressId);
+    setSelectedSavedBillingAddressId((current) => {
+      if (current && billingAddresses.some((address) => String(address.id) === String(current))) {
+        return current;
+      }
+      return defaultBillingAddress ? defaultBillingAddress.id : null;
+    });
+
+    // Saved Shipping Addresses
+    const rawShippingAddresses = normalizeCheckoutShippingAddresses(addressPayload, countriesList);
     const nextDefaultShippingAddressId = readDefaultShippingAddressId(finalProfile, storedUserData);
 
     const defaultAddress =
@@ -1789,46 +1998,18 @@ export default function CheckoutPageClient({
       return defaultAddress ? defaultAddress.id : null;
     });
     setForm((current) => {
-      if (shippingAddresses.length > 0 && addressToLoad) {
-        return applySavedShippingAddressToForm({ ...current, sameAsBilling: false }, addressToLoad);
+      let updated = current;
+      if (billingAddresses.length > 0 && billingAddressToLoad) {
+        updated = applySavedBillingAddressToForm(updated, billingAddressToLoad, countriesList);
       }
-      return current.sameAsBilling || !addressToLoad ? current : applySavedShippingAddressToForm(current, addressToLoad);
+      if (shippingAddresses.length > 0 && addressToLoad) {
+        return applySavedShippingAddressToForm({ ...updated, sameAsBilling: false }, addressToLoad, countriesList);
+      }
+      return updated.sameAsBilling || !addressToLoad ? updated : applySavedShippingAddressToForm(updated, addressToLoad, countriesList);
     });
     setIsLoadingSavedShippingAddresses(false);
-
-    const profileName = splitName(finalProfile);
-    const storedName = splitName(storedUserData);
-    const addressName = splitName(preferredAddress);
-    const profilePhone = readString(finalProfile, ["phone", "telephone", "mobile", "mobile_number", "mobileNumber"]);
-    const storedPhone = readString(storedUserData, ["phone", "telephone", "mobile", "mobile_number", "mobileNumber"]);
-    const addressPhone = readString(preferredAddress, ["phone", "telephone", "mobile", "mobile_number", "mobileNumber"]);
-
-    setForm((prev) => ({
-      ...prev,
-      firstName: valueWhenBlank(prev.firstName, addressName.firstName || profileName.firstName || storedName.firstName),
-      lastName: valueWhenBlank(prev.lastName, addressName.lastName || profileName.lastName || storedName.lastName),
-      email: valueWhenBlank(prev.email, readString(preferredAddress, ["email"]) || readString(finalProfile, ["email"]) || readString(storedUserData, ["email"])),
-      mobileNumber: valueWhenBlank(prev.mobileNumber, addressPhone || profilePhone || storedPhone),
-      companyName: valueWhenBlank(
-        prev.companyName,
-        readString(preferredAddress, ["company", "company_name", "business_name"]) ||
-          readString(finalProfile, ["company", "company_name", "business_name"]) ||
-          readString(storedUserData, ["company", "company_name", "business_name"]),
-      ),
-      vatNumber: valueWhenBlank(
-        prev.vatNumber,
-        readString(preferredAddress, ["vat_number", "btw_number", "vatNumber"]) ||
-          readString(finalProfile, ["vat_number", "btw_number", "vatNumber"]),
-      ),
-      streetAddress: valueWhenBlank(prev.streetAddress, readString(preferredAddress, ["address", "street", "address_1", "street_address"])),
-      city: valueWhenBlank(prev.city, readString(preferredAddress, ["city", "town", "locality"])),
-      state: valueWhenBlank(prev.state, readAddressState(preferredAddress)),
-      postcode: valueWhenBlank(prev.postcode, readString(preferredAddress, ["postalcode", "postcode", "zip", "postal_code"])),
-      country: preferredAddress ? countryFromAddress(preferredAddress, prev.country) : prev.country,
-    }));
-
     setIsAutofilled(true);
-  }, [isDemoMode, selectedSavedShippingAddressId]);
+  }, [isDemoMode, selectedSavedShippingAddressId, selectedSavedBillingAddressId, countriesList]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1892,7 +2073,7 @@ export default function CheckoutPageClient({
 
       setForm((current) => {
         const next = { ...current, sameAsBilling: false };
-        return selectedAddress ? applySavedShippingAddressToForm(next, selectedAddress) : next;
+        return selectedAddress ? applySavedShippingAddressToForm(next, selectedAddress, countriesList) : next;
       });
       setErrors((current) => ({ ...current, sameAsBilling: undefined }));
       return;
@@ -1904,7 +2085,7 @@ export default function CheckoutPageClient({
 
   const handleSavedShippingAddressSelect = useCallback((address: CheckoutSavedAddress) => {
     setSelectedSavedShippingAddressId(address.id);
-    setForm((current) => applySavedShippingAddressToForm(current, address));
+    setForm((current) => applySavedShippingAddressToForm(current, address, countriesList));
     setErrors((current) => ({
       ...current,
       shippingFirstName: undefined,
@@ -1913,6 +2094,23 @@ export default function CheckoutPageClient({
       shippingCity: undefined,
       shippingState: undefined,
       shippingPostcode: undefined,
+      email: address.email ? undefined : current.email,
+      mobileNumber: address.phone ? undefined : current.mobileNumber,
+    }));
+  }, []);
+
+  const handleSavedBillingAddressSelect = useCallback((address: CheckoutSavedAddress) => {
+    setSelectedSavedBillingAddressId(address.id);
+    setForm((current) => applySavedBillingAddressToForm(current, address));
+    setErrors((current) => ({
+      ...current,
+      firstName: undefined,
+      lastName: undefined,
+      streetAddress: undefined,
+      city: undefined,
+      state: undefined,
+      postcode: undefined,
+      companyName: undefined,
       email: address.email ? undefined : current.email,
       mobileNumber: address.phone ? undefined : current.mobileNumber,
     }));
@@ -2093,7 +2291,7 @@ export default function CheckoutPageClient({
       billing_state: form.state,
       billing_province: form.state,
       billing_postalcode: form.postcode,
-      billing_country_id: form.country === "Netherlands" ? "NL" : form.country === "Belgium" ? "BE" : "DE",
+      billing_country_id: (countriesList.find((c: any) => c.name.toLowerCase() === form.country.toLowerCase() || c.id.toLowerCase() === form.country.toLowerCase())?.id || (form.country === "Netherlands" ? "NL" : form.country === "Belgium" ? "BE" : form.country === "Germany" ? "DE" : "NL")).toUpperCase(),
       
       shipping_firstname: shippingFirst,
       shipping_lastname: shippingLast,
@@ -2102,7 +2300,7 @@ export default function CheckoutPageClient({
       shipping_state: shippingStateVal,
       shipping_province: shippingStateVal,
       shipping_postalcode: shippingPostcodeVal,
-      shipping_country_id: shippingCountryVal === "Netherlands" ? "NL" : shippingCountryVal === "Belgium" ? "BE" : "DE",
+      shipping_country_id: (countriesList.find((c: any) => c.name.toLowerCase() === shippingCountryVal.toLowerCase() || c.id.toLowerCase() === shippingCountryVal.toLowerCase())?.id || (shippingCountryVal === "Netherlands" ? "NL" : shippingCountryVal === "Belgium" ? "BE" : shippingCountryVal === "Germany" ? "DE" : "NL")).toUpperCase(),
 
       shipping_amount: shippingAmount,
       tax_amount: taxAmount,
@@ -2200,10 +2398,14 @@ export default function CheckoutPageClient({
     );
   }
 
-  const handleAddressAdded = async (savedAddressId?: string | number) => {
+  const handleAddressAdded = async (savedAddressId?: string | number, type?: 'billing' | 'shipping') => {
     await autofillCustomerDetails();
     if (savedAddressId) {
-      setSelectedSavedShippingAddressId(String(savedAddressId));
+      if (type === 'billing') {
+        setSelectedSavedBillingAddressId(String(savedAddressId));
+      } else {
+        setSelectedSavedShippingAddressId(String(savedAddressId));
+      }
     }
   };
 
@@ -2226,6 +2428,9 @@ export default function CheckoutPageClient({
       onSavedShippingAddressSelect={handleSavedShippingAddressSelect}
       isLoadingSavedShippingAddresses={isLoadingSavedShippingAddresses}
       savedShippingAddressesError={savedShippingAddressesError}
+      savedBillingAddresses={savedBillingAddresses}
+      selectedSavedBillingAddressId={selectedSavedBillingAddressId}
+      onSavedBillingAddressSelect={handleSavedBillingAddressSelect}
       step={step}
       setStep={setStep}
       onAddressSelect={(address, isShipping = false) => {
@@ -2285,21 +2490,27 @@ export default function CheckoutPageClient({
     />
   );
 }
-
-interface AddShippingAddressPopupProps {
+interface AddAddressPopupProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: (savedId?: string | number) => void;
   editingAddress?: CheckoutSavedAddress | null;
+  addressType?: 'billing' | 'shipping';
 }
 
-function AddShippingAddressPopup({ open, onOpenChange, onSuccess, editingAddress }: AddShippingAddressPopupProps) {
+function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addressType = 'shipping' }: AddAddressPopupProps) {
   const t = useTranslations();
   const getLabel = (key: string, fallback: string) => {
-    const val = t(key);
-    return val === key ? fallback : val;
+    try {
+      if (t.has && typeof t.has === 'function' && t.has(key as any)) {
+        return t(key);
+      }
+    } catch (_) {}
+    return fallback;
   };
 
+  const [companyName, setCompanyName] = useState('');
+  const [vatNumber, setVatNumber] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -2317,17 +2528,23 @@ function AddShippingAddressPopup({ open, onOpenChange, onSuccess, editingAddress
   useEffect(() => {
     if (open) {
       if (editingAddress) {
+        setCompanyName(editingAddress.company || '');
+        setVatNumber('');
         setFirstName(editingAddress.firstname || '');
         setLastName(editingAddress.lastname || '');
         setEmail(editingAddress.email || '');
         setPhone(editingAddress.phone || '');
-        setCountryId(editingAddress.country || 'NL');
+        const rawC = editingAddress.country || 'NL';
+        const matchC = countriesList.find((c: any) => c.id.toLowerCase() === rawC.toLowerCase() || c.name.toLowerCase() === rawC.toLowerCase());
+        setCountryId(matchC ? matchC.id : rawC);
         setStreet(editingAddress.address1 || '');
         setStateRegion(editingAddress.address2 || '');
         setPostcode(editingAddress.postcode || '');
         setCity(editingAddress.city || '');
         setLabel(editingAddress.company === 'Office' ? 'office' : 'home');
       } else {
+        setCompanyName('');
+        setVatNumber('');
         setFirstName('');
         setLastName('');
         setEmail('');
@@ -2340,7 +2557,7 @@ function AddShippingAddressPopup({ open, onOpenChange, onSuccess, editingAddress
         setLabel('home');
       }
     }
-  }, [open, editingAddress]);
+  }, [open, editingAddress, countriesList]);
 
   useEffect(() => {
     async function loadCountries() {
@@ -2350,11 +2567,14 @@ function AddShippingAddressPopup({ open, onOpenChange, onSuccess, editingAddress
           const data = await res.json();
           const list = data.countries || [];
           setCountriesList(list);
-          const nl = list.find((c: any) => c.id === 'NL' || c.name.toLowerCase() === 'netherlands');
-          if (nl) {
-            setCountryId(nl.id);
-          } else if (list.length > 0) {
-            setCountryId(list[0].id);
+          if (editingAddress?.country) {
+            const match = list.find((c: any) =>
+              c.id.toLowerCase() === editingAddress.country.toLowerCase() ||
+              c.name.toLowerCase() === editingAddress.country.toLowerCase()
+            );
+            if (match) {
+              setCountryId(match.id);
+            }
           }
         }
       } catch (err) {
@@ -2364,9 +2584,9 @@ function AddShippingAddressPopup({ open, onOpenChange, onSuccess, editingAddress
     if (open) {
       loadCountries();
     }
-  }, [open]);
+  }, [open, editingAddress]);
 
-  const selectedCountry = countriesList.find((c: any) => c.id === countryId);
+  const selectedCountry = countriesList.find((c: any) => c.id === countryId || c.name.toLowerCase() === countryId.toLowerCase());
   const provinces = selectedCountry?.provinces || [];
 
   useEffect(() => {
@@ -2394,11 +2614,12 @@ function AddShippingAddressPopup({ open, onOpenChange, onSuccess, editingAddress
     setIsSaving(true);
     try {
       const payload: Record<string, unknown> = {
-        type: 'shipping',
+        type: addressType,
         name: `${firstName} ${lastName}`,
         firstname: firstName,
         lastname: lastName,
-        company_name: label === 'office' ? 'Office' : '',
+        company_name: companyName || (label === 'office' ? 'Office' : ''),
+        vat_number: vatNumber,
         address: street,
         address2: stateRegion,
         postalcode: postcode,
@@ -2426,59 +2647,89 @@ function AddShippingAddressPopup({ open, onOpenChange, onSuccess, editingAddress
       const responseData = await response.json().catch(() => ({}));
       const savedAddressId = responseData?.id || responseData?.data?.id || editingAddress?.id;
 
-      toast.success(t('account.addressSavedSuccess', { type: 'Shipping' }));
+      const typeLabel = addressType === 'billing' ? 'Billing' : 'Shipping';
+      toast.success(t('account.addressSavedSuccess', { type: typeLabel }));
       onSuccess(savedAddressId);
     } catch (error) {
-      console.error("Shipping save error:", error);
+      console.error(`${addressType} save error:`, error);
       toast.error(t('account.addressesLoadError'));
     } finally {
       setIsSaving(false);
     }
   };
 
-  const labelClasses = "text-[#222222] text-[18px] font-bold font-['Segoe_UI'] leading-5 mb-2 block";
-  const inputClasses = "w-full h-[52px] px-5 py-4 rounded-full border border-[#DDE1EA] focus:border-[#F18800] focus:ring-[0.5px] focus:ring-[#F18800] outline-none text-[16px] font-normal leading-6 font-['Segoe_UI'] text-neutral-800 placeholder-[#888888] bg-white transition-all";
+  const labelClasses = "text-[18px] font-bold text-ink mb-2 block";
+  const inputClasses = "w-full h-[52px] px-5 py-4 rounded-full border bg-white text-neutral-800 text-[16px] outline-none transition-all placeholder:text-subtle border-[#DDE1EA] focus:border-brand focus:ring-1 focus:ring-brand";
+
+  const isBilling = addressType === 'billing';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false} className="max-h-[90vh] overflow-y-auto rounded-[28px] border-slate-100 bg-white p-8 shadow-2xl sm:max-w-2xl">
         <div className="flex flex-col gap-8 w-full">
           <DialogTitle className="w-full text-center text-[#222222] text-[32px] font-semibold font-['Segoe_UI'] leading-[38.40px]">
-            {editingAddress ? getLabel('account.editAddress', 'Edit Shipping Address') : getLabel('account.addNewAddress', 'Add New Shipping Address')}
+            {editingAddress
+              ? (isBilling ? getLabel('account.editBillingAddress', 'Edit Billing Address') : getLabel('account.editAddress', 'Edit Shipping Address'))
+              : (isBilling ? getLabel('account.addNewBillingAddress', 'Add New Billing Address') : getLabel('account.addNewAddress', 'Add New Shipping Address'))}
           </DialogTitle>
           <DialogDescription className="sr-only">
-            Form to add a new shipping address
+            {isBilling ? 'Form to add a new billing address' : 'Form to add a new shipping address'}
           </DialogDescription>
           
           <form onSubmit={handleSubmit} className="w-full flex flex-col gap-6">
-            <div className="flex gap-4 w-full">
-              <div className="flex-1 flex flex-col gap-2">
-                <label className={labelClasses}>{getLabel('account.firstName', 'First name')}</label>
+            {isBilling && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <span className={labelClasses}>{getLabel('checkout.companyName', 'Company name')}</span>
+                  <input 
+                    type="text" 
+                    value={companyName} 
+                    onChange={(e) => setCompanyName(e.target.value)} 
+                    className={inputClasses} 
+                    placeholder={getLabel('checkout.companyNamePlaceholder', 'Van Dijk Labels BV')} 
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <span className={labelClasses}>{getLabel('checkout.vatNumber', 'VAT number')}</span>
+                  <input 
+                    type="text" 
+                    value={vatNumber} 
+                    onChange={(e) => setVatNumber(e.target.value)} 
+                    className={inputClasses} 
+                    placeholder={getLabel('checkout.vatNumberPlaceholder', 'NL123456789B01')} 
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2">
+                <span className={labelClasses}>{getLabel('checkout.firstName', 'First Name')} *</span>
                 <input 
                   type="text" 
                   value={firstName} 
                   onChange={(e) => setFirstName(e.target.value)} 
                   className={inputClasses} 
                   required 
-                  placeholder={getLabel('account.firstName', 'First name')} 
+                  placeholder={getLabel('checkout.firstNamePlaceholder', 'Emma')} 
                 />
               </div>
-              <div className="flex-1 flex flex-col gap-2">
-                <label className={labelClasses}>{getLabel('account.lastName', 'Last name')}</label>
+              <div className="flex flex-col gap-2">
+                <span className={labelClasses}>{getLabel('checkout.lastName', 'Last Name')} *</span>
                 <input 
                   type="text" 
                   value={lastName} 
                   onChange={(e) => setLastName(e.target.value)} 
                   className={inputClasses} 
                   required 
-                  placeholder={getLabel('account.lastName', 'Last name')} 
+                  placeholder={getLabel('checkout.lastNamePlaceholder', 'van Dijk')} 
                 />
               </div>
             </div>
 
-            <div className="flex gap-4 w-full">
-              <div className="flex-1 flex flex-col gap-2">
-                <label className={labelClasses}>{getLabel('account.email', 'Email')}</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2">
+                <span className={labelClasses}>{getLabel('checkout.email', 'Email')} *</span>
                 <input 
                   type="email" 
                   value={email} 
@@ -2488,93 +2739,101 @@ function AddShippingAddressPopup({ open, onOpenChange, onSuccess, editingAddress
                   placeholder="you@example.com" 
                 />
               </div>
-              <div className="flex-1 flex flex-col gap-2">
-                <label className={labelClasses}>{getLabel('account.phoneNumber', 'Phone number')}</label>
+              <div className="flex flex-col gap-2">
+                <span className={labelClasses}>{getLabel('checkout.mobileNumber', 'Phone number')} *</span>
                 <input 
                   type="tel" 
                   value={phone} 
                   onChange={(e) => setPhone(e.target.value)} 
                   className={inputClasses} 
                   required 
-                  placeholder={getLabel('account.phoneNumber', 'Phone number')} 
+                  placeholder="+31 6 1234 5678" 
                 />
               </div>
             </div>
 
             <div className="flex flex-col gap-2 w-full">
-              <label className={labelClasses}>{getLabel('account.country', 'Country / Region')}</label>
+              <span className={labelClasses}>{getLabel('checkout.country', 'Country')}</span>
               <div className="relative w-full">
                 <select 
                   value={countryId} 
                   onChange={(e) => setCountryId(e.target.value)} 
-                  className={`${inputClasses} appearance-none pr-10 bg-transparent`}
+                  className={`${inputClasses} appearance-none pr-10 bg-white`}
                 >
-                  {countriesList.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
+                  {countriesList.length > 0 ? (
+                    countriesList.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="NL">{t('countries.netherlands', { defaultValue: 'Netherlands' })}</option>
+                      <option value="BE">{t('countries.belgium', { defaultValue: 'Belgium' })}</option>
+                      <option value="DE">{t('countries.germany', { defaultValue: 'Germany' })}</option>
+                    </>
+                  )}
                 </select>
-                <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none">
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M4 6L8 10L12 6" stroke="#888888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M4 6L8 10L12 6" stroke="var(--subtle)" strokeWidth="1.16667" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
               </div>
             </div>
 
-            <div className="flex gap-4 w-full">
-              <div className="flex-1 flex flex-col gap-2">
-                <label className={labelClasses}>{getLabel('account.streetAndHouseNumber', 'Street and house number')}</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2">
+                <span className={labelClasses}>{getLabel('checkout.streetAddress', 'Street Address')} *</span>
                 <input 
                   type="text" 
                   value={street} 
                   onChange={(e) => setStreet(e.target.value)} 
                   className={inputClasses} 
                   required 
-                  placeholder={getLabel('account.streetAndHouseNumber', 'Street and house number')} 
+                  placeholder={getLabel('checkout.streetAddressPlaceholder', 'Keizersgracht 214')} 
                 />
               </div>
-              <div className="flex-1 flex flex-col gap-2">
-                <label className={labelClasses}>{getLabel('account.postCode', 'Postcode')}</label>
+              <div className="flex flex-col gap-2">
+                <span className={labelClasses}>{getLabel('checkout.postcode', 'Postcode')} *</span>
                 <input 
                   type="text" 
                   value={postcode} 
                   onChange={(e) => setPostcode(e.target.value)} 
                   className={inputClasses} 
                   required 
-                  placeholder={getLabel('account.postCode', 'Postcode')} 
+                  placeholder={getLabel('checkout.postcodePlaceholder', '1016 DW')} 
                 />
               </div>
             </div>
 
-            <div className="flex gap-4 w-full">
-              <div className="flex-1 flex flex-col gap-2">
-                <label className={labelClasses}>{getLabel('account.city', 'Place')}</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2">
+                <span className={labelClasses}>{getLabel('checkout.city', 'Town/City')} *</span>
                 <input 
                   type="text" 
                   value={city} 
                   onChange={(e) => setCity(e.target.value)} 
                   className={inputClasses} 
                   required 
-                  placeholder={getLabel('account.city', 'Place')} 
+                  placeholder={getLabel('checkout.cityPlaceholder', 'Amsterdam')} 
                 />
               </div>
-              <div className="flex-1 flex flex-col gap-2">
-                <label className={labelClasses}>{getLabel('account.stateOptional', 'State (optional)')}</label>
+              <div className="flex flex-col gap-2">
+                <span className={labelClasses}>{getLabel('checkout.state', 'State')}</span>
                 {provinces.length > 0 ? (
                   <div className="relative w-full">
                     <select 
                       value={provinceId} 
                       onChange={(e) => handleProvinceChange(e.target.value)} 
-                      className={`${inputClasses} appearance-none pr-10 bg-transparent`}
+                      className={`${inputClasses} appearance-none pr-10 bg-white`}
                     >
                       <option value="">-- {getLabel('account.stateOptional', 'Select Province')} --</option>
                       {provinces.map((p: any) => (
                         <option key={p.id} value={p.id}>{p.name}</option>
                       ))}
                     </select>
-                    <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none">
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
                       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M4 6L8 10L12 6" stroke="#888888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M4 6L8 10L12 6" stroke="var(--subtle)" strokeWidth="1.16667" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     </div>
                   </div>
@@ -2584,78 +2843,80 @@ function AddShippingAddressPopup({ open, onOpenChange, onSuccess, editingAddress
                     value={stateRegion} 
                     onChange={(e) => setStateRegion(e.target.value)} 
                     className={inputClasses} 
-                    placeholder={getLabel('account.stateOptional', 'State')} 
+                    placeholder={getLabel('checkout.statePlaceholder', 'State')} 
                   />
                 )}
               </div>
             </div>
 
-            <div className="flex flex-col gap-2 w-full">
-              <label className={labelClasses}>{getLabel('account.selectLabelForDelivery', 'Select a label for effective delivery:')}</label>
-              <div className="flex gap-2 w-full">
-                <button 
-                  type="button" 
-                  onClick={() => setLabel('office')}
-                  className={`flex-1 p-4 bg-white border rounded-[52px] justify-start items-center gap-3 inline-flex cursor-pointer select-none transition-all ${
-                    label === 'office' ? 'border-[#F18800] bg-[rgba(241,136,0,0.02)] border-[1.5px]' : 'border-[#E4EAF1]'
-                  }`}
-                >
-                  <div className="w-5 h-5 relative flex items-center justify-center flex-shrink-0">
-                    {label === 'office' ? (
-                      <div className="w-5 h-5 bg-[#F18800] rounded-full relative flex items-center justify-center">
-                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M1.5 4L4 6.5L8.5 1.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </div>
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border border-[#CAD3DF]"></div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#444444] fill-current">
-                      <mask id="mask_office" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
-                        <rect width="20" height="20" fill="#D9D9D9"/>
-                      </mask>
-                      <g mask="url(#mask_office)">
-                        <path d="M2.49967 18.332C2.04134 18.332 1.64898 18.1688 1.32259 17.8424C0.996202 17.5161 0.833008 17.1237 0.833008 16.6654V8.33203C0.833008 8.09592 0.912869 7.898 1.07259 7.73828C1.23231 7.57856 1.43023 7.4987 1.66634 7.4987C1.90245 7.4987 2.10037 7.57856 2.26009 7.73828C2.41981 7.898 2.49967 8.09592 2.49967 8.33203V16.6654H15.833C16.0691 16.6654 16.267 16.7452 16.4268 16.9049C16.5865 17.0647 16.6663 17.2626 16.6663 17.4987C16.6663 17.7348 16.5865 17.9327 16.4268 18.0924C16.267 18.2522 16.0691 18.332 15.833 18.332H2.49967ZM5.83301 14.9987C5.37467 14.9987 4.98231 14.8355 4.65592 14.5091C4.32954 14.1827 4.16634 13.7904 4.16634 13.332V4.9987C4.16634 4.76259 4.2462 4.56467 4.40592 4.40495C4.56565 4.24523 4.76356 4.16536 4.99967 4.16536H8.33301V2.4987C8.33301 2.04036 8.4962 1.648 8.82259 1.32161C9.14898 0.995226 9.54134 0.832031 9.99967 0.832031H13.333C13.7913 0.832031 14.1837 0.995226 14.5101 1.32161C14.8365 1.648 14.9997 2.04036 14.9997 2.4987V4.16536H18.333C18.5691 4.16536 18.767 4.24523 18.9268 4.40495C19.0865 4.56467 19.1663 4.76259 19.1663 4.9987V13.332C19.1663 13.7904 19.0031 14.1827 18.6768 14.5091C18.3504 14.8355 17.958 14.9987 17.4997 14.9987H5.83301ZM5.83301 13.332H17.4997V5.83203H5.83301V13.332ZM9.99967 4.16536H13.333V2.4987H9.99967V4.16536Z" fill="#444444" />
-                      </g>
-                    </svg>
-                    <span className="text-[#444444] text-[20px] font-bold leading-6 font-['Segoe_UI']">{getLabel('account.office', 'Office')}</span>
-                  </div>
-                </button>
+            {!isBilling && (
+              <div className="flex flex-col gap-2 w-full">
+                <label className={labelClasses}>{getLabel('account.selectLabelForDelivery', 'Select a label for effective delivery:')}</label>
+                <div className="flex gap-2 w-full">
+                  <button 
+                    type="button" 
+                    onClick={() => setLabel('office')}
+                    className={`flex-1 p-4 bg-white border rounded-[52px] justify-start items-center gap-3 inline-flex cursor-pointer select-none transition-all ${
+                      label === 'office' ? 'border-[#F18800] bg-[rgba(241,136,0,0.02)] border-[1.5px]' : 'border-[#E4EAF1]'
+                    }`}
+                  >
+                    <div className="w-5 h-5 relative flex items-center justify-center flex-shrink-0">
+                      {label === 'office' ? (
+                        <div className="w-5 h-5 bg-[#F18800] rounded-full relative flex items-center justify-center">
+                          <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1.5 4L4 6.5L8.5 1.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                      ) : (
+                        <div className="w-5 h-5 rounded-full border border-[#CAD3DF]"></div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#444444] fill-current">
+                        <mask id="mask_office" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
+                          <rect width="20" height="20" fill="#D9D9D9"/>
+                        </mask>
+                        <g mask="url(#mask_office)">
+                          <path d="M2.49967 18.332C2.04134 18.332 1.64898 18.1688 1.32259 17.8424C0.996202 17.5161 0.833008 17.1237 0.833008 16.6654V8.33203C0.833008 8.09592 0.912869 7.898 1.07259 7.73828C1.23231 7.57856 1.43023 7.4987 1.66634 7.4987C1.90245 7.4987 2.10037 7.57856 2.26009 7.73828C2.41981 7.898 2.49967 8.09592 2.49967 8.33203V16.6654H15.833C16.0691 16.6654 16.267 16.7452 16.4268 16.9049C16.5865 17.0647 16.6663 17.2626 16.6663 17.4987C16.6663 17.7348 16.5865 17.9327 16.4268 18.0924C16.267 18.2522 16.0691 18.332 15.833 18.332H2.49967ZM5.83301 14.9987C5.37467 14.9987 4.98231 14.8355 4.65592 14.5091C4.32954 14.1827 4.16634 13.7904 4.16634 13.332V4.9987C4.16634 4.76259 4.2462 4.56467 4.40592 4.40495C4.56565 4.24523 4.76356 4.16536 4.99967 4.16536H8.33301V2.4987C8.33301 2.04036 8.4962 1.648 8.82259 1.32161C9.14898 0.995226 9.54134 0.832031 9.99967 0.832031H13.333C13.7913 0.832031 14.1837 0.995226 14.5101 1.32161C14.8365 1.648 14.9997 2.04036 14.9997 2.4987V4.16536H18.333C18.5691 4.16536 18.767 4.24523 18.9268 4.40495C19.0865 4.56467 19.1663 4.76259 19.1663 4.9987V13.332C19.1663 13.7904 19.0031 14.1827 18.6768 14.5091C18.3504 14.8355 17.958 14.9987 17.4997 14.9987H5.83301ZM5.83301 13.332H17.4997V5.83203H5.83301V13.332ZM9.99967 4.16536H13.333V2.4987H9.99967V4.16536Z" fill="#444444" />
+                        </g>
+                      </svg>
+                      <span className="text-[#444444] text-[20px] font-bold leading-6 font-['Segoe_UI']">{getLabel('account.office', 'Office')}</span>
+                    </div>
+                  </button>
 
-                <button 
-                  type="button" 
-                  onClick={() => setLabel('home')}
-                  className={`flex-1 p-4 bg-white border rounded-[52px] justify-start items-center gap-3 inline-flex cursor-pointer select-none transition-all ${
-                    label === 'home' ? 'border-[#F18800] bg-[rgba(241,136,0,0.02)] border-[1.5px]' : 'border-[#E4EAF1]'
-                  }`}
-                >
-                  <div className="w-5 h-5 relative flex items-center justify-center flex-shrink-0">
-                    {label === 'home' ? (
-                      <div className="w-5 h-5 bg-[#F18800] rounded-full relative flex items-center justify-center">
-                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M1.5 4L4 6.5L8.5 1.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </div>
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border border-[#CAD3DF]"></div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#444444] fill-current">
-                      <mask id="mask_home" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
-                        <rect width="20" height="20" fill="#D9D9D9"/>
-                      </mask>
-                      <g mask="url(#mask_home)">
-                        <path d="M4.99967 15.8346H7.49967V11.668C7.49967 11.4319 7.57954 11.2339 7.73926 11.0742C7.89898 10.9145 8.0969 10.8346 8.33301 10.8346H11.6663C11.9025 10.8346 12.1004 10.9145 12.2601 11.0742C12.4198 11.2339 12.4997 11.4319 12.4997 11.668V15.8346H14.9997V8.33464L9.99967 4.58464L4.99967 8.33464V15.8346ZM3.33301 15.8346V8.33464C3.33301 8.07075 3.39204 7.82075 3.51009 7.58464C3.62815 7.34852 3.79134 7.15408 3.99967 7.0013L8.99967 3.2513C9.29134 3.02908 9.62467 2.91797 9.99967 2.91797C10.3747 2.91797 10.708 3.02908 10.9997 3.2513L15.9997 7.0013C16.208 7.15408 16.3712 7.34852 16.4893 7.58464C16.6073 7.82075 16.6663 8.33464 16.6663 8.33464V15.8346C16.6663 16.293 16.5031 16.6853 16.1768 17.0117C15.8504 17.3381 15.458 17.5013 14.9997 17.5013H11.6663C11.4302 17.5013 11.2323 17.4214 11.0726 17.2617C10.9129 17.102 10.833 16.9041 10.833 16.668V12.5013H9.16634V16.668C9.16634 16.9041 9.08648 17.102 8.92676 17.2617C8.76704 17.4214 8.56912 17.5013 8.33301 17.5013H4.99967C4.54134 17.5013 4.14898 17.3381 3.82259 17.0117C3.4962 16.6853 3.33301 16.293 3.33301 15.8346Z" fill="#444444" />
-                      </g>
-                    </svg>
-                    <span className="text-[#444444] text-[20px] font-bold leading-6 font-['Segoe_UI']">{getLabel('account.home', 'Home')}</span>
-                  </div>
-                </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setLabel('home')}
+                    className={`flex-1 p-4 bg-white border rounded-[52px] justify-start items-center gap-3 inline-flex cursor-pointer select-none transition-all ${
+                      label === 'home' ? 'border-[#F18800] bg-[rgba(241,136,0,0.02)] border-[1.5px]' : 'border-[#E4EAF1]'
+                    }`}
+                  >
+                    <div className="w-5 h-5 relative flex items-center justify-center flex-shrink-0">
+                      {label === 'home' ? (
+                        <div className="w-5 h-5 bg-[#F18800] rounded-full relative flex items-center justify-center">
+                          <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1.5 4L4 6.5L8.5 1.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                      ) : (
+                        <div className="w-5 h-5 rounded-full border border-[#CAD3DF]"></div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#444444] fill-current">
+                        <mask id="mask_home" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
+                          <rect width="20" height="20" fill="#D9D9D9"/>
+                        </mask>
+                        <g mask="url(#mask_home)">
+                          <path d="M4.99967 15.8346H7.49967V11.668C7.49967 11.4319 7.57954 11.2339 7.73926 11.0742C7.89898 10.9145 8.0969 10.8346 8.33301 10.8346H11.6663C11.9025 10.8346 12.1004 10.9145 12.2601 11.0742C12.4198 11.2339 12.4997 11.4319 12.4997 11.668V15.8346H14.9997V8.33464L9.99967 4.58464L4.99967 8.33464V15.8346ZM3.33301 15.8346V8.33464C3.33301 8.07075 3.39204 7.82075 3.51009 7.58464C3.62815 7.34852 3.79134 7.15408 3.99967 7.0013L8.99967 3.2513C9.29134 3.02908 9.62467 2.91797 9.99967 2.91797C10.3747 2.91797 10.708 3.02908 10.9997 3.2513L15.9997 7.0013C16.208 7.15408 16.3712 7.34852 16.4893 7.58464C16.6073 7.82075 16.6663 8.33464 16.6663 8.33464V15.8346C16.6663 16.293 16.5031 16.6853 16.1768 17.0117C15.8504 17.3381 15.458 17.5013 14.9997 17.5013H11.6663C11.4302 17.5013 11.2323 17.4214 11.0726 17.2617C10.9129 17.102 10.833 16.9041 10.833 16.668V12.5013H9.16634V16.668C9.16634 16.9041 9.08648 17.102 8.92676 17.2617C8.76704 17.4214 8.56912 17.5013 8.33301 17.5013H4.99967C4.54134 17.5013 4.14898 17.3381 3.82259 17.0117C3.4962 16.6853 3.33301 16.293 3.33301 15.8346Z" fill="#444444" />
+                        </g>
+                      </svg>
+                      <span className="text-[#444444] text-[20px] font-bold leading-6 font-['Segoe_UI']">{getLabel('account.home', 'Home')}</span>
+                    </div>
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="w-full h-px bg-[#EDF2F7] my-2" />
 

@@ -140,6 +140,9 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ message: 'Unable to verify customer account.' }, { status: 400 });
     }
 
+    console.log('[addresses PUT] customerId:', customerId, 'addressId:', id);
+    console.log('[addresses PUT] payload to backend:', JSON.stringify(addressData, null, 2));
+
     const response = await fetch(backendUrl(apiBaseUrl, `/api/customers/${customerId}/addresses/${id}`), {
       method: 'PUT',
       headers: {
@@ -151,6 +154,7 @@ export async function PUT(request: NextRequest) {
     });
 
     const data = await readResponseBody(response);
+    console.log('[addresses PUT] backend status:', response.status, 'response:', JSON.stringify(data, null, 2));
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error('Error updating account address:', error);

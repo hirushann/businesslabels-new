@@ -1287,6 +1287,8 @@ export const MESSAGES_V4 = {
       email: 'Email',
       phoneNumber: 'Phone number',
       editAddress: 'Edit Address',
+      editBillingAddress: 'Edit Billing Address',
+      addNewBillingAddress: 'Add New Billing Address',
       saveChanges: 'Save Changes',
       action: 'Action',
       passwordsDoNotMatch: 'Passwords do not match.',
@@ -1415,6 +1417,7 @@ export const MESSAGES_V4 = {
       saveProfile: 'Save Profile',
       shipped: 'Shipped',
       defaultShippingAddressUpdated: 'Default shipping address updated.',
+      defaultBillingAddressUpdated: 'Default billing address updated.',
     },
     requestPrinter: {
       title: 'Request ICC Profile',
@@ -3309,6 +3312,8 @@ export const MESSAGES_V4 = {
       email: 'E-mailadres',
       phoneNumber: 'Telefoonnummer',
       editAddress: 'Adres Bewerken',
+      editBillingAddress: 'Factuuradres Bewerken',
+      addNewBillingAddress: 'Nieuw Factuuradres Toevoegen',
       saveChanges: 'Wijzigingen Opslaan',
       action: 'Actie',
       passwordsDoNotMatch: 'Wachtwoorden komen niet overeen.',
@@ -3437,6 +3442,7 @@ export const MESSAGES_V4 = {
       saveProfile: 'Profiel opslaan',
       shipped: 'Verzonden',
       defaultShippingAddressUpdated: 'Standaard afleveradres bijgewerkt.',
+      defaultBillingAddressUpdated: 'Standaard factuuradres bijgewerkt.',
     },
     requestPrinter: {
       title: 'Vraag ICC-profiel aan',
