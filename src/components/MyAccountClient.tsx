@@ -1147,7 +1147,7 @@ function OrdersView() {
                           <div className="self-stretch p-4 bg-surface rounded-[10px] flex flex-col justify-start items-start gap-2 w-full mt-1 border border-slate-100 animate-in fade-in slide-in-from-top-2 duration-300">
                             {order.items_list.map((item, itemIdx) => (
                               <Fragment key={`${item.id}-${itemIdx}`}>
-                                <div className="self-stretch justify-start items-center gap-2 inline-flex w-full">
+                                <div className="group self-stretch justify-start items-center gap-2 inline-flex w-full">
                                   <div className="w-10 h-10 p-1 bg-line overflow-hidden rounded-[5px] justify-center items-center flex shrink-0 relative">
                                     {item.mainImage ? (
                                       <img className="w-full h-full object-contain" src={item.mainImage} alt={item.name} />
@@ -1169,7 +1169,7 @@ function OrdersView() {
                                     <div className="w-[120px] text-copy text-base font-normal leading-[21px] shrink-0">
                                       {formatEuro(item.total)}
                                     </div>
-                                    <div className="w-[160px] shrink-0">
+                                    <div className="w-[160px] shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                       <button
                                         onClick={(e) => {
                                           e.stopPropagation();
