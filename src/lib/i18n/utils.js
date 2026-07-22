@@ -87,9 +87,7 @@ export function localePath(path, locale) {
     if (basePath === '/winkelmand') {
       return '/en/cart' + searchSuffix;
     }
-    if (basePath === '/afrekenen') {
-      return '/en/checkout' + searchSuffix;
-    }
+
     if (basePath === '/contact') {
       return '/en/contact-us' + searchSuffix;
     }
@@ -107,9 +105,7 @@ export function localePath(path, locale) {
   if (basePath === '/cart') {
     return '/winkelmand' + searchSuffix;
   }
-  if (basePath === '/checkout') {
-    return '/afrekenen' + searchSuffix;
-  }
+
   if (basePath === '/contact') {
     return '/contact-us' + searchSuffix;
   }
@@ -150,9 +146,7 @@ export function stripLocalePath(path) {
     if (rest === '/cart') {
       return '/winkelmand' + searchSuffix;
     }
-    if (rest === '/checkout') {
-      return '/afrekenen' + searchSuffix;
-    }
+
     if (rest === '/contact') {
       return '/contact-us' + searchSuffix;
     }
@@ -168,9 +162,7 @@ export function stripLocalePath(path) {
   if (basePath === '/winkelmand') {
     return '/cart' + searchSuffix;
   }
-  if (basePath === '/afrekenen') {
-    return '/checkout' + searchSuffix;
-  }
+
   if (basePath === '/contact') {
     return '/contact-us' + searchSuffix;
   }

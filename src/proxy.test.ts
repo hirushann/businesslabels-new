@@ -185,20 +185,6 @@ describe("proxy locale routing", () => {
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
 
-  it("rewrites /en/checkout internally to /afrekenen", () => {
-    const response = proxy(makeRequest("/en/checkout"));
-
-    expect(response.headers.get("x-middleware-rewrite")).toBe("http://localhost/afrekenen");
-    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
-  });
-
-  it("redirects /en/afrekenen to /en/checkout", () => {
-    const response = proxy(makeRequest("/en/afrekenen"));
-
-    expect(response.status).toBe(307);
-    expect(response.headers.get("location")).toBe("http://localhost/en/checkout");
-    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
-  });
 
   it("redirects /contact to /contact-us", () => {
     const response = proxy(makeRequest("/contact"));
