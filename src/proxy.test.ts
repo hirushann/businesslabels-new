@@ -124,24 +124,24 @@ describe("proxy locale routing", () => {
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
 
-  it("redirects /en/custom-made-form to /en/custom-made-labels", () => {
+  it("redirects /en/custom-made-form to /en/material-customization", () => {
     const response = proxy(makeRequest("/en/custom-made-form"));
 
     expect(response.status).toBe(307);
-    expect(response.headers.get("location")).toBe("http://localhost/en/custom-made-labels");
+    expect(response.headers.get("location")).toBe("http://localhost/en/material-customization");
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
 
-  it("redirects /en/maatwerk to /en/custom-made-labels", () => {
+  it("redirects /en/maatwerk to /en/material-customization", () => {
     const response = proxy(makeRequest("/en/maatwerk"));
 
     expect(response.status).toBe(307);
-    expect(response.headers.get("location")).toBe("http://localhost/en/custom-made-labels");
+    expect(response.headers.get("location")).toBe("http://localhost/en/material-customization");
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
 
-  it("rewrites /en/custom-made-labels internally to /maatwerk", () => {
-    const response = proxy(makeRequest("/en/custom-made-labels"));
+  it("rewrites /en/material-customization internally to /maatwerk", () => {
+    const response = proxy(makeRequest("/en/material-customization"));
 
     expect(response.headers.get("x-middleware-rewrite")).toBe("http://localhost/maatwerk");
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");

@@ -58,12 +58,12 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/en/custom-made-form',
-        destination: '/en/custom-made-labels',
+        destination: '/en/material-customization',
         permanent: true,
       },
       {
         source: '/en/maatwerk',
-        destination: '/en/custom-made-labels',
+        destination: '/en/material-customization',
         permanent: true,
       },
       {
