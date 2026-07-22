@@ -52,6 +52,7 @@ type AccountAddress = {
   firstname?: string;
   lastname?: string;
   company: string;
+  vatNumber?: string;
   address1: string;
   address2: string;
   postcode?: string;
@@ -285,17 +286,43 @@ function normalizeOrders(payload: unknown): AccountOrder[] {
           const price = readNumberValue(itemRecord, ['price', 'unit_price']) || 0;
           const total = readNumberValue(itemRecord, ['total', 'line_total']) || (price * quantity);
 
+          const imagesArray = Array.isArray(itemRecord.images) ? itemRecord.images : Array.isArray(product.images) ? product.images : [];
+          const firstImageObj = imagesArray.length > 0 && isPlainObject(imagesArray[0]) ? imagesArray[0] : null;
+
           return {
             id: readNumberValue(itemRecord, ['id']) || itemIndex,
-            name: readStringValue(itemRecord, ['name']) || readStringValue(product, ['name']) || 'Product',
+            name: (() => {
+              const explicitName = readStringValue(itemRecord, ['title_nl', 'title_en', 'name']) || readStringValue(product, ['title_nl', 'title_en', 'name']);
+              if (explicitName) return explicitName;
+              if (Array.isArray(product.translations)) {
+                const tr = product.translations.find((t: any) => t && (t.name || t.title));
+                if (tr) return tr.name || tr.title;
+              }
+              return 'Product';
+            })(),
             quantity,
             price: price,
             total: total,
             productId: readNumberValue(itemRecord, ['product_id', 'variation_id']) || readNumberValue(product, ['id']) || undefined,
             sku: readStringValue(itemRecord, ['sku']) || readStringValue(product, ['sku']) || undefined,
-            slug: readStringValue(product, ['slug', 'post_name']) || readStringValue(itemRecord, ['slug']) || undefined,
+            slug: (() => {
+              const explicitSlug = readStringValue(product, ['slug', 'slug_nl', 'slug_en', 'post_name']) || readStringValue(itemRecord, ['slug', 'slug_nl', 'slug_en']);
+              if (explicitSlug) return explicitSlug;
+              if (Array.isArray(product.translations)) {
+                const tr = product.translations.find((t: any) => t && t.slug);
+                if (tr) return tr.slug;
+              }
+              if (isPlainObject(product.slug)) {
+                return readStringValue(product.slug, ['nl', 'en']) || '';
+              }
+              if (isPlainObject(itemRecord.slug)) {
+                return readStringValue(itemRecord.slug, ['nl', 'en']) || '';
+              }
+              return undefined;
+            })(),
             type: readStringValue(product, ['type']) || readStringValue(itemRecord, ['type', 'product_type']) || 'simple',
             mainImage: toDisplayImageUrl(
+              (firstImageObj ? readStringValue(firstImageObj, ['url', 'file_name', 'src']) : '') ||
               readStringValue(product, ['main_image', 'image', 'image_url', 'thumbnail', 'thumbnail_url', 'url']) ||
               readStringValue(itemRecord, ['image', 'main_image', 'image_url', 'thumbnail', 'thumbnail_url', 'url']) ||
               (isPlainObject(product.main_image) ? readStringValue(product.main_image, ['url', 'src']) : '') ||
@@ -374,12 +401,25 @@ function formatAddressName(address: Record<string, unknown>) {
   return combinedName || 'Saved address';
 }
 
+function splitAddressName(address?: AccountAddress) {
+  if (!address) {
+    return { firstName: '', lastName: '' };
+  }
+
+  const [firstNameFromName = '', ...lastNameParts] = address.name.split(' ').filter(Boolean);
+
+  return {
+    firstName: address.firstname || firstNameFromName,
+    lastName: address.lastname || lastNameParts.join(' '),
+  };
+}
+
 function normalizeAddress(address: Record<string, unknown>, index: number): AccountAddress {
   const street = readStringValue(address, ['street', 'address', 'address_1', 'line1', 'street_address']);
-  const street2 = readStringValue(address, ['street2', 'address2', 'address_2', 'line2', 'apartment', 'suite']);
+  const street2 = readStringValue(address, ['street2', 'address2', 'address_2', 'line2', 'apartment', 'suite', 'state', 'province', 'region']);
   const postcode = readStringValue(address, ['postcode', 'postalcode', 'postal_code', 'zip', 'zip_code']);
   const city = readStringValue(address, ['city', 'town']);
-  const country = readStringValue(address, ['country', 'country_name', 'country_id']) || 'Netherlands';
+  const country = readStringValue(address, ['country', 'country_name', 'country_id']);
   const email = readStringValue(address, ['email', 'billing_email', 'shipping_email']);
 
   return {
@@ -389,6 +429,7 @@ function normalizeAddress(address: Record<string, unknown>, index: number): Acco
     firstname: readStringValue(address, ['firstname', 'first_name', 'billing_first_name', 'shipping_first_name']),
     lastname: readStringValue(address, ['lastname', 'last_name', 'billing_last_name', 'shipping_last_name']),
     company: readStringValue(address, ['company', 'company_name', 'business_name']),
+    vatNumber: readStringValue(address, ['vat_number', 'vatNumber', 'btw_number', 'btwNumber', 'tax_number', 'taxNumber']),
     address1: street,
     address2: street2,
     postcode,
@@ -1144,24 +1185,57 @@ function OrdersView() {
                         </div>
 
                         {isExpanded && order.items_list && order.items_list.length > 0 && (
-                          <div className="self-stretch p-4 bg-surface rounded-[10px] flex flex-col justify-start items-start gap-2 w-full mt-1 border border-slate-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                          <div 
+                            className="self-stretch p-4 bg-surface rounded-[10px] flex flex-col justify-start items-start gap-2 w-full mt-1 border border-slate-100 animate-in fade-in slide-in-from-top-2 duration-300"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             {order.items_list.map((item, itemIdx) => (
                               <Fragment key={`${item.id}-${itemIdx}`}>
                                 <div className="group self-stretch justify-start items-center gap-2 inline-flex w-full">
                                   <div className="w-10 h-10 p-1 bg-line overflow-hidden rounded-[5px] justify-center items-center flex shrink-0 relative">
-                                    {item.mainImage ? (
-                                      <img className="w-full h-full object-contain" src={item.mainImage} alt={item.name} />
+                                    {item.slug ? (
+                                      <Link 
+                                        href={`/product/${item.slug}`} 
+                                        className="w-full h-full block relative z-10 cursor-pointer pointer-events-auto"
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        {item.mainImage ? (
+                                          <img className="w-full h-full object-contain" src={item.mainImage} alt={item.name} />
+                                        ) : (
+                                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#717182" strokeWidth="1.5" className="opacity-40 w-full h-full">
+                                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                            <circle cx="8.5" cy="8.5" r="1.5" />
+                                            <polyline points="21 15 16 10 5 21" />
+                                          </svg>
+                                        )}
+                                      </Link>
                                     ) : (
-                                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#717182" strokeWidth="1.5" className="opacity-40">
-                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                                        <circle cx="8.5" cy="8.5" r="1.5" />
-                                        <polyline points="21 15 16 10 5 21" />
-                                      </svg>
+                                      item.mainImage ? (
+                                        <img className="w-full h-full object-contain" src={item.mainImage} alt={item.name} />
+                                      ) : (
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#717182" strokeWidth="1.5" className="opacity-40">
+                                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                          <circle cx="8.5" cy="8.5" r="1.5" />
+                                          <polyline points="21 15 16 10 5 21" />
+                                        </svg>
+                                      )
                                     )}
                                   </div>
                                   <div className="flex-1 justify-start items-center gap-2 flex">
                                     <div className="flex-1 flex flex-col justify-start items-start gap-1">
-                                      <div className="self-stretch text-copy text-base font-normal leading-[19px]">{item.name}</div>
+                                      <div className="self-stretch text-copy text-base font-normal leading-[19px]">
+                                        {item.slug ? (
+                                          <Link 
+                                            href={`/product/${item.slug}`} 
+                                            className="hover:text-brand hover:underline relative z-10 cursor-pointer pointer-events-auto"
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
+                                            {item.name}
+                                          </Link>
+                                        ) : (
+                                          item.name
+                                        )}
+                                      </div>
                                       <div className="text-subtle text-sm font-normal leading-5">
                                         {t('account.quantityCount', { count: item.quantity }) || `${item.quantity} Items`}
                                       </div>
@@ -1242,18 +1316,40 @@ function OrdersView() {
                     <div key={item.id} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100 gap-3">
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div className="w-12 h-12 p-1 bg-white border border-slate-200 overflow-hidden rounded-xl justify-center items-center flex shrink-0 relative shadow-sm">
-                          {item.mainImage ? (
-                            <img className="w-full h-full object-contain" src={item.mainImage} alt={item.name} />
+                          {item.slug ? (
+                            <Link href={`/product/${item.slug}`} className="w-full h-full block">
+                              {item.mainImage ? (
+                                <img className="w-full h-full object-contain" src={item.mainImage} alt={item.name} />
+                              ) : (
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#717182" strokeWidth="1.5" className="opacity-40 w-full h-full">
+                                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                  <circle cx="8.5" cy="8.5" r="1.5" />
+                                  <polyline points="21 15 16 10 5 21" />
+                                </svg>
+                              )}
+                            </Link>
                           ) : (
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#717182" strokeWidth="1.5" className="opacity-40">
-                              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                              <circle cx="8.5" cy="8.5" r="1.5" />
-                              <polyline points="21 15 16 10 5 21" />
-                            </svg>
+                            item.mainImage ? (
+                              <img className="w-full h-full object-contain" src={item.mainImage} alt={item.name} />
+                            ) : (
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#717182" strokeWidth="1.5" className="opacity-40">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                <circle cx="8.5" cy="8.5" r="1.5" />
+                                <polyline points="21 15 16 10 5 21" />
+                              </svg>
+                            )
                           )}
                         </div>
                         <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-                          <span className="font-bold text-neutral-800 truncate">{item.name}</span>
+                          <span className="font-bold text-neutral-800 truncate">
+                            {item.slug ? (
+                              <Link href={`/product/${item.slug}`} className="hover:text-brand hover:underline">
+                                {item.name}
+                              </Link>
+                            ) : (
+                              item.name
+                            )}
+                          </span>
                           <span className="text-xs font-medium text-neutral-400">{t('account.quantityCount', { count: item.quantity })}</span>
                         </div>
                       </div>
@@ -1840,6 +1936,7 @@ function ShippingAddressesView({ user }: { user: StoredUser }) {
                 const name = addr.name || `${addr.firstname || ''} ${addr.lastname || ''}`.trim();
                 const addressStr = [addr.address1, addr.address2, addr.city, addr.postcode, addr.country].filter(Boolean).join(', ');
                 const isOffice = addr.company?.toLowerCase().includes('office') || addr.company?.toLowerCase().includes('company') || addr.lastname?.toLowerCase().includes('havertz') || addr.firstname?.toLowerCase().includes('jenny'); // Fallback matches for mockup icons
+                const contactDetails = [addr.email, addr.phone].filter(Boolean);
                 
                 return (
                   <div 
@@ -1884,12 +1981,22 @@ function ShippingAddressesView({ user }: { user: StoredUser }) {
                             </svg>
                           )}
                         </div>
-                        <div className="flex justify-start items-center gap-2 flex-wrap text-copy text-[16px] font-normal leading-6">
-                          <div>{addr.email || '-'}</div>
-                          <div className="text-[#C8D2DD]">|</div>
-                          <div>{addr.phone || '-'}</div>
-                        </div>
-                        <div className="justify-center text-neutral-700 text-base font-normal leading-6">{addressStr}</div>
+                        {addr.company ? (
+                          <div className="justify-center text-neutral-700 text-base font-normal leading-6">{addr.company}</div>
+                        ) : null}
+                        {contactDetails.length > 0 ? (
+                          <div className="flex justify-start items-center gap-2 flex-wrap text-copy text-[16px] font-normal leading-6">
+                            {contactDetails.map((detail, detailIndex) => (
+                              <Fragment key={`${detail}-${detailIndex}`}>
+                                {detailIndex > 0 ? <div className="text-[#C8D2DD]">|</div> : null}
+                                <div>{detail}</div>
+                              </Fragment>
+                            ))}
+                          </div>
+                        ) : null}
+                        {addressStr ? (
+                          <div className="justify-center text-neutral-700 text-base font-normal leading-6">{addressStr}</div>
+                        ) : null}
                         <div className="self-stretch border-t border-line mt-1"></div>
                         <div className="self-stretch inline-flex justify-start items-center gap-4 mt-1">
                           <button onClick={() => setEditingAddress(addr)} className="inline-flex justify-start items-center gap-1 hover:opacity-80 transition-opacity">
@@ -2259,10 +2366,18 @@ function ShippingAddressEditInline({
   );
 }
 
+function AddressValueField({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex-1 inline-flex flex-col justify-start items-start gap-3 w-full">
+      <div className="justify-center text-zinc-500 text-base font-normal leading-6">{label}</div>
+      <div className="justify-start text-neutral-800 text-lg font-bold leading-5">{value}</div>
+    </div>
+  );
+}
+
 function SingleAddressView({ type }: { type: 'billing_address' | 'shipping_address' }) {
   const t = useTranslations();
   const isBilling = type === 'billing_address';
-  const typeWord = isBilling ? 'Billing' : 'Shipping';
   const [editingAddress, setEditingAddress] = useState<'billing' | 'shipping' | null>(null);
   const [addresses, setAddresses] = useState<AccountAddress[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -2326,13 +2441,24 @@ function SingleAddressView({ type }: { type: 'billing_address' | 'shipping_addre
     );
   }
 
-  const firstName = targetAddress?.firstname || targetAddress?.name?.split(' ')[0] || '-';
-  const lastName = targetAddress?.lastname || (targetAddress?.name?.includes(' ') ? targetAddress?.name?.substring(targetAddress.name.indexOf(' ') + 1) : '-');
-
   const getLabel = (key: string, fallback: string) => {
     const val = t(key);
     return val === key ? fallback : val;
   };
+  const { firstName, lastName } = splitAddressName(targetAddress);
+  const displayFields = [
+    { label: getLabel('account.company', 'Company name'), value: targetAddress?.company },
+    { label: getLabel('account.vatNumber', 'VAT number'), value: targetAddress?.vatNumber },
+    { label: getLabel('account.firstName', 'First name'), value: firstName },
+    { label: getLabel('account.lastName', 'Last name'), value: lastName },
+    { label: getLabel('account.emailAddress', 'Email address'), value: targetAddress?.email },
+    { label: getLabel('account.phoneNumber', 'Phone number'), value: targetAddress?.phone },
+    { label: getLabel('account.country', 'Country/Region'), value: targetAddress?.country },
+    { label: getLabel('account.streetAndHouseNumber', 'Street and house number'), value: targetAddress?.address1 },
+    { label: getLabel('account.postCode', 'Post code'), value: targetAddress?.postcode },
+    { label: getLabel('account.city', 'Place'), value: targetAddress?.city },
+    { label: getLabel('account.stateOptional', 'State (optional)'), value: targetAddress?.address2 },
+  ].filter((field): field is { label: string; value: string } => Boolean(field.value?.trim()));
 
   return (
     <div className="self-stretch flex flex-col justify-start items-start gap-4 w-full">
@@ -2352,62 +2478,16 @@ function SingleAddressView({ type }: { type: 'billing_address' | 'shipping_addre
         />
       ) : (
         <>
-          <div className="self-stretch flex flex-col justify-start items-start gap-6">
-        <div className="self-stretch flex flex-col sm:flex-row justify-start items-start gap-6 sm:gap-4">
-          <div className="flex-1 inline-flex flex-col justify-start items-start gap-3 w-full">
-            <div className="justify-center text-zinc-500 text-base font-normal leading-6">{getLabel('account.company', 'Company name')}</div>
-            <div className="justify-start text-neutral-800 text-lg font-bold leading-5">{targetAddress?.company || '-'}</div>
-          </div>
-          <div className="flex-1 inline-flex flex-col justify-start items-start gap-3 w-full">
-            <div className="justify-center text-zinc-500 text-base font-normal leading-6">{getLabel('account.vatNumber', 'VAT number')}</div>
-            <div className="justify-start text-neutral-800 text-lg font-bold leading-5">{'-'}</div>
-          </div>
-        </div>
-
-        <div className="self-stretch flex flex-col sm:flex-row justify-start items-start gap-6 sm:gap-4">
-          <div className="flex-1 inline-flex flex-col justify-start items-start gap-3 w-full">
-            <div className="justify-center text-zinc-500 text-base font-normal leading-6">{getLabel('account.firstName', 'First name')}</div>
-            <div className="justify-start text-neutral-800 text-lg font-bold leading-5">{firstName}</div>
-          </div>
-          <div className="flex-1 inline-flex flex-col justify-start items-start gap-3 w-full">
-            <div className="justify-center text-zinc-500 text-base font-normal leading-6">{getLabel('account.lastName', 'Last name')}</div>
-            <div className="justify-start text-neutral-800 text-lg font-bold leading-5">{lastName}</div>
-          </div>
-        </div>
-
-        <div className="self-stretch flex flex-col sm:flex-row justify-start items-start gap-6 sm:gap-4">
-          <div className="flex-1 inline-flex flex-col justify-start items-start gap-3 w-full">
-            <div className="justify-center text-zinc-500 text-base font-normal leading-6">{getLabel('account.emailAddress', 'Email address')}</div>
-            <div className="justify-start text-neutral-800 text-lg font-bold leading-5">{'-'}</div>
-          </div>
-          <div className="flex-1 inline-flex flex-col justify-start items-start gap-3 w-full">
-            <div className="justify-center text-zinc-500 text-base font-normal leading-6">{getLabel('account.phoneNumber', 'Phone number')}</div>
-            <div className="justify-start text-neutral-800 text-lg font-bold leading-5">{targetAddress?.phone || '-'}</div>
-          </div>
-        </div>
-
-        <div className="self-stretch flex flex-col sm:flex-row justify-start items-start gap-6 sm:gap-4">
-          <div className="flex-1 inline-flex flex-col justify-start items-start gap-3 w-full">
-            <div className="justify-center text-zinc-500 text-base font-normal leading-6">{getLabel('account.country', 'Country/Region')}</div>
-            {/* Displaying country placeholder for now or if we have country_id */}
-            <div className="justify-start text-neutral-800 text-lg font-bold leading-5">{'-'}</div>
-          </div>
-          <div className="flex-1 inline-flex flex-col justify-start items-start gap-3 w-full">
-            <div className="justify-center text-zinc-500 text-base font-normal leading-6">{getLabel('account.streetAndHouseNumber', 'Street and house number')}</div>
-            <div className="justify-start text-neutral-800 text-lg font-bold leading-5">{[targetAddress?.address1, targetAddress?.address2].filter(Boolean).join(', ') || '-'}</div>
-          </div>
-        </div>
-
-        <div className="self-stretch flex flex-col sm:flex-row justify-start items-start gap-6 sm:gap-4">
-          <div className="flex-1 inline-flex flex-col justify-start items-start gap-3 w-full">
-            <div className="justify-center text-zinc-500 text-base font-normal leading-6">{getLabel('account.postCode', 'Post code')}</div>
-            <div className="justify-start text-neutral-800 text-lg font-bold leading-5">{targetAddress?.postcode || '-'}</div>
-          </div>
-          <div className="flex-1 inline-flex flex-col justify-start items-start gap-3 w-full">
-            <div className="justify-center text-zinc-500 text-base font-normal leading-6">{getLabel('account.city', 'Place')}</div>
-            <div className="justify-start text-neutral-800 text-lg font-bold leading-5">{targetAddress?.city || '-'}</div>
-          </div>
-        </div>
+          <div className="self-stretch grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
+            {displayFields.length > 0 ? (
+              displayFields.map((field) => (
+                <AddressValueField key={field.label} label={field.label} value={field.value} />
+              ))
+            ) : (
+              <div className="text-zinc-500 text-base font-normal leading-6">
+                {isBilling ? getLabel('account.billingAddressEmpty', 'No billing address found.') : getLabel('account.shippingAddressEmpty', 'No shipping address found.')}
+              </div>
+            )}
           </div>
 
           <button 
@@ -2900,10 +2980,12 @@ function AddressProfile({
           <div className="relative z-10 flex flex-col gap-2">
             <p className="text-xl font-black text-neutral-800 mb-1">{address.name}</p>
             {address.company ? <p className="font-medium">{address.company}</p> : null}
-            <p className="font-medium">{address.address1}</p>
+            {address.email ? <p className="font-medium">{address.email}</p> : null}
+            {address.phone ? <p className="font-medium">{address.phone}</p> : null}
+            {address.address1 ? <p className="font-medium">{address.address1}</p> : null}
             {address.address2 ? <p className="font-medium">{address.address2}</p> : null}
-            <p className="font-medium">{address.postcode} {address.city}</p>
-            <p className="font-bold text-brand">{address.country}</p>
+            {address.postcode || address.city ? <p className="font-medium">{[address.postcode, address.city].filter(Boolean).join(' ')}</p> : null}
+            {address.country ? <p className="font-bold text-brand">{address.country}</p> : null}
           </div>
         </div>
       ) : (
