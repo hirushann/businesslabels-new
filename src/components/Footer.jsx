@@ -52,9 +52,11 @@ const footerLinks = {
     { nameKey: 'footer.links.specialLabels', href: '/category/specials' },
   ],
   printers: [
-    { name: 'ZX1600i', href: '/product/zx1600i' },
-    { name: 'EZ6350i', href: '/product/ez6350i' },
-    { name: 'HD830i', href: '/product/hd830i' },
+    { name: 'CW-D3800e', href: '/product/epson-colorworks-cw-d3800e-labelprinter-dye-inkt' },
+    { name: 'CW-C4000e MK', href: '/product/colorworks-cw-c4000-bk' },
+    { name: 'CW-C6000Ae BK', href: '/product/colorworks-cw-c6000ae' },
+    { name: 'CW-D6500Ae', href: '/product/colorworks-cw-d6500ae' },
+    { name: 'CW-C8000e MK', href: '/printers/epson-colorworks-cw-c8000-mk' },
     // { nameKey: 'footer.links.compareModels', href: '#' },
   ],
   support: [
