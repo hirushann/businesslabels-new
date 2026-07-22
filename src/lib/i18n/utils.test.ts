@@ -21,9 +21,9 @@ describe("i18n routing utilities", () => {
     expect(localePath("/brands", "nl")).toBe("/merken");
     expect(localePath("/support", "en")).toBe("/en/support-2/");
     expect(localePath("/support", "nl")).toBe("/support");
-    expect(localePath("/maatwerk", "en")).toBe("/en/custom-made-labels");
+    expect(localePath("/maatwerk", "en")).toBe("/en/material-customization");
     expect(localePath("/maatwerk", "nl")).toBe("/maatwerk");
-    expect(localePath("/maatwerk?materialId=123", "en")).toBe("/en/custom-made-labels?materialId=123");
+    expect(localePath("/maatwerk?materialId=123", "en")).toBe("/en/material-customization?materialId=123");
     expect(localePath("/winkelmand", "en")).toBe("/en/cart");
     expect(localePath("/cart", "nl")).toBe("/winkelmand");
     expect(localePath("/winkelmand", "nl")).toBe("/winkelmand");
@@ -47,8 +47,8 @@ describe("i18n routing utilities", () => {
     expect(stripLocalePath("/en/brands")).toBe("/brands");
     expect(stripLocalePath("/en/support-2/")).toBe("/support");
     expect(stripLocalePath("/en/support-2")).toBe("/support");
-    expect(stripLocalePath("/en/custom-made-labels")).toBe("/maatwerk");
-    expect(stripLocalePath("/en/custom-made-labels?materialId=123")).toBe("/maatwerk?materialId=123");
+    expect(stripLocalePath("/en/material-customization")).toBe("/maatwerk");
+    expect(stripLocalePath("/en/material-customization?materialId=123")).toBe("/maatwerk?materialId=123");
     expect(stripLocalePath("/en/shop")).toBe("/winkel");
     expect(stripLocalePath("/winkel")).toBe("/shop");
     expect(stripLocalePath("/en/cart")).toBe("/winkelmand");

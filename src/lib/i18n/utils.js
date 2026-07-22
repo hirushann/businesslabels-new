@@ -79,7 +79,7 @@ export function localePath(path, locale) {
       return '/en/support-2/' + searchSuffix;
     }
     if (basePath === '/maatwerk') {
-      return '/en/custom-made-labels' + searchSuffix;
+      return '/en/material-customization' + searchSuffix;
     }
     if (basePath === '/winkel') {
       return '/en/shop' + searchSuffix;
@@ -141,7 +141,7 @@ export function stripLocalePath(path) {
     if (rest === '/support-2/' || rest === '/support-2') {
       return '/support' + searchSuffix;
     }
-    if (rest === '/custom-made-labels') {
+    if (rest === '/material-customization') {
       return '/maatwerk' + searchSuffix;
     }
     if (rest === '/shop') {

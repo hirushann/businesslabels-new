@@ -44,7 +44,7 @@ export function proxy(request: NextRequest) {
   if (cleanPathname === '/support-2' || cleanPathname === '/support-2/') {
     cleanPathname = '/support';
   }
-  if (cleanPathname === '/custom-made-labels') {
+  if (cleanPathname === '/material-customization') {
     cleanPathname = '/maatwerk';
   }
   if (cleanPathname === '/shop') {
@@ -73,7 +73,7 @@ export function proxy(request: NextRequest) {
   }
 
   if (pathname === '/en/custom-made-form' || pathname === '/en/custom-made-form/' || pathname === '/en/maatwerk' || pathname === '/en/maatwerk/') {
-    const redirectUrl = new URL(`${EN_PREFIX}/custom-made-labels${search}`, request.url);
+    const redirectUrl = new URL(`${EN_PREFIX}/material-customization${search}`, request.url);
     return persistLocale(NextResponse.redirect(redirectUrl), 'en');
   }
 

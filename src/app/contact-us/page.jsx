@@ -206,27 +206,56 @@ export default async function ContactPage() {
                            alt={member.name}
                         />
                         <div className="self-stretch flex flex-col justify-center items-center gap-5">
-                           <div className="self-stretch flex flex-col justify-start items-start gap-2">
+                           <div className="self-stretch flex flex-col justify-start items-center gap-2">
                               <div className="self-stretch text-center justify-start text-neutral-800 text-2xl font-bold leading-7">
                                  {member.name}
                               </div>
+                              {member.function && (
+                                 <div className="text-center text-brand text-lg font-semibold leading-relaxed">
+                                    {member.function}
+                                 </div>
+                              )}
                            </div>
-                           {(member.email || member.phone) && (
-                              <div className="self-stretch flex flex-col justify-start items-center gap-1">
-                                 {member.email && (
-                                    <a
-                                       href={`mailto:${member.email}`}
-                                       className="self-stretch text-center justify-start text-neutral-700 text-base font-normal leading-6 hover:text-brand"
-                                    >
-                                       {member.email}
-                                    </a>
+                           
+                           {member.text && (
+                              <div className="self-stretch text-center text-neutral-600 text-base font-normal leading-relaxed">
+                                 {member.text}
+                              </div>
+                           )}
+
+                           {(member.email || member.phone || member.linkedin_url) && (
+                              <div className="self-stretch flex flex-col justify-start items-center gap-3">
+                                 {(member.email || member.phone) && (
+                                    <div className="flex flex-col justify-start items-center gap-1">
+                                       {member.email && (
+                                          <a
+                                             href={`mailto:${member.email}`}
+                                             className="text-center text-neutral-700 text-base font-normal leading-6 hover:text-brand transition-colors"
+                                          >
+                                             {member.email}
+                                          </a>
+                                       )}
+                                       {member.phone && (
+                                          <a
+                                             href={`tel:${member.phone}`}
+                                             className="text-center text-neutral-700 text-base font-normal leading-6 hover:text-brand transition-colors"
+                                          >
+                                             {member.phone}
+                                          </a>
+                                       )}
+                                    </div>
                                  )}
-                                 {member.phone && (
+                                 {member.linkedin_url && (
                                     <a
-                                       href={`tel:${member.phone}`}
-                                       className="self-stretch text-center justify-start text-neutral-700 text-base font-normal leading-6 hover:text-brand"
+                                       href={member.linkedin_url}
+                                       target="_blank"
+                                       rel="noopener noreferrer"
+                                       className="text-neutral-400 hover:text-brand transition-colors"
+                                       title="LinkedIn Profile"
                                     >
-                                       {member.phone}
+                                       <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                                          <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                                       </svg>
                                     </a>
                                  )}
                               </div>
