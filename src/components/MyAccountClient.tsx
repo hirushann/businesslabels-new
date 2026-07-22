@@ -286,17 +286,50 @@ function normalizeOrders(payload: unknown): AccountOrder[] {
           const price = readNumberValue(itemRecord, ['price', 'unit_price']) || 0;
           const total = readNumberValue(itemRecord, ['total', 'line_total']) || (price * quantity);
 
+          const imagesArray = Array.isArray(itemRecord.images) ? itemRecord.images : Array.isArray(product.images) ? product.images : [];
+          const firstImageObj = imagesArray.length > 0 && isPlainObject(imagesArray[0]) ? imagesArray[0] : null;
+
           return {
             id: readNumberValue(itemRecord, ['id']) || itemIndex,
-            name: readStringValue(itemRecord, ['name']) || readStringValue(product, ['name']) || 'Product',
+            name: (() => {
+              const explicitName = readStringValue(itemRecord, ['title_nl', 'title_en', 'name']) || readStringValue(product, ['title_nl', 'title_en', 'name']);
+              if (explicitName) return explicitName;
+              if (Array.isArray(product.translations)) {
+                const tr = product.translations.find((t: any) => t && (t.name || t.title));
+                if (tr) return tr.name || tr.title;
+              }
+              return 'Product';
+            })(),
             quantity,
             price: price,
             total: total,
             productId: readNumberValue(itemRecord, ['product_id', 'variation_id']) || readNumberValue(product, ['id']) || undefined,
             sku: readStringValue(itemRecord, ['sku']) || readStringValue(product, ['sku']) || undefined,
-            slug: readStringValue(product, ['slug', 'post_name']) || readStringValue(itemRecord, ['slug']) || undefined,
+            slug: (() => {
+              const explicitSlug = readStringValue(product, ['slug', 'slug_nl', 'slug_en', 'post_name']) || readStringValue(itemRecord, ['slug', 'slug_nl', 'slug_en']);
+              if (explicitSlug) return explicitSlug;
+              if (Array.isArray(product.translations)) {
+                const tr = product.translations.find((t: any) => t && t.slug);
+                if (tr) return tr.slug;
+              }
+              if (isPlainObject(product.slug)) {
+                return readStringValue(product.slug, ['nl', 'en']) || '';
+              }
+              if (isPlainObject(itemRecord.slug)) {
+                return readStringValue(itemRecord.slug, ['nl', 'en']) || '';
+              }
+              return undefined;
+            })(),
             type: readStringValue(product, ['type']) || readStringValue(itemRecord, ['type', 'product_type']) || 'simple',
-            mainImage: readStringValue(product, ['main_image', 'image', 'thumbnail']) || readStringValue(itemRecord, ['image', 'main_image']) || null,
+            mainImage: toDisplayImageUrl(
+              (firstImageObj ? readStringValue(firstImageObj, ['url', 'file_name', 'src']) : '') ||
+              readStringValue(product, ['main_image', 'image', 'image_url', 'thumbnail', 'thumbnail_url', 'url']) ||
+              readStringValue(itemRecord, ['image', 'main_image', 'image_url', 'thumbnail', 'thumbnail_url', 'url']) ||
+              (isPlainObject(product.main_image) ? readStringValue(product.main_image, ['url', 'src']) : '') ||
+              (isPlainObject(product.image) ? readStringValue(product.image, ['url', 'src']) : '') ||
+              (isPlainObject(itemRecord.image) ? readStringValue(itemRecord.image, ['url', 'src']) : '') ||
+              (isPlainObject(itemRecord.main_image) ? readStringValue(itemRecord.main_image, ['url', 'src']) : '')
+            ) || null,
             packingGroup: readNumberValue(product, ['packingGroup', 'packing_group']) || null,
             allowSingulars: product.allow_singulars !== undefined ? Boolean(product.allow_singulars) : null,
             isLabelProduct: Boolean(product.is_label_product ?? product.is_label ?? false),
@@ -1152,24 +1185,57 @@ function OrdersView() {
                         </div>
 
                         {isExpanded && order.items_list && order.items_list.length > 0 && (
-                          <div className="self-stretch p-4 bg-surface rounded-[10px] flex flex-col justify-start items-start gap-2 w-full mt-1 border border-slate-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                          <div 
+                            className="self-stretch p-4 bg-surface rounded-[10px] flex flex-col justify-start items-start gap-2 w-full mt-1 border border-slate-100 animate-in fade-in slide-in-from-top-2 duration-300"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             {order.items_list.map((item, itemIdx) => (
                               <Fragment key={`${item.id}-${itemIdx}`}>
                                 <div className="self-stretch justify-start items-center gap-2 inline-flex w-full">
                                   <div className="w-10 h-10 p-1 bg-line overflow-hidden rounded-[5px] justify-center items-center flex shrink-0 relative">
-                                    {item.mainImage ? (
-                                      <img className="w-full h-full object-contain" src={item.mainImage} alt={item.name} />
+                                    {item.slug ? (
+                                      <Link 
+                                        href={`/product/${item.slug}`} 
+                                        className="w-full h-full block relative z-10 cursor-pointer pointer-events-auto"
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        {item.mainImage ? (
+                                          <img className="w-full h-full object-contain" src={item.mainImage} alt={item.name} />
+                                        ) : (
+                                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#717182" strokeWidth="1.5" className="opacity-40 w-full h-full">
+                                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                            <circle cx="8.5" cy="8.5" r="1.5" />
+                                            <polyline points="21 15 16 10 5 21" />
+                                          </svg>
+                                        )}
+                                      </Link>
                                     ) : (
-                                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#717182" strokeWidth="1.5" className="opacity-40">
-                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                                        <circle cx="8.5" cy="8.5" r="1.5" />
-                                        <polyline points="21 15 16 10 5 21" />
-                                      </svg>
+                                      item.mainImage ? (
+                                        <img className="w-full h-full object-contain" src={item.mainImage} alt={item.name} />
+                                      ) : (
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#717182" strokeWidth="1.5" className="opacity-40">
+                                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                          <circle cx="8.5" cy="8.5" r="1.5" />
+                                          <polyline points="21 15 16 10 5 21" />
+                                        </svg>
+                                      )
                                     )}
                                   </div>
                                   <div className="flex-1 justify-start items-center gap-2 flex">
                                     <div className="flex-1 flex flex-col justify-start items-start gap-1">
-                                      <div className="self-stretch text-copy text-base font-normal leading-[19px]">{item.name}</div>
+                                      <div className="self-stretch text-copy text-base font-normal leading-[19px]">
+                                        {item.slug ? (
+                                          <Link 
+                                            href={`/product/${item.slug}`} 
+                                            className="hover:text-brand hover:underline relative z-10 cursor-pointer pointer-events-auto"
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
+                                            {item.name}
+                                          </Link>
+                                        ) : (
+                                          item.name
+                                        )}
+                                      </div>
                                       <div className="text-subtle text-sm font-normal leading-5">
                                         {t('account.quantityCount', { count: item.quantity }) || `${item.quantity} Items`}
                                       </div>
@@ -1247,12 +1313,47 @@ function OrdersView() {
                 <h4 className="text-xs font-black text-neutral-400 uppercase tracking-widest px-1">{t('account.orderItems')}</h4>
                 <div className="flex flex-col gap-3">
                   {selectedOrder.items_list?.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="font-bold text-neutral-800">{item.name}</span>
-                        <span className="text-xs font-medium text-neutral-400">{t('account.quantityCount', { count: item.quantity })}</span>
+                    <div key={item.id} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100 gap-3">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="w-12 h-12 p-1 bg-white border border-slate-200 overflow-hidden rounded-xl justify-center items-center flex shrink-0 relative shadow-sm">
+                          {item.slug ? (
+                            <Link href={`/product/${item.slug}`} className="w-full h-full block">
+                              {item.mainImage ? (
+                                <img className="w-full h-full object-contain" src={item.mainImage} alt={item.name} />
+                              ) : (
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#717182" strokeWidth="1.5" className="opacity-40 w-full h-full">
+                                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                  <circle cx="8.5" cy="8.5" r="1.5" />
+                                  <polyline points="21 15 16 10 5 21" />
+                                </svg>
+                              )}
+                            </Link>
+                          ) : (
+                            item.mainImage ? (
+                              <img className="w-full h-full object-contain" src={item.mainImage} alt={item.name} />
+                            ) : (
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#717182" strokeWidth="1.5" className="opacity-40">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                <circle cx="8.5" cy="8.5" r="1.5" />
+                                <polyline points="21 15 16 10 5 21" />
+                              </svg>
+                            )
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                          <span className="font-bold text-neutral-800 truncate">
+                            {item.slug ? (
+                              <Link href={`/product/${item.slug}`} className="hover:text-brand hover:underline">
+                                {item.name}
+                              </Link>
+                            ) : (
+                              item.name
+                            )}
+                          </span>
+                          <span className="text-xs font-medium text-neutral-400">{t('account.quantityCount', { count: item.quantity })}</span>
+                        </div>
                       </div>
-                      <span className="font-black text-neutral-800">{formatEuro(item.total)}</span>
+                      <span className="font-black text-neutral-800 shrink-0">{formatEuro(item.total)}</span>
                     </div>
                   ))}
                 </div>

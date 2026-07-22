@@ -35,19 +35,56 @@ async function getGoogleReviews() {
     return null;
   }
   
+  // Try Legacy Places API first
   try {
     const res = await fetch(
       `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=reviews,rating,user_ratings_total&key=${apiKey}&reviews_sort=newest`,
-      { next: { revalidate: 86400 } } // Cache for 24 hours
+      { next: { revalidate: 86400 } }
     );
 
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.result ?? null;
+    if (res.ok) {
+      const data = await res.json();
+      if (data.status === "OK" && data.result?.reviews?.length) {
+        return data.result;
+      }
+    }
   } catch (error) {
-    console.error("Failed to fetch Google Reviews:", error);
-    return null;
+    console.error("Legacy Places API fetch error:", error);
   }
+
+  // Fallback to Places API (New)
+  try {
+    const resNew = await fetch(
+      `https://places.googleapis.com/v1/places/${placeId}`,
+      {
+        headers: {
+          "X-Goog-Api-Key": apiKey,
+          "X-Goog-FieldMask": "reviews,rating,userRatingCount",
+        },
+        next: { revalidate: 86400 },
+      }
+    );
+
+    if (resNew.ok) {
+      const newData = await resNew.json();
+      if (newData.reviews?.length) {
+        return {
+          reviews: newData.reviews.map((r) => ({
+            text: r.text?.text || r.originalText?.text || "",
+            author_name: r.authorAttribution?.displayName || "Google Customer",
+            profile_photo_url: r.authorAttribution?.photoUri || "",
+            relative_time_description: r.relativePublishTimeDescription || "",
+            rating: r.rating || 5,
+          })),
+          user_ratings_total: newData.userRatingCount || "1000",
+        };
+      }
+    }
+  } catch (error) {
+    console.error("Places API (New) fetch error:", error);
+  }
+
+  return null;
 }
 
 export default async function ReviewsSection() {
