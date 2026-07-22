@@ -11,6 +11,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { useCart } from '@/components/CartProvider';
 import { toDisplayImageUrl } from '@/lib/utils/imageProxy';
 import { localePath } from '@/lib/i18n/utils';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 type Tab = 'dashboard' | 'orders' | 'addresses' | 'details' | 'printers' | 'favourites' | 'billing_address' | 'shipping_address' | 'change_password';
 
@@ -982,6 +983,7 @@ function OrdersView() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<AccountOrder | null>(null);
+  const [isOrderItemsOpen, setIsOrderItemsOpen] = useState(true);
   const [expandedOrders, setExpandedOrders] = useState<Record<string, boolean>>({});
 
   const toggleExpand = (orderId: string) => {
@@ -1262,27 +1264,15 @@ function OrdersView() {
       )}
 
       {/* Order Details Modal */}
-      {selectedOrder && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6">
-          <div 
-            className="absolute inset-0 bg-sky-950/40 backdrop-blur-sm animate-in fade-in duration-300" 
-            onClick={() => setSelectedOrder(null)}
-          />
-          <div className="relative w-full max-w-2xl bg-white rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 max-h-[90vh] flex flex-col">
+      <Dialog open={!!selectedOrder} onOpenChange={(open) => { if (!open) setSelectedOrder(null); }}>
+        {selectedOrder && (
+          <DialogContent className="w-full sm:max-w-2xl max-w-2xl bg-white rounded-2xl p-0 overflow-hidden max-h-[90vh] flex flex-col border-none shadow-2xl">
             {/* Header */}
             <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div className="flex flex-col gap-1">
-                <h3 className="text-2xl font-black text-neutral-800 tracking-tight">{t('account.orderNumber', { number: selectedOrder.id })}</h3>
-                <p className="text-sm font-medium text-neutral-500">{t('account.placedOn', { date: selectedOrder.date })}</p>
+                <DialogTitle className="text-2xl font-black text-neutral-800 tracking-tight">{t('account.orderNumber', { number: selectedOrder.id })}</DialogTitle>
+                <DialogDescription className="text-sm font-medium text-neutral-500">{t('account.placedOn', { date: selectedOrder.date })}</DialogDescription>
               </div>
-              <button 
-                onClick={() => setSelectedOrder(null)}
-                className="size-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-neutral-400 hover:text-neutral-800 hover:border-neutral-300 transition-all shadow-sm"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M18 6 6 18M6 6l12 12"/>
-                </svg>
-              </button>
             </div>
 
             {/* Content */}
@@ -1295,53 +1285,74 @@ function OrdersView() {
 
               {/* Items List */}
               <div className="flex flex-col gap-4">
-                <h4 className="text-xs font-black text-neutral-400 uppercase tracking-widest px-1">{t('account.orderItems')}</h4>
-                <div className="flex flex-col gap-3">
-                  {selectedOrder.items_list?.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100 gap-3">
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className="w-12 h-12 p-1 bg-white border border-slate-200 overflow-hidden rounded-xl justify-center items-center flex shrink-0 relative shadow-sm">
-                          {item.slug ? (
-                            <Link href={`/product/${item.slug}`} className="w-full h-full block">
-                              {item.mainImage ? (
+                <button 
+                  onClick={() => setIsOrderItemsOpen((prev) => !prev)}
+                  className="flex items-center justify-between w-full text-left px-1 py-1 group"
+                >
+                  <h4 className="text-xs font-black text-neutral-400 uppercase tracking-widest group-hover:text-neutral-600 transition-colors">{t('account.orderItems')}</h4>
+                  <svg 
+                    width="16" 
+                    height="16" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                    className={`text-neutral-400 transition-transform duration-200 ${isOrderItemsOpen ? 'rotate-180' : ''}`}
+                  >
+                    <path d="m6 9 6 6 6-6"/>
+                  </svg>
+                </button>
+
+                {isOrderItemsOpen && (
+                  <div className="flex flex-col gap-3 animate-in fade-in duration-200">
+                    {selectedOrder.items_list?.map((item) => (
+                      <div key={item.id} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100 gap-3">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="w-12 h-12 p-1 bg-white border border-slate-200 overflow-hidden rounded-xl justify-center items-center flex shrink-0 relative shadow-sm">
+                            {item.slug ? (
+                              <Link href={`/product/${item.slug}`} className="w-full h-full block">
+                                {item.mainImage ? (
+                                  <img className="w-full h-full object-contain" src={item.mainImage} alt={item.name} />
+                                ) : (
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#717182" strokeWidth="1.5" className="opacity-40 w-full h-full">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                    <circle cx="8.5" cy="8.5" r="1.5" />
+                                    <polyline points="21 15 16 10 5 21" />
+                                  </svg>
+                                )}
+                              </Link>
+                            ) : (
+                              item.mainImage ? (
                                 <img className="w-full h-full object-contain" src={item.mainImage} alt={item.name} />
                               ) : (
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#717182" strokeWidth="1.5" className="opacity-40 w-full h-full">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#717182" strokeWidth="1.5" className="opacity-40">
                                   <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                                   <circle cx="8.5" cy="8.5" r="1.5" />
                                   <polyline points="21 15 16 10 5 21" />
                                 </svg>
-                              )}
-                            </Link>
-                          ) : (
-                            item.mainImage ? (
-                              <img className="w-full h-full object-contain" src={item.mainImage} alt={item.name} />
-                            ) : (
-                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#717182" strokeWidth="1.5" className="opacity-40">
-                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                                <circle cx="8.5" cy="8.5" r="1.5" />
-                                <polyline points="21 15 16 10 5 21" />
-                              </svg>
-                            )
-                          )}
-                        </div>
-                        <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-                          <span className="font-bold text-neutral-800 truncate">
-                            {item.slug ? (
-                              <Link href={`/product/${item.slug}`} className="hover:text-brand hover:underline">
-                                {item.name}
-                              </Link>
-                            ) : (
-                              item.name
+                              )
                             )}
-                          </span>
-                          <span className="text-xs font-medium text-neutral-400">{t('account.quantityCount', { count: item.quantity })}</span>
+                          </div>
+                          <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                            <span className="font-bold text-neutral-800 truncate">
+                              {item.slug ? (
+                                <Link href={`/product/${item.slug}`} className="hover:text-brand hover:underline">
+                                  {item.name}
+                                </Link>
+                              ) : (
+                                item.name
+                              )}
+                            </span>
+                            <span className="text-xs font-medium text-neutral-400">{t('account.quantityCount', { count: item.quantity })}</span>
+                          </div>
                         </div>
+                        <span className="font-black text-neutral-800 shrink-0">{formatEuro(item.total)}</span>
                       </div>
-                      <span className="font-black text-neutral-800 shrink-0">{formatEuro(item.total)}</span>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Addresses */}
@@ -1371,7 +1382,7 @@ function OrdersView() {
               </div>
 
               {/* Summary */}
-              <div className="flex flex-col gap-3 p-6 rounded-3xl bg-neutral-900 text-white mt-4">
+              <div className="flex flex-col gap-3 p-6 rounded-3xl bg-neutral-900 text-white my-2">
                 <div className="flex justify-between text-sm text-neutral-400 font-bold">
                   <span>{t('account.subtotal')}</span>
                   <span>{selectedOrder.subtotal}</span>
@@ -1391,19 +1402,9 @@ function OrdersView() {
                 </div>
               </div>
             </div>
-
-            {/* Footer */}
-            <div className="px-8 py-6 border-t border-slate-100 bg-slate-50/50">
-              <button 
-                onClick={() => setSelectedOrder(null)}
-                className="w-full h-12 bg-white border border-slate-200 text-neutral-800 font-black text-sm rounded-full hover:bg-slate-50 transition-all shadow-sm"
-              >
-                {t('account.closeOrderDetails')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          </DialogContent>
+        )}
+      </Dialog>
     </div>
   );
 }
