@@ -155,10 +155,9 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                       : null;
 
                     const imageSrc = item.mainImage?.trim() || 'https://placehold.co/80x80';
-                    const href = item.slug
-                      ? item.type
-                        ? { pathname: `/product/${item.slug}`, query: { type: item.type } }
-                        : { pathname: `/product/${item.slug}` }
+                    const productSlug = item.slug?.trim();
+                    const href = productSlug
+                      ? lp(`/product/${productSlug}${item.type ? `?type=${item.type}` : ''}`)
                       : undefined;
 
                     return (
@@ -166,12 +165,23 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                         <div className="flex gap-4">
                           {/* Product Image */}
                           <div className="w-20 h-20 relative bg-line rounded-[6px] overflow-hidden shrink-0">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={imageSrc}
-                              alt={item.name}
-                              className="w-full h-full object-contain p-1"
-                            />
+                            {href ? (
+                              <Link href={href} onClick={onClose} className="w-full h-full block">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={imageSrc}
+                                  alt={item.name}
+                                  className="w-full h-full object-contain p-1"
+                                />
+                              </Link>
+                            ) : (
+                              /* eslint-disable-next-line @next/next/no-img-element */
+                              <img
+                                src={imageSrc}
+                                alt={item.name}
+                                className="w-full h-full object-contain p-1"
+                              />
+                            )}
                           </div>
 
                           {/* Product Details */}

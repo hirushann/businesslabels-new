@@ -164,7 +164,10 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
               {/* Products List Body */}
               <div className="p-4 md:p-6 flex flex-col gap-6">
                 {mainItems.map((item, index) => {
-                  const href = item.slug ? `/product/${item.slug}${item.type ? `?type=${item.type}` : ''}` : undefined;
+                  const productSlug = item.slug?.trim();
+                  const href = productSlug
+                    ? localePath(`/product/${productSlug}${item.type ? `?type=${item.type}` : ''}`, locale)
+                    : undefined;
                   const linkedWarranty = items.find(
                     (w) => w.itemKind === 'warranty' && w.linkedToKey === item.key
                   );
@@ -198,11 +201,21 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                           <div className="flex-1 flex items-start md:items-center gap-3 md:gap-4 min-w-0">
                             {/* Product Image */}
                             <div className="w-16 h-16 md:w-20 md:h-20 bg-line rounded-lg overflow-hidden flex items-center justify-center p-2 shrink-0">
-                              <img
-                                src={item.mainImage || 'https://placehold.co/80x80'}
-                                alt={item.name}
-                                className="w-full h-full object-contain"
-                              />
+                              {href ? (
+                                <Link href={href} className="w-full h-full block">
+                                  <img
+                                    src={item.mainImage || 'https://placehold.co/80x80'}
+                                    alt={item.name}
+                                    className="w-full h-full object-contain"
+                                  />
+                                </Link>
+                              ) : (
+                                <img
+                                  src={item.mainImage || 'https://placehold.co/80x80'}
+                                  alt={item.name}
+                                  className="w-full h-full object-contain"
+                                />
+                              )}
                             </div>
                             
                             {/* SKU & Name */}

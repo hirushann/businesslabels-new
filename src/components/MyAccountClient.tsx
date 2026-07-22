@@ -998,7 +998,7 @@ function OrdersView() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<AccountOrder | null>(null);
-  const [isOrderItemsOpen, setIsOrderItemsOpen] = useState(true);
+  const [isOrderItemsOpen, setIsOrderItemsOpen] = useState(false);
   const [expandedOrders, setExpandedOrders] = useState<Record<string, boolean>>({});
 
   const toggleExpand = (orderId: string) => {
@@ -1191,13 +1191,16 @@ function OrdersView() {
                             className="self-stretch p-4 bg-surface rounded-[10px] flex flex-col justify-start items-start gap-2 w-full mt-1 border border-slate-100 animate-in fade-in slide-in-from-top-2 duration-300"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            {order.items_list.map((item, itemIdx) => (
+                            {order.items_list.map((item, itemIdx) => {
+                              const productHref = item.slug ? localePath(`/product/${item.slug}`, locale) : null;
+
+                              return (
                               <Fragment key={`${item.id}-${itemIdx}`}>
                                 <div className="group self-stretch justify-start items-center gap-2 inline-flex w-full">
                                   <div className="w-10 h-10 p-1 bg-line overflow-hidden rounded-[5px] justify-center items-center flex shrink-0 relative">
-                                    {item.slug ? (
+                                    {productHref ? (
                                       <Link 
-                                        href={`/product/${item.slug}`} 
+                                        href={productHref} 
                                         className="w-full h-full block relative z-10 cursor-pointer pointer-events-auto"
                                         onClick={(e) => e.stopPropagation()}
                                       >
@@ -1226,9 +1229,9 @@ function OrdersView() {
                                   <div className="flex-1 justify-start items-center gap-2 flex">
                                     <div className="flex-1 flex flex-col justify-start items-start gap-1">
                                       <div className="self-stretch text-copy text-base font-normal leading-[19px]">
-                                        {item.slug ? (
+                                        {productHref ? (
                                           <Link 
-                                            href={`/product/${item.slug}`} 
+                                            href={productHref} 
                                             className="hover:text-brand hover:underline relative z-10 cursor-pointer pointer-events-auto"
                                             onClick={(e) => e.stopPropagation()}
                                           >
@@ -1262,7 +1265,8 @@ function OrdersView() {
                                   <div className="self-stretch h-[1px] bg-[#E5E7EB] my-1"></div>
                                 )}
                               </Fragment>
-                            ))}
+                            );
+                            })}
                           </div>
                         )}
                       </div>
@@ -1299,7 +1303,7 @@ function OrdersView() {
               </div>
 
               {/* Items List */}
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-4 border-b border-slate-100 pb-6">
                 <button 
                   onClick={() => setIsOrderItemsOpen((prev) => !prev)}
                   className="flex items-center justify-between w-full text-left px-1 py-1 group"
@@ -1322,12 +1326,15 @@ function OrdersView() {
 
                 {isOrderItemsOpen && (
                   <div className="flex flex-col gap-3 animate-in fade-in duration-200">
-                    {selectedOrder.items_list?.map((item) => (
+                    {selectedOrder.items_list?.map((item) => {
+                      const productHref = item.slug ? localePath(`/product/${item.slug}`, locale) : null;
+
+                      return (
                       <div key={item.id} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100 gap-3">
                         <div className="flex items-center gap-3 min-w-0 flex-1">
                           <div className="w-12 h-12 p-1 bg-white border border-slate-200 overflow-hidden rounded-xl justify-center items-center flex shrink-0 relative shadow-sm">
-                            {item.slug ? (
-                              <Link href={`/product/${item.slug}`} className="w-full h-full block">
+                            {productHref ? (
+                              <Link href={productHref} className="w-full h-full block">
                                 {item.mainImage ? (
                                   <img className="w-full h-full object-contain" src={item.mainImage} alt={item.name} />
                                 ) : (
@@ -1352,8 +1359,8 @@ function OrdersView() {
                           </div>
                           <div className="flex flex-col gap-0.5 min-w-0 flex-1">
                             <span className="font-bold text-neutral-800 truncate">
-                              {item.slug ? (
-                                <Link href={`/product/${item.slug}`} className="hover:text-brand hover:underline">
+                              {productHref ? (
+                                <Link href={productHref} className="hover:text-brand hover:underline">
                                   {item.name}
                                 </Link>
                               ) : (
@@ -1365,7 +1372,8 @@ function OrdersView() {
                         </div>
                         <span className="font-black text-neutral-800 shrink-0">{formatEuro(item.total)}</span>
                       </div>
-                    ))}
+                    );
+                    })}
                   </div>
                 )}
               </div>

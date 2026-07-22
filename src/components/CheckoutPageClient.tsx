@@ -1127,11 +1127,8 @@ function CheckoutShell({
                 <div className="flex flex-col gap-4">
                   {items.map((item) => {
                     const imageSrc = item.mainImage?.trim() || "https://placehold.co/62x62";
-                    const productHref = item.slug
-                      ? localePath(`/product/${item.slug}`, locale)
-                      : item.id
-                      ? localePath(`/product/${item.id}`, locale)
-                      : null;
+                    const productSlug = item.slug?.trim();
+                    const productHref = productSlug ? localePath(`/product/${productSlug}`, locale) : null;
 
                     return (
                       <div key={item.key} className="w-full flex items-center gap-3">
