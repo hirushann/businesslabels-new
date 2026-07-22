@@ -441,7 +441,7 @@ export default function ThankYouPage() {
             </h2>
             
             {/* Items List */}
-            <div className="flex flex-col gap-4 max-h-[360px] overflow-y-auto pr-1 scrollbar-thin">
+            <div className="flex flex-col gap-4">
               {itemsList.map((item, index) => {
                 const rawImage = item.main_image || 
                   (Array.isArray(item.images) && item.images.length > 0 
