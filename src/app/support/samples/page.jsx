@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { DM_Sans } from 'next/font/google';
 
@@ -11,14 +11,11 @@ export default function PrintSamplePage() {
   const t = useTranslations('printSample');
 
   const [selectedPrinter, setSelectedPrinter] = useState('');
-  const [printerQuery, setPrinterQuery] = useState('');
-  const [printerResults, setPrinterResults] = useState([]);
-  const [isSearchingPrinters, setIsSearchingPrinters] = useState(false);
-
-  const [selectedMaterial, setSelectedMaterial] = useState('');
-  const [materialQuery, setMaterialQuery] = useState('');
-  const [materialResults, setMaterialResults] = useState([]);
-  const [isSearchingMaterials, setIsSearchingMaterials] = useState(false);
+  const [printerOptions, setPrinterOptions] = useState([]);
+  const [isLoadingPrinters, setIsLoadingPrinters] = useState(true);
+  const [printerLoadError, setPrinterLoadError] = useState(false);
+  const [selectedSubstrate, setSelectedSubstrate] = useState('');
+  const [selectedFinish, setSelectedFinish] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
@@ -32,58 +29,53 @@ export default function PrintSamplePage() {
   });
 
   useEffect(() => {
-    const handler = setTimeout(async () => {
-      if (printerQuery.trim().length >= 3) {
-        setIsSearchingPrinters(true);
-        try {
-          const res = await fetch(`/api/printers/search?query=${encodeURIComponent(printerQuery)}`);
-          const json = await res.json();
-          if (json.data) {
-            setPrinterResults(json.data.map(p => ({
-              id: p.id,
-              name: p.name,
-              desc: p.brand || p.model || t('printerDesc')
-            })));
-          }
-        } catch (err) {
-          console.error("Error fetching printers", err);
-        } finally {
-          setIsSearchingPrinters(false);
+    let isMounted = true;
+
+    async function loadColorWorksPrinters() {
+      setIsLoadingPrinters(true);
+      setPrinterLoadError(false);
+
+      try {
+        const response = await fetch('/api/printers?search=colorworks&per_page=60', {
+          headers: { Accept: 'application/json' },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to load printers');
         }
-      } else {
-        setPrinterResults([]);
-      }
-    }, 400);
 
-    return () => clearTimeout(handler);
-  }, [printerQuery]);
+        const data = await response.json();
+        const printers = Array.isArray(data.printers) ? data.printers : [];
+        const colorWorksPrinters = printers
+          .filter((printer) => String(printer.name ?? '').toLowerCase().includes('colorworks'))
+          .map((printer) => ({
+            id: printer.id,
+            name: printer.name,
+            desc: printer.subtitle || printer.properties?.label_breedte?.[0] || t('printerDesc'),
+          }));
 
-  useEffect(() => {
-    const handler = setTimeout(async () => {
-      if (materialQuery.trim().length >= 3) {
-        setIsSearchingMaterials(true);
-        try {
-          const res = await fetch(`/api/materials?search=${encodeURIComponent(materialQuery)}&perPage=9`);
-          const json = await res.json();
-          if (json.materials) {
-            setMaterialResults(json.materials.map(m => ({
-              id: m.id,
-              name: m.title,
-              desc: m.subtitle || m.brand || t('materialDesc')
-            })));
-          }
-        } catch (err) {
-          console.error("Error fetching materials", err);
-        } finally {
-          setIsSearchingMaterials(false);
+        if (isMounted) {
+          setPrinterOptions(colorWorksPrinters);
         }
-      } else {
-        setMaterialResults([]);
+      } catch (error) {
+        console.error('Error loading ColorWorks printers', error);
+        if (isMounted) {
+          setPrinterLoadError(true);
+          setPrinterOptions([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingPrinters(false);
+        }
       }
-    }, 400);
+    }
 
-    return () => clearTimeout(handler);
-  }, [materialQuery]);
+    loadColorWorksPrinters();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [t]);
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -113,8 +105,8 @@ export default function PrintSamplePage() {
         formData.append(key, value);
       });
       if (selectedPrinter) formData.append('printer', selectedPrinter);
-      if (selectedMaterial) formData.append('substrate', selectedMaterial);
-      formData.append('finish', '');
+      if (selectedSubstrate) formData.append('substrate', selectedSubstrate);
+      if (selectedFinish) formData.append('finish', selectedFinish);
       formData.append('locale', locale);
       if (file) {
         formData.append('file', file);
@@ -155,7 +147,7 @@ export default function PrintSamplePage() {
             {t('successDesc')}
           </p>
           <button
-            onClick={() => { setSubmitted(false); setForm({ first_name: '', last_name: '', email: '', phone: '', company: '', country: '', street: '', postcode: '', place: '', state: '', application: '', special_material: '', comments: '' }); setSelectedPrinter(''); setSelectedMaterial(''); setPrinterQuery(''); setMaterialQuery(''); setFile(null); setFileName(''); }}
+            onClick={() => { setSubmitted(false); setForm({ first_name: '', last_name: '', email: '', phone: '', company: '', country: '', street: '', postcode: '', place: '', state: '', application: '', special_material: '', comments: '' }); setSelectedPrinter(''); setSelectedSubstrate(''); setSelectedFinish(''); setFile(null); setFileName(''); }}
             className="h-12 px-8 bg-brand rounded-[100px] text-white text-base font-semibold hover:bg-brand-hover transition-all"
           >
             {t('submitAnother')}
@@ -233,43 +225,29 @@ export default function PrintSamplePage() {
                   <h2 className="text-neutral-800 text-2xl font-bold leading-7">{t('printerTitle')}</h2>
                   <p className="text-neutral-700 text-sm font-normal leading-5">{t('printerSubtitle')}</p>
                 </div>
-                
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    placeholder={t('searchPrinterPlaceholder')} 
-                    value={printerQuery}
-                    onChange={(e) => setPrinterQuery(e.target.value)}
-                    className="w-full h-12 px-10 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-zinc-200 text-base text-neutral-800 placeholder:text-zinc-500 leading-6 focus:outline-amber-400 focus:outline-2 transition-all"
-                  />
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                      <path d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z" stroke="var(--subtle)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M20.9999 20.9999L16.6499 16.6499" stroke="var(--subtle)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                  {isSearchingPrinters && (
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                      <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="12" r="10" stroke="var(--subtle)" strokeWidth="3" strokeDasharray="31.4" strokeDashoffset="10"/>
-                      </svg>
-                    </div>
-                  )}
-                </div>
 
-                <div className="flex flex-col gap-3">
-                  {printerResults.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {printerResults.map((p) => (
-                        <SelectOption key={p.id} option={p} selected={selectedPrinter === p.name} onChange={() => setSelectedPrinter(p.name)} />
-                      ))}
-                    </div>
-                  ) : printerQuery.trim().length >= 3 && !isSearchingPrinters ? (
-                     <p className="text-zinc-500 text-sm italic">{t('noPrintersFound', { query: printerQuery })}</p>
-                  ) : printerQuery.trim().length === 0 ? (
-                     <p className="text-zinc-500 text-sm">{t('searchPrinterAbove')}</p>
-                  ) : null}
-                </div>
+                {isLoadingPrinters ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                    {Array.from({ length: 6 }).map((_, index) => (
+                      <div key={index} className="h-[72px] rounded-xl bg-slate-50 outline outline-1 outline-offset-[-1px] outline-gray-100 animate-pulse" />
+                    ))}
+                  </div>
+                ) : printerLoadError ? (
+                  <p className="text-zinc-500 text-sm">{t('printerLoadError')}</p>
+                ) : printerOptions.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                    {printerOptions.map((printer) => (
+                      <SelectOption
+                        key={printer.id}
+                        option={printer}
+                        selected={selectedPrinter === printer.name}
+                        onChange={() => setSelectedPrinter(printer.name)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-zinc-500 text-sm">{t('noColorworksPrinters')}</p>
+                )}
               </div>
 
               <div className="h-px bg-slate-100" />
@@ -280,42 +258,22 @@ export default function PrintSamplePage() {
                   <h2 className="text-neutral-800 text-2xl font-bold leading-7">{t('materialTitle')}</h2>
                   <p className="text-neutral-700 text-sm font-normal leading-5">{t('materialSubtitle')}</p>
                 </div>
-                
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    placeholder={t('searchMaterialPlaceholder')} 
-                    value={materialQuery}
-                    onChange={(e) => setMaterialQuery(e.target.value)}
-                    className="w-full h-12 px-10 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-zinc-200 text-base text-neutral-800 placeholder:text-zinc-500 leading-6 focus:outline-amber-400 focus:outline-2 transition-all"
-                  />
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                      <path d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z" stroke="var(--subtle)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M20.9999 20.9999L16.6499 16.6499" stroke="var(--subtle)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                  {isSearchingMaterials && (
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                      <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="12" r="10" stroke="var(--subtle)" strokeWidth="3" strokeDasharray="31.4" strokeDashoffset="10"/>
-                      </svg>
-                    </div>
-                  )}
-                </div>
 
-                <div className="flex flex-col gap-3">
-                  {materialResults.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {materialResults.map((m) => (
-                        <SelectOption key={m.id} option={m} selected={selectedMaterial === m.name} onChange={() => setSelectedMaterial(m.name)} />
-                      ))}
+                <div className="flex flex-col gap-5">
+                  <div className="flex flex-col gap-2.5">
+                    <p className="text-neutral-800 text-lg font-bold leading-5">{t('substrate')}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <RadioChip label={t('paper')} selected={selectedSubstrate === 'Paper'} onChange={() => setSelectedSubstrate('Paper')} />
+                      <RadioChip label={t('foil')} selected={selectedSubstrate === 'Foil'} onChange={() => setSelectedSubstrate('Foil')} />
                     </div>
-                  ) : materialQuery.trim().length >= 3 && !isSearchingMaterials ? (
-                     <p className="text-zinc-500 text-sm italic">{t('noMaterialsFound', { query: materialQuery })}</p>
-                  ) : materialQuery.trim().length === 0 ? (
-                     <p className="text-zinc-500 text-sm">{t('searchMaterialAbove')}</p>
-                  ) : null}
+                  </div>
+                  <div className="flex flex-col gap-2.5">
+                    <p className="text-neutral-800 text-lg font-bold leading-5">{t('finish')}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <RadioChip label={t('matte')} selected={selectedFinish === 'Matte'} onChange={() => setSelectedFinish('Matte')} />
+                      <RadioChip label={t('glossy')} selected={selectedFinish === 'Glossy'} onChange={() => setSelectedFinish('Glossy')} />
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex flex-col gap-2 mt-2">
@@ -475,7 +433,7 @@ function SelectOption({ option, selected, onChange }) {
 
 function RadioChip({ label, selected, onChange }) {
   return (
-    <button type="button" onClick={onChange} className={"w-60 px-2 py-2.5 rounded-lg flex justify-start items-center gap-2 transition-all " + (selected ? 'bg-transparent outline outline-[1.5px] outline-offset-[-1.5px] outline-amber-500' : 'bg-slate-50 outline outline-1 outline-offset-[-1px] outline-gray-100 hover:outline-amber-300')}>
+    <button type="button" onClick={onChange} className={"w-full px-2 py-2.5 rounded-lg flex justify-start items-center gap-2 transition-all " + (selected ? 'bg-transparent outline outline-[1.5px] outline-offset-[-1.5px] outline-amber-500' : 'bg-slate-50 outline outline-1 outline-offset-[-1px] outline-gray-100 hover:outline-amber-300')}>
       <div className="size-4 relative flex-shrink-0">
         {selected ? (
           <div className="size-4 absolute inset-0 bg-brand rounded-full flex items-center justify-center">
