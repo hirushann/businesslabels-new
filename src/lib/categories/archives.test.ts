@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  archiveChildrenForNavigation,
   localizedCategoryArchivePath,
   resolveCategoryArchive,
 } from "@/lib/categories/archives";
@@ -110,5 +111,92 @@ describe("resolveCategoryArchive", () => {
       "/product-categorie/legacy",
       "en",
     )).resolves.toBeNull();
+  });
+
+  it("shows only translated, non-empty children in parent navigation", () => {
+    const visibleChildren = archiveChildrenForNavigation({
+      term_id: 1,
+      external_id: 100,
+      identity_id: 10,
+      parent_term_id: null,
+      locale: "nl",
+      name: "Labelprinters",
+      slug: "labelprinters",
+      path: "labelprinters",
+      description: null,
+      meta_title: null,
+      meta_description: null,
+      canonical_url: "/product-categorie/labelprinters",
+      alternate_urls: {},
+      direct_count: 1,
+      count: 1,
+      upstream_count: 1,
+      is_linked_translation: true,
+      children: [
+        {
+          term_id: 2,
+          external_id: 101,
+          identity_id: 11,
+          parent_term_id: 1,
+          locale: "nl",
+          name: "Accessoires",
+          slug: "accessoires",
+          path: "labelprinters/accessoires",
+          description: null,
+          meta_title: null,
+          meta_description: null,
+          canonical_url: "/product-categorie/labelprinters/accessoires",
+          alternate_urls: {
+            en: "/en/product-category/labelprinters/accessories-1",
+          },
+          direct_count: 1,
+          count: 1,
+          upstream_count: 1,
+          is_linked_translation: true,
+        },
+        {
+          term_id: 3,
+          external_id: 102,
+          identity_id: 12,
+          parent_term_id: 1,
+          locale: "nl",
+          name: "Legacy accessories",
+          slug: "legacy-accessories",
+          path: "labelprinters/legacy-accessories",
+          description: null,
+          meta_title: null,
+          meta_description: null,
+          canonical_url: "/product-categorie/labelprinters/legacy-accessories",
+          alternate_urls: {},
+          direct_count: 5,
+          count: 5,
+          upstream_count: 5,
+          is_linked_translation: false,
+        },
+        {
+          term_id: 4,
+          external_id: 103,
+          identity_id: 13,
+          parent_term_id: 1,
+          locale: "nl",
+          name: "Empty translated category",
+          slug: "empty-translated",
+          path: "labelprinters/empty-translated",
+          description: null,
+          meta_title: null,
+          meta_description: null,
+          canonical_url: "/product-categorie/labelprinters/empty-translated",
+          alternate_urls: {
+            en: "/en/product-category/labelprinters/empty-translated",
+          },
+          direct_count: 0,
+          count: 0,
+          upstream_count: 0,
+          is_linked_translation: true,
+        },
+      ],
+    });
+
+    expect(visibleChildren.map((child) => child.term_id)).toEqual([2]);
   });
 });

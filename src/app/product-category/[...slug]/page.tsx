@@ -7,6 +7,7 @@ import ProductsListing from "@/components/ProductsListing";
 import ReviewsSection from "@/components/ReviewsSection";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import {
+  archiveChildrenForNavigation,
   resolveCategoryArchive,
   type CategoryArchiveNode,
 } from "@/lib/categories/archives";
@@ -164,7 +165,7 @@ export async function ProductCategoryPage({
     console.error(`Failed to load category archive '${resolved.archive.path}'.`, error);
   }
 
-  const archiveChildren = resolved.archive.children ?? [];
+  const archiveChildren = archiveChildrenForNavigation(resolved.archive);
   const imagesByIdentity = categoryImagesByIdentity(categoryGroups);
   const childNodes = archiveChildren.map((child) =>
     asCategoryNode(child, imagesByIdentity),

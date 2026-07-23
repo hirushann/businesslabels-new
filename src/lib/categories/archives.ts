@@ -27,6 +27,14 @@ export type ResolvedCategoryArchive = {
   redirect_to: string | null;
 };
 
+export function archiveChildrenForNavigation(
+  archive: CategoryArchiveNode,
+): CategoryArchiveNode[] {
+  return (archive.children ?? []).filter(
+    (child) => child.count > 0 && Object.keys(child.alternate_urls).length > 0,
+  );
+}
+
 export async function resolveCategoryArchive(
   locale: "en" | "nl",
   path: string,
