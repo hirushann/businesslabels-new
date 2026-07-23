@@ -10,6 +10,8 @@ export type CategoryArchiveNode = {
   description: string | null;
   meta_title: string | null;
   meta_description: string | null;
+  image?: string | null;
+  main_image?: string | null;
   canonical_url: string;
   alternate_urls: Partial<Record<"en" | "nl", string>>;
   direct_count: number;

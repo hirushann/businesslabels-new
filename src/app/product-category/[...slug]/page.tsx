@@ -10,7 +10,11 @@ import {
   resolveCategoryArchive,
   type CategoryArchiveNode,
 } from "@/lib/categories/archives";
-import type { CategoryNode } from "@/lib/categories/tree";
+import {
+  fetchCategoryGroups,
+  type CategoryGroup,
+  type CategoryNode,
+} from "@/lib/categories/tree";
 import { getServerLocale } from "@/lib/i18n";
 import { localePath } from "@/lib/i18n/utils";
 import {
@@ -42,7 +46,35 @@ function toSearchParams(query: Record<string, string | string[] | undefined>): U
   return params;
 }
 
-function asCategoryNode(archive: CategoryArchiveNode): CategoryNode {
+type CategoryImages = Pick<CategoryNode, "image" | "main_image">;
+
+function categoryImagesByIdentity(groups: CategoryGroup[]): Map<number, CategoryImages> {
+  const images = new Map<number, CategoryImages>();
+
+  const visit = (categories: CategoryNode[]) => {
+    categories.forEach((category) => {
+      if (category.image || category.main_image) {
+        images.set(category.id, {
+          image: category.image,
+          main_image: category.main_image,
+        });
+      }
+      visit(category.children ?? []);
+    });
+  };
+
+  groups.forEach((group) => visit(group.categories ?? []));
+  return images;
+}
+
+function asCategoryNode(
+  archive: CategoryArchiveNode,
+  imagesByIdentity: Map<number, CategoryImages>,
+): CategoryNode {
+  const fallbackImages = archive.identity_id
+    ? imagesByIdentity.get(archive.identity_id)
+    : undefined;
+
   return {
     id: archive.term_id,
     name: archive.name,
@@ -59,7 +91,11 @@ function asCategoryNode(archive: CategoryArchiveNode): CategoryNode {
     },
     parent_id: archive.parent_term_id,
     count: archive.count,
-    children: (archive.children ?? []).map(asCategoryNode),
+    image: archive.image ?? fallbackImages?.image,
+    main_image: archive.main_image ?? fallbackImages?.main_image,
+    children: (archive.children ?? []).map((child) =>
+      asCategoryNode(child, imagesByIdentity),
+    ),
   };
 }
 
@@ -95,10 +131,11 @@ export async function ProductCategoryPage({
 }: ProductCategoryPageProps & {
   requestedRouteBase?: "product-category" | "product-categorie";
 }) {
-  const [{ locale, resolved }, rawQuery, t] = await Promise.all([
+  const [{ locale, resolved }, rawQuery, t, categoryGroups] = await Promise.all([
     archiveFor(params),
     searchParams,
     getTranslations(),
+    fetchCategoryGroups(),
   ]);
 
   if (!resolved) notFound();
@@ -128,11 +165,16 @@ export async function ProductCategoryPage({
   }
 
   const archiveChildren = resolved.archive.children ?? [];
-  const childNodes = archiveChildren.map(asCategoryNode);
+  const imagesByIdentity = categoryImagesByIdentity(categoryGroups);
+  const childNodes = archiveChildren.map((child) =>
+    asCategoryNode(child, imagesByIdentity),
+  );
   const childUrls = new Map(
     archiveChildren.map((child) => [child.term_id, child.canonical_url]),
   );
-  const ancestorNodes = resolved.ancestors.map(asCategoryNode);
+  const ancestorNodes = resolved.ancestors.map((ancestor) =>
+    asCategoryNode(ancestor, imagesByIdentity),
+  );
   const breadcrumbs = [
     { label: t("common.products"), href: localePath("/product", locale) },
     ...resolved.ancestors.map((ancestor) => ({
