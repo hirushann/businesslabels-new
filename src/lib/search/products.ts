@@ -46,6 +46,7 @@ const MULTI_VALUE_KEYS = {
   categories: ["category", "category_slug"],
   scopeCategories: ["scope_category"],
   categoryIds: ["category_id"],
+  categoryTermIds: ["category_term_id"],
   brands: ["brand"],
   materialIds: ["material_id"],
   materialCategories: ["material_category"],
@@ -263,6 +264,7 @@ export function parseCatalogSearchParams(params: URLSearchParams, locale?: "en" 
   const categoryValues = valuesParam(params, MULTI_VALUE_KEYS.categories);
   const scopeCategoryValues = valuesParam(params, MULTI_VALUE_KEYS.scopeCategories);
   const categoryIdValues = valuesParam(params, MULTI_VALUE_KEYS.categoryIds);
+  const categoryTermIdValues = valuesParam(params, MULTI_VALUE_KEYS.categoryTermIds);
   const materialIdValues = valuesParam(params, MULTI_VALUE_KEYS.materialIds);
   const materialCategoryIdValues = valuesParam(params, MULTI_VALUE_KEYS.materialCategoryIds);
   const printerIdValues = valuesParam(params, EXACT_VALUE_KEYS.printerIds);
@@ -297,6 +299,7 @@ export function parseCatalogSearchParams(params: URLSearchParams, locale?: "en" 
     categories: categoryValues,
     scopeCategories: scopeCategoryValues,
     categoryIds: integerValues(categoryIdValues),
+    categoryTermIds: integerValues(categoryTermIdValues),
     brands: valuesParam(params, MULTI_VALUE_KEYS.brands),
     materialIds: integerValues(materialIdValues),
     materialCategories: valuesParam(params, MULTI_VALUE_KEYS.materialCategories),
@@ -933,6 +936,7 @@ function buildBaseFilters(
     // user-selectable `categories` facet filter so the two never OR together.
     categorySlugFilter(params.scopeCategories),
     termsFilter("category_ids", params.categoryIds),
+    termsFilter(`category_archive_term_ids_${params.locale ?? "nl"}`, params.categoryTermIds),
     materialIdsFilter(params.materialIds),
     termsFilter("material_taxon_slugs", params.materialCategories),
     termsFilter("material_taxon_ids", params.materialCategoryIds),

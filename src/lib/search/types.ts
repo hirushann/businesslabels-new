@@ -88,6 +88,7 @@ export type CatalogSearchParams = {
   categories: string[];
   scopeCategories: string[];
   categoryIds: number[];
+  categoryTermIds: number[];
   brands: string[];
   materialIds: number[];
   materialCategories: string[];

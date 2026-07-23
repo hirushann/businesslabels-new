@@ -19,6 +19,7 @@ function persistLocale(response: NextResponse, locale: 'en' | 'nl') {
 /**
  * Locale-prefix routing:
  * - /en/* → English, rewrite internally to /* + persist NEXT_LOCALE=en
+ * - /product-categorie/* → Dutch, regardless of a previous English cookie
  * - /* → Use the persisted user locale, falling back to Dutch.
  *
  * The user's explicit language choice is the source of truth. This prevents
@@ -29,8 +30,10 @@ function persistLocale(response: NextResponse, locale: 'en' | 'nl') {
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const hasEnglishPrefix = pathname.startsWith(EN_PREFIX + '/') || pathname === EN_PREFIX;
+  const hasDutchArchivePrefix =
+    pathname.startsWith('/product-categorie/') || pathname === '/product-categorie';
   const persistedLocale = normalizeLocale(request.cookies.get(LOCALE_COOKIE)?.value);
-  const locale = hasEnglishPrefix ? 'en' : persistedLocale;
+  const locale = hasEnglishPrefix ? 'en' : hasDutchArchivePrefix ? 'nl' : persistedLocale;
   let cleanPathname = hasEnglishPrefix ? (pathname.slice(EN_PREFIX.length) || '/') : pathname;
   if (cleanPathname === '/software-2') {
     cleanPathname = '/software';

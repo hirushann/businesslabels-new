@@ -41,6 +41,18 @@ describe("proxy locale routing", () => {
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
 
+  it("uses Dutch for product-categorie URLs even with an English cookie", () => {
+    const response = proxy(
+      makeRequest(
+        "/product-categorie/labelprinters/verbruiksmaterialen-nl",
+        `${LOCALE_COOKIE}=en`,
+      ),
+    );
+
+    expect(response.status).not.toBeGreaterThanOrEqual(300);
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("nl");
+  });
+
   it("keeps auth redirects locale-aware", () => {
     const response = proxy(makeRequest("/en/my-account"));
 

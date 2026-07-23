@@ -53,8 +53,22 @@ export default function LanguageSwitcher() {
     // Build the target URL: EN gets /en prefix, NL gets clean path
     const currentPath = window.location.pathname;
     const cleanPath = stripLocalePath(currentPath);
+    const isCategoryArchive = /^\/(?:en\/)?product-(?:category|categorie)(?:\/|$)/.test(currentPath);
 
-    if (/^\/(?:en\/)?product-(?:category|categorie)(?:\/|$)/.test(currentPath)) {
+    if (isCategoryArchive) {
+      const alternateHref = document
+        .querySelector(`link[rel="alternate"][hreflang="${normalized}"]`)
+        ?.getAttribute('href');
+
+      if (alternateHref) {
+        const alternateUrl = new URL(alternateHref, window.location.origin);
+        startTransition(() => {
+          router.push(`${alternateUrl.pathname}${window.location.search}${window.location.hash}`);
+          router.refresh();
+        });
+        return;
+      }
+
       try {
         const params = new URLSearchParams({
           pathname: currentPath,
@@ -73,9 +87,15 @@ export default function LanguageSwitcher() {
           }
         }
       } catch {
-        // The existing route-specific and pathname fallbacks below keep the
-        // language switch usable when the category API is temporarily down.
+        // Fall through to a safe locale landing page below.
       }
+
+      const categoryLandingPath = normalized === 'en' ? '/en/product' : '/product';
+      startTransition(() => {
+        router.push(categoryLandingPath);
+        router.refresh();
+      });
+      return;
     }
 
     const alternateHref = document

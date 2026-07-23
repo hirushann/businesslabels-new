@@ -1,8 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import {
-  fetchCategoryGroups,
-  localizedProductCategoryPath,
-} from "@/lib/categories/tree";
+import { localizedCategoryArchivePath } from "@/lib/categories/archives";
 
 export async function GET(request: NextRequest) {
   const pathname = request.nextUrl.searchParams.get("pathname") ?? "";
@@ -12,8 +9,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ path: null }, { status: 400 });
   }
 
-  const groups = await fetchCategoryGroups();
-  const path = localizedProductCategoryPath(groups, pathname, locale);
+  const path = await localizedCategoryArchivePath(pathname, locale);
 
   return NextResponse.json({ path });
 }
