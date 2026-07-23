@@ -56,6 +56,9 @@ type AccountAddress = {
   vatNumber?: string;
   address1: string;
   address2: string;
+  state?: string;
+  province_id?: number | string;
+  state_id?: number | string;
   postcode?: string;
   city?: string;
   phone?: string;
@@ -417,7 +420,8 @@ function splitAddressName(address?: AccountAddress) {
 
 function normalizeAddress(address: Record<string, unknown>, index: number): AccountAddress {
   const street = readStringValue(address, ['street', 'address', 'address_1', 'line1', 'street_address']);
-  const street2 = readStringValue(address, ['street2', 'address2', 'address_2', 'line2', 'apartment', 'suite', 'state', 'province', 'region']);
+  const street2 = readStringValue(address, ['street2', 'address2', 'address_2', 'line2', 'apartment', 'suite']);
+  const state = readStringValue(address, ['state', 'state_name', 'province', 'province_name', 'region', 'region_name']);
   const postcode = readStringValue(address, ['postcode', 'postalcode', 'postal_code', 'zip', 'zip_code']);
   const city = readStringValue(address, ['city', 'town']);
   const country = readStringValue(address, ['country', 'country_name', 'country_id']);
@@ -430,9 +434,10 @@ function normalizeAddress(address: Record<string, unknown>, index: number): Acco
     firstname: readStringValue(address, ['firstname', 'first_name', 'billing_first_name', 'shipping_first_name']),
     lastname: readStringValue(address, ['lastname', 'last_name', 'billing_last_name', 'shipping_last_name']),
     company: readStringValue(address, ['company', 'company_name', 'business_name']),
-    vatNumber: readStringValue(address, ['vat_number', 'vatNumber', 'btw_number', 'btwNumber', 'tax_number', 'taxNumber']),
+    vatNumber: readStringValue(address, ['vat_number', 'tax_nr', 'vatNumber', 'btw_number', 'btwNumber', 'tax_number', 'taxNumber']),
     address1: street,
     address2: street2,
+    state: state || street2,
     postcode,
     city,
     phone: readStringValue(address, ['phone', 'telephone', 'mobile']),
@@ -775,7 +780,7 @@ function MyAccountContent() {
               {activeTab === 'addresses' && <AddressesView />}
               {activeTab === 'details' && <AccountDetailsView user={user} />}
               
-              {activeTab === 'billing_address' && <SingleAddressView type="billing_address" />}
+              {activeTab === 'billing_address' && <BillingAddressesView user={user} />}
               {activeTab === 'shipping_address' && <ShippingAddressesView user={user} />}
               {activeTab === 'change_password' && <ChangePasswordView />}
             </div>
@@ -1768,6 +1773,298 @@ function AddressesView() {
   );
 }
 
+function BillingAddressesView({ user }: { user: StoredUser }) {
+  const t = useTranslations();
+  const [editingAddress, setEditingAddress] = useState<AccountAddress | 'new' | null>(null);
+  const [addresses, setAddresses] = useState<AccountAddress[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
+    user.default_billing_address_id ? String(user.default_billing_address_id) : null
+  );
+
+  const fetchAddresses = async () => {
+    setIsLoading(true);
+    setErrorMessage('');
+    try {
+      setAddresses(await requestAccountAddresses());
+    } catch (error) {
+      setAddresses([]);
+      setErrorMessage(error instanceof Error ? error.message : t('account.addressesLoadError'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadAddresses() {
+      try {
+        const nextAddresses = await requestAccountAddresses();
+        if (isMounted) setAddresses(nextAddresses);
+      } catch (error) {
+        if (isMounted) {
+          setAddresses([]);
+          setErrorMessage(error instanceof Error ? error.message : t('account.addressesLoadError'));
+        }
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+    void loadAddresses();
+    return () => { isMounted = false; };
+  }, [t]);
+
+  useEffect(() => {
+    if (user.default_billing_address_id) {
+      setSelectedAddressId(String(user.default_billing_address_id));
+    }
+  }, [user.default_billing_address_id]);
+
+  useEffect(() => {
+    if (addresses.length > 0 && !selectedAddressId) {
+      const userDefaultId = user.default_billing_address_id ? String(user.default_billing_address_id) : undefined;
+      const defaultSel = addresses.find(a => String(a.id) === userDefaultId) || addresses.find(a => a.type?.toLowerCase() === 'billing') || addresses[0];
+      setSelectedAddressId(defaultSel.id);
+    }
+  }, [addresses, selectedAddressId, user.default_billing_address_id]);
+
+  const handleSelectAddress = async (addrId: string) => {
+    setSelectedAddressId(addrId);
+    try {
+      const uName = userDisplayName(user);
+      const uEmail = userString(user, ['email']);
+      const uPhone = userString(user, ['phone', 'mobile']);
+
+      const response = await fetch('/api/account/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          name: uName,
+          email: uEmail,
+          phone: uPhone,
+          default_billing_address_id: addrId
+        }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('auth_user', JSON.stringify(data.data || data));
+        window.dispatchEvent(new Event('auth-user-updated'));
+        toast.success(t('account.defaultBillingAddressUpdated') || 'Default billing address updated.');
+      } else {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to update default billing address');
+      }
+    } catch (error) {
+      console.error('Error updating default billing address:', error);
+      toast.error(error instanceof Error ? error.message : 'Error updating default billing address.');
+    }
+  };
+
+  const billingAddresses = addresses.filter((address) => {
+    const addressType = address.type?.toLowerCase() || '';
+    return addressType === 'billing' || addressType.includes('billing');
+  });
+
+  const getLabel = (key: string, fallback: string) => {
+    const val = t(key);
+    return val === key ? fallback : val;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-64 w-full items-center justify-center rounded-3xl border border-slate-100 bg-slate-50">
+        <div className="flex flex-col items-center gap-3 text-neutral-500">
+          <div className="size-10 animate-spin rounded-full border-4 border-slate-200 border-t-amber-500" />
+          <p className="font-bold">{t('account.loadingAddresses')}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <div className="rounded-3xl border border-red-100 bg-red-50 p-8 w-full">
+        <h3 className="text-lg font-black text-red-700">{t('account.addressesLoadError')}</h3>
+        <p className="mt-2 font-medium text-red-600">{errorMessage}</p>
+        <button type="button" onClick={() => void fetchAddresses()} className="mt-5 rounded-full bg-red-600 px-6 py-2.5 text-sm font-black text-white transition-colors hover:bg-red-700">{t('account.tryAgain')}</button>
+      </div>
+    );
+  }
+
+  const handleRemove = async (addressId: string) => {
+    if (!confirm(t('account.confirmRemoveAddress') || 'Are you sure you want to remove this address?')) {
+      return;
+    }
+    try {
+      const response = await fetch('/api/account/addresses', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({ id: addressId }),
+      });
+      if (!response.ok) {
+        throw new Error();
+      }
+      toast.success(t('account.addressRemovedSuccess') || 'Address removed successfully.');
+      void fetchAddresses();
+    } catch (error) {
+      toast.error(t('account.addressRemoveError') || 'Error removing address.');
+    }
+  };
+
+  return (
+    <div className="self-stretch flex flex-col justify-start items-start gap-6 w-full">
+      <div className="justify-start text-neutral-800 text-3xl font-bold leading-8">
+        {getLabel('account.billingAddress', 'Billing Address')}
+      </div>
+      <div className="self-stretch border-t border-line"></div>
+
+      {editingAddress ? (
+        <BillingAddressEditInline
+          onClose={() => setEditingAddress(null)}
+          onSave={(savedId) => {
+            setEditingAddress(null);
+            if (savedId) {
+              setSelectedAddressId(String(savedId));
+            }
+            void fetchAddresses();
+          }}
+          address={editingAddress === 'new' ? undefined : editingAddress}
+        />
+      ) : (
+        <>
+          <div className="self-stretch flex flex-col justify-start items-start gap-4">
+            {billingAddresses.length === 0 && (
+              <div className="text-zinc-500 text-base">{getLabel('account.noBillingAddresses', 'No billing addresses found.')}</div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full self-stretch">
+              {billingAddresses.map((addr, index) => {
+                const isSelected = selectedAddressId ? String(addr.id) === String(selectedAddressId) : index === 0;
+                const name = addr.name || `${addr.firstname || ''} ${addr.lastname || ''}`.trim();
+                const addressStr = [addr.address1, addr.address2, addr.city, addr.postcode, addr.country].filter(Boolean).join(', ');
+                const isOffice = addr.company?.toLowerCase().includes('office') || addr.company?.toLowerCase().includes('company');
+                const contactDetails = [addr.email, addr.phone].filter(Boolean);
+
+                return (
+                  <div
+                    key={addr.id || index}
+                    className={`flex-1 p-4 relative rounded-xl outline transition-all duration-200 ${isSelected ? 'bg-[rgba(241,136,0,0.02)] outline-[1.5px] outline-brand' : 'bg-white outline-[1px] outline-[#E4EAF1]'} inline-flex flex-col justify-start items-start gap-3 w-full`}
+                  >
+                    <div className="self-stretch inline-flex justify-start items-start gap-3">
+                      <div className="w-5 h-6 relative mt-1 cursor-pointer flex items-start" onClick={() => handleSelectAddress(addr.id)}>
+                        {isSelected ? (
+                          <div className="w-5 h-5 bg-brand rounded-full relative flex items-center justify-center">
+                            <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M1.5 4L4 6.5L8.5 1.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
+                        ) : (
+                          <div className="w-5 h-5 rounded-full border border-[#CAD3DF]"></div>
+                        )}
+                      </div>
+
+                      <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
+                        <div className="inline-flex justify-start items-center gap-1">
+                          <div className="justify-start text-neutral-800 text-xl font-bold leading-6">{name || '-'}</div>
+                          {isOffice ? (
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-[16px] h-[16px] text-copy fill-current">
+                              <mask id={`mask0_billing_office_${addr.id}`} style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
+                                <rect width="20" height="20" fill="#D9D9D9"/>
+                              </mask>
+                              <g mask={`url(#mask0_billing_office_${addr.id})`}>
+                                <path d="M3.45455 18C3.05455 18 2.71212 17.8508 2.42727 17.5524C2.14242 17.254 2 16.8952 2 16.4762V8.85714C2 8.64127 2.0697 8.46032 2.20909 8.31429C2.34848 8.16825 2.52121 8.09524 2.72727 8.09524C2.93333 8.09524 3.10606 8.16825 3.24545 8.31429C3.38485 8.46032 3.45455 8.64127 3.45455 8.85714V16.4762H15.0909C15.297 16.4762 15.4697 16.5492 15.6091 16.6952C15.7485 16.8413 15.8182 17.0222 15.8182 17.2381C15.8182 17.454 15.7485 17.6349 15.6091 17.781C15.4697 17.927 15.297 18 15.0909 18H3.45455ZM6.36364 14.9524C5.96364 14.9524 5.62121 14.8032 5.33636 14.5048C5.05152 14.2063 4.90909 13.8476 4.90909 13.4286V5.80952C4.90909 5.59365 4.97879 5.4127 5.11818 5.26667C5.25758 5.12063 5.4303 5.04762 5.63636 5.04762H8.54545V3.52381C8.54545 3.10476 8.68788 2.74603 8.97273 2.44762C9.25758 2.14921 9.6 2 10 2H12.9091C13.3091 2 13.6515 2.14921 13.9364 2.44762C14.2212 2.74603 14.3636 3.10476 14.3636 3.52381V5.04762H17.2727C17.4788 5.04762 17.6515 5.12063 17.7909 5.26667C17.9303 5.4127 18 5.59365 18 5.80952V13.4286C18 13.8476 17.8576 14.2063 17.5727 14.5048C17.2879 14.8032 16.9455 14.9524 16.5455 14.9524H6.36364ZM6.36364 13.4286H16.5455V6.57143H6.36364V13.4286ZM10 5.04762H12.9091V3.52381H10V5.04762Z" fill="var(--copy)"/>
+                              </g>
+                            </svg>
+                          ) : (
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--copy)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-[15px] h-[15px]">
+                              <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                              <polyline points="9 22 9 12 15 12 15 22"/>
+                            </svg>
+                          )}
+                        </div>
+                        {addr.company ? (
+                          <div className="justify-center text-neutral-700 text-base font-normal leading-6">{addr.company}</div>
+                        ) : null}
+                        {contactDetails.length > 0 ? (
+                          <div className="flex justify-start items-center gap-2 flex-wrap text-copy text-[16px] font-normal leading-6">
+                            {contactDetails.map((detail, detailIndex) => (
+                              <Fragment key={`${detail}-${detailIndex}`}>
+                                {detailIndex > 0 ? <div className="text-[#C8D2DD]">|</div> : null}
+                                <div>{detail}</div>
+                              </Fragment>
+                            ))}
+                          </div>
+                        ) : null}
+                        {addressStr ? (
+                          <div className="justify-center text-neutral-700 text-base font-normal leading-6">{addressStr}</div>
+                        ) : null}
+                        <div className="self-stretch border-t border-line mt-1"></div>
+                        <div className="self-stretch inline-flex justify-start items-center gap-4 mt-1">
+                          <button onClick={() => setEditingAddress(addr)} className="inline-flex justify-start items-center gap-1 hover:opacity-80 transition-opacity">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <mask id={`mask0_billing_edit_${addr.id}`} style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
+                                <rect width="20" height="20" fill="#D9D9D9"/>
+                              </mask>
+                              <g mask={`url(#mask0_billing_edit_${addr.id})`}>
+                                <path d="M3.33268 20.0052C2.87435 20.0052 2.48199 19.842 2.1556 19.5156C1.82921 19.1892 1.66602 18.7969 1.66602 18.3385C1.66602 17.8802 1.82921 17.4878 2.1556 17.1615C2.48199 16.8351 2.87435 16.6719 3.33268 16.6719H16.666C17.1243 16.6719 17.5167 16.8351 17.8431 17.1615C18.1695 17.4878 18.3327 17.8802 18.3327 18.3385C18.3327 18.7969 18.1695 19.1892 17.8431 19.5156C17.5167 19.842 17.1243 20.0052 16.666 20.0052H3.33268ZM4.99935 13.3385H6.16602L12.666 6.85938L11.4785 5.67188L4.99935 12.1719V13.3385ZM3.33268 14.1719V11.8177C3.33268 11.7066 3.35352 11.599 3.39518 11.4948C3.43685 11.3906 3.49935 11.2969 3.58268 11.2135L12.666 2.15104C12.8188 1.99826 12.9959 1.88021 13.1973 1.79688C13.3987 1.71354 13.6105 1.67188 13.8327 1.67188C14.0549 1.67188 14.2702 1.71354 14.4785 1.79688C14.6868 1.88021 14.8743 2.00521 15.041 2.17188L16.1868 3.33854C16.3535 3.49132 16.475 3.67188 16.5514 3.88021C16.6278 4.08854 16.666 4.30382 16.666 4.52604C16.666 4.73438 16.6278 4.93924 16.5514 5.14063C16.475 5.34201 16.3535 5.52604 16.1868 5.69271L7.12435 14.7552C7.04101 14.8385 6.94726 14.901 6.8431 14.9427C6.73893 14.9844 6.63129 15.0052 6.52018 15.0052H4.16602C3.9299 15.0052 3.73199 14.9253 3.57227 14.7656C3.41254 14.6059 3.33268 14.408 3.33268 14.1719Z" fill="var(--brand)"/>
+                              </g>
+                            </svg>
+                            <div className="text-brand text-base font-normal leading-5">{getLabel('account.edit', 'Edit')}</div>
+                          </button>
+                          <>
+                            <div className="w-[1.16px] h-4 bg-[#C8D2DD] rounded-full mx-1"></div>
+                            <button onClick={() => handleRemove(addr.id)} className="inline-flex justify-start items-center gap-1 hover:opacity-80 transition-opacity">
+                              <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <mask id={`mask0_billing_delete_${addr.id}`} style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="21" height="21">
+                                  <rect width="21" height="21" fill="#D9D9D9"/>
+                                </mask>
+                                <g mask={`url(#mask0_billing_delete_${addr.id})`}>
+                                  <path d="M6.125 18.375C5.64375 18.375 5.23177 18.2036 4.88906 17.8609C4.54635 17.5182 4.375 17.1062 4.375 16.625V5.25C4.12708 5.25 3.91927 5.16615 3.75156 4.99844C3.58385 4.83073 3.5 4.62292 3.5 4.375C3.5 4.12708 3.58385 3.91927 3.75156 3.75156C3.91927 3.58385 4.12708 3.5 4.375 3.5H7.875C7.875 3.25208 7.95885 3.04427 8.12656 2.87656C8.29427 2.70885 8.50208 2.625 8.75 2.625H12.25C12.4979 2.625 12.7057 2.70885 12.8734 2.87656C13.0411 3.04427 13.125 3.25208 13.125 3.5H16.625C16.8729 3.5 17.0807 3.58385 17.2484 3.75156C17.4161 3.91927 17.5 4.12708 17.5 4.375C17.5 4.62292 17.4161 4.83073 17.2484 4.99844C17.0807 5.16615 16.8729 5.25 16.625 5.25V16.625C16.625 17.1062 16.4536 17.5182 16.1109 17.8609C15.7682 18.2036 15.3562 18.375 14.875 18.375H6.125ZM14.875 5.25H6.125V16.625H14.875V5.25ZM9.37344 14.6234C9.54115 14.4557 9.625 14.2479 9.625 14V7.875C9.625 7.62708 9.54115 7.41927 9.37344 7.25156C9.20573 7.08385 8.99792 7 8.75 7C8.50208 7 8.29427 7.08385 8.12656 7.25156C7.95885 7.41927 7.875 7.62708 7.875 7.875V14C7.875 14.2479 7.95885 14.4557 8.12656 14.6234C8.29427 14.7911 8.50208 14.875 8.75 14.875C8.99792 14.875 9.20573 14.7911 9.37344 14.6234ZM12.8734 14.6234C13.0411 14.4557 13.125 14.2479 13.125 14V7.875C13.125 7.62708 13.0411 7.41927 12.8734 7.25156C12.7057 7.08385 12.4979 7 12.25 7C12.0021 7 11.7943 7.08385 11.6266 7.25156C11.4589 7.41927 11.375 7.62708 11.375 7.875V14C11.375 14.2479 11.4589 14.4557 11.6266 14.6234C11.7943 14.7911 12.0021 14.875 12.25 14.875C12.4979 14.875 12.7057 14.7911 12.8734 14.6234Z" fill="var(--subtle)"/>
+                                </g>
+                              </svg>
+                              <div className="text-subtle text-base font-normal leading-5">{getLabel('account.remove', 'Remove')}</div>
+                            </button>
+                          </>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="self-stretch justify-start items-center gap-2 inline-flex">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.99935 1.66536C14.5827 1.66536 18.3327 5.41536 18.3327 9.9987C18.3327 14.582 14.5827 18.332 9.99935 18.332C5.41602 18.332 1.66602 14.582 1.66602 9.9987C1.66602 5.41536 5.41602 1.66536 9.99935 1.66536Z" stroke="var(--subtle)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M10 13.332V9.16536" stroke="var(--subtle)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M9.99609 6.66797H10.0036" stroke="var(--subtle)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <div className="text-subtle text-[16px] font-normal leading-[20.80px]">
+              {getLabel('account.selectFavoriteAddress', 'Select an address to make it your favorite.')}
+            </div>
+          </div>
+
+          <button
+            onClick={() => setEditingAddress('new')}
+            className="h-[52px] px-8 rounded-full border-[1.5px] border-brand flex w-full sm:inline-flex sm:w-auto justify-center items-center gap-2 hover:bg-brand/5 transition-colors mt-2"
+          >
+            <span className="text-brand text-[22px] font-normal leading-6">+</span>
+            <span className="text-brand text-lg font-normal leading-6">{getLabel('account.addNewAddress', 'Add New Address')}</span>
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
 function ShippingAddressesView({ user }: { user: StoredUser }) {
   const t = useTranslations();
   const [editingAddress, setEditingAddress] = useState<AccountAddress | 'new' | null>(null);
@@ -2092,7 +2389,7 @@ function ShippingAddressEditInline({
   const [street, setStreet] = useState(address?.address1 || '');
   const [postcode, setPostcode] = useState(address?.postcode || '');
   const [city, setCity] = useState(address?.city || '');
-  const [stateRegion, setStateRegion] = useState(address?.address2 || '');
+  const [stateRegion, setStateRegion] = useState(address?.state || address?.address2 || '');
   const [label, setLabel] = useState<'office' | 'home'>('home');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -2134,7 +2431,7 @@ function ShippingAddressEditInline({
 
   useEffect(() => {
     if (provinces.length > 0) {
-      const initialProvVal = address?.address2 || (address as any)?.state || '';
+      const initialProvVal = address?.state || address?.address2 || (address as any)?.state || '';
       const match = provinces.find((p: any) => 
         String(p.id) === String(initialProvVal) ||
         p.name.toLowerCase() === String(initialProvVal).toLowerCase()
@@ -2182,12 +2479,19 @@ function ShippingAddressEditInline({
         company_name: label === 'office' ? 'Office' : '',
         address: street,
         address2: stateRegion,
+        state: stateRegion,
+        state_name: stateRegion,
+        province: stateRegion,
+        province_name: stateRegion,
         postalcode: postcode,
         city: city,
         phone: phone,
         email: email,
         country_id: countryId || 'NL',
+        country: selectedCountry?.name || countryId || 'Netherlands',
+        country_name: selectedCountry?.name || countryId || 'Netherlands',
         province_id: provinceId ? Number(provinceId) : undefined,
+        state_id: provinceId ? Number(provinceId) : undefined,
       };
 
       const response = await fetch('/api/account/addresses', {
@@ -2466,7 +2770,7 @@ function SingleAddressView({ type }: { type: 'billing_address' | 'shipping_addre
     { label: getLabel('account.streetAndHouseNumber', 'Street and house number'), value: targetAddress?.address1 },
     { label: getLabel('account.postCode', 'Post code'), value: targetAddress?.postcode },
     { label: getLabel('account.city', 'Place'), value: targetAddress?.city },
-    { label: getLabel('account.stateOptional', 'State (optional)'), value: targetAddress?.address2 },
+    { label: getLabel('account.stateOptional', 'State (optional)'), value: targetAddress?.state || targetAddress?.address2 },
   ].filter((field): field is { label: string; value: string } => Boolean(field.value?.trim()));
 
   return (
@@ -2517,7 +2821,7 @@ function BillingAddressEditInline({
   address 
 }: { 
   onClose: () => void; 
-  onSave: () => void;
+  onSave: (savedId?: string | number) => void;
   address?: AccountAddress;
 }) {
   const t = useTranslations();
@@ -2529,6 +2833,7 @@ function BillingAddressEditInline({
   const [firstName, setFirstName] = useState(address?.firstname || '');
   const [lastName, setLastName] = useState(address?.lastname || '');
   const [company, setCompany] = useState(address?.company || '');
+  const [vatNumber, setVatNumber] = useState(address?.vatNumber || '');
   const [email, setEmail] = useState(address?.email || ''); 
   const [phone, setPhone] = useState(address?.phone || '');
   const [countryId, setCountryId] = useState('');
@@ -2537,7 +2842,7 @@ function BillingAddressEditInline({
   const [street, setStreet] = useState(address?.address1 || '');
   const [postcode, setPostcode] = useState(address?.postcode || '');
   const [city, setCity] = useState(address?.city || '');
-  const [stateRegion, setStateRegion] = useState(address?.address2 || '');
+  const [stateRegion, setStateRegion] = useState(address?.state || address?.address2 || '');
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -2578,7 +2883,7 @@ function BillingAddressEditInline({
 
   useEffect(() => {
     if (provinces.length > 0) {
-      const initialProvVal = address?.address2 || (address as any)?.state || '';
+      const initialProvVal = address?.state || address?.address2 || (address as any)?.state || '';
       const match = provinces.find((p: any) => 
         String(p.id) === String(initialProvVal) ||
         p.name.toLowerCase() === String(initialProvVal).toLowerCase()
@@ -2624,14 +2929,23 @@ function BillingAddressEditInline({
         firstname: firstName,
         lastname: lastName,
         company_name: company,
+        vat_number: vatNumber || undefined,
+        btw_number: vatNumber || undefined,
         address: street,
         address2: stateRegion,
+        state: stateRegion,
+        state_name: stateRegion,
+        province: stateRegion,
+        province_name: stateRegion,
         postalcode: postcode,
         city: city,
         phone: phone,
         email: email,
         country_id: countryId || 'NL',
+        country: selectedCountry?.name || countryId || 'Netherlands',
+        country_name: selectedCountry?.name || countryId || 'Netherlands',
         province_id: provinceId ? Number(provinceId) : undefined,
+        state_id: provinceId ? Number(provinceId) : undefined,
       };
 
       const response = await fetch('/api/account/addresses', {
@@ -2640,15 +2954,19 @@ function BillingAddressEditInline({
         body: JSON.stringify(payload),
       });
 
+      const responseData = await response.json().catch(() => ({}));
+      console.log('[BillingForm] response status:', response.status, 'data:', responseData);
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Save failed');
+        throw new Error(responseData.message || responseData.error || JSON.stringify(responseData) || 'Save failed');
       }
+
+      const savedAddressId = responseData?.id || responseData?.data?.id || cleanId;
       toast.success(t('account.addressSavedSuccess', { type: 'Billing' }));
-      onSave();
+      onSave(savedAddressId);
     } catch (error) {
       console.error("Billing save error:", error);
-      toast.error(t('account.addressesLoadError'));
+      toast.error(error instanceof Error ? error.message : t('account.addressesLoadError'));
     } finally {
       setIsSaving(false);
     }
@@ -2664,7 +2982,7 @@ function BillingAddressEditInline({
           </div>
           <div>
             <label className={labelClasses}>{getLabel('account.vatNumberOptional', 'VAT number (optional)')}</label>
-            <input type="text" className={inputClasses} placeholder="NL123456789B01" />
+            <input type="text" value={vatNumber} onChange={(e) => setVatNumber(e.target.value)} className={inputClasses} placeholder="NL123456789B01" />
           </div>
         </div>
 
@@ -2813,6 +3131,10 @@ function AddressEditModal({
         company_name: company,
         address: street,
         address2: street2,
+        state: street2,
+        state_name: street2,
+        province: street2,
+        province_name: street2,
         postalcode: postcode,
         city: city,
         phone: phone,
