@@ -56,6 +56,9 @@ export function proxy(request: NextRequest) {
   if (cleanPathname === '/cart') {
     cleanPathname = '/winkelmand';
   }
+  if (cleanPathname === '/thank-you' || cleanPathname === '/thank-you/') {
+    cleanPathname = '/bedankt';
+  }
 
   if (cleanPathname === '/terms-and-conditions' || cleanPathname === '/terms-and-conditions/') {
     cleanPathname = '/algemene-voorwaarden';
@@ -73,8 +76,8 @@ export function proxy(request: NextRequest) {
     }
   }
 
-  if (pathname === '/en/custom-made-form' || pathname === '/en/custom-made-form/' || pathname === '/en/maatwerk' || pathname === '/en/maatwerk/') {
-    const redirectUrl = new URL(`${EN_PREFIX}/material-customization${search}`, request.url);
+  if (pathname === '/en/custom-made-form' || pathname === '/en/custom-made-form/' || pathname === '/en/maatwerk' || pathname === '/en/maatwerk/' || pathname === '/en/custom-made-labels' || pathname === '/en/custom-made-labels/') {
+    const redirectUrl = new URL(`${EN_PREFIX}/material-customization/${search}`, request.url);
     return persistLocale(NextResponse.redirect(redirectUrl), 'en');
   }
 

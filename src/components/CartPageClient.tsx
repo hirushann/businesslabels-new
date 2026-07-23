@@ -53,7 +53,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
   const { defaultRule } = useShippingRules();
 
   const subtotal = totalAmount;
-  const shippingThreshold = defaultRule ? defaultRule.free_shipping_threshold : 100;
+  const shippingThreshold = defaultRule ? defaultRule.free_shipping_threshold : 500;
   const shipping = subtotal >= shippingThreshold ? 0 : (defaultRule ? defaultRule.shipping_cost : 15);
   const tax = subtotal * 0.21;
   const total = subtotal + shipping;

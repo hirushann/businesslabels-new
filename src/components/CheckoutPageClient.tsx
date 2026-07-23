@@ -62,6 +62,7 @@ type CheckoutSavedAddress = {
   phone: string;
   email: string;
   country: string;
+  effective_label?: 'home' | 'office';
 };
 
 const DELIVERY_FEE = 9.95;
@@ -331,7 +332,9 @@ function CheckoutShell({
 
   const shippingAmount = useMemo(() => {
     if (items.length === 0) return 0;
-    if (!selectedRule) return DELIVERY_FEE;
+    if (!selectedRule) {
+      return totalAmount >= 500 ? 0 : DELIVERY_FEE;
+    }
     return totalAmount >= selectedRule.free_shipping_threshold ? 0 : selectedRule.shipping_cost;
   }, [items.length, totalAmount, selectedRule]);
   const paymentFee = useMemo(() => (form.paymentMethod === "creditcard" ? totalAmount * 0.025 : 0), [totalAmount, form.paymentMethod]);
@@ -1574,6 +1577,10 @@ function normalizeCheckoutAddress(address: Record<string, unknown>, index: numbe
     address.is_default === true ||
     readString(address, ["default_shipping", "is_default_shipping", "default", "is_default"]) === "1";
 
+  const rawLabel = readString(address, ['effective_label']);
+  const effectiveLabel: 'home' | 'office' | undefined =
+    rawLabel === 'home' || rawLabel === 'office' ? rawLabel : undefined;
+
   return {
     id: formatAddressId(address, index),
     type: readAddressType(address) || "shipping",
@@ -1590,6 +1597,7 @@ function normalizeCheckoutAddress(address: Record<string, unknown>, index: numbe
     phone: readString(address, ["phone", "telephone", "mobile", "mobile_number", "mobileNumber"]),
     email: readString(address, ["email", "billing_email", "shipping_email"]),
     country: countryFromAddress(address, "Netherlands", countriesList),
+    effective_label: effectiveLabel,
   };
 }
 
@@ -1763,6 +1771,7 @@ export default function CheckoutPageClient({
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [savedShippingAddresses, setSavedShippingAddresses] = useState<CheckoutSavedAddress[]>([]);
   const [selectedSavedShippingAddressId, setSelectedSavedShippingAddressId] = useState<string | null>(null);
+  const [selectedShippingEffectiveLabel, setSelectedShippingEffectiveLabel] = useState<'home' | 'office' | null>(null);
   const [defaultShippingAddressId, setDefaultShippingAddressId] = useState<string>("");
   const [savedBillingAddresses, setSavedBillingAddresses] = useState<CheckoutSavedAddress[]>([]);
   const [selectedSavedBillingAddressId, setSelectedSavedBillingAddressId] = useState<string | null>(null);
@@ -2011,6 +2020,9 @@ export default function CheckoutPageClient({
 
       return defaultAddress ? defaultAddress.id : null;
     });
+    if (addressToLoad?.effective_label) {
+      setSelectedShippingEffectiveLabel(addressToLoad.effective_label);
+    }
     setForm((current) => {
       let updated = current;
       if (billingAddresses.length > 0 && billingAddressToLoad) {
@@ -2099,6 +2111,7 @@ export default function CheckoutPageClient({
 
   const handleSavedShippingAddressSelect = useCallback((address: CheckoutSavedAddress) => {
     setSelectedSavedShippingAddressId(address.id);
+    setSelectedShippingEffectiveLabel(address.effective_label ?? null);
     setForm((current) => applySavedShippingAddressToForm(current, address, countriesList));
     setErrors((current) => ({
       ...current,
@@ -2273,7 +2286,7 @@ export default function CheckoutPageClient({
       if (selectedRule) {
         shippingAmount = totalAmount >= selectedRule.free_shipping_threshold ? 0 : selectedRule.shipping_cost;
       } else {
-        shippingAmount = DELIVERY_FEE;
+        shippingAmount = totalAmount >= 500 ? 0 : DELIVERY_FEE;
       }
     }
     const paymentFee = form.paymentMethod === "creditcard" ? totalAmount * 0.025 : 0;
@@ -2323,6 +2336,7 @@ export default function CheckoutPageClient({
       total: finalTotal,
       lang: locale.split('-')[0] === 'nl' ? 'nl' : 'en',
       order_items: buildCheckoutOrderItems(items),
+      ...(selectedShippingEffectiveLabel ? { shipping_effective_label: selectedShippingEffectiveLabel } : {}),
     };
 
     console.log("[Checkout] Submitting order data:", JSON.stringify(orderData, null, 2));
@@ -2555,7 +2569,7 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
         setStateRegion(editingAddress.state || editingAddress.address2 || '');
         setPostcode(editingAddress.postcode || '');
         setCity(editingAddress.city || '');
-        setLabel(editingAddress.company === 'Office' ? 'office' : 'home');
+        setLabel(editingAddress.effective_label || 'home');
       } else {
         setCompanyName('');
         setVatNumber('');
@@ -2662,6 +2676,7 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
         country_name: selectedCountry?.name || countryId || 'Netherlands',
         province_id: provinceId ? Number(provinceId) : undefined,
         state_id: provinceId ? Number(provinceId) : undefined,
+        ...(!isBilling ? { effective_label: label } : {}),
       };
 
       if (editingAddress?.id) {

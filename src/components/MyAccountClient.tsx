@@ -64,6 +64,7 @@ type AccountAddress = {
   phone?: string;
   email?: string;
   country: string;
+  effective_label?: 'home' | 'office';
 };
 
 const emptyUser: StoredUser = {};
@@ -427,6 +428,10 @@ function normalizeAddress(address: Record<string, unknown>, index: number): Acco
   const country = readStringValue(address, ['country', 'country_name', 'country_id']);
   const email = readStringValue(address, ['email', 'billing_email', 'shipping_email']);
 
+  const rawLabel = readStringValue(address, ['effective_label']);
+  const effectiveLabel: 'home' | 'office' | undefined =
+    rawLabel === 'home' || rawLabel === 'office' ? rawLabel : undefined;
+
   return {
     id: formatAddressId(address, index),
     type: readAddressType(address) || 'shipping',
@@ -443,6 +448,7 @@ function normalizeAddress(address: Record<string, unknown>, index: number): Acco
     phone: readStringValue(address, ['phone', 'telephone', 'mobile']),
     email,
     country,
+    effective_label: effectiveLabel,
   };
 }
 
@@ -1253,7 +1259,7 @@ function OrdersView() {
                                     <div className="w-[120px] text-copy text-base font-normal leading-[21px] shrink-0">
                                       {formatEuro(item.total)}
                                     </div>
-                                    <div className="w-[160px] shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                    <div className="w-[160px] shrink-0 invisible group-hover:visible transition-all duration-200 opacity-0 group-hover:opacity-100">
                                       <button
                                         onClick={(e) => {
                                           e.stopPropagation();
@@ -1390,10 +1396,13 @@ function OrdersView() {
                   <div className="p-5 rounded-2xl border border-slate-100 bg-white shadow-sm flex flex-col gap-1 text-sm font-medium text-neutral-600">
                     <span className="font-bold text-neutral-800 mb-1 text-base">{selectedOrder.billing_address?.name}</span>
                     {selectedOrder.billing_address?.company && <span>{selectedOrder.billing_address.company}</span>}
+                    {selectedOrder.billing_address?.vatNumber && <span>VAT: {selectedOrder.billing_address.vatNumber}</span>}
                     {selectedOrder.billing_address?.address1 && <span>{selectedOrder.billing_address.address1}</span>}
                     {selectedOrder.billing_address?.address2 && <span>{selectedOrder.billing_address.address2}</span>}
                     <span>{selectedOrder.billing_address?.postcode} {selectedOrder.billing_address?.city}</span>
                     <span>{selectedOrder.billing_address?.country}</span>
+                    {selectedOrder.billing_address?.email && <span className="text-neutral-500">{selectedOrder.billing_address.email}</span>}
+                    {selectedOrder.billing_address?.phone && <span className="text-neutral-500">{selectedOrder.billing_address.phone}</span>}
                   </div>
                 </div>
                 <div className="flex flex-col gap-4">
@@ -1401,10 +1410,13 @@ function OrdersView() {
                   <div className="p-5 rounded-2xl border border-slate-100 bg-white shadow-sm flex flex-col gap-1 text-sm font-medium text-neutral-600">
                     <span className="font-bold text-neutral-800 mb-1 text-base">{selectedOrder.shipping_address?.name}</span>
                     {selectedOrder.shipping_address?.company && <span>{selectedOrder.shipping_address.company}</span>}
+                    {selectedOrder.shipping_address?.vatNumber && <span>VAT: {selectedOrder.shipping_address.vatNumber}</span>}
                     {selectedOrder.shipping_address?.address1 && <span>{selectedOrder.shipping_address.address1}</span>}
                     {selectedOrder.shipping_address?.address2 && <span>{selectedOrder.shipping_address.address2}</span>}
                     <span>{selectedOrder.shipping_address?.postcode} {selectedOrder.shipping_address?.city}</span>
                     <span>{selectedOrder.shipping_address?.country}</span>
+                    {selectedOrder.shipping_address?.email && <span className="text-neutral-500">{selectedOrder.shipping_address.email}</span>}
+                    {selectedOrder.shipping_address?.phone && <span className="text-neutral-500">{selectedOrder.shipping_address.phone}</span>}
                   </div>
                 </div>
               </div>
@@ -2241,7 +2253,7 @@ function ShippingAddressesView({ user }: { user: StoredUser }) {
                 const isSelected = selectedAddressId ? String(addr.id) === String(selectedAddressId) : index === 0;
                 const name = addr.name || `${addr.firstname || ''} ${addr.lastname || ''}`.trim();
                 const addressStr = [addr.address1, addr.address2, addr.city, addr.postcode, addr.country].filter(Boolean).join(', ');
-                const isOffice = addr.company?.toLowerCase().includes('office') || addr.company?.toLowerCase().includes('company') || addr.lastname?.toLowerCase().includes('havertz') || addr.firstname?.toLowerCase().includes('jenny'); // Fallback matches for mockup icons
+                const isOffice = addr.effective_label === 'office';
                 const contactDetails = [addr.email, addr.phone].filter(Boolean);
                 
                 return (
@@ -2390,7 +2402,7 @@ function ShippingAddressEditInline({
   const [postcode, setPostcode] = useState(address?.postcode || '');
   const [city, setCity] = useState(address?.city || '');
   const [stateRegion, setStateRegion] = useState(address?.state || address?.address2 || '');
-  const [label, setLabel] = useState<'office' | 'home'>('home');
+  const [label, setLabel] = useState<'office' | 'home'>(address?.effective_label || 'home');
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -2476,7 +2488,6 @@ function ShippingAddressEditInline({
         name: `${firstName} ${lastName}`,
         firstname: firstName,
         lastname: lastName,
-        company_name: label === 'office' ? 'Office' : '',
         address: street,
         address2: stateRegion,
         state: stateRegion,
@@ -2492,6 +2503,7 @@ function ShippingAddressEditInline({
         country_name: selectedCountry?.name || countryId || 'Netherlands',
         province_id: provinceId ? Number(provinceId) : undefined,
         state_id: provinceId ? Number(provinceId) : undefined,
+        effective_label: label,
       };
 
       const response = await fetch('/api/account/addresses', {
@@ -3107,6 +3119,7 @@ function AddressEditModal({
   const [postcode, setPostcode] = useState(address?.postcode || '');
   const [city, setCity] = useState(address?.city || '');
   const [phone, setPhone] = useState(address?.phone || '');
+  const [effectiveLabel, setEffectiveLabel] = useState<'home' | 'office' | ''>(address?.effective_label || '');
   const [isSaving, setIsSaving] = useState(false);
 
   const typeWord = isBilling 
@@ -3140,6 +3153,7 @@ function AddressEditModal({
         phone: phone,
         email: email,
         country_id: 'NL',
+        ...((!isBilling && effectiveLabel) ? { effective_label: effectiveLabel } : {}),
       };
 
 
@@ -3246,6 +3260,28 @@ function AddressEditModal({
               <label className={labelClasses}>{t('account.phone')}</label>
               <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClasses} />
             </div>
+
+            {!isBilling && (
+              <div>
+                <label className={labelClasses}>{t('account.addressLabel') || 'Address Label'}</label>
+                <div className="flex gap-3">
+                  {(['home', 'office'] as const).map((label) => (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => setEffectiveLabel(effectiveLabel === label ? '' : label)}
+                      className={`flex-1 h-14 rounded-2xl border-2 font-black text-sm uppercase tracking-widest transition-all ${
+                        effectiveLabel === label
+                          ? 'border-brand bg-brand/5 text-brand'
+                          : 'border-slate-200 bg-white text-neutral-400 hover:border-slate-300'
+                      }`}
+                    >
+                      {label === 'home' ? (t('account.labelHome') || '🏠 Home') : (t('account.labelOffice') || '🏢 Office')}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </form>
         </div>
 
