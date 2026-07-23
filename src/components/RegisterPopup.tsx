@@ -408,19 +408,22 @@ export default function RegisterPopup({
         strategy="afterInteractive"
       />
       <DialogContent
-        className="max-h-[90vh] overflow-y-auto rounded-[28px] border-slate-100 bg-white p-8 shadow-2xl sm:max-w-2xl"
+        className="max-h-[90vh] flex flex-col p-0 overflow-hidden rounded-[28px] border-none bg-white shadow-2xl sm:max-w-2xl w-full"
         showCloseButton
       >
-        <DialogHeader className="items-center gap-2 text-center">
-          <DialogTitle className="text-3xl font-black tracking-tight text-neutral-800">
-            {t('register.popupTitle')}
-          </DialogTitle>
-          <DialogDescription className="text-base font-medium text-neutral-500">
-            {t('register.popupSubtitle')}
-          </DialogDescription>
-        </DialogHeader>
+        <div className="px-8 pt-8 pb-4 border-b border-slate-100 shrink-0 bg-white">
+          <DialogHeader className="items-center gap-2 text-center">
+            <DialogTitle className="text-3xl font-black tracking-tight text-neutral-800">
+              {t('register.popupTitle')}
+            </DialogTitle>
+            <DialogDescription className="text-base font-medium text-neutral-500">
+              {t('register.popupSubtitle')}
+            </DialogDescription>
+          </DialogHeader>
+        </div>
 
-        <form onSubmit={handleSubmit} className="mt-2 flex flex-col gap-5" noValidate>
+        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
           {formMessage ? (
             <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
               {formMessage}
@@ -660,7 +663,8 @@ export default function RegisterPopup({
               </Link>
             )}
           </p>
-        </form>
+          </form>
+        </div>
       </DialogContent>
     </Dialog>
   );

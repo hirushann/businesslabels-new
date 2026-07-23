@@ -56,6 +56,9 @@ type AccountAddress = {
   vatNumber?: string;
   address1: string;
   address2: string;
+  state?: string;
+  province_id?: number | string;
+  state_id?: number | string;
   postcode?: string;
   city?: string;
   phone?: string;
@@ -417,7 +420,8 @@ function splitAddressName(address?: AccountAddress) {
 
 function normalizeAddress(address: Record<string, unknown>, index: number): AccountAddress {
   const street = readStringValue(address, ['street', 'address', 'address_1', 'line1', 'street_address']);
-  const street2 = readStringValue(address, ['street2', 'address2', 'address_2', 'line2', 'apartment', 'suite', 'state', 'province', 'region']);
+  const street2 = readStringValue(address, ['street2', 'address2', 'address_2', 'line2', 'apartment', 'suite']);
+  const state = readStringValue(address, ['state', 'state_name', 'province', 'province_name', 'region', 'region_name']);
   const postcode = readStringValue(address, ['postcode', 'postalcode', 'postal_code', 'zip', 'zip_code']);
   const city = readStringValue(address, ['city', 'town']);
   const country = readStringValue(address, ['country', 'country_name', 'country_id']);
@@ -433,6 +437,7 @@ function normalizeAddress(address: Record<string, unknown>, index: number): Acco
     vatNumber: readStringValue(address, ['vat_number', 'tax_nr', 'vatNumber', 'btw_number', 'btwNumber', 'tax_number', 'taxNumber']),
     address1: street,
     address2: street2,
+    state: state || street2,
     postcode,
     city,
     phone: readStringValue(address, ['phone', 'telephone', 'mobile']),
@@ -2384,7 +2389,7 @@ function ShippingAddressEditInline({
   const [street, setStreet] = useState(address?.address1 || '');
   const [postcode, setPostcode] = useState(address?.postcode || '');
   const [city, setCity] = useState(address?.city || '');
-  const [stateRegion, setStateRegion] = useState(address?.address2 || '');
+  const [stateRegion, setStateRegion] = useState(address?.state || address?.address2 || '');
   const [label, setLabel] = useState<'office' | 'home'>('home');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -2426,7 +2431,7 @@ function ShippingAddressEditInline({
 
   useEffect(() => {
     if (provinces.length > 0) {
-      const initialProvVal = address?.address2 || (address as any)?.state || '';
+      const initialProvVal = address?.state || address?.address2 || (address as any)?.state || '';
       const match = provinces.find((p: any) => 
         String(p.id) === String(initialProvVal) ||
         p.name.toLowerCase() === String(initialProvVal).toLowerCase()
@@ -2474,6 +2479,10 @@ function ShippingAddressEditInline({
         company_name: label === 'office' ? 'Office' : '',
         address: street,
         address2: stateRegion,
+        state: stateRegion,
+        state_name: stateRegion,
+        province: stateRegion,
+        province_name: stateRegion,
         postalcode: postcode,
         city: city,
         phone: phone,
@@ -2482,6 +2491,7 @@ function ShippingAddressEditInline({
         country: selectedCountry?.name || countryId || 'Netherlands',
         country_name: selectedCountry?.name || countryId || 'Netherlands',
         province_id: provinceId ? Number(provinceId) : undefined,
+        state_id: provinceId ? Number(provinceId) : undefined,
       };
 
       const response = await fetch('/api/account/addresses', {
@@ -2760,7 +2770,7 @@ function SingleAddressView({ type }: { type: 'billing_address' | 'shipping_addre
     { label: getLabel('account.streetAndHouseNumber', 'Street and house number'), value: targetAddress?.address1 },
     { label: getLabel('account.postCode', 'Post code'), value: targetAddress?.postcode },
     { label: getLabel('account.city', 'Place'), value: targetAddress?.city },
-    { label: getLabel('account.stateOptional', 'State (optional)'), value: targetAddress?.address2 },
+    { label: getLabel('account.stateOptional', 'State (optional)'), value: targetAddress?.state || targetAddress?.address2 },
   ].filter((field): field is { label: string; value: string } => Boolean(field.value?.trim()));
 
   return (
@@ -2832,7 +2842,7 @@ function BillingAddressEditInline({
   const [street, setStreet] = useState(address?.address1 || '');
   const [postcode, setPostcode] = useState(address?.postcode || '');
   const [city, setCity] = useState(address?.city || '');
-  const [stateRegion, setStateRegion] = useState(address?.address2 || '');
+  const [stateRegion, setStateRegion] = useState(address?.state || address?.address2 || '');
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -2873,7 +2883,7 @@ function BillingAddressEditInline({
 
   useEffect(() => {
     if (provinces.length > 0) {
-      const initialProvVal = address?.address2 || (address as any)?.state || '';
+      const initialProvVal = address?.state || address?.address2 || (address as any)?.state || '';
       const match = provinces.find((p: any) => 
         String(p.id) === String(initialProvVal) ||
         p.name.toLowerCase() === String(initialProvVal).toLowerCase()
@@ -2923,6 +2933,10 @@ function BillingAddressEditInline({
         btw_number: vatNumber || undefined,
         address: street,
         address2: stateRegion,
+        state: stateRegion,
+        state_name: stateRegion,
+        province: stateRegion,
+        province_name: stateRegion,
         postalcode: postcode,
         city: city,
         phone: phone,
@@ -2931,6 +2945,7 @@ function BillingAddressEditInline({
         country: selectedCountry?.name || countryId || 'Netherlands',
         country_name: selectedCountry?.name || countryId || 'Netherlands',
         province_id: provinceId ? Number(provinceId) : undefined,
+        state_id: provinceId ? Number(provinceId) : undefined,
       };
 
       const response = await fetch('/api/account/addresses', {
@@ -3116,6 +3131,10 @@ function AddressEditModal({
         company_name: company,
         address: street,
         address2: street2,
+        state: street2,
+        state_name: street2,
+        province: street2,
+        province_name: street2,
         postalcode: postcode,
         city: city,
         phone: phone,

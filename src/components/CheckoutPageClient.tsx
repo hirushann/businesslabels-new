@@ -319,6 +319,16 @@ function CheckoutShell({
   );
   const billingProvinces = selectedBillingCountryObj?.provinces || [];
 
+  const selectedBillingProvinceValue = useMemo(() => {
+    if (!form.state) return '';
+    const match = billingProvinces.find(
+      (p: any) =>
+        String(p.id) === String(form.state) ||
+        p.name.toLowerCase() === form.state.toLowerCase()
+    );
+    return match ? match.name : form.state;
+  }, [form.state, billingProvinces]);
+
   const shippingAmount = useMemo(() => {
     if (items.length === 0) return 0;
     if (!selectedRule) return DELIVERY_FEE;
@@ -774,7 +784,7 @@ function CheckoutShell({
                           {billingProvinces.length > 0 ? (
                             <div className="relative">
                               <select
-                                value={form.state}
+                                value={selectedBillingProvinceValue}
                                 disabled={isLoggedIn && !isEditingBilling}
                                 onChange={(e) => handleChange("state", e.target.value)}
                                 className={`${inputClasses(Boolean(errors.state))} appearance-none pr-10`}
@@ -1680,6 +1690,9 @@ function readAddressState(address: unknown) {
       "county",
       "administrative_area",
       "administrative_area_level_1",
+      "address2",
+      "address_2",
+      "street2",
     ]) ||
     readNestedString(address, ["state", "province", "region"], ["name", "title", "label", "code"])
   );
@@ -1723,6 +1736,7 @@ function applySavedBillingAddressToForm(
     streetAddress: address.address1,
     city: address.city,
     state: address.state,
+    shippingState: current.sameAsBilling ? address.state : current.shippingState,
     postcode: address.postcode,
     country: countryFromAddress(address, current.country, countriesList),
   };
@@ -2538,7 +2552,7 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
         const matchC = countriesList.find((c: any) => c.id.toLowerCase() === rawC.toLowerCase() || c.name.toLowerCase() === rawC.toLowerCase());
         setCountryId(matchC ? matchC.id : rawC);
         setStreet(editingAddress.address1 || '');
-        setStateRegion(editingAddress.address2 || '');
+        setStateRegion(editingAddress.state || editingAddress.address2 || '');
         setPostcode(editingAddress.postcode || '');
         setCity(editingAddress.city || '');
         setLabel(editingAddress.company === 'Office' ? 'office' : 'home');
@@ -2552,6 +2566,7 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
         setCountryId('NL');
         setStreet('');
         setStateRegion('');
+        setProvinceId('');
         setPostcode('');
         setCity('');
         setLabel('home');
@@ -2592,12 +2607,24 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
   useEffect(() => {
     const provincesList = selectedCountry?.provinces || [];
     if (provincesList.length > 0) {
-      setProvinceId('');
-      setStateRegion('');
+      const initialProvVal = editingAddress?.state || editingAddress?.address2 || stateRegion || '';
+      const match = provincesList.find((p: any) =>
+        String(p.id) === String(initialProvVal) ||
+        p.name.toLowerCase() === String(initialProvVal).toLowerCase()
+      );
+      if (match) {
+        setProvinceId(match.id);
+        setStateRegion(match.name);
+      } else {
+        setProvinceId('');
+        if (initialProvVal) {
+          setStateRegion(initialProvVal);
+        }
+      }
     } else {
       setProvinceId('');
     }
-  }, [countryId, selectedCountry]);
+  }, [countryId, selectedCountry, editingAddress]);
 
   const handleProvinceChange = (provIdStr: string) => {
     setProvinceId(provIdStr);
@@ -2622,12 +2649,19 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
         vat_number: vatNumber,
         address: street,
         address2: stateRegion,
+        state: stateRegion,
+        state_name: stateRegion,
+        province: stateRegion,
+        province_name: stateRegion,
         postalcode: postcode,
         city: city,
         phone: phone,
         email: email,
         country_id: countryId || 'NL',
+        country: selectedCountry?.name || countryId || 'Netherlands',
+        country_name: selectedCountry?.name || countryId || 'Netherlands',
         province_id: provinceId ? Number(provinceId) : undefined,
+        state_id: provinceId ? Number(provinceId) : undefined,
       };
 
       if (editingAddress?.id) {
@@ -2665,9 +2699,10 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="max-h-[90vh] overflow-y-auto rounded-[28px] border-slate-100 bg-white p-8 shadow-2xl sm:max-w-2xl">
-        <div className="flex flex-col gap-8 w-full">
-          <DialogTitle className="w-full text-center text-[#222222] text-[32px] font-semibold font-['Segoe_UI'] leading-[38.40px]">
+      <DialogContent showCloseButton={false} className="max-h-[90vh] flex flex-col p-0 overflow-hidden rounded-[28px] border-none bg-white shadow-2xl sm:max-w-2xl w-full">
+        {/* Header */}
+        <div className="px-8 pt-6 pb-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
+          <DialogTitle className="text-[#222222] text-[24px] sm:text-[28px] font-semibold font-['Segoe_UI'] leading-tight">
             {editingAddress
               ? (isBilling ? getLabel('account.editBillingAddress', 'Edit Billing Address') : getLabel('account.editAddress', 'Edit Shipping Address'))
               : (isBilling ? getLabel('account.addNewBillingAddress', 'Add New Billing Address') : getLabel('account.addNewAddress', 'Add New Shipping Address'))}
@@ -2675,7 +2710,19 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
           <DialogDescription className="sr-only">
             {isBilling ? 'Form to add a new billing address' : 'Form to add a new shipping address'}
           </DialogDescription>
-          
+          <button 
+            type="button"
+            onClick={() => onOpenChange(false)}
+            className="size-9 rounded-full bg-white border border-slate-200 flex items-center justify-center text-neutral-400 hover:text-neutral-800 hover:border-neutral-300 transition-all shadow-sm shrink-0"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 6 6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        {/* Scrollable Body */}
+        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
           <form onSubmit={handleSubmit} className="w-full flex flex-col gap-6">
             {isBilling && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2938,13 +2985,6 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
             </div>
           </form>
         </div>
-        <DialogClose className="absolute right-6 top-6 opacity-70 transition-opacity hover:opacity-100 focus:outline-none rounded-sm">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M18 6L6 18" stroke="#888888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M6 6L18 18" stroke="#888888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          <span className="sr-only">Close</span>
-        </DialogClose>
       </DialogContent>
     </Dialog>
   );
