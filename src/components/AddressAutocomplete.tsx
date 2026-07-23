@@ -2,21 +2,105 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 
-// Extend Window interface for Google Maps
+type LegacySuggestion = {
+  isLegacy: true;
+  placePrediction: LegacyPrediction;
+};
+
+type AddressSuggestion = ModernSuggestion | LegacySuggestion;
+
+type AutocompleteSessionToken = object;
+
+type FormattableText = {
+  text: string;
+};
+
+type ModernPlacePrediction = {
+  mainText?: FormattableText | null;
+  secondaryText?: FormattableText | null;
+  text: FormattableText;
+  placeId: string;
+};
+
+type ModernSuggestion = {
+  placePrediction: ModernPlacePrediction | null;
+};
+
+type LegacyPrediction = {
+  description: string;
+  place_id: string;
+  structured_formatting?: {
+    main_text?: string;
+    secondary_text?: string;
+  };
+};
+
+type AddressComponent = {
+  types: string[];
+  longText?: string | null;
+  long_name?: string;
+};
+
+type ModernPlace = {
+  addressComponents?: AddressComponent[];
+  fetchFields: (request: { fields: string[] }) => Promise<void>;
+};
+
+type PlacesLibrary = {
+  Place: new (options: { id: string }) => ModernPlace;
+};
+
+type AutocompleteRequest = {
+  input: string;
+  sessionToken?: AutocompleteSessionToken;
+  includedRegionCodes?: string[];
+  componentRestrictions?: {
+    country: string[];
+  };
+};
+
+type LegacyAutocompleteService = {
+  getPlacePredictions: (
+    request: AutocompleteRequest,
+    callback: (predictions: LegacyPrediction[] | null, status: string) => void
+  ) => void;
+};
+
+type LegacyPlaceResult = {
+  address_components?: AddressComponent[];
+};
+
+type LegacyPlacesService = {
+  getDetails: (
+    request: { placeId: string; fields: string[] },
+    callback: (place: LegacyPlaceResult | null, status: string) => void
+  ) => void;
+};
+
+type GoogleMapsRuntime = {
+  importLibrary?: (name: "places") => Promise<PlacesLibrary>;
+  places: {
+    AutocompleteSessionToken: new () => AutocompleteSessionToken;
+    AutocompleteSuggestion: {
+      fetchAutocompleteSuggestions: (
+        request: AutocompleteRequest
+      ) => Promise<{ suggestions: ModernSuggestion[] }>;
+    };
+    AutocompleteService?: new () => LegacyAutocompleteService;
+    PlacesService: new (element: HTMLElement) => LegacyPlacesService;
+    PlacesServiceStatus: {
+      OK: string;
+    };
+  };
+};
+
 declare global {
   interface Window {
     google?: {
-      maps?: typeof google.maps;
+      maps?: GoogleMapsRuntime;
     };
   }
 }
-
-type LegacySuggestion = {
-  isLegacy: true;
-  placePrediction: google.maps.places.AutocompletePrediction;
-};
-
-type AddressSuggestion = google.maps.places.AutocompleteSuggestion | LegacySuggestion;
 
 type AddressAutocompleteProps = {
   value: string;
@@ -41,9 +125,9 @@ const isLegacySuggestion = (suggestion: AddressSuggestion): suggestion is Legacy
 };
 
 const hasPlacePrediction = (
-  suggestion: google.maps.places.AutocompleteSuggestion
-): suggestion is google.maps.places.AutocompleteSuggestion & {
-  placePrediction: google.maps.places.PlacePrediction;
+  suggestion: ModernSuggestion
+): suggestion is ModernSuggestion & {
+  placePrediction: ModernPlacePrediction;
 } => Boolean(suggestion.placePrediction);
 
 export default function AddressAutocomplete({
@@ -60,21 +144,23 @@ export default function AddressAutocomplete({
   const [useLegacy, setUseLegacy] = useState(false);
   
   const containerRef = useRef<HTMLDivElement>(null);
-  const sessionTokenRef = useRef<google.maps.places.AutocompleteSessionToken | null>(null);
-  const autocompleteServiceRef = useRef<google.maps.places.AutocompleteService | null>(null);
+  const sessionTokenRef = useRef<AutocompleteSessionToken | null>(null);
+  const autocompleteServiceRef = useRef<LegacyAutocompleteService | null>(null);
   const requestIdRef = useRef(0);
 
   // Initialize Maps library
   useEffect(() => {
     const initialize = async () => {
-      if (window.google?.maps?.importLibrary) {
+      const maps = window.google?.maps;
+
+      if (maps?.importLibrary) {
         try {
-          await window.google.maps.importLibrary("places");
+          await maps.importLibrary("places");
           setIsLoaded(true);
           
           // Pre-initialize session token and legacy service as fallback
           if (!sessionTokenRef.current) {
-            sessionTokenRef.current = new window.google.maps.places.AutocompleteSessionToken();
+            sessionTokenRef.current = new maps.places.AutocompleteSessionToken();
           }
           // We don't instantiate legacy service here to avoid deprecation warning.
           // It will be instantiated on-demand if modern API fails.
@@ -100,8 +186,9 @@ export default function AddressAutocomplete({
 
   const fetchSuggestions = useCallback(async (input: string, requestId: number) => {
     const trimmedInput = input.trim();
+    const maps = window.google?.maps;
 
-    if (trimmedInput.length < MIN_AUTOCOMPLETE_LENGTH || !isLoaded) {
+    if (trimmedInput.length < MIN_AUTOCOMPLETE_LENGTH || !isLoaded || !maps) {
       setSuggestions([]);
       return;
     }
@@ -109,7 +196,7 @@ export default function AddressAutocomplete({
     // Try modern API first
     if (!useLegacy) {
       try {
-        const { suggestions: results } = await window.google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
+        const { suggestions: results } = await maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
           input: trimmedInput,
           sessionToken: sessionTokenRef.current ?? undefined,
           includedRegionCodes: ["nl", "be", "de"],
@@ -132,8 +219,8 @@ export default function AddressAutocomplete({
 
     // Legacy Fallback
     if (useLegacy) {
-      if (!autocompleteServiceRef.current && window.google.maps.places.AutocompleteService) {
-        autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
+      if (!autocompleteServiceRef.current && maps.places.AutocompleteService) {
+        autocompleteServiceRef.current = new maps.places.AutocompleteService();
       }
       
       if (autocompleteServiceRef.current) {
@@ -149,7 +236,7 @@ export default function AddressAutocomplete({
               return;
             }
 
-            if (status === window.google.maps.places.PlacesServiceStatus.OK) {
+            if (status === maps.places.PlacesServiceStatus.OK) {
               setSuggestions((predictions ?? []).map((placePrediction) => ({ placePrediction, isLegacy: true })));
             } else {
               setSuggestions([]);
@@ -254,10 +341,15 @@ export default function AddressAutocomplete({
       let state = "";
       let postcode = "";
       let country = "";
+      const maps = window.google?.maps;
+
+      if (!maps?.importLibrary) {
+        return;
+      }
 
       if (!isLegacy) {
         // Modern Place API
-        const { Place } = await window.google.maps.importLibrary("places") as google.maps.PlacesLibrary;
+        const { Place } = await maps.importLibrary("places");
         const place = new Place({ id: placeId });
         await place.fetchFields({ fields: ["addressComponents"] });
         
@@ -273,18 +365,18 @@ export default function AddressAutocomplete({
       } else {
         // Legacy PlacesService
         const dummyElement = document.createElement("div");
-        const service = new window.google.maps.places.PlacesService(dummyElement);
+        const service = new maps.places.PlacesService(dummyElement);
         
         service.getDetails({ placeId, fields: ["address_components"] }, (place, status) => {
-          if (status === window.google.maps.places.PlacesServiceStatus.OK) {
+          if (status === maps.places.PlacesServiceStatus.OK) {
             place?.address_components?.forEach((component) => {
               const types = component.types;
-              if (types.includes("street_number")) streetNumber = component.long_name;
-              if (types.includes("route")) route = component.long_name;
-              if (types.includes("locality")) city = component.long_name;
-              if (types.includes("administrative_area_level_1")) state = component.long_name;
-              if (types.includes("postal_code")) postcode = component.long_name;
-              if (types.includes("country")) country = component.long_name;
+              if (types.includes("street_number")) streetNumber = component.long_name ?? "";
+              if (types.includes("route")) route = component.long_name ?? "";
+              if (types.includes("locality")) city = component.long_name ?? "";
+              if (types.includes("administrative_area_level_1")) state = component.long_name ?? "";
+              if (types.includes("postal_code")) postcode = component.long_name ?? "";
+              if (types.includes("country")) country = component.long_name ?? "";
             });
             
             onAddressSelect({
@@ -308,7 +400,7 @@ export default function AddressAutocomplete({
       });
 
       // Reset session token for next search
-      sessionTokenRef.current = new window.google.maps.places.AutocompleteSessionToken();
+      sessionTokenRef.current = new maps.places.AutocompleteSessionToken();
     } catch (error) {
       console.error("Error fetching place details:", error);
     }
