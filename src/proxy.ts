@@ -53,6 +53,9 @@ export function proxy(request: NextRequest) {
   if (cleanPathname === '/cart') {
     cleanPathname = '/winkelmand';
   }
+  if (cleanPathname === '/thank-you' || cleanPathname === '/thank-you/') {
+    cleanPathname = '/bedankt';
+  }
 
   if (cleanPathname === '/terms-and-conditions' || cleanPathname === '/terms-and-conditions/') {
     cleanPathname = '/algemene-voorwaarden';
