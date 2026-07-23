@@ -1259,7 +1259,7 @@ function OrdersView() {
                                     <div className="w-[120px] text-copy text-base font-normal leading-[21px] shrink-0">
                                       {formatEuro(item.total)}
                                     </div>
-                                    <div className="w-[160px] shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                    <div className="w-[160px] shrink-0 invisible group-hover:visible transition-all duration-200 opacity-0 group-hover:opacity-100">
                                       <button
                                         onClick={(e) => {
                                           e.stopPropagation();

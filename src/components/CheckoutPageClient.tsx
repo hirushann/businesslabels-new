@@ -332,7 +332,9 @@ function CheckoutShell({
 
   const shippingAmount = useMemo(() => {
     if (items.length === 0) return 0;
-    if (!selectedRule) return DELIVERY_FEE;
+    if (!selectedRule) {
+      return totalAmount >= 500 ? 0 : DELIVERY_FEE;
+    }
     return totalAmount >= selectedRule.free_shipping_threshold ? 0 : selectedRule.shipping_cost;
   }, [items.length, totalAmount, selectedRule]);
   const paymentFee = useMemo(() => (form.paymentMethod === "creditcard" ? totalAmount * 0.025 : 0), [totalAmount, form.paymentMethod]);
@@ -2284,7 +2286,7 @@ export default function CheckoutPageClient({
       if (selectedRule) {
         shippingAmount = totalAmount >= selectedRule.free_shipping_threshold ? 0 : selectedRule.shipping_cost;
       } else {
-        shippingAmount = DELIVERY_FEE;
+        shippingAmount = totalAmount >= 500 ? 0 : DELIVERY_FEE;
       }
     }
     const paymentFee = form.paymentMethod === "creditcard" ? totalAmount * 0.025 : 0;

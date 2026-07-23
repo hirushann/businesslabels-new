@@ -385,7 +385,7 @@ export default async function KnowledgeBaseArchive() {
                 {t('productFinder')}
               </Link>
               <Link
-                href="/custom-made"
+                href="/maatwerk"
                 className="w-full sm:w-auto justify-center px-7 py-4 bg-white/10 rounded-full border border-white/20 backdrop-blur-sm flex items-center gap-2.5 text-white text-lg font-medium leading-6 hover:bg-white/20 transition-colors text-center"
               >
                 {t('customMadeLabels')}

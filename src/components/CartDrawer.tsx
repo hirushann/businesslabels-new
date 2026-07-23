@@ -24,7 +24,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
   const t = useTranslations();
   const lp = useLocalePath();
   const { defaultRule } = useShippingRules();
-  const shippingThreshold = defaultRule ? defaultRule.free_shipping_threshold : 100;
+  const shippingThreshold = defaultRule ? defaultRule.free_shipping_threshold : 500;
   
   const {
     items,
