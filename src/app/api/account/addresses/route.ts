@@ -193,7 +193,22 @@ export async function DELETE(request: NextRequest) {
       },
     });
 
+    console.log('[addresses DELETE] backend status:', response.status, 'addressId:', id);
+
+    // Treat 204 No Content as success — normalize to 200 so the client
+    // receives a valid JSON body (204 must not have a body per HTTP spec).
+    if (response.status === 204) {
+      return NextResponse.json({ message: 'Address deleted successfully.' }, { status: 200 });
+    }
+
     const data = await readResponseBody(response);
+    console.log('[addresses DELETE] backend response body:', JSON.stringify(data));
+
+    // Any 2xx is a success — normalise to 200 to avoid empty-body edge-cases.
+    if (response.ok) {
+      return NextResponse.json({ message: 'Address deleted successfully.', ...data }, { status: 200 });
+    }
+
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error('Error deleting account address:', error);

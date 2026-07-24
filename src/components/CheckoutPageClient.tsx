@@ -1003,6 +1003,7 @@ function CheckoutShell({
                                                e.preventDefault();
                                                e.stopPropagation();
                                                setEditingAddress(address);
+                                               setAddressPopupType('shipping');
                                                setIsAddAddressPopupOpen(true);
                                              }}
                                              className="inline-flex justify-start items-center gap-1 hover:opacity-80 transition-opacity cursor-pointer shrink-0 ml-auto"
@@ -1033,6 +1034,7 @@ function CheckoutShell({
                               type="button"
                               onClick={() => {
                                 setEditingAddress(null);
+                                setAddressPopupType('shipping');
                                 setIsAddAddressPopupOpen(true);
                               }}
                               className="w-fit min-w-[170px] h-[52px] px-8 rounded-full border-[1.5px] border-[#F18800] inline-flex justify-center items-center gap-2 hover:bg-orange-50/50 transition-all focus:outline-none mt-2"

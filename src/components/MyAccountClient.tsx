@@ -1908,7 +1908,10 @@ function BillingAddressesView({ user }: { user: StoredUser }) {
   }
 
   const handleRemove = async (addressId: string) => {
-    if (!confirm(t('account.confirmRemoveAddress') || 'Are you sure you want to remove this address?')) {
+    const confirmMessage = t.has('account.confirmRemoveAddress')
+      ? t('account.confirmRemoveAddress')
+      : 'Are you sure you want to remove this address?';
+    if (!confirm(confirmMessage)) {
       return;
     }
     try {
@@ -1921,12 +1924,15 @@ function BillingAddressesView({ user }: { user: StoredUser }) {
         body: JSON.stringify({ id: addressId }),
       });
       if (!response.ok) {
-        throw new Error();
+        const errData = await response.json().catch(() => ({}));
+        const errMsg = typeof errData?.message === 'string' ? errData.message : null;
+        throw new Error(errMsg || 'Error removing address.');
       }
-      toast.success(t('account.addressRemovedSuccess') || 'Address removed successfully.');
+      toast.success(t.has('account.addressRemovedSuccess') ? t('account.addressRemovedSuccess') : 'Address removed successfully.');
       void fetchAddresses();
     } catch (error) {
-      toast.error(t('account.addressRemoveError') || 'Error removing address.');
+      const msg = error instanceof Error ? error.message : (t.has('account.addressRemoveError') ? t('account.addressRemoveError') : 'Error removing address.');
+      toast.error(msg);
     }
   };
 
@@ -2200,7 +2206,10 @@ function ShippingAddressesView({ user }: { user: StoredUser }) {
   }
 
   const handleRemove = async (addressId: string) => {
-    if (!confirm(t('account.confirmRemoveAddress') || 'Are you sure you want to remove this address?')) {
+    const confirmMessage = t.has('account.confirmRemoveAddress')
+      ? t('account.confirmRemoveAddress')
+      : 'Are you sure you want to remove this address?';
+    if (!confirm(confirmMessage)) {
       return;
     }
     try {
@@ -2213,12 +2222,15 @@ function ShippingAddressesView({ user }: { user: StoredUser }) {
         body: JSON.stringify({ id: addressId }),
       });
       if (!response.ok) {
-        throw new Error();
+        const errData = await response.json().catch(() => ({}));
+        const errMsg = typeof errData?.message === 'string' ? errData.message : null;
+        throw new Error(errMsg || 'Error removing address.');
       }
-      toast.success(t('account.addressRemovedSuccess') || 'Address removed successfully.');
+      toast.success(t.has('account.addressRemovedSuccess') ? t('account.addressRemovedSuccess') : 'Address removed successfully.');
       void fetchAddresses();
     } catch (error) {
-      toast.error(t('account.addressRemoveError') || 'Error removing address.');
+      const msg = error instanceof Error ? error.message : (t.has('account.addressRemoveError') ? t('account.addressRemoveError') : 'Error removing address.');
+      toast.error(msg);
     }
   };
 

@@ -11,4 +11,4 @@ export async function getMessages(locale) {
   const normalized = normalizeLocale(locale);
   return MESSAGES_V4[normalized] ?? MESSAGES_V4[DEFAULT_LOCALE];
 }
-// Force reload cache 6
+// Force reload cache 7
