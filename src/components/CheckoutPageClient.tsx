@@ -2295,6 +2295,49 @@ export default function CheckoutPageClient({
     const taxAmount = (totalAmount + shippingAmount + paymentFee) * 0.21;
     const finalTotal = totalAmount + shippingAmount + paymentFee + taxAmount;
 
+    const isSavedBillingSelected =
+      isLoggedIn &&
+      !isEditingBilling &&
+      selectedSavedBillingAddressId !== null &&
+      selectedSavedBillingAddressId !== undefined &&
+      selectedSavedBillingAddressId !== "";
+
+    const billingAddressId = isSavedBillingSelected
+      ? !isNaN(Number(selectedSavedBillingAddressId))
+        ? Number(selectedSavedBillingAddressId)
+        : selectedSavedBillingAddressId
+      : null;
+
+    const isSavedShippingSelected =
+      isLoggedIn &&
+      !form.sameAsBilling &&
+      selectedSavedShippingAddressId !== null &&
+      selectedSavedShippingAddressId !== undefined &&
+      selectedSavedShippingAddressId !== "";
+
+    const shippingAddressId = isSavedShippingSelected
+      ? !isNaN(Number(selectedSavedShippingAddressId))
+        ? Number(selectedSavedShippingAddressId)
+        : selectedSavedShippingAddressId
+      : null;
+
+    const getCountryId = (countryName: string) => {
+      return (
+        countriesList.find(
+          (c: any) =>
+            c.name.toLowerCase() === countryName.toLowerCase() ||
+            c.id.toLowerCase() === countryName.toLowerCase()
+        )?.id ||
+        (countryName === "Netherlands"
+          ? "NL"
+          : countryName === "Belgium"
+          ? "BE"
+          : countryName === "Germany"
+          ? "DE"
+          : "NL")
+      ).toUpperCase();
+    };
+
     const shippingFirst = form.sameAsBilling ? form.firstName : form.shippingFirstName;
     const shippingLast = form.sameAsBilling ? form.lastName : form.shippingLastName;
     const shippingStreet = form.sameAsBilling ? form.streetAddress : form.shippingStreetAddress;
@@ -2303,9 +2346,7 @@ export default function CheckoutPageClient({
     const shippingPostcodeVal = form.sameAsBilling ? form.postcode : form.shippingPostcode;
     const shippingCountryVal = form.sameAsBilling ? form.country : form.shippingCountry;
 
-    const orderData = {
-      status: "pending",
-      customer_notes: form.purchaseReference,
+    const rawBillingFields = {
       billing_firstname: form.firstName,
       billing_lastname: form.lastName,
       billing_email: form.email,
@@ -2320,8 +2361,10 @@ export default function CheckoutPageClient({
       billing_state: form.state,
       billing_province: form.state,
       billing_postalcode: form.postcode,
-      billing_country_id: (countriesList.find((c: any) => c.name.toLowerCase() === form.country.toLowerCase() || c.id.toLowerCase() === form.country.toLowerCase())?.id || (form.country === "Netherlands" ? "NL" : form.country === "Belgium" ? "BE" : form.country === "Germany" ? "DE" : "NL")).toUpperCase(),
-      
+      billing_country_id: getCountryId(form.country),
+    };
+
+    const rawShippingFields = {
       shipping_firstname: shippingFirst,
       shipping_lastname: shippingLast,
       shipping_address: shippingStreet,
@@ -2329,8 +2372,33 @@ export default function CheckoutPageClient({
       shipping_state: shippingStateVal,
       shipping_province: shippingStateVal,
       shipping_postalcode: shippingPostcodeVal,
-      shipping_country_id: (countriesList.find((c: any) => c.name.toLowerCase() === shippingCountryVal.toLowerCase() || c.id.toLowerCase() === shippingCountryVal.toLowerCase())?.id || (shippingCountryVal === "Netherlands" ? "NL" : shippingCountryVal === "Belgium" ? "BE" : shippingCountryVal === "Germany" ? "DE" : "NL")).toUpperCase(),
+      shipping_country_id: getCountryId(shippingCountryVal),
+    };
 
+    const orderData: Record<string, any> = {
+      status: "pending",
+      customer_notes: form.purchaseReference,
+    };
+
+    if (billingAddressId !== null) {
+      orderData.billing_address_id = billingAddressId;
+    } else {
+      Object.assign(orderData, rawBillingFields);
+    }
+
+    if (form.sameAsBilling) {
+      if (billingAddressId !== null) {
+        orderData.shipping_address_id = null;
+      } else {
+        Object.assign(orderData, rawShippingFields);
+      }
+    } else if (shippingAddressId !== null) {
+      orderData.shipping_address_id = shippingAddressId;
+    } else {
+      Object.assign(orderData, rawShippingFields);
+    }
+
+    Object.assign(orderData, {
       shipping_amount: shippingAmount,
       tax_amount: taxAmount,
       payment_fee: paymentFee,
@@ -2339,7 +2407,7 @@ export default function CheckoutPageClient({
       lang: locale.split('-')[0] === 'nl' ? 'nl' : 'en',
       order_items: buildCheckoutOrderItems(items),
       ...(selectedShippingEffectiveLabel ? { shipping_effective_label: selectedShippingEffectiveLabel } : {}),
-    };
+    });
 
     console.log("[Checkout] Submitting order data:", JSON.stringify(orderData, null, 2));
 

@@ -268,12 +268,18 @@ function normalizeOrders(payload: unknown): AccountOrder[] {
       const itemsValue = order.items ?? order.line_items ?? order.order_items;
       const itemsRaw = Array.isArray(itemsValue) ? itemsValue : [];
       const billpayer = isPlainObject(order.billpayer) ? order.billpayer : {};
-      const billingRaw = isPlainObject(order.billing_address)
-        ? order.billing_address
-        : isPlainObject(billpayer.address)
-          ? billpayer.address
+      const billingRaw = isPlainObject(order.selected_billing_address)
+        ? order.selected_billing_address
+        : isPlainObject(order.billing_address)
+          ? order.billing_address
+          : isPlainObject(billpayer.address)
+            ? billpayer.address
+            : null;
+      const shippingRaw = isPlainObject(order.selected_shipping_address)
+        ? order.selected_shipping_address
+        : isPlainObject(order.shipping_address)
+          ? order.shipping_address
           : null;
-      const shippingRaw = isPlainObject(order.shipping_address) ? order.shipping_address : null;
 
       return {
         id: formatOrderId(order),

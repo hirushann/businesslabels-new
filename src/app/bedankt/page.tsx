@@ -24,6 +24,11 @@ type OrderDetails = {
   purchase_ref?: string;
   customer_notes?: string;
   original_checkout_payload?: Record<string, unknown>;
+  selected_billing_address?: Record<string, unknown>;
+  selected_shipping_address?: Record<string, unknown>;
+  billing_address_id?: number | string | null;
+  shipping_address_id?: number | string | null;
+  user?: Record<string, unknown>;
   billing_address?: {
     name?: string;
     firstname?: string;
@@ -108,25 +113,24 @@ function readNumberValue(source: Record<string, unknown> | null | undefined, key
   if (!source) return null;
   for (const key of keys) {
     const value = source[key];
-    if (typeof value === "number" && Number.isFinite(value)) {
+    if (typeof value === "number" && !isNaN(value)) {
       return value;
     }
     if (typeof value === "string" && value.trim()) {
-      const normalized = Number(value.replace(/[^\d.-]/g, ""));
-      if (Number.isFinite(normalized)) {
-        return normalized;
-      }
+      const parsed = parseFloat(value);
+      if (!isNaN(parsed)) return parsed;
     }
   }
   return null;
 }
 
 export default function ThankYouPage() {
-  const t = useTranslations();
-  const locale = useLocale();
   const searchParams = useSearchParams();
-  const orderNumber = searchParams.get("order_number");
+  const locale = useLocale();
+  const t = useTranslations();
   const { clearCart } = useCart();
+
+  const orderNumber = searchParams.get("order_number") || searchParams.get("number") || searchParams.get("order");
   const [order, setOrder] = useState<OrderDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPdfGenerating, setIsPdfGenerating] = useState(false);
@@ -174,6 +178,8 @@ export default function ThankYouPage() {
   const isRealOrder = !!order;
   const isSuccess = !isRealOrder || order?.status === "processing" || order?.status === "completed" || order?.status === "pending";
 
+  const selectedBillingAddress = order?.selected_billing_address as Record<string, unknown> | undefined;
+  const selectedShippingAddress = (order?.selected_shipping_address || (order?.shipping_address_id === null ? selectedBillingAddress : undefined)) as Record<string, unknown> | undefined;
   const billingAddress = order?.billing_address;
   const shippingAddress = order?.shipping_address;
   const payload = order?.original_checkout_payload || {};
@@ -183,23 +189,72 @@ export default function ThankYouPage() {
   const demoShippingPostcode = t("thankYou.demoShippingPostcode");
   const demoShippingCountry = t("thankYou.demoShippingCountry");
 
-  const personalName = [
-    readStringValue(order, ["billing_firstname", "billing_first_name"]) || readStringValue(payload, ["billing_firstname", "billing_first_name"]) || billingAddress?.firstname,
-    readStringValue(order, ["billing_lastname", "billing_last_name"]) || readStringValue(payload, ["billing_lastname", "billing_last_name"]) || billingAddress?.lastname
-  ].filter(Boolean).join(" ") || billingAddress?.name || (isRealOrder ? "" : "Alex Growder");
+  const personalName =
+    [
+      readStringValue(selectedBillingAddress, ["firstname", "first_name"]) || readStringValue(order, ["billing_firstname", "billing_first_name"]) || readStringValue(payload, ["billing_firstname", "billing_first_name"]) || billingAddress?.firstname,
+      readStringValue(selectedBillingAddress, ["lastname", "last_name"]) || readStringValue(order, ["billing_lastname", "billing_last_name"]) || readStringValue(payload, ["billing_lastname", "billing_last_name"]) || billingAddress?.lastname
+    ].filter(Boolean).join(" ") ||
+    readStringValue(selectedBillingAddress, ["name"]) ||
+    billingAddress?.name ||
+    readStringValue(order, ["customer_name", "user_name", "name"]) ||
+    (isRealOrder ? "" : "Alex Growder");
 
-  const personalPhone = readStringValue(order, ["billing_phone", "phone"]) || readStringValue(payload, ["billing_phone", "phone"]) || billingAddress?.phone || (isRealOrder ? "" : "+88035654823");
-  const personalEmail = readStringValue(order, ["billing_email", "email"]) || readStringValue(payload, ["billing_email", "email"]) || billingAddress?.email || (isRealOrder ? "" : "demo123@gmail.com");
+  const personalPhone =
+    readStringValue(selectedBillingAddress, ["phone", "mobile", "telephone"]) ||
+    readStringValue(order, ["billing_phone", "phone", "customer_phone"]) ||
+    readStringValue(payload, ["billing_phone", "phone"]) ||
+    billingAddress?.phone ||
+    readStringValue(selectedShippingAddress, ["phone", "mobile", "telephone"]) ||
+    readStringValue(order, ["shipping_phone"]) ||
+    readStringValue(order?.user as Record<string, unknown>, ["phone", "mobile"]) ||
+    (isRealOrder ? "" : "+88035654823");
 
-  const shippingNameFormatted = shippingAddress?.name || [
-    readStringValue(order, ["shipping_firstname", "shipping_first_name"]),
-    readStringValue(order, ["shipping_lastname", "shipping_last_name"])
-  ].filter(Boolean).join(" ") || personalName;
+  const personalEmail =
+    readStringValue(selectedBillingAddress, ["email"]) ||
+    readStringValue(order, ["billing_email", "email", "customer_email"]) ||
+    readStringValue(payload, ["billing_email", "email"]) ||
+    billingAddress?.email ||
+    readStringValue(selectedShippingAddress, ["email"]) ||
+    readStringValue(order, ["shipping_email"]) ||
+    readStringValue(order?.user as Record<string, unknown>, ["email"]) ||
+    (isRealOrder ? "" : "demo123@gmail.com");
 
-  const shippingStreet = shippingAddress?.address1 || shippingAddress?.address2 || shippingAddress?.address || readStringValue(order, ["shipping_address_1", "shipping_address"]) || (isRealOrder ? "" : demoShippingStreet);
-  const shippingCity = shippingAddress?.city || readStringValue(order, ["shipping_city"]) || (isRealOrder ? "" : demoShippingCity);
-  const shippingPostcode = shippingAddress?.postcode || shippingAddress?.postalcode || readStringValue(order, ["shipping_postalcode", "shipping_postcode"]) || (isRealOrder ? "" : demoShippingPostcode);
-  const shippingCountry = shippingAddress?.country || shippingAddress?.country_id || readStringValue(order, ["shipping_country_id", "shipping_country"]) || (isRealOrder ? "" : demoShippingCountry);
+  const shippingNameFormatted =
+    readStringValue(selectedShippingAddress, ["name"]) ||
+    shippingAddress?.name ||
+    [
+      readStringValue(selectedShippingAddress, ["firstname", "first_name"]) || readStringValue(order, ["shipping_firstname", "shipping_first_name"]),
+      readStringValue(selectedShippingAddress, ["lastname", "last_name"]) || readStringValue(order, ["shipping_lastname", "shipping_last_name"])
+    ].filter(Boolean).join(" ") ||
+    personalName;
+
+  const shippingStreet =
+    readStringValue(selectedShippingAddress, ["address", "address1", "address_1", "street"]) ||
+    shippingAddress?.address1 ||
+    shippingAddress?.address2 ||
+    shippingAddress?.address ||
+    readStringValue(order, ["shipping_address_1", "shipping_address"]) ||
+    (isRealOrder ? "" : demoShippingStreet);
+
+  const shippingCity =
+    readStringValue(selectedShippingAddress, ["city"]) ||
+    shippingAddress?.city ||
+    readStringValue(order, ["shipping_city"]) ||
+    (isRealOrder ? "" : demoShippingCity);
+
+  const shippingPostcode =
+    readStringValue(selectedShippingAddress, ["postalcode", "postcode", "postal_code", "zip"]) ||
+    shippingAddress?.postcode ||
+    shippingAddress?.postalcode ||
+    readStringValue(order, ["shipping_postalcode", "shipping_postcode"]) ||
+    (isRealOrder ? "" : demoShippingPostcode);
+
+  const shippingCountry =
+    readStringValue(selectedShippingAddress, ["country", "country_id", "country_name"]) ||
+    shippingAddress?.country ||
+    shippingAddress?.country_id ||
+    readStringValue(order, ["shipping_country_id", "shipping_country"]) ||
+    (isRealOrder ? "" : demoShippingCountry);
 
   const fullShippingAddress = [shippingStreet, shippingCity, shippingPostcode, shippingCountry].filter(Boolean).join(", ") || (isRealOrder ? "" : t("thankYou.demoShippingAddress"));
 
