@@ -2422,6 +2422,17 @@ function ShippingAddressEditInline({
   const [stateRegion, setStateRegion] = useState(address?.state || address?.address2 || '');
   const [label, setLabel] = useState<'office' | 'home'>(address?.effective_label || 'home');
   const [isSaving, setIsSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const clearFieldError = (field: string) => {
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  };
 
   useEffect(() => {
     async function loadCountries() {
@@ -2470,7 +2481,6 @@ function ShippingAddressEditInline({
         setProvinceId(match.id);
         setStateRegion(match.name);
       } else {
-        // If no match but we have provinces, set to first or empty
         setProvinceId('');
         setStateRegion('');
       }
@@ -2481,6 +2491,7 @@ function ShippingAddressEditInline({
 
   const handleProvinceChange = (provIdStr: string) => {
     setProvinceId(provIdStr);
+    clearFieldError('stateRegion');
     const match = provinces.find((p: any) => String(p.id) === provIdStr);
     if (match) {
       setStateRegion(match.name);
@@ -2489,11 +2500,46 @@ function ShippingAddressEditInline({
     }
   };
 
-  const inputClasses = "w-full h-12 px-4 rounded-full border border-slate-200 focus:border-brand outline-none transition-all text-neutral-800 text-base bg-white font-normal";
+  const getInputClasses = (hasError?: boolean) =>
+    `w-full h-12 px-4 rounded-full border ${
+      hasError
+        ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50/20'
+        : 'border-slate-200 focus:border-brand'
+    } outline-none transition-all text-neutral-800 text-base bg-white font-normal`;
+
   const labelClasses = "text-base font-bold text-neutral-800 mb-2 block";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const errors: Record<string, string> = {};
+
+    const reqField = (val: string, key: string, fieldName: string) => {
+      if (!val || !val.trim()) {
+        errors[key] = t.has && typeof t.has === 'function' && t.has('validation.required')
+          ? t('validation.required', { field: fieldName })
+          : `${fieldName} is required`;
+      }
+    };
+
+    reqField(firstName, 'firstName', getLabel('account.firstName', 'First name'));
+    reqField(lastName, 'lastName', getLabel('account.lastName', 'Last name'));
+    reqField(email, 'email', getLabel('account.email', 'Email'));
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      errors.email = t.has && typeof t.has === 'function' && t.has('validation.invalidEmail')
+        ? t('validation.invalidEmail')
+        : 'Please enter a valid email address';
+    }
+    reqField(phone, 'phone', getLabel('account.phoneNumber', 'Phone number'));
+    reqField(street, 'street', getLabel('account.streetAndHouseNumber', 'Street and house number'));
+    reqField(postcode, 'postcode', getLabel('account.postCode', 'Postcode'));
+    reqField(city, 'city', getLabel('account.city', 'Place'));
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+
     setIsSaving(true);
     try {
       const cleanId = address?.id && !address.id.startsWith('address-') 
@@ -2530,18 +2576,30 @@ function ShippingAddressEditInline({
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Save failed');
-      }
       const responseData = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        if (responseData.errors && typeof responseData.errors === 'object') {
+          const apiErrors: Record<string, string> = {};
+          for (const [key, msgs] of Object.entries(responseData.errors)) {
+            const msg = Array.isArray(msgs) ? msgs[0] : String(msgs);
+            const fieldKey = key === 'address' || key === 'address1' || key === 'street_address' ? 'street' :
+                             key === 'postalcode' || key === 'zip' ? 'postcode' :
+                             key === 'firstname' ? 'firstName' :
+                             key === 'lastname' ? 'lastName' : key;
+            apiErrors[fieldKey] = msg;
+          }
+          setFieldErrors(apiErrors);
+        }
+        throw new Error(responseData.message || responseData.error || 'Save failed');
+      }
       const savedAddressId = responseData?.id || responseData?.data?.id || cleanId;
 
       toast.success(t('account.addressSavedSuccess', { type: 'Shipping' }));
       onSave(savedAddressId);
     } catch (error) {
       console.error("Shipping save error:", error);
-      toast.error(t('account.addressesLoadError'));
+      toast.error(error instanceof Error ? error.message : t('account.addressesLoadError'));
     } finally {
       setIsSaving(false);
     }
@@ -2549,33 +2607,80 @@ function ShippingAddressEditInline({
 
   return (
     <div className="w-full animate-in fade-in duration-300 mt-2">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className={labelClasses}>{getLabel('account.firstName', 'First name')}</label>
-            <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputClasses} required placeholder="Sofia" />
+            <label className={labelClasses}>{getLabel('account.firstName', 'First name')} *</label>
+            <input 
+              type="text" 
+              value={firstName} 
+              onChange={(e) => {
+                setFirstName(e.target.value);
+                clearFieldError('firstName');
+              }} 
+              className={getInputClasses(Boolean(fieldErrors.firstName))} 
+              placeholder="Sofia" 
+            />
+            {fieldErrors.firstName && <span className="text-xs text-red-500 font-medium mt-1 block ml-3">{fieldErrors.firstName}</span>}
           </div>
           <div>
-            <label className={labelClasses}>{getLabel('account.lastName', 'Last name')}</label>
-            <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputClasses} required placeholder="Havertz" />
+            <label className={labelClasses}>{getLabel('account.lastName', 'Last name')} *</label>
+            <input 
+              type="text" 
+              value={lastName} 
+              onChange={(e) => {
+                setLastName(e.target.value);
+                clearFieldError('lastName');
+              }} 
+              className={getInputClasses(Boolean(fieldErrors.lastName))} 
+              placeholder="Havertz" 
+            />
+            {fieldErrors.lastName && <span className="text-xs text-red-500 font-medium mt-1 block ml-3">{fieldErrors.lastName}</span>}
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className={labelClasses}>{getLabel('account.email', 'Email')}</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClasses} placeholder="sofia@gmail.com" />
+            <label className={labelClasses}>{getLabel('account.email', 'Email')} *</label>
+            <input 
+              type="email" 
+              value={email} 
+              onChange={(e) => {
+                setEmail(e.target.value);
+                clearFieldError('email');
+              }} 
+              className={getInputClasses(Boolean(fieldErrors.email))} 
+              placeholder="sofia@gmail.com" 
+            />
+            {fieldErrors.email && <span className="text-xs text-red-500 font-medium mt-1 block ml-3">{fieldErrors.email}</span>}
           </div>
           <div>
-            <label className={labelClasses}>{getLabel('account.phoneNumber', 'Phone number')}</label>
-            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClasses} placeholder="+555-113324" />
+            <label className={labelClasses}>{getLabel('account.phoneNumber', 'Phone number')} *</label>
+            <input 
+              type="tel" 
+              value={phone} 
+              onChange={(e) => {
+                setPhone(e.target.value);
+                clearFieldError('phone');
+              }} 
+              className={getInputClasses(Boolean(fieldErrors.phone))} 
+              placeholder="+555-113324" 
+            />
+            {fieldErrors.phone && <span className="text-xs text-red-500 font-medium mt-1 block ml-3">{fieldErrors.phone}</span>}
           </div>
         </div>
 
         <div>
           <label className={labelClasses}>{getLabel('account.country', 'Country / Region')}</label>
           <div className="relative">
-            <select value={countryId} onChange={(e) => setCountryId(e.target.value)} className={`${inputClasses} appearance-none pr-10 bg-transparent`}>
+            <select 
+              value={countryId} 
+              onChange={(e) => {
+                setCountryId(e.target.value);
+                clearFieldError('countryId');
+              }} 
+              className={`${getInputClasses(Boolean(fieldErrors.countryId))} appearance-none pr-10 bg-transparent`}
+            >
               {countriesList.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
@@ -2584,29 +2689,64 @@ function ShippingAddressEditInline({
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><path d="m6 9 6 6 6-6"/></svg>
             </div>
           </div>
+          {fieldErrors.countryId && <span className="text-xs text-red-500 font-medium mt-1 block ml-3">{fieldErrors.countryId}</span>}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className={labelClasses}>{getLabel('account.streetAndHouseNumber', 'Street and house number')}</label>
-            <input type="text" value={street} onChange={(e) => setStreet(e.target.value)} className={inputClasses} required placeholder="345 Long Island" />
+            <label className={labelClasses}>{getLabel('account.streetAndHouseNumber', 'Street and house number')} *</label>
+            <input 
+              type="text" 
+              value={street} 
+              onChange={(e) => {
+                setStreet(e.target.value);
+                clearFieldError('street');
+              }} 
+              className={getInputClasses(Boolean(fieldErrors.street))} 
+              placeholder="345 Long Island" 
+            />
+            {fieldErrors.street && <span className="text-xs text-red-500 font-medium mt-1 block ml-3">{fieldErrors.street}</span>}
           </div>
           <div>
-            <label className={labelClasses}>{getLabel('account.postCode', 'Postcode')}</label>
-            <input type="text" value={postcode} onChange={(e) => setPostcode(e.target.value)} className={inputClasses} required placeholder="1200" />
+            <label className={labelClasses}>{getLabel('account.postCode', 'Postcode')} *</label>
+            <input 
+              type="text" 
+              value={postcode} 
+              onChange={(e) => {
+                setPostcode(e.target.value);
+                clearFieldError('postcode');
+              }} 
+              className={getInputClasses(Boolean(fieldErrors.postcode))} 
+              placeholder="1200" 
+            />
+            {fieldErrors.postcode && <span className="text-xs text-red-500 font-medium mt-1 block ml-3">{fieldErrors.postcode}</span>}
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className={labelClasses}>{getLabel('account.city', 'Place')}</label>
-            <input type="text" value={city} onChange={(e) => setCity(e.target.value)} className={inputClasses} required placeholder="NewYork" />
+            <label className={labelClasses}>{getLabel('account.city', 'Place')} *</label>
+            <input 
+              type="text" 
+              value={city} 
+              onChange={(e) => {
+                setCity(e.target.value);
+                clearFieldError('city');
+              }} 
+              className={getInputClasses(Boolean(fieldErrors.city))} 
+              placeholder="NewYork" 
+            />
+            {fieldErrors.city && <span className="text-xs text-red-500 font-medium mt-1 block ml-3">{fieldErrors.city}</span>}
           </div>
           <div>
             <label className={labelClasses}>{getLabel('account.stateOptional', 'State (optional)')}</label>
             {provinces.length > 0 ? (
               <div className="relative">
-                <select value={provinceId} onChange={(e) => handleProvinceChange(e.target.value)} className={`${inputClasses} appearance-none pr-10 bg-transparent`}>
+                <select 
+                  value={provinceId} 
+                  onChange={(e) => handleProvinceChange(e.target.value)} 
+                  className={`${getInputClasses(Boolean(fieldErrors.stateRegion))} appearance-none pr-10 bg-transparent`}
+                >
                   <option value="">-- Select Province --</option>
                   {provinces.map((p: any) => (
                     <option key={p.id} value={p.id}>{p.name}</option>
@@ -2617,8 +2757,18 @@ function ShippingAddressEditInline({
                 </div>
               </div>
             ) : (
-              <input type="text" value={stateRegion} onChange={(e) => setStateRegion(e.target.value)} className={inputClasses} placeholder="NewYork" />
+              <input 
+                type="text" 
+                value={stateRegion} 
+                onChange={(e) => {
+                  setStateRegion(e.target.value);
+                  clearFieldError('stateRegion');
+                }} 
+                className={getInputClasses(Boolean(fieldErrors.stateRegion))} 
+                placeholder="NewYork" 
+              />
             )}
+            {fieldErrors.stateRegion && <span className="text-xs text-red-500 font-medium mt-1 block ml-3">{fieldErrors.stateRegion}</span>}
           </div>
         </div>
 
@@ -2874,6 +3024,17 @@ function BillingAddressEditInline({
   const [city, setCity] = useState(address?.city || '');
   const [stateRegion, setStateRegion] = useState(address?.state || address?.address2 || '');
   const [isSaving, setIsSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const clearFieldError = (field: string) => {
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  };
 
   useEffect(() => {
     async function loadCountries() {
@@ -2922,7 +3083,6 @@ function BillingAddressEditInline({
         setProvinceId(match.id);
         setStateRegion(match.name);
       } else {
-        // If no match but we have provinces, set to first or empty
         setProvinceId('');
         setStateRegion('');
       }
@@ -2933,6 +3093,7 @@ function BillingAddressEditInline({
 
   const handleProvinceChange = (provIdStr: string) => {
     setProvinceId(provIdStr);
+    clearFieldError('stateRegion');
     const match = provinces.find((p: any) => String(p.id) === provIdStr);
     if (match) {
       setStateRegion(match.name);
@@ -2941,11 +3102,52 @@ function BillingAddressEditInline({
     }
   };
 
-  const inputClasses = "w-full h-12 px-4 rounded-full border border-slate-200 focus:border-brand outline-none transition-all text-neutral-800 text-base bg-white font-normal";
+  const getInputClasses = (hasError?: boolean) =>
+    `w-full h-12 px-4 rounded-full border ${
+      hasError
+        ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50/20'
+        : 'border-slate-200 focus:border-brand'
+    } outline-none transition-all text-neutral-800 text-base bg-white font-normal`;
+
   const labelClasses = "text-base font-bold text-neutral-800 mb-2 block";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const errors: Record<string, string> = {};
+
+    const reqField = (val: string, key: string, fieldName: string) => {
+      if (!val || !val.trim()) {
+        errors[key] = t.has && typeof t.has === 'function' && t.has('validation.required')
+          ? t('validation.required', { field: fieldName })
+          : `${fieldName} is required`;
+      }
+    };
+
+    reqField(firstName, 'firstName', getLabel('account.firstName', 'First name'));
+    reqField(lastName, 'lastName', getLabel('account.lastName', 'Last name'));
+    reqField(email, 'email', getLabel('account.emailAddress', 'Email'));
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      errors.email = t.has && typeof t.has === 'function' && t.has('validation.invalidEmail')
+        ? t('validation.invalidEmail')
+        : 'Please enter a valid email address';
+    }
+    reqField(phone, 'phone', getLabel('account.phoneNumber', 'Phone number'));
+    reqField(street, 'street', getLabel('account.streetAndHouseNumber', 'Street and house number'));
+    reqField(postcode, 'postcode', getLabel('account.postCode', 'Postcode'));
+    reqField(city, 'city', getLabel('account.city', 'Place'));
+
+    if (vatNumber && vatNumber.trim().length > 17) {
+      errors.vatNumber = t.has && typeof t.has === 'function' && t.has('validation.vatNumberLength')
+        ? t('validation.vatNumberLength')
+        : 'BTW-nummer mag niet langer zijn dan 17 tekens';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+
     setIsSaving(true);
     try {
       const cleanId = address?.id && !address.id.startsWith('address-') 
@@ -2985,10 +3187,23 @@ function BillingAddressEditInline({
       });
 
       const responseData = await response.json().catch(() => ({}));
-      console.log('[BillingForm] response status:', response.status, 'data:', responseData);
 
       if (!response.ok) {
-        throw new Error(responseData.message || responseData.error || JSON.stringify(responseData) || 'Save failed');
+        if (responseData.errors && typeof responseData.errors === 'object') {
+          const apiErrors: Record<string, string> = {};
+          for (const [key, msgs] of Object.entries(responseData.errors)) {
+            const msg = Array.isArray(msgs) ? msgs[0] : String(msgs);
+            const fieldKey = key === 'address' || key === 'address1' || key === 'street_address' ? 'street' :
+                             key === 'postalcode' || key === 'zip' ? 'postcode' :
+                             key === 'firstname' ? 'firstName' :
+                             key === 'lastname' ? 'lastName' :
+                             key === 'company_name' ? 'company' :
+                             key === 'vat_number' || key === 'tax_nr' ? 'vatNumber' : key;
+            apiErrors[fieldKey] = msg;
+          }
+          setFieldErrors(apiErrors);
+        }
+        throw new Error(responseData.message || responseData.error || 'Save failed');
       }
 
       const savedAddressId = responseData?.id || responseData?.data?.id || cleanId;
@@ -3004,44 +3219,111 @@ function BillingAddressEditInline({
 
   return (
     <div className="w-full animate-in fade-in duration-300 mt-2">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className={labelClasses}>{getLabel('account.companyOptional', 'Company name (optional)')}</label>
-            <input type="text" value={company} onChange={(e) => setCompany(e.target.value)} className={inputClasses} placeholder="Company Ltd." />
+            <input 
+              type="text" 
+              value={company} 
+              onChange={(e) => {
+                setCompany(e.target.value);
+                clearFieldError('company');
+              }} 
+              className={getInputClasses(Boolean(fieldErrors.company))} 
+              placeholder="Company Ltd." 
+            />
+            {fieldErrors.company && <span className="text-xs text-red-500 font-medium mt-1 block ml-3">{fieldErrors.company}</span>}
           </div>
           <div>
             <label className={labelClasses}>{getLabel('account.vatNumberOptional', 'VAT number (optional)')}</label>
-            <input type="text" value={vatNumber} onChange={(e) => setVatNumber(e.target.value)} className={inputClasses} placeholder="NL123456789B01" />
+            <input 
+              type="text" 
+              value={vatNumber} 
+              onChange={(e) => {
+                setVatNumber(e.target.value);
+                clearFieldError('vatNumber');
+              }} 
+              className={getInputClasses(Boolean(fieldErrors.vatNumber))} 
+              placeholder="NL123456789B01" 
+            />
+            {fieldErrors.vatNumber && <span className="text-xs text-red-500 font-medium mt-1 block ml-3">{fieldErrors.vatNumber}</span>}
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className={labelClasses}>{getLabel('account.firstName', 'First name')}</label>
-            <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputClasses} required placeholder="Sofia" />
+            <label className={labelClasses}>{getLabel('account.firstName', 'First name')} *</label>
+            <input 
+              type="text" 
+              value={firstName} 
+              onChange={(e) => {
+                setFirstName(e.target.value);
+                clearFieldError('firstName');
+              }} 
+              className={getInputClasses(Boolean(fieldErrors.firstName))} 
+              placeholder="Sofia" 
+            />
+            {fieldErrors.firstName && <span className="text-xs text-red-500 font-medium mt-1 block ml-3">{fieldErrors.firstName}</span>}
           </div>
           <div>
-            <label className={labelClasses}>{getLabel('account.lastName', 'Last name')}</label>
-            <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputClasses} required placeholder="Havertz" />
+            <label className={labelClasses}>{getLabel('account.lastName', 'Last name')} *</label>
+            <input 
+              type="text" 
+              value={lastName} 
+              onChange={(e) => {
+                setLastName(e.target.value);
+                clearFieldError('lastName');
+              }} 
+              className={getInputClasses(Boolean(fieldErrors.lastName))} 
+              placeholder="Havertz" 
+            />
+            {fieldErrors.lastName && <span className="text-xs text-red-500 font-medium mt-1 block ml-3">{fieldErrors.lastName}</span>}
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className={labelClasses}>{getLabel('account.emailAddress', 'Email')}</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClasses} placeholder="sofia@gmail.com" />
+            <label className={labelClasses}>{getLabel('account.emailAddress', 'Email')} *</label>
+            <input 
+              type="email" 
+              value={email} 
+              onChange={(e) => {
+                setEmail(e.target.value);
+                clearFieldError('email');
+              }} 
+              className={getInputClasses(Boolean(fieldErrors.email))} 
+              placeholder="sofia@gmail.com" 
+            />
+            {fieldErrors.email && <span className="text-xs text-red-500 font-medium mt-1 block ml-3">{fieldErrors.email}</span>}
           </div>
           <div>
-            <label className={labelClasses}>{getLabel('account.phoneNumber', 'Phone number')}</label>
-            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClasses} placeholder="+555-113324" />
+            <label className={labelClasses}>{getLabel('account.phoneNumber', 'Phone number')} *</label>
+            <input 
+              type="tel" 
+              value={phone} 
+              onChange={(e) => {
+                setPhone(e.target.value);
+                clearFieldError('phone');
+              }} 
+              className={getInputClasses(Boolean(fieldErrors.phone))} 
+              placeholder="+555-113324" 
+            />
+            {fieldErrors.phone && <span className="text-xs text-red-500 font-medium mt-1 block ml-3">{fieldErrors.phone}</span>}
           </div>
         </div>
 
         <div>
           <label className={labelClasses}>{getLabel('account.country', 'Country / Region')}</label>
           <div className="relative">
-            <select value={countryId} onChange={(e) => setCountryId(e.target.value)} className={`${inputClasses} appearance-none pr-10 bg-transparent`}>
+            <select 
+              value={countryId} 
+              onChange={(e) => {
+                setCountryId(e.target.value);
+                clearFieldError('countryId');
+              }} 
+              className={`${getInputClasses(Boolean(fieldErrors.countryId))} appearance-none pr-10 bg-transparent`}
+            >
               {countriesList.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
@@ -3050,29 +3332,64 @@ function BillingAddressEditInline({
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><path d="m6 9 6 6 6-6"/></svg>
             </div>
           </div>
+          {fieldErrors.countryId && <span className="text-xs text-red-500 font-medium mt-1 block ml-3">{fieldErrors.countryId}</span>}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className={labelClasses}>{getLabel('account.streetAndHouseNumber', 'Street and house number')}</label>
-            <input type="text" value={street} onChange={(e) => setStreet(e.target.value)} className={inputClasses} required placeholder="345 Long Island" />
+            <label className={labelClasses}>{getLabel('account.streetAndHouseNumber', 'Street and house number')} *</label>
+            <input 
+              type="text" 
+              value={street} 
+              onChange={(e) => {
+                setStreet(e.target.value);
+                clearFieldError('street');
+              }} 
+              className={getInputClasses(Boolean(fieldErrors.street))} 
+              placeholder="345 Long Island" 
+            />
+            {fieldErrors.street && <span className="text-xs text-red-500 font-medium mt-1 block ml-3">{fieldErrors.street}</span>}
           </div>
           <div>
-            <label className={labelClasses}>{getLabel('account.postCode', 'Postcode')}</label>
-            <input type="text" value={postcode} onChange={(e) => setPostcode(e.target.value)} className={inputClasses} required placeholder="1200" />
+            <label className={labelClasses}>{getLabel('account.postCode', 'Postcode')} *</label>
+            <input 
+              type="text" 
+              value={postcode} 
+              onChange={(e) => {
+                setPostcode(e.target.value);
+                clearFieldError('postcode');
+              }} 
+              className={getInputClasses(Boolean(fieldErrors.postCode))} 
+              placeholder="1200" 
+            />
+            {fieldErrors.postcode && <span className="text-xs text-red-500 font-medium mt-1 block ml-3">{fieldErrors.postcode}</span>}
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className={labelClasses}>{getLabel('account.city', 'Place')}</label>
-            <input type="text" value={city} onChange={(e) => setCity(e.target.value)} className={inputClasses} required placeholder="NewYork" />
+            <label className={labelClasses}>{getLabel('account.city', 'Place')} *</label>
+            <input 
+              type="text" 
+              value={city} 
+              onChange={(e) => {
+                setCity(e.target.value);
+                clearFieldError('city');
+              }} 
+              className={getInputClasses(Boolean(fieldErrors.city))} 
+              placeholder="NewYork" 
+            />
+            {fieldErrors.city && <span className="text-xs text-red-500 font-medium mt-1 block ml-3">{fieldErrors.city}</span>}
           </div>
           <div>
             <label className={labelClasses}>{getLabel('account.stateOptional', 'State (optional)')}</label>
             {provinces.length > 0 ? (
               <div className="relative">
-                <select value={provinceId} onChange={(e) => handleProvinceChange(e.target.value)} className={`${inputClasses} appearance-none pr-10 bg-transparent`}>
+                <select 
+                  value={provinceId} 
+                  onChange={(e) => handleProvinceChange(e.target.value)} 
+                  className={`${getInputClasses(Boolean(fieldErrors.stateRegion))} appearance-none pr-10 bg-transparent`}
+                >
                   <option value="">-- Select Province --</option>
                   {provinces.map((p: any) => (
                     <option key={p.id} value={p.id}>{p.name}</option>
@@ -3083,8 +3400,18 @@ function BillingAddressEditInline({
                 </div>
               </div>
             ) : (
-              <input type="text" value={stateRegion} onChange={(e) => setStateRegion(e.target.value)} className={inputClasses} placeholder="NewYork" />
+              <input 
+                type="text" 
+                value={stateRegion} 
+                onChange={(e) => {
+                  setStateRegion(e.target.value);
+                  clearFieldError('stateRegion');
+                }} 
+                className={getInputClasses(Boolean(fieldErrors.stateRegion))} 
+                placeholder="NewYork" 
+              />
             )}
+            {fieldErrors.stateRegion && <span className="text-xs text-red-500 font-medium mt-1 block ml-3">{fieldErrors.stateRegion}</span>}
           </div>
         </div>
 
@@ -3125,12 +3452,20 @@ function AddressEditModal({
   const t = useTranslations();
   const locale = useLocale();
   const isBilling = type === 'billing';
-  const inputClasses = "w-full h-14 px-6 rounded-2xl border border-slate-200 focus:border-brand outline-none transition-all text-neutral-800 text-base bg-white focus:ring-[6px] focus:ring-brand/5 font-medium";
+  
+  const getInputClasses = (hasError?: boolean) =>
+    `w-full h-14 px-6 rounded-2xl border ${
+      hasError
+        ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50/20'
+        : 'border-slate-200 focus:border-brand focus:ring-brand/5'
+    } outline-none transition-all text-neutral-800 text-base bg-white focus:ring-[6px] font-medium`;
+    
   const labelClasses = "text-xs font-black text-neutral-500 uppercase tracking-widest mb-2.5 block ml-1";
 
   const [firstName, setFirstName] = useState(address?.firstname || '');
   const [lastName, setLastName] = useState(address?.lastname || '');
   const [company, setCompany] = useState(address?.company || '');
+  const [vatNumber, setVatNumber] = useState(address?.vatNumber || '');
   const [email, setEmail] = useState(address?.email || '');
   const [street, setStreet] = useState(address?.address1 || '');
   const [street2, setStreet2] = useState(address?.address2 || '');
@@ -3139,6 +3474,17 @@ function AddressEditModal({
   const [phone, setPhone] = useState(address?.phone || '');
   const [effectiveLabel, setEffectiveLabel] = useState<'home' | 'office' | ''>(address?.effective_label || '');
   const [isSaving, setIsSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const clearFieldError = (field: string) => {
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  };
 
   const typeWord = isBilling 
     ? (locale === 'nl' ? 'Factuur' : 'Billing') 
@@ -3146,6 +3492,45 @@ function AddressEditModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const errors: Record<string, string> = {};
+
+    const reqField = (val: string, key: string, fieldName: string) => {
+      if (!val || !val.trim()) {
+        errors[key] = t.has && typeof t.has === 'function' && t.has('validation.required')
+          ? t('validation.required', { field: fieldName })
+          : `${fieldName} is required`;
+      }
+    };
+
+    reqField(firstName, 'firstName', t('account.firstName') || (locale === 'nl' ? 'Voornaam' : 'First Name'));
+    reqField(lastName, 'lastName', t('account.lastName') || (locale === 'nl' ? 'Achternaam' : 'Last Name'));
+    reqField(email, 'email', locale === 'nl' ? 'E-mailadres' : 'Email address');
+    if (!email.trim()) {
+      errors.email = t.has && typeof t.has === 'function' && t.has('validation.required')
+        ? t('validation.required', { field: locale === 'nl' ? 'E-mailadres' : 'Email address' })
+        : (locale === 'nl' ? 'E-mailadres is verplicht' : 'Email address is required');
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      errors.email = t.has && typeof t.has === 'function' && t.has('validation.invalidEmail')
+        ? t('validation.invalidEmail')
+        : (locale === 'nl' ? 'Voer een geldig e-mailadres in' : 'Please enter a valid email address');
+    }
+    reqField(phone, 'phone', t('account.phone') || (locale === 'nl' ? 'Telefoonnummer' : 'Phone number'));
+    reqField(street, 'street', t('account.streetAddress') || (locale === 'nl' ? 'Straat en huisnummer' : 'Street Address'));
+    reqField(postcode, 'postcode', t('account.postcode') || (locale === 'nl' ? 'Postcode' : 'Postcode'));
+    reqField(city, 'city', t('account.townCity') || (locale === 'nl' ? 'Plaats' : 'Town/City'));
+
+    if (vatNumber && vatNumber.trim().length > 17) {
+      errors.vatNumber = t.has && typeof t.has === 'function' && t.has('validation.vatNumberLength')
+        ? t('validation.vatNumberLength')
+        : 'BTW-nummer mag niet langer zijn dan 17 tekens';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+
     setIsSaving(true);
 
     try {
@@ -3160,6 +3545,7 @@ function AddressEditModal({
         firstname: firstName,
         lastname: lastName,
         company_name: company,
+        vat_number: vatNumber,
         address: street,
         address2: street2,
         state: street2,
@@ -3174,7 +3560,6 @@ function AddressEditModal({
         ...((!isBilling && effectiveLabel) ? { effective_label: effectiveLabel } : {}),
       };
 
-
       const response = await fetch('/api/account/addresses', {
         method: cleanId ? 'PUT' : 'POST',
         headers: {
@@ -3187,6 +3572,20 @@ function AddressEditModal({
       const responseData = await response.json().catch(() => ({}));
 
       if (!response.ok) {
+        if (responseData.errors && typeof responseData.errors === 'object') {
+          const apiErrors: Record<string, string> = {};
+          for (const [key, msgs] of Object.entries(responseData.errors)) {
+            const msg = Array.isArray(msgs) ? msgs[0] : String(msgs);
+            const fieldKey = key === 'address' || key === 'address1' || key === 'street_address' ? 'street' :
+                             key === 'postalcode' || key === 'zip' ? 'postcode' :
+                             key === 'firstname' ? 'firstName' :
+                             key === 'lastname' ? 'lastName' :
+                             key === 'company_name' ? 'company' :
+                             key === 'vat_number' || key === 'tax_nr' ? 'vatNumber' : key;
+            apiErrors[fieldKey] = msg;
+          }
+          setFieldErrors(apiErrors);
+        }
         throw new Error(responseData.message || t('account.addressesLoadError'));
       }
 
@@ -3229,55 +3628,163 @@ function AddressEditModal({
 
         {/* Form Content */}
         <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-          <form id="address-form-modal" className="flex flex-col gap-6" onSubmit={handleSubmit}>
+          <form id="address-form-modal" noValidate className="flex flex-col gap-6" onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className={labelClasses}>{t('account.firstName')}</label>
-                <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputClasses} required />
+                <label className={labelClasses}>{t('account.firstName')} *</label>
+                <input 
+                  type="text" 
+                  value={firstName} 
+                  onChange={(e) => {
+                    setFirstName(e.target.value);
+                    clearFieldError('firstName');
+                  }} 
+                  className={getInputClasses(Boolean(fieldErrors.firstName))} 
+                />
+                {fieldErrors.firstName && <span className="text-xs text-red-500 font-medium mt-1.5 block ml-1">{fieldErrors.firstName}</span>}
               </div>
               <div>
-                <label className={labelClasses}>{t('account.lastName')}</label>
-                <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputClasses} required />
+                <label className={labelClasses}>{t('account.lastName')} *</label>
+                <input 
+                  type="text" 
+                  value={lastName} 
+                  onChange={(e) => {
+                    setLastName(e.target.value);
+                    clearFieldError('lastName');
+                  }} 
+                  className={getInputClasses(Boolean(fieldErrors.lastName))} 
+                />
+                {fieldErrors.lastName && <span className="text-xs text-red-500 font-medium mt-1.5 block ml-1">{fieldErrors.lastName}</span>}
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className={labelClasses}>{locale === 'nl' ? 'E-mailadres' : 'Email address'} *</label>
+                <input 
+                  type="email" 
+                  value={email} 
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    clearFieldError('email');
+                  }} 
+                  className={getInputClasses(Boolean(fieldErrors.email))} 
+                />
+                {fieldErrors.email && <span className="text-xs text-red-500 font-medium mt-1.5 block ml-1">{fieldErrors.email}</span>}
+              </div>
+              <div>
+                <label className={labelClasses}>{t('account.phone') || (locale === 'nl' ? 'Telefoonnummer' : 'Phone number')} *</label>
+                <input 
+                  type="tel" 
+                  value={phone} 
+                  onChange={(e) => {
+                    setPhone(e.target.value);
+                    clearFieldError('phone');
+                  }} 
+                  className={getInputClasses(Boolean(fieldErrors.phone))} 
+                />
+                {fieldErrors.phone && <span className="text-xs text-red-500 font-medium mt-1.5 block ml-1">{fieldErrors.phone}</span>}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className={labelClasses}>{t('account.companyOptional') || (locale === 'nl' ? 'Bedrijfsnaam (Optioneel)' : 'Company name (Optional)')}</label>
+                <input 
+                  type="text" 
+                  value={company} 
+                  onChange={(e) => {
+                    setCompany(e.target.value);
+                    clearFieldError('company');
+                  }} 
+                  className={getInputClasses(Boolean(fieldErrors.company))} 
+                />
+                {fieldErrors.company && <span className="text-xs text-red-500 font-medium mt-1.5 block ml-1">{fieldErrors.company}</span>}
+              </div>
+              {isBilling && (
+                <div>
+                  <label className={labelClasses}>{locale === 'nl' ? 'BTW-nummer (Optioneel)' : 'VAT number (Optional)'}</label>
+                  <input 
+                    type="text" 
+                    value={vatNumber} 
+                    onChange={(e) => {
+                      setVatNumber(e.target.value);
+                      clearFieldError('vatNumber');
+                    }} 
+                    className={getInputClasses(Boolean(fieldErrors.vatNumber))} 
+                    placeholder="NL123456789B01"
+                  />
+                  {fieldErrors.vatNumber && <span className="text-xs text-red-500 font-medium mt-1.5 block ml-1">{fieldErrors.vatNumber}</span>}
+                </div>
+              )}
             </div>
 
             <div>
-              <label className={labelClasses}>{t('account.companyOptional')}</label>
-              <input type="text" value={company} onChange={(e) => setCompany(e.target.value)} className={inputClasses} />
-            </div>
-
-              <div>
-                <label className={labelClasses}>{t('account.streetAddress')}</label>
-                <div className="flex flex-col gap-3">
-                  <AddressAutocomplete
-                    value={street}
-                    onChange={setStreet}
-                    onAddressSelect={(addr) => {
-                      if (addr.street) setStreet(addr.street);
-                      if (addr.city) setCity(addr.city);
-                      if (addr.postcode) setPostcode(addr.postcode);
-                    }}
-                    className={inputClasses}
-                  />
-                  <input type="text" placeholder={t('account.apartmentOptional')} value={street2} onChange={(e) => setStreet2(e.target.value)} className={inputClasses} />
-                </div>
+              <label className={labelClasses}>{t('account.streetAddress')} *</label>
+              <div className="flex flex-col gap-3">
+                <AddressAutocomplete
+                  value={street}
+                  onChange={(val) => {
+                    setStreet(val);
+                    clearFieldError('street');
+                  }}
+                  onAddressSelect={(addr) => {
+                    if (addr.street) {
+                      setStreet(addr.street);
+                      clearFieldError('street');
+                    }
+                    if (addr.city) {
+                      setCity(addr.city);
+                      clearFieldError('city');
+                    }
+                    if (addr.postcode) {
+                      setPostcode(addr.postcode);
+                      clearFieldError('postcode');
+                    }
+                  }}
+                  className={getInputClasses(Boolean(fieldErrors.street))}
+                />
+                {fieldErrors.street && <span className="text-xs text-red-500 font-medium mt-1 block ml-1">{fieldErrors.street}</span>}
+                <input 
+                  type="text" 
+                  placeholder={t('account.apartmentOptional')} 
+                  value={street2} 
+                  onChange={(e) => setStreet2(e.target.value)} 
+                  className={getInputClasses(false)} 
+                />
               </div>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="md:col-span-1">
-                <label className={labelClasses}>{t('account.postcode')}</label>
-                <input type="text" value={postcode} onChange={(e) => setPostcode(e.target.value)} className={inputClasses} required />
+                <label className={labelClasses}>{t('account.postcode')} *</label>
+                <input 
+                  type="text" 
+                  value={postcode} 
+                  onChange={(e) => {
+                    setPostcode(e.target.value);
+                    clearFieldError('postcode');
+                  }} 
+                  className={getInputClasses(Boolean(fieldErrors.postcode))} 
+                />
+                {fieldErrors.postcode && <span className="text-xs text-red-500 font-medium mt-1.5 block ml-1">{fieldErrors.postcode}</span>}
               </div>
               <div className="md:col-span-2">
-                <label className={labelClasses}>{t('account.townCity')}</label>
-                <input type="text" value={city} onChange={(e) => setCity(e.target.value)} className={inputClasses} required />
+                <label className={labelClasses}>{t('account.townCity')} *</label>
+                <input 
+                  type="text" 
+                  value={city} 
+                  onChange={(e) => {
+                    setCity(e.target.value);
+                    clearFieldError('city');
+                  }} 
+                  className={getInputClasses(Boolean(fieldErrors.city))} 
+                />
+                {fieldErrors.city && <span className="text-xs text-red-500 font-medium mt-1.5 block ml-1">{fieldErrors.city}</span>}
               </div>
             </div>
 
-            <div>
-              <label className={labelClasses}>{t('account.phone')}</label>
-              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClasses} />
-            </div>
+
 
             {!isBilling && (
               <div>

@@ -2186,6 +2186,11 @@ export default function CheckoutPageClient({
       if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
         nextErrors.email = t('validation.invalidEmail');
       }
+      if (form.vatNumber && form.vatNumber.trim().length > 17) {
+        nextErrors.vatNumber = t.has && typeof t.has === 'function' && t.has('validation.vatNumberLength')
+          ? t('validation.vatNumberLength')
+          : 'BTW-nummer mag niet langer zijn dan 17 tekens';
+      }
     } else if (currentStep === 2) {
       if (!form.sameAsBilling) {
         const requiredFields: Array<keyof CheckoutFormState> = [
@@ -2622,9 +2627,21 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
   const [stateRegion, setStateRegion] = useState('');
   const [label, setLabel] = useState<'office' | 'home'>('home');
   const [isSaving, setIsSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const clearFieldError = (field: string) => {
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  };
 
   useEffect(() => {
     if (open) {
+      setFieldErrors({});
       if (editingAddress) {
         setCompanyName(editingAddress.company || '');
         setVatNumber('');
@@ -2712,6 +2729,7 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
 
   const handleProvinceChange = (provIdStr: string) => {
     setProvinceId(provIdStr);
+    clearFieldError('stateRegion');
     const match = provinces.find((p: any) => String(p.id) === provIdStr);
     if (match) {
       setStateRegion(match.name);
@@ -2722,6 +2740,40 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const errors: Record<string, string> = {};
+
+    const reqField = (val: string, key: string, fieldName: string) => {
+      if (!val || !val.trim()) {
+        errors[key] = t.has && typeof t.has === 'function' && t.has('validation.required')
+          ? t('validation.required', { field: fieldName })
+          : `${fieldName} is required`;
+      }
+    };
+
+    reqField(firstName, 'firstName', getLabel('checkout.firstName', 'First Name').replace(/\s*\*\s*$/, ''));
+    reqField(lastName, 'lastName', getLabel('checkout.lastName', 'Last Name').replace(/\s*\*\s*$/, ''));
+    reqField(email, 'email', getLabel('checkout.email', 'Email').replace(/\s*\*\s*$/, ''));
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      errors.email = t.has && typeof t.has === 'function' && t.has('validation.invalidEmail')
+        ? t('validation.invalidEmail')
+        : 'Please enter a valid email address';
+    }
+    reqField(phone, 'phone', getLabel('checkout.mobileNumber', 'Phone number').replace(/\s*\*\s*$/, ''));
+    reqField(street, 'street', getLabel('checkout.streetAddress', 'Street Address').replace(/\s*\*\s*$/, ''));
+    reqField(postcode, 'postcode', getLabel('checkout.postcode', 'Postcode').replace(/\s*\*\s*$/, ''));
+    reqField(city, 'city', getLabel('checkout.city', 'Town/City').replace(/\s*\*\s*$/, ''));
+    if (vatNumber && vatNumber.trim().length > 17) {
+      errors.vatNumber = t.has && typeof t.has === 'function' && t.has('validation.vatNumberLength')
+        ? t('validation.vatNumberLength')
+        : 'BTW-nummer mag niet langer zijn dan 17 tekens';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+
     setIsSaving(true);
     try {
       const payload: Record<string, unknown> = {
@@ -2761,6 +2813,20 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        if (errorData.errors && typeof errorData.errors === 'object') {
+          const apiErrors: Record<string, string> = {};
+          for (const [key, msgs] of Object.entries(errorData.errors)) {
+            const msg = Array.isArray(msgs) ? msgs[0] : String(msgs);
+            const fieldKey = key === 'address' || key === 'address1' || key === 'street_address' ? 'street' :
+                             key === 'postalcode' || key === 'zip' ? 'postcode' :
+                             key === 'firstname' ? 'firstName' :
+                             key === 'lastname' ? 'lastName' :
+                             key === 'company_name' ? 'companyName' :
+                             key === 'vat_number' ? 'vatNumber' : key;
+            apiErrors[fieldKey] = msg;
+          }
+          setFieldErrors(apiErrors);
+        }
         throw new Error(errorData.message || 'Save failed');
       }
       const responseData = await response.json().catch(() => ({}));
@@ -2778,7 +2844,12 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
   };
 
   const labelClasses = "text-[18px] font-bold text-ink mb-2 block";
-  const inputClasses = "w-full h-[52px] px-5 py-4 rounded-full border bg-white text-neutral-800 text-[16px] outline-none transition-all placeholder:text-subtle border-[#DDE1EA] focus:border-brand focus:ring-1 focus:ring-brand";
+  const inputClasses = (hasError?: boolean) =>
+    `w-full h-[52px] px-5 py-4 rounded-full border bg-white text-neutral-800 text-[16px] outline-none transition-all placeholder:text-subtle ${
+      hasError
+        ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/20'
+        : 'border-[#DDE1EA] focus:border-brand focus:ring-1 focus:ring-brand'
+    }`;
 
   const isBilling = addressType === 'billing';
 
@@ -2808,28 +2879,36 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
 
         {/* Scrollable Body */}
         <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-          <form onSubmit={handleSubmit} className="w-full flex flex-col gap-6">
+          <form onSubmit={handleSubmit} noValidate className="w-full flex flex-col gap-6">
             {isBilling && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-2">
-                  <span className={labelClasses}>{getLabel('checkout.companyName', 'Company name')}</span>
+                  <span className={labelClasses}>{getLabel('checkout.companyName', 'Bedrijfsnaam (Optioneel)')}</span>
                   <input 
                     type="text" 
                     value={companyName} 
-                    onChange={(e) => setCompanyName(e.target.value)} 
-                    className={inputClasses} 
+                    onChange={(e) => {
+                      setCompanyName(e.target.value);
+                      clearFieldError('companyName');
+                    }} 
+                    className={inputClasses(Boolean(fieldErrors.companyName))} 
                     placeholder={getLabel('checkout.companyNamePlaceholder', 'Van Dijk Labels BV')} 
                   />
+                  {fieldErrors.companyName && <span className="text-xs text-red-500 font-medium">{fieldErrors.companyName}</span>}
                 </div>
                 <div className="flex flex-col gap-2">
-                  <span className={labelClasses}>{getLabel('checkout.vatNumber', 'VAT number')}</span>
+                  <span className={labelClasses}>{getLabel('checkout.vatNumber', 'BTW-nummer (Optioneel)')}</span>
                   <input 
                     type="text" 
                     value={vatNumber} 
-                    onChange={(e) => setVatNumber(e.target.value)} 
-                    className={inputClasses} 
+                    onChange={(e) => {
+                      setVatNumber(e.target.value);
+                      clearFieldError('vatNumber');
+                    }} 
+                    className={inputClasses(Boolean(fieldErrors.vatNumber))} 
                     placeholder={getLabel('checkout.vatNumberPlaceholder', 'NL123456789B01')} 
                   />
+                  {fieldErrors.vatNumber && <span className="text-xs text-red-500 font-medium">{fieldErrors.vatNumber}</span>}
                 </div>
               </div>
             )}
@@ -2840,22 +2919,28 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
                 <input 
                   type="text" 
                   value={firstName} 
-                  onChange={(e) => setFirstName(e.target.value)} 
-                  className={inputClasses} 
-                  required 
+                  onChange={(e) => {
+                    setFirstName(e.target.value);
+                    clearFieldError('firstName');
+                  }} 
+                  className={inputClasses(Boolean(fieldErrors.firstName))} 
                   placeholder={getLabel('checkout.firstNamePlaceholder', 'Emma')} 
                 />
+                {fieldErrors.firstName && <span className="text-xs text-red-500 font-medium">{fieldErrors.firstName}</span>}
               </div>
               <div className="flex flex-col gap-2">
                 <span className={labelClasses}>{getLabel('checkout.lastName', 'Last Name')} *</span>
                 <input 
                   type="text" 
                   value={lastName} 
-                  onChange={(e) => setLastName(e.target.value)} 
-                  className={inputClasses} 
-                  required 
+                  onChange={(e) => {
+                    setLastName(e.target.value);
+                    clearFieldError('lastName');
+                  }} 
+                  className={inputClasses(Boolean(fieldErrors.lastName))} 
                   placeholder={getLabel('checkout.lastNamePlaceholder', 'van Dijk')} 
                 />
+                {fieldErrors.lastName && <span className="text-xs text-red-500 font-medium">{fieldErrors.lastName}</span>}
               </div>
             </div>
 
@@ -2865,22 +2950,28 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
                 <input 
                   type="email" 
                   value={email} 
-                  onChange={(e) => setEmail(e.target.value)} 
-                  className={inputClasses} 
-                  required 
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    clearFieldError('email');
+                  }} 
+                  className={inputClasses(Boolean(fieldErrors.email))} 
                   placeholder="you@example.com" 
                 />
+                {fieldErrors.email && <span className="text-xs text-red-500 font-medium">{fieldErrors.email}</span>}
               </div>
               <div className="flex flex-col gap-2">
                 <span className={labelClasses}>{getLabel('checkout.mobileNumber', 'Phone number')} *</span>
                 <input 
                   type="tel" 
                   value={phone} 
-                  onChange={(e) => setPhone(e.target.value)} 
-                  className={inputClasses} 
-                  required 
+                  onChange={(e) => {
+                    setPhone(e.target.value);
+                    clearFieldError('phone');
+                  }} 
+                  className={inputClasses(Boolean(fieldErrors.phone))} 
                   placeholder="+31 6 1234 5678" 
                 />
+                {fieldErrors.phone && <span className="text-xs text-red-500 font-medium">{fieldErrors.phone}</span>}
               </div>
             </div>
 
@@ -2889,8 +2980,11 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
               <div className="relative w-full">
                 <select 
                   value={countryId} 
-                  onChange={(e) => setCountryId(e.target.value)} 
-                  className={`${inputClasses} appearance-none pr-10 bg-white`}
+                  onChange={(e) => {
+                    setCountryId(e.target.value);
+                    clearFieldError('countryId');
+                  }} 
+                  className={`${inputClasses(Boolean(fieldErrors.countryId))} appearance-none pr-10 bg-white`}
                 >
                   {countriesList.length > 0 ? (
                     countriesList.map((c) => (
@@ -2910,6 +3004,7 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
                   </svg>
                 </div>
               </div>
+              {fieldErrors.countryId && <span className="text-xs text-red-500 font-medium">{fieldErrors.countryId}</span>}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2918,22 +3013,28 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
                 <input 
                   type="text" 
                   value={street} 
-                  onChange={(e) => setStreet(e.target.value)} 
-                  className={inputClasses} 
-                  required 
+                  onChange={(e) => {
+                    setStreet(e.target.value);
+                    clearFieldError('street');
+                  }} 
+                  className={inputClasses(Boolean(fieldErrors.street))} 
                   placeholder={getLabel('checkout.streetAddressPlaceholder', 'Keizersgracht 214')} 
                 />
+                {fieldErrors.street && <span className="text-xs text-red-500 font-medium">{fieldErrors.street}</span>}
               </div>
               <div className="flex flex-col gap-2">
                 <span className={labelClasses}>{getLabel('checkout.postcode', 'Postcode')} *</span>
                 <input 
                   type="text" 
                   value={postcode} 
-                  onChange={(e) => setPostcode(e.target.value)} 
-                  className={inputClasses} 
-                  required 
+                  onChange={(e) => {
+                    setPostcode(e.target.value);
+                    clearFieldError('postcode');
+                  }} 
+                  className={inputClasses(Boolean(fieldErrors.postcode))} 
                   placeholder={getLabel('checkout.postcodePlaceholder', '1016 DW')} 
                 />
+                {fieldErrors.postcode && <span className="text-xs text-red-500 font-medium">{fieldErrors.postcode}</span>}
               </div>
             </div>
 
@@ -2943,11 +3044,14 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
                 <input 
                   type="text" 
                   value={city} 
-                  onChange={(e) => setCity(e.target.value)} 
-                  className={inputClasses} 
-                  required 
+                  onChange={(e) => {
+                    setCity(e.target.value);
+                    clearFieldError('city');
+                  }} 
+                  className={inputClasses(Boolean(fieldErrors.city))} 
                   placeholder={getLabel('checkout.cityPlaceholder', 'Amsterdam')} 
                 />
+                {fieldErrors.city && <span className="text-xs text-red-500 font-medium">{fieldErrors.city}</span>}
               </div>
               <div className="flex flex-col gap-2">
                 <span className={labelClasses}>{getLabel('checkout.state', 'State')}</span>
@@ -2956,7 +3060,7 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
                     <select 
                       value={provinceId} 
                       onChange={(e) => handleProvinceChange(e.target.value)} 
-                      className={`${inputClasses} appearance-none pr-10 bg-white`}
+                      className={`${inputClasses(Boolean(fieldErrors.stateRegion))} appearance-none pr-10 bg-white`}
                     >
                       <option value="">-- {getLabel('account.stateOptional', 'Select Province')} --</option>
                       {provinces.map((p: any) => (
@@ -2973,11 +3077,15 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
                   <input 
                     type="text" 
                     value={stateRegion} 
-                    onChange={(e) => setStateRegion(e.target.value)} 
-                    className={inputClasses} 
+                    onChange={(e) => {
+                      setStateRegion(e.target.value);
+                      clearFieldError('stateRegion');
+                    }} 
+                    className={inputClasses(Boolean(fieldErrors.stateRegion))} 
                     placeholder={getLabel('checkout.statePlaceholder', 'State')} 
                   />
                 )}
+                {fieldErrors.stateRegion && <span className="text-xs text-red-500 font-medium">{fieldErrors.stateRegion}</span>}
               </div>
             </div>
 

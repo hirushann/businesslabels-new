@@ -51,7 +51,8 @@ export const MESSAGES_V4 = {
     },
     validation: {
       required: "{field} is required",
-      invalidEmail: "Enter a valid email"
+      invalidEmail: "Enter a valid email",
+      vatNumberLength: "VAT number must not be greater than 17 characters"
     },
     hero: {
       badge: 'Epson ColorWorks Gold Partner',
@@ -586,9 +587,9 @@ export const MESSAGES_V4 = {
       lastName: 'Last Name',
       email: 'Email',
       mobileNumber: 'Phone number',
-      companyName: 'Company name',
+      companyName: 'Company name (Optional)',
       companyNamePlaceholder: 'Van Dijk Labels BV',
-      vatNumber: 'VAT number',
+      vatNumber: 'VAT number (Optional)',
       vatNumberPlaceholder: 'NL123456789B01',
       streetAddress: 'Street Address',
       streetAddressPlaceholder: 'Keizersgracht 214',
@@ -2078,7 +2079,8 @@ export const MESSAGES_V4 = {
     },
     validation: {
       required: "{field} is verplicht",
-      invalidEmail: "Voer een geldig e-mailadres in"
+      invalidEmail: "Voer een geldig e-mailadres in",
+      vatNumberLength: "BTW-nummer mag niet langer zijn dan 17 tekens"
     },
     hero: {
       badge: 'Epson ColorWorks Gold Partner',
@@ -2613,9 +2615,9 @@ export const MESSAGES_V4 = {
       lastName: 'Achternaam',
       email: 'E-mail',
       mobileNumber: 'Telefoonnummer',
-      companyName: 'Bedrijfsnaam',
+      companyName: 'Bedrijfsnaam (Optioneel)',
       companyNamePlaceholder: 'Van Dijk Labels BV',
-      vatNumber: 'BTW-nummer',
+      vatNumber: 'BTW-nummer (Optioneel)',
       vatNumberPlaceholder: 'NL123456789B01',
       streetAddress: 'Straat + huisnummer',
       streetAddressPlaceholder: 'Keizersgracht 214',
