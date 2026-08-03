@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { DEFAULT_LOCALE, normalizeLocale } from "./config";
-import { localePath, stripLocalePath } from "./utils";
+import { localePath, localizedSeoPaths, stripLocalePath } from "./utils";
 
 describe("i18n routing utilities", () => {
   it("uses Dutch as the clean-path fallback locale", () => {
@@ -12,6 +12,10 @@ describe("i18n routing utilities", () => {
 
   it("adds the English prefix only for English routes", () => {
     expect(localePath("/product?focus=true", "en")).toBe("/en/product?focus=true");
+    expect(localePath("/material/2000t", "en")).toBe("/en/material/2000t");
+    expect(localePath("/login", "en")).toBe("/en/login");
+    expect(localePath("/register", "en")).toBe("/en/register");
+    expect(localePath("/en/material/2000t", "en")).toBe("/en/material/2000t");
     expect(localePath("/product?focus=true", "nl")).toBe("/product?focus=true");
     expect(localePath("/software", "en")).toBe("/en/software-2");
     expect(localePath("/software", "nl")).toBe("/software");
@@ -55,5 +59,17 @@ describe("i18n routing utilities", () => {
 
     expect(stripLocalePath("/en/contact")).toBe("/contact-us");
     expect(stripLocalePath("/contact")).toBe("/contact-us");
+  });
+
+  it.each([
+    ["/", { en: "/en", nl: "/" }],
+    ["/en/", { en: "/en", nl: "/" }],
+    ["/kennisbank-overzicht", { en: "/en/knowledge-base", nl: "/kennisbank-overzicht" }],
+    ["/en/brands", { en: "/en/brands", nl: "/merken" }],
+    ["/winkel", { en: "/en/shop", nl: "/winkel" }],
+    ["/en/material/2000t", { en: "/en/material/2000t", nl: "/material/2000t" }],
+    ["/bedankt", { en: "/en/thank-you", nl: "/bedankt" }],
+  ])("builds canonical locale pairs for %s", (path, expected) => {
+    expect(localizedSeoPaths(path)).toEqual(expected);
   });
 });

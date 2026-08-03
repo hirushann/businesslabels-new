@@ -232,7 +232,7 @@ function buildSortClause(sort: MaterialSortValue): estypes.Sort {
   }
 }
 
-function buildTextQuery(search: string): estypes.QueryDslQueryContainer {
+export function buildMaterialTextQuery(search: string): estypes.QueryDslQueryContainer {
   const query = search.trim();
   if (!query) return { match_all: {} };
 
@@ -240,31 +240,30 @@ function buildTextQuery(search: string): estypes.QueryDslQueryContainer {
     bool: {
       minimum_should_match: 1,
       should: [
-        { match_phrase: { title: { query, boost: 20 } } },
-        { match_phrase_prefix: { title: { query, boost: 12, max_expansions: 50 } } },
+        { term: { "code.keyword": { value: query, boost: 1000, case_insensitive: true } } },
+        { match_phrase: { title: { query, boost: 100 } } },
+        { match_phrase_prefix: { title: { query, boost: 80, max_expansions: 50 } } },
         {
           multi_match: {
             query,
-            fields: [
-              "title^5",
-              "title_locales^5",
-              "slug^4",
-              "slug_locales^4",
-              "code^4",
-              "brand^2",
-              "brand_label^2",
-              "description",
-              "description_locales",
-            ],
+            fields: ["title^5", "title_locales^5"],
             type: "bool_prefix",
             operator: "and",
+            boost: 60,
           },
         },
-        { wildcard: { "title_sort.keyword": { value: `${query.toLowerCase()}*`, boost: 5, case_insensitive: true } } },
-        { wildcard: { "code.keyword": { value: `${query.toLowerCase()}*`, boost: 4, case_insensitive: true } } },
+        { multi_match: { query, fields: ["categories.name^3", "category_slugs^3", "brand", "brand_label"], boost: 40 } },
+        { multi_match: { query, fields: ["specifications.*"], boost: 20 } },
+        { multi_match: { query, fields: ["description", "description_locales"], boost: 5 } },
+        { wildcard: { "code.keyword": { value: `${query.toLowerCase()}*`, boost: 50, case_insensitive: true } } },
       ],
     },
   };
+}
+
+export function buildMaterialSortClause(search: string, sort: MaterialSortValue): estypes.Sort {
+  const selectedSort = buildSortClause(sort);
+  return search.trim() ? [{ _score: { order: "desc" } }, ...(selectedSort as estypes.SortCombinations[])] : selectedSort;
 }
 
 function applyTranslation(source: MaterialSource, locale?: "en" | "nl"): Partial<Material> {
@@ -386,11 +385,11 @@ export async function searchMaterials(params: MaterialSearchParams): Promise<Mat
     ],
     query: {
       bool: {
-        must: [buildTextQuery(params.search)],
+        must: [buildMaterialTextQuery(params.search)],
         filter,
       },
     },
-    sort: buildSortClause(params.sort),
+    sort: buildMaterialSortClause(params.search, params.sort),
   });
 
   const total = typeof response.hits.total === "number"

@@ -16,6 +16,7 @@ import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 import DownloadSpecSheetButton from "@/components/materials/DownloadSpecSheetButton";
 import { parseCatalogSearchParams, searchCatalogProducts } from "@/lib/search/products";
 import type { CatalogSearchResponse } from "@/lib/search/types";
+import { htmlToText } from "@/lib/utils";
 
 type MaterialProduct = {
   id: number;
@@ -106,22 +107,7 @@ function resolveLocalizedText(value: LocalizedText, locale: "en" | "nl"): string
 }
 
 function plainText(value: string): string {
-  return value
-    .replace(/<[^>]*>/g, " ")
-    .replace(/&#(\d+);/g, (_, code: string) => String.fromCodePoint(Number(code)))
-    .replace(/&([a-z]+);/gi, (_, entity: string) => {
-      const entities: Record<string, string> = {
-        amp: "&",
-        apos: "'",
-        gt: ">",
-        lt: "<",
-        nbsp: " ",
-        quot: '"',
-      };
-      return entities[entity.toLowerCase()] ?? `&${entity};`;
-    })
-    .replace(/\s+/g, " ")
-    .trim();
+  return htmlToText(value);
 }
 
 function specValue(specs: MaterialSpec[], patterns: RegExp[]): string {
@@ -248,10 +234,11 @@ export async function generateMetadata({ params }: MaterialPageProps): Promise<M
   if (!material) return { title: "Material — Businesslabels" };
   const locale = await getServerLocale();
   const richDescription = resolveLocalizedText(material.description, locale);
-  const description = material.subtitle || plainText(richDescription);
+  const description = plainText(material.subtitle || richDescription);
+  const title = plainText(material.title);
 
   return {
-    title: `${material.title} — Businesslabels`,
+    title: `${title} — Businesslabels`,
     description,
   };
 }
@@ -419,7 +406,9 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
     resolveLocalizedText(material.description, locale) ||
     resolveLocalizedText(material.excerpt, locale) ||
     resolveLocalizedText(material.short_description, locale);
-  const materialSummary = material.subtitle;
+  const materialDescriptionText = plainText(materialDescription);
+  const materialTitle = plainText(material.title);
+  const materialSummary = plainText(material.subtitle);
   const specEntries = material.specifications?.material_specs ?? [];
   const brand = derivedBrand(material);
   const printMethod = derivedPrintMethod(material);
@@ -453,7 +442,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
       value: (
         <DownloadSpecSheetButton
           materialId={material.id}
-          materialTitle={material.title}
+          materialTitle={materialTitle}
           materialCode={material.code}
           materialSubtitle={material.subtitle || undefined}
           hasUploadedSpecSheet={!!material.has_uploaded_spec_sheet}
@@ -464,7 +453,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
           // downloadLabel={t("materialsPage.downloadSpecSheet")}
           downloadLabel={(material.brand ? material.brand + "-" : "") + material.code + ".pdf"}
           materialImage={materialImage}
-          description={materialDescription}
+          description={materialDescriptionText}
           pdfTitleLabel={t("materialDetail.specSheet")}
           aboutThisMaterialLabel={t("materialDetail.aboutThisMaterial")}
           specificationsLabel={t("materialDetail.specifications")}
@@ -483,13 +472,13 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
             items={[
               { label: t("common.materials"), href: "/material" },
               ...(category ? [{ label: category.name, href: `/category/${category.slug || category.id}` }] : []),
-              { label: material.title },
+              { label: materialTitle },
             ]}
           />
 
           <div className="flex flex-col gap-2">
             {material.code ? <span className="text-base font-bold uppercase tracking-wide text-link">{material.code}</span> : null}
-            <h1 className="text-[32px] font-semibold leading-10 text-ink">{material.title}</h1>
+            <h1 className="text-[32px] font-semibold leading-10 text-ink">{materialTitle}</h1>
             {materialSummary ? <p className="text-lg leading-7 text-neutral-600">{materialSummary}</p> : null}
           </div>
 
@@ -499,7 +488,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
               <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-gray-100">
                 <Image
                   src={materialImage}
-                  alt={t("materialsPage.materialAlt", { title: material.title })}
+                  alt={t("materialsPage.materialAlt", { title: materialTitle })}
                   fill
                   priority
                   sizes="(max-width: 1024px) 100vw, 720px"
@@ -512,11 +501,10 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
                 <Accordion title={t("materialDetail.aboutThisMaterial")}>
                   <div className="flex flex-col gap-5 -mx-10 px-5">
                     <DetailTable rows={aboutRows} />
-                    {materialDescription ? (
-                      <div
-                        className="text-base px-5 leading-7 text-neutral-600 [&_a]:text-brand [&_a]:underline hover:[&_a]:text-[var(--brand-hover)] [&_a]:transition-colors"
-                        dangerouslySetInnerHTML={{ __html: materialDescription }}
-                      />
+                    {materialDescriptionText ? (
+                      <p className="whitespace-pre-line text-base px-5 leading-7 text-neutral-600">
+                        {materialDescriptionText}
+                      </p>
                     ) : null}
                   </div>
                 </Accordion>
@@ -553,7 +541,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
                     email: t("supportPanel.email"),
                     whatsapp: t("supportPanel.whatsapp"),
                   }}
-                  materialCode={material.code || material.title || ""}
+                  materialCode={material.code || materialTitle}
                 />
               </SidebarCard>
 
@@ -569,7 +557,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
                       : "Download ICC profiles to ensure precise and accurate printer color reproduction."}
                   </p>
                 </div>
-                <IccProfileModal materialTitle={material.title} isNl={isNl} />
+                <IccProfileModal materialTitle={materialTitle} isNl={isNl} />
               </div>
 
               {/* {material.spec_sheet_url && (

@@ -66,6 +66,7 @@ export async function generateMetadata({
       languages: {
         en: productPathForSlug(localeSlugs.en ?? canonicalSlug, null, "en"),
         nl: productPathForSlug(localeSlugs.nl ?? canonicalSlug, null, "nl"),
+        "x-default": productPathForSlug(localeSlugs.nl ?? canonicalSlug, null, "nl"),
       },
     },
     openGraph: {

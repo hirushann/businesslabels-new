@@ -39,6 +39,7 @@ type CheckoutFormState = {
   shippingPostcode: string;
   sameAsBilling: boolean;
   purchaseReference: string;
+  termsAccepted: boolean;
 };
 
 type CheckoutMode = "live" | "demo";
@@ -93,6 +94,7 @@ const initialFormState: CheckoutFormState = {
   shippingPostcode: "",
   sameAsBilling: true,
   purchaseReference: "",
+  termsAccepted: false,
 };
 
 const demoFormState: CheckoutFormState = {
@@ -119,6 +121,7 @@ const demoFormState: CheckoutFormState = {
   shippingPostcode: "1016 DW",
   sameAsBilling: true,
   purchaseReference: "",
+  termsAccepted: false,
 };
 
 function formatEuro(value: number): string {
@@ -663,7 +666,7 @@ function CheckoutShell({
                             <input
                               type="text"
                               value={form.companyName}
-                              disabled={isLoggedIn && !isEditingBilling}
+                              disabled={isLoggedIn && !isEditingBilling && savedBillingAddresses.length > 0}
                               onChange={(e) => handleChange("companyName", e.target.value)}
                               placeholder={t('checkout.companyNamePlaceholder')}
                               className={inputClasses(Boolean(errors.companyName))}
@@ -675,7 +678,7 @@ function CheckoutShell({
                             <input
                               type="text"
                               value={form.vatNumber}
-                              disabled={isLoggedIn && !isEditingBilling}
+                              disabled={isLoggedIn && !isEditingBilling && savedBillingAddresses.length > 0}
                               onChange={(e) => handleChange("vatNumber", e.target.value)}
                               placeholder={t('checkout.vatNumberPlaceholder')}
                               className={inputClasses(Boolean(errors.vatNumber))}
@@ -690,7 +693,7 @@ function CheckoutShell({
                             <input
                               type="text"
                               value={form.firstName}
-                              disabled={isLoggedIn && !isEditingBilling}
+                              disabled={isLoggedIn && !isEditingBilling && savedBillingAddresses.length > 0}
                               onChange={(e) => handleChange("firstName", e.target.value)}
                               placeholder={t('checkout.firstNamePlaceholder')}
                               className={inputClasses(Boolean(errors.firstName))}
@@ -702,7 +705,7 @@ function CheckoutShell({
                             <input
                               type="text"
                               value={form.lastName}
-                              disabled={isLoggedIn && !isEditingBilling}
+                              disabled={isLoggedIn && !isEditingBilling && savedBillingAddresses.length > 0}
                               onChange={(e) => handleChange("lastName", e.target.value)}
                               placeholder={t('checkout.lastNamePlaceholder')}
                               className={inputClasses(Boolean(errors.lastName))}
@@ -717,7 +720,7 @@ function CheckoutShell({
                             <input
                               type="email"
                               value={form.email}
-                              disabled={isLoggedIn && !isEditingBilling}
+                              disabled={isLoggedIn && !isEditingBilling && savedBillingAddresses.length > 0}
                               onChange={(e) => handleChange("email", e.target.value)}
                               placeholder={t('checkout.emailPlaceholder')}
                               className={inputClasses(Boolean(errors.email))}
@@ -729,7 +732,7 @@ function CheckoutShell({
                             <input
                               type="tel"
                               value={form.mobileNumber}
-                              disabled={isLoggedIn && !isEditingBilling}
+                              disabled={isLoggedIn && !isEditingBilling && savedBillingAddresses.length > 0}
                               onChange={(e) => handleChange("mobileNumber", e.target.value)}
                               placeholder={t('checkout.mobileNumberPlaceholder')}
                               className={inputClasses(Boolean(errors.mobileNumber))}
@@ -743,7 +746,7 @@ function CheckoutShell({
                           <div className="relative">
                             <select
                               value={form.country}
-                              disabled={isLoggedIn && !isEditingBilling}
+                              disabled={isLoggedIn && !isEditingBilling && savedBillingAddresses.length > 0}
                               onChange={(e) => handleChange("country", e.target.value)}
                               className={`${inputClasses()} appearance-none pr-10`}
                             >
@@ -775,7 +778,7 @@ function CheckoutShell({
                           <input
                             type="text"
                             value={form.streetAddress}
-                            disabled={isLoggedIn && !isEditingBilling}
+                            disabled={isLoggedIn && !isEditingBilling && savedBillingAddresses.length > 0}
                             onChange={(e) => handleChange("streetAddress", e.target.value)}
                             placeholder={t('checkout.streetAddressPlaceholder')}
                             className={inputClasses(Boolean(errors.streetAddress))}
@@ -787,7 +790,7 @@ function CheckoutShell({
                           <input
                             type="text"
                             value={form.postcode}
-                            disabled={isLoggedIn && !isEditingBilling}
+                            disabled={isLoggedIn && !isEditingBilling && savedBillingAddresses.length > 0}
                             onChange={(e) => handleChange("postcode", e.target.value)}
                             placeholder={t('checkout.postcodePlaceholder')}
                             className={inputClasses(Boolean(errors.postcode))}
@@ -802,7 +805,7 @@ function CheckoutShell({
                           <input
                             type="text"
                             value={form.city}
-                            disabled={isLoggedIn && !isEditingBilling}
+                            disabled={isLoggedIn && !isEditingBilling && savedBillingAddresses.length > 0}
                             onChange={(e) => handleChange("city", e.target.value)}
                             placeholder={t('checkout.cityPlaceholder')}
                             className={inputClasses(Boolean(errors.city))}
@@ -815,7 +818,7 @@ function CheckoutShell({
                             <div className="relative">
                               <select
                                 value={selectedBillingProvinceValue}
-                                disabled={isLoggedIn && !isEditingBilling}
+                                disabled={isLoggedIn && !isEditingBilling && savedBillingAddresses.length > 0}
                                 onChange={(e) => handleChange("state", e.target.value)}
                                 className={`${inputClasses(Boolean(errors.state))} appearance-none pr-10`}
                               >
@@ -836,7 +839,7 @@ function CheckoutShell({
                             <input
                               type="text"
                               value={form.state}
-                              disabled={isLoggedIn && !isEditingBilling}
+                              disabled={isLoggedIn && !isEditingBilling && savedBillingAddresses.length > 0}
                               onChange={(e) => handleChange("state", e.target.value)}
                               placeholder={t('checkout.statePlaceholder')}
                               className={inputClasses(Boolean(errors.state))}
@@ -1498,6 +1501,22 @@ function CheckoutShell({
                       </Tooltip>
                     </div>
                     {errors.paymentMethod && <p className="text-sm text-red-500 font-medium">{errors.paymentMethod}</p>}
+                    
+                    <div className="flex flex-col gap-1 mt-2">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          id="termsAccepted"
+                          checked={form.termsAccepted}
+                          onChange={(e) => handleChange("termsAccepted", e.target.checked)}
+                          className={`w-5 h-5 rounded border-gray-300 text-brand focus:ring-brand ${errors.termsAccepted ? 'border-red-500' : ''}`}
+                        />
+                        <label htmlFor="termsAccepted" className="text-[14px] text-copy">
+                          {t('checkout.acceptTerms')} <Link href={localePath("/terms-and-conditions", locale)} target="_blank" className="text-brand underline">{t('checkout.termsAndConditions')}</Link> *
+                        </label>
+                      </div>
+                      {errors.termsAccepted && <p className="text-sm text-red-500 font-medium ml-8">{errors.termsAccepted}</p>}
+                    </div>
                   </div>
                 )}
 
@@ -1514,7 +1533,7 @@ function CheckoutShell({
                       )}
                       <button
                         type="submit"
-                        disabled={isPending}
+                        disabled={isPending || (step === 3 && !form.termsAccepted)}
                         className="flex-1 h-[52px] bg-brand text-white rounded-full font-medium text-base sm:text-[18px] flex items-center justify-center gap-1.5 sm:gap-2 hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed px-3 min-w-0"
                       >
                         {isPending ? (
@@ -2493,6 +2512,9 @@ export default function CheckoutPageClient({
       }
       if (!isLoggedIn && form.paymentMethod === "banktransfer") {
         nextErrors.paymentMethod = t("checkout.invoiceAccountOnly");
+      }
+      if (!form.termsAccepted) {
+        nextErrors.termsAccepted = t('checkout.acceptTermsRequired');
       }
     }
 

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import LocaleLink from '@/components/LocaleLink';
 import Script from 'next/script';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useState } from 'react';
@@ -654,13 +655,13 @@ export default function RegisterPopup({
                 {t('register.popupLoginLink')}
               </button>
             ) : (
-              <Link
+              <LocaleLink
                 href="/login"
                 onClick={() => handleOpenChange(false)}
                 className="font-black text-brand transition-colors hover:text-amber-700"
               >
                 {t('register.popupLoginLink')}
-              </Link>
+              </LocaleLink>
             )}
           </p>
           </form>

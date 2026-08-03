@@ -17,9 +17,24 @@ const getBaseUrl = () => {
 const frontendUrl = getBaseUrl();
 
 type SitemapApiItem = {
-  slug?: string;
+  slug?: string | Partial<Record<'en' | 'nl', string>>;
+  locale_slugs?: Partial<Record<'en' | 'nl', string>>;
+  translations?: Array<Record<string, { language?: string; slug?: string }> | { language?: string; slug?: string }>;
   updated_at?: string;
 };
+
+export function localizedSitemapSlug(item: SitemapApiItem, locale: 'en' | 'nl'): string | null {
+  const direct = item.locale_slugs?.[locale] || (typeof item.slug === 'object' ? item.slug[locale] : null);
+  if (direct) return direct;
+
+  for (const entry of item.translations ?? []) {
+    const keyed = locale in entry ? entry[locale] : null;
+    if (keyed?.slug) return keyed.slug;
+    if ('language' in entry && entry.language === locale && entry.slug) return entry.slug;
+  }
+
+  return typeof item.slug === 'string' ? item.slug : null;
+}
 
 function publicBrandSlug(slug: string): string {
   return slug === 'diamondlabels' ? 'diamondlabels-nl' : slug;
@@ -75,9 +90,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/kennisbank-overzicht' },
     { path: '/brands' },
     { path: '/printers' },
-    { path: '/cart' },
-    { path: '/checkout' },
-    { path: '/my-account' },
     { path: '/maatwerk' },
     { path: '/support' },
     { path: '/support/samples' },
@@ -145,9 +157,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Add Products
   products.forEach((product) => {
-    if (product.slug) {
-      const path = `/product/${product.slug}`;
-      addEntry(localePath(path, 'nl'), localePath(path, 'en'), new Date(product.updated_at || new Date()), 0.9, 'weekly');
+    const nlSlug = localizedSitemapSlug(product, 'nl');
+    const enSlug = localizedSitemapSlug(product, 'en');
+    if (nlSlug && enSlug) {
+      addEntry(`/product/${nlSlug}`, `/en/product/${enSlug}`, new Date(product.updated_at || new Date()), 0.9, 'weekly');
     }
   });
 
@@ -195,9 +208,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Add Blogs
   blogs.forEach((blog) => {
-    if (blog.slug) {
-      const path = `/blog/${blog.slug}`;
-      addEntry(localePath(path, 'nl'), localePath(path, 'en'), new Date(blog.updated_at || new Date()), 0.6, 'monthly');
+    const nlSlug = localizedSitemapSlug(blog, 'nl');
+    const enSlug = localizedSitemapSlug(blog, 'en');
+    if (nlSlug && enSlug) {
+      addEntry(`/blog/${nlSlug}`, `/en/blog/${enSlug}`, new Date(blog.updated_at || new Date()), 0.6, 'monthly');
     }
   });
 
@@ -211,4 +225,3 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [...nlEntries, ...enEntries];
 }
-
