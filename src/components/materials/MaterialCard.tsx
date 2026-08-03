@@ -3,8 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Material } from "@/lib/search/materials";
-import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 import { localePath } from "@/lib/i18n/utils";
+import { materialMeasurements, resolveMaterialImage } from "@/lib/materials/presentation";
 
 const getLocalizedLabel = (key: string, locale: string) => {
   const dictionary: Record<string, Record<string, string>> = {
@@ -175,21 +175,7 @@ export function deriveMaterialAttributes(material: Material, currentPrintMethod?
     }
   }
 
-  let weight = "";
-  let thickness = "";
-  if (material.specifications && Array.isArray(material.specifications.material_specs)) {
-    for (const spec of material.specifications.material_specs) {
-      const label = (spec.label || "").toLowerCase();
-      if (label.includes("weight") || label.includes("gewicht")) {
-        weight = spec.value;
-      } else if (label.includes("thickness") || label.includes("dikte") || label.includes("hoogte")) {
-        thickness = spec.value;
-      }
-    }
-  }
-
-  if (!weight) weight = "165 g/m²";
-  if (!thickness) thickness = "169 µm";
+  const { weight, thickness } = materialMeasurements(material.specifications);
 
   return { printTech, printTechs, baseMat, finish, adhesive, weight, thickness };
 }
@@ -235,7 +221,7 @@ export default function MaterialCard({
   printMethod?: string;
 }) {
   const { printTechs, baseMat, finish, adhesive, weight, thickness } = deriveMaterialAttributes(material, printMethod);
-  const cardImage = toDisplayImageUrl(material.main_image) || "/images/material-placeholder.svg";
+  const cardImage = resolveMaterialImage(material.main_image);
   const materialSummary = plainText(material.excerpt || material.description || material.subtitle);
   const materialHref = localePath(`/material/${material.slug}`, locale);
 
@@ -304,20 +290,20 @@ export default function MaterialCard({
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 border-t border-slate-100 pt-4 pb-1">
-            <div className="flex flex-row gap-3 items-center">
+          {weight || thickness ? <div className={`grid gap-4 border-t border-slate-100 pt-4 pb-1 ${weight && thickness ? "grid-cols-2" : "grid-cols-1"}`}>
+            {weight ? <div className="flex flex-row gap-3 items-center">
               <span className="text-sm text-slate-700">
                 {getLocalizedLabel("Weight", locale)}
               </span>
               <span className="text-sm font-bold text-slate-700">{weight}</span>
-            </div>
-            <div className="flex flex-row gap-3 items-center">
+            </div> : null}
+            {thickness ? <div className="flex flex-row gap-3 items-center">
               <span className="text-sm text-slate-700">
                 {getLocalizedLabel("Thickness", locale)}
               </span>
               <span className="text-sm font-bold text-slate-700">{thickness}</span>
-            </div>
-          </div>
+            </div> : null}
+          </div> : null}
         </div>
 
         <div className="pt-4">

@@ -10,6 +10,7 @@ import EmptyState from "@/components/EmptyState";
 import { useDebouncedSearchParam } from "@/components/search/useDebouncedSearchParam";
 import type { Material, MaterialSearchResponse } from "@/lib/search/materials";
 import MaterialCard from "./MaterialCard";
+import { MATERIAL_GRID_CLASS_NAME, resolveMaterialImage } from "@/lib/materials/presentation";
 
 // Inline helper for labels
 const getLocalizedLabel = (key: string, locale: string) => {
@@ -329,7 +330,7 @@ export default function MaterialsCatalogClient({
         >
           <div className="relative h-44 w-full overflow-hidden rounded-xl">
             <Image
-              src="/images/inkjet_preview.png"
+              src={resolveMaterialImage("/images/inkjet_preview.png")}
               alt="Inkjet printer preview"
               fill
               priority
@@ -362,7 +363,7 @@ export default function MaterialsCatalogClient({
         >
           <div className="relative h-44 w-full overflow-hidden rounded-xl">
             <Image
-              src="/images/thermal_transfer_preview.png"
+              src={resolveMaterialImage("/images/thermal_transfer_preview.png")}
               alt="Thermal transfer printer preview"
               fill
               sizes="(max-width: 768px) 100vw, 33vw"
@@ -394,7 +395,7 @@ export default function MaterialsCatalogClient({
         >
           <div className="relative h-44 w-full overflow-hidden rounded-xl">
             <Image
-              src="/images/thermal_direct_preview.png"
+              src={resolveMaterialImage("/images/thermal_direct_preview.png")}
               alt="Thermal direct printer preview"
               fill
               sizes="(max-width: 768px) 100vw, 33vw"
@@ -618,7 +619,7 @@ export default function MaterialsCatalogClient({
 
             {paginatedMaterials.length > 0 ? (
               <div
-                className={`grid grid-cols-1 gap-6 transition-opacity sm:grid-cols-2 ${loading ? "opacity-60" : "opacity-100"} ${isSidebarOpen ? "lg:grid-cols-3" : "lg:grid-cols-4"}`}
+                className={`${MATERIAL_GRID_CLASS_NAME} transition-opacity ${loading ? "opacity-60" : "opacity-100"}`}
               >
                 {paginatedMaterials.map((material) => (
                   <MaterialCard
@@ -630,7 +631,7 @@ export default function MaterialsCatalogClient({
                 ))}
               </div>
             ) : loading ? (
-              <div className={`grid grid-cols-1 gap-6 sm:grid-cols-2 ${isSidebarOpen ? "lg:grid-cols-3" : "lg:grid-cols-4"}`}>
+              <div className={MATERIAL_GRID_CLASS_NAME}>
                 {Array.from({ length: 8 }, (_, index) => (
                   <div
                     key={index}

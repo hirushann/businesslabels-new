@@ -24,6 +24,7 @@ import LocaleLink from "@/components/LocaleLink";
 import { categoryNameFallback } from "@/lib/categories/tree";
 import { localizeProductSpecValue } from "@/lib/products/specValues";
 import { mapLaravelProductToCardData, type LaravelProduct } from "@/lib/mappings/product";
+import ProductDescriptionAccordion from "@/components/ProductDescriptionAccordion";
 export async function generateMetadata({
   params,
   searchParams,
@@ -1262,20 +1263,10 @@ export default async function SingleProductPage({
                 </Accordion>
             ) : null}
 
-              <Accordion
+              <ProductDescriptionAccordion
                 title={t('product.productDescription')}
-              >
-                {productDescription ? (
-                  <div
-                    className="text-neutral-700 text-base font-normal leading-6 cms-content [&_a]:text-brand [&_a]:underline hover:[&_a]:text-[var(--brand-hover)] [&_a]:transition-colors"
-                    dangerouslySetInnerHTML={{ __html: productDescription }}
-                  />
-                ) : (
-                  <div className="text-neutral-500 text-base font-normal leading-6">
-                    {t('product.noDescriptionAvailable')}
-                  </div>
-                )}
-              </Accordion>
+                description={productDescription}
+              />
 
               <Accordion
                 title={t('product.productSpecifications')}

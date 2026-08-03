@@ -12,11 +12,11 @@ import ProductsListing from "@/components/ProductsListing";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 import { localePath } from "@/lib/i18n/utils";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
-import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 import DownloadSpecSheetButton from "@/components/materials/DownloadSpecSheetButton";
 import { parseCatalogSearchParams, searchCatalogProducts } from "@/lib/search/products";
 import type { CatalogSearchResponse } from "@/lib/search/types";
 import { htmlToText } from "@/lib/utils";
+import { materialHeading, resolveMaterialImage } from "@/lib/materials/presentation";
 
 type MaterialProduct = {
   id: number;
@@ -235,7 +235,7 @@ export async function generateMetadata({ params }: MaterialPageProps): Promise<M
   const locale = await getServerLocale();
   const richDescription = resolveLocalizedText(material.description, locale);
   const description = plainText(material.subtitle || richDescription);
-  const title = plainText(material.title);
+  const title = materialHeading(material);
 
   return {
     title: `${title} — Businesslabels`,
@@ -398,16 +398,13 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
     console.error("Failed to load material products from Elasticsearch.", error);
   }
 
-  const materialImage =
-    toDisplayImageUrl(material.main_image) ||
-    toDisplayImageUrl(material.products?.[0]?.main_image) ||
-    "/images/labelrolls.png";
+  const materialImage = resolveMaterialImage(material.main_image);
   const materialDescription =
     resolveLocalizedText(material.description, locale) ||
     resolveLocalizedText(material.excerpt, locale) ||
     resolveLocalizedText(material.short_description, locale);
   const materialDescriptionText = plainText(materialDescription);
-  const materialTitle = plainText(material.title);
+  const materialTitle = materialHeading(material);
   const materialSummary = plainText(material.subtitle);
   const specEntries = material.specifications?.material_specs ?? [];
   const brand = derivedBrand(material);
@@ -479,7 +476,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
           <div className="flex flex-col gap-2">
             {material.code ? <span className="text-base font-bold uppercase tracking-wide text-link">{material.code}</span> : null}
             <h1 className="text-[32px] font-semibold leading-10 text-ink">{materialTitle}</h1>
-            {materialSummary ? <p className="text-lg leading-7 text-neutral-600">{materialSummary}</p> : null}
+            {materialSummary && materialSummary !== materialTitle ? <p className="text-lg leading-7 text-neutral-600">{materialSummary}</p> : null}
           </div>
 
           <div className="flex flex-col gap-10 lg:flex-row lg:items-start">
