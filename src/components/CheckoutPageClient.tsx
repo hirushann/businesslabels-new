@@ -57,6 +57,9 @@ type CheckoutSavedAddress = {
   firstname: string;
   lastname: string;
   company: string;
+  vatNumber?: string;
+  vat_number?: string;
+  btw_number?: string;
   address1: string;
   address2: string;
   postcode: string;
@@ -602,11 +605,17 @@ function CheckoutShell({
                                         </span>
                                       )}
                                     </div>
-                                    {(address.email || address.phone) && (
+                                    {(address.email || address.phone || address.vat_number || address.vatNumber || (address as any).btw_number) && (
                                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-copy text-[14px] font-normal leading-5">
                                         {address.email && <span className="break-all">{address.email}</span>}
                                         {address.email && address.phone && <span className="text-[#C8D2DD]">|</span>}
                                         {address.phone && <span>{address.phone}</span>}
+                                        {(address.vat_number || address.vatNumber || (address as any).btw_number) && (
+                                          <>
+                                            {(address.email || address.phone) && <span className="text-[#C8D2DD]">|</span>}
+                                            <span>{t('checkout.vatNumber') || 'VAT'}: {address.vat_number || address.vatNumber || (address as any).btw_number}</span>
+                                          </>
+                                        )}
                                       </div>
                                     )}
                                     <div className="flex items-end justify-between gap-2">
@@ -1902,6 +1911,9 @@ function normalizeCheckoutAddress(address: Record<string, unknown>, index: numbe
     firstname: firstName,
     lastname: lastName,
     company: readString(address, ["company", "company_name", "business_name"]),
+    vatNumber: readString(address, ["vatNumber", "vat_number", "btw_number", "btwNumber", "tax_nr", "tax_number"]),
+    vat_number: readString(address, ["vat_number", "vatNumber", "btw_number", "btwNumber", "tax_nr", "tax_number"]),
+    btw_number: readString(address, ["btw_number", "btwNumber", "vat_number", "vatNumber"]),
     address1: readString(address, ["street", "address", "address_1", "line1", "street_address"]),
     address2: readString(address, ["street2", "address2", "address_2", "line2", "apartment", "suite"]),
     postcode: readString(address, ["postcode", "postalcode", "postal_code", "zip", "zip_code"]),
@@ -2028,16 +2040,23 @@ function applySavedShippingAddressToForm(
   address: CheckoutSavedAddress,
   countriesList?: any[],
 ): CheckoutFormState {
+  const firstname = address.firstname || address.name?.split(' ')[0] || current.shippingFirstName || current.firstName;
+  const lastname = address.lastname || address.name?.split(' ').slice(1).join(' ') || current.shippingLastName || current.lastName;
+  const email = address.email || current.shippingEmail || current.email;
+  const phone = address.phone || current.shippingMobileNumber || current.mobileNumber;
+
   return {
     ...current,
-    shippingFirstName: address.firstname || current.shippingFirstName,
-    shippingLastName: address.lastname || current.shippingLastName,
-    email: address.email || current.email,
-    mobileNumber: address.phone || current.mobileNumber,
-    shippingStreetAddress: address.address1,
-    shippingCity: address.city,
-    shippingState: address.state,
-    shippingPostcode: address.postcode,
+    shippingFirstName: firstname,
+    shippingLastName: lastname,
+    shippingEmail: email,
+    shippingMobileNumber: phone,
+    email: current.email || email,
+    mobileNumber: current.mobileNumber || phone,
+    shippingStreetAddress: address.address1 || current.shippingStreetAddress,
+    shippingCity: address.city || current.shippingCity,
+    shippingState: address.state || current.shippingState,
+    shippingPostcode: address.postcode || current.shippingPostcode,
     shippingCountry: countryFromAddress(address, current.shippingCountry, countriesList),
   };
 }
@@ -2047,11 +2066,13 @@ function applySavedBillingAddressToForm(
   address: CheckoutSavedAddress,
   countriesList?: any[],
 ): CheckoutFormState {
+  const vat = address.vatNumber || address.vat_number || address.btw_number || current.vatNumber;
   return {
     ...current,
     firstName: address.firstname || current.firstName,
     lastName: address.lastname || current.lastName,
     companyName: address.company || current.companyName,
+    vatNumber: vat,
     email: address.email || current.email,
     mobileNumber: address.phone || current.mobileNumber,
     streetAddress: address.address1,
@@ -2141,6 +2162,14 @@ export default function CheckoutPageClient({
   };
 
   const saveEditingBilling = async () => {
+    if (!validateStep(1)) {
+      const incompleteMsg = (t.has && typeof t.has === 'function' && t.has('validation.errorIncomplete'))
+        ? t('validation.errorIncomplete')
+        : (locale.startsWith('nl') ? "Vul a.u.b. alle verplichte velden in." : "Please fill in all required fields.");
+      toast.error(incompleteMsg);
+      return;
+    }
+
     if (isLoggedIn) {
       try {
         let finalAddressId = loadedBillingAddressId;
@@ -2176,7 +2205,12 @@ export default function CheckoutPageClient({
           firstname: form.firstName,
           lastname: form.lastName,
           company_name: form.companyName,
+          company: form.companyName,
+          vat_number: form.vatNumber,
+          btw_number: form.vatNumber,
+          vatNumber: form.vatNumber,
           address: form.streetAddress,
+          address1: form.streetAddress,
           postalcode: cleanPostcode,
           postcode: cleanPostcode,
           zip: cleanPostcode,
@@ -2184,7 +2218,11 @@ export default function CheckoutPageClient({
           phone: form.mobileNumber,
           email: form.email,
           country_id: countryIdVal,
+          country: countryObj?.name || form.country,
+          country_name: countryObj?.name || form.country,
           province_id: provinceIdVal,
+          state: form.state,
+          state_name: form.state,
         };
 
         const res = await fetch("/api/account/addresses", {
@@ -2205,9 +2243,11 @@ export default function CheckoutPageClient({
         const newId = data?.id || data?.data?.id || finalAddressId;
         if (newId) {
           setLoadedBillingAddressId(newId);
+          setSelectedSavedBillingAddressId(String(newId));
         }
 
         toast.success(t("account.addressSavedSuccess", { type: "Billing" }));
+        await autofillCustomerDetails();
       } catch (err: any) {
         console.error("Failed to save billing address:", err);
         toast.error(err.message || "Failed to save billing address");
@@ -2437,10 +2477,12 @@ export default function CheckoutPageClient({
       shippingCity: undefined,
       shippingState: undefined,
       shippingPostcode: undefined,
+      shippingEmail: undefined,
+      shippingMobileNumber: undefined,
       email: address.email ? undefined : current.email,
       mobileNumber: address.phone ? undefined : current.mobileNumber,
     }));
-  }, []);
+  }, [countriesList]);
 
   const handleSavedBillingAddressSelect = useCallback((address: CheckoutSavedAddress) => {
     setSelectedSavedBillingAddressId(address.id);
@@ -2487,7 +2529,6 @@ export default function CheckoutPageClient({
       const requiredFields: Array<keyof CheckoutFormState> = [
         "firstName",
         "lastName",
-        "companyName",
         "email",
         "mobileNumber",
         "streetAddress",
@@ -2519,28 +2560,37 @@ export default function CheckoutPageClient({
       }
     } else if (currentStep === 2) {
       if (!form.sameAsBilling) {
-        const requiredFields: Array<keyof CheckoutFormState> = [
-          "shippingFirstName",
-          "shippingLastName",
-          "shippingEmail",
-          "shippingMobileNumber",
-          "shippingStreetAddress",
-          "shippingCity",
-          "shippingPostcode",
-        ];
-        for (const field of requiredFields) {
-          const val = form[field];
-          if (typeof val === "string" && !val.trim()) {
-            nextErrors[field] = t('validation.required', { field: fieldLabels[field] || field });
-          }
+        const shippingFirst = form.shippingFirstName || (isLoggedIn ? form.firstName : '');
+        const shippingLast = form.shippingLastName || (isLoggedIn ? form.lastName : '');
+        const shippingEmailVal = form.shippingEmail || form.email;
+        const shippingMobileVal = form.shippingMobileNumber || form.mobileNumber;
+
+        if (!shippingFirst.trim()) {
+          nextErrors.shippingFirstName = t('validation.required', { field: fieldLabels.shippingFirstName || 'First Name' });
         }
-        if (form.shippingEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.shippingEmail)) {
+        if (!shippingLast.trim()) {
+          nextErrors.shippingLastName = t('validation.required', { field: fieldLabels.shippingLastName || 'Last Name' });
+        }
+        if (!shippingEmailVal.trim()) {
+          nextErrors.shippingEmail = t('validation.required', { field: fieldLabels.shippingEmail || 'Email' });
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(shippingEmailVal.trim())) {
           nextErrors.shippingEmail = t('validation.invalidEmail');
         }
-        if (form.shippingMobileNumber && !/^(\+|00)?[0-9\s\-\(\)\.]{7,20}$/.test(form.shippingMobileNumber.trim())) {
+        if (!shippingMobileVal.trim()) {
+          nextErrors.shippingMobileNumber = t('validation.required', { field: fieldLabels.shippingMobileNumber || 'Mobile Number' });
+        } else if (!/^(\+|00)?[0-9\s\-\(\)\.]{7,20}$/.test(shippingMobileVal.trim())) {
           nextErrors.shippingMobileNumber = t.has && typeof t.has === 'function' && t.has('validation.invalidPhone')
             ? t('validation.invalidPhone')
             : (locale.startsWith('nl') ? 'Voer een geldig Europees telefoonnummer in' : 'Enter a valid European phone number');
+        }
+        if (!form.shippingStreetAddress.trim()) {
+          nextErrors.shippingStreetAddress = t('validation.required', { field: fieldLabels.shippingStreetAddress || 'Street Address' });
+        }
+        if (!form.shippingCity.trim()) {
+          nextErrors.shippingCity = t('validation.required', { field: fieldLabels.shippingCity || 'City' });
+        }
+        if (!form.shippingPostcode.trim()) {
+          nextErrors.shippingPostcode = t('validation.required', { field: fieldLabels.shippingPostcode || 'Postcode' });
         }
       }
     } else if (currentStep === 3) {
@@ -3028,7 +3078,7 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
       setFieldErrors({});
       if (editingAddress) {
         setCompanyName(editingAddress.company || '');
-        setVatNumber('');
+        setVatNumber(editingAddress.vatNumber || editingAddress.vat_number || (editingAddress as any).btw_number || '');
         setFirstName(editingAddress.firstname || '');
         setLastName(editingAddress.lastname || '');
         setEmail(editingAddress.email || '');
@@ -3137,7 +3187,17 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
 
     reqField(firstName, 'firstName', getLabel('checkout.firstName', 'First Name').replace(/\s*\*\s*$/, ''));
     reqField(lastName, 'lastName', getLabel('checkout.lastName', 'Last Name').replace(/\s*\*\s*$/, ''));
-    reqField(companyName, 'companyName', getLabel('checkout.companyName', 'Company name').replace(/\s*\*\s*$/, ''));
+    if (isBilling) {
+      reqField(companyName, 'companyName', getLabel('checkout.companyName', 'Company name').replace(/\s*\*\s*$/, ''));
+      if (countryId !== 'NL') {
+        reqField(vatNumber, 'vatNumber', getLabel('checkout.vatNumber', 'VAT number').replace(/\s*\*\s*$/, ''));
+      }
+      if (vatNumber && vatNumber.trim().length > 17) {
+        errors.vatNumber = t.has && typeof t.has === 'function' && t.has('validation.vatNumberLength')
+          ? t('validation.vatNumberLength')
+          : 'BTW-nummer mag niet langer zijn dan 17 tekens';
+      }
+    }
     reqField(email, 'email', getLabel('checkout.email', 'Email').replace(/\s*\*\s*$/, ''));
     if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       errors.email = t.has && typeof t.has === 'function' && t.has('validation.invalidEmail')
@@ -3153,14 +3213,6 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
     reqField(street, 'street', getLabel('checkout.streetAddress', 'Street Address').replace(/\s*\*\s*$/, ''));
     reqField(postcode, 'postcode', getLabel('checkout.postcode', 'Postcode').replace(/\s*\*\s*$/, ''));
     reqField(city, 'city', getLabel('checkout.city', 'Town/City').replace(/\s*\*\s*$/, ''));
-    if (countryId !== 'NL') {
-      reqField(vatNumber, 'vatNumber', getLabel('checkout.vatNumber', 'VAT number').replace(/\s*\*\s*$/, ''));
-    }
-    if (vatNumber && vatNumber.trim().length > 17) {
-      errors.vatNumber = t.has && typeof t.has === 'function' && t.has('validation.vatNumberLength')
-        ? t('validation.vatNumberLength')
-        : 'BTW-nummer mag niet langer zijn dan 17 tekens';
-    }
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -3174,8 +3226,11 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
         name: `${firstName} ${lastName}`,
         firstname: firstName,
         lastname: lastName,
-        company_name: companyName || (label === 'office' ? 'Office' : ''),
-        vat_number: vatNumber,
+        company_name: isBilling ? companyName : (label === 'office' ? 'Office' : ''),
+        company: isBilling ? companyName : (label === 'office' ? 'Office' : ''),
+        vat_number: isBilling ? vatNumber : '',
+        btw_number: isBilling ? vatNumber : '',
+        vatNumber: isBilling ? vatNumber : '',
         address: street,
         address2: stateRegion,
         state: stateRegion,
@@ -3217,6 +3272,7 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
                              key === 'firstname' ? 'firstName' :
                              key === 'lastname' ? 'lastName' :
                              key === 'company_name' ? 'companyName' :
+                             key === 'mobile' || key === 'mobile_number' ? 'phone' :
                              key === 'vat_number' ? 'vatNumber' : key;
             apiErrors[fieldKey] = msg;
           }
@@ -3230,9 +3286,9 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
       const typeLabel = addressType === 'billing' ? 'Billing' : 'Shipping';
       toast.success(t('account.addressSavedSuccess', { type: typeLabel }));
       onSuccess(savedAddressId);
-    } catch (error) {
+    } catch (error: any) {
       console.error(`${addressType} save error:`, error);
-      toast.error(t('account.addressesLoadError'));
+      toast.error(error?.message || t('account.addressesLoadError'));
     } finally {
       setIsSaving(false);
     }

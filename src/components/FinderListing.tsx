@@ -508,7 +508,7 @@ export default function FinderListing({
       )}
 
       {/* ── FAQ / Info cards section ── */}
-      <div className="mt-16 -mx-6 px-6 py-20 bg-surface sm:-mx-10 sm:px-10 lg:-mx-10 lg:px-10">
+      <div className="mt-16 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10 py-20 bg-surface">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3  max-w-[1440px] mx-auto">
           {faqItems.map((item) => (
             <div

@@ -228,6 +228,13 @@ function RegisterContent() {
   const [errors, setErrors] = useState<RegisterErrors>({});
   const [formMessage, setFormMessage] = useState('');
 
+  // Redirect already-logged-in users away from the register page
+  useEffect(() => {
+    if (typeof window !== 'undefined' && localStorage.getItem('auth_user')) {
+      router.replace('/my-account');
+    }
+  }, [router]);
+
   const redirectTo = searchParams.get('redirect') || '/my-account';
   const fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
 

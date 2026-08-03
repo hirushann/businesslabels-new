@@ -224,16 +224,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   });
 
   brands.forEach((brand) => {
-<<<<<<< HEAD
-    if (typeof brand.slug === 'string' && brand.slug) {
-      const path = `/brand/${publicBrandSlug(brand.slug)}`;
-      addEntry(localePath(path, 'nl'), localePath(path, 'en'), new Date(), 0.7, 'weekly');
-=======
     const nlSlug = localizedSitemapSlug(brand, 'nl');
     const enSlug = localizedSitemapSlug(brand, 'en');
     if (nlSlug && enSlug) {
       addEntry(`/brand/${publicBrandSlug(nlSlug)}`, `/en/brand/${publicBrandSlug(enSlug)}`, new Date(), 0.7, 'weekly');
->>>>>>> 35a4bfb8454166742c2078c8982fd50c4c47c725
     }
   });
 

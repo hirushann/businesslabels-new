@@ -54,6 +54,8 @@ type AccountAddress = {
   lastname?: string;
   company: string;
   vatNumber?: string;
+  vat_number?: string;
+  btw_number?: string;
   address1: string;
   address2: string;
   state?: string;
@@ -1974,7 +1976,8 @@ function BillingAddressesView({ user }: { user: StoredUser }) {
                 const name = addr.name || `${addr.firstname || ''} ${addr.lastname || ''}`.trim();
                 const addressStr = [addr.address1, addr.address2, addr.city, addr.postcode, addr.country].filter(Boolean).join(', ');
                 const isOffice = addr.company?.toLowerCase().includes('office') || addr.company?.toLowerCase().includes('company');
-                const contactDetails = [addr.email, addr.phone].filter(Boolean);
+                const vatNum = addr.vatNumber || addr.vat_number || (addr as any).btw_number;
+                const contactDetails = [addr.email, addr.phone, vatNum ? `${getLabel('account.vatNumber', 'VAT number')}: ${vatNum}` : ''].filter(Boolean);
 
                 return (
                   <div
@@ -2526,7 +2529,6 @@ function ShippingAddressEditInline({
 
     reqField(firstName, 'firstName', getLabel('account.firstName', 'First name'));
     reqField(lastName, 'lastName', getLabel('account.lastName', 'Last name'));
-    reqField(company, 'company', getLabel('account.companyName', 'Company name'));
     reqField(email, 'email', getLabel('account.email', 'Email'));
     if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       errors.email = t.has && typeof t.has === 'function' && t.has('validation.invalidEmail')
@@ -2541,14 +2543,6 @@ function ShippingAddressEditInline({
     }
     reqField(street, 'street', getLabel('account.streetAndHouseNumber', 'Street and house number'));
     reqField(postcode, 'postcode', getLabel('account.postCode', 'Postcode'));
-    if (countryId !== 'NL') {
-      reqField(vatNumber, 'vatNumber', getLabel('account.vatNumber', 'VAT number'));
-    }
-    if (vatNumber && vatNumber.trim().length > 17) {
-      errors.vatNumber = t.has && typeof t.has === 'function' && t.has('validation.vatNumberLength')
-        ? t('validation.vatNumberLength')
-        : 'BTW-nummer mag niet langer zijn dan 17 tekens';
-    }
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -2656,36 +2650,6 @@ function ShippingAddressEditInline({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className={labelClasses}>{getLabel('account.companyName', 'Company name')} *</label>
-            <input 
-              type="text" 
-              value={company} 
-              onChange={(e) => {
-                setCompany(e.target.value);
-                clearFieldError('company');
-              }} 
-              className={getInputClasses(Boolean(fieldErrors.company))} 
-              placeholder="Van Dijk Labels BV" 
-            />
-            {fieldErrors.company && <span className="text-xs text-red-500 font-medium mt-1 block ml-3">{fieldErrors.company}</span>}
-          </div>
-          <div>
-            <label className={labelClasses}>{getLabel('account.vatNumber', 'VAT number')} {countryId !== 'NL' ? '*' : '(Optional)'}</label>
-            <input 
-              type="text" 
-              value={vatNumber} 
-              onChange={(e) => {
-                setVatNumber(e.target.value);
-                clearFieldError('vatNumber');
-              }} 
-              className={getInputClasses(Boolean(fieldErrors.vatNumber))} 
-              placeholder="NL123456789B01" 
-            />
-            {fieldErrors.vatNumber && <span className="text-xs text-red-500 font-medium mt-1 block ml-3">{fieldErrors.vatNumber}</span>}
-          </div>
-        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
@@ -3061,7 +3025,7 @@ function BillingAddressEditInline({
   const [firstName, setFirstName] = useState(address?.firstname || '');
   const [lastName, setLastName] = useState(address?.lastname || '');
   const [company, setCompany] = useState(address?.company || '');
-  const [vatNumber, setVatNumber] = useState(address?.vatNumber || '');
+  const [vatNumber, setVatNumber] = useState(address?.vatNumber || address?.vat_number || (address as any)?.btw_number || '');
   const [email, setEmail] = useState(address?.email || ''); 
   const [phone, setPhone] = useState(address?.phone || '');
   const [countryId, setCountryId] = useState('');
@@ -3174,7 +3138,6 @@ function BillingAddressEditInline({
 
     reqField(firstName, 'firstName', getLabel('account.firstName', 'First name'));
     reqField(lastName, 'lastName', getLabel('account.lastName', 'Last name'));
-    reqField(company, 'company', getLabel('account.companyName', 'Company name'));
     reqField(email, 'email', getLabel('account.emailAddress', 'Email'));
     if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       errors.email = t.has && typeof t.has === 'function' && t.has('validation.invalidEmail')
@@ -3186,6 +3149,9 @@ function BillingAddressEditInline({
     reqField(postcode, 'postcode', getLabel('account.postCode', 'Postcode'));
     reqField(city, 'city', getLabel('account.city', 'Place'));
 
+    if (countryId !== 'NL') {
+      reqField(vatNumber, 'vatNumber', getLabel('account.vatNumber', 'VAT number'));
+    }
     if (vatNumber && vatNumber.trim().length > 17) {
       errors.vatNumber = t.has && typeof t.has === 'function' && t.has('validation.vatNumberLength')
         ? t('validation.vatNumberLength')
@@ -3285,7 +3251,9 @@ function BillingAddressEditInline({
             {fieldErrors.company && <span className="text-xs text-red-500 font-medium mt-1 block ml-3">{fieldErrors.company}</span>}
           </div>
           <div>
-            <label className={labelClasses}>{getLabel('account.vatNumberOptional', 'VAT number (optional)')}</label>
+            <label className={labelClasses}>
+              {getLabel('account.vatNumber', 'VAT number')} {countryId !== 'NL' ? '*' : '(Optional)'}
+            </label>
             <input 
               type="text" 
               value={vatNumber} 
@@ -3555,7 +3523,17 @@ function AddressEditModal({
 
     reqField(firstName, 'firstName', t('account.firstName') || (locale === 'nl' ? 'Voornaam' : 'First Name'));
     reqField(lastName, 'lastName', t('account.lastName') || (locale === 'nl' ? 'Achternaam' : 'Last Name'));
-    reqField(company, 'company', t('account.companyName') || (locale === 'nl' ? 'Bedrijfsnaam' : 'Company Name'));
+    if (isBilling) {
+      reqField(company, 'company', t('account.companyName') || (locale === 'nl' ? 'Bedrijfsnaam' : 'Company Name'));
+      if (countryId !== 'NL') {
+        reqField(vatNumber, 'vatNumber', t('account.vatNumber') || (locale === 'nl' ? 'BTW-nummer' : 'VAT number'));
+      }
+      if (vatNumber && vatNumber.trim().length > 17) {
+        errors.vatNumber = t.has && typeof t.has === 'function' && t.has('validation.vatNumberLength')
+          ? t('validation.vatNumberLength')
+          : 'BTW-nummer mag niet langer zijn dan 17 tekens';
+      }
+    }
     reqField(email, 'email', locale === 'nl' ? 'E-mailadres' : 'Email address');
     if (!email.trim()) {
       errors.email = t.has && typeof t.has === 'function' && t.has('validation.required')
@@ -3570,15 +3548,6 @@ function AddressEditModal({
     reqField(street, 'street', t('account.streetAddress') || (locale === 'nl' ? 'Straat en huisnummer' : 'Street Address'));
     reqField(postcode, 'postcode', t('account.postcode') || (locale === 'nl' ? 'Postcode' : 'Postcode'));
     reqField(city, 'city', t('account.townCity') || (locale === 'nl' ? 'Plaats' : 'Town/City'));
-
-    if (isBilling && countryId !== 'NL') {
-      reqField(vatNumber, 'vatNumber', t('account.vatNumber') || (locale === 'nl' ? 'BTW-nummer' : 'VAT number'));
-    }
-    if (vatNumber && vatNumber.trim().length > 17) {
-      errors.vatNumber = t.has && typeof t.has === 'function' && t.has('validation.vatNumberLength')
-        ? t('validation.vatNumberLength')
-        : 'BTW-nummer mag niet langer zijn dan 17 tekens';
-    }
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -3740,22 +3709,21 @@ function AddressEditModal({
                 {fieldErrors.phone && <span className="text-xs text-red-500 font-medium mt-1.5 block ml-1">{fieldErrors.phone}</span>}
               </div>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className={labelClasses}>{(locale === 'nl' ? 'Bedrijfsnaam' : 'Company name')} *</label>
-                <input 
-                  type="text" 
-                  value={company} 
-                  onChange={(e) => {
-                    setCompany(e.target.value);
-                    clearFieldError('company');
-                  }} 
-                  className={getInputClasses(Boolean(fieldErrors.company))} 
-                />
-                {fieldErrors.company && <span className="text-xs text-red-500 font-medium mt-1.5 block ml-1">{fieldErrors.company}</span>}
-              </div>
-              {isBilling && (
+            {isBilling && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className={labelClasses}>{(locale === 'nl' ? 'Bedrijfsnaam' : 'Company name')} *</label>
+                  <input 
+                    type="text" 
+                    value={company} 
+                    onChange={(e) => {
+                      setCompany(e.target.value);
+                      clearFieldError('company');
+                    }} 
+                    className={getInputClasses(Boolean(fieldErrors.company))} 
+                  />
+                  {fieldErrors.company && <span className="text-xs text-red-500 font-medium mt-1.5 block ml-1">{fieldErrors.company}</span>}
+                </div>
                 <div>
                   <label className={labelClasses}>{(locale === 'nl' ? 'BTW-nummer' : 'VAT number')} {countryId !== 'NL' ? '*' : (locale === 'nl' ? '(Optioneel)' : '(Optional)')}</label>
                   <input 
@@ -3770,8 +3738,8 @@ function AddressEditModal({
                   />
                   {fieldErrors.vatNumber && <span className="text-xs text-red-500 font-medium mt-1.5 block ml-1">{fieldErrors.vatNumber}</span>}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             <div>
               <label className={labelClasses}>{t('account.streetAddress')} *</label>
@@ -3928,6 +3896,9 @@ function AddressProfile({
             {address.company ? <p className="font-medium">{address.company}</p> : null}
             {address.email ? <p className="font-medium">{address.email}</p> : null}
             {address.phone ? <p className="font-medium">{address.phone}</p> : null}
+            {!isShipping && (address.vatNumber || address.vat_number || (address as any).btw_number) ? (
+              <p className="font-medium">VAT: {address.vatNumber || address.vat_number || (address as any).btw_number}</p>
+            ) : null}
             {address.address1 ? <p className="font-medium">{address.address1}</p> : null}
             {address.address2 ? <p className="font-medium">{address.address2}</p> : null}
             {address.postcode || address.city ? <p className="font-medium">{[address.postcode, address.city].filter(Boolean).join(' ')}</p> : null}
