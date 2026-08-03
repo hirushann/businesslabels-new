@@ -190,6 +190,21 @@ function getLinkedWarrantyItem(items: CartItem[], parentItem: CartItem): CartIte
   return items.find((item) => item.itemKind === "warranty" && item.linkedToKey === parentItem.key) ?? null;
 }
 
+function resolveCountryId(countryName: string, countriesList: any[] = []): string {
+  if (!countryName) return 'NL';
+  const found = countriesList.find(
+    (c: any) =>
+      c.name.toLowerCase() === countryName.toLowerCase() ||
+      c.id.toLowerCase() === countryName.toLowerCase()
+  );
+  if (found) return found.id.toUpperCase();
+  const lower = countryName.toLowerCase();
+  if (lower === 'netherlands' || lower === 'nederland' || lower === 'nl') return 'NL';
+  if (lower === 'belgium' || lower === 'belgië' || lower === 'belgique' || lower === 'be') return 'BE';
+  if (lower === 'germany' || lower === 'duitsland' || lower === 'deutschland' || lower === 'de') return 'DE';
+  return 'NL';
+}
+
 function buildCheckoutOrderItems(items: CartItem[]): CheckoutOrderItem[] {
   return items.flatMap((item) => {
     if (item.itemKind === "warranty") {
@@ -662,7 +677,7 @@ function CheckoutShell({
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="flex flex-col gap-2">
-                            <span className="text-[18px] font-bold text-ink">{t('checkout.companyName')}</span>
+                            <span className="text-[18px] font-bold text-ink">{t('checkout.companyName')} <span className="text-red-500">*</span></span>
                             <input
                               type="text"
                               value={form.companyName}
@@ -674,7 +689,14 @@ function CheckoutShell({
                             {errors.companyName && <span className="text-xs text-red-500">{errors.companyName}</span>}
                           </div>
                           <div className="flex flex-col gap-2">
-                            <span className="text-[18px] font-bold text-ink">{t('checkout.vatNumber')}</span>
+                            <span className="text-[18px] font-bold text-ink">
+                              {t('checkout.vatNumber')}{' '}
+                              {resolveCountryId(form.country, countriesList) !== 'NL' ? (
+                                <span className="text-red-500">*</span>
+                              ) : (
+                                <span className="text-neutral-400 font-normal text-sm">{locale.startsWith('nl') ? '(Optioneel)' : '(Optional)'}</span>
+                              )}
+                            </span>
                             <input
                               type="text"
                               value={form.vatNumber}
@@ -2465,6 +2487,7 @@ export default function CheckoutPageClient({
       const requiredFields: Array<keyof CheckoutFormState> = [
         "firstName",
         "lastName",
+        "companyName",
         "email",
         "mobileNumber",
         "streetAddress",
@@ -2479,6 +2502,15 @@ export default function CheckoutPageClient({
       }
       if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
         nextErrors.email = t('validation.invalidEmail');
+      }
+      if (form.mobileNumber && !/^(\+|00)?[0-9\s\-\(\)\.]{7,20}$/.test(form.mobileNumber.trim())) {
+        nextErrors.mobileNumber = t.has && typeof t.has === 'function' && t.has('validation.invalidPhone')
+          ? t('validation.invalidPhone')
+          : (locale.startsWith('nl') ? 'Voer een geldig Europees telefoonnummer in' : 'Enter a valid European phone number');
+      }
+      const selectedCountryCode = resolveCountryId(form.country, countriesList);
+      if (selectedCountryCode !== 'NL' && (!form.vatNumber || !form.vatNumber.trim())) {
+        nextErrors.vatNumber = t('validation.required', { field: fieldLabels.vatNumber || 'VAT number' });
       }
       if (form.vatNumber && form.vatNumber.trim().length > 17) {
         nextErrors.vatNumber = t.has && typeof t.has === 'function' && t.has('validation.vatNumberLength')
@@ -2504,6 +2536,11 @@ export default function CheckoutPageClient({
         }
         if (form.shippingEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.shippingEmail)) {
           nextErrors.shippingEmail = t('validation.invalidEmail');
+        }
+        if (form.shippingMobileNumber && !/^(\+|00)?[0-9\s\-\(\)\.]{7,20}$/.test(form.shippingMobileNumber.trim())) {
+          nextErrors.shippingMobileNumber = t.has && typeof t.has === 'function' && t.has('validation.invalidPhone')
+            ? t('validation.invalidPhone')
+            : (locale.startsWith('nl') ? 'Voer een geldig Europees telefoonnummer in' : 'Enter a valid European phone number');
         }
       }
     } else if (currentStep === 3) {
@@ -2567,17 +2604,21 @@ export default function CheckoutPageClient({
       return;
     }
 
+    const incompleteMsg = (t.has && typeof t.has === 'function' && t.has('validation.errorIncomplete'))
+      ? t('validation.errorIncomplete')
+      : (locale.startsWith('nl') ? "Vul a.u.b. alle verplichte velden in." : "Please fill in all required fields.");
+    
     if (step < 3) {
       if (validateStep(step)) {
         setStep((step + 1) as 1 | 2 | 3);
       } else {
-        toast.error(t.has && typeof t.has === 'function' && t.has('validation.errorIncomplete') ? t('validation.errorIncomplete') : "Please fill in all required fields.");
+        toast.error(incompleteMsg);
       }
       return;
     }
 
     if (!validateStep(3)) {
-      toast.error(t.has && typeof t.has === 'function' && t.has('validation.errorIncomplete') ? t('validation.errorIncomplete') : "Please fill in all required fields.");
+      toast.error(incompleteMsg);
       return;
     }
 
@@ -2945,6 +2986,7 @@ interface AddAddressPopupProps {
 
 function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addressType = 'shipping' }: AddAddressPopupProps) {
   const t = useTranslations();
+  const locale = useLocale();
   const getLabel = (key: string, fallback: string) => {
     try {
       if (t.has && typeof t.has === 'function' && t.has(key as any)) {
@@ -3095,6 +3137,7 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
 
     reqField(firstName, 'firstName', getLabel('checkout.firstName', 'First Name').replace(/\s*\*\s*$/, ''));
     reqField(lastName, 'lastName', getLabel('checkout.lastName', 'Last Name').replace(/\s*\*\s*$/, ''));
+    reqField(companyName, 'companyName', getLabel('checkout.companyName', 'Company name').replace(/\s*\*\s*$/, ''));
     reqField(email, 'email', getLabel('checkout.email', 'Email').replace(/\s*\*\s*$/, ''));
     if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       errors.email = t.has && typeof t.has === 'function' && t.has('validation.invalidEmail')
@@ -3102,9 +3145,17 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
         : 'Please enter a valid email address';
     }
     reqField(phone, 'phone', getLabel('checkout.mobileNumber', 'Phone number').replace(/\s*\*\s*$/, ''));
+    if (phone.trim() && !/^(\+|00)?[0-9\s\-\(\)\.]{7,20}$/.test(phone.trim())) {
+      errors.phone = t.has && typeof t.has === 'function' && t.has('validation.invalidPhone')
+        ? t('validation.invalidPhone')
+        : 'Enter a valid European phone number';
+    }
     reqField(street, 'street', getLabel('checkout.streetAddress', 'Street Address').replace(/\s*\*\s*$/, ''));
     reqField(postcode, 'postcode', getLabel('checkout.postcode', 'Postcode').replace(/\s*\*\s*$/, ''));
     reqField(city, 'city', getLabel('checkout.city', 'Town/City').replace(/\s*\*\s*$/, ''));
+    if (countryId !== 'NL') {
+      reqField(vatNumber, 'vatNumber', getLabel('checkout.vatNumber', 'VAT number').replace(/\s*\*\s*$/, ''));
+    }
     if (vatNumber && vatNumber.trim().length > 17) {
       errors.vatNumber = t.has && typeof t.has === 'function' && t.has('validation.vatNumberLength')
         ? t('validation.vatNumberLength')
@@ -3227,7 +3278,7 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
             {isBilling && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-2">
-                  <span className={labelClasses}>{getLabel('checkout.companyName', 'Bedrijfsnaam (Optioneel)')}</span>
+                  <span className={labelClasses}>{getLabel('checkout.companyName', 'Bedrijfsnaam')} *</span>
                   <input 
                     type="text" 
                     value={companyName} 
@@ -3241,7 +3292,9 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
                   {fieldErrors.companyName && <span className="text-xs text-red-500 font-medium">{fieldErrors.companyName}</span>}
                 </div>
                 <div className="flex flex-col gap-2">
-                  <span className={labelClasses}>{getLabel('checkout.vatNumber', 'BTW-nummer (Optioneel)')}</span>
+                  <span className={labelClasses}>
+                    {getLabel('checkout.vatNumber', 'BTW-nummer')} {countryId !== 'NL' ? '*' : (locale.startsWith('nl') ? '(Optioneel)' : '(Optional)')}
+                  </span>
                   <input 
                     type="text" 
                     value={vatNumber} 

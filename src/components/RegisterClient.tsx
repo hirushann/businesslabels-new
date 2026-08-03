@@ -474,6 +474,7 @@ function RegisterContent() {
                   <TextInput
                     id="company"
                     label={t('register.company')}
+                    required
                     value={company}
                     onChange={setCompany}
                     autoComplete="organization"
@@ -594,7 +595,7 @@ function RegisterContent() {
                   <TextInput
                     id="vat-number"
                     label={t('register.vatNumber')}
-                    required
+                    required={(selectedCountry?.id ?? countryId) !== 'NL'}
                     value={vatNumber}
                     onChange={setVatNumber}
                     autoComplete="off"

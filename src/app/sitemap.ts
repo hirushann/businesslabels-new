@@ -28,9 +28,9 @@ export function localizedSitemapSlug(item: SitemapApiItem, locale: 'en' | 'nl'):
   if (direct) return direct;
 
   for (const entry of item.translations ?? []) {
-    const keyed = locale in entry ? entry[locale] : null;
+    const keyed = (entry as Record<string, any>)[locale];
     if (keyed?.slug) return keyed.slug;
-    if ('language' in entry && entry.language === locale && entry.slug) return entry.slug;
+    if ('language' in entry && (entry as any).language === locale && (entry as any).slug) return (entry as any).slug;
   }
 
   return typeof item.slug === 'string' ? item.slug : null;
@@ -215,9 +215,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   });
 
-  // Add Brands
   brands.forEach((brand) => {
-    if (brand.slug) {
+    if (typeof brand.slug === 'string' && brand.slug) {
       const path = `/brand/${publicBrandSlug(brand.slug)}`;
       addEntry(localePath(path, 'nl'), localePath(path, 'en'), new Date(), 0.7, 'weekly');
     }

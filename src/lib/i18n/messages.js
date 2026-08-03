@@ -52,7 +52,9 @@ export const MESSAGES_V4 = {
     validation: {
       required: "{field} is required",
       invalidEmail: "Enter a valid email",
-      vatNumberLength: "VAT number must not be greater than 17 characters"
+      invalidPhone: "Enter a valid European phone number",
+      vatNumberLength: "VAT number must not be greater than 17 characters",
+      errorIncomplete: "Please fill in all required fields."
     },
     hero: {
       badge: 'Epson ColorWorks Gold Partner',
@@ -587,9 +589,9 @@ export const MESSAGES_V4 = {
       lastName: 'Last Name',
       email: 'Email',
       mobileNumber: 'Phone number',
-      companyName: 'Company name (Optional)',
+      companyName: 'Company name',
       companyNamePlaceholder: 'Van Dijk Labels BV',
-      vatNumber: 'VAT number (Optional)',
+      vatNumber: 'VAT number',
       vatNumberPlaceholder: 'NL123456789B01',
       streetAddress: 'Street Address',
       streetAddressPlaceholder: 'Keizersgracht 214',
@@ -1405,7 +1407,7 @@ export const MESSAGES_V4 = {
       deliveryWord: 'delivery',
       firstName: 'First name',
       lastName: 'Last name',
-      companyOptional: 'Company Name (Optional)',
+      companyOptional: 'Company Name',
       streetAddress: 'Street address',
       apartmentOptional: 'Apartment, suite, unit, etc. (optional)',
       postcode: 'Postcode',
@@ -2083,7 +2085,9 @@ export const MESSAGES_V4 = {
     validation: {
       required: "{field} is verplicht",
       invalidEmail: "Voer een geldig e-mailadres in",
-      vatNumberLength: "BTW-nummer mag niet langer zijn dan 17 tekens"
+      invalidPhone: "Voer een geldig Europees telefoonnummer in",
+      vatNumberLength: "BTW-nummer mag niet langer zijn dan 17 tekens",
+      errorIncomplete: "Vul a.u.b. alle verplichte velden in."
     },
     hero: {
       badge: 'Epson ColorWorks Gold Partner',
@@ -2618,9 +2622,9 @@ export const MESSAGES_V4 = {
       lastName: 'Achternaam',
       email: 'E-mail',
       mobileNumber: 'Telefoonnummer',
-      companyName: 'Bedrijfsnaam (Optioneel)',
+      companyName: 'Bedrijfsnaam',
       companyNamePlaceholder: 'Van Dijk Labels BV',
-      vatNumber: 'BTW-nummer (Optioneel)',
+      vatNumber: 'BTW-nummer',
       vatNumberPlaceholder: 'NL123456789B01',
       streetAddress: 'Straat + huisnummer',
       streetAddressPlaceholder: 'Keizersgracht 214',
@@ -3437,7 +3441,7 @@ export const MESSAGES_V4 = {
       deliveryWord: 'levering',
       firstName: 'Voornaam',
       lastName: 'Achternaam',
-      companyOptional: 'Bedrijfsnaam (Optioneel)',
+      companyOptional: 'Bedrijfsnaam',
       streetAddress: 'Straatnaam en huisnummer',
       apartmentOptional: 'Appartement, suite, unit, etc. (optioneel)',
       postcode: 'Postcode',

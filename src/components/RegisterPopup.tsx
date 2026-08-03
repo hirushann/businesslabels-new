@@ -460,6 +460,7 @@ export default function RegisterPopup({
           <TextInput
             id="popup-company"
             label={t('register.company')}
+            required
             value={company}
             onChange={setCompany}
             autoComplete="organization"
@@ -471,7 +472,7 @@ export default function RegisterPopup({
           <TextInput
             id="popup-vat-number"
             label={t('register.vatNumber')}
-            required
+            required={(selectedCountry?.id ?? countryId) !== 'NL'}
             value={vatNumber}
             onChange={setVatNumber}
             autoComplete="off"

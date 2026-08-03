@@ -2411,6 +2411,8 @@ function ShippingAddressEditInline({
   };
   const [firstName, setFirstName] = useState(address?.firstname || '');
   const [lastName, setLastName] = useState(address?.lastname || '');
+  const [company, setCompany] = useState(address?.company || '');
+  const [vatNumber, setVatNumber] = useState((address as any)?.vat_number || address?.vatNumber || '');
   const [email, setEmail] = useState(address?.email || ''); 
   const [phone, setPhone] = useState(address?.phone || '');
   const [countryId, setCountryId] = useState('');
@@ -2524,6 +2526,7 @@ function ShippingAddressEditInline({
 
     reqField(firstName, 'firstName', getLabel('account.firstName', 'First name'));
     reqField(lastName, 'lastName', getLabel('account.lastName', 'Last name'));
+    reqField(company, 'company', getLabel('account.companyName', 'Company name'));
     reqField(email, 'email', getLabel('account.email', 'Email'));
     if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       errors.email = t.has && typeof t.has === 'function' && t.has('validation.invalidEmail')
@@ -2531,9 +2534,21 @@ function ShippingAddressEditInline({
         : 'Please enter a valid email address';
     }
     reqField(phone, 'phone', getLabel('account.phoneNumber', 'Phone number'));
+    if (phone.trim() && !/^(\+|00)?[0-9\s\-\(\)\.]{7,20}$/.test(phone.trim())) {
+      errors.phone = t.has && typeof t.has === 'function' && t.has('validation.invalidPhone')
+        ? t('validation.invalidPhone')
+        : 'Enter a valid European phone number';
+    }
     reqField(street, 'street', getLabel('account.streetAndHouseNumber', 'Street and house number'));
     reqField(postcode, 'postcode', getLabel('account.postCode', 'Postcode'));
-    reqField(city, 'city', getLabel('account.city', 'Place'));
+    if (countryId !== 'NL') {
+      reqField(vatNumber, 'vatNumber', getLabel('account.vatNumber', 'VAT number'));
+    }
+    if (vatNumber && vatNumber.trim().length > 17) {
+      errors.vatNumber = t.has && typeof t.has === 'function' && t.has('validation.vatNumberLength')
+        ? t('validation.vatNumberLength')
+        : 'BTW-nummer mag niet langer zijn dan 17 tekens';
+    }
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -2552,6 +2567,8 @@ function ShippingAddressEditInline({
         name: `${firstName} ${lastName}`,
         firstname: firstName,
         lastname: lastName,
+        company: company,
+        company_name: company,
         address: street,
         address2: stateRegion,
         state: stateRegion,
@@ -2636,6 +2653,37 @@ function ShippingAddressEditInline({
               placeholder="Havertz" 
             />
             {fieldErrors.lastName && <span className="text-xs text-red-500 font-medium mt-1 block ml-3">{fieldErrors.lastName}</span>}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className={labelClasses}>{getLabel('account.companyName', 'Company name')} *</label>
+            <input 
+              type="text" 
+              value={company} 
+              onChange={(e) => {
+                setCompany(e.target.value);
+                clearFieldError('company');
+              }} 
+              className={getInputClasses(Boolean(fieldErrors.company))} 
+              placeholder="Van Dijk Labels BV" 
+            />
+            {fieldErrors.company && <span className="text-xs text-red-500 font-medium mt-1 block ml-3">{fieldErrors.company}</span>}
+          </div>
+          <div>
+            <label className={labelClasses}>{getLabel('account.vatNumber', 'VAT number')} {countryId !== 'NL' ? '*' : '(Optional)'}</label>
+            <input 
+              type="text" 
+              value={vatNumber} 
+              onChange={(e) => {
+                setVatNumber(e.target.value);
+                clearFieldError('vatNumber');
+              }} 
+              className={getInputClasses(Boolean(fieldErrors.vatNumber))} 
+              placeholder="NL123456789B01" 
+            />
+            {fieldErrors.vatNumber && <span className="text-xs text-red-500 font-medium mt-1 block ml-3">{fieldErrors.vatNumber}</span>}
           </div>
         </div>
 
@@ -3126,6 +3174,7 @@ function BillingAddressEditInline({
 
     reqField(firstName, 'firstName', getLabel('account.firstName', 'First name'));
     reqField(lastName, 'lastName', getLabel('account.lastName', 'Last name'));
+    reqField(company, 'company', getLabel('account.companyName', 'Company name'));
     reqField(email, 'email', getLabel('account.emailAddress', 'Email'));
     if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       errors.email = t.has && typeof t.has === 'function' && t.has('validation.invalidEmail')
@@ -3222,7 +3271,7 @@ function BillingAddressEditInline({
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className={labelClasses}>{getLabel('account.companyOptional', 'Company name (optional)')}</label>
+            <label className={labelClasses}>{getLabel('account.companyName', 'Company name')} *</label>
             <input 
               type="text" 
               value={company} 
@@ -3465,7 +3514,8 @@ function AddressEditModal({
   const [firstName, setFirstName] = useState(address?.firstname || '');
   const [lastName, setLastName] = useState(address?.lastname || '');
   const [company, setCompany] = useState(address?.company || '');
-  const [vatNumber, setVatNumber] = useState(address?.vatNumber || '');
+  const [vatNumber, setVatNumber] = useState((address as any)?.vat_number || address?.vatNumber || '');
+  const [countryId, setCountryId] = useState(address?.country || (address as any)?.country_id || 'NL');
   const [email, setEmail] = useState(address?.email || '');
   const [street, setStreet] = useState(address?.address1 || '');
   const [street2, setStreet2] = useState(address?.address2 || '');
@@ -3505,6 +3555,7 @@ function AddressEditModal({
 
     reqField(firstName, 'firstName', t('account.firstName') || (locale === 'nl' ? 'Voornaam' : 'First Name'));
     reqField(lastName, 'lastName', t('account.lastName') || (locale === 'nl' ? 'Achternaam' : 'Last Name'));
+    reqField(company, 'company', t('account.companyName') || (locale === 'nl' ? 'Bedrijfsnaam' : 'Company Name'));
     reqField(email, 'email', locale === 'nl' ? 'E-mailadres' : 'Email address');
     if (!email.trim()) {
       errors.email = t.has && typeof t.has === 'function' && t.has('validation.required')
@@ -3520,6 +3571,9 @@ function AddressEditModal({
     reqField(postcode, 'postcode', t('account.postcode') || (locale === 'nl' ? 'Postcode' : 'Postcode'));
     reqField(city, 'city', t('account.townCity') || (locale === 'nl' ? 'Plaats' : 'Town/City'));
 
+    if (isBilling && countryId !== 'NL') {
+      reqField(vatNumber, 'vatNumber', t('account.vatNumber') || (locale === 'nl' ? 'BTW-nummer' : 'VAT number'));
+    }
     if (vatNumber && vatNumber.trim().length > 17) {
       errors.vatNumber = t.has && typeof t.has === 'function' && t.has('validation.vatNumberLength')
         ? t('validation.vatNumberLength')
@@ -3689,7 +3743,7 @@ function AddressEditModal({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className={labelClasses}>{t('account.companyOptional') || (locale === 'nl' ? 'Bedrijfsnaam (Optioneel)' : 'Company name (Optional)')}</label>
+                <label className={labelClasses}>{(locale === 'nl' ? 'Bedrijfsnaam' : 'Company name')} *</label>
                 <input 
                   type="text" 
                   value={company} 
@@ -3703,7 +3757,7 @@ function AddressEditModal({
               </div>
               {isBilling && (
                 <div>
-                  <label className={labelClasses}>{locale === 'nl' ? 'BTW-nummer (Optioneel)' : 'VAT number (Optional)'}</label>
+                  <label className={labelClasses}>{(locale === 'nl' ? 'BTW-nummer' : 'VAT number')} {countryId !== 'NL' ? '*' : (locale === 'nl' ? '(Optioneel)' : '(Optional)')}</label>
                   <input 
                     type="text" 
                     value={vatNumber} 

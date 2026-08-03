@@ -269,7 +269,7 @@ export default function AddressAutocomplete({
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    onChange(val);
+    onChange?.(val);
     setIsOpen(true);
 
     if (val.trim().length < MIN_AUTOCOMPLETE_LENGTH) {
@@ -330,7 +330,7 @@ export default function AddressAutocomplete({
       placeId = placePrediction.placeId;
     }
 
-    onChange(description);
+    onChange?.(description);
     setIsOpen(false);
     setSuggestions([]);
 
