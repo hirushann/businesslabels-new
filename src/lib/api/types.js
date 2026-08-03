@@ -444,6 +444,7 @@
  * Detail-only fields (present on show/showBySlug):
  * @property {boolean} [has_uploaded_spec_sheet]  True when an admin uploaded a PDF for the active locale; false when it is generated on download.
  * @property {string|null} [description]
+ * @property {string|null} [main_image]  Dedicated material image managed by the backoffice media flow.
  * @property {Object|null} [specifications]
  * @property {string|null} [print_method]
  * @property {string|null} [print_method_label]  Human-readable label for `print_method`.

@@ -16,14 +16,20 @@ const getBaseUrl = () => {
 
 const frontendUrl = getBaseUrl();
 
+type Locale = 'en' | 'nl';
+type SitemapTranslation = {
+  language?: string;
+  slug?: string;
+} & Partial<Record<Locale, { language?: string; slug?: string }>>;
+
 type SitemapApiItem = {
   slug?: string | Partial<Record<'en' | 'nl', string>>;
   locale_slugs?: Partial<Record<'en' | 'nl', string>>;
-  translations?: Array<Record<string, { language?: string; slug?: string }> | { language?: string; slug?: string }>;
+  translations?: SitemapTranslation[];
   updated_at?: string;
 };
 
-export function localizedSitemapSlug(item: SitemapApiItem, locale: 'en' | 'nl'): string | null {
+export function localizedSitemapSlug(item: SitemapApiItem, locale: Locale): string | null {
   const direct = item.locale_slugs?.[locale] || (typeof item.slug === 'object' ? item.slug[locale] : null);
   if (direct) return direct;
 
@@ -149,9 +155,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Add Materials
   materials.forEach((material) => {
-    if (material.slug) {
-      const path = `/material/${material.slug}`;
-      addEntry(localePath(path, 'nl'), localePath(path, 'en'), new Date(material.updated_at || new Date()), 0.7, 'weekly');
+    const nlSlug = localizedSitemapSlug(material, 'nl');
+    const enSlug = localizedSitemapSlug(material, 'en');
+    if (nlSlug && enSlug) {
+      addEntry(`/material/${nlSlug}`, `/en/material/${enSlug}`, new Date(material.updated_at || new Date()), 0.7, 'weekly');
     }
   });
 
@@ -200,9 +207,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Add Printers
   printers.forEach((printer) => {
-    if (printer.slug) {
-      const path = `/printers/${printer.slug}`;
-      addEntry(localePath(path, 'nl'), localePath(path, 'en'), new Date(printer.updated_at || new Date()), 0.7, 'weekly');
+    const nlSlug = localizedSitemapSlug(printer, 'nl');
+    const enSlug = localizedSitemapSlug(printer, 'en');
+    if (nlSlug && enSlug) {
+      addEntry(`/printers/${nlSlug}`, `/en/printers/${enSlug}`, new Date(printer.updated_at || new Date()), 0.7, 'weekly');
     }
   });
 
@@ -216,9 +224,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   });
 
   brands.forEach((brand) => {
+<<<<<<< HEAD
     if (typeof brand.slug === 'string' && brand.slug) {
       const path = `/brand/${publicBrandSlug(brand.slug)}`;
       addEntry(localePath(path, 'nl'), localePath(path, 'en'), new Date(), 0.7, 'weekly');
+=======
+    const nlSlug = localizedSitemapSlug(brand, 'nl');
+    const enSlug = localizedSitemapSlug(brand, 'en');
+    if (nlSlug && enSlug) {
+      addEntry(`/brand/${publicBrandSlug(nlSlug)}`, `/en/brand/${publicBrandSlug(enSlug)}`, new Date(), 0.7, 'weekly');
+>>>>>>> 35a4bfb8454166742c2078c8982fd50c4c47c725
     }
   });
 

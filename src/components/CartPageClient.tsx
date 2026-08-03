@@ -11,6 +11,8 @@ import { useState, useEffect } from 'react';
 import { getExpectedDeliveryMessage } from '@/lib/utils/delivery';
 import { useShippingRules } from '@/hooks/useShippingRules';
 import { useDeliveryAvailability } from '@/hooks/useDeliveryAvailability';
+import CartTotals from '@/components/CartTotals';
+import { useIsBusinessCustomer } from '@/hooks/useIsBusinessCustomer';
 
 function formatEuro(value: number): string {
   return new Intl.NumberFormat('nl-NL', {
@@ -42,6 +44,7 @@ function warrantyTypeNameFor(item: CartItem | undefined): string | null {
 export default function CartPageClient({ popularProducts = [] }: { popularProducts?: ProductCardData[] }) {
   const t = useTranslations();
   const locale = useLocale();
+  const isBusinessCustomer = useIsBusinessCustomer();
   const {
     items,
     totalAmount,
@@ -531,15 +534,13 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
 
                   <div className="w-full h-px bg-[#D9E3ED]" />
 
-                  {/* Total incl. VAT */}
-                  <div className="flex justify-between items-center bg-white/50">
-                    <span className="text-xl font-bold text-ink">
-                      {t('cart.totalInclVat')}
-                    </span>
-                    <span className="text-xl font-semibold text-ink">
-                      {formatEuro(total * 1.21)}
-                    </span>
-                  </div>
+                  <CartTotals
+                    totalExclVatLabel={t('cart.totalExclVat')}
+                    totalInclVatLabel={t('cart.totalInclVat')}
+                    totalExclVat={formatEuro(total)}
+                    totalInclVat={formatEuro(total * 1.21)}
+                    isBusinessCustomer={isBusinessCustomer}
+                  />
                 </div>
 
                 {/* Checkout CTA */}

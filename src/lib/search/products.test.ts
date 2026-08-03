@@ -461,6 +461,7 @@ function catalogParams(overrides: Partial<CatalogSearchParams>): CatalogSearchPa
     categories: [],
     scopeCategories: [],
     categoryIds: [],
+    categoryTermIds: [],
     brands: [],
     materialIds: [],
     materialCategories: [],
