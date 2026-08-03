@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE, LOCALE_HEADER, normalizeLocale } from '@/lib/i18n/config';
+import { CHECKOUT_RETURN_LOCALE_COOKIE, LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE, LOCALE_HEADER } from '@/lib/i18n/config';
 
 const EN_PREFIX = '/en';
 const COOKIE_OPTIONS = { path: '/', sameSite: 'lax' as const, maxAge: LOCALE_COOKIE_MAX_AGE };
@@ -19,21 +19,12 @@ function persistLocale(response: NextResponse, locale: 'en' | 'nl') {
 /**
  * Locale-prefix routing:
  * - /en/* → English, rewrite internally to /* + persist NEXT_LOCALE=en
- * - /product-categorie/* → Dutch, regardless of a previous English cookie
- * - /* → Use the persisted user locale, falling back to Dutch.
- *
- * The user's explicit language choice is the source of truth. This prevents
- * external returns (checkout/payment callbacks, email links, reloads, etc.)
- * from silently switching an English user back to Dutch just because the URL is
- * unprefixed.
+ * - all unprefixed routes → Dutch, regardless of saved/browser state
  */
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const hasEnglishPrefix = pathname.startsWith(EN_PREFIX + '/') || pathname === EN_PREFIX;
-  const hasDutchArchivePrefix =
-    pathname.startsWith('/product-categorie/') || pathname === '/product-categorie';
-  const persistedLocale = normalizeLocale(request.cookies.get(LOCALE_COOKIE)?.value);
-  const locale = hasEnglishPrefix ? 'en' : hasDutchArchivePrefix ? 'nl' : persistedLocale;
+  const locale = hasEnglishPrefix ? 'en' : 'nl';
   let cleanPathname = hasEnglishPrefix ? (pathname.slice(EN_PREFIX.length) || '/') : pathname;
   if (cleanPathname === '/software-2') {
     cleanPathname = '/software';
@@ -60,6 +51,18 @@ export function proxy(request: NextRequest) {
     cleanPathname = '/bedankt';
   }
 
+  if (
+    !hasEnglishPrefix &&
+    cleanPathname === '/bedankt' &&
+    request.nextUrl.searchParams.has('order_number') &&
+    request.cookies.get(CHECKOUT_RETURN_LOCALE_COOKIE)?.value === 'en'
+  ) {
+    const redirectUrl = new URL(`${EN_PREFIX}/thank-you${search}`, request.url);
+    const response = persistLocale(NextResponse.redirect(redirectUrl), 'en');
+    response.cookies.set(CHECKOUT_RETURN_LOCALE_COOKIE, '', { ...COOKIE_OPTIONS, maxAge: 0 });
+    return response;
+  }
+
   if (cleanPathname === '/terms-and-conditions' || cleanPathname === '/terms-and-conditions/') {
     cleanPathname = '/algemene-voorwaarden';
   }
@@ -77,7 +80,7 @@ export function proxy(request: NextRequest) {
   }
 
   if (pathname === '/en/custom-made-form' || pathname === '/en/custom-made-form/' || pathname === '/en/maatwerk' || pathname === '/en/maatwerk/' || pathname === '/en/custom-made-labels' || pathname === '/en/custom-made-labels/') {
-    const redirectUrl = new URL(`${EN_PREFIX}/material-customization/${search}`, request.url);
+    const redirectUrl = new URL(`${EN_PREFIX}/material-customization${search}`, request.url);
     return persistLocale(NextResponse.redirect(redirectUrl), 'en');
   }
 

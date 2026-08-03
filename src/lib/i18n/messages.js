@@ -501,8 +501,8 @@ export const MESSAGES_V4 = {
       goToShoppingCart: 'Go to shopping cart',
       freeShippingProgress: 'Order another <amountStyle>{amount}</amountStyle> for <shippingStyle>free shipping</shippingStyle>',
       freeShippingQualified: 'Your order qualifies for free shipping!',
-      orderWithin: 'Order within <timeStyle>2 hours 34 minutes</timeStyle> for delivery <deliveryStyle>today → </deliveryStyle>shipped <shippedStyle>today</shippedStyle>',
-      freeDeliveryThreshold: 'Free delivery on orders over <amountStyle>€500</amountStyle>',
+      orderWithin: 'Order within <timeStyle></timeStyle> for shipping on <shippingStyle></shippingStyle>',
+      freeDeliveryThreshold: 'Free delivery on orders of <amountStyle>{amount}</amountStyle> or more',
     },
     menus: {
       printers: {
@@ -1043,8 +1043,8 @@ export const MESSAGES_V4 = {
       goToShoppingCart: 'Go to shopping cart',
       freeShippingProgress: 'Order another <amountStyle>{amount}</amountStyle> for <shippingStyle>free shipping</shippingStyle>',
       freeShippingQualified: 'Your order qualifies for free shipping!',
-      orderWithin: 'Order within <timeStyle>2 hours 34 minutes</timeStyle> for delivery <deliveryStyle>today → </deliveryStyle>shipped <shippedStyle>today</shippedStyle>',
-      freeDeliveryThreshold: 'Free delivery on orders over <amountStyle>€500</amountStyle>',
+      orderWithin: 'Order within <timeStyle></timeStyle> for shipping on <shippingStyle></shippingStyle>',
+      freeDeliveryThreshold: 'Free delivery on orders of <amountStyle>{amount}</amountStyle> or more',
       yourOverview: 'Your Overview',
       proceedToCheckout: 'Proceed to checkout',
     },
@@ -2532,8 +2532,8 @@ export const MESSAGES_V4 = {
       goToShoppingCart: 'Ga naar winkelwagen',
       freeShippingProgress: 'Bestel nog voor <amountStyle>{amount}</amountStyle> voor <shippingStyle>gratis verzending</shippingStyle>',
       freeShippingQualified: 'Je bestelling komt in aanmerking voor gratis verzending!',
-      orderWithin: 'Bestel binnen <timeStyle>2 uur 34 minuten</timeStyle> voor levering <deliveryStyle>vandaag → </deliveryStyle><shippedStyle>vandaag</shippedStyle> verzonden',
-      freeDeliveryThreshold: 'Gratis verzending bij bestellingen vanaf <amountStyle>€500</amountStyle>',
+      orderWithin: 'Bestel binnen <timeStyle></timeStyle> voor verzending op <shippingStyle></shippingStyle>',
+      freeDeliveryThreshold: 'Gratis verzending bij bestellingen vanaf <amountStyle>{amount}</amountStyle>',
     },
     menus: {
       printers: {
@@ -3074,8 +3074,8 @@ export const MESSAGES_V4 = {
       goToShoppingCart: 'Ga naar winkelwagen',
       freeShippingProgress: 'Bestel nog voor <amountStyle>{amount}</amountStyle> voor <shippingStyle>gratis verzending</shippingStyle>',
       freeShippingQualified: 'Je bestelling komt in aanmerking voor gratis verzending!',
-      orderWithin: 'Bestel binnen <timeStyle>2 uur 34 minuten</timeStyle> voor levering <deliveryStyle>vandaag → </deliveryStyle><shippedStyle>vandaag</shippedStyle> verzonden',
-      freeDeliveryThreshold: 'Gratis verzending bij bestellingen vanaf <amountStyle>€500</amountStyle>',
+      orderWithin: 'Bestel binnen <timeStyle></timeStyle> voor verzending op <shippingStyle></shippingStyle>',
+      freeDeliveryThreshold: 'Gratis verzending bij bestellingen vanaf <amountStyle>{amount}</amountStyle>',
       yourOverview: 'Jouw overzicht',
       proceedToCheckout: 'Doorgaan naar afrekenen',
     },

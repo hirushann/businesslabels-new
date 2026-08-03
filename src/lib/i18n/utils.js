@@ -69,6 +69,9 @@ export function localePath(path, locale) {
   const [basePath, search] = path.split('?');
   const searchSuffix = search ? '?' + search : '';
   if (normalized === 'en') {
+    if (basePath === '/en' || basePath.startsWith('/en/')) {
+      return path;
+    }
     if (basePath === '/software') {
       return '/en/software-2' + searchSuffix;
     }

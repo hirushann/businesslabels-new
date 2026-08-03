@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import LocaleLink from '@/components/LocaleLink';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FormEvent, Suspense, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -644,9 +645,9 @@ function RegisterContent() {
 
             <p className="mt-7 text-center text-sm font-semibold text-neutral-500">
               {t('register.alreadyHaveAccount')}{' '}
-              <Link href="/login" className="font-black text-brand transition-colors hover:text-amber-700">
+              <LocaleLink href="/login" className="font-black text-brand transition-colors hover:text-amber-700">
                 {t('register.loginLink')}
-              </Link>
+              </LocaleLink>
             </p>
         </div>
       </div>

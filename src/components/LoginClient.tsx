@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import LocaleLink from '@/components/LocaleLink';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FormEvent, Suspense, useState, useRef } from 'react';
 import { ArrowRight, Eye, EyeOff, Loader2, LockKeyhole, Mail, CheckCircle2, Home, ShoppingBag } from 'lucide-react';
@@ -478,9 +479,9 @@ function LoginContent() {
 
             <p className="mt-7 text-center text-sm font-semibold text-neutral-500">
               {t('login.noAccount')}{' '}
-              <Link href="/register" className="font-black text-brand transition-colors hover:text-amber-700">
+              <LocaleLink href="/register" className="font-black text-brand transition-colors hover:text-amber-700">
                 {t('login.register')}
-              </Link>
+              </LocaleLink>
             </p>
           </div>
         </div>

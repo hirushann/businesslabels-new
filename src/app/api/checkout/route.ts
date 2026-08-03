@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { normalizeLocale } from '@/lib/i18n/config';
+import { CHECKOUT_RETURN_LOCALE_COOKIE, normalizeLocale } from '@/lib/i18n/config';
 
 const API_BASE_URL = process.env.BBNL_API_BASE_URL;
 
@@ -20,13 +20,17 @@ const API_MESSAGES = {
   },
 };
 
+function getRequestLocale(request: NextRequest) {
+  return normalizeLocale(request.cookies.get('NEXT_LOCALE')?.value || request.headers.get('x-businesslabels-locale'));
+}
+
 function getRequestMessages(request: NextRequest) {
-  const locale = normalizeLocale(request.cookies.get('NEXT_LOCALE')?.value || request.headers.get('x-businesslabels-locale'));
-  return API_MESSAGES[locale];
+  return API_MESSAGES[getRequestLocale(request)];
 }
 
 export async function POST(request: NextRequest) {
-  const messages = getRequestMessages(request);
+  const locale = getRequestLocale(request);
+  const messages = API_MESSAGES[locale];
 
   if (!API_BASE_URL) {
     return NextResponse.json(
@@ -74,7 +78,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(data, { status: response.status });
     }
 
-    return NextResponse.json(data);
+    const nextResponse = NextResponse.json(data);
+    if (locale === 'en' && data?.payment_url) {
+      nextResponse.cookies.set(CHECKOUT_RETURN_LOCALE_COOKIE, 'en', {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        path: '/',
+        maxAge: 60 * 60,
+      });
+    }
+
+    return nextResponse;
   } catch (error) {
     console.error('Checkout proxy error:', error);
     return NextResponse.json(

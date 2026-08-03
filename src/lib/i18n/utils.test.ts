@@ -12,6 +12,10 @@ describe("i18n routing utilities", () => {
 
   it("adds the English prefix only for English routes", () => {
     expect(localePath("/product?focus=true", "en")).toBe("/en/product?focus=true");
+    expect(localePath("/material/2000t", "en")).toBe("/en/material/2000t");
+    expect(localePath("/login", "en")).toBe("/en/login");
+    expect(localePath("/register", "en")).toBe("/en/register");
+    expect(localePath("/en/material/2000t", "en")).toBe("/en/material/2000t");
     expect(localePath("/product?focus=true", "nl")).toBe("/product?focus=true");
     expect(localePath("/software", "en")).toBe("/en/software-2");
     expect(localePath("/software", "nl")).toBe("/software");

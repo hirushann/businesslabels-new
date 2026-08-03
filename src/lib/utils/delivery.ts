@@ -1,9 +1,9 @@
-/**
- * Maximum effective delivery time, in days, for a product to count as
- * "in stock". Anything slower (2 weeks or more) is treated as out of stock
- * and hidden from listings.
- */
+/** Delivery estimates at or below this many days count as in stock. */
 export const IN_STOCK_DELIVERY_DAY_LIMIT = 10;
+export const DEFAULT_DELIVERY_DATES_IN_STOCK = 1;
+export const DEFAULT_DELIVERY_DATES_NO_STOCK = 7;
+
+const DEFAULT_BUSINESS_TIMEZONE = "Europe/Amsterdam";
 
 type NumericLike = number | string | null | undefined;
 
@@ -13,7 +13,6 @@ type StockStatusParams = {
   delivery_dates_no_stock?: NumericLike;
 };
 
-/** Coerce a number-or-numeric-string into a finite number, else null. */
 function toFiniteNumber(value: NumericLike): number | null {
   if (typeof value === "number") return Number.isFinite(value) ? value : null;
   if (typeof value === "string" && value.trim() !== "") {
@@ -23,92 +22,104 @@ function toFiniteNumber(value: NumericLike): number | null {
   return null;
 }
 
-/**
- * Effective delivery time in days: the in-stock lead time when stock is on
- * hand, otherwise the replenishment (no-stock) lead time. Returns `null` when
- * the relevant delivery figure is missing or not a positive number.
- *
- * Delivery figures are accepted as numbers or numeric strings, since the API
- * has been observed to return either.
- */
 export function getEffectiveDeliveryDays({
   stock,
   delivery_dates_in_stock,
   delivery_dates_no_stock,
 }: StockStatusParams): number | null {
   const stockCount = toFiniteNumber(stock);
-  const hasStock = stockCount !== null && stockCount > 0;
-  const days = toFiniteNumber(hasStock ? delivery_dates_in_stock : delivery_dates_no_stock);
-  return days !== null && days > 0 ? days : null;
+  const value = stockCount !== null && stockCount > 0
+    ? delivery_dates_in_stock ?? DEFAULT_DELIVERY_DATES_IN_STOCK
+    : delivery_dates_no_stock ?? DEFAULT_DELIVERY_DATES_NO_STOCK;
+  const days = toFiniteNumber(value);
+  return days !== null && days >= 0 ? days : null;
 }
 
-/**
- * A product counts as "in stock" when it can be delivered within
- * `IN_STOCK_DELIVERY_DAY_LIMIT` days. Anything slower is out of stock.
- *
- * Returns `null` when delivery data is unavailable, so callers can fall back
- * to whatever stock signal they already have.
- */
 export function isDeliverableInStock(params: StockStatusParams): boolean | null {
   const days = getEffectiveDeliveryDays(params);
-  if (days === null) return null;
-  return days <= IN_STOCK_DELIVERY_DAY_LIMIT;
+  return days === null ? null : days <= IN_STOCK_DELIVERY_DAY_LIMIT;
 }
 
-type DeliveryMessageParams = {
+type DeliveryMessageParams = StockStatusParams & {
   stock: NumericLike;
-  delivery_dates_in_stock: NumericLike;
-  delivery_dates_no_stock: NumericLike;
   now?: Date;
   pickupTime?: string;
+  timeZone?: string;
+  availableDates: readonly string[];
+  locale?: "en" | "nl";
 };
 
 type DeliveryMessageResult = {
-  message: string; // Keep for backward compatibility
-  countdown: {
-    hours: number;
-    minutes: number;
-    formattedMinutes: string; // Zero-padded: "00", "05", "30"
-  };
-  deliveryLabel: string; // "tomorrow" or "7th May"
+  message: string;
+  countdown: { hours: number; minutes: number; formattedMinutes: string };
+  deliveryLabel: string;
   deliveryDate: Date;
 };
 
-function parsePickupTime(timeString: string): { hours: number; minutes: number } {
-  const [hoursStr, minutesStr] = timeString.split(':');
-  return {
-    hours: parseInt(hoursStr, 10),
-    minutes: parseInt(minutesStr, 10),
-  };
+type DateParts = { year: number; month: number; day: number; hour: number; minute: number; second: number };
+
+function zonedParts(date: Date, timeZone: string): DateParts {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const value = (type: Intl.DateTimeFormatPartTypes) => Number(parts.find((part) => part.type === type)?.value);
+  return { year: value("year"), month: value("month"), day: value("day"), hour: value("hour"), minute: value("minute"), second: value("second") };
 }
 
-function getOrdinalSuffix(day: number): string {
-  if (day > 3 && day < 21) return 'th';
-  switch (day % 10) {
-    case 1: return 'st';
-    case 2: return 'nd';
-    case 3: return 'rd';
-    default: return 'th';
+function zonedDate(parts: DateParts, timeZone: string): Date {
+  const intended = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second);
+  let result = new Date(intended);
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const actual = zonedParts(result, timeZone);
+    const actualWallTime = Date.UTC(actual.year, actual.month - 1, actual.day, actual.hour, actual.minute, actual.second);
+    result = new Date(result.getTime() + intended - actualWallTime);
   }
+  return result;
 }
 
-function formatDeliveryDate(date: Date, currentDate: Date): string {
-  // Check if it's tomorrow
-  const tomorrow = new Date(currentDate);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  
-  if (
-    date.getDate() === tomorrow.getDate() &&
-    date.getMonth() === tomorrow.getMonth() &&
-    date.getFullYear() === tomorrow.getFullYear()
-  ) {
-    return 'tomorrow';
-  }
-  
-  // Format as "7th May"
-  const day = date.getDate();
-  const monthName = date.toLocaleString('en-GB', { month: 'long' });
-  return `${day}${getOrdinalSuffix(day)} ${monthName}`;
+function dateKey(parts: Pick<DateParts, "year" | "month" | "day">): string {
+  return `${parts.year}-${String(parts.month).padStart(2, "0")}-${String(parts.day).padStart(2, "0")}`;
+}
+
+function datePartsFromKey(key: string): DateParts {
+  const [year, month, day] = key.split("-").map(Number);
+  return { year, month, day, hour: 0, minute: 0, second: 0 };
+}
+
+function addCalendarDays(key: string, days: number): string {
+  const { year, month, day } = datePartsFromKey(key);
+  const date = new Date(Date.UTC(year, month - 1, day + days));
+  return date.toISOString().slice(0, 10);
+}
+
+export function getAvailableDeliveryDates(payload: unknown): string[] {
+  if (!payload || typeof payload !== "object" || !("data" in payload) || !Array.isArray(payload.data)) return [];
+
+  return payload.data.flatMap((slot) => {
+    if (!slot || typeof slot !== "object" || !("date" in slot) || !("is_fully_unavailable" in slot)) return [];
+    return typeof slot.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(slot.date) && slot.is_fully_unavailable === false
+      ? [slot.date]
+      : [];
+  });
+}
+
+function nextAvailableDay(key: string, availableDates: Set<string>): string {
+  const candidate = [...availableDates].sort().find((date) => date > key);
+  if (!candidate) throw new Error("No upcoming delivery availability returned by the API");
+  return candidate;
+}
+
+function formatDeliveryDate(key: string, currentKey: string, locale: "en" | "nl", timeZone: string): string {
+  if (key === addCalendarDays(currentKey, 1)) return locale === "nl" ? "morgen" : "tomorrow";
+  const date = zonedDate(datePartsFromKey(key), timeZone);
+  return new Intl.DateTimeFormat(locale === "nl" ? "nl-NL" : "en-GB", { timeZone, day: "numeric", month: "long" }).format(date);
 }
 
 export function getExpectedDeliveryMessage({
@@ -116,74 +127,45 @@ export function getExpectedDeliveryMessage({
   delivery_dates_in_stock,
   delivery_dates_no_stock,
   now = new Date(),
-  pickupTime = process.env.NEXT_PUBLIC_DELIVERY_PICKUP_TIME || process.env.DELIVERY_PICKUP_TIME || '13:00',
+  pickupTime = process.env.NEXT_PUBLIC_DELIVERY_PICKUP_TIME || process.env.DELIVERY_PICKUP_TIME || "13:00",
+  timeZone = process.env.NEXT_PUBLIC_BUSINESS_TIMEZONE || process.env.BUSINESS_TIMEZONE || DEFAULT_BUSINESS_TIMEZONE,
+  availableDates,
+  locale = "en",
 }: DeliveryMessageParams): DeliveryMessageResult {
   const stockCount = toFiniteNumber(stock);
-  if (stockCount === null) {
-    throw new Error("Stock must be a finite number");
-  }
+  if (stockCount === null) throw new Error("Stock must be a finite number");
 
-  // Determine which delivery days to use
-  const deliveryDays = getEffectiveDeliveryDays({
-    stock: stockCount,
-    delivery_dates_in_stock,
-    delivery_dates_no_stock,
-  });
-  if (deliveryDays === null) {
-    throw new Error("Delivery dates must be positive finite numbers");
-  }
-  
-  // Parse pickup time
-  const { hours: pickupHour, minutes: pickupMinute } = parsePickupTime(pickupTime);
-  
-  // Create cutoff time for today
-  const todayCutoff = new Date(now);
-  todayCutoff.setHours(pickupHour, pickupMinute, 0, 0);
-  
-  // Check if we've passed today's cutoff
-  const passedCutoff = now >= todayCutoff;
-  
-  // Calculate countdown target
-  let countdownTarget: Date;
-  let extraDays = 0;
-  
-  if (passedCutoff) {
-    // Use tomorrow's cutoff
-    countdownTarget = new Date(todayCutoff);
-    countdownTarget.setDate(countdownTarget.getDate() + 1);
-    extraDays = 1; // Add extra day to delivery
-  } else {
-    // Use today's cutoff
-    countdownTarget = todayCutoff;
-  }
-  
-  // Calculate time remaining
-  const timeRemaining = countdownTarget.getTime() - now.getTime();
-  const hoursRemaining = Math.floor(timeRemaining / (1000 * 60 * 60));
-  const minutesRemaining = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
-  
-  // Calculate delivery date
-  const deliveryDate = new Date(now);
-  deliveryDate.setDate(deliveryDate.getDate() + deliveryDays + extraDays);
-  deliveryDate.setHours(0, 0, 0, 0); // Reset time to midnight for date comparison
-  
-  // Format the delivery date
-  const deliveryDateLabel = formatDeliveryDate(deliveryDate, now);
-  
-  // Format minutes with zero padding
-  const minutesStr = minutesRemaining.toString().padStart(2, '0');
-  
-  // Build the message
-  const message = `Order within ${hoursRemaining} hours ${minutesStr} minutes for delivery ${deliveryDateLabel}`;
-  
+  const deliveryDays = getEffectiveDeliveryDays({ stock: stockCount, delivery_dates_in_stock, delivery_dates_no_stock });
+  if (deliveryDays === null) throw new Error("Delivery dates must be non-negative finite numbers");
+
+  const [pickupHour, pickupMinute] = pickupTime.split(":").map(Number);
+  if (!Number.isInteger(pickupHour) || !Number.isInteger(pickupMinute)) throw new Error("Pickup time must use HH:mm");
+
+  const availableDateSet = new Set(availableDates);
+  const current = zonedParts(now, timeZone);
+  const currentKey = dateKey(current);
+  const todayCutoff = zonedDate({ ...datePartsFromKey(currentKey), hour: pickupHour, minute: pickupMinute }, timeZone);
+  const orderDateKey = availableDateSet.has(currentKey) && now < todayCutoff
+    ? currentKey
+    : nextAvailableDay(currentKey, availableDateSet);
+  const cutoff = orderDateKey === currentKey
+    ? todayCutoff
+    : zonedDate({ ...datePartsFromKey(orderDateKey), hour: pickupHour, minute: pickupMinute }, timeZone);
+  const remainingMinutes = Math.max(0, Math.floor((cutoff.getTime() - now.getTime()) / 60000));
+  const deliveryCandidateKey = addCalendarDays(orderDateKey, deliveryDays);
+  const deliveryKey = availableDateSet.has(deliveryCandidateKey)
+    ? deliveryCandidateKey
+    : nextAvailableDay(deliveryCandidateKey, availableDateSet);
+  const deliveryDate = zonedDate(datePartsFromKey(deliveryKey), timeZone);
+  const deliveryLabel = formatDeliveryDate(deliveryKey, currentKey, locale, timeZone);
+  const hours = Math.floor(remainingMinutes / 60);
+  const minutes = remainingMinutes % 60;
+  const formattedMinutes = String(minutes).padStart(2, "0");
+
   return {
-    message,
-    countdown: {
-      hours: hoursRemaining,
-      minutes: minutesRemaining,
-      formattedMinutes: minutesStr,
-    },
-    deliveryLabel: deliveryDateLabel,
+    message: `Order within ${hours} hours ${formattedMinutes} minutes for delivery ${deliveryLabel}`,
+    countdown: { hours, minutes, formattedMinutes },
+    deliveryLabel,
     deliveryDate,
   };
 }

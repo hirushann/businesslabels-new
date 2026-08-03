@@ -11,6 +11,7 @@ export const DEFAULT_LOCALE = 'nl';
 export const LOCALE_COOKIE = 'NEXT_LOCALE';
 export const LOCALE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
 export const LOCALE_HEADER = 'x-businesslabels-locale';
+export const CHECKOUT_RETURN_LOCALE_COOKIE = 'CHECKOUT_RETURN_LOCALE';
 
 export const LOCALE_LABELS = {
   en: { name: 'English', short: 'EN' },

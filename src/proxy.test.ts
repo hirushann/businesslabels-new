@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { NextRequest } from "next/server";
 
-import { LOCALE_COOKIE } from "@/lib/i18n/config";
+import { CHECKOUT_RETURN_LOCALE_COOKIE, LOCALE_COOKIE } from "@/lib/i18n/config";
 import { proxy } from "./proxy";
 
 function makeRequest(path: string, cookie?: string) {
@@ -11,20 +11,32 @@ function makeRequest(path: string, cookie?: string) {
 }
 
 describe("proxy locale routing", () => {
-  it("keeps clean URLs in the user's persisted English locale", () => {
-    const response = proxy(makeRequest("/product?focus=true", `${LOCALE_COOKIE}=en`));
+  it.each(["/", "/kennisbank-overzicht"])('loads the Dutch route %s in Dutch despite saved English state', (path) => {
+    const response = proxy(makeRequest(path, `${LOCALE_COOKIE}=en`));
 
     expect(response.status).not.toBeGreaterThanOrEqual(300);
     expect(response.headers.get("location")).toBeNull();
-    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("nl");
   });
 
-  it("keeps checkout return URLs in the user's persisted English locale", () => {
+  it("keeps unprefixed checkout return URLs Dutch despite saved English state", () => {
     const response = proxy(makeRequest("/bedankt?order_number=BL-123", `${LOCALE_COOKIE}=en`));
 
     expect(response.status).not.toBeGreaterThanOrEqual(300);
     expect(response.headers.get("location")).toBeNull();
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("nl");
+  });
+
+  it("restores English only for an active English payment return", () => {
+    const response = proxy(makeRequest(
+      "/bedankt?order_number=BL-123",
+      `${LOCALE_COOKIE}=en; ${CHECKOUT_RETURN_LOCALE_COOKIE}=en`,
+    ));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/en/thank-you?order_number=BL-123");
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+    expect(response.cookies.get(CHECKOUT_RETURN_LOCALE_COOKIE)?.value).toBe("");
   });
 
   it("defaults clean URLs to Dutch when no locale has been selected", () => {
@@ -35,8 +47,8 @@ describe("proxy locale routing", () => {
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("nl");
   });
 
-  it("keeps prefixed English URLs English", () => {
-    const response = proxy(makeRequest("/en/product?focus=true", `${LOCALE_COOKIE}=nl`));
+  it.each(["/en/", "/en/knowledge-base"])('loads the English route %s in English despite saved Dutch state', (path) => {
+    const response = proxy(makeRequest(path, `${LOCALE_COOKIE}=nl`));
 
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
@@ -61,20 +73,20 @@ describe("proxy locale routing", () => {
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
 
-  it("keeps auth redirects locale-aware from clean URLs with an English cookie", () => {
+  it("keeps unprefixed auth redirects Dutch despite an English cookie", () => {
     const response = proxy(makeRequest("/my-account", `${LOCALE_COOKIE}=en`));
 
     expect(response.status).toBeGreaterThanOrEqual(300);
-    expect(response.headers.get("location")).toBe("http://localhost/en/login?redirect=%2Fen%2Fmy-account");
-    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+    expect(response.headers.get("location")).toBe("http://localhost/login?redirect=%2Fmy-account");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("nl");
   });
 
-  it("redirects /my-account to /en/my-account when user is authenticated with an English cookie", () => {
+  it("keeps authenticated unprefixed account routes Dutch despite an English cookie", () => {
     const response = proxy(makeRequest("/my-account", `${LOCALE_COOKIE}=en; auth_token=test_token`));
 
-    expect(response.status).toBe(307);
-    expect(response.headers.get("location")).toBe("http://localhost/en/my-account");
-    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("nl");
   });
 
   it("rewrites /en/software-2 internally to /software", () => {
@@ -136,12 +148,12 @@ describe("proxy locale routing", () => {
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
 
-  it("redirects /inkt-recyclen-epson-colorworks to /en/inkt-recyclen-epson-colorworks when cookie is en", () => {
+  it("keeps unprefixed recycling routes Dutch despite an English cookie", () => {
     const response = proxy(makeRequest("/inkt-recyclen-epson-colorworks", `${LOCALE_COOKIE}=en`));
 
-    expect(response.status).toBe(307);
-    expect(response.headers.get("location")).toBe("http://localhost/en/inkt-recyclen-epson-colorworks");
-    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("nl");
   });
 
   it("redirects /en/custom-made-form to /en/material-customization", () => {
@@ -182,12 +194,12 @@ describe("proxy locale routing", () => {
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
 
-  it("redirects /winkel to /en/shop when cookie is en", () => {
+  it("keeps unprefixed shop routes Dutch despite an English cookie", () => {
     const response = proxy(makeRequest("/winkel", `${LOCALE_COOKIE}=en`));
 
-    expect(response.status).toBe(307);
-    expect(response.headers.get("location")).toBe("http://localhost/en/shop");
-    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("nl");
   });
 
   it("rewrites /en/cart internally to /winkelmand", () => {
