@@ -104,7 +104,7 @@ declare global {
 
 type AddressAutocompleteProps = {
   value?: string;
-  onChange?: (value: string) => void;
+  onChange: (value: string) => void;
   onAddressSelect: (address: {
     street: string;
     city: string;
