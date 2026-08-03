@@ -1618,6 +1618,14 @@ function categoriesFromSource(source: ProductSource): ProductCardCategory[] {
   return [];
 }
 
+// Delivery-window data isn't part of ProductCardData (it's a search-internal
+// signal), so we stash it here to recombine with a live stock count in
+// applyProductConfigOverrides (see N04: the ES index can lag the live DB).
+const deliveryWindowByResult = new WeakMap<
+  CatalogProductResult,
+  { stock: number | null; deliveryDatesInStock: number | null; deliveryDatesNoStock: number | null }
+>();
+
 function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number, locale?: "en" | "nl"): CatalogProductResult {
   const source = hit._source ?? {};
   const id = stringValue(source.id) ?? stringValue(source.ID) ?? hit._id ?? `result-${index}`;
@@ -1706,7 +1714,13 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number, loc
     href = '/product/' + href.slice('/products/'.length);
   }
 
-  return { id: resultKey, product, href };
+  const result = { id: resultKey, product, href };
+  deliveryWindowByResult.set(result, {
+    stock: stockCount,
+    deliveryDatesInStock: numberValue(source.delivery_dates_in_stock),
+    deliveryDatesNoStock: numberValue(source.delivery_dates_no_stock),
+  });
+  return result;
 }
 
 function totalHitsValue(total: estypes.SearchTotalHits | number | undefined): number {
@@ -1754,6 +1768,10 @@ async function applyProductConfigOverrides(products: CatalogProductResult[], loc
         isLabelProduct: boolean | null;
         isGroupProduct: boolean | null;
         warranty: LaravelProduct["warranty"];
+        price: number | null;
+        originalPrice: number | null;
+        stock: number | null;
+        rawInStock: boolean | null;
       }
     >();
 
@@ -1764,6 +1782,10 @@ async function applyProductConfigOverrides(products: CatalogProductResult[], loc
       isLabelProduct: boolean | null;
       isGroupProduct: boolean | null;
       warranty: LaravelProduct["warranty"];
+      price: number | null;
+      originalPrice: number | null;
+      stock: number | null;
+      rawInStock: boolean | null;
     }) => {
       const normalized = key?.trim();
       if (normalized) productConfigMap.set(normalized, config);
@@ -1777,6 +1799,14 @@ async function applyProductConfigOverrides(products: CatalogProductResult[], loc
         isLabelProduct: p.is_label_product ?? p.is_label ?? null,
         isGroupProduct: p.is_group_product ?? null,
         warranty: p.warranty ?? null,
+        // Live price + stock signal so listing cards never lag behind the
+        // Elasticsearch index (which is only as fresh as the last Scout
+        // reindex). The detail page always reads these live; the list should
+        // agree with it instead of showing a stale cached price/stock (N04).
+        price: numberValue(p.price),
+        originalPrice: numberValue(p.original_price),
+        stock: numberValue(p.stock),
+        rawInStock: typeof p.in_stock === "boolean" ? p.in_stock : null,
       };
 
       const slugValues = typeof p.slug === "string"
@@ -1803,6 +1833,29 @@ async function applyProductConfigOverrides(products: CatalogProductResult[], loc
       p.product.is_label = productConfig?.isLabelProduct ?? null;
       p.product.is_group_product = productConfig?.isGroupProduct ?? null;
       p.product.warranty = productConfig?.warranty ?? p.product.warranty ?? null;
+
+      // Prefer the live price over whatever the ES index had cached.
+      if (productConfig.price != null) {
+        p.product.price = productConfig.price;
+      }
+      if (productConfig.originalPrice != null) {
+        p.product.originalPrice = productConfig.originalPrice;
+      }
+
+      // Recompute stock status from a live stock count, keeping the ES-cached
+      // delivery-window estimate (rarely changes) but never a stale raw
+      // stock/in_stock flag (N04: category badge disagreeing with the
+      // product page for the same SKU).
+      const deliveryWindow = deliveryWindowByResult.get(p);
+      const liveStock = productConfig.stock ?? deliveryWindow?.stock ?? null;
+      const liveDeliveryStockStatus = isDeliverableInStock({
+        stock: liveStock,
+        delivery_dates_in_stock: deliveryWindow?.deliveryDatesInStock ?? null,
+        delivery_dates_no_stock: deliveryWindow?.deliveryDatesNoStock ?? null,
+      });
+      p.product.inStock = liveDeliveryStockStatus
+        ?? productConfig.rawInStock
+        ?? Boolean((liveStock ?? 0) > 0);
     });
   } catch (err) {
     console.error("[Search] Failed to fetch packing_group overrides:", err);

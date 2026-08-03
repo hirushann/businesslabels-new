@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
 import type { FormEvent, MouseEvent } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 interface TeamMember {
   id: number;
@@ -139,6 +139,9 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
     return () => { ignore = true; };
   }, []);
   const [clientAuthState, setClientAuthState] = useState<boolean | null>(null);
+  const [isLoginPopupOpen, setIsLoginPopupOpen] = useState(false);
+  const [isRegisterPopupOpen, setIsRegisterPopupOpen] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const checkAuth = () => {
@@ -150,24 +153,82 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
 
     checkAuth();
 
+    const handleAuthExpired = () => {
+      setClientAuthState(false);
+      // Soft redirect to home page and trigger login popup
+      // without causing a full browser refresh
+      if (typeof window !== 'undefined') {
+        const currentPath = window.location.pathname;
+        if (currentPath.includes('/my-account')) {
+          router.push('/?auth=login&redirect=' + encodeURIComponent(currentPath));
+        } else {
+          setIsLoginPopupOpen(true);
+        }
+      }
+    };
+
     window.addEventListener('storage', checkAuth);
     window.addEventListener('auth-user-updated', checkAuth);
+    window.addEventListener('auth-expired', handleAuthExpired);
 
     return () => {
       window.removeEventListener('storage', checkAuth);
       window.removeEventListener('auth-user-updated', checkAuth);
+      window.removeEventListener('auth-expired', handleAuthExpired);
     };
-  }, []);
+  }, [router]);
 
-  const isAuthenticated = clientAuthState ?? hasAuthToken;
+  // We only trust clientAuthState if the server confirms they have a token (hasAuthToken === true)
+  // or if they just logged in on the client (clientAuthState === true && hasAuthToken === false is only valid briefly before refresh)
+  // But wait, if they have a stale localStorage, clientAuthState is true and hasAuthToken is false.
+  // To distinguish a fresh client login from a stale localStorage, we can check if hasAuthToken is false,
+  // we default to false unless they JUST successfully logged in. 
+  // For simplicity and correctness, the most robust check is just hasAuthToken, 
+  // because if they are logged in, the server knows it. If they just logged in via popup, 
+  // the popup calls router.refresh() which instantly updates hasAuthToken.
+  const isAuthenticated = hasAuthToken;
   const accountHref = lp('/my-account');
-  const [isLoginPopupOpen, setIsLoginPopupOpen] = useState(false);
-  const [isRegisterPopupOpen, setIsRegisterPopupOpen] = useState(false);
 
   const handleAccountClick = (event: MouseEvent<HTMLAnchorElement>) => {
     if (!isAuthenticated) {
       event.preventDefault();
       setIsLoginPopupOpen(true);
+    }
+  };
+
+  // /login and /register redirect here with these params so the popup (the
+  // Figma-matching implementation) stays the single auth entry point instead
+  // of the old standalone pages.
+  const [pendingAuthRedirect, setPendingAuthRedirect] = useState<string | null>(null);
+
+  useEffect(() => {
+    const authParam = searchParams.get('auth');
+    if (!authParam) return;
+
+    if (authParam === 'register') {
+      setIsRegisterPopupOpen(true);
+    } else if (authParam === 'login') {
+      setIsLoginPopupOpen(true);
+    } else {
+      return;
+    }
+
+    const redirectParam = searchParams.get('redirect');
+    if (redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//')) {
+      setPendingAuthRedirect(redirectParam);
+    }
+
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.delete('auth');
+    nextParams.delete('redirect');
+    const query = nextParams.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }, [searchParams, router, pathname]);
+
+  const handleAuthPopupLoginSuccess = () => {
+    if (pendingAuthRedirect) {
+      router.push(pendingAuthRedirect);
+      router.refresh();
     }
   };
 
@@ -1082,6 +1143,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
         open={isLoginPopupOpen}
         onOpenChange={setIsLoginPopupOpen}
         onSwitchToRegister={() => setIsRegisterPopupOpen(true)}
+        onLoginSuccess={handleAuthPopupLoginSuccess}
       />
       <RegisterPopup
         open={isRegisterPopupOpen}

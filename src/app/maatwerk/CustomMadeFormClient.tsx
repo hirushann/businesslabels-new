@@ -155,6 +155,7 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoaded, setIsLoaded] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; email?: string }>({});
 
   useEffect(() => {
     let draftCompany = '';
@@ -250,15 +251,41 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
     setEmail('');
     setPhone('');
     setComments('');
+    setFieldErrors({});
+  }
+
+  function validateContactFields() {
+    const errors: { name?: string; email?: string } = {};
+
+    if (!name.trim()) {
+      errors.name = t('nameRequired');
+    }
+
+    if (!email.trim()) {
+      errors.email = t('emailRequired');
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      errors.email = t('emailInvalid');
+    }
+
+    return errors;
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (isSubmitting) return;
 
+    const validationErrors = validateContactFields();
+    if (Object.keys(validationErrors).length > 0) {
+      setFieldErrors(validationErrors);
+      setSubmitStatus('error');
+      setErrorMessage(t('fixHighlightedFields'));
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitStatus('idle');
     setErrorMessage('');
+    setFieldErrors({});
 
     const shapeLabel = SHAPES.find((s) => s.id === selectedShape)?.label || 'Not specified';
     const printerValue = unknownPrinter ? 'Unknown' : printerQuery || 'Not specified';
@@ -298,15 +325,28 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
       } else {
         const data = await response.json().catch(() => ({}));
         setSubmitStatus('error');
-        
+
         let errorText = data.message || 'Something went wrong. Please try again.';
         if (data.errors) {
-          const firstErrorKey = Object.keys(data.errors)[0];
-          if (firstErrorKey && data.errors[firstErrorKey][0]) {
-            errorText = data.errors[firstErrorKey][0];
+          const serverFieldErrors: { name?: string; email?: string } = {};
+          for (const key of ['name', 'email'] as const) {
+            const messages = data.errors[key];
+            if (Array.isArray(messages) && messages[0]) {
+              serverFieldErrors[key] = messages[0];
+            }
+          }
+
+          if (Object.keys(serverFieldErrors).length > 0) {
+            setFieldErrors(serverFieldErrors);
+            errorText = t('fixHighlightedFields');
+          } else {
+            const firstErrorKey = Object.keys(data.errors)[0];
+            if (firstErrorKey && data.errors[firstErrorKey][0]) {
+              errorText = data.errors[firstErrorKey][0];
+            }
           }
         }
-        
+
         setErrorMessage(errorText);
       }
     } catch (err) {
@@ -485,7 +525,7 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
             </div>
             <div className="h-px bg-gray-100" />
 
-            <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-6">
+            <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-6" noValidate>
               {/* ── Step 1: Shape ── */}
             <section className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
@@ -930,29 +970,46 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
                     />
                   </div>
                   <div className="flex-1 flex flex-col gap-2">
-                    <label htmlFor="name" className="text-neutral-800 text-lg font-bold font-sans leading-5">{t("name")}</label>
+                    <label htmlFor="name" className="text-neutral-800 text-lg font-bold font-sans leading-5">
+                      {t("name")} <span className="text-red-500">*</span>
+                    </label>
                     <input
                       id="name"
                       type="text"
                       value={name}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        setName(e.target.value);
+                        if (fieldErrors.name) setFieldErrors((current) => ({ ...current, name: undefined }));
+                      }}
                       placeholder={t('yourName')}
-                      className="h-11 px-5 py-3 rounded-[38px] outline outline-1 outline-offset-[-1px] outline-zinc-200 text-neutral-700 text-base font-sans w-full bg-white focus:outline-brand focus:outline-2 transition-all"
+                      required
+                      aria-invalid={Boolean(fieldErrors.name)}
+                      aria-describedby={fieldErrors.name ? 'name-error' : undefined}
+                      className={`h-11 px-5 py-3 rounded-[38px] outline outline-1 outline-offset-[-1px] text-neutral-700 text-base font-sans w-full bg-white focus:outline-brand focus:outline-2 transition-all ${fieldErrors.name ? 'outline-red-400 outline-2' : 'outline-zinc-200'}`}
                     />
+                    {fieldErrors.name ? <p id="name-error" className="text-sm font-medium text-red-600">{fieldErrors.name}</p> : null}
                   </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="flex-1 flex flex-col gap-2">
-                    <label htmlFor="email" className="text-neutral-800 text-lg font-bold font-sans leading-5">{t("email")}</label>
+                    <label htmlFor="email" className="text-neutral-800 text-lg font-bold font-sans leading-5">
+                      {t("email")} <span className="text-red-500">*</span>
+                    </label>
                     <input
                       id="email"
                       type="email"
                       value={email}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        setEmail(e.target.value);
+                        if (fieldErrors.email) setFieldErrors((current) => ({ ...current, email: undefined }));
+                      }}
                       placeholder={t('yourEmail')}
                       required
-                      className="h-11 px-5 py-3 rounded-[38px] outline outline-1 outline-offset-[-1px] outline-zinc-200 text-neutral-700 text-base font-sans w-full bg-white focus:outline-brand focus:outline-2 transition-all"
+                      aria-invalid={Boolean(fieldErrors.email)}
+                      aria-describedby={fieldErrors.email ? 'email-error' : undefined}
+                      className={`h-11 px-5 py-3 rounded-[38px] outline outline-1 outline-offset-[-1px] text-neutral-700 text-base font-sans w-full bg-white focus:outline-brand focus:outline-2 transition-all ${fieldErrors.email ? 'outline-red-400 outline-2' : 'outline-zinc-200'}`}
                     />
+                    {fieldErrors.email ? <p id="email-error" className="text-sm font-medium text-red-600">{fieldErrors.email}</p> : null}
                   </div>
                   <div className="flex-1 flex flex-col gap-2">
                     <label htmlFor="phone" className="text-neutral-800 text-lg font-bold font-sans leading-5">{t("phone")}</label>

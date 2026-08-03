@@ -1307,10 +1307,10 @@ function CheckoutShell({
                         <div className="w-[62px] h-[62px] p-1 bg-line rounded-lg flex items-center justify-center overflow-hidden shrink-0">
                           {productHref ? (
                             <Link href={productHref} className="w-full h-full block">
-                              <img src={imageSrc} alt={item.name} className="w-full h-full object-contain" />
+                              <img src={imageSrc} alt={item.name} className="w-full h-full object-contain" onError={(e) => { e.currentTarget.src = '/empty.png'; }} />
                             </Link>
                           ) : (
-                            <img src={imageSrc} alt={item.name} className="w-full h-full object-contain" />
+                            <img src={imageSrc} alt={item.name} className="w-full h-full object-contain" onError={(e) => { e.currentTarget.src = '/empty.png'; }} />
                           )}
                         </div>
                         <div className="flex-1 flex items-start justify-between gap-2 min-w-0">
@@ -1782,6 +1782,16 @@ export default function CheckoutPageClient({
   const [form, setForm] = useState<CheckoutFormState>(
     isDemoMode ? demoFormState : initialFormState,
   );
+
+  useEffect(() => {
+    if (isDemoMode || !cart.purchaseReference) {
+      return;
+    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Syncing in a value that only becomes available once CartProvider hydrates from localStorage.
+    setForm((current) =>
+      current.purchaseReference ? current : { ...current, purchaseReference: cart.purchaseReference },
+    );
+  }, [isDemoMode, cart.purchaseReference]);
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [errors, setErrors] = useState<Partial<Record<keyof CheckoutFormState, string>>>({});
   const [isPending, setIsPending] = useState(false);
@@ -2094,6 +2104,12 @@ export default function CheckoutPageClient({
   }, [autofillCustomerDetails, isAutofilled]);
 
   const handleChange = (field: keyof CheckoutFormState, value: string | boolean) => {
+    if (field === "purchaseReference") {
+      setForm((current) => ({ ...current, purchaseReference: value as string }));
+      cart.setPurchaseReference(value as string);
+      return;
+    }
+
     if (field === "country") {
       setForm((current) => ({ ...current, country: value as string, state: "" }));
       setErrors((current) => ({ ...current, country: undefined, state: undefined }));

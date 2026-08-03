@@ -172,6 +172,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                                   src={imageSrc}
                                   alt={item.name}
                                   className="w-full h-full object-contain p-1"
+                                  onError={(e) => { e.currentTarget.src = '/empty.png'; }}
                                 />
                               </Link>
                             ) : (
@@ -180,6 +181,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                                 src={imageSrc}
                                 alt={item.name}
                                 className="w-full h-full object-contain p-1"
+                                onError={(e) => { e.currentTarget.src = '/empty.png'; }}
                               />
                             )}
                           </div>

@@ -57,18 +57,20 @@ export default function PrinterCard({ printer, href }: PrinterCardProps) {
   const printerName = printer.name ?? "";
   const subtitle = normalizeText(printer.subtitle);
   const imageSrc = normalizeText(printer.mainImage) || "https://placehold.co/600x400";
+  const [imgError, setImgError] = useState(false);
 
   const cardContent = (
     <div className="bg-white rounded-xl border border-line shadow-[2px_4px_20px_0px_rgba(109,109,120,0.10)] flex flex-col overflow-hidden hover:shadow-[2px_8px_28px_0px_rgba(109,109,120,0.18)] transition-shadow duration-200">
       {/* Image area */}
       <div className="relative h-[220px] border-b border-line flex items-center justify-center overflow-hidden bg-line">
         <Image
-          src={imageSrc}
-          alt={printerName}
-          width={320}
-          height={220}
-          className="h-full w-auto object-contain py-6 px-6"
+          src={imgError ? "/empty.png" : imageSrc}
+          alt={printerName || "Printer"}
+          width={600}
+          height={400}
+          className="h-full w-auto object-contain mx-auto py-5"
           unoptimized
+          onError={() => setImgError(true)}
         />
       </div>
 

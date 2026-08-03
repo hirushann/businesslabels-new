@@ -1,17 +1,17 @@
-import type { Metadata } from 'next';
-import { getTranslations } from 'next-intl/server';
+import { redirect } from 'next/navigation';
 
-import LoginClient from '@/components/LoginClient';
+type LoginPageProps = {
+  searchParams: Promise<{ redirect?: string | string[] }>;
+};
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations();
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const params = await searchParams;
+  const redirectTo = Array.isArray(params.redirect) ? params.redirect[0] : params.redirect;
 
-  return {
-    title: t('pages.loginMetadataTitle'),
-    description: t('pages.loginMetadataDescription'),
-  };
-}
+  const query = new URLSearchParams({ auth: 'login' });
+  if (redirectTo && redirectTo.startsWith('/') && !redirectTo.startsWith('//')) {
+    query.set('redirect', redirectTo);
+  }
 
-export default function LoginPage() {
-  return <LoginClient />;
+  redirect(`/?${query.toString()}`);
 }

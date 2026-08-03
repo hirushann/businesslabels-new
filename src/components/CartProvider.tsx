@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { ProductRouteType } from "@/components/ProductCard";
 
 const CART_STORAGE_KEY = "businesslabels-cart";
+const PURCHASE_REFERENCE_STORAGE_KEY = "businesslabels-purchase-reference";
 
 type CartDiscountTier = {
   discount?: string | number | null;
@@ -57,6 +58,8 @@ type CartContextValue = {
   isCartOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
+  purchaseReference: string;
+  setPurchaseReference: (value: string) => void;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -175,6 +178,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [purchaseReference, setPurchaseReference] = useState("");
 
   useEffect(() => {
     try {
@@ -185,6 +189,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           // eslint-disable-next-line react-hooks/set-state-in-effect -- Cart is hydrated from localStorage after mount to avoid SSR/client mismatches.
           setItems(parsed);
         }
+      }
+
+      const storedReference = window.localStorage.getItem(PURCHASE_REFERENCE_STORAGE_KEY);
+      if (storedReference) {
+        setPurchaseReference(storedReference);
       }
     } catch (error) {
       console.error("Failed to load cart", error);
@@ -204,6 +213,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       console.error("Failed to persist cart", error);
     }
   }, [isHydrated, items]);
+
+  useEffect(() => {
+    if (!isHydrated) {
+      return;
+    }
+
+    try {
+      window.localStorage.setItem(PURCHASE_REFERENCE_STORAGE_KEY, purchaseReference);
+    } catch (error) {
+      console.error("Failed to persist purchase reference", error);
+    }
+  }, [isHydrated, purchaseReference]);
 
   const addItem = useCallback((item: CartInput, quantity = 1) => {
     const normalizedQuantity = Number.isFinite(quantity) && quantity > 0 ? Math.floor(quantity) : 1;
@@ -337,6 +358,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const clearCart = useCallback(() => {
     setItems([]);
+    setPurchaseReference("");
   }, []);
 
   const openCart = useCallback(() => setIsCartOpen(true), []);
@@ -368,6 +390,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       isCartOpen,
       openCart,
       closeCart,
+      purchaseReference,
+      setPurchaseReference,
     }),
     [
       items,
@@ -380,6 +404,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       clearCart,
       openCart,
       closeCart,
+      purchaseReference,
     ],
   );
 

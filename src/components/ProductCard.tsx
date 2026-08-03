@@ -404,6 +404,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
     Number.isFinite(productOriginalPrice) &&
     (!hasPrice || (hasPrice && productPrice !== undefined && productPrice !== null && productOriginalPrice > productPrice));
   const imageSrc = normalizeText(productMainImage) || "https://placehold.co/600x400?text=" + encodeURIComponent(productName);
+  const [imgError, setImgError] = useState(false);
   
   const properties = product.properties as Record<string, unknown> | null;
   const kernValue = properties?.kern;
@@ -622,12 +623,13 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
         </div>
         <Link href={localizedHref || "#"} className="absolute inset-0 z-0" onClick={onClick}>
         <Image
-          src={imageSrc}
-          alt={productName}
+          src={imgError ? "/empty.png" : imageSrc}
+          alt={productName || "Product"}
           width={600}
           height={400}
           className="h-full w-auto object-contain mx-auto py-5"
           unoptimized
+          onError={() => setImgError(true)}
         />
         </Link>
         {product.is_label_product === true && product.packing_group != null && Number(product.packing_group) > 0 && (

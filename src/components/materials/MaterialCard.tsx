@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import type { Material } from "@/lib/search/materials";
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 
@@ -235,17 +236,19 @@ export default function MaterialCard({
 }) {
   const { printTechs, baseMat, finish, adhesive, weight, thickness } = deriveMaterialAttributes(material, printMethod);
   const cardImage = toDisplayImageUrl(material.main_image) || "/images/material-placeholder.svg";
+  const [imgError, setImgError] = useState(false);
   const materialSummary = plainText(material.excerpt || material.description || material.subtitle);
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_4px_20px_rgba(109,109,120,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(109,109,120,0.12)]">
       <Link href={`/material/${material.slug}`} className="relative block h-60 w-full overflow-hidden bg-slate-50">
         <Image
-          src={cardImage}
-          alt={material.title}
+          src={imgError ? "/empty.png" : cardImage}
+          alt={material.title || "Material"}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           className="object-cover transition-transform duration-500 group-hover:scale-105"
+          onError={() => setImgError(true)}
         />
         <div className="absolute left-4 top-4 flex flex-wrap gap-2 z-10">
           {printTechs.map((tech) => {

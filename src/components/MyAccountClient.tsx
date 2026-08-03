@@ -375,7 +375,7 @@ async function requestAccountOrders() {
     if (response.status === 401 || data.message === 'Unauthenticated.') {
       if (typeof window !== 'undefined') {
         localStorage.removeItem('auth_user');
-        window.location.href = '/login?redirect=/my-account';
+        window.dispatchEvent(new CustomEvent('auth-expired'));
       }
       return [];
     }
@@ -509,7 +509,7 @@ async function requestAccountAddresses() {
     if (response.status === 401 || data.message === 'Unauthenticated.') {
       if (typeof window !== 'undefined') {
         localStorage.removeItem('auth_user');
-        window.location.href = '/login?redirect=/my-account';
+        window.dispatchEvent(new CustomEvent('auth-expired'));
       }
       return [];
     }
@@ -537,7 +537,7 @@ async function requestAccountFavorites() {
     if (response.status === 401 || data.message === 'Unauthenticated.') {
       if (typeof window !== 'undefined') {
         localStorage.removeItem('auth_user');
-        window.location.href = '/login?redirect=/my-account';
+        window.dispatchEvent(new CustomEvent('auth-expired'));
       }
       return [];
     }
@@ -681,7 +681,7 @@ function MyAccountContent() {
       localStorage.removeItem('auth_user');
       window.dispatchEvent(new Event('auth-user-updated'));
       setIsLoggingOut(false);
-      window.location.replace('/login');
+      window.location.replace('/');
     }
   };
 
@@ -1222,7 +1222,7 @@ function OrdersView() {
                                         onClick={(e) => e.stopPropagation()}
                                       >
                                         {item.mainImage ? (
-                                          <img className="w-full h-full object-contain" src={item.mainImage} alt={item.name} />
+                                          <img className="w-full h-full object-contain" src={item.mainImage} alt={item.name} onError={(e) => { e.currentTarget.src = '/empty.png'; }} />
                                         ) : (
                                           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#717182" strokeWidth="1.5" className="opacity-40 w-full h-full">
                                             <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
@@ -1233,7 +1233,7 @@ function OrdersView() {
                                       </Link>
                                     ) : (
                                       item.mainImage ? (
-                                        <img className="w-full h-full object-contain" src={item.mainImage} alt={item.name} />
+                                        <img className="w-full h-full object-contain" src={item.mainImage} alt={item.name} onError={(e) => { e.currentTarget.src = '/empty.png'; }} />
                                       ) : (
                                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#717182" strokeWidth="1.5" className="opacity-40">
                                           <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />

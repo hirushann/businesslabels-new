@@ -66,6 +66,10 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
+function isValidEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 function readOptionId(value: Record<string, unknown>) {
   const id =
     value.id ??
@@ -337,11 +341,56 @@ export default function RegisterPopup({
     }
   };
 
+  const validate = (): RegisterErrors => {
+    const nextErrors: RegisterErrors = {};
+    const required = t('register.fieldRequired');
+
+    if (!firstName.trim()) nextErrors.first_name = [required];
+    if (!lastName.trim()) nextErrors.last_name = [required];
+    if (!company.trim()) nextErrors.company = [required];
+    if (!vatNumber.trim()) nextErrors.vat_number = [required];
+
+    if (!email.trim()) {
+      nextErrors.email = [required];
+    } else if (!isValidEmail(email)) {
+      nextErrors.email = [t('register.emailInvalid')];
+    }
+
+    if (!password.trim()) {
+      nextErrors.password = [required];
+    } else if (password.length < 8) {
+      nextErrors.password = [t('register.passwordTooShort')];
+    }
+
+    if (!phone.trim()) nextErrors.phone = [required];
+
+    if (!billingEmail.trim()) {
+      nextErrors.billing_email = [required];
+    } else if (!isValidEmail(billingEmail)) {
+      nextErrors.billing_email = [t('register.emailInvalid')];
+    }
+
+    if (!(selectedCountry?.id ?? countryId)) nextErrors.country_id = [required];
+    if (!streetAddress.trim()) nextErrors.street_address = [required];
+    if (!postcode.trim()) nextErrors.postcode = [required];
+    if (!city.trim()) nextErrors.city = [required];
+
+    return nextErrors;
+  };
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setIsSubmitting(true);
     setErrors({});
     setFormMessage('');
+
+    const validationErrors = validate();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      setFormMessage(t('register.formError'));
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
       const response = await fetch('/api/register', {
@@ -459,6 +508,7 @@ export default function RegisterPopup({
           <TextInput
             id="popup-company"
             label={t('register.company')}
+            required
             value={company}
             onChange={setCompany}
             autoComplete="organization"

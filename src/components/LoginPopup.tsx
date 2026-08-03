@@ -86,7 +86,7 @@ export default function LoginPopup({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [resetEmail, setResetEmail] = useState('');
-  const [remember, setRemember] = useState(true);
+  const [remember, setRemember] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResetMode, setIsResetMode] = useState(false);
@@ -111,7 +111,7 @@ export default function LoginPopup({
     setEmail('');
     setPassword('');
     setResetEmail('');
-    setRemember(true);
+    setRemember(false);
     setShowPassword(false);
     setIsResetMode(false);
     setErrors({});
