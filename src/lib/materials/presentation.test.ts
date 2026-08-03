@@ -29,6 +29,15 @@ describe("material presentation", () => {
     expect(materialMeasurements()).toEqual({ weight: "", thickness: "" });
   });
 
+  it("keeps the first face-material measurements and normalizes imported unit spellings", () => {
+    expect(materialMeasurements({ material_specs: [
+      { label: "Gewicht label (face + lijm)", value: "94 (+/- 8) G m²" },
+      { label: "Lijm gewicht", value: "20 (+/- 4) g/m2" },
+      { label: "Dikte label (face + lijm)", value: "90 (+/- 12) Mu" },
+      { label: "Lijm dikte", value: "25 g/m²" },
+    ] })).toEqual({ weight: "94 (+/- 8) g/m²", thickness: "90 (+/- 12) µm" });
+  });
+
   it("uses the readable name once and only the dedicated material image", () => {
     expect(materialHeading({ title: "DIA010", subtitle: "Extra thin matte inkjet material", code: "DIA010" }))
       .toBe("Extra thin matte inkjet material");

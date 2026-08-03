@@ -9,7 +9,11 @@ export function resolveMaterialImage(image?: string | null): string {
 }
 
 export function normalizeMicronUnit(value: string): string {
-  return value.trim().replace(/\bmicrons?\b|[µμ]m/giu, "µm");
+  return value.trim().replace(/\bmicrons?\b|\bmu\b|[µμ]m/giu, "µm");
+}
+
+function normalizeWeightUnit(value: string): string {
+  return value.trim().replace(/\b(?:g|grams?)\s*(?:\/\s*m(?:2|²)|m\s*\/\s*2|m²)/giu, "g/m²");
 }
 
 export function materialMeasurements(
@@ -20,9 +24,9 @@ export function materialMeasurements(
 
   for (const spec of specifications?.material_specs ?? []) {
     const label = spec.label.toLowerCase();
-    if (label.includes("weight") || label.includes("gewicht") || label.includes("grammage")) {
-      weight = spec.value.trim();
-    } else if (label.includes("thickness") || label.includes("dikte") || label.includes("hoogte")) {
+    if (!weight && (label.includes("weight") || label.includes("gewicht") || label.includes("grammage"))) {
+      weight = normalizeWeightUnit(spec.value);
+    } else if (!thickness && (label.includes("thickness") || label.includes("dikte") || label.includes("hoogte"))) {
       thickness = normalizeMicronUnit(spec.value);
     }
   }
