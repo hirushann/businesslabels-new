@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { normalizeLocale } from '@/lib/i18n/config';
 import { parsePrinterSearchParams, searchPrinters } from '@/lib/search/printers';
 
 /**
@@ -8,7 +9,7 @@ import { parsePrinterSearchParams, searchPrinters } from '@/lib/search/printers'
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const params = parsePrinterSearchParams(searchParams);
+    const params = parsePrinterSearchParams(searchParams, normalizeLocale(searchParams.get('lang')));
 
     const result = await searchPrinters(params);
     
