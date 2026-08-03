@@ -233,7 +233,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
     }, 250);
 
     return () => {
-      controller.abort();
+      controller.abort('cleanup');
       window.clearTimeout(timeout);
     };
   }, [groupProductsTitle, headerSearchInput, isSearchPopoverOpen, locale, productListingPath, t]);
