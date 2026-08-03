@@ -103,8 +103,8 @@ declare global {
 }
 
 type AddressAutocompleteProps = {
-  value: string;
-  onChange: (value: string) => void;
+  value?: string;
+  onChange?: (value: string) => void;
   onAddressSelect: (address: {
     street: string;
     city: string;
@@ -131,7 +131,7 @@ const hasPlacePrediction = (
 } => Boolean(suggestion.placePrediction);
 
 export default function AddressAutocomplete({
-  value,
+  value = "",
   onChange,
   onAddressSelect,
   className,
@@ -251,7 +251,7 @@ export default function AddressAutocomplete({
   }, [isLoaded, useLegacy]);
 
   useEffect(() => {
-    const trimmedInput = value.trim();
+    const trimmedInput = (value ?? "").trim();
 
     requestIdRef.current += 1;
     const requestId = requestIdRef.current;

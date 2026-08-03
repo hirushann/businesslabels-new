@@ -30,6 +30,8 @@ type CheckoutFormState = {
   // Shipping fields
   shippingFirstName: string;
   shippingLastName: string;
+  shippingEmail: string;
+  shippingMobileNumber: string;
   shippingStreetAddress: string;
   shippingCountry: string;
   shippingCity: string;
@@ -83,6 +85,8 @@ const initialFormState: CheckoutFormState = {
   paymentMethod: "",
   shippingFirstName: "",
   shippingLastName: "",
+  shippingEmail: "",
+  shippingMobileNumber: "",
   shippingStreetAddress: "",
   shippingCountry: "Netherlands",
   shippingCity: "",
@@ -108,6 +112,8 @@ const demoFormState: CheckoutFormState = {
   paymentMethod: "ideal",
   shippingFirstName: "Emma",
   shippingLastName: "van Dijk",
+  shippingEmail: "emma.vandijk@example.com",
+  shippingMobileNumber: "+31 6 1234 5678",
   shippingStreetAddress: "Keizersgracht 214",
   shippingCountry: "Netherlands",
   shippingCity: "Amsterdam",
@@ -273,6 +279,8 @@ function CheckoutShell({
   saveEditingBilling,
   countriesList,
   onAddressAdded,
+  selectedShippingEffectiveLabel,
+  setSelectedShippingEffectiveLabel,
 }: {
   items: CartItem[];
   totalAmount: number;
@@ -309,6 +317,8 @@ function CheckoutShell({
   saveEditingBilling: () => void;
   countriesList: any[];
   onAddressAdded: (savedAddressId?: string | number, type?: 'billing' | 'shipping') => Promise<void>;
+  selectedShippingEffectiveLabel: 'home' | 'office' | null;
+  setSelectedShippingEffectiveLabel: (label: 'home' | 'office' | null) => void;
 }) {
   const t = useTranslations();
   const locale = useLocale();
@@ -332,6 +342,23 @@ function CheckoutShell({
     );
     return match ? match.name : form.state;
   }, [form.state, billingProvinces]);
+
+  const selectedShippingCountryObj = countriesList.find(
+    (c: any) =>
+      c.name.toLowerCase() === form.shippingCountry.toLowerCase() ||
+      c.id.toLowerCase() === form.shippingCountry.toLowerCase()
+  );
+  const shippingProvinces = selectedShippingCountryObj?.provinces || [];
+
+  const selectedShippingProvinceValue = useMemo(() => {
+    if (!form.shippingState) return '';
+    const match = shippingProvinces.find(
+      (p: any) =>
+        String(p.id) === String(form.shippingState) ||
+        p.name.toLowerCase() === form.shippingState.toLowerCase()
+    );
+    return match ? match.name : form.shippingState;
+  }, [form.shippingState, shippingProvinces]);
 
   const shippingAmount = useMemo(() => {
     if (items.length === 0) return 0;
@@ -1047,6 +1074,249 @@ function CheckoutShell({
                                 <span className="text-[#F18800] text-[18px] align-middle">{t('account.addNewAddress')}</span>
                               </span>
                             </button>
+                          </div>
+                        )}
+                        {!isLoggedIn && !form.sameAsBilling && (
+                          <div className="w-full p-4 bg-[rgba(241,136,0,0.02)] rounded-xl border-[1.5px] border-[#F18800] flex flex-col gap-6">
+                            {/* Quick Address Search (Shipping) */}
+                            <div className="flex flex-col gap-2">
+                              <span className="text-[18px] font-bold text-ink">{t('checkout.quickAddressSearch')}</span>
+                              <AddressAutocomplete
+                                value={form.shippingStreetAddress}
+                                onChange={(val) => handleChange("shippingStreetAddress", val)}
+                                onAddressSelect={(addr) => onAddressSelect(addr, true)}
+                                className={inputClasses(Boolean(errors.shippingStreetAddress))}
+                                placeholder={t('checkout.quickAddressSearch')}
+                              />
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="flex flex-col gap-2">
+                                <span className="text-[18px] font-bold text-ink">{t('checkout.firstName')} *</span>
+                                <input
+                                  type="text"
+                                  value={form.shippingFirstName}
+                                  onChange={(e) => handleChange("shippingFirstName", e.target.value)}
+                                  placeholder={t('checkout.firstNamePlaceholder')}
+                                  className={inputClasses(Boolean(errors.shippingFirstName))}
+                                />
+                                {errors.shippingFirstName && <span className="text-xs text-red-500">{errors.shippingFirstName}</span>}
+                              </div>
+                              <div className="flex flex-col gap-2">
+                                <span className="text-[18px] font-bold text-ink">{t('checkout.lastName')} *</span>
+                                <input
+                                  type="text"
+                                  value={form.shippingLastName}
+                                  onChange={(e) => handleChange("shippingLastName", e.target.value)}
+                                  placeholder={t('checkout.lastNamePlaceholder')}
+                                  className={inputClasses(Boolean(errors.shippingLastName))}
+                                />
+                                {errors.shippingLastName && <span className="text-xs text-red-500">{errors.shippingLastName}</span>}
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="flex flex-col gap-2">
+                                <span className="text-[18px] font-bold text-ink">{t('checkout.email')} *</span>
+                                <input
+                                  type="email"
+                                  value={form.shippingEmail}
+                                  onChange={(e) => handleChange("shippingEmail", e.target.value)}
+                                  placeholder={t('checkout.emailPlaceholder')}
+                                  className={inputClasses(Boolean(errors.shippingEmail))}
+                                />
+                                {errors.shippingEmail && <span className="text-xs text-red-500">{errors.shippingEmail}</span>}
+                              </div>
+                              <div className="flex flex-col gap-2">
+                                <span className="text-[18px] font-bold text-ink">{t('checkout.mobileNumber')} *</span>
+                                <input
+                                  type="tel"
+                                  value={form.shippingMobileNumber}
+                                  onChange={(e) => handleChange("shippingMobileNumber", e.target.value)}
+                                  placeholder={t('checkout.mobileNumberPlaceholder')}
+                                  className={inputClasses(Boolean(errors.shippingMobileNumber))}
+                                />
+                                {errors.shippingMobileNumber && <span className="text-xs text-red-500">{errors.shippingMobileNumber}</span>}
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col gap-2">
+                              <span className="text-[18px] font-bold text-ink">{t('checkout.country')}</span>
+                              <div className="relative">
+                                <select
+                                  value={form.shippingCountry}
+                                  onChange={(e) => handleChange("shippingCountry", e.target.value)}
+                                  className={`${inputClasses()} appearance-none pr-10`}
+                                >
+                                  {countriesList.length > 0 ? (
+                                    countriesList.map((c: any) => (
+                                      <option key={c.id} value={c.name}>
+                                        {c.name}
+                                      </option>
+                                    ))
+                                  ) : (
+                                    <>
+                                      <option value="Netherlands">{t('countries.netherlands')}</option>
+                                      <option value="Belgium">{t('countries.belgium')}</option>
+                                      <option value="Germany">{t('countries.germany')}</option>
+                                    </>
+                                  )}
+                                </select>
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M4 6L8 10L12 6" stroke="var(--subtle)" strokeWidth="1.16667" strokeLinecap="round" strokeLinejoin="round"/>
+                                  </svg>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="flex flex-col gap-2">
+                                <span className="text-[18px] font-bold text-ink">{t('checkout.streetAddress')} *</span>
+                                <input
+                                  type="text"
+                                  value={form.shippingStreetAddress}
+                                  onChange={(e) => handleChange("shippingStreetAddress", e.target.value)}
+                                  placeholder={t('checkout.streetAddressPlaceholder')}
+                                  className={inputClasses(Boolean(errors.shippingStreetAddress))}
+                                />
+                                {errors.shippingStreetAddress && <span className="text-xs text-red-500">{errors.shippingStreetAddress}</span>}
+                              </div>
+                              <div className="flex flex-col gap-2">
+                                <span className="text-[18px] font-bold text-ink">{t('checkout.postcode')} *</span>
+                                <input
+                                  type="text"
+                                  value={form.shippingPostcode}
+                                  onChange={(e) => handleChange("shippingPostcode", e.target.value)}
+                                  placeholder={t('checkout.postcodePlaceholder')}
+                                  className={inputClasses(Boolean(errors.shippingPostcode))}
+                                />
+                                {errors.shippingPostcode && <span className="text-xs text-red-500">{errors.shippingPostcode}</span>}
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="flex flex-col gap-2">
+                                <span className="text-[18px] font-bold text-ink">{t('checkout.city')} *</span>
+                                <input
+                                  type="text"
+                                  value={form.shippingCity}
+                                  onChange={(e) => handleChange("shippingCity", e.target.value)}
+                                  placeholder={t('checkout.cityPlaceholder')}
+                                  className={inputClasses(Boolean(errors.shippingCity))}
+                                />
+                                {errors.shippingCity && <span className="text-xs text-red-500">{errors.shippingCity}</span>}
+                              </div>
+                              <div className="flex flex-col gap-2">
+                                <span className="text-[18px] font-bold text-ink">{t('checkout.state')}</span>
+                                {shippingProvinces.length > 0 ? (
+                                  <div className="relative">
+                                    <select
+                                      value={selectedShippingProvinceValue}
+                                      onChange={(e) => handleChange("shippingState", e.target.value)}
+                                      className={`${inputClasses(Boolean(errors.shippingState))} appearance-none pr-10`}
+                                    >
+                                      <option value="">-- Select Province --</option>
+                                      {shippingProvinces.map((p: any) => (
+                                        <option key={p.id} value={p.name}>
+                                          {p.name}
+                                        </option>
+                                      ))}
+                                    </select>
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M4 6L8 10L12 6" stroke="var(--subtle)" strokeWidth="1.16667" strokeLinecap="round" strokeLinejoin="round"/>
+                                      </svg>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <input
+                                    type="text"
+                                    value={form.shippingState}
+                                    onChange={(e) => handleChange("shippingState", e.target.value)}
+                                    placeholder={t('checkout.statePlaceholder')}
+                                    className={inputClasses(Boolean(errors.shippingState))}
+                                  />
+                                )}
+                                {errors.shippingState && <span className="text-xs text-red-500">{errors.shippingState}</span>}
+                              </div>
+                            </div>
+
+                            {/* Select a label for effective delivery */}
+                            <div className="flex flex-col gap-3 mt-2">
+                              <span className="text-[16px] font-bold text-ink">
+                                {t.has && typeof t.has === 'function' && t.has('account.selectLabelForDelivery')
+                                  ? t('account.selectLabelForDelivery')
+                                  : 'Selecteer een label voor effectieve bezorging:'}
+                              </span>
+                              <div className="flex flex-row gap-4 items-center">
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedShippingEffectiveLabel('office')}
+                                  className={`flex items-center justify-start gap-3 h-12 px-6 rounded-full border transition-all duration-200 font-bold min-w-[150px] ${
+                                    selectedShippingEffectiveLabel === 'office'
+                                      ? 'border-brand bg-[rgba(241,136,0,0.02)] ring-[0.5px] ring-brand'
+                                      : 'border-slate-200 hover:border-slate-300 bg-white'
+                                  }`}
+                                >
+                                  <div className="w-5 h-5 relative flex items-center justify-center flex-shrink-0">
+                                    {selectedShippingEffectiveLabel === 'office' ? (
+                                      <div className="w-5 h-5 bg-brand rounded-full relative flex items-center justify-center">
+                                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                          <path d="M1.5 4L4 6.5L8.5 1.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                                        </svg>
+                                      </div>
+                                    ) : (
+                                      <div className="w-5 h-5 rounded-full border border-[#CAD3DF]"></div>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-copy fill-current">
+                                      <mask id="mask_office_shipping" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
+                                        <rect width="20" height="20" fill="#D9D9D9"/>
+                                      </mask>
+                                      <g mask="url(#mask_office_shipping)">
+                                        <path d="M2.49967 18.332C2.04134 18.332 1.64898 18.1688 1.32259 17.8424C0.996202 17.5161 0.833008 17.1237 0.833008 16.6654V8.33203C0.833008 8.09592 0.912869 7.898 1.07259 7.73828C1.23231 7.57856 1.43023 7.4987 1.66634 7.4987C1.90245 7.4987 2.10037 7.57856 2.26009 7.73828C2.41981 7.898 2.49967 8.09592 2.49967 8.33203V16.6654H15.833C16.0691 16.6654 16.267 16.7452 16.4268 16.9049C16.5865 17.0647 16.6663 17.2626 16.6663 17.4987C16.6663 17.7348 16.5865 17.9327 16.4268 18.0924C16.267 18.2522 16.0691 18.332 15.833 18.332H2.49967ZM5.83301 14.9987C5.37467 14.9987 4.98231 14.8355 4.65592 14.5091C4.32954 14.1827 4.16634 13.7904 4.16634 13.332V4.9987C4.16634 4.76259 4.2462 4.56467 4.40592 4.40495C4.56565 4.24523 4.76356 4.16536 4.99967 4.16536H8.33301V2.4987C8.33301 2.04036 8.4962 1.648 8.82259 1.32161C9.14898 0.995226 9.54134 0.832031 9.99967 0.832031H13.333C13.7913 0.832031 14.1837 0.995226 14.5101 1.32161C14.8365 1.648 14.9997 2.04036 14.9997 2.4987V4.16536H18.333C18.5691 4.16536 18.767 4.24523 18.9268 4.40495C19.0865 4.56467 19.1663 4.76259 19.1663 4.9987V13.332C19.1663 13.7904 19.0031 14.1827 18.6768 14.5091C18.3504 14.8355 17.958 14.9987 17.4997 14.9987H5.83301ZM5.83301 13.332H17.4997V5.83203H5.83301V13.332ZM9.99967 4.16536H13.333V2.4987H9.99967V4.16536Z" fill="var(--copy)" />
+                                      </g>
+                                    </svg>
+                                    <span className="text-copy text-[16px] font-bold">{t('account.office')}</span>
+                                  </div>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedShippingEffectiveLabel('home')}
+                                  className={`flex items-center justify-start gap-3 h-12 px-6 rounded-full border transition-all duration-200 font-bold min-w-[150px] ${
+                                    selectedShippingEffectiveLabel === 'home'
+                                      ? 'border-brand bg-[rgba(241,136,0,0.02)] ring-[0.5px] ring-brand'
+                                      : 'border-slate-200 hover:border-slate-300 bg-white'
+                                  }`}
+                                >
+                                  <div className="w-5 h-5 relative flex items-center justify-center flex-shrink-0">
+                                    {selectedShippingEffectiveLabel === 'home' ? (
+                                      <div className="w-5 h-5 bg-brand rounded-full relative flex items-center justify-center">
+                                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                          <path d="M1.5 4L4 6.5L8.5 1.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                                        </svg>
+                                      </div>
+                                    ) : (
+                                      <div className="w-5 h-5 rounded-full border border-[#CAD3DF]"></div>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-copy fill-current">
+                                      <mask id="mask_home_shipping" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
+                                        <rect width="20" height="20" fill="#D9D9D9"/>
+                                      </mask>
+                                      <g mask="url(#mask_home_shipping)">
+                                        <path d="M4.99967 15.8346H7.49967V11.668C7.49967 11.4319 7.57954 11.2339 7.73926 11.0742C7.89898 10.9145 8.0969 10.8346 8.33301 10.8346H11.6663C11.9025 10.8346 12.1004 10.9145 12.2601 11.0742C12.4198 11.2339 12.4997 11.4319 12.4997 11.668V15.8346H14.9997V8.33464L9.99967 4.58464L4.99967 8.33464V15.8346ZM3.33301 15.8346V8.33464C3.33301 8.07075 3.39204 7.82075 3.51009 7.58464C3.62815 7.34852 3.79134 7.15408 3.99967 7.0013L8.99967 3.2513C9.29134 3.02908 9.62467 2.91797 9.99967 2.91797C10.3747 2.91797 10.708 3.02908 10.9997 3.2513L15.9997 7.0013C16.208 7.15408 16.3712 7.34852 16.4893 7.58464C16.6073 7.82075 16.6663 8.33464 16.6663 8.33464V15.8346C16.6663 16.293 16.5031 16.6853 16.1768 17.0117C15.8504 17.3381 15.458 17.5013 14.9997 17.5013H11.6663C11.4302 17.5013 11.2323 17.4214 11.0726 17.2617C10.9129 17.102 10.833 16.9041 10.833 16.668V12.5013H9.16634V16.668C9.16634 16.9041 9.08648 17.102 8.92676 17.2617C8.76704 17.4214 8.56912 17.5013 8.33301 17.5013H4.99967C4.54134 17.5013 4.14898 17.3381 3.82259 17.0117C3.4962 16.6853 3.33301 16.293 3.33301 15.8346Z" />
+                                      </g>
+                                    </svg>
+                                    <span className="text-copy text-[16px] font-bold">{t('account.home')}</span>
+                                  </div>
+                                </button>
+                              </div>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -1792,7 +2062,7 @@ export default function CheckoutPageClient({
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [savedShippingAddresses, setSavedShippingAddresses] = useState<CheckoutSavedAddress[]>([]);
   const [selectedSavedShippingAddressId, setSelectedSavedShippingAddressId] = useState<string | null>(null);
-  const [selectedShippingEffectiveLabel, setSelectedShippingEffectiveLabel] = useState<'home' | 'office' | null>(null);
+  const [selectedShippingEffectiveLabel, setSelectedShippingEffectiveLabel] = useState<'home' | 'office' | null>('home');
   const [defaultShippingAddressId, setDefaultShippingAddressId] = useState<string>("");
   const [savedBillingAddresses, setSavedBillingAddresses] = useState<CheckoutSavedAddress[]>([]);
   const [selectedSavedBillingAddressId, setSelectedSavedBillingAddressId] = useState<string | null>(null);
@@ -1876,6 +2146,7 @@ export default function CheckoutPageClient({
         );
         const provinceIdVal = provinceObj?.id ? Number(provinceObj.id) : undefined;
 
+        const cleanPostcode = (form.postcode || "").trim().slice(0, 12);
         const payload = {
           id: finalAddressId || undefined,
           type: "billing",
@@ -1884,7 +2155,9 @@ export default function CheckoutPageClient({
           lastname: form.lastName,
           company_name: form.companyName,
           address: form.streetAddress,
-          postalcode: form.postcode,
+          postalcode: cleanPostcode,
+          postcode: cleanPostcode,
+          zip: cleanPostcode,
           city: form.city,
           phone: form.mobileNumber,
           email: form.email,
@@ -2179,6 +2452,8 @@ export default function CheckoutPageClient({
       postcode: t('checkout.postcode'),
       shippingFirstName: t('checkout.firstName'),
       shippingLastName: t('checkout.lastName'),
+      shippingEmail: t('checkout.email'),
+      shippingMobileNumber: t('checkout.mobileNumber'),
       shippingStreetAddress: t('checkout.streetAddress'),
       shippingCity: t('checkout.city'),
       shippingState: t('checkout.state'),
@@ -2215,6 +2490,8 @@ export default function CheckoutPageClient({
         const requiredFields: Array<keyof CheckoutFormState> = [
           "shippingFirstName",
           "shippingLastName",
+          "shippingEmail",
+          "shippingMobileNumber",
           "shippingStreetAddress",
           "shippingCity",
           "shippingPostcode",
@@ -2224,6 +2501,9 @@ export default function CheckoutPageClient({
           if (typeof val === "string" && !val.trim()) {
             nextErrors[field] = t('validation.required', { field: fieldLabels[field] || field });
           }
+        }
+        if (form.shippingEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.shippingEmail)) {
+          nextErrors.shippingEmail = t('validation.invalidEmail');
         }
       }
     } else if (currentStep === 3) {
@@ -2290,11 +2570,14 @@ export default function CheckoutPageClient({
     if (step < 3) {
       if (validateStep(step)) {
         setStep((step + 1) as 1 | 2 | 3);
+      } else {
+        toast.error(t.has && typeof t.has === 'function' && t.has('validation.errorIncomplete') ? t('validation.errorIncomplete') : "Please fill in all required fields.");
       }
       return;
     }
 
     if (!validateStep(3)) {
+      toast.error(t.has && typeof t.has === 'function' && t.has('validation.errorIncomplete') ? t('validation.errorIncomplete') : "Please fill in all required fields.");
       return;
     }
 
@@ -2373,6 +2656,9 @@ export default function CheckoutPageClient({
     const shippingPostcodeVal = form.sameAsBilling ? form.postcode : form.shippingPostcode;
     const shippingCountryVal = form.sameAsBilling ? form.country : form.shippingCountry;
 
+    const cleanBillingPostcode = (form.postcode || "").trim().slice(0, 12);
+    const cleanShippingPostcode = (shippingPostcodeVal || "").trim().slice(0, 12);
+
     const rawBillingFields = {
       billing_firstname: form.firstName,
       billing_lastname: form.lastName,
@@ -2387,18 +2673,27 @@ export default function CheckoutPageClient({
       billing_city: form.city,
       billing_state: form.state,
       billing_province: form.state,
-      billing_postalcode: form.postcode,
+      billing_postalcode: cleanBillingPostcode,
+      billing_postcode: cleanBillingPostcode,
+      billing_zip: cleanBillingPostcode,
       billing_country_id: getCountryId(form.country),
     };
+
+    const shippingEmailVal = form.sameAsBilling ? form.email : (form.shippingEmail || form.email);
+    const shippingPhoneVal = form.sameAsBilling ? form.mobileNumber : (form.shippingMobileNumber || form.mobileNumber);
 
     const rawShippingFields = {
       shipping_firstname: shippingFirst,
       shipping_lastname: shippingLast,
+      shipping_email: shippingEmailVal,
+      shipping_phone: shippingPhoneVal,
       shipping_address: shippingStreet,
       shipping_city: shippingCityVal,
       shipping_state: shippingStateVal,
       shipping_province: shippingStateVal,
-      shipping_postalcode: shippingPostcodeVal,
+      shipping_postalcode: cleanShippingPostcode,
+      shipping_postcode: cleanShippingPostcode,
+      shipping_zip: cleanShippingPostcode,
       shipping_country_id: getCountryId(shippingCountryVal),
     };
 
@@ -2455,6 +2750,29 @@ export default function CheckoutPageClient({
           localStorage.removeItem('auth_user');
           window.location.href = `${localePath("/login", locale)}?redirect=${encodeURIComponent(localePath("/afrekenen", locale))}`;
           return;
+        }
+
+        if (json.errors && typeof json.errors === 'object') {
+          const apiErrors: Partial<Record<keyof CheckoutFormState, string>> = {};
+          for (const [key, msgs] of Object.entries(json.errors)) {
+            const msg = Array.isArray(msgs) ? msgs[0] : String(msgs);
+            const fieldKey = (
+              key === 'billing_postalcode' || key === 'billing_postcode' || key === 'billing_zip' ? 'postcode' :
+              key === 'shipping_postalcode' || key === 'shipping_postcode' || key === 'shipping_zip' ? 'shippingPostcode' :
+              key === 'billing_firstname' ? 'firstName' :
+              key === 'billing_lastname' ? 'lastName' :
+              key === 'billing_email' ? 'email' :
+              key === 'billing_phone' ? 'mobileNumber' :
+              key === 'billing_address' ? 'streetAddress' :
+              key === 'billing_city' ? 'city' :
+              key === 'shipping_firstname' ? 'shippingFirstName' :
+              key === 'shipping_lastname' ? 'shippingLastName' :
+              key === 'shipping_address' ? 'shippingStreetAddress' :
+              key === 'shipping_city' ? 'shippingCity' : key
+            ) as keyof CheckoutFormState;
+            apiErrors[fieldKey] = msg;
+          }
+          setErrors(apiErrors);
         }
         
         toast.error(json.message || json.error || t('checkout.createOrderError'));
@@ -2558,6 +2876,8 @@ export default function CheckoutPageClient({
       onSavedBillingAddressSelect={handleSavedBillingAddressSelect}
       step={step}
       setStep={setStep}
+      selectedShippingEffectiveLabel={selectedShippingEffectiveLabel}
+      setSelectedShippingEffectiveLabel={setSelectedShippingEffectiveLabel}
       onAddressSelect={(address, isShipping = false) => {
         setForm((prev) => {
           let normalizedCountry = address.country;
@@ -2811,7 +3131,9 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
         state_name: stateRegion,
         province: stateRegion,
         province_name: stateRegion,
-        postalcode: postcode,
+        postalcode: (postcode || '').trim().slice(0, 12),
+        postcode: (postcode || '').trim().slice(0, 12),
+        zip: (postcode || '').trim().slice(0, 12),
         city: city,
         phone: phone,
         email: email,

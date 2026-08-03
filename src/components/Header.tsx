@@ -212,13 +212,18 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data?.error || 'Search suggestions failed.');
+          setSearchSuggestions({
+            productGroups: [],
+            materials: { id: 'materials', title: t('search.popover.materials'), href: '/material', total: 0, items: [] },
+            groupProducts: { id: 'group-products', title: groupProductsTitle, href: productListingPath, total: 0, items: [] },
+            error: data?.error || t('search.popover.unavailable'),
+          });
+          return;
         }
 
         setSearchSuggestions(data);
       } catch (error) {
         if (controller.signal.aborted) return;
-        console.error('Header search suggestions failed:', error);
         setSearchSuggestions({
           productGroups: [],
           materials: { id: 'materials', title: t('search.popover.materials'), href: '/material', total: 0, items: [] },
