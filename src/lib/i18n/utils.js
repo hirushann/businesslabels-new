@@ -90,6 +90,9 @@ export function localePath(path, locale) {
     if (basePath === '/winkelmand') {
       return '/en/cart' + searchSuffix;
     }
+    if (basePath === '/bedankt') {
+      return '/en/thank-you' + searchSuffix;
+    }
 
     if (basePath === '/contact') {
       return '/en/contact-us' + searchSuffix;
@@ -107,6 +110,9 @@ export function localePath(path, locale) {
   }
   if (basePath === '/cart') {
     return '/winkelmand' + searchSuffix;
+  }
+  if (basePath === '/thank-you') {
+    return '/bedankt' + searchSuffix;
   }
 
   if (basePath === '/contact') {
@@ -149,6 +155,9 @@ export function stripLocalePath(path) {
     if (rest === '/cart') {
       return '/winkelmand' + searchSuffix;
     }
+    if (rest === '/thank-you') {
+      return '/bedankt' + searchSuffix;
+    }
 
     if (rest === '/contact') {
       return '/contact-us' + searchSuffix;
@@ -170,4 +179,15 @@ export function stripLocalePath(path) {
     return '/contact-us' + searchSuffix;
   }
   return path;
+}
+
+/** Build canonical public paths for both supported locales. */
+export function localizedSeoPaths(path) {
+  const basePath = stripLocalePath(path);
+  const clean = (value) => value.length > 1 ? value.replace(/\/+$/, '') : value;
+
+  return {
+    en: clean(localePath(basePath, 'en')),
+    nl: clean(localePath(basePath, 'nl')),
+  };
 }
