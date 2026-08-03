@@ -34,9 +34,9 @@ export function localizedSitemapSlug(item: SitemapApiItem, locale: Locale): stri
   if (direct) return direct;
 
   for (const entry of item.translations ?? []) {
-    const keyed = (entry as Record<string, any>)[locale];
+    const keyed = entry[locale];
     if (keyed?.slug) return keyed.slug;
-    if ('language' in entry && (entry as any).language === locale && (entry as any).slug) return (entry as any).slug;
+    if (entry.language === locale && entry.slug) return entry.slug;
   }
 
   return typeof item.slug === 'string' ? item.slug : null;
