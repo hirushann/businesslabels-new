@@ -53,7 +53,7 @@ const footerLinks = {
   ],
   printers: [
     { name: 'CW-D3800e', href: '/product/epson-colorworks-cw-d3800e-labelprinter-dye-inkt' },
-    { name: 'CW-C4000e MK', href: '/product/colorworks-cw-c4000-bk' },
+    { name: 'CW-C4000e MK', href: '/product/colorworks-cw-c4000-mk' },
     { name: 'CW-C6000Ae BK', href: '/product/colorworks-cw-c6000ae' },
     { name: 'CW-D6500Ae', href: '/product/colorworks-cw-d6500ae' },
     { name: 'CW-C8000e MK', href: '/printers/epson-colorworks-cw-c8000-mk' },
@@ -149,24 +149,21 @@ export default function Footer() {
             {Object.entries(footerLinks).map(([section, links]) => (
               <div key={section} className="flex flex-col gap-5">
                 <Link 
-                  href={section === 'products' ? '/product' : '#'} 
+                  href={section === 'products' ? lp('/product') : '#'} 
                   className={`text-white text-lg font-medium leading-6 ${section === 'products' ? 'hover:text-brand transition-colors' : 'pointer-events-none'}`}
                 >
                   {t(`footer.columns.${section}`)}
                 </Link>
                 <div className="flex flex-col gap-4">
-                  {links.map((item) => {
-                    const isContact = item.href === '/contact-us';
-                    return (
-                      <Link
-                        key={item.href + (item.nameKey || item.name)}
-                        href={isContact ? lp(item.href) : item.href}
-                        className="text-white/80 text-base font-light leading-5 hover:text-white transition-colors"
-                      >
-                        {item.nameKey ? t(item.nameKey) : item.name}
-                      </Link>
-                    );
-                  })}
+                  {links.map((item) => (
+                    <Link
+                      key={item.href + (item.nameKey || item.name)}
+                      href={lp(item.href)}
+                      className="text-white/80 text-base font-light leading-5 hover:text-white transition-colors"
+                    >
+                      {item.nameKey ? t(item.nameKey) : item.name}
+                    </Link>
+                  ))}
                 </div>
               </div>
             ))}

@@ -2,15 +2,15 @@
 
 import Link from 'next/link';
 import type { LinkProps } from 'next/link';
-import type { ReactNode } from 'react';
+import type { AnchorHTMLAttributes, ReactNode } from 'react';
 import { useLocale } from 'next-intl';
 import { localePath } from '@/lib/i18n/utils';
 
-type LocaleLinkProps = Omit<LinkProps, 'href'> & {
-  href: string;
-  className?: string;
-  children: ReactNode;
-};
+type LocaleLinkProps = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, keyof LinkProps> &
+  Omit<LinkProps, 'href'> & {
+    href: string;
+    children?: ReactNode;
+  };
 
 /**
  * Drop-in replacement for Next.js `<Link>` that automatically prepends the

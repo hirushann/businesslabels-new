@@ -205,14 +205,14 @@ export default function PrinterCard({ printer, href }: PrinterCardProps) {
           <LocaleLink
             href="/register"
             className="flex-1 flex items-center justify-center h-10 rounded-full border border-slate-300 font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
           >
             {t('register.registerButton')}
           </LocaleLink>
           <LocaleLink
             href="/login"
             className="flex-1 flex items-center justify-center h-10 rounded-full bg-brand font-semibold text-white hover:bg-brand-hover transition-colors"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
           >
             {t('login.loginButton')}
           </LocaleLink>
