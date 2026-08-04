@@ -12,6 +12,7 @@ import { useCart } from '@/components/CartProvider';
 import { toDisplayImageUrl } from '@/lib/utils/imageProxy';
 import { localePath } from '@/lib/i18n/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import ProductCard, { type ProductCardData, type ProductRouteType } from '@/components/ProductCard';
 
 type Tab = 'dashboard' | 'orders' | 'addresses' | 'details' | 'printers' | 'favourites' | 'billing_address' | 'shipping_address' | 'change_password';
 
@@ -526,6 +527,40 @@ async function requestAccountAddresses() {
   return normalizeAddresses(data);
 }
 
+function normalizeAccountFavorites(payload: unknown): ProductCardData[] {
+  const rawList = Array.isArray(payload) ? payload : (isPlainObject(payload) && Array.isArray(payload.data) ? payload.data : []);
+
+  return rawList.filter(isPlainObject).map((item, index) => {
+    const product = isPlainObject(item.product) ? item.product : isPlainObject(item.item) ? item.item : item;
+    const imagesArray = Array.isArray(product.images) ? product.images : Array.isArray(item.images) ? item.images : [];
+    const firstImageObj = imagesArray.length > 0 && isPlainObject(imagesArray[0]) ? imagesArray[0] : null;
+
+    const mainImageUrl = toDisplayImageUrl(
+      (firstImageObj ? readStringValue(firstImageObj, ['url', 'file_name', 'src']) : '') ||
+      readStringValue(product, ['mainImage', 'main_image', 'image', 'image_url', 'thumbnail', 'thumbnail_url', 'url']) ||
+      readStringValue(item, ['mainImage', 'main_image', 'image', 'image_url', 'thumbnail', 'thumbnail_url', 'url']) ||
+      (isPlainObject(product.main_image) ? readStringValue(product.main_image, ['url', 'src']) : '') ||
+      (isPlainObject(product.image) ? readStringValue(product.image, ['url', 'src']) : '') ||
+      (isPlainObject(item.image) ? readStringValue(item.image, ['url', 'src']) : '') ||
+      (isPlainObject(item.main_image) ? readStringValue(item.main_image, ['url', 'src']) : '')
+    ) || null;
+
+    const rawType = readStringValue(product, ['type']) || readStringValue(item, ['type']) || 'simple';
+    const type: ProductRouteType = rawType === 'variable' || rawType === 'group_product' ? rawType : 'simple';
+
+    return {
+      id: readNumberValue(product, ['id']) || readNumberValue(item, ['id']) || index,
+      name: readStringValue(product, ['name', 'title_nl', 'title_en', 'title']) || readStringValue(item, ['name', 'title_nl', 'title_en', 'title']) || 'Product',
+      sku: readStringValue(product, ['sku']) || readStringValue(item, ['sku']) || '',
+      slug: readStringValue(product, ['slug']) || readStringValue(item, ['slug']) || '',
+      type,
+      price: readNumberValue(product, ['price', 'unit_price']) ?? readNumberValue(item, ['price', 'unit_price']) ?? 0,
+      mainImage: mainImageUrl,
+      inStock: product.in_stock !== undefined ? Boolean(product.in_stock) : item.in_stock !== undefined ? Boolean(item.in_stock) : (product.inStock !== false && item.inStock !== false),
+    };
+  });
+}
+
 async function requestAccountFavorites() {
   const response = await fetch('/api/account/favorites', {
     headers: {
@@ -551,7 +586,7 @@ async function requestAccountFavorites() {
     );
   }
 
-  return Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
+  return normalizeAccountFavorites(data);
 }
 
 function formatCustomerSince(user: StoredUser, t: TranslationFn, locale: string) {
@@ -692,6 +727,8 @@ function MyAccountContent() {
 
   const sidebarItems = [
     { id: 'details', label: t('account.accountDetails') },
+    { id: 'printers', label: t('account.myPrinters') },
+    { id: 'favourites', label: t('account.myFavorites') },
     { id: 'billing_address', label: t('account.billingAddress') },
     { id: 'shipping_address', label: t('account.shippingAddress') },
     { id: 'orders', label: t('account.orders') },
@@ -1473,6 +1510,7 @@ function orderStatusClass(status: string) {
 
 function PrintersView() {
   const t = useTranslations();
+  const locale = useLocale();
   const [printers, setPrinters] = useState<PrinterCardData[]>([]);
 
   useEffect(() => {
@@ -1484,15 +1522,23 @@ function PrintersView() {
     return () => window.removeEventListener('favorites-updated', loadFavorites);
   }, []);
 
+  const handleRemove = (printerId: string | number) => {
+    const favorites = JSON.parse(localStorage.getItem('favorite_printers') || '[]');
+    const updated = favorites.filter((p: PrinterCardData) => p.id !== printerId);
+    localStorage.setItem('favorite_printers', JSON.stringify(updated));
+    setPrinters(updated);
+    window.dispatchEvent(new Event('favorites-updated'));
+  };
+
   return (
-    <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex justify-between items-end gap-4">
+    <div className="flex flex-col gap-8 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div className="flex flex-col gap-2">
           <h2 className="text-3xl font-black text-neutral-800 tracking-tight">{t('account.myPrinters')}</h2>
           <p className="text-neutral-500 font-medium">{t('account.hardwareMonitoring')}</p>
         </div>
-        <Link href="/en/printers" className="h-11 px-8 bg-sky-950 text-white rounded-full font-bold text-sm hover:bg-brand transition-all flex items-center gap-2 whitespace-nowrap">
-           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+        <Link href={localePath('/printers', locale)} className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-8 h-[52px] font-bold rounded-full transition-colors shadow-sm text-[18px] border whitespace-nowrap border-slate-300 text-neutral-700 hover:border-brand hover:text-brand bg-white hover:bg-brand-soft/20">
+           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transition-colors duration-150" aria-hidden="true">
              <path d="M5 12h14"/><path d="M12 5v14"/>
            </svg>
            {t('account.findMorePrinters')}
@@ -1507,51 +1553,149 @@ function PrintersView() {
            <p className="mt-4 text-neutral-400 font-bold">{t('account.noSavedPrinters')}</p>
         </div>
       ) : (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {printers.map((printer) => (
-          <div key={printer.id} className="group p-8 rounded-[32px] border border-slate-200 bg-white hover:border-brand hover:shadow-xl hover:shadow-brand/5 transition-all flex flex-col gap-6">
-            <div className="relative h-48 bg-slate-100 rounded-2xl overflow-hidden p-6 group-hover:scale-[1.02] transition-transform">
-               <Image src={printer.mainImage || "https://placehold.co/400x300"} alt={printer.name} fill className="object-contain" unoptimized />
-            </div>
-            <div className="flex flex-col gap-2">
-              <h3 className="text-xl font-black text-neutral-800 leading-tight">{printer.name}</h3>
-              <div className="flex items-center justify-between">
-                {printer.sku ? (
-                  <span className="text-neutral-400 font-bold text-sm tracking-tight">{t('account.skuNumber', { sku: printer.sku })}</span>
-                ) : (
-                  <span />
-                )}
-                <Link href={printer.slug ? `/material/${printer.slug}` : "#"} className="text-brand font-black text-xs uppercase tracking-wider hover:underline">{t('account.viewPrinter')}</Link>
-              </div>
-            </div>
-            <div className="h-px bg-slate-100" />
-            <div className="grid grid-cols-2 gap-4">
-               <button 
-                onClick={() => {
-                   const favorites = JSON.parse(localStorage.getItem('favorite_printers') || '[]');
-                   const updated = favorites.filter((p: PrinterCardData) => p.id !== printer.id);
-                   localStorage.setItem('favorite_printers', JSON.stringify(updated));
-                   setPrinters(updated);
-                   window.dispatchEvent(new Event('favorites-updated'));
-                }}
-                className="flex flex-col gap-1 text-left group/btn">
-                  <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest group-hover/btn:text-red-500 transition-colors">{t('account.action', { fallback: 'Action' })}</span>
-                  <span className="text-sm font-bold text-neutral-800 group-hover/btn:text-red-500 transition-colors">{t('account.removeFromFavorites')}</span>
-               </button>
-               <Link href={printer.slug ? `/material/${printer.slug}` : "#"} className="flex flex-col gap-1 text-left group/btn">
-                  <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest group-hover/btn:text-brand transition-colors">{t('account.supplies', { fallback: 'Supplies' })}</span>
-                  <span className="text-sm font-bold text-neutral-800">{t('account.buyLabels')}</span>
-               </Link>
-            </div>
+        <div className="w-full bg-white relative shadow-[2px_4px_20px_rgba(109,109,120,0.10)] overflow-hidden rounded-xl border border-line">
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-line text-neutral-500 text-sm font-semibold bg-white relative z-10">
+                  <th className="py-4 pl-[56px] pr-4 text-copy text-[16px] font-bold">{t('common.products') || 'Products'}</th>
+                  <th className="py-4 pr-6 pl-4 w-[180px] text-copy text-[16px] font-semibold text-left">{t('favoritesPage.action') || 'Action'}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line">
+                {printers.map((printer) => {
+                  const printerHref = printer.slug ? `/printers/${printer.slug}` : undefined;
+                  const localizedHref = printerHref ? localePath(printerHref, locale) : '#';
+
+                  return (
+                    <tr key={printer.id} className="group hover:bg-slate-50/40 transition-colors">
+                      {/* Printer Image, Name, SKU, and Remove */}
+                      <td className="py-4 pl-4 pr-4">
+                        <div className="flex items-center gap-6">
+                          <button
+                            type="button"
+                            onClick={() => handleRemove(printer.id)}
+                            className="text-subtle hover:text-red-500 transition-colors text-lg font-light leading-none w-4 h-4 flex items-center justify-center shrink-0"
+                            title={t('account.removeFromFavorites') || 'Remove from favorites'}
+                          >
+                            ✕
+                          </button>
+                          <Link href={localizedHref} className="w-20 h-20 shrink-0 bg-slate-50 border border-slate-100 flex items-center justify-center p-2 overflow-hidden rounded-lg hover:border-brand/50 transition-colors">
+                            <Image
+                              src={printer.mainImage || 'https://placehold.co/100x100'}
+                              alt={printer.name}
+                              width={80}
+                              height={80}
+                              className="object-contain w-full h-full"
+                              unoptimized
+                            />
+                          </Link>
+                          <div className="flex flex-col min-w-0 gap-1">
+                            {printer.sku && (
+                              <Link
+                                href={localizedHref}
+                                className="text-link hover:underline text-[14px] font-light text-left truncate"
+                              >
+                                {printer.sku}
+                              </Link>
+                            )}
+                            <Link
+                              href={localizedHref}
+                              className="text-ink font-bold hover:text-brand transition-colors text-[18px] leading-[21.60px] text-left"
+                            >
+                              {printer.name}
+                            </Link>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Action Button */}
+                      <td className="py-4 pr-6 pl-4 text-left">
+                        <Link
+                          href={localizedHref}
+                          className="h-[38px] px-5 bg-brand hover:bg-brand-hover text-white rounded-[100px] text-[15px] font-medium transition-all inline-flex items-center justify-center gap-2 whitespace-nowrap"
+                        >
+                          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+                            <path d="M1.5 9C1.5 9 4 3.75 9 3.75C14 3.75 16.5 9 16.5 9C16.5 9 14 14.25 9 14.25C4 14.25 1.5 9 1.5 9Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <circle cx="9" cy="9" r="2.25" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          <span>{t('account.viewPrinter') || 'View Printer'}</span>
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-        ))}
-      </div>
+
+          {/* Mobile Stacked Table Layout */}
+          <div className="md:hidden divide-y divide-slate-100">
+            {printers.map((printer) => {
+              const printerHref = printer.slug ? `/printers/${printer.slug}` : undefined;
+              const localizedHref = printerHref ? localePath(printerHref, locale) : '#';
+
+              return (
+                <div key={printer.id} className="p-5 flex flex-col gap-4 relative">
+                  <button
+                    type="button"
+                    onClick={() => handleRemove(printer.id)}
+                    className="absolute top-4 right-4 text-slate-400 hover:text-red-500 p-1"
+                    title={t('account.removeFromFavorites') || 'Remove from favorites'}
+                  >
+                    ✕
+                  </button>
+
+                  <div className="flex gap-4 items-center">
+                    <Link href={localizedHref} className="w-16 h-16 shrink-0 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center p-2 overflow-hidden hover:border-brand/50 transition-colors">
+                      <Image
+                        src={printer.mainImage || 'https://placehold.co/100x100'}
+                        alt={printer.name}
+                        width={64}
+                        height={64}
+                        className="object-contain w-full h-full"
+                        unoptimized
+                      />
+                    </Link>
+                    <div className="flex flex-col min-w-0 pr-6">
+                      {printer.sku && (
+                        <Link
+                          href={localizedHref}
+                          className="text-sky-500 hover:underline text-xs font-semibold mb-0.5 truncate"
+                        >
+                          {printer.sku}
+                        </Link>
+                      )}
+                      <Link
+                        href={localizedHref}
+                        className="text-neutral-800 font-bold hover:text-brand transition-colors text-sm line-clamp-2"
+                      >
+                        {printer.name}
+                      </Link>
+                    </div>
+                  </div>
+
+                  <Link
+                    href={localizedHref}
+                    className="w-full h-10 bg-brand hover:bg-brand-hover text-white rounded-full text-sm font-bold transition-all flex items-center justify-center gap-2 mt-2"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+                      <path d="M1.5 9C1.5 9 4 3.75 9 3.75C14 3.75 16.5 9 16.5 9C16.5 9 14 14.25 9 14.25C4 14.25 1.5 9 1.5 9Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      <circle cx="9" cy="9" r="2.25" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <span>{t('account.viewPrinter') || 'View Printer'}</span>
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       )}
     </div>
   );
 }
 
-import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 import { useWishlist } from "@/components/WishlistProvider";
 import { PrinterCardData } from './PrintersListing';
 
@@ -1603,25 +1747,46 @@ function FavouriteProductsView() {
     wishlist.removeItem(key, { id: product.id, type: product.type });
   };
 
+  const locale = useLocale();
+  const cart = useCart();
+
+  const handleAction = (item: ProductCardData) => {
+    const isSimple = !item.type || item.type === 'simple';
+
+    if (isSimple && item.inStock !== false) {
+      cart.addItem({
+        id: item.id,
+        slug: item.slug,
+        type: item.type,
+        name: item.name,
+        sku: item.sku,
+        price: item.price ?? null,
+        mainImage: item.mainImage ?? null,
+        packingGroup: null,
+        allowSingulars: null,
+      });
+      cart.openCart();
+    } else {
+      const href = item.slug ? `/product/${item.slug}${item.type ? `?type=${item.type}` : ''}` : '/product';
+      window.location.href = localePath(href, locale);
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full">
         <div className="flex flex-col gap-2">
           <h2 className="text-3xl font-black text-neutral-800 tracking-tight">{t('account.favouriteProducts')}</h2>
           <p className="text-neutral-500 font-medium">{t('account.favouriteSuppliesDesc')}</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {[1, 2].map((i) => (
-            <div key={i} className="h-96 bg-slate-50 rounded-[40px] animate-pulse border border-slate-200" />
-          ))}
-        </div>
+        <div className="h-64 bg-slate-50 rounded-xl animate-pulse border border-slate-200" />
       </div>
     );
   }
 
   if (errorMessage) {
     return (
-      <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full">
         <div className="flex flex-col gap-2">
           <h2 className="text-3xl font-black text-neutral-800 tracking-tight">{t('account.favouriteProducts')}</h2>
           <p className="text-neutral-500 font-medium">{t('account.favouriteSuppliesDesc')}</p>
@@ -1634,7 +1799,7 @@ function FavouriteProductsView() {
   }
 
   return (
-    <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="flex flex-col gap-8 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col gap-2">
         <h2 className="text-3xl font-black text-neutral-800 tracking-tight">{t('account.favouriteProducts')}</h2>
         <p className="text-neutral-500 font-medium">{t('account.favouriteSuppliesDesc')}</p>
@@ -1646,29 +1811,206 @@ function FavouriteProductsView() {
              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
            </svg>
            <p className="mt-4 text-neutral-400 font-bold">{t('account.noFavourites')}</p>
-           <Link href="/product" className="mt-6 h-11 px-8 bg-brand text-white rounded-full font-black text-sm hover:shadow-lg shadow-brand/20 transition-all flex items-center">
+           <Link href={localePath('/product', locale)} className="mt-6 h-11 px-8 bg-brand text-white rounded-full font-black text-sm hover:shadow-lg shadow-brand/20 transition-all flex items-center">
              {t('account.browseSupplies')}
            </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {favourites.map((product) => (
-            <div key={product.sku} className="relative group">
-              <ProductCard 
-                product={product} 
-                href={product.slug ? `/product/${product.slug}` : undefined}
-              />
-              <button
-                onClick={() => handleRemoveFavorite(product)}
-                className="absolute top-4 right-4 z-20 bg-white/90 hover:bg-red-500 hover:text-white text-neutral-500 p-2 rounded-full shadow-md transition-all duration-200 flex items-center justify-center border border-neutral-200/50 hover:border-red-500"
-                title={t('account.removeFromFavorites') || "Remove from favorites"}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          ))}
+        <div className="w-full bg-white relative shadow-[2px_4px_20px_rgba(109,109,120,0.10)] overflow-hidden rounded-xl border border-line">
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-line text-neutral-500 text-sm font-semibold bg-white relative z-10">
+                  <th className="py-4 pl-[56px] pr-4 w-[500px] text-copy text-[16px] font-bold">{t('common.products') || 'Products'}</th>
+                  <th className="py-4 px-4 w-[180px] text-copy text-[16px] font-semibold">{t('cart.price') || 'Price'}</th>
+                  <th className="py-4 px-4 w-[140px] text-copy text-[16px] font-semibold">{t('account.status') || 'Status'}</th>
+                  <th className="py-4 pr-6 pl-4 w-[180px] text-copy text-[16px] font-semibold text-left">{t('favoritesPage.action') || 'Action'}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line">
+                {favourites.map((item) => {
+                  const isSimple = !item.type || item.type === 'simple';
+                  const isButtonAddToCart = isSimple && item.inStock !== false;
+                  const itemHref = item.slug ? `/product/${item.slug}${item.type ? `?type=${item.type}` : ''}` : undefined;
+                  const localizedHref = itemHref ? localePath(itemHref, locale) : '#';
+
+                  return (
+                    <tr key={item.id} className="group hover:bg-slate-50/40 transition-colors">
+                      {/* Product Image, Name, SKU, and Remove */}
+                      <td className="py-4 pl-4 pr-4">
+                        <div className="flex items-center gap-6">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveFavorite(item)}
+                            className="text-subtle hover:text-red-500 transition-colors text-lg font-light leading-none w-4 h-4 flex items-center justify-center shrink-0"
+                            title={t('account.removeFromFavorites') || 'Remove from favorites'}
+                          >
+                            ✕
+                          </button>
+                          <Link href={localizedHref} className="w-20 h-20 shrink-0 bg-slate-50 border border-slate-100 flex items-center justify-center p-2 overflow-hidden rounded-lg hover:border-brand/50 transition-colors">
+                            <Image
+                              src={item.mainImage || 'https://placehold.co/100x100'}
+                              alt={item.name}
+                              width={80}
+                              height={80}
+                              className="object-contain w-full h-full"
+                              unoptimized
+                            />
+                          </Link>
+                          <div className="flex flex-col min-w-0 gap-1">
+                            {item.sku && (
+                              <Link
+                                href={localizedHref}
+                                className="text-link hover:underline text-[14px] font-light text-left truncate"
+                              >
+                                {item.sku}
+                              </Link>
+                            )}
+                            <Link
+                              href={localizedHref}
+                              className="text-ink font-bold hover:text-brand transition-colors text-[18px] leading-[21.60px] text-left"
+                            >
+                              {item.name}
+                            </Link>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Price */}
+                      <td className="py-4 px-4">
+                        <div className="flex flex-wrap items-end gap-x-1 gap-y-0.5">
+                          {!isButtonAddToCart && (
+                            <span className="text-copy text-[16px] font-normal">
+                              {t('product.fromPrice') || 'From'}
+                            </span>
+                          )}
+                          <span className="text-ink text-[20px] font-bold leading-normal">
+                            {item.price ? formatEuro(item.price).replace(/\s+/g, '') : '-'}
+                          </span>
+                          <span className="text-subtle text-[12px] font-normal pb-[2px]">
+                            {t('product.exVat') || 'ex. VAT'}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Status */}
+                      <td className="py-4 px-4">
+                        {item.inStock !== false ? (
+                          <span className="text-success font-medium text-[18px]">
+                            {t('product.inStock') || 'In Stock'}
+                          </span>
+                        ) : (
+                          <span className="text-danger font-medium text-[18px]">
+                            {t('product.outOfStock') || 'Out of Stock'}
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Action Button */}
+                      <td className="py-4 pr-6 pl-4 text-left">
+                        <button
+                          type="button"
+                          onClick={() => handleAction(item)}
+                          className="h-[38px] px-4 bg-brand hover:bg-brand-hover text-white rounded-[100px] text-[16px] font-medium transition-all inline-flex items-center justify-center gap-2 whitespace-nowrap"
+                        >
+                          <span>
+                            {isButtonAddToCart
+                              ? t('wishlist.moveToCart') || 'Add to cart'
+                              : t('common.select') || 'Select option'}
+                          </span>
+                          <div className="w-[22px] h-[16px] relative overflow-hidden flex items-center">
+                            <svg width="22" height="16" viewBox="0 0 22 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M7.33268 14.6654C7.83894 14.6654 8.24935 14.3669 8.24935 13.9987C8.24935 13.6305 7.83894 13.332 7.33268 13.332C6.82642 13.332 6.41602 13.6305 6.41602 13.9987C6.41602 14.3669 6.82642 14.6654 7.33268 14.6654Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M17.4167 14.6654C17.9229 14.6654 18.3333 14.3669 18.3333 13.9987C18.3333 13.6305 17.9229 13.332 17.4167 13.332C16.9104 13.332 16.5 13.6305 16.5 13.9987C16.5 14.3669 16.9104 14.6654 17.4167 14.6654Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M1.87891 1.36719H3.71224L6.15057 9.64719C6.24002 9.95043 6.47202 10.2215 6.80664 10.4138C7.14126 10.606 7.55757 10.7074 7.9839 10.7005H16.9489C17.3661 10.7 17.7707 10.596 18.0957 10.4057C18.4207 10.2154 18.6467 9.95021 18.7364 9.65385L20.2489 4.70052H4.69307" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Stacked Table Layout */}
+          <div className="md:hidden divide-y divide-slate-100">
+            {favourites.map((item) => {
+              const isSimple = !item.type || item.type === 'simple';
+              const isButtonAddToCart = isSimple && item.inStock !== false;
+              const itemHref = item.slug ? `/product/${item.slug}${item.type ? `?type=${item.type}` : ''}` : undefined;
+              const localizedHref = itemHref ? localePath(itemHref, locale) : '#';
+
+              return (
+                <div key={item.id} className="p-5 flex flex-col gap-4 relative">
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveFavorite(item)}
+                    className="absolute top-4 right-4 text-slate-400 hover:text-red-500 p-1"
+                    title={t('account.removeFromFavorites') || 'Remove from favorites'}
+                  >
+                    ✕
+                  </button>
+
+                  <div className="flex gap-4 items-center">
+                    <Link href={localizedHref} className="w-16 h-16 shrink-0 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center p-2 overflow-hidden hover:border-brand/50 transition-colors">
+                      <Image
+                        src={item.mainImage || 'https://placehold.co/100x100'}
+                        alt={item.name}
+                        width={64}
+                        height={64}
+                        className="object-contain w-full h-full"
+                        unoptimized
+                      />
+                    </Link>
+                    <div className="flex flex-col min-w-0 pr-6">
+                      {item.sku && (
+                        <Link
+                          href={localizedHref}
+                          className="text-sky-500 hover:underline text-xs font-semibold mb-0.5 truncate"
+                        >
+                          {item.sku}
+                        </Link>
+                      )}
+                      <Link
+                        href={localizedHref}
+                        className="text-neutral-800 font-bold hover:text-brand transition-colors text-sm line-clamp-2"
+                      >
+                        {item.name}
+                      </Link>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-ink text-sm font-bold">
+                          {item.price ? formatEuro(item.price).replace(/\s+/g, '') : '-'}
+                        </span>
+                        <span className="text-subtle text-[10px]">ex. VAT</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleAction(item)}
+                    className="w-full h-10 bg-brand hover:bg-brand-hover text-white rounded-full text-sm font-bold transition-all flex items-center justify-center gap-2 mt-2"
+                  >
+                    <span>
+                      {isButtonAddToCart
+                        ? t('wishlist.moveToCart') || 'Add to cart'
+                        : t('common.select') || 'Select option'}
+                    </span>
+                    <div className="w-4 h-4 relative overflow-hidden flex items-center">
+                      <svg width="16" height="16" viewBox="0 0 22 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M7.33268 14.6654C7.83894 14.6654 8.24935 14.3669 8.24935 13.9987C8.24935 13.6305 7.83894 13.332 7.33268 13.332C6.82642 13.332 6.41602 13.6305 6.41602 13.9987C6.41602 14.3669 6.82642 14.6654 7.33268 14.6654Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M17.4167 14.6654C17.9229 14.6654 18.3333 14.3669 18.3333 13.9987C18.3333 13.6305 17.9229 13.332 17.4167 13.332C16.9104 13.332 16.5 13.6305 16.5 13.9987C16.5 14.3669 16.9104 14.6654 17.4167 14.6654Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M1.87891 1.36719H3.71224L6.15057 9.64719C6.24002 9.95043 6.47202 10.2215 6.80664 10.4138C7.14126 10.606 7.55757 10.7074 7.9839 10.7005H16.9489C17.3661 10.7 17.7707 10.596 18.0957 10.4057C18.4207 10.2154 18.6467 9.95021 18.7364 9.65385L20.2489 4.70052H4.69307" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
