@@ -206,14 +206,14 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                               {href ? (
                                 <Link href={href} className="w-full h-full block">
                                   <img
-                                    src={item.mainImage || 'https://placehold.co/80x80'}
+                                    src={item.mainImage || '/image-placeholder.svg'}
                                     alt={item.name}
                                     className="w-full h-full object-contain"
                                   />
                                 </Link>
                               ) : (
                                 <img
-                                  src={item.mainImage || 'https://placehold.co/80x80'}
+                                  src={item.mainImage || '/image-placeholder.svg'}
                                   alt={item.name}
                                   className="w-full h-full object-contain"
                                 />

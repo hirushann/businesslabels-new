@@ -403,7 +403,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
     typeof productOriginalPrice === "number" &&
     Number.isFinite(productOriginalPrice) &&
     (!hasPrice || (hasPrice && productPrice !== undefined && productPrice !== null && productOriginalPrice > productPrice));
-  const imageSrc = normalizeText(productMainImage) || "https://placehold.co/600x400?text=" + encodeURIComponent(productName);
+  const imageSrc = normalizeText(productMainImage) || "/image-placeholder.svg";
   const [imgError, setImgError] = useState(false);
   
   const properties = product.properties as Record<string, unknown> | null;
@@ -598,8 +598,6 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
               )}
             </div>
           ) : <div className="w-8" />}
-          {/* Only an in-stock badge is ever shown — out-of-stock products are
-              filtered out of listings, never flagged. */}
           {productInStock ? (
             <div className="px-2.5 py-1 bg-green-600 rounded-full flex items-center gap-1.5">
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -616,14 +614,18 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
               <span className="text-white text-xs font-normal leading-4">{t("product.inStock")}</span>
             </div>
           ) : (
-            <div className="px-2.5 py-1 rounded-full flex items-center gap-1.5">
-              {/* <span className="text-gray-600 text-xs font-normal leading-4">Out of Stock</span> */}
+            <div className="px-2.5 py-1 bg-zinc-400 rounded-full flex items-center gap-1.5">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth={2} xmlns="http://www.w3.org/2000/svg">
+                <circle cx="6" cy="6" r="5" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4l4 4m0-4L4 8" />
+              </svg>
+              <span className="text-white text-xs font-normal leading-4">{t("product.outOfStock")}</span>
             </div>
           )}
         </div>
         <Link href={localizedHref || "#"} className="absolute inset-0 z-0" onClick={onClick}>
         <Image
-          src={imgError ? "/empty.png" : imageSrc}
+          src={imgError ? "/image-placeholder.svg" : imageSrc}
           alt={productName || "Product"}
           width={600}
           height={400}

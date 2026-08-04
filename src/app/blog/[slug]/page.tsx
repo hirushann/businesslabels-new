@@ -326,7 +326,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
                   {/* Category */}
                   <div className="flex flex-col justify-start items-start gap-3">
                     <div className="text-neutral-700 text-sm font-normal leading-5">{t("common.category")}:</div>
-                    <Link href={`/blog?category=${post.categories?.[0]?.slug || "all"}`} className="h-7 px-3 bg-neutral-800/10 rounded-full flex items-center hover:bg-neutral-800/20 transition-colors">
+                    <Link href={localePath(`/blog?category=${post.categories?.[0]?.slug || "all"}`, locale)} className="h-7 px-3 bg-neutral-800/10 rounded-full flex items-center hover:bg-neutral-800/20 transition-colors">
                       <div className="text-neutral-800 text-sm font-bold">
                         {post.categories?.[0]?.name || "Article"}
                       </div>

@@ -1298,7 +1298,7 @@ function CheckoutShell({
                 {/* Product List */}
                 <div className="flex flex-col gap-4">
                   {items.map((item) => {
-                    const imageSrc = item.mainImage?.trim() || "https://placehold.co/62x62";
+                    const imageSrc = item.mainImage?.trim() || "/image-placeholder.svg";
                     const productSlug = item.slug?.trim();
                     const productHref = productSlug ? localePath(`/product/${productSlug}`, locale) : null;
 

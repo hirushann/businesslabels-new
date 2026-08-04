@@ -154,7 +154,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                       ? Math.round(linkedWarranty.warranty.durationMonths / 12)
                       : null;
 
-                    const imageSrc = item.mainImage?.trim() || 'https://placehold.co/80x80';
+                    const imageSrc = item.mainImage?.trim() || '/image-placeholder.svg';
                     const productSlug = item.slug?.trim();
                     const href = productSlug
                       ? lp(`/product/${productSlug}${item.type ? `?type=${item.type}` : ''}`)

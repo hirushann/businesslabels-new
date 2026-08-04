@@ -881,7 +881,7 @@ function DashboardView({ setActiveTab, user }: { setActiveTab: (tab: Tab) => voi
       <div className="flex flex-col gap-6">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-full bg-slate-100 border-4 border-white shadow-sm overflow-hidden relative">
-            <Image src={avatarUrl || "https://placehold.co/128x128"} alt="Profile" fill className="object-cover" />
+            <Image src={avatarUrl || "/image-placeholder.svg"} alt="Profile" fill className="object-cover" />
           </div>
           <div>
             <h2 className="text-xl sm:text-3xl font-black text-neutral-800 tracking-tight font-bold">{t('account.welcomeName', { name: displayName })}</h2>
@@ -993,7 +993,7 @@ function DashboardView({ setActiveTab, user }: { setActiveTab: (tab: Tab) => voi
               {t('account.expertSupportDesc')}
             </p>
           </div>
-          <Link href="/support" className="inline-flex h-12 items-center justify-center rounded-full bg-white px-8 text-sm font-black text-sky-950 hover:bg-brand hover:text-white transition-all w-fit shadow-xl shadow-black/10">
+          <Link href={localePath('/support', locale)} className="inline-flex h-12 items-center justify-center rounded-full bg-white px-8 text-sm font-black text-sky-950 hover:bg-brand hover:text-white transition-all w-fit shadow-xl shadow-black/10">
             {t('account.talkToExpert')}
           </Link>
         </div>
@@ -1119,7 +1119,7 @@ function OrdersView() {
           <h3 className="text-2xl font-black text-neutral-800">{t('account.noOrdersFound')}</h3>
           <p className="mt-2 font-medium text-neutral-400 max-w-sm mx-auto">{t('account.noOrdersFoundDesc')}</p>
           <Link
-            href="/product"
+            href={localePath('/product', locale)}
             className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-sky-950 px-10 text-sm font-black text-white transition-all hover:bg-brand hover:shadow-xl hover:shadow-brand/20"
           >
             {t('account.continueShopping')}
@@ -1471,6 +1471,7 @@ function orderStatusClass(status: string) {
 
 function PrintersView() {
   const t = useTranslations();
+  const locale = useLocale();
   const [printers, setPrinters] = useState<PrinterCardData[]>([]);
 
   useEffect(() => {
@@ -1489,7 +1490,7 @@ function PrintersView() {
           <h2 className="text-3xl font-black text-neutral-800 tracking-tight">{t('account.myPrinters')}</h2>
           <p className="text-neutral-500 font-medium">{t('account.hardwareMonitoring')}</p>
         </div>
-        <Link href="/en/printers" className="h-11 px-8 bg-sky-950 text-white rounded-full font-bold text-sm hover:bg-brand transition-all flex items-center gap-2 whitespace-nowrap">
+        <Link href={localePath('/printers', locale)} className="h-11 px-8 bg-sky-950 text-white rounded-full font-bold text-sm hover:bg-brand transition-all flex items-center gap-2 whitespace-nowrap">
            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
              <path d="M5 12h14"/><path d="M12 5v14"/>
            </svg>
@@ -1509,7 +1510,7 @@ function PrintersView() {
         {printers.map((printer) => (
           <div key={printer.id} className="group p-8 rounded-[32px] border border-slate-200 bg-white hover:border-brand hover:shadow-xl hover:shadow-brand/5 transition-all flex flex-col gap-6">
             <div className="relative h-48 bg-slate-100 rounded-2xl overflow-hidden p-6 group-hover:scale-[1.02] transition-transform">
-               <Image src={printer.mainImage || "https://placehold.co/400x300"} alt={printer.name} fill className="object-contain" unoptimized />
+               <Image src={printer.mainImage || "/image-placeholder.svg"} alt={printer.name} fill className="object-contain" unoptimized />
             </div>
             <div className="flex flex-col gap-2">
               <h3 className="text-xl font-black text-neutral-800 leading-tight">{printer.name}</h3>
@@ -1555,6 +1556,7 @@ import { PrinterCardData } from './PrintersListing';
 
 function FavouriteProductsView() {
   const t = useTranslations();
+  const locale = useLocale();
   const wishlist = useWishlist();
   const [favourites, setFavourites] = useState<ProductCardData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -1644,7 +1646,7 @@ function FavouriteProductsView() {
              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
            </svg>
            <p className="mt-4 text-neutral-400 font-bold">{t('account.noFavourites')}</p>
-           <Link href="/product" className="mt-6 h-11 px-8 bg-brand text-white rounded-full font-black text-sm hover:shadow-lg shadow-brand/20 transition-all flex items-center">
+           <Link href={localePath('/product', locale)} className="mt-6 h-11 px-8 bg-brand text-white rounded-full font-black text-sm hover:shadow-lg shadow-brand/20 transition-all flex items-center">
              {t('account.browseSupplies')}
            </Link>
         </div>

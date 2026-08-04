@@ -1,5 +1,6 @@
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import Link from "next/link";
+import { localePath } from "@/lib/i18n/utils";
 import ReviewsSection from "@/components/ReviewsSection";
 import AvailabilityStatus from "./AvailabilityStatus";
 import ContactForm from "./ContactForm";
@@ -30,6 +31,7 @@ async function getTeamMembers() {
 
 export default async function ContactPage() {
    const t = await getTranslations("contactPage");
+   const locale = await getLocale();
    const teamMembers = await getTeamMembers();
    return (
       <>
@@ -128,7 +130,7 @@ export default async function ContactPage() {
                                     <div className="justify-start text-neutral-800 text-xl font-bold leading-6">{t("sampleTitle")}</div>
                                  </div>
                                  <div className="self-stretch justify-start">
-                                    <Link href="/print-sample" className="text-brand text-base font-bold underline">{t("sampleLink")}</Link>
+                                    <Link href={localePath("/print-sample", locale)} className="text-brand text-base font-bold underline">{t("sampleLink")}</Link>
                                     <span className="text-neutral-700 text-base font-normal">{t("sampleDesc")}</span>
                                  </div>
                               </div>

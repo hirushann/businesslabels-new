@@ -1106,7 +1106,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
               <div className="h-px bg-slate-100 my-4" />
               
               <Link
-                href="/custom"
+                href={lp('/maatwerk')}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="px-4 py-3 text-brand font-semibold text-base flex items-center gap-2 hover:bg-brand-soft rounded-lg transition-colors"
               >

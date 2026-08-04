@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE, LOCALE_HEADER, normalizeLocale } from '@/lib/i18n/config';
+import { DEFAULT_LOCALE, LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE, LOCALE_HEADER } from '@/lib/i18n/config';
 
 const EN_PREFIX = '/en';
 const COOKIE_OPTIONS = { path: '/', sameSite: 'lax' as const, maxAge: LOCALE_COOKIE_MAX_AGE };
@@ -20,20 +20,21 @@ function persistLocale(response: NextResponse, locale: 'en' | 'nl') {
  * Locale-prefix routing:
  * - /en/* → English, rewrite internally to /* + persist NEXT_LOCALE=en
  * - /product-categorie/* → Dutch, regardless of a previous English cookie
- * - /* → Use the persisted user locale, falling back to Dutch.
+ * - /* → Dutch, regardless of a previous English cookie
  *
- * The user's explicit language choice is the source of truth. This prevents
- * external returns (checkout/payment callbacks, email links, reloads, etc.)
- * from silently switching an English user back to Dutch just because the URL is
- * unprefixed.
+ * The URL is the sole source of truth for locale. An unprefixed URL always
+ * renders Dutch — no falling back to a persisted cookie — so a Dutch URL
+ * can't get indexed or land a fresh visitor in English (N01). Flows that must
+ * keep an English user on English across a redirect (e.g. /my-account) do so
+ * by redirecting to an explicit /en/-prefixed URL, not by relying on this
+ * fallback.
  */
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const hasEnglishPrefix = pathname.startsWith(EN_PREFIX + '/') || pathname === EN_PREFIX;
   const hasDutchArchivePrefix =
     pathname.startsWith('/product-categorie/') || pathname === '/product-categorie';
-  const persistedLocale = normalizeLocale(request.cookies.get(LOCALE_COOKIE)?.value);
-  const locale = hasEnglishPrefix ? 'en' : hasDutchArchivePrefix ? 'nl' : persistedLocale;
+  const locale = hasEnglishPrefix ? 'en' : hasDutchArchivePrefix ? 'nl' : DEFAULT_LOCALE;
   let cleanPathname = hasEnglishPrefix ? (pathname.slice(EN_PREFIX.length) || '/') : pathname;
   if (cleanPathname === '/software-2') {
     cleanPathname = '/software';

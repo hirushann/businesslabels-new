@@ -71,11 +71,43 @@ async function getPostCategories(locale: string): Promise<PostCategoryData[]> {
     });
     if (!res.ok) return [];
     const json = await res.json();
-    return (json?.data as PostCategoryData[]) ?? [];
+    const categories = (json?.data as PostCategoryData[]) ?? [];
+    return dedupeAndFilterTestCategories(categories, locale);
   } catch (err) {
     console.error("Failed to fetch post categories:", err);
     return [];
   }
+}
+
+function localizedText(value: unknown, locale: string): string {
+  if (typeof value === 'string') return value;
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    const localized = record[locale] ?? record.en ?? record.nl;
+    return typeof localized === 'string' ? localized : '';
+  }
+  return '';
+}
+
+// Guards against stray CMS content: hides an obvious "test" category and
+// collapses accidental duplicate categories so neither surfaces publicly.
+function dedupeAndFilterTestCategories(categories: PostCategoryData[], locale: string): PostCategoryData[] {
+  const seenSlugs = new Set<string>();
+  const result: PostCategoryData[] = [];
+
+  for (const category of categories) {
+    const normalizedName = localizedText(category.name, locale).trim().toLowerCase();
+    const localizedSlug = localizedText(category.slug, locale).trim().toLowerCase();
+    const normalizedSlug = localizedSlug || String(category.id);
+
+    if (normalizedName === 'test' || normalizedSlug === 'test') continue;
+    if (seenSlugs.has(normalizedSlug)) continue;
+
+    seenSlugs.add(normalizedSlug);
+    result.push(category);
+  }
+
+  return result;
 }
 
 type ArticleData = {
@@ -176,14 +208,14 @@ export default async function KnowledgeBaseArchive() {
               const IconComponent = sectionIcon(page.icon) || HelpCircle;
               
               return (
-                <Link key={page.id} href={`/epson-colorworks-faq?topic=${slug}`} className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 flex flex-col items-center gap-4 transition-all group">
+                <Link key={page.id} href={localePath(`/epson-colorworks-faq?topic=${slug}`, locale)} className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 flex flex-col items-center gap-4 transition-all group">
                   <IconComponent className="w-14 h-14 text-zinc-500 group-hover:text-brand transition-colors" />
                   <h3 className="text-center text-neutral-800 text-xl font-bold">{title}</h3>
                 </Link>
               );
             })}
             
-            <Link href="/contact-us" className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 flex flex-col items-center gap-4 transition-all group">
+            <Link href={localePath("/contact-us", locale)} className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 flex flex-col items-center gap-4 transition-all group">
               <HelpCircle className="w-14 h-14 text-zinc-500 group-hover:text-brand transition-colors" />
               <h3 className="text-center text-neutral-800 text-xl font-bold">{t('wantToKnowMore')}</h3>
             </Link>
@@ -211,7 +243,7 @@ export default async function KnowledgeBaseArchive() {
               } as Record<string, any>)[category.slug] || BookOpen;
 
               return (
-                <Link key={category.id} href={`/blog?category=${categorySlug}`} className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 flex items-center gap-6 transition-all group">
+                <Link key={category.id} href={localePath(`/blog?category=${categorySlug}`, locale)} className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 flex items-center gap-6 transition-all group">
                   <div className="w-20 h-20 bg-brand-soft rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform flex-shrink-0">
                     <Icon className="w-10 h-10 text-brand" />
                   </div>
@@ -246,7 +278,7 @@ export default async function KnowledgeBaseArchive() {
                 <Link key={article.id} href={localePath(`/blog/${slug}`, locale)} className="bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 p-5 flex flex-col sm:flex-row gap-6 transition-all group">
                   <div className="w-full sm:w-48 aspect-square rounded-lg bg-slate-100 overflow-hidden flex-shrink-0 relative">
                     <Image 
-                      src={toDisplayImageUrl(article.image) || "https://placehold.co/400x400"} 
+                      src={toDisplayImageUrl(article.image) || "/image-placeholder.svg"}
                       alt={title} 
                       fill 
                       unoptimized
@@ -347,7 +379,7 @@ export default async function KnowledgeBaseArchive() {
               </div>
             </div>
             <p className="text-neutral-600">
-              {t('stillStuck')} <Link href="/contact-us" className="text-brand font-bold hover:underline">{t('contactSupport')}</Link> {t('connectViaTeamViewer')}
+              {t('stillStuck')} <Link href={localePath("/contact-us", locale)} className="text-brand font-bold hover:underline">{t('contactSupport')}</Link> {t('connectViaTeamViewer')}
             </p>
           </div>
         </div>
@@ -379,13 +411,13 @@ export default async function KnowledgeBaseArchive() {
             </div>
             <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
               <Link
-                href="/product-finder"
+                href={localePath("/printers", locale)}
                 className="w-full sm:w-auto justify-center px-7 py-4 bg-brand rounded-full flex items-center gap-2.5 text-white text-lg font-medium leading-6 hover:bg-brand-hover transition-colors text-center"
               >
                 {t('productFinder')}
               </Link>
               <Link
-                href="/maatwerk"
+                href={localePath("/maatwerk", locale)}
                 className="w-full sm:w-auto justify-center px-7 py-4 bg-white/10 rounded-full border border-white/20 backdrop-blur-sm flex items-center gap-2.5 text-white text-lg font-medium leading-6 hover:bg-white/20 transition-colors text-center"
               >
                 {t('customMadeLabels')}

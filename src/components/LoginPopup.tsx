@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Eye, EyeOff, Loader2, Mail, LockKeyhole } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
+import { useLocalePath } from '@/hooks/useLocalePath';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -83,6 +84,7 @@ export default function LoginPopup({
   onLoginSuccess?: () => void;
 }) {
   const t = useTranslations();
+  const lp = useLocalePath();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [resetEmail, setResetEmail] = useState('');
@@ -474,7 +476,7 @@ export default function LoginPopup({
                 </button>
               ) : (
                 <Link
-                  href="/register"
+                  href={lp('/register')}
                   onClick={() => handleOpenChange(false)}
                   className="font-black text-brand transition-colors hover:text-amber-700"
                 >

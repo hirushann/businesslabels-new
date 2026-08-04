@@ -7,6 +7,7 @@ import EmptyState from '@/components/EmptyState';
 import DrawerProductCard from '@/components/DrawerProductCard';
 import { useWishlist } from '@/components/WishlistProvider';
 import { useCart } from '@/components/CartProvider';
+import { useLocalePath } from '@/hooks/useLocalePath';
 
 type WishlistDrawerProps = {
   onClose: () => void;
@@ -23,6 +24,7 @@ function formatEuro(value: number): string {
 
 export default function WishlistDrawer({ onClose }: WishlistDrawerProps) {
   const t = useTranslations();
+  const lp = useLocalePath();
   const { items: localItems, removeItem, moveToCart } = useWishlist();
   const cart = useCart();
   const [favorites, setFavorites] = useState<any[]>([]);
@@ -192,7 +194,7 @@ export default function WishlistDrawer({ onClose }: WishlistDrawerProps) {
           ) : (
             <div className="flex flex-col gap-4">
               {mergedItems.map((item) => {
-                const imageSrc = item.mainImage?.trim() || 'https://placehold.co/140x100';
+                const imageSrc = item.mainImage?.trim() || '/image-placeholder.svg';
                 const hasPrice = typeof item.price === 'number' && Number.isFinite(item.price);
                 const href = item.slug
                   ? item.type
@@ -242,7 +244,7 @@ export default function WishlistDrawer({ onClose }: WishlistDrawerProps) {
 
         <div className="shrink-0 p-6 border-t border-slate-200 bg-slate-50 flex flex-col gap-3">
           <Link
-            href="/my-account?tab=favourites"
+            href={lp('/my-account?tab=favourites')}
             onClick={onClose}
             className="w-full h-11 bg-brand text-white rounded-full font-black text-sm hover:shadow-lg shadow-brand/20 transition-all flex items-center justify-center gap-2"
           >
@@ -252,7 +254,7 @@ export default function WishlistDrawer({ onClose }: WishlistDrawerProps) {
             {t('account.favouriteProducts')}
           </Link>
           <Link
-            href="/my-account?tab=printers"
+            href={lp('/my-account?tab=printers')}
             onClick={onClose}
             className="w-full h-11 bg-white border border-slate-200 text-neutral-700 hover:bg-slate-50 rounded-full font-bold text-sm transition-all flex items-center justify-center gap-2"
           >

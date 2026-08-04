@@ -208,7 +208,7 @@ export default function FavoritesPageClient() {
                           </button>
                           <div className="w-20 h-20 shrink-0 bg-line flex items-center justify-center p-2 overflow-hidden rounded-none">
                             <Image
-                              src={item.mainImage || 'https://placehold.co/100x100'}
+                              src={item.mainImage || '/image-placeholder.svg'}
                               alt={item.name}
                               width={80}
                               height={80}
@@ -313,7 +313,7 @@ export default function FavoritesPageClient() {
                   <div className="flex gap-4 items-center">
                     <div className="w-16 h-16 shrink-0 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center p-2 overflow-hidden">
                       <Image
-                        src={item.mainImage || 'https://placehold.co/100x100'}
+                        src={item.mainImage || '/image-placeholder.svg'}
                         alt={item.name}
                         width={64}
                         height={64}

@@ -20,7 +20,7 @@ export async function generateMetadata() {
       canonical: siteUrl,
       languages: {
         en: `${siteUrl}/en`,
-        nl: `${siteUrl}/nl`,
+        nl: `${siteUrl}/`,
       },
     },
     robots: {

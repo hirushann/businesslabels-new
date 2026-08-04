@@ -203,8 +203,8 @@ export default async function BlogsPage({
             {/* Categories Tab */}
             <div className="w-full flex flex-col justify-end items-start">
               <div className="w-full flex overflow-x-auto no-scrollbar items-start">
-                <Link 
-                  href="/blog?category=all"
+                <Link
+                  href={localePath("/blog?category=all", locale)}
                   className={`px-2.5 flex justify-center items-center gap-2.5 relative transition-colors ${activeCategory === "all" ? "text-brand font-bold" : "text-neutral-700 font-semibold hover:text-brand"}`}
                 >
                   <span className="text-base leading-5 whitespace-nowrap p-3">All</span>
@@ -214,9 +214,9 @@ export default async function BlogsPage({
                 </Link>
                 
                 {categories.map(category => (
-                  <Link 
+                  <Link
                     key={category.slug}
-                    href={`/blog?category=${category.slug}`}
+                    href={localePath(`/blog?category=${category.slug}`, locale)}
                     className={`px-2.5 flex justify-center items-center gap-2.5 relative transition-colors ${activeCategory === category.slug ? "text-brand font-bold" : "text-neutral-700 font-semibold hover:text-brand"}`}
                   >
                     <span className="text-base leading-5 whitespace-nowrap p-3">{category.name}</span>
@@ -241,7 +241,7 @@ export default async function BlogsPage({
                   <Link key={post.id} href={localePath(`/blog/${slug}`, locale)} className="flex flex-col bg-white rounded-2xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-100 overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                     <div className="w-full h-48 relative overflow-hidden bg-slate-100">
                       <Image 
-                        src={toDisplayImageUrl(post.image_preview || post.image) || "https://placehold.co/384x192"} 
+                        src={toDisplayImageUrl(post.image_preview || post.image) || "/image-placeholder.svg"}
                         alt={title}
                         fill
                         unoptimized

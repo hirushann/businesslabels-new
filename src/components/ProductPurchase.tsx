@@ -424,6 +424,12 @@ export default function ProductPurchase({
     return bulkDiscounts;
   }, [bulkDiscounts, hasBulkDiscounts, minimumQuantity]);
 
+  // Whether `price` (the undiscounted base) is a quantity a customer could
+  // actually order. When the first bulk-discount tier starts at or below the
+  // minimum order quantity, `price` is never purchasable — showing it
+  // struck-through misrepresents a quantity discount as a sale (N06).
+  const hasOrderableBasePrice = !hasBulkDiscounts || Number.parseInt(bulkDiscounts[0].quantity, 10) > minimumQuantity;
+
   const hasWarrantyOptions = Boolean(normalizedWarranty.defaultOption) || normalizedWarranty.types.length > 0 || normalizedWarranty.oldOptions.length > 0;
 
   // Find active discount percentage based on quantity
@@ -766,7 +772,7 @@ export default function ProductPurchase({
             <span className="text-neutral-800 text-4xl font-semibold leading-[48px]">
               {hasPrice ? formatEuro(activeUnitPrice ?? price ?? 0) : "-"}
             </span>
-            {activeDiscountPercent > 0 ? (
+            {activeDiscountPercent > 0 && hasOrderableBasePrice ? (
               <span className="text-zinc-500 text-2xl font-normal line-through leading-7">
                 {formatEuro(price ?? 0)}
               </span>
@@ -775,7 +781,7 @@ export default function ProductPurchase({
                 {formatEuro(originalPrice ?? 0)}
               </span>
             ) : null}
-            {activeDiscountPercent > 0 ? (
+            {activeDiscountPercent > 0 && hasOrderableBasePrice ? (
               <span className="text-red-600 text-2xl font-extrabold leading-7">-{activeDiscountPercent}%</span>
             ) : discountPercentage ? (
               <span className="text-red-600 text-2xl font-extrabold leading-7">-{discountPercentage}%</span>

@@ -11,20 +11,20 @@ function makeRequest(path: string, cookie?: string) {
 }
 
 describe("proxy locale routing", () => {
-  it("keeps clean URLs in the user's persisted English locale", () => {
+  it("resets clean URLs to Dutch even with a persisted English cookie (N01: URL is the source of truth)", () => {
     const response = proxy(makeRequest("/product?focus=true", `${LOCALE_COOKIE}=en`));
 
     expect(response.status).not.toBeGreaterThanOrEqual(300);
     expect(response.headers.get("location")).toBeNull();
-    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("nl");
   });
 
-  it("keeps checkout return URLs in the user's persisted English locale", () => {
+  it("resets checkout return URLs to Dutch even with a persisted English cookie (N01: URL is the source of truth)", () => {
     const response = proxy(makeRequest("/bedankt?order_number=BL-123", `${LOCALE_COOKIE}=en`));
 
     expect(response.status).not.toBeGreaterThanOrEqual(300);
     expect(response.headers.get("location")).toBeNull();
-    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("nl");
   });
 
   it("defaults clean URLs to Dutch when no locale has been selected", () => {
@@ -61,20 +61,20 @@ describe("proxy locale routing", () => {
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
 
-  it("keeps auth redirects locale-aware from clean URLs with an English cookie", () => {
+  it("redirects unauthenticated /my-account to the Dutch login, even with a persisted English cookie (N01)", () => {
     const response = proxy(makeRequest("/my-account", `${LOCALE_COOKIE}=en`));
 
     expect(response.status).toBeGreaterThanOrEqual(300);
-    expect(response.headers.get("location")).toBe("http://localhost/en/login?redirect=%2Fen%2Fmy-account");
-    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+    expect(response.headers.get("location")).toBe("http://localhost/login?redirect=%2Fmy-account");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("nl");
   });
 
-  it("redirects /my-account to /en/my-account when user is authenticated with an English cookie", () => {
+  it("serves /my-account in Dutch for an authenticated user, even with a persisted English cookie (N01)", () => {
     const response = proxy(makeRequest("/my-account", `${LOCALE_COOKIE}=en; auth_token=test_token`));
 
-    expect(response.status).toBe(307);
-    expect(response.headers.get("location")).toBe("http://localhost/en/my-account");
-    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+    expect(response.status).not.toBeGreaterThanOrEqual(300);
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("nl");
   });
 
   it("rewrites /en/software-2 internally to /software", () => {
@@ -136,12 +136,12 @@ describe("proxy locale routing", () => {
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
 
-  it("redirects /inkt-recyclen-epson-colorworks to /en/inkt-recyclen-epson-colorworks when cookie is en", () => {
+  it("keeps /inkt-recyclen-epson-colorworks in Dutch even with an English cookie (N01)", () => {
     const response = proxy(makeRequest("/inkt-recyclen-epson-colorworks", `${LOCALE_COOKIE}=en`));
 
-    expect(response.status).toBe(307);
-    expect(response.headers.get("location")).toBe("http://localhost/en/inkt-recyclen-epson-colorworks");
-    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+    expect(response.status).not.toBeGreaterThanOrEqual(300);
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("nl");
   });
 
   it("redirects /en/custom-made-form to /en/material-customization", () => {
@@ -182,12 +182,12 @@ describe("proxy locale routing", () => {
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
 
-  it("redirects /winkel to /en/shop when cookie is en", () => {
+  it("keeps /winkel in Dutch even with an English cookie (N01)", () => {
     const response = proxy(makeRequest("/winkel", `${LOCALE_COOKIE}=en`));
 
-    expect(response.status).toBe(307);
-    expect(response.headers.get("location")).toBe("http://localhost/en/shop");
-    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+    expect(response.status).not.toBeGreaterThanOrEqual(300);
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("nl");
   });
 
   it("rewrites /en/cart internally to /winkelmand", () => {

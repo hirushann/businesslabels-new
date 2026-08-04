@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { LinkProps } from "next/link";
 import { useTranslations } from "next-intl";
+import { useLocalePath } from "@/hooks/useLocalePath";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -39,6 +40,7 @@ function normalizeText(value: string | null | undefined): string | null {
 
 export default function PrinterCard({ printer, href }: PrinterCardProps) {
   const t = useTranslations();
+  const lp = useLocalePath();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
 
@@ -56,7 +58,7 @@ export default function PrinterCard({ printer, href }: PrinterCardProps) {
 
   const printerName = printer.name ?? "";
   const subtitle = normalizeText(printer.subtitle);
-  const imageSrc = normalizeText(printer.mainImage) || "https://placehold.co/600x400";
+  const imageSrc = normalizeText(printer.mainImage) || "/image-placeholder.svg";
   const [imgError, setImgError] = useState(false);
 
   const cardContent = (
@@ -204,14 +206,14 @@ export default function PrinterCard({ printer, href }: PrinterCardProps) {
         </DialogHeader>
         <DialogFooter className="flex-col sm:flex-row gap-2 mt-4">
           <Link
-            href="/register"
+            href={lp('/register')}
             className="flex-1 flex items-center justify-center h-10 rounded-full border border-slate-300 font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
             onClick={(e) => e.stopPropagation()}
           >
             {t('register.registerButton')}
           </Link>
           <Link
-            href="/login"
+            href={lp('/login')}
             className="flex-1 flex items-center justify-center h-10 rounded-full bg-brand font-semibold text-white hover:bg-brand-hover transition-colors"
             onClick={(e) => e.stopPropagation()}
           >

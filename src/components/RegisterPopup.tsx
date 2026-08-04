@@ -8,6 +8,7 @@ import type { ReactNode } from 'react';
 import { ChevronDown, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
+import { useLocalePath } from '@/hooks/useLocalePath';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -210,6 +211,7 @@ export default function RegisterPopup({
   onSwitchToLogin?: () => void;
 }) {
   const t = useTranslations();
+  const lp = useLocalePath();
   const router = useRouter();
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
@@ -669,7 +671,7 @@ export default function RegisterPopup({
 
           <p className="text-xs font-medium leading-5 text-neutral-500">
             {t('register.privacyText')}{' '}
-            <Link href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="font-semibold text-brand transition-colors hover:text-amber-700">
+            <Link href={lp('/privacy-policy')} target="_blank" rel="noopener noreferrer" className="font-semibold text-brand transition-colors hover:text-amber-700">
               {t('register.privacyPolicy')}
             </Link>
             .
@@ -705,7 +707,7 @@ export default function RegisterPopup({
               </button>
             ) : (
               <Link
-                href="/login"
+                href={lp('/login')}
                 onClick={() => handleOpenChange(false)}
                 className="font-black text-brand transition-colors hover:text-amber-700"
               >
