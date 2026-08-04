@@ -219,7 +219,7 @@ export default function PrinterCard({ printer, href }: PrinterCardProps) {
             onClick={(e: React.MouseEvent) => e.stopPropagation()}
           >
             {t('login.loginButton')}
-          </LocaleLink>
+          </Link>
         </DialogFooter>
       </DialogContent>
     </Dialog>

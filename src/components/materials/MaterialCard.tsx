@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import LocaleLink from "@/components/LocaleLink";
 import { useState } from "react";
 import type { Material } from "@/lib/search/materials";

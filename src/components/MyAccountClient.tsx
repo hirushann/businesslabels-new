@@ -13,6 +13,7 @@ import { toDisplayImageUrl } from '@/lib/utils/imageProxy';
 import { localePath } from '@/lib/i18n/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import ProductCard, { type ProductCardData, type ProductRouteType } from '@/components/ProductCard';
+import { useWishlist } from "@/components/WishlistProvider";
 
 type Tab = 'dashboard' | 'orders' | 'addresses' | 'details' | 'printers' | 'favourites' | 'billing_address' | 'shipping_address' | 'change_password';
 
@@ -1910,7 +1911,6 @@ function PrintersView() {
   );
 }
 
-import { useWishlist } from "@/components/WishlistProvider";
 import { PrinterCardData } from './PrintersListing';
 
 function FavouriteProductsView() {
@@ -1962,7 +1962,6 @@ function FavouriteProductsView() {
     wishlist.removeItem(key, { id: product.id, type: product.type });
   };
 
-  const locale = useLocale();
   const cart = useCart();
 
   const handleAction = (item: ProductCardData) => {
