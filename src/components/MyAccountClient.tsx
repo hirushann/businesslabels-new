@@ -28,6 +28,14 @@ type AccountOrder = {
   subtotal?: string;
   shipping_amount?: string;
   tax_amount?: string;
+  rawSubtotal?: number;
+  rawShipping?: number;
+  rawTax?: number;
+  rawDiscount?: number;
+  rawTotal?: number;
+  payment_method?: string;
+  purchase_reference?: string;
+  mollie_id?: string;
   items_list?: Array<{
     id: number;
     name: string;
@@ -284,15 +292,32 @@ function normalizeOrders(payload: unknown): AccountOrder[] {
           ? order.shipping_address
           : null;
 
+      const rawSubtotal = readNumberValue(order, ['subtotal']) || 0;
+      const rawShipping = readNumberValue(order, ['shipping_amount', 'shipping_total']) || 0;
+      const rawTax = readNumberValue(order, ['tax_amount', 'tax_total']) || 0;
+      const rawDiscount = readNumberValue(order, ['discount_amount', 'discount_total']) || 0;
+      const rawTotal = readNumberValue(order, ['total', 'grand_total']) || 0;
+      const rawPaymentMethod = readStringValue(order, ['payment_method', 'payment_method_title']) || '';
+      const purchaseRef = readStringValue(order, ['customer_notes', 'customer_note']) || '';
+      const mollieId = readStringValue(order, ['transaction_id', 'mollie_payment_id', 'mollie_id']) || '';
+
       return {
         id: formatOrderId(order),
         date: formatOrderDate(order),
         status: readStringValue(order, ['status', 'order_status', 'fulfillment_status']) || 'Pending',
         total: formatOrderTotal(order),
         items: readOrderItemCount(order),
-        subtotal: formatEuro(readNumberValue(order, ['subtotal']) || 0),
-        shipping_amount: formatEuro(readNumberValue(order, ['shipping_amount']) || 0),
-        tax_amount: formatEuro(readNumberValue(order, ['tax_amount']) || 0),
+        subtotal: formatEuro(rawSubtotal),
+        shipping_amount: formatEuro(rawShipping),
+        tax_amount: formatEuro(rawTax),
+        rawSubtotal,
+        rawShipping,
+        rawTax,
+        rawDiscount,
+        rawTotal,
+        payment_method: rawPaymentMethod,
+        purchase_reference: purchaseRef,
+        mollie_id: mollieId,
         items_list: itemsRaw.map((item, itemIndex) => {
           const itemRecord = isPlainObject(item) ? item : {};
           const product = isPlainObject(itemRecord.product) ? itemRecord.product : {};
@@ -1056,6 +1081,183 @@ function OrdersView() {
   const [selectedOrder, setSelectedOrder] = useState<AccountOrder | null>(null);
   const [isOrderItemsOpen, setIsOrderItemsOpen] = useState(false);
   const [expandedOrders, setExpandedOrders] = useState<Record<string, boolean>>({});
+  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
+
+  const handleDownloadPDF = async (order: AccountOrder) => {
+    setIsPdfGenerating(true);
+    try {
+      const { default: jsPDF } = await import('jspdf');
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      const loadImage = (src: string): Promise<HTMLImageElement> => {
+        return new Promise((resolve, reject) => {
+          const img = new window.Image();
+          img.crossOrigin = 'anonymous';
+          img.src = src;
+          img.onload = () => resolve(img);
+          img.onerror = (err: unknown) => reject(err);
+        });
+      };
+
+      let logoImg: HTMLImageElement | null = null;
+      try {
+        logoImg = await loadImage('/logo.png');
+      } catch (e) {
+        console.error('Failed to load logo image:', e);
+      }
+
+      const primaryColor = [241, 136, 0];
+      const darkColor = [34, 34, 34];
+      const grayColor = [136, 136, 136];
+
+      if (logoImg) {
+        const aspectRatio = logoImg.width / logoImg.height;
+        const logoHeight = 12;
+        const logoWidth = logoHeight * aspectRatio;
+        doc.addImage(logoImg, 'PNG', 15, 12, logoWidth, logoHeight);
+      } else {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(22);
+        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        doc.text('Businesslabels', 15, 20);
+      }
+
+      doc.setFontSize(16);
+      doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+      const titleY = 32;
+      doc.text(t('thankYou.pdfTitle', { number: order.id }), 15, titleY);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
+
+      let infoY = titleY + 6;
+      doc.text(`${t('thankYou.pdfDate')}: ${order.date}`, 15, infoY);
+
+      if (order.mollie_id) {
+        infoY += 6;
+        doc.text(`Mollie ID: ${order.mollie_id}`, 15, infoY);
+      }
+
+      if (order.purchase_reference) {
+        infoY += 6;
+        doc.text(`${t('thankYou.purchaseReference')}: ${order.purchase_reference}`, 15, infoY);
+      }
+
+      if (order.payment_method) {
+        const rawPaymentMethod = order.payment_method;
+        const paymentMethodLabel =
+          rawPaymentMethod === 'creditcard' || rawPaymentMethod === 'credit_card'
+            ? t('thankYou.cardPaymentLabel')
+            : rawPaymentMethod === 'ideal'
+            ? 'iDEAL'
+            : rawPaymentMethod === 'banktransfer'
+            ? t('thankYou.bankTransfer')
+            : rawPaymentMethod;
+        infoY += 6;
+        doc.text(`${t('thankYou.paymentMethod')}: ${paymentMethodLabel}`, 15, infoY);
+      }
+
+      const detailsY = infoY + 12;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+      doc.text(t('thankYou.personalDetails'), 15, detailsY);
+      doc.text(t('thankYou.shippingAddress'), 110, detailsY);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+
+      let personalY = detailsY + 6;
+      if (order.billing_address) {
+        const b = order.billing_address;
+        if (b.name) doc.text(b.name, 15, personalY);
+        if (b.company) doc.text(b.company, 15, (personalY += 5));
+        if (b.phone) doc.text(b.phone, 15, (personalY += 5));
+        if (b.email) doc.text(b.email, 15, (personalY += 5));
+        const street = [b.address1, b.address2].filter(Boolean).join(', ');
+        if (street) doc.text(street, 15, (personalY += 5));
+        const cityZip = [b.postcode, b.city].filter(Boolean).join(' ');
+        if (cityZip) doc.text(cityZip, 15, (personalY += 5));
+        if (b.country) doc.text(b.country, 15, (personalY += 5));
+      }
+
+      let shippingY = detailsY + 6;
+      if (order.shipping_address) {
+        const s = order.shipping_address;
+        if (s.name) doc.text(s.name, 110, shippingY);
+        if (s.company) doc.text(s.company, 110, (shippingY += 5));
+        const street = [s.address1, s.address2].filter(Boolean).join(', ');
+        if (street) doc.text(street, 110, (shippingY += 5));
+        const cityZip = [s.postcode, s.city].filter(Boolean).join(' ');
+        if (cityZip) doc.text(cityZip, 110, (shippingY += 5));
+        if (s.country) doc.text(s.country, 110, (shippingY += 5));
+      }
+
+      const tableY = Math.max(personalY, shippingY) + 12;
+      doc.setFillColor(237, 242, 247);
+      doc.rect(15, tableY, 180, 8, 'F');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+      doc.text(t('thankYou.pdfProduct'), 18, tableY + 5);
+      doc.text(t('thankYou.pdfQuantity'), 125, tableY + 5);
+      doc.text(t('thankYou.pdfPrice'), 145, tableY + 5);
+      doc.text(t('thankYou.pdfTotal'), 175, tableY + 5);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      let itemY = tableY + 8;
+
+      (order.items_list || []).forEach((item) => {
+        itemY += 6;
+        doc.text(item.name || t('thankYou.pdfProduct'), 18, itemY);
+        doc.text(String(item.quantity), 125, itemY);
+        doc.text(formatEuro(item.price), 145, itemY);
+        doc.text(formatEuro(item.total), 175, itemY);
+
+        doc.setDrawColor(237, 242, 247);
+        doc.line(15, itemY + 2, 195, itemY + 2);
+        itemY += 2;
+      });
+
+      let totalsY = itemY + 12;
+      doc.setFont('helvetica', 'normal');
+      doc.text(t('checkout.subtotal'), 130, totalsY);
+      doc.text(order.subtotal || formatEuro(order.rawSubtotal || 0), 175, totalsY);
+
+      doc.text(t('checkout.shipping'), 130, (totalsY += 6));
+      doc.text(order.shipping_amount || formatEuro(order.rawShipping || 0), 175, totalsY);
+
+      doc.text(`${t('checkout.vat')} (21%)`, 130, (totalsY += 6));
+      doc.text(order.tax_amount || formatEuro(order.rawTax || 0), 175, totalsY);
+
+      if (order.rawDiscount && order.rawDiscount !== 0) {
+        doc.setTextColor(221, 51, 51);
+        doc.text(t('checkout.discount'), 130, (totalsY += 6));
+        doc.text(formatEuro(order.rawDiscount), 175, totalsY);
+        doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+      }
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text(t('thankYou.totalInclVat'), 130, (totalsY += 8));
+      doc.text(order.total || formatEuro(order.rawTotal || 0), 175, totalsY);
+
+      doc.save(`Order_Confirmation_${order.id}.pdf`);
+    } catch (err) {
+      console.error('Failed to generate PDF invoice:', err);
+      toast.error('Failed to generate PDF invoice.');
+    } finally {
+      setIsPdfGenerating(false);
+    }
+  };
 
   const toggleExpand = (orderId: string) => {
     setExpandedOrders((prev) => ({
@@ -1343,11 +1545,23 @@ function OrdersView() {
         {selectedOrder && (
           <DialogContent className="w-full sm:max-w-2xl max-w-2xl bg-white rounded-2xl p-0 overflow-hidden max-h-[90vh] flex flex-col border-none shadow-2xl">
             {/* Header */}
-            <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-              <div className="flex flex-col gap-1">
+            <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 gap-4">
+              <div className="flex flex-col gap-1 min-w-0">
                 <DialogTitle className="text-2xl font-black text-neutral-800 tracking-tight">{t('account.orderNumber', { number: selectedOrder.id })}</DialogTitle>
                 <DialogDescription className="text-sm font-medium text-neutral-500">{t('account.placedOn', { date: selectedOrder.date })}</DialogDescription>
               </div>
+              <button
+                onClick={() => handleDownloadPDF(selectedOrder)}
+                disabled={isPdfGenerating}
+                className="flex items-center gap-2 px-4 py-2.5 bg-brand text-white font-bold text-xs sm:text-sm rounded-xl hover:bg-brand-hover transition-colors shadow-sm disabled:opacity-50 cursor-pointer shrink-0"
+              >
+                <svg width="16" height="16" viewBox="0 0 18 18" fill="none" className="shrink-0">
+                  <path d="M8.65215 12.1985C8.85814 12.4047 9.19199 12.4045 9.39785 12.1985L11.6572 9.93921C11.8632 9.73335 11.8632 9.39937 11.6572 9.19351C11.4513 8.98752 11.1175 8.98752 10.9115 9.19351L9.55234 10.5527V6.74219C9.55234 6.45091 9.31614 6.21484 9.025 6.21484C8.73372 6.21484 8.49765 6.45091 8.49765 6.74219V10.5527L7.13851 9.19351C6.93251 8.98752 6.59867 8.98752 6.39267 9.19351C6.18682 9.39937 6.18682 9.73335 6.39267 9.93921L8.65215 12.1985Z" fill="currentColor"/>
+                  <path d="M11.2844 13.5547H6.76562C6.47449 13.5547 6.23828 13.7908 6.23828 14.082C6.23828 14.3732 6.47449 14.6094 6.76562 14.6094H11.2844C11.5756 14.6094 11.8118 14.3732 11.8118 14.082C11.8118 13.7908 11.5757 13.5547 11.2844 13.5547Z" fill="currentColor"/>
+                  <path d="M14.1093 0H6.20151C6.06171 0 5.92754 0.0556183 5.82866 0.154495L2.43965 3.5435C2.34077 3.64238 2.28516 3.77655 2.28516 3.91635V16.343C2.28516 17.2566 3.02852 18 3.94217 18H14.1093C15.0204 18 15.7663 17.2634 15.7663 16.343V1.65701C15.7663 0.745972 15.0298 0 14.1093 0ZM6.239 1.23555V3.35152C6.239 3.68372 5.96887 3.95384 5.63667 3.95384H3.52071L6.239 1.23555ZM14.7117 16.343C14.7117 16.6711 14.4465 16.9453 14.1093 16.9453H3.94217C3.61011 16.9453 3.33984 16.675 3.33984 16.343V5.00867H5.63667C6.55032 5.00867 7.29369 4.2653 7.29369 3.35165V1.05469H14.1093C14.4375 1.05469 14.7117 1.32001 14.7117 1.65701V16.343Z" fill="currentColor"/>
+                </svg>
+                <span>{isPdfGenerating ? t('common.loading') : t('account.downloadInvoice')}</span>
+              </button>
             </div>
 
             {/* Content */}
