@@ -826,7 +826,7 @@ export const MESSAGES_V4 = {
       downloadMarkdownButton: 'Download as markdown',
     },
     materialsPage: {
-      metadataTitle: 'Archive Materials • BusinessLabels.nl',
+      metadataTitle: 'Materials • BusinessLabels.nl',
       metadataDescription: 'Discover printer media materials selected for precision, durability, color accuracy, and reliable professional output.',
       title: 'Material Overview',
       subtitle: 'Explore our printer media materials, engineered for precision, durability, and high-quality output. From standard to specialty stocks, each is chosen to boost performance, color accuracy, and reliability-ensuring professional results without compromise.',
@@ -2873,7 +2873,7 @@ export const MESSAGES_V4 = {
       downloadMarkdownButton: 'Download als markdown',
     },
     materialsPage: {
-      metadataTitle: 'Archief Materials • BusinessLabels.nl',
+      metadataTitle: 'Materialen • BusinessLabels.nl',
       metadataDescription: 'Ontdek printermaterialen geselecteerd voor precisie, duurzaamheid, kleurnauwkeurigheid en betrouwbare professionele output.',
       title: 'Materiaaloverzicht',
       subtitle: 'Ontdek onze printermaterialen, ontwikkeld voor precisie, duurzaamheid en hoogwaardige output. Van standaard tot speciale materialen: elk materiaal is gekozen om prestaties, kleurnauwkeurigheid en betrouwbaarheid te verbeteren, voor professionele resultaten zonder compromis.',

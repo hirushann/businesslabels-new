@@ -312,7 +312,7 @@ export default function LoginPopup({
                   disabled={isResetSubmitting}
                 />
               </div>
-              {resetErrors.email?.[0] ? <p className="text-sm font-semibold text-red-600">{resetErrors.email[0]}</p> : null}
+              {resetErrors.email?.[0] ? <p className="text-sm font-medium text-red-600">{resetErrors.email[0]}</p> : null}
             </div>
 
             <Button
@@ -373,7 +373,7 @@ export default function LoginPopup({
                   disabled={isSubmitting}
                 />
               </div>
-              {errors.email?.[0] ? <p className="text-sm font-semibold text-red-600">{errors.email[0]}</p> : null}
+              {errors.email?.[0] ? <p className="text-sm font-medium text-red-600">{errors.email[0]}</p> : null}
             </div>
 
             <div className="flex flex-col gap-2">
@@ -403,7 +403,7 @@ export default function LoginPopup({
                   {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
                 </button>
               </div>
-              {errors.password?.[0] ? <p className="text-sm font-semibold text-red-600">{errors.password[0]}</p> : null}
+              {errors.password?.[0] ? <p className="text-sm font-medium text-red-600">{errors.password[0]}</p> : null}
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-3">

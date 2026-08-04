@@ -173,7 +173,10 @@ function readRegisterDataOptions(data: RegisterDataResponse) {
 function findOptionById(options: RegisterOption[], id: string) {
   const normalizedId = id.trim().toLowerCase();
 
-  return options.find((option) => option.id.toLowerCase() === normalizedId);
+  return options.find(
+    (option) =>
+      option.id.toLowerCase() === normalizedId || option.label.toLowerCase() === normalizedId
+  );
 }
 
 function extractUser(data: RegisterResponse, email: string, name: string) {
@@ -223,7 +226,7 @@ export default function RegisterPopup({
   const [email, setEmail] = useState('');
   const [billingEmail, setBillingEmail] = useState('');
   const [countries, setCountries] = useState<RegisterOption[]>([]);
-  const [countryId, setCountryId] = useState('');
+  const [countryId, setCountryId] = useState('NL');
   const [stateId, setStateId] = useState('');
   const [isLoadingRegisterData, setIsLoadingRegisterData] = useState(true);
   const [streetAddress, setStreetAddress] = useState('');
@@ -239,6 +242,11 @@ export default function RegisterPopup({
   const fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
 
   const selectedCountry = findOptionById(countries, countryId);
+  const activeCountryId = selectedCountry?.id ?? countryId;
+  const isNetherlands =
+    activeCountryId.toUpperCase() === 'NL' ||
+    selectedCountry?.label.toLowerCase() === 'netherlands' ||
+    selectedCountry?.label.toLowerCase() === 'nederland';
   const provinces = selectedCountry?.provinces || [];
   const selectedProvince = findOptionById(provinces, stateId);
 
@@ -270,6 +278,17 @@ export default function RegisterPopup({
 
         if (isActive) {
           setCountries(nextOptions.countries);
+          setCountryId((prevCountryId) => {
+            const target = prevCountryId || 'NL';
+            const matched =
+              findOptionById(nextOptions.countries, target) ||
+              nextOptions.countries.find((c) => {
+                const normId = c.id.toLowerCase();
+                const normLabel = c.label.toLowerCase();
+                return normId === 'nl' || normLabel === 'netherlands' || normLabel === 'nederland';
+              });
+            return matched?.id ?? target;
+          });
         }
       } catch {
         if (isActive) {
@@ -296,7 +315,7 @@ export default function RegisterPopup({
     setPhone('');
     setEmail('');
     setBillingEmail('');
-    setCountryId('');
+    setCountryId(findOptionById(countries, 'NL')?.id ?? 'NL');
     setStateId('');
     setStreetAddress('');
     setPostcode('');
@@ -351,7 +370,7 @@ export default function RegisterPopup({
     if (!firstName.trim()) nextErrors.first_name = [required];
     if (!lastName.trim()) nextErrors.last_name = [required];
     if (!company.trim()) nextErrors.company = [required];
-    if (!vatNumber.trim()) nextErrors.vat_number = [required];
+    if (!isNetherlands && !vatNumber.trim()) nextErrors.vat_number = [required];
 
     if (!email.trim()) {
       nextErrors.email = [required];
@@ -477,7 +496,7 @@ export default function RegisterPopup({
         <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
           <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
           {formMessage ? (
-            <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+            <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
               {formMessage}
             </div>
           ) : null}
@@ -523,7 +542,7 @@ export default function RegisterPopup({
           <TextInput
             id="popup-vat-number"
             label={t('register.vatNumber')}
-            required={(selectedCountry?.id ?? countryId) !== 'NL'}
+            required={!isNetherlands}
             value={vatNumber}
             onChange={setVatNumber}
             autoComplete="off"
@@ -613,7 +632,7 @@ export default function RegisterPopup({
                 placeholder={t('register.addressAutocompletePlaceholder')}
               />
               {errors.street_address?.[0] ? (
-                <p className="mt-1 text-sm font-semibold text-red-600">{errors.street_address[0]}</p>
+                <p className="mt-1 text-sm font-medium text-red-600">{errors.street_address[0]}</p>
               ) : null}
             </div>
 
@@ -672,7 +691,7 @@ export default function RegisterPopup({
 
           <p className="text-xs font-medium leading-5 text-neutral-500">
             {t('register.privacyText')}{' '}
-            <Link href={lp('/privacy-policy')} target="_blank" rel="noopener noreferrer" className="font-semibold text-brand transition-colors hover:text-amber-700">
+            <Link href={lp('/privacy-policy')} target="_blank" rel="noopener noreferrer" className="font-bold text-brand transition-colors hover:text-amber-700">
               {t('register.privacyPolicy')}
             </Link>
             .
@@ -769,7 +788,7 @@ function TextInput({
           disabled={disabled}
         />
       </div>
-      {error ? <p className="text-sm font-semibold text-red-600">{error}</p> : null}
+      {error ? <p className="text-sm font-medium text-red-600">{error}</p> : null}
       {!error && hint ? <p className="text-sm font-medium text-neutral-400">{hint}</p> : null}
     </div>
   );
@@ -819,7 +838,7 @@ function SelectInput({
         </select>
         <ChevronDown className="pointer-events-none absolute right-5 top-1/2 size-5 -translate-y-1/2 text-neutral-500" />
       </div>
-      {error ? <p className="text-sm font-semibold text-red-600">{error}</p> : null}
+      {error ? <p className="text-sm font-medium text-red-600">{error}</p> : null}
     </div>
   );
 }

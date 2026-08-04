@@ -178,15 +178,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
     };
   }, [router]);
 
-  // We only trust clientAuthState if the server confirms they have a token (hasAuthToken === true)
-  // or if they just logged in on the client (clientAuthState === true && hasAuthToken === false is only valid briefly before refresh)
-  // But wait, if they have a stale localStorage, clientAuthState is true and hasAuthToken is false.
-  // To distinguish a fresh client login from a stale localStorage, we can check if hasAuthToken is false,
-  // we default to false unless they JUST successfully logged in. 
-  // For simplicity and correctness, the most robust check is just hasAuthToken, 
-  // because if they are logged in, the server knows it. If they just logged in via popup, 
-  // the popup calls router.refresh() which instantly updates hasAuthToken.
-  const isAuthenticated = hasAuthToken;
+  const isAuthenticated = hasAuthToken || clientAuthState === true;
   const accountHref = lp('/my-account');
 
   const handleAccountClick = (event: MouseEvent<HTMLAnchorElement>) => {
@@ -204,6 +196,15 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
   useEffect(() => {
     const authParam = searchParams.get('auth');
     if (!authParam) return;
+
+    if (isAuthenticated) {
+      const nextParams = new URLSearchParams(searchParams.toString());
+      nextParams.delete('auth');
+      nextParams.delete('redirect');
+      const query = nextParams.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+      return;
+    }
 
     if (authParam === 'register') {
       setIsRegisterPopupOpen(true);
@@ -223,7 +224,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
     nextParams.delete('redirect');
     const query = nextParams.toString();
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-  }, [searchParams, router, pathname]);
+  }, [searchParams, router, pathname, isAuthenticated]);
 
   const handleAuthPopupLoginSuccess = () => {
     if (pendingAuthRedirect) {
@@ -1145,13 +1146,13 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
       {isWishlistOpen && <WishlistDrawer onClose={() => setIsWishlistOpen(false)} />}
       {isCartOpen && <CartDrawer onClose={closeCart} />}
       <LoginPopup
-        open={isLoginPopupOpen}
+        open={isLoginPopupOpen && !isAuthenticated}
         onOpenChange={setIsLoginPopupOpen}
         onSwitchToRegister={() => setIsRegisterPopupOpen(true)}
         onLoginSuccess={handleAuthPopupLoginSuccess}
       />
       <RegisterPopup
-        open={isRegisterPopupOpen}
+        open={isRegisterPopupOpen && !isAuthenticated}
         onOpenChange={setIsRegisterPopupOpen}
         onSwitchToLogin={() => setIsLoginPopupOpen(true)}
       />

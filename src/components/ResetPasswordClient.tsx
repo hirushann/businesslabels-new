@@ -189,7 +189,7 @@ export default function ResetPasswordClient({ initialEmail, initialToken }: Rese
                     disabled={isSubmitting}
                   />
                 </div>
-                {errors.email?.[0] ? <p className="text-sm font-semibold text-red-600">{errors.email[0]}</p> : null}
+                {errors.email?.[0] ? <p className="text-sm font-medium text-red-600">{errors.email[0]}</p> : null}
               </div>
 
               <div className="flex flex-col gap-2">
@@ -219,7 +219,7 @@ export default function ResetPasswordClient({ initialEmail, initialToken }: Rese
                     {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
                   </button>
                 </div>
-                {errors.password?.[0] ? <p className="text-sm font-semibold text-red-600">{errors.password[0]}</p> : null}
+                {errors.password?.[0] ? <p className="text-sm font-medium text-red-600">{errors.password[0]}</p> : null}
               </div>
 
               <div className="flex flex-col gap-2">
