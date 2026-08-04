@@ -570,6 +570,7 @@ export const MESSAGES_V4 = {
       emptyTitle: 'Your Favorite list is Empty',
       emptyDescription: 'It seems you haven\'t saved any items yet. Explore our collection and add your favorites!',
       exploreProduct: 'Explore Product',
+      action: 'Action',
     },
     checkout: {
       title: 'Checkout',
@@ -2606,6 +2607,7 @@ export const MESSAGES_V4 = {
       emptyTitle: 'Je favorietenlijst is leeg',
       emptyDescription: 'Het lijkt erop dat je nog geen items hebt opgeslagen. Ontdek onze collectie en voeg je favorieten toe!',
       exploreProduct: 'Producten ontdekken',
+      action: 'Actie',
     },
     checkout: {
       title: 'Afrekenen',

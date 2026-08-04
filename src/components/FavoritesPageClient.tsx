@@ -183,7 +183,7 @@ export default function FavoritesPageClient() {
                   <th className="py-4 pl-[56px] pr-4 w-[600px] text-copy text-[16px] font-bold">{t('common.products') || 'Products'}</th>
                   <th className="py-4 px-4 w-[200px] text-copy text-[16px] font-semibold">{t('cart.price') || 'Price'}</th>
                   <th className="py-4 px-4 w-[120px] text-copy text-[16px] font-semibold">{t('account.status') || 'Status'}</th>
-                  <th className="py-4 pr-4 pl-4 w-[180px] text-copy text-[16px] font-semibold">{t('account.status') || 'STATUS'}</th>
+                  <th className="py-4 pr-4 pl-4 w-[180px] text-copy text-[16px] font-semibold">{t('favoritesPage.action') || 'Action'}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
