@@ -433,7 +433,7 @@ export default async function PrintersPage({
           >
             {/* Background image */}
             <Image
-              src="/labelprinters.jpeg"
+              src="/printer_page_hero.png"
               alt="Label printers"
               fill
               className="object-cover"

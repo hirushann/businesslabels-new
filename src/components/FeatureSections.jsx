@@ -9,7 +9,7 @@ const sections = [
   {
     key: 'section1',
     href: '/product-category/labelprinters',
-    image: '/find_the_right_printer.jpeg',
+    image: '/home_epson_printer.png',
     imageLeft: false,
     bullets: 3,
   },
