@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { DEFAULT_LOCALE, LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE, LOCALE_HEADER } from '@/lib/i18n/config';
+import { CHECKOUT_RETURN_LOCALE_COOKIE, DEFAULT_LOCALE, LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE, LOCALE_HEADER, LOCALE_PATH_HEADER } from '@/lib/i18n/config';
 
 const EN_PREFIX = '/en';
 const COOKIE_OPTIONS = { path: '/', sameSite: 'lax' as const, maxAge: LOCALE_COOKIE_MAX_AGE };
@@ -8,6 +8,7 @@ const COOKIE_OPTIONS = { path: '/', sameSite: 'lax' as const, maxAge: LOCALE_COO
 function requestHeadersWithLocale(request: NextRequest, locale: 'en' | 'nl') {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set(LOCALE_HEADER, locale);
+  requestHeaders.set(LOCALE_PATH_HEADER, request.nextUrl.pathname);
   return requestHeaders;
 }
 
@@ -61,6 +62,18 @@ export function proxy(request: NextRequest) {
     cleanPathname = '/bedankt';
   }
 
+  if (
+    !hasEnglishPrefix &&
+    cleanPathname === '/bedankt' &&
+    request.nextUrl.searchParams.has('order_number') &&
+    request.cookies.get(CHECKOUT_RETURN_LOCALE_COOKIE)?.value === 'en'
+  ) {
+    const redirectUrl = new URL(`${EN_PREFIX}/thank-you${search}`, request.url);
+    const response = persistLocale(NextResponse.redirect(redirectUrl), 'en');
+    response.cookies.set(CHECKOUT_RETURN_LOCALE_COOKIE, '', { ...COOKIE_OPTIONS, maxAge: 0 });
+    return response;
+  }
+
   if (cleanPathname === '/terms-and-conditions' || cleanPathname === '/terms-and-conditions/') {
     cleanPathname = '/algemene-voorwaarden';
   }
@@ -78,7 +91,7 @@ export function proxy(request: NextRequest) {
   }
 
   if (pathname === '/en/custom-made-form' || pathname === '/en/custom-made-form/' || pathname === '/en/maatwerk' || pathname === '/en/maatwerk/' || pathname === '/en/custom-made-labels' || pathname === '/en/custom-made-labels/') {
-    const redirectUrl = new URL(`${EN_PREFIX}/material-customization/${search}`, request.url);
+    const redirectUrl = new URL(`${EN_PREFIX}/material-customization${search}`, request.url);
     return persistLocale(NextResponse.redirect(redirectUrl), 'en');
   }
 

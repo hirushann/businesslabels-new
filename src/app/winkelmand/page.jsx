@@ -9,6 +9,7 @@ export async function generateMetadata() {
   return {
     title: t('pages.cartMetadataTitle'),
     description: t('pages.cartMetadataDescription'),
+    robots: { index: false, follow: false },
   };
 }
 

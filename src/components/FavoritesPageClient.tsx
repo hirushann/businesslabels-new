@@ -9,6 +9,7 @@ import EmptyState from '@/components/EmptyState';
 import { useWishlist } from '@/components/WishlistProvider';
 import { useCart } from '@/components/CartProvider';
 import { localePath } from '@/lib/i18n/utils';
+import { toDisplayImageUrl } from '@/lib/utils/imageProxy';
 
 function formatEuro(value: number): string {
   return new Intl.NumberFormat('nl-NL', {
@@ -59,21 +60,34 @@ export default function FavoritesPageClient() {
   // Merge local items and backend favorites
   const mergedItems = [...localItems];
   favorites.forEach((fav) => {
-    const key = fav.slug ? (fav.type ? `${fav.slug}::${fav.type}` : fav.slug) : String(fav.id);
+    const product = fav.product || fav.item || fav;
+    const imagesArray = Array.isArray(product.images) ? product.images : Array.isArray(fav.images) ? fav.images : [];
+    const firstImageObj = imagesArray.length > 0 && typeof imagesArray[0] === 'object' ? imagesArray[0] : null;
+
+    const rawImage =
+      (firstImageObj ? (firstImageObj.url || firstImageObj.file_name || firstImageObj.src) : '') ||
+      product.mainImage || product.main_image || product.image || product.image_url || product.thumbnail || product.thumbnail_url || product.url ||
+      fav.mainImage || fav.main_image || fav.image || fav.image_url || fav.thumbnail || fav.thumbnail_url || fav.url ||
+      (typeof product.main_image === 'object' ? (product.main_image?.url || product.main_image?.src) : '') ||
+      (typeof product.image === 'object' ? (product.image?.url || product.image?.src) : '');
+
+    const proxiedImage = toDisplayImageUrl(rawImage);
+
+    const key = product.slug ? (product.type ? `${product.slug}::${product.type}` : product.slug) : String(product.id || fav.id);
     if (!mergedItems.some((item) => item.key === key)) {
       mergedItems.push({
         key,
-        id: fav.id,
-        slug: fav.slug,
-        type: fav.type,
-        name: fav.name,
-        sku: fav.sku,
-        price: fav.price,
-        mainImage: fav.mainImage,
-        subtitle: fav.subtitle,
-        excerpt: fav.excerpt,
-        materialTitle: fav.materialTitle,
-        inStock: fav.inStock !== false,
+        id: product.id || fav.id,
+        slug: product.slug || fav.slug,
+        type: product.type || fav.type,
+        name: product.name || product.title_nl || product.title_en || fav.name || 'Product',
+        sku: product.sku || fav.sku || '',
+        price: product.price ?? fav.price ?? 0,
+        mainImage: proxiedImage,
+        subtitle: product.subtitle || fav.subtitle,
+        excerpt: product.excerpt || fav.excerpt,
+        materialTitle: product.materialTitle || fav.materialTitle,
+        inStock: product.in_stock !== undefined ? Boolean(product.in_stock) : fav.in_stock !== undefined ? Boolean(fav.in_stock) : (product.inStock !== false && fav.inStock !== false),
       });
     }
   });
@@ -106,22 +120,18 @@ export default function FavoritesPageClient() {
     const isSimple = !item.type || item.type === 'simple';
 
     if (isSimple && item.inStock) {
-      if (localItems.some((local) => local.key === item.key)) {
-        moveToCart(item.key);
-      } else {
-        cart.addItem({
-          id: item.id,
-          slug: item.slug,
-          type: item.type,
-          name: item.name,
-          sku: item.sku,
-          price: item.price ?? null,
-          mainImage: item.mainImage ?? null,
-          packingGroup: null,
-          allowSingulars: null,
-        });
-        handleRemove(item);
-      }
+      cart.addItem({
+        id: item.id,
+        slug: item.slug,
+        type: item.type,
+        name: item.name,
+        sku: item.sku,
+        price: item.price ?? null,
+        mainImage: item.mainImage ?? null,
+        packingGroup: null,
+        allowSingulars: null,
+      });
+      cart.openCart();
     } else {
       // Redirect to product detail page if configurable/variable or out of stock
       const href = item.slug ? `/product/${item.slug}${item.type ? `?type=${item.type}` : ''}` : '/product';
@@ -183,7 +193,7 @@ export default function FavoritesPageClient() {
                   <th className="py-4 pl-[56px] pr-4 w-[600px] text-copy text-[16px] font-bold">{t('common.products') || 'Products'}</th>
                   <th className="py-4 px-4 w-[200px] text-copy text-[16px] font-semibold">{t('cart.price') || 'Price'}</th>
                   <th className="py-4 px-4 w-[120px] text-copy text-[16px] font-semibold">{t('account.status') || 'Status'}</th>
-                  <th className="py-4 pr-4 pl-4 w-[180px] text-copy text-[16px] font-semibold">{t('account.status') || 'STATUS'}</th>
+                  <th className="py-4 pr-4 pl-4 w-[180px] text-copy text-[16px] font-semibold">{t('favoritesPage.action') || 'Action'}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
@@ -206,7 +216,7 @@ export default function FavoritesPageClient() {
                           >
                             ✕
                           </button>
-                          <div className="w-20 h-20 shrink-0 bg-line flex items-center justify-center p-2 overflow-hidden rounded-none">
+                          <Link href={localizedHref} className="w-20 h-20 shrink-0 bg-line flex items-center justify-center p-2 overflow-hidden rounded-none hover:opacity-80 transition-opacity">
                             <Image
                               src={item.mainImage || '/image-placeholder.svg'}
                               alt={item.name}
@@ -215,7 +225,7 @@ export default function FavoritesPageClient() {
                               className="object-contain w-full h-full"
                               unoptimized
                             />
-                          </div>
+                          </Link>
                           <div className="flex flex-col min-w-0 gap-2">
                             <Link
                               href={localizedHref}
@@ -311,7 +321,7 @@ export default function FavoritesPageClient() {
                   </button>
 
                   <div className="flex gap-4 items-center">
-                    <div className="w-16 h-16 shrink-0 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center p-2 overflow-hidden">
+                    <Link href={localizedHref} className="w-16 h-16 shrink-0 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center p-2 overflow-hidden hover:opacity-80 transition-opacity">
                       <Image
                         src={item.mainImage || '/image-placeholder.svg'}
                         alt={item.name}
@@ -320,7 +330,7 @@ export default function FavoritesPageClient() {
                         className="object-contain w-full h-full"
                         unoptimized
                       />
-                    </div>
+                    </Link>
                     <div className="flex flex-col min-w-0 pr-6">
                       <Link
                         href={localizedHref}

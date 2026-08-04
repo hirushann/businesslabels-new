@@ -12,6 +12,7 @@ import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { useTranslations, useLocale } from "next-intl";
 import { normalizeWarrantyOptions, type NormalizedWarrantyOption as WarrantyOption } from "@/lib/warranty/localize";
 import WarrantyDialogContent from "@/components/WarrantyDialogContent";
+import { useDeliveryAvailability } from "@/hooks/useDeliveryAvailability";
 
 type BulkDiscount = {
   discount: string;
@@ -247,6 +248,7 @@ export default function ProductPurchase({
   const [quantity, setQuantity] = useState(initialQuantity);
   const [quantityError, setQuantityError] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
+  const availableDates = useDeliveryAvailability();
   const [isWarrantyPopoverOpen, setIsWarrantyPopoverOpen] = useState(false);
   const warrantyDialogHandledRef = useRef(false);
   const [pendingQuantity, setPendingQuantity] = useState<number | null>(null);
@@ -492,7 +494,8 @@ export default function ProductPurchase({
     if (
       stockCount === null ||
       !hasDeliveryEstimate ||
-      !currentTime
+      !currentTime ||
+      !availableDates?.length
     ) {
       return null;
     }
@@ -502,13 +505,15 @@ export default function ProductPurchase({
         stock,
         delivery_dates_in_stock: deliveryDatesInStock,
         delivery_dates_no_stock: deliveryDatesNoStock,
+        availableDates,
         now: currentTime,
+        locale: locale === "nl" ? "nl" : "en",
       });
     } catch (error) {
       console.error("Failed to calculate delivery message:", error);
       return null;
     }
-  }, [stock, stockCount, deliveryDatesInStock, deliveryDatesNoStock, hasDeliveryEstimate, currentTime]);
+  }, [stock, stockCount, deliveryDatesInStock, deliveryDatesNoStock, hasDeliveryEstimate, currentTime, availableDates, locale]);
 
   const validateQuantity = (customQuantity?: number): number | null => {
     setQuantityError(null);

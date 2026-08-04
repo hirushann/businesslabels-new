@@ -5,6 +5,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+html,
+body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
 @font-face {
     font-family: 'Segoe UI';
     src:

@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
+import LocaleLink from '@/components/LocaleLink';
 import { Eye, EyeOff, Loader2, Mail, LockKeyhole } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';

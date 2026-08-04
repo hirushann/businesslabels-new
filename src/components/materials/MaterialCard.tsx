@@ -4,7 +4,8 @@ import Image from "next/image";
 import LocaleLink from "@/components/LocaleLink";
 import { useState } from "react";
 import type { Material } from "@/lib/search/materials";
-import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
+import { localePath } from "@/lib/i18n/utils";
+import { materialMeasurements, resolveMaterialImage } from "@/lib/materials/presentation";
 
 const getLocalizedLabel = (key: string, locale: string) => {
   const dictionary: Record<string, Record<string, string>> = {
@@ -175,21 +176,7 @@ export function deriveMaterialAttributes(material: Material, currentPrintMethod?
     }
   }
 
-  let weight = "";
-  let thickness = "";
-  if (material.specifications && Array.isArray(material.specifications.material_specs)) {
-    for (const spec of material.specifications.material_specs) {
-      const label = (spec.label || "").toLowerCase();
-      if (label.includes("weight") || label.includes("gewicht")) {
-        weight = spec.value;
-      } else if (label.includes("thickness") || label.includes("dikte") || label.includes("hoogte")) {
-        thickness = spec.value;
-      }
-    }
-  }
-
-  if (!weight) weight = "165 g/m²";
-  if (!thickness) thickness = "169 µm";
+  const { weight, thickness } = materialMeasurements(material.specifications);
 
   return { printTech, printTechs, baseMat, finish, adhesive, weight, thickness };
 }
@@ -235,13 +222,14 @@ export default function MaterialCard({
   printMethod?: string;
 }) {
   const { printTechs, baseMat, finish, adhesive, weight, thickness } = deriveMaterialAttributes(material, printMethod);
-  const cardImage = toDisplayImageUrl(material.main_image) || "/images/material-placeholder.svg";
+  const cardImage = resolveMaterialImage(material.main_image) || "/images/material-placeholder.svg";
   const [imgError, setImgError] = useState(false);
   const materialSummary = plainText(material.excerpt || material.description || material.subtitle);
+  const materialHref = localePath(`/material/${material.slug}`, locale);
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_4px_20px_rgba(109,109,120,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(109,109,120,0.12)]">
-      <LocaleLink href={`/material/${material.slug}`} className="relative block h-60 w-full overflow-hidden bg-slate-50">
+      <Link href={materialHref} className="relative block h-60 w-full overflow-hidden bg-slate-50">
         <Image
           src={imgError ? "/empty.png" : cardImage}
           alt={material.title || "Material"}
@@ -270,21 +258,21 @@ export default function MaterialCard({
             );
           })}
         </div>
-      </LocaleLink>
+      </Link>
 
       <div className="flex flex-1 flex-col p-5">
         <div className="flex-1">
           <div className="mb-2 flex items-center gap-2">
-            <LocaleLink href={`/material/${material.slug}`} className="inline-block text-lg rounded-md font-bold uppercase tracking-wide text-link transition-colors">
+            <Link href={materialHref} className="inline-block text-lg rounded-md font-bold uppercase tracking-wide text-link transition-colors">
               {material.code}
-            </LocaleLink>
+            </Link>
             <span className="text-xs text-slate-400 font-medium">{material.brand || "Diamondlabels"}</span>
           </div>
 
           <h3 className="mb-2 text-lg font-bold leading-snug line-clamp-1">
-            <LocaleLink href={`/material/${material.slug}`} className="text-slate-800 hover:text-brand transition-colors">
+            <Link href={materialHref} className="text-slate-800 hover:text-brand transition-colors">
               {material.subtitle ? material.subtitle : material.title}
-            </LocaleLink>
+            </Link>
           </h3>
 
           {materialSummary ? (
@@ -305,29 +293,29 @@ export default function MaterialCard({
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 border-t border-slate-100 pt-4 pb-1">
-            <div className="flex flex-row gap-3 items-center">
+          {weight || thickness ? <div className={`grid gap-4 border-t border-slate-100 pt-4 pb-1 ${weight && thickness ? "grid-cols-2" : "grid-cols-1"}`}>
+            {weight ? <div className="flex flex-row gap-3 items-center">
               <span className="text-sm text-slate-700">
                 {getLocalizedLabel("Weight", locale)}
               </span>
               <span className="text-sm font-bold text-slate-700">{weight}</span>
-            </div>
-            <div className="flex flex-row gap-3 items-center">
+            </div> : null}
+            {thickness ? <div className="flex flex-row gap-3 items-center">
               <span className="text-sm text-slate-700">
                 {getLocalizedLabel("Thickness", locale)}
               </span>
               <span className="text-sm font-bold text-slate-700">{thickness}</span>
-            </div>
-          </div>
+            </div> : null}
+          </div> : null}
         </div>
 
         <div className="pt-4">
-          <LocaleLink
-            href={`/material/${material.slug}`}
+          <Link
+            href={materialHref}
             className="flex h-11 items-center justify-center rounded-full bg-brand px-5 text-normal font-bold text-white shadow-sm transition-all duration-200 hover:bg-brand-hover hover:shadow-md hover:shadow-brand/10"
           >
             {getLocalizedLabel("view_details", locale)}
-          </LocaleLink>
+          </Link>
         </div>
       </div>
     </article>

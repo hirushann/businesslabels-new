@@ -80,6 +80,47 @@ function stringValue(value: unknown): string | null {
   return scalar === null ? null : String(scalar);
 }
 
+function cleanString(value: unknown): string | null {
+  return stringValue(value)?.trim() || null;
+}
+
+export function localizedPrinterText(source: PrinterSource, locale?: "en" | "nl") {
+  const fallback = {
+    title: cleanString(source.title) ?? "",
+    subtitle: cleanString(source.subtitle),
+    excerpt: cleanString(source.excerpt),
+    content: cleanString(source.content),
+  };
+
+  if (!locale) return fallback;
+
+  const entry = (Array.isArray(source.translations) ? source.translations : []).find((value) => {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+    const record = value as Record<string, unknown>;
+    return record[locale] || record.language === locale;
+  }) as Record<string, unknown> | undefined;
+  const nested = entry?.[locale];
+  const translation = nested && typeof nested === "object" && !Array.isArray(nested)
+    ? nested as Record<string, unknown>
+    : entry;
+
+  const translated = {
+    title: cleanString(translation?.title) ?? cleanString(translation?.name) ?? "",
+    subtitle: cleanString(translation?.subtitle),
+    excerpt: cleanString(translation?.excerpt),
+    content: cleanString(translation?.content),
+  };
+
+  return locale === "en"
+    ? translated
+    : {
+        title: translated.title || fallback.title,
+        subtitle: translated.subtitle ?? fallback.subtitle,
+        excerpt: translated.excerpt ?? fallback.excerpt,
+        content: translated.content ?? fallback.content,
+      };
+}
+
 function stringValues(value: unknown): string[] {
   if (Array.isArray(value)) {
     return value.flatMap((item) => stringValues(item));
@@ -115,45 +156,7 @@ function stringArrayMap(value: unknown): Record<string, string[]> | undefined {
 
 function mapFinderPrinter(source: PrinterSource, locale?: "en" | "nl"): FinderPrinterDetails | null {
   const id = numberValue(source.id);
-  let title = stringValue(source.title) || "";
-  let subtitle = stringValue(source.subtitle);
-  let excerpt = stringValue(source.excerpt);
-  let content = stringValue(source.content);
-
-  // Apply translations if locale is provided
-  if (locale && Array.isArray(source.translations)) {
-    const entry = source.translations.find((e: any) => {
-      if (!e || typeof e !== "object") return false;
-      return e[locale] || e.language === locale;
-    });
-
-    if (entry) {
-      const translation = entry[locale] || entry;
-      
-      const apply = (val: unknown) => {
-        if (val !== null && val !== undefined) {
-          if (typeof val === "string") {
-            const trimmed = val.trim();
-            return trimmed !== "" ? trimmed : null;
-          }
-          return val;
-        }
-        return null;
-      };
-
-      const translatedTitle = apply(translation.title) || apply(translation.name);
-      if (translatedTitle) title = translatedTitle as string;
-
-      const translatedSubtitle = apply(translation.subtitle);
-      if (translatedSubtitle) subtitle = translatedSubtitle as string;
-
-      const translatedExcerpt = apply(translation.excerpt);
-      if (translatedExcerpt) excerpt = translatedExcerpt as string;
-
-      const translatedContent = apply(translation.content);
-      if (translatedContent) content = translatedContent as string;
-    }
-  }
+  const { title, subtitle, excerpt, content } = localizedPrinterText(source, locale);
 
   if (id === null || !title) return null;
 
@@ -478,50 +481,13 @@ export async function searchPrinters(params: PrinterSearchParams): Promise<Print
     const lastPage = Math.max(1, Math.ceil(total / params.perPage));
 
     // Map printers
-    const printers: PrinterCardData[] = hits.map((hit) => {
+    const printers: PrinterCardData[] = hits.flatMap((hit) => {
       const source = hit._source as Record<string, unknown>;
-      const titles = Array.isArray(source.title) ? source.title : [source.title];
-      const subtitles = Array.isArray(source.subtitle) ? source.subtitle : [source.subtitle];
       const slugs = Array.isArray(source.slug) ? source.slug : [source.slug];
-      const excerpts = Array.isArray(source.excerpt) ? source.excerpt : [source.excerpt];
+      const { title: name, subtitle, excerpt } = localizedPrinterText(source, params.locale);
+      if (!name) return [];
 
-      let name = String(titles[0] || "");
-      let subtitle = subtitles[0] ? String(subtitles[0]) : null;
-      let excerpt = excerpts[0] ? String(excerpts[0]) : null;
-
-      // Apply translations if locale is provided
-      if (params.locale && Array.isArray(source.translations)) {
-        const entry = source.translations.find((e: any) => {
-          if (!e || typeof e !== "object") return false;
-          return e[params.locale!] || e.language === params.locale;
-        });
-
-        if (entry) {
-          const translation = entry[params.locale!] || entry;
-          
-          const apply = (val: unknown) => {
-            if (val !== null && val !== undefined) {
-              if (typeof val === "string") {
-                const trimmed = val.trim();
-                return trimmed !== "" ? trimmed : null;
-              }
-              return val;
-            }
-            return null;
-          };
-
-          const translatedTitle = apply(translation.title) || apply(translation.name);
-          if (translatedTitle) name = translatedTitle as string;
-
-          const translatedSubtitle = apply(translation.subtitle);
-          if (translatedSubtitle) subtitle = translatedSubtitle as string;
-
-          const translatedExcerpt = apply(translation.excerpt);
-          if (translatedExcerpt) excerpt = translatedExcerpt as string;
-        }
-      }
-
-      return {
+      return [{
         id: String(source.id),
         sku: source.sku ? String(source.sku) : "",
         name,
@@ -536,8 +502,8 @@ export async function searchPrinters(params: PrinterSearchParams): Promise<Print
         slug: slugs[0] ? String(slugs[0]) : null,
         type: "simple",
         properties: source.properties as Record<string, string[]> | undefined,
-        featured: source.featured !== undefined ? (source.featured as any) : null,
-      };
+        featured: source.featured !== undefined ? source.featured as PrinterCardData["featured"] : null,
+      }];
     });
 
     // Build filters from aggregations

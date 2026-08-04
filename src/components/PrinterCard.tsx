@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import LocaleLink from "@/components/LocaleLink";
 import type { LinkProps } from "next/link";
 import { useTranslations } from "next-intl";
 import { useLocalePath } from "@/hooks/useLocalePath";
@@ -208,17 +209,17 @@ export default function PrinterCard({ printer, href }: PrinterCardProps) {
           <Link
             href={lp('/register')}
             className="flex-1 flex items-center justify-center h-10 rounded-full border border-slate-300 font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
           >
             {t('register.registerButton')}
           </Link>
           <Link
             href={lp('/login')}
             className="flex-1 flex items-center justify-center h-10 rounded-full bg-brand font-semibold text-white hover:bg-brand-hover transition-colors"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
           >
             {t('login.loginButton')}
-          </Link>
+          </LocaleLink>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -242,4 +243,3 @@ export default function PrinterCard({ printer, href }: PrinterCardProps) {
     </>
   );
 }
-

@@ -10,6 +10,9 @@ import { localePath } from '@/lib/i18n/utils';
 import { useState, useEffect } from 'react';
 import { getExpectedDeliveryMessage } from '@/lib/utils/delivery';
 import { useShippingRules } from '@/hooks/useShippingRules';
+import { useDeliveryAvailability } from '@/hooks/useDeliveryAvailability';
+import CartTotals from '@/components/CartTotals';
+import { useIsBusinessCustomer } from '@/hooks/useIsBusinessCustomer';
 
 function formatEuro(value: number): string {
   return new Intl.NumberFormat('nl-NL', {
@@ -41,6 +44,7 @@ function warrantyTypeNameFor(item: CartItem | undefined): string | null {
 export default function CartPageClient({ popularProducts = [] }: { popularProducts?: ProductCardData[] }) {
   const t = useTranslations();
   const locale = useLocale();
+  const isBusinessCustomer = useIsBusinessCustomer();
   const {
     items,
     totalAmount,
@@ -60,17 +64,24 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
   const tax = subtotal * 0.21;
   const total = subtotal + shipping;
 
-  const [countdown, setCountdown] = useState({ hours: 2, minutes: 34, formattedMinutes: '34' });
+  const [deliveryInfo, setDeliveryInfo] = useState<ReturnType<typeof getExpectedDeliveryMessage> | null>(null);
+  const availableDates = useDeliveryAvailability();
 
   useEffect(() => {
+    if (!availableDates?.length) {
+      return;
+    }
+
     const updateCountdown = () => {
       try {
-        const { countdown } = getExpectedDeliveryMessage({
+        const nextDeliveryInfo = getExpectedDeliveryMessage({
           stock: 1,
-          delivery_dates_in_stock: 1,
-          delivery_dates_no_stock: 1
+          delivery_dates_in_stock: 0,
+          delivery_dates_no_stock: 0,
+          availableDates,
+          locale: locale === 'nl' ? 'nl' : 'en',
         });
-        setCountdown(countdown);
+        setDeliveryInfo(nextDeliveryInfo);
       } catch (e) {
         console.error(e);
       }
@@ -79,7 +90,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
     updateCountdown();
     const interval = setInterval(updateCountdown, 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [availableDates, locale]);
 
   const breadcrumbs = [
     { label: t('cart.title') }
@@ -422,13 +433,14 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                         </g>
                       </svg>
                     </div>
-                    <p className="text-base font-normal text-copy leading-tight">
-                      {t.rich('cart.orderWithin', {
-                        timeStyle: () => <span className="font-bold">{countdown.hours} {t.has('product.hours') ? t('product.hours') : 'hours'} {countdown.formattedMinutes} {t.has('product.minutes') ? t('product.minutes') : 'minutes'}</span>,
-                        deliveryStyle: (chunks) => <span className="font-bold">{chunks}</span>,
-                        shippedStyle: (chunks) => <span className="font-bold">{chunks}</span>,
-                      })}
-                    </p>
+                    {deliveryInfo ? (
+                      <p className="text-base font-normal text-copy leading-tight">
+                        {t.rich('cart.orderWithin', {
+                          timeStyle: () => <span className="font-bold">{deliveryInfo.countdown.hours} {t.has('product.hours') ? t('product.hours') : 'hours'} {deliveryInfo.countdown.formattedMinutes} {t.has('product.minutes') ? t('product.minutes') : 'minutes'}</span>,
+                          shippingStyle: () => <span className="font-bold">{deliveryInfo.deliveryLabel}</span>,
+                        })}
+                      </p>
+                    ) : null}
                   </div>
                   
                   {/* Free Delivery Threshold */}
@@ -444,6 +456,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                     </div>
                     <p className="text-base font-normal text-copy leading-tight">
                       {t.rich('cart.freeDeliveryThreshold', {
+                        amount: formatEuro(shippingThreshold),
                         amountStyle: (chunks) => <span className="font-bold">{chunks}</span>,
                       })}
                     </p>
@@ -523,15 +536,13 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
 
                   <div className="w-full h-px bg-[#D9E3ED]" />
 
-                  {/* Total incl. VAT */}
-                  <div className="flex justify-between items-center bg-white/50">
-                    <span className="text-xl font-bold text-ink">
-                      {t('cart.totalInclVat')}
-                    </span>
-                    <span className="text-xl font-semibold text-ink">
-                      {formatEuro(total * 1.21)}
-                    </span>
-                  </div>
+                  <CartTotals
+                    totalExclVatLabel={t('cart.totalExclVat')}
+                    totalInclVatLabel={t('cart.totalInclVat')}
+                    totalExclVat={formatEuro(total)}
+                    totalInclVat={formatEuro(total * 1.21)}
+                    isBusinessCustomer={isBusinessCustomer}
+                  />
                 </div>
 
                 {/* Purchase Reference Card */}

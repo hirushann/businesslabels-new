@@ -185,6 +185,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       languages: {
         en: `${siteUrl}/en/blog/${enSlug}`,
         nl: `${siteUrl}/blog/${nlSlug}`,
+        "x-default": `${siteUrl}/blog/${nlSlug}`,
       },
     },
   };

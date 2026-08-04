@@ -16,10 +16,31 @@ const getBaseUrl = () => {
 
 const frontendUrl = getBaseUrl();
 
-type SitemapApiItem = {
+type Locale = 'en' | 'nl';
+type SitemapTranslation = {
+  language?: string;
   slug?: string;
+} & Partial<Record<Locale, { language?: string; slug?: string }>>;
+
+type SitemapApiItem = {
+  slug?: string | Partial<Record<'en' | 'nl', string>>;
+  locale_slugs?: Partial<Record<'en' | 'nl', string>>;
+  translations?: SitemapTranslation[];
   updated_at?: string;
 };
+
+export function localizedSitemapSlug(item: SitemapApiItem, locale: Locale): string | null {
+  const direct = item.locale_slugs?.[locale] || (typeof item.slug === 'object' ? item.slug[locale] : null);
+  if (direct) return direct;
+
+  for (const entry of item.translations ?? []) {
+    const keyed = entry[locale];
+    if (keyed?.slug) return keyed.slug;
+    if (entry.language === locale && entry.slug) return entry.slug;
+  }
+
+  return typeof item.slug === 'string' ? item.slug : null;
+}
 
 function publicBrandSlug(slug: string): string {
   return slug === 'diamondlabels' ? 'diamondlabels-nl' : slug;
@@ -75,9 +96,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/kennisbank-overzicht' },
     { path: '/brands' },
     { path: '/printers' },
-    { path: '/cart' },
-    { path: '/checkout' },
-    { path: '/my-account' },
     { path: '/maatwerk' },
     { path: '/support' },
     { path: '/support/samples' },
@@ -137,17 +155,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Add Materials
   materials.forEach((material) => {
-    if (material.slug) {
-      const path = `/material/${material.slug}`;
-      addEntry(localePath(path, 'nl'), localePath(path, 'en'), new Date(material.updated_at || new Date()), 0.7, 'weekly');
+    const nlSlug = localizedSitemapSlug(material, 'nl');
+    const enSlug = localizedSitemapSlug(material, 'en');
+    if (nlSlug && enSlug) {
+      addEntry(`/material/${nlSlug}`, `/en/material/${enSlug}`, new Date(material.updated_at || new Date()), 0.7, 'weekly');
     }
   });
 
   // Add Products
   products.forEach((product) => {
-    if (product.slug) {
-      const path = `/product/${product.slug}`;
-      addEntry(localePath(path, 'nl'), localePath(path, 'en'), new Date(product.updated_at || new Date()), 0.9, 'weekly');
+    const nlSlug = localizedSitemapSlug(product, 'nl');
+    const enSlug = localizedSitemapSlug(product, 'en');
+    if (nlSlug && enSlug) {
+      addEntry(`/product/${nlSlug}`, `/en/product/${enSlug}`, new Date(product.updated_at || new Date()), 0.9, 'weekly');
     }
   });
 
@@ -187,28 +207,29 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Add Printers
   printers.forEach((printer) => {
-    if (printer.slug) {
-      const path = `/printers/${printer.slug}`;
-      addEntry(localePath(path, 'nl'), localePath(path, 'en'), new Date(printer.updated_at || new Date()), 0.7, 'weekly');
+    const nlSlug = localizedSitemapSlug(printer, 'nl');
+    const enSlug = localizedSitemapSlug(printer, 'en');
+    if (nlSlug && enSlug) {
+      addEntry(`/printers/${nlSlug}`, `/en/printers/${enSlug}`, new Date(printer.updated_at || new Date()), 0.7, 'weekly');
     }
   });
 
   // Add Blogs
   blogs.forEach((blog) => {
-    if (blog.slug) {
-      const path = `/blog/${blog.slug}`;
-      addEntry(localePath(path, 'nl'), localePath(path, 'en'), new Date(blog.updated_at || new Date()), 0.6, 'monthly');
+    const nlSlug = localizedSitemapSlug(blog, 'nl');
+    const enSlug = localizedSitemapSlug(blog, 'en');
+    if (nlSlug && enSlug) {
+      addEntry(`/blog/${nlSlug}`, `/en/blog/${enSlug}`, new Date(blog.updated_at || new Date()), 0.6, 'monthly');
     }
   });
 
-  // Add Brands
   brands.forEach((brand) => {
-    if (brand.slug) {
-      const path = `/brand/${publicBrandSlug(brand.slug)}`;
-      addEntry(localePath(path, 'nl'), localePath(path, 'en'), new Date(), 0.7, 'weekly');
+    const nlSlug = localizedSitemapSlug(brand, 'nl');
+    const enSlug = localizedSitemapSlug(brand, 'en');
+    if (nlSlug && enSlug) {
+      addEntry(`/brand/${publicBrandSlug(nlSlug)}`, `/en/brand/${publicBrandSlug(enSlug)}`, new Date(), 0.7, 'weekly');
     }
   });
 
   return [...nlEntries, ...enEntries];
 }
-

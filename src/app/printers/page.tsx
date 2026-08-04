@@ -423,7 +423,7 @@ export default async function PrintersPage({
   }
 
   return (
-    <div className="bg-white">
+    <div className="bg-white overflow-x-clip">
       {/* ── Hero Banner ── */}
       <div className="px-4 pt-6 sm:px-6 lg:px-10">
         <div className="mx-auto max-w-[1440px] mx-auto">
@@ -511,7 +511,7 @@ export default async function PrintersPage({
       </div>
 
       {/* ── Main Content ── */}
-      <div className="relative px-4 py-10 sm:px-6 lg:px-10">
+      <div className="relative px-4 py-10 sm:px-6 lg:px-10 overflow-hidden">
         {/* Decorative orange patches */}
         <div className="w-72 h-72 absolute -left-20 -top-20 bg-brand/20 rounded-full blur-[100px] pointer-events-none z-0" />
         <div className="w-72 h-72 absolute -right-20 -bottom-20 bg-brand/20 rounded-full blur-[100px] pointer-events-none z-0" />

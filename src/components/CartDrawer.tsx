@@ -6,6 +6,8 @@ import { useCart } from '@/components/CartProvider';
 import { useTranslations } from 'next-intl';
 import { useLocalePath } from '@/hooks/useLocalePath';
 import { useShippingRules } from '@/hooks/useShippingRules';
+import CartTotals from '@/components/CartTotals';
+import { useIsBusinessCustomer } from '@/hooks/useIsBusinessCustomer';
 
 type CartDrawerProps = {
   onClose: () => void;
@@ -23,6 +25,7 @@ function formatEuro(value: number): string {
 export default function CartDrawer({ onClose }: CartDrawerProps) {
   const t = useTranslations();
   const lp = useLocalePath();
+  const isBusinessCustomer = useIsBusinessCustomer();
   const { defaultRule } = useShippingRules();
   const shippingThreshold = defaultRule ? defaultRule.free_shipping_threshold : 500;
   
@@ -359,15 +362,14 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                   return null;
                 })()}
 
-                {/* Total */}
-                <div className="px-6 flex justify-between items-center">
-                  <span className="text-copy text-lg font-medium leading-[21.6px]">
-                    {t('cart.totalInclVat')}
-                  </span>
-                  <span className="text-ink text-lg font-semibold leading-[21.6px]">
-                    {formatEuro(totalAmount * 1.21)}
-                  </span>
-                </div>
+                <CartTotals
+                  className="px-6"
+                  totalExclVatLabel={t('cart.totalExclVat')}
+                  totalInclVatLabel={t('cart.totalInclVat')}
+                  totalExclVat={formatEuro(totalAmount)}
+                  totalInclVat={formatEuro(totalAmount * 1.21)}
+                  isBusinessCustomer={isBusinessCustomer}
+                />
               </div>
 
               {/* Action Buttons */}

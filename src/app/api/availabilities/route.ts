@@ -20,7 +20,7 @@ async function readResponseBody(response: Response) {
 
 /**
  * GET /api/availabilities
- * Forwards HelpDrawer availability checks to Laravel using BBNL_API_BASE_URL.
+ * Forwards availability checks to Laravel using BBNL_API_BASE_URL.
  */
 export async function GET() {
   const apiBaseUrl = process.env.BBNL_API_BASE_URL;
@@ -34,6 +34,7 @@ export async function GET() {
 
   try {
     const response = await fetch(backendUrl(apiBaseUrl, '/api/availabilities'), {
+      cache: 'no-store',
       headers: {
         'Accept': 'application/json',
       },
@@ -42,7 +43,7 @@ export async function GET() {
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Error fetching HelpDrawer availabilities:', error);
+    console.error('Error fetching availabilities:', error);
 
     return NextResponse.json(
       { message: 'Failed to fetch availabilities.' },

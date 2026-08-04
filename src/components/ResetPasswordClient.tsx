@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useLocalePath } from '@/hooks/useLocalePath';
 
 type ResetPasswordErrors = {
   token?: string[];
@@ -33,6 +34,7 @@ function isValidEmail(email: string) {
 }
 
 export default function ResetPasswordClient({ initialEmail, initialToken }: ResetPasswordClientProps) {
+  const localePath = useLocalePath();
   const t = useTranslations();
   const router = useRouter();
   const [email, setEmail] = useState(initialEmail);
@@ -105,7 +107,7 @@ export default function ResetPasswordClient({ initialEmail, initialToken }: Rese
       }
 
       toast.success(t('login.passwordResetComplete'));
-      router.replace('/login?reset=success');
+      router.replace(localePath('/login?reset=success'));
       router.refresh();
     } catch {
       setFormMessage(t('login.resetError'));

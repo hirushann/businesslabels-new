@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import LocaleLink from '@/components/LocaleLink';
 import Script from 'next/script';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useState } from 'react';
@@ -522,7 +523,7 @@ export default function RegisterPopup({
           <TextInput
             id="popup-vat-number"
             label={t('register.vatNumber')}
-            required
+            required={(selectedCountry?.id ?? countryId) !== 'NL'}
             value={vatNumber}
             onChange={setVatNumber}
             autoComplete="off"

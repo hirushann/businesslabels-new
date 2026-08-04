@@ -120,7 +120,10 @@ export async function generateMetadata({ params }: ProductCategoryPageProps): Pr
     description: resolved.archive.meta_description || resolved.archive.description || undefined,
     alternates: {
       canonical: resolved.archive.canonical_url,
-      languages: resolved.archive.alternate_urls,
+      languages: {
+        ...resolved.archive.alternate_urls,
+        "x-default": resolved.archive.alternate_urls.nl ?? resolved.archive.canonical_url,
+      },
     },
   };
 }

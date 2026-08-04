@@ -12,6 +12,7 @@ import { useCart } from '@/components/CartProvider';
 import { toDisplayImageUrl } from '@/lib/utils/imageProxy';
 import { localePath } from '@/lib/i18n/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import ProductCard, { type ProductCardData, type ProductRouteType } from '@/components/ProductCard';
 
 type Tab = 'dashboard' | 'orders' | 'addresses' | 'details' | 'printers' | 'favourites' | 'billing_address' | 'shipping_address' | 'change_password';
 
@@ -27,6 +28,14 @@ type AccountOrder = {
   subtotal?: string;
   shipping_amount?: string;
   tax_amount?: string;
+  rawSubtotal?: number;
+  rawShipping?: number;
+  rawTax?: number;
+  rawDiscount?: number;
+  rawTotal?: number;
+  payment_method?: string;
+  purchase_reference?: string;
+  mollie_id?: string;
   items_list?: Array<{
     id: number;
     name: string;
@@ -54,6 +63,8 @@ type AccountAddress = {
   lastname?: string;
   company: string;
   vatNumber?: string;
+  vat_number?: string;
+  btw_number?: string;
   address1: string;
   address2: string;
   state?: string;
@@ -281,15 +292,32 @@ function normalizeOrders(payload: unknown): AccountOrder[] {
           ? order.shipping_address
           : null;
 
+      const rawSubtotal = readNumberValue(order, ['subtotal']) || 0;
+      const rawShipping = readNumberValue(order, ['shipping_amount', 'shipping_total']) || 0;
+      const rawTax = readNumberValue(order, ['tax_amount', 'tax_total']) || 0;
+      const rawDiscount = readNumberValue(order, ['discount_amount', 'discount_total']) || 0;
+      const rawTotal = readNumberValue(order, ['total', 'grand_total']) || 0;
+      const rawPaymentMethod = readStringValue(order, ['payment_method', 'payment_method_title']) || '';
+      const purchaseRef = readStringValue(order, ['customer_notes', 'customer_note']) || '';
+      const mollieId = readStringValue(order, ['transaction_id', 'mollie_payment_id', 'mollie_id']) || '';
+
       return {
         id: formatOrderId(order),
         date: formatOrderDate(order),
         status: readStringValue(order, ['status', 'order_status', 'fulfillment_status']) || 'Pending',
         total: formatOrderTotal(order),
         items: readOrderItemCount(order),
-        subtotal: formatEuro(readNumberValue(order, ['subtotal']) || 0),
-        shipping_amount: formatEuro(readNumberValue(order, ['shipping_amount']) || 0),
-        tax_amount: formatEuro(readNumberValue(order, ['tax_amount']) || 0),
+        subtotal: formatEuro(rawSubtotal),
+        shipping_amount: formatEuro(rawShipping),
+        tax_amount: formatEuro(rawTax),
+        rawSubtotal,
+        rawShipping,
+        rawTax,
+        rawDiscount,
+        rawTotal,
+        payment_method: rawPaymentMethod,
+        purchase_reference: purchaseRef,
+        mollie_id: mollieId,
         items_list: itemsRaw.map((item, itemIndex) => {
           const itemRecord = isPlainObject(item) ? item : {};
           const product = isPlainObject(itemRecord.product) ? itemRecord.product : {};
@@ -524,6 +552,40 @@ async function requestAccountAddresses() {
   return normalizeAddresses(data);
 }
 
+function normalizeAccountFavorites(payload: unknown): ProductCardData[] {
+  const rawList = Array.isArray(payload) ? payload : (isPlainObject(payload) && Array.isArray(payload.data) ? payload.data : []);
+
+  return rawList.filter(isPlainObject).map((item, index) => {
+    const product = isPlainObject(item.product) ? item.product : isPlainObject(item.item) ? item.item : item;
+    const imagesArray = Array.isArray(product.images) ? product.images : Array.isArray(item.images) ? item.images : [];
+    const firstImageObj = imagesArray.length > 0 && isPlainObject(imagesArray[0]) ? imagesArray[0] : null;
+
+    const mainImageUrl = toDisplayImageUrl(
+      (firstImageObj ? readStringValue(firstImageObj, ['url', 'file_name', 'src']) : '') ||
+      readStringValue(product, ['mainImage', 'main_image', 'image', 'image_url', 'thumbnail', 'thumbnail_url', 'url']) ||
+      readStringValue(item, ['mainImage', 'main_image', 'image', 'image_url', 'thumbnail', 'thumbnail_url', 'url']) ||
+      (isPlainObject(product.main_image) ? readStringValue(product.main_image, ['url', 'src']) : '') ||
+      (isPlainObject(product.image) ? readStringValue(product.image, ['url', 'src']) : '') ||
+      (isPlainObject(item.image) ? readStringValue(item.image, ['url', 'src']) : '') ||
+      (isPlainObject(item.main_image) ? readStringValue(item.main_image, ['url', 'src']) : '')
+    ) || null;
+
+    const rawType = readStringValue(product, ['type']) || readStringValue(item, ['type']) || 'simple';
+    const type: ProductRouteType = rawType === 'variable' || rawType === 'group_product' ? rawType : 'simple';
+
+    return {
+      id: readNumberValue(product, ['id']) || readNumberValue(item, ['id']) || index,
+      name: readStringValue(product, ['name', 'title_nl', 'title_en', 'title']) || readStringValue(item, ['name', 'title_nl', 'title_en', 'title']) || 'Product',
+      sku: readStringValue(product, ['sku']) || readStringValue(item, ['sku']) || '',
+      slug: readStringValue(product, ['slug']) || readStringValue(item, ['slug']) || '',
+      type,
+      price: readNumberValue(product, ['price', 'unit_price']) ?? readNumberValue(item, ['price', 'unit_price']) ?? 0,
+      mainImage: mainImageUrl,
+      inStock: product.in_stock !== undefined ? Boolean(product.in_stock) : item.in_stock !== undefined ? Boolean(item.in_stock) : (product.inStock !== false && item.inStock !== false),
+    };
+  });
+}
+
 async function requestAccountFavorites() {
   const response = await fetch('/api/account/favorites', {
     headers: {
@@ -549,7 +611,7 @@ async function requestAccountFavorites() {
     );
   }
 
-  return Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
+  return normalizeAccountFavorites(data);
 }
 
 function formatCustomerSince(user: StoredUser, t: TranslationFn, locale: string) {
@@ -690,6 +752,8 @@ function MyAccountContent() {
 
   const sidebarItems = [
     { id: 'details', label: t('account.accountDetails') },
+    { id: 'printers', label: t('account.myPrinters') },
+    { id: 'favourites', label: t('account.myFavorites') },
     { id: 'billing_address', label: t('account.billingAddress') },
     { id: 'shipping_address', label: t('account.shippingAddress') },
     { id: 'orders', label: t('account.orders') },
@@ -1017,6 +1081,183 @@ function OrdersView() {
   const [selectedOrder, setSelectedOrder] = useState<AccountOrder | null>(null);
   const [isOrderItemsOpen, setIsOrderItemsOpen] = useState(false);
   const [expandedOrders, setExpandedOrders] = useState<Record<string, boolean>>({});
+  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
+
+  const handleDownloadPDF = async (order: AccountOrder) => {
+    setIsPdfGenerating(true);
+    try {
+      const { default: jsPDF } = await import('jspdf');
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      const loadImage = (src: string): Promise<HTMLImageElement> => {
+        return new Promise((resolve, reject) => {
+          const img = new window.Image();
+          img.crossOrigin = 'anonymous';
+          img.src = src;
+          img.onload = () => resolve(img);
+          img.onerror = (err: unknown) => reject(err);
+        });
+      };
+
+      let logoImg: HTMLImageElement | null = null;
+      try {
+        logoImg = await loadImage('/logo.png');
+      } catch (e) {
+        console.error('Failed to load logo image:', e);
+      }
+
+      const primaryColor = [241, 136, 0];
+      const darkColor = [34, 34, 34];
+      const grayColor = [136, 136, 136];
+
+      if (logoImg) {
+        const aspectRatio = logoImg.width / logoImg.height;
+        const logoHeight = 12;
+        const logoWidth = logoHeight * aspectRatio;
+        doc.addImage(logoImg, 'PNG', 15, 12, logoWidth, logoHeight);
+      } else {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(22);
+        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        doc.text('Businesslabels', 15, 20);
+      }
+
+      doc.setFontSize(16);
+      doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+      const titleY = 32;
+      doc.text(t('thankYou.pdfTitle', { number: order.id }), 15, titleY);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
+
+      let infoY = titleY + 6;
+      doc.text(`${t('thankYou.pdfDate')}: ${order.date}`, 15, infoY);
+
+      if (order.mollie_id) {
+        infoY += 6;
+        doc.text(`Mollie ID: ${order.mollie_id}`, 15, infoY);
+      }
+
+      if (order.purchase_reference) {
+        infoY += 6;
+        doc.text(`${t('thankYou.purchaseReference')}: ${order.purchase_reference}`, 15, infoY);
+      }
+
+      if (order.payment_method) {
+        const rawPaymentMethod = order.payment_method;
+        const paymentMethodLabel =
+          rawPaymentMethod === 'creditcard' || rawPaymentMethod === 'credit_card'
+            ? t('thankYou.cardPaymentLabel')
+            : rawPaymentMethod === 'ideal'
+            ? 'iDEAL'
+            : rawPaymentMethod === 'banktransfer'
+            ? t('thankYou.bankTransfer')
+            : rawPaymentMethod;
+        infoY += 6;
+        doc.text(`${t('thankYou.paymentMethod')}: ${paymentMethodLabel}`, 15, infoY);
+      }
+
+      const detailsY = infoY + 12;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+      doc.text(t('thankYou.personalDetails'), 15, detailsY);
+      doc.text(t('thankYou.shippingAddress'), 110, detailsY);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+
+      let personalY = detailsY + 6;
+      if (order.billing_address) {
+        const b = order.billing_address;
+        if (b.name) doc.text(b.name, 15, personalY);
+        if (b.company) doc.text(b.company, 15, (personalY += 5));
+        if (b.phone) doc.text(b.phone, 15, (personalY += 5));
+        if (b.email) doc.text(b.email, 15, (personalY += 5));
+        const street = [b.address1, b.address2].filter(Boolean).join(', ');
+        if (street) doc.text(street, 15, (personalY += 5));
+        const cityZip = [b.postcode, b.city].filter(Boolean).join(' ');
+        if (cityZip) doc.text(cityZip, 15, (personalY += 5));
+        if (b.country) doc.text(b.country, 15, (personalY += 5));
+      }
+
+      let shippingY = detailsY + 6;
+      if (order.shipping_address) {
+        const s = order.shipping_address;
+        if (s.name) doc.text(s.name, 110, shippingY);
+        if (s.company) doc.text(s.company, 110, (shippingY += 5));
+        const street = [s.address1, s.address2].filter(Boolean).join(', ');
+        if (street) doc.text(street, 110, (shippingY += 5));
+        const cityZip = [s.postcode, s.city].filter(Boolean).join(' ');
+        if (cityZip) doc.text(cityZip, 110, (shippingY += 5));
+        if (s.country) doc.text(s.country, 110, (shippingY += 5));
+      }
+
+      const tableY = Math.max(personalY, shippingY) + 12;
+      doc.setFillColor(237, 242, 247);
+      doc.rect(15, tableY, 180, 8, 'F');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+      doc.text(t('thankYou.pdfProduct'), 18, tableY + 5);
+      doc.text(t('thankYou.pdfQuantity'), 125, tableY + 5);
+      doc.text(t('thankYou.pdfPrice'), 145, tableY + 5);
+      doc.text(t('thankYou.pdfTotal'), 175, tableY + 5);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      let itemY = tableY + 8;
+
+      (order.items_list || []).forEach((item) => {
+        itemY += 6;
+        doc.text(item.name || t('thankYou.pdfProduct'), 18, itemY);
+        doc.text(String(item.quantity), 125, itemY);
+        doc.text(formatEuro(item.price), 145, itemY);
+        doc.text(formatEuro(item.total), 175, itemY);
+
+        doc.setDrawColor(237, 242, 247);
+        doc.line(15, itemY + 2, 195, itemY + 2);
+        itemY += 2;
+      });
+
+      let totalsY = itemY + 12;
+      doc.setFont('helvetica', 'normal');
+      doc.text(t('checkout.subtotal'), 130, totalsY);
+      doc.text(order.subtotal || formatEuro(order.rawSubtotal || 0), 175, totalsY);
+
+      doc.text(t('checkout.shipping'), 130, (totalsY += 6));
+      doc.text(order.shipping_amount || formatEuro(order.rawShipping || 0), 175, totalsY);
+
+      doc.text(`${t('checkout.vat')} (21%)`, 130, (totalsY += 6));
+      doc.text(order.tax_amount || formatEuro(order.rawTax || 0), 175, totalsY);
+
+      if (order.rawDiscount && order.rawDiscount !== 0) {
+        doc.setTextColor(221, 51, 51);
+        doc.text(t('checkout.discount'), 130, (totalsY += 6));
+        doc.text(formatEuro(order.rawDiscount), 175, totalsY);
+        doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+      }
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text(t('thankYou.totalInclVat'), 130, (totalsY += 8));
+      doc.text(order.total || formatEuro(order.rawTotal || 0), 175, totalsY);
+
+      doc.save(`Order_Confirmation_${order.id}.pdf`);
+    } catch (err) {
+      console.error('Failed to generate PDF invoice:', err);
+      toast.error('Failed to generate PDF invoice.');
+    } finally {
+      setIsPdfGenerating(false);
+    }
+  };
 
   const toggleExpand = (orderId: string) => {
     setExpandedOrders((prev) => ({
@@ -1304,11 +1545,23 @@ function OrdersView() {
         {selectedOrder && (
           <DialogContent className="w-full sm:max-w-2xl max-w-2xl bg-white rounded-2xl p-0 overflow-hidden max-h-[90vh] flex flex-col border-none shadow-2xl">
             {/* Header */}
-            <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-              <div className="flex flex-col gap-1">
+            <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 gap-4">
+              <div className="flex flex-col gap-1 min-w-0">
                 <DialogTitle className="text-2xl font-black text-neutral-800 tracking-tight">{t('account.orderNumber', { number: selectedOrder.id })}</DialogTitle>
                 <DialogDescription className="text-sm font-medium text-neutral-500">{t('account.placedOn', { date: selectedOrder.date })}</DialogDescription>
               </div>
+              <button
+                onClick={() => handleDownloadPDF(selectedOrder)}
+                disabled={isPdfGenerating}
+                className="flex items-center gap-2 px-4 py-2.5 bg-brand text-white font-bold text-xs sm:text-sm rounded-xl hover:bg-brand-hover transition-colors shadow-sm disabled:opacity-50 cursor-pointer shrink-0"
+              >
+                <svg width="16" height="16" viewBox="0 0 18 18" fill="none" className="shrink-0">
+                  <path d="M8.65215 12.1985C8.85814 12.4047 9.19199 12.4045 9.39785 12.1985L11.6572 9.93921C11.8632 9.73335 11.8632 9.39937 11.6572 9.19351C11.4513 8.98752 11.1175 8.98752 10.9115 9.19351L9.55234 10.5527V6.74219C9.55234 6.45091 9.31614 6.21484 9.025 6.21484C8.73372 6.21484 8.49765 6.45091 8.49765 6.74219V10.5527L7.13851 9.19351C6.93251 8.98752 6.59867 8.98752 6.39267 9.19351C6.18682 9.39937 6.18682 9.73335 6.39267 9.93921L8.65215 12.1985Z" fill="currentColor"/>
+                  <path d="M11.2844 13.5547H6.76562C6.47449 13.5547 6.23828 13.7908 6.23828 14.082C6.23828 14.3732 6.47449 14.6094 6.76562 14.6094H11.2844C11.5756 14.6094 11.8118 14.3732 11.8118 14.082C11.8118 13.7908 11.5757 13.5547 11.2844 13.5547Z" fill="currentColor"/>
+                  <path d="M14.1093 0H6.20151C6.06171 0 5.92754 0.0556183 5.82866 0.154495L2.43965 3.5435C2.34077 3.64238 2.28516 3.77655 2.28516 3.91635V16.343C2.28516 17.2566 3.02852 18 3.94217 18H14.1093C15.0204 18 15.7663 17.2634 15.7663 16.343V1.65701C15.7663 0.745972 15.0298 0 14.1093 0ZM6.239 1.23555V3.35152C6.239 3.68372 5.96887 3.95384 5.63667 3.95384H3.52071L6.239 1.23555ZM14.7117 16.343C14.7117 16.6711 14.4465 16.9453 14.1093 16.9453H3.94217C3.61011 16.9453 3.33984 16.675 3.33984 16.343V5.00867H5.63667C6.55032 5.00867 7.29369 4.2653 7.29369 3.35165V1.05469H14.1093C14.4375 1.05469 14.7117 1.32001 14.7117 1.65701V16.343Z" fill="currentColor"/>
+                </svg>
+                <span>{isPdfGenerating ? t('common.loading') : t('account.downloadInvoice')}</span>
+              </button>
             </div>
 
             {/* Content */}
@@ -1483,15 +1736,23 @@ function PrintersView() {
     return () => window.removeEventListener('favorites-updated', loadFavorites);
   }, []);
 
+  const handleRemove = (printerId: string | number) => {
+    const favorites = JSON.parse(localStorage.getItem('favorite_printers') || '[]');
+    const updated = favorites.filter((p: PrinterCardData) => p.id !== printerId);
+    localStorage.setItem('favorite_printers', JSON.stringify(updated));
+    setPrinters(updated);
+    window.dispatchEvent(new Event('favorites-updated'));
+  };
+
   return (
-    <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex justify-between items-end gap-4">
+    <div className="flex flex-col gap-8 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div className="flex flex-col gap-2">
           <h2 className="text-3xl font-black text-neutral-800 tracking-tight">{t('account.myPrinters')}</h2>
           <p className="text-neutral-500 font-medium">{t('account.hardwareMonitoring')}</p>
         </div>
-        <Link href={localePath('/printers', locale)} className="h-11 px-8 bg-sky-950 text-white rounded-full font-bold text-sm hover:bg-brand transition-all flex items-center gap-2 whitespace-nowrap">
-           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+        <Link href={localePath('/printers', locale)} className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-8 h-[52px] font-bold rounded-full transition-colors shadow-sm text-[18px] border whitespace-nowrap border-slate-300 text-neutral-700 hover:border-brand hover:text-brand bg-white hover:bg-brand-soft/20">
+           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transition-colors duration-150" aria-hidden="true">
              <path d="M5 12h14"/><path d="M12 5v14"/>
            </svg>
            {t('account.findMorePrinters')}
@@ -1506,51 +1767,149 @@ function PrintersView() {
            <p className="mt-4 text-neutral-400 font-bold">{t('account.noSavedPrinters')}</p>
         </div>
       ) : (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {printers.map((printer) => (
-          <div key={printer.id} className="group p-8 rounded-[32px] border border-slate-200 bg-white hover:border-brand hover:shadow-xl hover:shadow-brand/5 transition-all flex flex-col gap-6">
-            <div className="relative h-48 bg-slate-100 rounded-2xl overflow-hidden p-6 group-hover:scale-[1.02] transition-transform">
-               <Image src={printer.mainImage || "/image-placeholder.svg"} alt={printer.name} fill className="object-contain" unoptimized />
-            </div>
-            <div className="flex flex-col gap-2">
-              <h3 className="text-xl font-black text-neutral-800 leading-tight">{printer.name}</h3>
-              <div className="flex items-center justify-between">
-                {printer.sku ? (
-                  <span className="text-neutral-400 font-bold text-sm tracking-tight">{t('account.skuNumber', { sku: printer.sku })}</span>
-                ) : (
-                  <span />
-                )}
-                <Link href={printer.slug ? `/material/${printer.slug}` : "#"} className="text-brand font-black text-xs uppercase tracking-wider hover:underline">{t('account.viewPrinter')}</Link>
-              </div>
-            </div>
-            <div className="h-px bg-slate-100" />
-            <div className="grid grid-cols-2 gap-4">
-               <button 
-                onClick={() => {
-                   const favorites = JSON.parse(localStorage.getItem('favorite_printers') || '[]');
-                   const updated = favorites.filter((p: PrinterCardData) => p.id !== printer.id);
-                   localStorage.setItem('favorite_printers', JSON.stringify(updated));
-                   setPrinters(updated);
-                   window.dispatchEvent(new Event('favorites-updated'));
-                }}
-                className="flex flex-col gap-1 text-left group/btn">
-                  <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest group-hover/btn:text-red-500 transition-colors">{t('account.action', { fallback: 'Action' })}</span>
-                  <span className="text-sm font-bold text-neutral-800 group-hover/btn:text-red-500 transition-colors">{t('account.removeFromFavorites')}</span>
-               </button>
-               <Link href={printer.slug ? `/material/${printer.slug}` : "#"} className="flex flex-col gap-1 text-left group/btn">
-                  <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest group-hover/btn:text-brand transition-colors">{t('account.supplies', { fallback: 'Supplies' })}</span>
-                  <span className="text-sm font-bold text-neutral-800">{t('account.buyLabels')}</span>
-               </Link>
-            </div>
+        <div className="w-full bg-white relative shadow-[2px_4px_20px_rgba(109,109,120,0.10)] overflow-hidden rounded-xl border border-line">
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-line text-neutral-500 text-sm font-semibold bg-white relative z-10">
+                  <th className="py-4 pl-[56px] pr-4 text-copy text-[16px] font-bold">{t('common.products') || 'Products'}</th>
+                  <th className="py-4 pr-6 pl-4 w-[180px] text-copy text-[16px] font-semibold text-left">{t('favoritesPage.action') || 'Action'}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line">
+                {printers.map((printer) => {
+                  const printerHref = printer.slug ? `/printers/${printer.slug}` : undefined;
+                  const localizedHref = printerHref ? localePath(printerHref, locale) : '#';
+
+                  return (
+                    <tr key={printer.id} className="group hover:bg-slate-50/40 transition-colors">
+                      {/* Printer Image, Name, SKU, and Remove */}
+                      <td className="py-4 pl-4 pr-4">
+                        <div className="flex items-center gap-6">
+                          <button
+                            type="button"
+                            onClick={() => handleRemove(printer.id)}
+                            className="text-subtle hover:text-red-500 transition-colors text-lg font-light leading-none w-4 h-4 flex items-center justify-center shrink-0"
+                            title={t('account.removeFromFavorites') || 'Remove from favorites'}
+                          >
+                            ✕
+                          </button>
+                          <Link href={localizedHref} className="w-20 h-20 shrink-0 bg-slate-50 border border-slate-100 flex items-center justify-center p-2 overflow-hidden rounded-lg hover:border-brand/50 transition-colors">
+                            <Image
+                              src={printer.mainImage || '/image-placeholder.svg'}
+                              alt={printer.name}
+                              width={80}
+                              height={80}
+                              className="object-contain w-full h-full"
+                              unoptimized
+                            />
+                          </Link>
+                          <div className="flex flex-col min-w-0 gap-1">
+                            {printer.sku && (
+                              <Link
+                                href={localizedHref}
+                                className="text-link hover:underline text-[14px] font-light text-left truncate"
+                              >
+                                {printer.sku}
+                              </Link>
+                            )}
+                            <Link
+                              href={localizedHref}
+                              className="text-ink font-bold hover:text-brand transition-colors text-[18px] leading-[21.60px] text-left"
+                            >
+                              {printer.name}
+                            </Link>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Action Button */}
+                      <td className="py-4 pr-6 pl-4 text-left">
+                        <Link
+                          href={localizedHref}
+                          className="h-[38px] px-5 bg-brand hover:bg-brand-hover text-white rounded-[100px] text-[15px] font-medium transition-all inline-flex items-center justify-center gap-2 whitespace-nowrap"
+                        >
+                          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+                            <path d="M1.5 9C1.5 9 4 3.75 9 3.75C14 3.75 16.5 9 16.5 9C16.5 9 14 14.25 9 14.25C4 14.25 1.5 9 1.5 9Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <circle cx="9" cy="9" r="2.25" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          <span>{t('account.viewPrinter') || 'View Printer'}</span>
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-        ))}
-      </div>
+
+          {/* Mobile Stacked Table Layout */}
+          <div className="md:hidden divide-y divide-slate-100">
+            {printers.map((printer) => {
+              const printerHref = printer.slug ? `/printers/${printer.slug}` : undefined;
+              const localizedHref = printerHref ? localePath(printerHref, locale) : '#';
+
+              return (
+                <div key={printer.id} className="p-5 flex flex-col gap-4 relative">
+                  <button
+                    type="button"
+                    onClick={() => handleRemove(printer.id)}
+                    className="absolute top-4 right-4 text-slate-400 hover:text-red-500 p-1"
+                    title={t('account.removeFromFavorites') || 'Remove from favorites'}
+                  >
+                    ✕
+                  </button>
+
+                  <div className="flex gap-4 items-center">
+                    <Link href={localizedHref} className="w-16 h-16 shrink-0 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center p-2 overflow-hidden hover:border-brand/50 transition-colors">
+                      <Image
+                        src={printer.mainImage || 'https://placehold.co/100x100'}
+                        alt={printer.name}
+                        width={64}
+                        height={64}
+                        className="object-contain w-full h-full"
+                        unoptimized
+                      />
+                    </Link>
+                    <div className="flex flex-col min-w-0 pr-6">
+                      {printer.sku && (
+                        <Link
+                          href={localizedHref}
+                          className="text-sky-500 hover:underline text-xs font-semibold mb-0.5 truncate"
+                        >
+                          {printer.sku}
+                        </Link>
+                      )}
+                      <Link
+                        href={localizedHref}
+                        className="text-neutral-800 font-bold hover:text-brand transition-colors text-sm line-clamp-2"
+                      >
+                        {printer.name}
+                      </Link>
+                    </div>
+                  </div>
+
+                  <Link
+                    href={localizedHref}
+                    className="w-full h-10 bg-brand hover:bg-brand-hover text-white rounded-full text-sm font-bold transition-all flex items-center justify-center gap-2 mt-2"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+                      <path d="M1.5 9C1.5 9 4 3.75 9 3.75C14 3.75 16.5 9 16.5 9C16.5 9 14 14.25 9 14.25C4 14.25 1.5 9 1.5 9Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      <circle cx="9" cy="9" r="2.25" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <span>{t('account.viewPrinter') || 'View Printer'}</span>
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       )}
     </div>
   );
 }
 
-import ProductCard, { type ProductCardData } from "@/components/ProductCard";
 import { useWishlist } from "@/components/WishlistProvider";
 import { PrinterCardData } from './PrintersListing';
 
@@ -1603,25 +1962,46 @@ function FavouriteProductsView() {
     wishlist.removeItem(key, { id: product.id, type: product.type });
   };
 
+  const locale = useLocale();
+  const cart = useCart();
+
+  const handleAction = (item: ProductCardData) => {
+    const isSimple = !item.type || item.type === 'simple';
+
+    if (isSimple && item.inStock !== false) {
+      cart.addItem({
+        id: item.id,
+        slug: item.slug,
+        type: item.type,
+        name: item.name,
+        sku: item.sku,
+        price: item.price ?? null,
+        mainImage: item.mainImage ?? null,
+        packingGroup: null,
+        allowSingulars: null,
+      });
+      cart.openCart();
+    } else {
+      const href = item.slug ? `/product/${item.slug}${item.type ? `?type=${item.type}` : ''}` : '/product';
+      window.location.href = localePath(href, locale);
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full">
         <div className="flex flex-col gap-2">
           <h2 className="text-3xl font-black text-neutral-800 tracking-tight">{t('account.favouriteProducts')}</h2>
           <p className="text-neutral-500 font-medium">{t('account.favouriteSuppliesDesc')}</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {[1, 2].map((i) => (
-            <div key={i} className="h-96 bg-slate-50 rounded-[40px] animate-pulse border border-slate-200" />
-          ))}
-        </div>
+        <div className="h-64 bg-slate-50 rounded-xl animate-pulse border border-slate-200" />
       </div>
     );
   }
 
   if (errorMessage) {
     return (
-      <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full">
         <div className="flex flex-col gap-2">
           <h2 className="text-3xl font-black text-neutral-800 tracking-tight">{t('account.favouriteProducts')}</h2>
           <p className="text-neutral-500 font-medium">{t('account.favouriteSuppliesDesc')}</p>
@@ -1634,7 +2014,7 @@ function FavouriteProductsView() {
   }
 
   return (
-    <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="flex flex-col gap-8 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col gap-2">
         <h2 className="text-3xl font-black text-neutral-800 tracking-tight">{t('account.favouriteProducts')}</h2>
         <p className="text-neutral-500 font-medium">{t('account.favouriteSuppliesDesc')}</p>
@@ -1651,24 +2031,201 @@ function FavouriteProductsView() {
            </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {favourites.map((product) => (
-            <div key={product.sku} className="relative group">
-              <ProductCard 
-                product={product} 
-                href={product.slug ? `/product/${product.slug}` : undefined}
-              />
-              <button
-                onClick={() => handleRemoveFavorite(product)}
-                className="absolute top-4 right-4 z-20 bg-white/90 hover:bg-red-500 hover:text-white text-neutral-500 p-2 rounded-full shadow-md transition-all duration-200 flex items-center justify-center border border-neutral-200/50 hover:border-red-500"
-                title={t('account.removeFromFavorites') || "Remove from favorites"}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          ))}
+        <div className="w-full bg-white relative shadow-[2px_4px_20px_rgba(109,109,120,0.10)] overflow-hidden rounded-xl border border-line">
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-line text-neutral-500 text-sm font-semibold bg-white relative z-10">
+                  <th className="py-4 pl-[56px] pr-4 w-[500px] text-copy text-[16px] font-bold">{t('common.products') || 'Products'}</th>
+                  <th className="py-4 px-4 w-[180px] text-copy text-[16px] font-semibold">{t('cart.price') || 'Price'}</th>
+                  <th className="py-4 px-4 w-[140px] text-copy text-[16px] font-semibold">{t('account.status') || 'Status'}</th>
+                  <th className="py-4 pr-6 pl-4 w-[180px] text-copy text-[16px] font-semibold text-left">{t('favoritesPage.action') || 'Action'}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line">
+                {favourites.map((item) => {
+                  const isSimple = !item.type || item.type === 'simple';
+                  const isButtonAddToCart = isSimple && item.inStock !== false;
+                  const itemHref = item.slug ? `/product/${item.slug}${item.type ? `?type=${item.type}` : ''}` : undefined;
+                  const localizedHref = itemHref ? localePath(itemHref, locale) : '#';
+
+                  return (
+                    <tr key={item.id} className="group hover:bg-slate-50/40 transition-colors">
+                      {/* Product Image, Name, SKU, and Remove */}
+                      <td className="py-4 pl-4 pr-4">
+                        <div className="flex items-center gap-6">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveFavorite(item)}
+                            className="text-subtle hover:text-red-500 transition-colors text-lg font-light leading-none w-4 h-4 flex items-center justify-center shrink-0"
+                            title={t('account.removeFromFavorites') || 'Remove from favorites'}
+                          >
+                            ✕
+                          </button>
+                          <Link href={localizedHref} className="w-20 h-20 shrink-0 bg-slate-50 border border-slate-100 flex items-center justify-center p-2 overflow-hidden rounded-lg hover:border-brand/50 transition-colors">
+                            <Image
+                              src={item.mainImage || 'https://placehold.co/100x100'}
+                              alt={item.name}
+                              width={80}
+                              height={80}
+                              className="object-contain w-full h-full"
+                              unoptimized
+                            />
+                          </Link>
+                          <div className="flex flex-col min-w-0 gap-1">
+                            {item.sku && (
+                              <Link
+                                href={localizedHref}
+                                className="text-link hover:underline text-[14px] font-light text-left truncate"
+                              >
+                                {item.sku}
+                              </Link>
+                            )}
+                            <Link
+                              href={localizedHref}
+                              className="text-ink font-bold hover:text-brand transition-colors text-[18px] leading-[21.60px] text-left"
+                            >
+                              {item.name}
+                            </Link>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Price */}
+                      <td className="py-4 px-4">
+                        <div className="flex flex-wrap items-end gap-x-1 gap-y-0.5">
+                          {!isButtonAddToCart && (
+                            <span className="text-copy text-[16px] font-normal">
+                              {t('product.fromPrice') || 'From'}
+                            </span>
+                          )}
+                          <span className="text-ink text-[20px] font-bold leading-normal">
+                            {item.price ? formatEuro(item.price).replace(/\s+/g, '') : '-'}
+                          </span>
+                          <span className="text-subtle text-[12px] font-normal pb-[2px]">
+                            {t('product.exVat') || 'ex. VAT'}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Status */}
+                      <td className="py-4 px-4">
+                        {item.inStock !== false ? (
+                          <span className="text-success font-medium text-[18px]">
+                            {t('product.inStock') || 'In Stock'}
+                          </span>
+                        ) : (
+                          <span className="text-danger font-medium text-[18px]">
+                            {t('product.outOfStock') || 'Out of Stock'}
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Action Button */}
+                      <td className="py-4 pr-6 pl-4 text-left">
+                        <button
+                          type="button"
+                          onClick={() => handleAction(item)}
+                          className="h-[38px] px-4 bg-brand hover:bg-brand-hover text-white rounded-[100px] text-[16px] font-medium transition-all inline-flex items-center justify-center gap-2 whitespace-nowrap"
+                        >
+                          <span>
+                            {isButtonAddToCart
+                              ? t('wishlist.moveToCart') || 'Add to cart'
+                              : t('common.select') || 'Select option'}
+                          </span>
+                          <div className="w-[22px] h-[16px] relative overflow-hidden flex items-center">
+                            <svg width="22" height="16" viewBox="0 0 22 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M7.33268 14.6654C7.83894 14.6654 8.24935 14.3669 8.24935 13.9987C8.24935 13.6305 7.83894 13.332 7.33268 13.332C6.82642 13.332 6.41602 13.6305 6.41602 13.9987C6.41602 14.3669 6.82642 14.6654 7.33268 14.6654Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M17.4167 14.6654C17.9229 14.6654 18.3333 14.3669 18.3333 13.9987C18.3333 13.6305 17.9229 13.332 17.4167 13.332C16.9104 13.332 16.5 13.6305 16.5 13.9987C16.5 14.3669 16.9104 14.6654 17.4167 14.6654Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M1.87891 1.36719H3.71224L6.15057 9.64719C6.24002 9.95043 6.47202 10.2215 6.80664 10.4138C7.14126 10.606 7.55757 10.7074 7.9839 10.7005H16.9489C17.3661 10.7 17.7707 10.596 18.0957 10.4057C18.4207 10.2154 18.6467 9.95021 18.7364 9.65385L20.2489 4.70052H4.69307" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Stacked Table Layout */}
+          <div className="md:hidden divide-y divide-slate-100">
+            {favourites.map((item) => {
+              const isSimple = !item.type || item.type === 'simple';
+              const isButtonAddToCart = isSimple && item.inStock !== false;
+              const itemHref = item.slug ? `/product/${item.slug}${item.type ? `?type=${item.type}` : ''}` : undefined;
+              const localizedHref = itemHref ? localePath(itemHref, locale) : '#';
+
+              return (
+                <div key={item.id} className="p-5 flex flex-col gap-4 relative">
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveFavorite(item)}
+                    className="absolute top-4 right-4 text-slate-400 hover:text-red-500 p-1"
+                    title={t('account.removeFromFavorites') || 'Remove from favorites'}
+                  >
+                    ✕
+                  </button>
+
+                  <div className="flex gap-4 items-center">
+                    <Link href={localizedHref} className="w-16 h-16 shrink-0 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center p-2 overflow-hidden hover:border-brand/50 transition-colors">
+                      <Image
+                        src={item.mainImage || 'https://placehold.co/100x100'}
+                        alt={item.name}
+                        width={64}
+                        height={64}
+                        className="object-contain w-full h-full"
+                        unoptimized
+                      />
+                    </Link>
+                    <div className="flex flex-col min-w-0 pr-6">
+                      {item.sku && (
+                        <Link
+                          href={localizedHref}
+                          className="text-sky-500 hover:underline text-xs font-semibold mb-0.5 truncate"
+                        >
+                          {item.sku}
+                        </Link>
+                      )}
+                      <Link
+                        href={localizedHref}
+                        className="text-neutral-800 font-bold hover:text-brand transition-colors text-sm line-clamp-2"
+                      >
+                        {item.name}
+                      </Link>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-ink text-sm font-bold">
+                          {item.price ? formatEuro(item.price).replace(/\s+/g, '') : '-'}
+                        </span>
+                        <span className="text-subtle text-[10px]">ex. VAT</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleAction(item)}
+                    className="w-full h-10 bg-brand hover:bg-brand-hover text-white rounded-full text-sm font-bold transition-all flex items-center justify-center gap-2 mt-2"
+                  >
+                    <span>
+                      {isButtonAddToCart
+                        ? t('wishlist.moveToCart') || 'Add to cart'
+                        : t('common.select') || 'Select option'}
+                    </span>
+                    <div className="w-4 h-4 relative overflow-hidden flex items-center">
+                      <svg width="16" height="16" viewBox="0 0 22 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M7.33268 14.6654C7.83894 14.6654 8.24935 14.3669 8.24935 13.9987C8.24935 13.6305 7.83894 13.332 7.33268 13.332C6.82642 13.332 6.41602 13.6305 6.41602 13.9987C6.41602 14.3669 6.82642 14.6654 7.33268 14.6654Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M17.4167 14.6654C17.9229 14.6654 18.3333 14.3669 18.3333 13.9987C18.3333 13.6305 17.9229 13.332 17.4167 13.332C16.9104 13.332 16.5 13.6305 16.5 13.9987C16.5 14.3669 16.9104 14.6654 17.4167 14.6654Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M1.87891 1.36719H3.71224L6.15057 9.64719C6.24002 9.95043 6.47202 10.2215 6.80664 10.4138C7.14126 10.606 7.55757 10.7074 7.9839 10.7005H16.9489C17.3661 10.7 17.7707 10.596 18.0957 10.4057C18.4207 10.2154 18.6467 9.95021 18.7364 9.65385L20.2489 4.70052H4.69307" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
@@ -1976,7 +2533,8 @@ function BillingAddressesView({ user }: { user: StoredUser }) {
                 const name = addr.name || `${addr.firstname || ''} ${addr.lastname || ''}`.trim();
                 const addressStr = [addr.address1, addr.address2, addr.city, addr.postcode, addr.country].filter(Boolean).join(', ');
                 const isOffice = addr.company?.toLowerCase().includes('office') || addr.company?.toLowerCase().includes('company');
-                const contactDetails = [addr.email, addr.phone].filter(Boolean);
+                const vatNum = addr.vatNumber || addr.vat_number || (addr as any).btw_number;
+                const contactDetails = [addr.email, addr.phone, vatNum ? `${getLabel('account.vatNumber', 'VAT number')}: ${vatNum}` : ''].filter(Boolean);
 
                 return (
                   <div
@@ -2413,6 +2971,8 @@ function ShippingAddressEditInline({
   };
   const [firstName, setFirstName] = useState(address?.firstname || '');
   const [lastName, setLastName] = useState(address?.lastname || '');
+  const [company, setCompany] = useState(address?.company || '');
+  const [vatNumber, setVatNumber] = useState((address as any)?.vat_number || address?.vatNumber || '');
   const [email, setEmail] = useState(address?.email || ''); 
   const [phone, setPhone] = useState(address?.phone || '');
   const [countryId, setCountryId] = useState('');
@@ -2533,9 +3093,13 @@ function ShippingAddressEditInline({
         : 'Please enter a valid email address';
     }
     reqField(phone, 'phone', getLabel('account.phoneNumber', 'Phone number'));
+    if (phone.trim() && !/^(\+|00)?[0-9\s\-\(\)\.]{7,20}$/.test(phone.trim())) {
+      errors.phone = t.has && typeof t.has === 'function' && t.has('validation.invalidPhone')
+        ? t('validation.invalidPhone')
+        : 'Enter a valid European phone number';
+    }
     reqField(street, 'street', getLabel('account.streetAndHouseNumber', 'Street and house number'));
     reqField(postcode, 'postcode', getLabel('account.postCode', 'Postcode'));
-    reqField(city, 'city', getLabel('account.city', 'Place'));
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -2554,6 +3118,8 @@ function ShippingAddressEditInline({
         name: `${firstName} ${lastName}`,
         firstname: firstName,
         lastname: lastName,
+        company: company,
+        company_name: company,
         address: street,
         address2: stateRegion,
         state: stateRegion,
@@ -2640,6 +3206,7 @@ function ShippingAddressEditInline({
             {fieldErrors.lastName && <span className="text-xs text-red-500 font-medium mt-1 block ml-3">{fieldErrors.lastName}</span>}
           </div>
         </div>
+
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
@@ -3015,7 +3582,7 @@ function BillingAddressEditInline({
   const [firstName, setFirstName] = useState(address?.firstname || '');
   const [lastName, setLastName] = useState(address?.lastname || '');
   const [company, setCompany] = useState(address?.company || '');
-  const [vatNumber, setVatNumber] = useState(address?.vatNumber || '');
+  const [vatNumber, setVatNumber] = useState(address?.vatNumber || address?.vat_number || (address as any)?.btw_number || '');
   const [email, setEmail] = useState(address?.email || ''); 
   const [phone, setPhone] = useState(address?.phone || '');
   const [countryId, setCountryId] = useState('');
@@ -3139,6 +3706,9 @@ function BillingAddressEditInline({
     reqField(postcode, 'postcode', getLabel('account.postCode', 'Postcode'));
     reqField(city, 'city', getLabel('account.city', 'Place'));
 
+    if (countryId !== 'NL') {
+      reqField(vatNumber, 'vatNumber', getLabel('account.vatNumber', 'VAT number'));
+    }
     if (vatNumber && vatNumber.trim().length > 17) {
       errors.vatNumber = t.has && typeof t.has === 'function' && t.has('validation.vatNumberLength')
         ? t('validation.vatNumberLength')
@@ -3224,7 +3794,7 @@ function BillingAddressEditInline({
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className={labelClasses}>{getLabel('account.companyOptional', 'Company name (optional)')}</label>
+            <label className={labelClasses}>{getLabel('account.companyName', 'Company name')} *</label>
             <input 
               type="text" 
               value={company} 
@@ -3238,7 +3808,9 @@ function BillingAddressEditInline({
             {fieldErrors.company && <span className="text-xs text-red-500 font-medium mt-1 block ml-3">{fieldErrors.company}</span>}
           </div>
           <div>
-            <label className={labelClasses}>{getLabel('account.vatNumberOptional', 'VAT number (optional)')}</label>
+            <label className={labelClasses}>
+              {getLabel('account.vatNumber', 'VAT number')} {countryId !== 'NL' ? '*' : '(Optional)'}
+            </label>
             <input 
               type="text" 
               value={vatNumber} 
@@ -3467,7 +4039,8 @@ function AddressEditModal({
   const [firstName, setFirstName] = useState(address?.firstname || '');
   const [lastName, setLastName] = useState(address?.lastname || '');
   const [company, setCompany] = useState(address?.company || '');
-  const [vatNumber, setVatNumber] = useState(address?.vatNumber || '');
+  const [vatNumber, setVatNumber] = useState((address as any)?.vat_number || address?.vatNumber || '');
+  const [countryId, setCountryId] = useState(address?.country || (address as any)?.country_id || 'NL');
   const [email, setEmail] = useState(address?.email || '');
   const [street, setStreet] = useState(address?.address1 || '');
   const [street2, setStreet2] = useState(address?.address2 || '');
@@ -3507,6 +4080,17 @@ function AddressEditModal({
 
     reqField(firstName, 'firstName', t('account.firstName') || (locale === 'nl' ? 'Voornaam' : 'First Name'));
     reqField(lastName, 'lastName', t('account.lastName') || (locale === 'nl' ? 'Achternaam' : 'Last Name'));
+    if (isBilling) {
+      reqField(company, 'company', t('account.companyName') || (locale === 'nl' ? 'Bedrijfsnaam' : 'Company Name'));
+      if (countryId !== 'NL') {
+        reqField(vatNumber, 'vatNumber', t('account.vatNumber') || (locale === 'nl' ? 'BTW-nummer' : 'VAT number'));
+      }
+      if (vatNumber && vatNumber.trim().length > 17) {
+        errors.vatNumber = t.has && typeof t.has === 'function' && t.has('validation.vatNumberLength')
+          ? t('validation.vatNumberLength')
+          : 'BTW-nummer mag niet langer zijn dan 17 tekens';
+      }
+    }
     reqField(email, 'email', locale === 'nl' ? 'E-mailadres' : 'Email address');
     if (!email.trim()) {
       errors.email = t.has && typeof t.has === 'function' && t.has('validation.required')
@@ -3521,12 +4105,6 @@ function AddressEditModal({
     reqField(street, 'street', t('account.streetAddress') || (locale === 'nl' ? 'Straat en huisnummer' : 'Street Address'));
     reqField(postcode, 'postcode', t('account.postcode') || (locale === 'nl' ? 'Postcode' : 'Postcode'));
     reqField(city, 'city', t('account.townCity') || (locale === 'nl' ? 'Plaats' : 'Town/City'));
-
-    if (vatNumber && vatNumber.trim().length > 17) {
-      errors.vatNumber = t.has && typeof t.has === 'function' && t.has('validation.vatNumberLength')
-        ? t('validation.vatNumberLength')
-        : 'BTW-nummer mag niet langer zijn dan 17 tekens';
-    }
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -3688,24 +4266,23 @@ function AddressEditModal({
                 {fieldErrors.phone && <span className="text-xs text-red-500 font-medium mt-1.5 block ml-1">{fieldErrors.phone}</span>}
               </div>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className={labelClasses}>{t('account.companyOptional') || (locale === 'nl' ? 'Bedrijfsnaam (Optioneel)' : 'Company name (Optional)')}</label>
-                <input 
-                  type="text" 
-                  value={company} 
-                  onChange={(e) => {
-                    setCompany(e.target.value);
-                    clearFieldError('company');
-                  }} 
-                  className={getInputClasses(Boolean(fieldErrors.company))} 
-                />
-                {fieldErrors.company && <span className="text-xs text-red-500 font-medium mt-1.5 block ml-1">{fieldErrors.company}</span>}
-              </div>
-              {isBilling && (
+            {isBilling && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className={labelClasses}>{locale === 'nl' ? 'BTW-nummer (Optioneel)' : 'VAT number (Optional)'}</label>
+                  <label className={labelClasses}>{(locale === 'nl' ? 'Bedrijfsnaam' : 'Company name')} *</label>
+                  <input 
+                    type="text" 
+                    value={company} 
+                    onChange={(e) => {
+                      setCompany(e.target.value);
+                      clearFieldError('company');
+                    }} 
+                    className={getInputClasses(Boolean(fieldErrors.company))} 
+                  />
+                  {fieldErrors.company && <span className="text-xs text-red-500 font-medium mt-1.5 block ml-1">{fieldErrors.company}</span>}
+                </div>
+                <div>
+                  <label className={labelClasses}>{(locale === 'nl' ? 'BTW-nummer' : 'VAT number')} {countryId !== 'NL' ? '*' : (locale === 'nl' ? '(Optioneel)' : '(Optional)')}</label>
                   <input 
                     type="text" 
                     value={vatNumber} 
@@ -3718,8 +4295,8 @@ function AddressEditModal({
                   />
                   {fieldErrors.vatNumber && <span className="text-xs text-red-500 font-medium mt-1.5 block ml-1">{fieldErrors.vatNumber}</span>}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             <div>
               <label className={labelClasses}>{t('account.streetAddress')} *</label>
@@ -3876,6 +4453,9 @@ function AddressProfile({
             {address.company ? <p className="font-medium">{address.company}</p> : null}
             {address.email ? <p className="font-medium">{address.email}</p> : null}
             {address.phone ? <p className="font-medium">{address.phone}</p> : null}
+            {!isShipping && (address.vatNumber || address.vat_number || (address as any).btw_number) ? (
+              <p className="font-medium">VAT: {address.vatNumber || address.vat_number || (address as any).btw_number}</p>
+            ) : null}
             {address.address1 ? <p className="font-medium">{address.address1}</p> : null}
             {address.address2 ? <p className="font-medium">{address.address2}</p> : null}
             {address.postcode || address.city ? <p className="font-medium">{[address.postcode, address.city].filter(Boolean).join(' ')}</p> : null}

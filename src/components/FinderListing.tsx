@@ -123,9 +123,9 @@ export default function FinderListing({
       return a.name.localeCompare(b.name, locale);
     };
 
-    const updatedMyPrinters = myPrinters.map((localPrinter) => {
+    const updatedMyPrinters = myPrinters.flatMap((localPrinter) => {
       const fetched = printers.find((p) => String(p.id) === String(localPrinter.id));
-      return fetched ? fetched : localPrinter;
+      return fetched ? [fetched] : locale === "en" ? [] : [localPrinter];
     });
 
     const filtered = updatedMyPrinters.filter((printer) => {
@@ -235,6 +235,7 @@ export default function FinderListing({
       // Strip any existing page param and fetch page 1
       const params = new URLSearchParams(currentQueryString);
       params.delete("page");
+      params.set("lang", locale);
       const endpoint = params.toString()
         ? `/api/printers?${params.toString()}`
         : "/api/printers";
@@ -272,7 +273,7 @@ export default function FinderListing({
       window.clearTimeout(loadingTimeoutId);
       controller.abort();
     };
-  }, [currentQueryString, queryString]);
+  }, [currentQueryString, locale, queryString]);
 
   // Load next page and append to existing list
   const loadMore = useCallback(async () => {
@@ -289,6 +290,7 @@ export default function FinderListing({
 
     const params = new URLSearchParams(currentQueryString);
     params.set("page", String(nextPage));
+    params.set("lang", locale);
     const endpoint = `/api/printers?${params.toString()}`;
 
     try {
@@ -309,7 +311,7 @@ export default function FinderListing({
     } finally {
       setIsLoadingMore(false);
     }
-  }, [isLoadingMore, hasMore, currentPage, lastPage, currentQueryString]);
+  }, [isLoadingMore, hasMore, currentPage, lastPage, currentQueryString, locale]);
 
   const setParams = useCallback(
     (updater: (params: URLSearchParams) => void) => {
@@ -506,7 +508,7 @@ export default function FinderListing({
       )}
 
       {/* ── FAQ / Info cards section ── */}
-      <div className="mt-16 -mx-6 px-6 py-20 bg-surface sm:-mx-10 sm:px-10 lg:-mx-10 lg:px-10">
+      <div className="mt-16 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10 py-20 bg-surface">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3  max-w-[1440px] mx-auto">
           {faqItems.map((item) => (
             <div

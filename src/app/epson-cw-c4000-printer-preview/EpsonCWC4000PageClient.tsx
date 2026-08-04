@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import LocaleLink from '@/components/LocaleLink';
 import { useTranslations } from 'next-intl';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 
@@ -435,7 +436,7 @@ export default function EpsonCWC4000PageClient() {
                   </span>
                 ))}
               </div>
-              <Link
+              <LocaleLink
                 id="cwc4000-bk-cta"
                 href="/product/colorworks-cw-c4000-bk/"
                 className="inline-flex items-center gap-2.5 rounded-full bg-neutral-900 px-6 py-3 text-sm font-bold uppercase tracking-wide text-white transition-all duration-200 hover:bg-neutral-700 active:scale-[0.98]"
@@ -444,7 +445,7 @@ export default function EpsonCWC4000PageClient() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m5-9v9m4-9v9m1-9l2 9" />
                 </svg>
                 {t('bkBtn')}
-              </Link>
+              </LocaleLink>
             </div>
           </div>
 
@@ -475,7 +476,7 @@ export default function EpsonCWC4000PageClient() {
                   </span>
                 ))}
               </div>
-              <Link
+              <LocaleLink
                 id="cwc4000-mk-cta"
                 href="/product/colorworks-cw-c4000-mk/"
                 className="inline-flex items-center gap-2.5 rounded-full bg-brand px-6 py-3 text-sm font-bold uppercase tracking-wide text-white shadow-lg shadow-brand/25 transition-all duration-200 hover:bg-brand-hover active:scale-[0.98]"
@@ -484,7 +485,7 @@ export default function EpsonCWC4000PageClient() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m5-9v9m4-9v9m1-9l2 9" />
                 </svg>
                 {t('mkBtn')}
-              </Link>
+              </LocaleLink>
             </div>
           </div>
         </div>
