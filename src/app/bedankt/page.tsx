@@ -16,6 +16,7 @@ type OrderDetails = {
   total?: number | string;
   subtotal?: number | string;
   shipping_amount?: number | string;
+  payment_fee?: number | string;
   tax_amount?: number | string;
   discount_amount?: number | string;
   discount_total?: number | string;
@@ -272,6 +273,7 @@ export default function ThankYouPage() {
   // Totals calculations
   const subtotal = isRealOrder ? (readNumberValue(order, ["subtotal"]) ?? 0) : 4704.67;
   const shipping = isRealOrder ? (readNumberValue(order, ["shipping_amount", "shipping_total"]) ?? 0) : 100.00;
+  const paymentFee = isRealOrder ? (readNumberValue(order, ["payment_fee", "payment_fee_amount", "payment_method_fee"]) ?? 0) : 0;
   const tax = isRealOrder ? (readNumberValue(order, ["tax_amount", "tax_total"]) ?? 0) : 988.00;
   const discount = isRealOrder ? (readNumberValue(order, ["discount_amount", "discount_total"]) ?? 0) : -100.00;
   const total = isRealOrder ? (readNumberValue(order, ["total", "grand_total"]) ?? 0) : 5792.67;
@@ -429,6 +431,11 @@ export default function ThankYouPage() {
       doc.text(t("checkout.shipping"), 130, totalsY += 6);
       doc.text(formatEuro(shipping), 175, totalsY);
 
+      if (paymentFee > 0) {
+        doc.text(t("checkout.paymentFee"), 130, totalsY += 6);
+        doc.text(formatEuro(paymentFee), 175, totalsY);
+      }
+
       doc.text(`${t("checkout.vat")} (21%)`, 130, totalsY += 6);
       doc.text(formatEuro(tax), 175, totalsY);
 
@@ -563,6 +570,12 @@ export default function ThankYouPage() {
                 <span>{t("checkout.shipping")}</span>
                 <span>{formatEuro(shipping)}</span>
               </div>
+              {paymentFee > 0 && (
+                <div className="flex justify-between items-center text-ink text-[16px] md:text-[18px] font-bold">
+                  <span>{t("checkout.paymentFee")}</span>
+                  <span>{formatEuro(paymentFee)}</span>
+                </div>
+              )}
               <div className="flex justify-between items-center text-ink text-[16px] md:text-[18px] font-bold">
                 <span>{t("checkout.vat")} (21%)</span>
                 <span>{formatEuro(tax)}</span>

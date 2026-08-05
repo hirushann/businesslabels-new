@@ -28,9 +28,11 @@ type AccountOrder = {
   items: number | null;
   subtotal?: string;
   shipping_amount?: string;
+  payment_fee?: string;
   tax_amount?: string;
   rawSubtotal?: number;
   rawShipping?: number;
+  rawPaymentFee?: number;
   rawTax?: number;
   rawDiscount?: number;
   rawTotal?: number;
@@ -295,6 +297,7 @@ function normalizeOrders(payload: unknown): AccountOrder[] {
 
       const rawSubtotal = readNumberValue(order, ['subtotal']) || 0;
       const rawShipping = readNumberValue(order, ['shipping_amount', 'shipping_total']) || 0;
+      const rawPaymentFee = readNumberValue(order, ['payment_fee', 'payment_fee_amount', 'payment_method_fee']) || 0;
       const rawTax = readNumberValue(order, ['tax_amount', 'tax_total']) || 0;
       const rawDiscount = readNumberValue(order, ['discount_amount', 'discount_total']) || 0;
       const rawTotal = readNumberValue(order, ['total', 'grand_total']) || 0;
@@ -310,9 +313,11 @@ function normalizeOrders(payload: unknown): AccountOrder[] {
         items: readOrderItemCount(order),
         subtotal: formatEuro(rawSubtotal),
         shipping_amount: formatEuro(rawShipping),
+        payment_fee: formatEuro(rawPaymentFee),
         tax_amount: formatEuro(rawTax),
         rawSubtotal,
         rawShipping,
+        rawPaymentFee,
         rawTax,
         rawDiscount,
         rawTotal,
@@ -1236,6 +1241,11 @@ function OrdersView() {
       doc.text(t('checkout.shipping'), 130, (totalsY += 6));
       doc.text(order.shipping_amount || formatEuro(order.rawShipping || 0), 175, totalsY);
 
+      if (order.rawPaymentFee && order.rawPaymentFee > 0) {
+        doc.text(t('checkout.paymentFee'), 130, (totalsY += 6));
+        doc.text(order.payment_fee || formatEuro(order.rawPaymentFee), 175, totalsY);
+      }
+
       doc.text(`${t('checkout.vat')} (21%)`, 130, (totalsY += 6));
       doc.text(order.tax_amount || formatEuro(order.rawTax || 0), 175, totalsY);
 
@@ -1691,6 +1701,12 @@ function OrdersView() {
                   <span>{t('account.shipping')}</span>
                   <span>{selectedOrder.shipping_amount}</span>
                 </div>
+                {selectedOrder.rawPaymentFee && selectedOrder.rawPaymentFee > 0 ? (
+                  <div className="flex justify-between text-sm text-neutral-400 font-bold">
+                    <span>{t('account.paymentFee')}</span>
+                    <span>{selectedOrder.payment_fee}</span>
+                  </div>
+                ) : null}
                 <div className="flex justify-between text-sm text-neutral-400 font-bold">
                   <span>{t('account.tax')}</span>
                   <span>{selectedOrder.tax_amount}</span>
