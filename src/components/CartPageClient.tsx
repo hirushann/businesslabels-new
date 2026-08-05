@@ -71,7 +71,7 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
   
   const shippingThreshold = defaultRule ? defaultRule.free_shipping_threshold : 500;
   const isFreeShipping = (taxableAmount >= shippingThreshold) || (appliedCoupon?.allow_free_shipping);
-  const shipping = isFreeShipping ? 0 : (defaultRule ? defaultRule.shipping_cost : 15);
+  const shipping = items.length === 0 ? 0 : (isFreeShipping ? 0 : (defaultRule ? defaultRule.shipping_cost : 9.95));
   
   const tax = (taxableAmount + shipping) * 0.21;
   const total = taxableAmount + shipping;
