@@ -62,7 +62,7 @@ export default function ContactForm() {
              <p className="text-neutral-600">{t("successDesc")}</p>
              <button
                onClick={() => setStatus('idle')}
-               className="mt-6 px-6 py-2 bg-brand text-white rounded-[100px] font-semibold hover:bg-brand-hover transition-colors"
+               className="mt-6 px-6 py-2 bg-brand text-white rounded-[100px] font-medium hover:bg-brand-hover transition-colors"
              >
                Send another message
              </button>

@@ -460,7 +460,7 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
                 resetForm();
                 setSubmitStatus('idle');
               }}
-              className="h-12 px-8 bg-brand rounded-full text-white text-base font-semibold font-sans hover:bg-brand-hover active:scale-[0.98] transition-all shadow-sm hover:shadow flex items-center justify-center"
+              className="h-12 px-8 bg-brand rounded-full text-white text-base font-medium font-sans hover:bg-brand-hover active:scale-[0.98] transition-all shadow-sm hover:shadow flex items-center justify-center"
             >
               {t('submitAnotherRequest')}
             </button>
