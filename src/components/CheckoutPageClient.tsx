@@ -338,8 +338,8 @@ function CheckoutShell({
   saveEditingBilling: () => void;
   countriesList: any[];
   onAddressAdded: (savedAddressId?: string | number, type?: 'billing' | 'shipping') => Promise<void>;
-  selectedShippingEffectiveLabel: string | null;
-  setSelectedShippingEffectiveLabel: (label: string | null) => void;
+  selectedShippingEffectiveLabel: 'home' | 'office' | null;
+  setSelectedShippingEffectiveLabel: (label: 'home' | 'office' | null) => void;
   couponCode?: string;
   couponDiscountAmount?: number;
   appliedCoupon?: any;
