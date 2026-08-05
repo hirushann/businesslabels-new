@@ -5,6 +5,7 @@ import type { ProductRouteType } from "@/components/ProductCard";
 
 const CART_STORAGE_KEY = "businesslabels-cart";
 const PURCHASE_REFERENCE_STORAGE_KEY = "businesslabels-purchase-reference";
+const COUPON_CODE_STORAGE_KEY = "businesslabels-coupon-code";
 
 type CartDiscountTier = {
   discount?: string | number | null;
@@ -60,6 +61,14 @@ type CartContextValue = {
   closeCart: () => void;
   purchaseReference: string;
   setPurchaseReference: (value: string) => void;
+  couponCode: string;
+  setCouponCode: (value: string) => void;
+  appliedCoupon: any | null;
+  couponDiscountAmount: number;
+  couponError: string | null;
+  isApplyingCoupon: boolean;
+  applyCouponCode: (code: string) => Promise<void>;
+  removeCoupon: () => void;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -179,6 +188,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [isHydrated, setIsHydrated] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [purchaseReference, setPurchaseReference] = useState("");
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<any | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
   useEffect(() => {
     try {
@@ -194,6 +207,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const storedReference = window.localStorage.getItem(PURCHASE_REFERENCE_STORAGE_KEY);
       if (storedReference) {
         setPurchaseReference(storedReference);
+      }
+
+      const storedCouponCode = window.localStorage.getItem(COUPON_CODE_STORAGE_KEY);
+      if (storedCouponCode) {
+        setCouponCode(storedCouponCode);
       }
     } catch (error) {
       console.error("Failed to load cart", error);
@@ -225,6 +243,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       console.error("Failed to persist purchase reference", error);
     }
   }, [isHydrated, purchaseReference]);
+
+  useEffect(() => {
+    if (!isHydrated) {
+      return;
+    }
+
+    try {
+      window.localStorage.setItem(COUPON_CODE_STORAGE_KEY, couponCode);
+    } catch (error) {
+      console.error("Failed to persist coupon code", error);
+    }
+  }, [isHydrated, couponCode]);
 
   const addItem = useCallback((item: CartInput, quantity = 1) => {
     const normalizedQuantity = Number.isFinite(quantity) && quantity > 0 ? Math.floor(quantity) : 1;
@@ -359,40 +389,102 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const clearCart = useCallback(() => {
     setItems([]);
     setPurchaseReference("");
+    setCouponCode("");
+    setAppliedCoupon(null);
+    setCouponError(null);
   }, []);
 
   const openCart = useCallback(() => setIsCartOpen(true), []);
   const closeCart = useCallback(() => setIsCartOpen(false), []);
 
+  const applyCouponCode = useCallback(async (code: string) => {
+    if (!code.trim()) return;
+    setIsApplyingCoupon(true);
+    setCouponError(null);
+    try {
+      const currentTotal = items.reduce((sum, item) => sum + ((typeof item.price === "number" && Number.isFinite(item.price) ? item.price : 0) * item.quantity), 0);
+      
+      const res = await fetch(`/api/coupons/${encodeURIComponent(code)}?cart_total=${currentTotal}`);
+      const data = await res.json();
+      
+      if (!res.ok) {
+        const error: any = new Error(data.message || "Invalid coupon code");
+        error.response = { status: res.status, data };
+        throw error;
+      }
+      
+      setAppliedCoupon(data.data || data); // Laravel resources often wrap in 'data'
+      setCouponCode(code);
+    } catch (err: any) {
+      setAppliedCoupon(null);
+      const status = err?.response?.status;
+      const serverMessage = err?.response?.data?.message;
+
+      if (status === 404) {
+        setCouponError(serverMessage && serverMessage !== "Not Found." ? serverMessage : "invalid_coupon");
+      } else {
+        setCouponError(serverMessage || err?.message || "invalid_coupon");
+      }
+    } finally {
+      setIsApplyingCoupon(false);
+    }
+  }, [items]);
+
+  const removeCoupon = useCallback(() => {
+    setAppliedCoupon(null);
+    setCouponError(null);
+    setCouponCode("");
+  }, []);
+
   const value = useMemo<CartContextValue>(
-    () => ({
-      items,
-      uniqueItemCount: items.length,
-      totalItemCount: items.reduce((sum, item) => {
-        // For group products, each unit added counts as 'componentCount' items.
-        const countPerUnit = item.type === 'group_product' && item.componentCount ? item.componentCount : 1;
-        
-        // Warranties shouldn't count towards the physical product count usually
-        if (item.itemKind === 'warranty') return sum;
-        
-        return sum + (countPerUnit * item.quantity);
-      }, 0),
-      totalAmount: items.reduce((sum, item) => {
+    () => {
+      const rawTotalAmount = items.reduce((sum, item) => {
         const price = typeof item.price === "number" && Number.isFinite(item.price) ? item.price : 0;
         return sum + price * item.quantity;
-      }, 0),
-      addItem,
-      removeItem,
-      incrementItemQuantity,
-      decrementItemQuantity,
-      setItemQuantity,
-      clearCart,
-      isCartOpen,
-      openCart,
-      closeCart,
-      purchaseReference,
-      setPurchaseReference,
-    }),
+      }, 0);
+      
+      let couponDiscountAmount = 0;
+      if (appliedCoupon && appliedCoupon.amount) {
+        const amount = Number(appliedCoupon.amount) || 0;
+        const type = String(appliedCoupon.discount_type).toLowerCase();
+        
+        if (type.includes("percent")) {
+          couponDiscountAmount = rawTotalAmount * (amount / 100);
+        } else {
+          couponDiscountAmount = Math.min(rawTotalAmount, amount);
+        }
+      }
+
+      return {
+        items,
+        uniqueItemCount: items.length,
+        totalItemCount: items.reduce((sum, item) => {
+          const countPerUnit = item.type === 'group_product' && item.componentCount ? item.componentCount : 1;
+          if (item.itemKind === 'warranty') return sum;
+          return sum + (countPerUnit * item.quantity);
+        }, 0),
+        totalAmount: rawTotalAmount,
+        couponDiscountAmount,
+        addItem,
+        removeItem,
+        incrementItemQuantity,
+        decrementItemQuantity,
+        setItemQuantity,
+        clearCart,
+        isCartOpen,
+        openCart,
+        closeCart,
+        purchaseReference,
+        setPurchaseReference,
+        couponCode,
+        setCouponCode,
+        appliedCoupon,
+        couponError,
+        isApplyingCoupon,
+        applyCouponCode,
+        removeCoupon,
+      };
+    },
     [
       items,
       isCartOpen,
@@ -405,6 +497,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       openCart,
       closeCart,
       purchaseReference,
+      couponCode,
+      appliedCoupon,
+      couponError,
+      isApplyingCoupon,
+      applyCouponCode,
+      removeCoupon,
     ],
   );
 

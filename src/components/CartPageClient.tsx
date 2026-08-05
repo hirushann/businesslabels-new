@@ -54,15 +54,27 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
     setItemQuantity,
     purchaseReference,
     setPurchaseReference,
+    couponCode,
+    setCouponCode,
+    appliedCoupon,
+    couponError,
+    isApplyingCoupon,
+    applyCouponCode,
+    removeCoupon,
+    couponDiscountAmount,
   } = useCart();
   
   const { defaultRule } = useShippingRules();
 
   const subtotal = totalAmount;
+  const taxableAmount = Math.max(0, subtotal - couponDiscountAmount);
+  
   const shippingThreshold = defaultRule ? defaultRule.free_shipping_threshold : 500;
-  const shipping = subtotal >= shippingThreshold ? 0 : (defaultRule ? defaultRule.shipping_cost : 15);
-  const tax = subtotal * 0.21;
-  const total = subtotal + shipping;
+  const isFreeShipping = (taxableAmount >= shippingThreshold) || (appliedCoupon?.allow_free_shipping);
+  const shipping = isFreeShipping ? 0 : (defaultRule ? defaultRule.shipping_cost : 15);
+  
+  const tax = (taxableAmount + shipping) * 0.21;
+  const total = taxableAmount + shipping;
 
   const [deliveryInfo, setDeliveryInfo] = useState<ReturnType<typeof getExpectedDeliveryMessage> | null>(null);
   const availableDates = useDeliveryAvailability();
@@ -534,6 +546,18 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                     </div>
                   ) : null}
 
+                  {/* Coupon Discount */}
+                  {appliedCoupon && couponDiscountAmount > 0 ? (
+                    <div className="flex justify-between items-center bg-white/50">
+                      <span className="text-lg font-bold text-[#15803D]">
+                        {t.has('cart.couponCode') ? t('cart.couponCode') : 'Coupon'} ({appliedCoupon.code})
+                      </span>
+                      <span className="text-lg font-semibold text-[#15803D]">
+                        -{formatEuro(couponDiscountAmount)}
+                      </span>
+                    </div>
+                  ) : null}
+
                   <div className="w-full h-px bg-[#D9E3ED]" />
 
                   <CartTotals
@@ -543,6 +567,57 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                     totalInclVat={formatEuro(total * 1.21)}
                     isBusinessCustomer={isBusinessCustomer}
                   />
+                </div>
+
+                {/* Coupon Code Card */}
+                <div className="w-full p-4 bg-white rounded-xl border border-line flex flex-col gap-3 shadow-[0px_2px_10px_rgba(109,109,120,0.04)]">
+                  <h3 className="text-ink text-[20px] font-bold leading-6">{t.has('cart.couponCode') ? t('cart.couponCode') : 'Coupon Code'}</h3>
+
+                  {appliedCoupon ? (
+                    <div className="flex items-center justify-between bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg p-3">
+                      <div className="flex items-center gap-2 text-[#15803D]">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M10 18.3327C14.6024 18.3327 18.3333 14.6017 18.3333 9.99935C18.3333 5.39698 14.6024 1.66602 10 1.66602C5.39763 1.66602 1.66667 5.39698 1.66667 9.99935C1.66667 14.6017 5.39763 18.3327 10 18.3327Z" fill="currentColor" fillOpacity="0.2"/>
+                          <path d="M14.1667 7.5L8.33333 13.3333L5.83333 10.8333" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        <span className="font-semibold">{appliedCoupon.code}</span>
+                      </div>
+                      <button type="button" onClick={removeCoupon} className="text-[#B91C1C] text-sm font-medium hover:underline">
+                        {t.has('cart.remove') ? t('cart.remove') : 'Remove'}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="relative w-full h-[52px]">
+                      <input
+                        type="text"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            applyCouponCode(couponCode);
+                          }
+                        }}
+                        placeholder={t.has('cart.couponPlaceholder') ? t('cart.couponPlaceholder') : 'Enter your coupon code'}
+                        className="w-full h-full pl-5 pr-24 rounded-full border border-[#DDE1EA] bg-white font-medium text-neutral-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => applyCouponCode(couponCode)}
+                        disabled={isApplyingCoupon || !couponCode.trim()}
+                        className="absolute right-1 top-1 h-[44px] px-4 bg-brand hover:bg-brand-hover active:bg-brand-active disabled:opacity-50 text-white font-medium rounded-full transition-colors flex items-center justify-center"
+                      >
+                        {isApplyingCoupon ? '...' : (t.has('cart.apply') ? t('cart.apply') : 'Apply')}
+                      </button>
+                    </div>
+                  )}
+                  {couponError ? (
+                    <p className="text-[#B91C1C] text-sm mt-1">
+                      {couponError === 'invalid_coupon' 
+                        ? (t.has('cart.invalidCoupon') ? t('cart.invalidCoupon') : 'Invalid coupon code') 
+                        : couponError}
+                    </p>
+                  ) : null}
                 </div>
 
                 {/* Purchase Reference Card */}

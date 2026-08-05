@@ -1,0 +1,57 @@
+{
+  "requestBody": {
+    "status": "pending",
+    "customer_notes": "Sint fuga Proident",
+    "coupon_code": "testco",
+    "billing_firstname": "Quia nulla dolores q",
+    "billing_lastname": "Rerum asperiores fac",
+    "billing_email": "cogawy@mailinator.com",
+    "billing_phone": "+1 (828) 125-1944",
+    "billing_company_name": "Suscipit quae non pe",
+    "company_name": "Suscipit quae non pe",
+    "billing_vat_number": "12313123131",
+    "vat_number": "12313123131",
+    "btw_number": "12313123131",
+    "billing_address": "Odit nisi aperiam do",
+    "billing_city": "Ipsa aut aliquam ex",
+    "billing_state": "",
+    "billing_province": "",
+    "billing_postalcode": "123123",
+    "billing_postcode": "123123",
+    "billing_zip": "123123",
+    "billing_country_id": "DJ",
+    "shipping_firstname": "Quia nulla dolores q",
+    "shipping_lastname": "Rerum asperiores fac",
+    "shipping_email": "cogawy@mailinator.com",
+    "shipping_phone": "+1 (828) 125-1944",
+    "shipping_address": "Odit nisi aperiam do",
+    "shipping_city": "Ipsa aut aliquam ex",
+    "shipping_state": "",
+    "shipping_province": "",
+    "shipping_postalcode": "123123",
+    "shipping_postcode": "123123",
+    "shipping_zip": "123123",
+    "shipping_country_id": "DJ",
+    "shipping_amount": 0,
+    "tax_amount": 139.61808000000002,
+    "payment_fee": 0,
+    "payment_method": "ideal",
+    "total": 804.4660800000001,
+    "lang": "nl",
+    "order_items": [
+      {
+        "product_id": 698,
+        "name": "CW-D6000 series Inktcartridges Cyaan",
+        "price": 41.04,
+        "quantity": 18,
+        "is_group_product": false
+      }
+    ],
+    "shipping_effective_label": "home"
+  },
+  "responseStatus": 422,
+  "responseData": {
+    "message": "Failed to create order or initialize payment.",
+    "error": "[2026-08-05T08:58:13+00:00] Your request wasn't executed due to failed authentication. Check your API key. Error executing API call (401: Unauthorized Request): Missing authentication, or failed to authenticate. Documentation: https://docs.mollie.com/reference/authentication. Request body: {\"description\":\"Order BL60101\",\"amount\":{\"currency\":\"EUR\",\"value\":\"804.47\"},\"redirectUrl\":\"http:\\/\\/localhost:3000\\/bedankt?order_number=BL60101\",\"method\":\"ideal\",\"metadata\":{\"order_id\":9}}"
+  }
+}

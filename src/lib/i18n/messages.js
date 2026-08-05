@@ -509,6 +509,10 @@ export const MESSAGES_V4 = {
       freeShippingQualified: 'Your order qualifies for free shipping!',
       orderWithin: 'Order within <timeStyle></timeStyle> for shipping on <shippingStyle></shippingStyle>',
       freeDeliveryThreshold: 'Free delivery on orders of <amountStyle>{amount}</amountStyle> or more',
+      couponCode: 'Coupon Code',
+      couponPlaceholder: 'Enter your coupon code',
+      invalidCoupon: 'Invalid coupon code',
+      apply: 'Apply',
     },
     menus: {
       printers: {
@@ -1059,6 +1063,9 @@ export const MESSAGES_V4 = {
       freeShippingQualified: 'Your order qualifies for free shipping!',
       orderWithin: 'Order within <timeStyle></timeStyle> for shipping on <shippingStyle></shippingStyle>',
       freeDeliveryThreshold: 'Free delivery on orders of <amountStyle>{amount}</amountStyle> or more',
+      couponCode: 'Coupon Code',
+      couponPlaceholder: 'Enter your coupon code',
+      apply: 'Apply',
       yourOverview: 'Your Overview',
       proceedToCheckout: 'Proceed to checkout',
     },
@@ -2560,6 +2567,9 @@ export const MESSAGES_V4 = {
       freeShippingQualified: 'Je bestelling komt in aanmerking voor gratis verzending!',
       orderWithin: 'Bestel binnen <timeStyle></timeStyle> voor verzending op <shippingStyle></shippingStyle>',
       freeDeliveryThreshold: 'Gratis verzending bij bestellingen vanaf <amountStyle>{amount}</amountStyle>',
+      couponCode: 'Kortingscode',
+      couponPlaceholder: 'Vul uw kortingscode in',
+      apply: 'Toepassen',
     },
     menus: {
       printers: {
@@ -3110,6 +3120,9 @@ export const MESSAGES_V4 = {
       freeShippingQualified: 'Je bestelling komt in aanmerking voor gratis verzending!',
       orderWithin: 'Bestel binnen <timeStyle></timeStyle> voor verzending op <shippingStyle></shippingStyle>',
       freeDeliveryThreshold: 'Gratis verzending bij bestellingen vanaf <amountStyle>{amount}</amountStyle>',
+      couponCode: 'Kortingscode',
+      couponPlaceholder: 'Vul uw kortingscode in',
+      apply: 'Toepassen',
       yourOverview: 'Jouw overzicht',
       proceedToCheckout: 'Doorgaan naar afrekenen',
     },

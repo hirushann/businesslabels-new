@@ -299,6 +299,9 @@ function CheckoutShell({
   onAddressAdded,
   selectedShippingEffectiveLabel,
   setSelectedShippingEffectiveLabel,
+  couponCode,
+  couponDiscountAmount = 0,
+  appliedCoupon,
 }: {
   items: CartItem[];
   totalAmount: number;
@@ -335,8 +338,11 @@ function CheckoutShell({
   saveEditingBilling: () => void;
   countriesList: any[];
   onAddressAdded: (savedAddressId?: string | number, type?: 'billing' | 'shipping') => Promise<void>;
-  selectedShippingEffectiveLabel: 'home' | 'office' | null;
-  setSelectedShippingEffectiveLabel: (label: 'home' | 'office' | null) => void;
+  selectedShippingEffectiveLabel: string | null;
+  setSelectedShippingEffectiveLabel: (label: string | null) => void;
+  couponCode?: string;
+  couponDiscountAmount?: number;
+  appliedCoupon?: any;
 }) {
   const t = useTranslations();
   const locale = useLocale();
@@ -378,16 +384,19 @@ function CheckoutShell({
     return match ? match.name : form.shippingState;
   }, [form.shippingState, shippingProvinces]);
 
+  const taxableAmount = Math.max(0, totalAmount - couponDiscountAmount);
+
   const shippingAmount = useMemo(() => {
     if (items.length === 0) return 0;
+    if (appliedCoupon?.allow_free_shipping) return 0;
     if (!selectedRule) {
-      return totalAmount >= 500 ? 0 : DELIVERY_FEE;
+      return taxableAmount >= 500 ? 0 : DELIVERY_FEE;
     }
-    return totalAmount >= selectedRule.free_shipping_threshold ? 0 : selectedRule.shipping_cost;
-  }, [items.length, totalAmount, selectedRule]);
-  const paymentFee = useMemo(() => (form.paymentMethod === "creditcard" ? totalAmount * 0.025 : 0), [totalAmount, form.paymentMethod]);
-  const taxAmount = useMemo(() => (totalAmount + shippingAmount + paymentFee) * 0.21, [totalAmount, shippingAmount, paymentFee]);
-  const finalTotal = useMemo(() => totalAmount + shippingAmount + paymentFee + taxAmount, [totalAmount, shippingAmount, paymentFee, taxAmount]);
+    return taxableAmount >= selectedRule.free_shipping_threshold ? 0 : selectedRule.shipping_cost;
+  }, [items.length, taxableAmount, selectedRule, appliedCoupon]);
+  const paymentFee = useMemo(() => (form.paymentMethod === "creditcard" ? taxableAmount * 0.025 : 0), [taxableAmount, form.paymentMethod]);
+  const taxAmount = useMemo(() => (taxableAmount + shippingAmount + paymentFee) * 0.21, [taxableAmount, shippingAmount, paymentFee]);
+  const finalTotal = useMemo(() => taxableAmount + shippingAmount + paymentFee + taxAmount, [taxableAmount, shippingAmount, paymentFee, taxAmount]);
   const [isLoginPopupOpen, setIsLoginPopupOpen] = useState(false);
   const [isRegisterPopupOpen, setIsRegisterPopupOpen] = useState(false);
   const [isAddAddressPopupOpen, setIsAddAddressPopupOpen] = useState(false);
@@ -1642,6 +1651,12 @@ function CheckoutShell({
                     <span className="text-ink font-bold">{t('checkout.subtotal')}</span>
                     <span className="text-ink font-bold">{formatEuro(totalAmount)}</span>
                   </div>
+                  {couponDiscountAmount > 0 && (
+                    <div className="flex justify-between items-center text-[18px]">
+                      <span className="text-[#15803D] font-bold">Coupon ({couponCode})</span>
+                      <span className="text-[#15803D] font-bold">-{formatEuro(couponDiscountAmount)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between items-center text-[18px]">
                     <span className="text-ink font-bold">{t('checkout.shipping')}</span>
                     <span className="text-ink font-bold">{formatEuro(shippingAmount)}</span>
@@ -2699,18 +2714,19 @@ export default function CheckoutPageClient({
 
     const selectedCountry = form.sameAsBilling ? form.country : form.shippingCountry;
     const selectedRule = shippingRules.find(r => r.country_name === selectedCountry) ?? defaultRule;
+    const taxableAmount = Math.max(0, totalAmount - (cart.couponDiscountAmount || 0));
     
     let shippingAmount = 0;
-    if (items.length > 0) {
-      if (selectedRule) {
-        shippingAmount = totalAmount >= selectedRule.free_shipping_threshold ? 0 : selectedRule.shipping_cost;
-      } else {
-        shippingAmount = totalAmount >= 500 ? 0 : DELIVERY_FEE;
-      }
+    if (cart.appliedCoupon?.allow_free_shipping) {
+      shippingAmount = 0;
+    } else if (selectedRule) {
+      shippingAmount = taxableAmount >= selectedRule.free_shipping_threshold ? 0 : selectedRule.shipping_cost;
+    } else {
+      shippingAmount = taxableAmount >= 500 ? 0 : DELIVERY_FEE;
     }
-    const paymentFee = form.paymentMethod === "creditcard" ? totalAmount * 0.025 : 0;
-    const taxAmount = (totalAmount + shippingAmount + paymentFee) * 0.21;
-    const finalTotal = totalAmount + shippingAmount + paymentFee + taxAmount;
+    const paymentFee = form.paymentMethod === "creditcard" ? taxableAmount * 0.025 : 0;
+    const taxAmount = (taxableAmount + shippingAmount + paymentFee) * 0.21;
+    const finalTotal = taxableAmount + shippingAmount + paymentFee + taxAmount;
 
     const isSavedBillingSelected =
       isLoggedIn &&
@@ -2807,6 +2823,7 @@ export default function CheckoutPageClient({
     const orderData: Record<string, any> = {
       status: "pending",
       customer_notes: form.purchaseReference,
+      ...(cart.couponCode ? { coupon_code: cart.couponCode } : {}),
     };
 
     if (billingAddressId !== null) {
@@ -2963,6 +2980,9 @@ export default function CheckoutPageClient({
     <CheckoutShell
       items={items}
       totalAmount={totalAmount}
+      couponCode={cart.couponCode}
+      couponDiscountAmount={cart.couponDiscountAmount}
+      appliedCoupon={cart.appliedCoupon}
       onAddressAdded={handleAddressAdded}
       removeItem={removeItem}
       incrementItemQuantity={incrementItemQuantity}
