@@ -243,14 +243,27 @@ export default function LoginPopup({
 
       const data = (await response.json()) as ResetPasswordResponse;
 
+      const rawMsg = data.message || data.status || '';
+      const isEmailedResetLinkMsg =
+        typeof rawMsg === 'string' &&
+        /we have emailed your password reset link/i.test(rawMsg);
+
       if (!response.ok) {
         setResetErrors(data.errors ?? {});
-        setResetMessage(data.message || t('login.invalidEmail'));
+        setResetMessage(
+          isEmailedResetLinkMsg
+            ? t('login.emailedPasswordResetLink')
+            : data.message || t('login.invalidEmail')
+        );
         setResetMessageTone('error');
         return;
       }
 
-      setResetMessage(data.message || data.status || t('login.resetEmailSent'));
+      setResetMessage(
+        isEmailedResetLinkMsg
+          ? t('login.emailedPasswordResetLink')
+          : rawMsg || t('login.resetEmailSent')
+      );
       setResetMessageTone('success');
       toast.success(t('login.resetSuccess'));
     } catch {
