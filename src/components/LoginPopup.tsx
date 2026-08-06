@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import LocaleLink from '@/components/LocaleLink';
-import { Eye, EyeOff, Loader2, Mail, LockKeyhole } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Mail, MailOpen, LockKeyhole } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
 import { useLocalePath } from '@/hooks/useLocalePath';
@@ -101,6 +101,7 @@ export default function LoginPopup({
   const [resetMessage, setResetMessage] = useState('');
   const [resetMessageTone, setResetMessageTone] = useState<'success' | 'error' | null>(null);
   const closeAfterSuccessTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isMigrationDialogOpen, setIsMigrationDialogOpen] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -123,6 +124,7 @@ export default function LoginPopup({
     setFormMessageTone(null);
     setResetMessage('');
     setResetMessageTone(null);
+    // Do not reset isMigrationDialogOpen here — it has its own close button
   };
 
   const handleOpenChange = (nextOpen: boolean) => {
@@ -158,8 +160,9 @@ export default function LoginPopup({
 
       if (!response.ok) {
         if (data.password_reset_required) {
-          setFormMessage(data.message || t('login.migratedPasswordResetSent'));
-          setFormMessageTone(data.reset_email_sent ? 'success' : 'error');
+          // Close the login dialog and open the migration-specific notice dialog
+          handleOpenChange(false);
+          setIsMigrationDialogOpen(true);
           return;
         }
 
@@ -279,6 +282,7 @@ export default function LoginPopup({
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         className="rounded-[28px] border-slate-100 bg-white p-8 shadow-2xl sm:max-w-lg"
@@ -502,5 +506,36 @@ export default function LoginPopup({
         )}
       </DialogContent>
     </Dialog>
+
+    {/* ── Migration notice dialog ── */}
+    <Dialog open={isMigrationDialogOpen} onOpenChange={setIsMigrationDialogOpen}>
+      <DialogContent
+        className="rounded-[28px] border-slate-100 bg-white p-8 shadow-2xl sm:max-w-md"
+        showCloseButton
+      >
+        <DialogHeader className="items-center gap-3 text-center">
+          <div className="flex size-16 items-center justify-center rounded-full bg-amber-50 ring-1 ring-amber-100">
+            <MailOpen className="size-8 text-brand" />
+          </div>
+          <DialogTitle className="text-2xl font-black tracking-tight text-neutral-800">
+            {t('login.migrationDialogTitle')}
+          </DialogTitle>
+          <DialogDescription className="text-base font-medium leading-relaxed text-neutral-600">
+            {t('login.migratedPasswordResetSent')}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="mt-4 flex justify-center">
+          <button
+            type="button"
+            onClick={() => setIsMigrationDialogOpen(false)}
+            className="h-11 rounded-full bg-brand px-8 text-sm font-black text-white shadow-lg shadow-brand/20 hover:bg-brand-hover"
+          >
+            {t('login.migrationDialogClose')}
+          </button>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
