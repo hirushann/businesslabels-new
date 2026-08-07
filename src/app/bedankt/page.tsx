@@ -275,14 +275,14 @@ export default function ThankYouPage() {
     readStringValue(order, ["shipping_phone"]) ||
     readStringValue(payload, ["shipping_phone"]) ||
     shippingAddress?.phone ||
-    personalPhone;
+    "";
 
   const shippingEmail =
     readStringValue(selectedShippingAddress, ["email"]) ||
     readStringValue(order, ["shipping_email"]) ||
     readStringValue(payload, ["shipping_email"]) ||
     shippingAddress?.email ||
-    personalEmail;
+    "";
 
   const fullShippingAddress = [shippingStreet, shippingCity, shippingPostcode, shippingCountry].filter(Boolean).join(", ") || (isRealOrder ? "" : t("thankYou.demoShippingAddress"));
 
