@@ -273,7 +273,8 @@ export default async function BlogsPage({
                           </div>
                         )}
                         <div className="text-neutral-700 text-base font-bold leading-6">
-                          {post.author?.name || "Admin"}
+                          {/* {post.author?.name || "Admin"} */}
+                          Levi van der Molen
                         </div>
                       </div>
                     </div>
