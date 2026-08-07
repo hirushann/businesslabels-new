@@ -3222,9 +3222,9 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
       }
     };
 
-    reqField(firstName, 'firstName', getLabel('checkout.firstName', 'First Name').replace(/\s*\*\s*$/, ''));
-    reqField(lastName, 'lastName', getLabel('checkout.lastName', 'Last Name').replace(/\s*\*\s*$/, ''));
     if (isBilling) {
+      reqField(firstName, 'firstName', getLabel('checkout.firstName', 'First Name').replace(/\s*\*\s*$/, ''));
+      reqField(lastName, 'lastName', getLabel('checkout.lastName', 'Last Name').replace(/\s*\*\s*$/, ''));
       reqField(companyName, 'companyName', getLabel('checkout.companyName', 'Company name').replace(/\s*\*\s*$/, ''));
       if (countryId !== 'NL') {
         reqField(vatNumber, 'vatNumber', getLabel('checkout.vatNumber', 'VAT number').replace(/\s*\*\s*$/, ''));
@@ -3405,7 +3405,9 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
-                <span className={labelClasses}>{getLabel('checkout.firstName', 'First Name')} *</span>
+                <span className={labelClasses}>
+                  {getLabel('checkout.firstName', 'First Name')} {isBilling ? '*' : (locale.startsWith('nl') ? '(Optioneel)' : '(Optional)')}
+                </span>
                 <input 
                   type="text" 
                   value={firstName} 
@@ -3419,7 +3421,9 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
                 {fieldErrors.firstName && <span className="text-xs text-red-500 font-medium">{fieldErrors.firstName}</span>}
               </div>
               <div className="flex flex-col gap-2">
-                <span className={labelClasses}>{getLabel('checkout.lastName', 'Last Name')} *</span>
+                <span className={labelClasses}>
+                  {getLabel('checkout.lastName', 'Last Name')} {isBilling ? '*' : (locale.startsWith('nl') ? '(Optioneel)' : '(Optional)')}
+                </span>
                 <input 
                   type="text" 
                   value={lastName} 
