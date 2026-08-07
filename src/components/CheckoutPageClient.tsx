@@ -666,7 +666,7 @@ function CheckoutShell({
                                             <path d="M3.33268 20.0052C2.87435 20.0052 2.48199 19.842 2.1556 19.5156C1.82921 19.1892 1.66602 18.7969 1.66602 18.3385C1.66602 17.8802 1.82921 17.4878 2.1556 17.1615C2.48199 16.8351 2.87435 16.6719 3.33268 16.6719H16.666C17.1243 16.6719 17.5167 16.8351 17.8431 17.1615C18.1695 17.4878 18.3327 17.8802 18.3327 18.3385C18.3327 18.7969 18.1695 19.1892 17.8431 19.5156C17.5167 19.842 17.1243 20.0052 16.666 20.0052H3.33268ZM4.99935 13.3385H6.16602L12.666 6.85938L11.4785 5.67188L4.99935 12.1719V13.3385ZM3.33268 14.1719V11.8177C3.33268 11.7066 3.35352 11.599 3.39518 11.4948C3.43685 11.3906 3.49935 11.2969 3.58268 11.2135L12.666 2.15104C12.8188 1.99826 12.9959 1.88021 13.1973 1.79688C13.3987 1.71354 13.6105 1.67188 13.8327 1.67188C14.0549 1.67188 14.2702 1.71354 14.4785 1.79688C14.6868 1.88021 14.8743 2.00521 15.041 2.17188L16.1868 3.33854C16.3535 3.49132 16.475 3.67188 16.5514 3.88021C16.6278 4.08854 16.666 4.30382 16.666 4.52604C16.666 4.73438 16.6278 4.93924 16.5514 5.14063C16.475 5.34201 16.5514 5.52604 16.1868 5.69271L7.12435 14.7552C7.04101 14.8385 6.94726 14.901 6.8431 14.9427C6.73893 14.9844 6.63129 15.0052 6.52018 15.0052H4.16602C3.9299 15.0052 3.73199 14.9253 3.57227 14.7656C3.41254 14.6059 3.33268 14.408 3.33268 14.1719Z" fill="var(--brand)"></path>
                                           </g>
                                         </svg>
-                                        <div className="text-brand text-base font-normal leading-5">Edit</div>
+                                        <div className="text-brand text-base font-normal leading-5">{t('checkout.editButton')}</div>
                                       </button>
                                     </div>
                                   </div>
@@ -3238,9 +3238,9 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
       }
     };
 
-    reqField(firstName, 'firstName', getLabel('checkout.firstName', 'First Name').replace(/\s*\*\s*$/, ''));
-    reqField(lastName, 'lastName', getLabel('checkout.lastName', 'Last Name').replace(/\s*\*\s*$/, ''));
     if (isBilling) {
+      reqField(firstName, 'firstName', getLabel('checkout.firstName', 'First Name').replace(/\s*\*\s*$/, ''));
+      reqField(lastName, 'lastName', getLabel('checkout.lastName', 'Last Name').replace(/\s*\*\s*$/, ''));
       reqField(companyName, 'companyName', getLabel('checkout.companyName', 'Company name').replace(/\s*\*\s*$/, ''));
       if (countryId !== 'NL') {
         reqField(vatNumber, 'vatNumber', getLabel('checkout.vatNumber', 'VAT number').replace(/\s*\*\s*$/, ''));
@@ -3421,7 +3421,9 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
-                <span className={labelClasses}>{getLabel('checkout.firstName', 'First Name')} *</span>
+                <span className={labelClasses}>
+                  {getLabel('checkout.firstName', 'First Name')} {isBilling ? '*' : (locale.startsWith('nl') ? '(Optioneel)' : '(Optional)')}
+                </span>
                 <input 
                   type="text" 
                   value={firstName} 
@@ -3435,7 +3437,9 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
                 {fieldErrors.firstName && <span className="text-xs text-red-500 font-medium">{fieldErrors.firstName}</span>}
               </div>
               <div className="flex flex-col gap-2">
-                <span className={labelClasses}>{getLabel('checkout.lastName', 'Last Name')} *</span>
+                <span className={labelClasses}>
+                  {getLabel('checkout.lastName', 'Last Name')} {isBilling ? '*' : (locale.startsWith('nl') ? '(Optioneel)' : '(Optional)')}
+                </span>
                 <input 
                   type="text" 
                   value={lastName} 
