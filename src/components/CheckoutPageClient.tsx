@@ -604,29 +604,45 @@ function CheckoutShell({
                                     )}
                                   </div>
                                   <div className="flex min-w-0 flex-1 flex-col gap-2">
-                                    <div className="flex items-start justify-between gap-2">
-                                      <span className="text-ink text-[17px] font-bold leading-5 break-words">
-                                        {address.name || `${address.firstname} ${address.lastname}`.trim() || t('checkout.billingAddress')}
-                                      </span>
-                                      {isSelected && (
-                                        <span className="rounded-full bg-brand-soft px-2.5 py-1 text-[12px] font-bold text-brand">
-                                          {t('common.selected')}
-                                        </span>
-                                      )}
-                                    </div>
-                                    {(address.email || address.phone || address.vat_number || address.vatNumber || (address as any).btw_number) && (
-                                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-copy text-[14px] font-normal leading-5">
-                                        {address.email && <span className="break-all">{address.email}</span>}
-                                        {address.email && address.phone && <span className="text-[#C8D2DD]">|</span>}
-                                        {address.phone && <span>{address.phone}</span>}
-                                        {(address.vat_number || address.vatNumber || (address as any).btw_number) && (
-                                          <>
-                                            {(address.email || address.phone) && <span className="text-[#C8D2DD]">|</span>}
-                                            <span>{t('checkout.vatNumber') || 'VAT'}: {address.vat_number || address.vatNumber || (address as any).btw_number}</span>
-                                          </>
-                                        )}
-                                      </div>
-                                    )}
+                                    {(() => {
+                                      const companyName = (address.company || (address as any).company_name || (address as any).companyName || '').trim();
+                                      const personName = (address.name || `${address.firstname || ''} ${address.lastname || ''}`).trim();
+                                      const displayName = companyName || personName || t('checkout.billingAddress');
+                                      const vatNum = address.vat_number || address.vatNumber || (address as any).btw_number || (address as any).btwNumber;
+
+                                      return (
+                                        <>
+                                          <div className="flex items-start justify-between gap-2">
+                                            <span className="text-ink text-[17px] font-bold leading-5 break-words">
+                                              {displayName}
+                                            </span>
+                                            {isSelected && (
+                                              <span className="rounded-full bg-brand-soft px-2.5 py-1 text-[12px] font-bold text-brand">
+                                                {t('common.selected')}
+                                              </span>
+                                            )}
+                                          </div>
+                                          {companyName && personName && (
+                                            <div className="text-copy text-[14px] font-medium leading-5">
+                                              {personName}
+                                            </div>
+                                          )}
+                                          {(address.email || address.phone || vatNum) && (
+                                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-copy text-[14px] font-normal leading-5">
+                                              {address.email && <span className="break-all">{address.email}</span>}
+                                              {address.email && address.phone && <span className="text-[#C8D2DD]">|</span>}
+                                              {address.phone && <span>{address.phone}</span>}
+                                              {vatNum && (
+                                                <>
+                                                  {(address.email || address.phone) && <span className="text-[#C8D2DD]">|</span>}
+                                                  <span>{t('checkout.vatNumber') || 'VAT'}: {vatNum}</span>
+                                                </>
+                                              )}
+                                            </div>
+                                          )}
+                                        </>
+                                      );
+                                    })()}
                                     <div className="flex items-end justify-between gap-2">
                                       <p className="text-copy text-[15px] font-normal leading-5 flex-1">
                                         {addressLine || '-'}
