@@ -220,12 +220,21 @@ export default function ThankYouPage() {
     readStringValue(order?.user as Record<string, unknown>, ["email"]) ||
     (isRealOrder ? "" : "demo123@gmail.com");
 
+  // Backend stores name as "-" when it can't compose it — treat that as empty
+  const rawShippingName = readStringValue(selectedShippingAddress, ["name"]) ||
+    (shippingAddress?.name && shippingAddress.name !== "-" ? shippingAddress.name : "");
+
   const shippingNameFormatted =
-    readStringValue(selectedShippingAddress, ["name"]) ||
-    shippingAddress?.name ||
+    rawShippingName ||
     [
-      readStringValue(selectedShippingAddress, ["firstname", "first_name"]) || readStringValue(order, ["shipping_firstname", "shipping_first_name"]),
-      readStringValue(selectedShippingAddress, ["lastname", "last_name"]) || readStringValue(order, ["shipping_lastname", "shipping_last_name"])
+      readStringValue(selectedShippingAddress, ["firstname", "first_name"]) ||
+        shippingAddress?.firstname ||
+        readStringValue(order, ["shipping_firstname", "shipping_first_name"]) ||
+        readStringValue(payload, ["shipping_firstname", "shipping_first_name"]),
+      readStringValue(selectedShippingAddress, ["lastname", "last_name"]) ||
+        shippingAddress?.lastname ||
+        readStringValue(order, ["shipping_lastname", "shipping_last_name"]) ||
+        readStringValue(payload, ["shipping_lastname", "shipping_last_name"])
     ].filter(Boolean).join(" ") ||
     personalName;
 
@@ -235,12 +244,14 @@ export default function ThankYouPage() {
     shippingAddress?.address2 ||
     shippingAddress?.address ||
     readStringValue(order, ["shipping_address_1", "shipping_address"]) ||
+    readStringValue(payload, ["shipping_address", "shipping_address_1"]) ||
     (isRealOrder ? "" : demoShippingStreet);
 
   const shippingCity =
     readStringValue(selectedShippingAddress, ["city"]) ||
     shippingAddress?.city ||
     readStringValue(order, ["shipping_city"]) ||
+    readStringValue(payload, ["shipping_city"]) ||
     (isRealOrder ? "" : demoShippingCity);
 
   const shippingPostcode =
@@ -248,6 +259,7 @@ export default function ThankYouPage() {
     shippingAddress?.postcode ||
     shippingAddress?.postalcode ||
     readStringValue(order, ["shipping_postalcode", "shipping_postcode"]) ||
+    readStringValue(payload, ["shipping_postalcode", "shipping_postcode", "shipping_zip"]) ||
     (isRealOrder ? "" : demoShippingPostcode);
 
   const shippingCountry =
@@ -255,6 +267,7 @@ export default function ThankYouPage() {
     shippingAddress?.country ||
     shippingAddress?.country_id ||
     readStringValue(order, ["shipping_country_id", "shipping_country"]) ||
+    readStringValue(payload, ["shipping_country_id", "shipping_country"]) ||
     (isRealOrder ? "" : demoShippingCountry);
 
   const fullShippingAddress = [shippingStreet, shippingCity, shippingPostcode, shippingCountry].filter(Boolean).join(", ") || (isRealOrder ? "" : t("thankYou.demoShippingAddress"));
@@ -269,6 +282,50 @@ export default function ThankYouPage() {
     : rawPaymentMethod || (isRealOrder ? "" : t("thankYou.cardPaymentLabel"));
 
   const purchaseReference = readStringValue(order, ["customer_notes", "customer_note"]) || readStringValue(payload, ["customer_notes", "customer_note"]) || (isRealOrder ? t("thankYou.noReference") : "PR-213321");
+
+  // Billing address fields for PDF
+  const billingCompany =
+    readStringValue(selectedBillingAddress, ["company_name", "company"]) ||
+    readStringValue(order, ["billing_company_name", "billing_company", "company_name", "company"]) ||
+    readStringValue(payload, ["billing_company_name", "billing_company", "company_name", "company"]) ||
+    (billingAddress as Record<string, unknown>)?.company_name as string ||
+    billingAddress?.company ||
+    "";
+
+  const billingVatNumber =
+    readStringValue(selectedBillingAddress, ["vat_number", "vatNumber", "btw_number", "btwNumber", "tax_number", "tax_nr"]) ||
+    readStringValue(order, ["billing_vat_number", "vat_number", "btw_number", "tax_number"]) ||
+    readStringValue(payload, ["billing_vat_number", "vat_number", "btw_number", "tax_number"]) ||
+    "";
+
+  const billingStreet =
+    readStringValue(selectedBillingAddress, ["address", "address1", "address_1", "street"]) ||
+    billingAddress?.address1 ||
+    billingAddress?.address2 ||
+    readStringValue(order, ["billing_address_1", "billing_address"]) ||
+    readStringValue(payload, ["billing_address_1", "billing_address"]) ||
+    "";
+
+  const billingCity =
+    readStringValue(selectedBillingAddress, ["city"]) ||
+    billingAddress?.city ||
+    readStringValue(order, ["billing_city"]) ||
+    readStringValue(payload, ["billing_city"]) ||
+    "";
+
+  const billingPostcode =
+    readStringValue(selectedBillingAddress, ["postalcode", "postcode", "postal_code", "zip"]) ||
+    billingAddress?.postcode ||
+    readStringValue(order, ["billing_postcode", "billing_postalcode"]) ||
+    readStringValue(payload, ["billing_postcode", "billing_postalcode"]) ||
+    "";
+
+  const billingCountry =
+    readStringValue(selectedBillingAddress, ["country", "country_id", "country_name"]) ||
+    billingAddress?.country ||
+    readStringValue(order, ["billing_country_id", "billing_country"]) ||
+    readStringValue(payload, ["billing_country_id", "billing_country"]) ||
+    "";
 
   // Totals calculations
   const subtotal = isRealOrder ? (readNumberValue(order, ["subtotal"]) ?? 0) : 4704.67;
@@ -365,31 +422,45 @@ export default function ThankYouPage() {
       
       infoY += 10;
       doc.text(`${t("thankYou.paymentMethod")}: ${paymentMethodLabel}`, 15, infoY);
+      if (billingCompany) {
+        infoY += 6;
+        doc.text(`${locale === "nl" ? "Bedrijf" : "Company"}: ${billingCompany}`, 15, infoY);
+      }
+      if (billingVatNumber) {
+        infoY += 6;
+        doc.text(`${locale === "nl" ? "BTW-nummer" : "VAT Number"}: ${billingVatNumber}`, 15, infoY);
+      }
 
       // Shipping & Billing columns
       const detailsY = infoY + 12;
       doc.setFont("helvetica", "bold");
       doc.setFontSize(12);
       doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
-      doc.text(t("thankYou.personalDetails"), 15, detailsY);
+      doc.text(t("thankYou.pdfBillingAddress"), 15, detailsY);
       doc.text(t("thankYou.shippingAddress"), 110, detailsY);
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
       doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
       
-      // Personal
+      // Billing address
       let personalY = detailsY + 6;
       doc.text(personalName, 15, personalY);
+      if (billingCompany) doc.text(billingCompany, 15, personalY += 5);
+      if (billingStreet) doc.text(billingStreet, 15, personalY += 5);
+      if (billingCity) doc.text(billingCity, 15, personalY += 5);
+      if (billingPostcode) doc.text(billingPostcode, 15, personalY += 5);
+      if (billingCountry) doc.text(billingCountry, 15, personalY += 5);
       if (personalPhone) doc.text(personalPhone, 15, personalY += 5);
       if (personalEmail) doc.text(personalEmail, 15, personalY += 5);
 
       // Shipping
       let shippingY = detailsY + 6;
       doc.text(shippingNameFormatted, 110, shippingY);
-      doc.text(shippingStreet, 110, shippingY += 5);
-      doc.text(`${shippingPostcode} ${shippingCity}`, 110, shippingY += 5);
-      doc.text(shippingCountry, 110, shippingY += 5);
+      if (shippingStreet) doc.text(shippingStreet, 110, shippingY += 5);
+      if (shippingCity) doc.text(shippingCity, 110, shippingY += 5);
+      if (shippingPostcode) doc.text(shippingPostcode, 110, shippingY += 5);
+      if (shippingCountry) doc.text(shippingCountry, 110, shippingY += 5);
 
       // Items Table Header starts dynamic to avoid any overlap with address lines
       const tableY = Math.max(personalY, shippingY) + 12;
@@ -624,6 +695,8 @@ export default function ThankYouPage() {
                     <span className="text-ink text-[16px] md:text-[18px] font-bold">{t("thankYou.personalInfo")}</span>
                   </div>
                   <div className="text-copy text-[15px] md:text-[16px] font-normal leading-relaxed flex flex-col">
+                    {billingCompany && <span>{billingCompany}</span>}
+                    {billingVatNumber && <span>{billingVatNumber}</span>}
                     <span>{personalName}</span>
                     {personalPhone && <span>{personalPhone}</span>}
                     {personalEmail && <span>{personalEmail}</span>}

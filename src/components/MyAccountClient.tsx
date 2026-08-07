@@ -1166,13 +1166,23 @@ function OrdersView() {
             : rawPaymentMethod;
         infoY += 6;
         doc.text(`${t('thankYou.paymentMethod')}: ${paymentMethodLabel}`, 15, infoY);
+        const billingCompanyForPdf = order.billing_address?.company;
+        const billingVatForPdf = order.billing_address?.vatNumber || order.billing_address?.vat_number || order.billing_address?.btw_number;
+        if (billingCompanyForPdf) {
+          infoY += 6;
+          doc.text(`${locale === 'nl' ? 'Bedrijf' : 'Company'}: ${billingCompanyForPdf}`, 15, infoY);
+        }
+        if (billingVatForPdf) {
+          infoY += 6;
+          doc.text(`${locale === 'nl' ? 'BTW-nummer' : 'VAT Number'}: ${billingVatForPdf}`, 15, infoY);
+        }
       }
 
       const detailsY = infoY + 12;
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(12);
       doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
-      doc.text(t('thankYou.personalDetails'), 15, detailsY);
+      doc.text(t('thankYou.pdfBillingAddress'), 15, detailsY);
       doc.text(t('thankYou.shippingAddress'), 110, detailsY);
 
       doc.setFont('helvetica', 'normal');
@@ -1182,26 +1192,32 @@ function OrdersView() {
       let personalY = detailsY + 6;
       if (order.billing_address) {
         const b = order.billing_address;
-        if (b.name) doc.text(b.name, 15, personalY);
+        // Compose name from firstname+lastname if name is missing or "-"
+        const billingName = (b.name && b.name !== '-') ? b.name
+          : [b.firstname, b.lastname].filter(Boolean).join(' ');
+        if (billingName) doc.text(billingName, 15, personalY);
         if (b.company) doc.text(b.company, 15, (personalY += 5));
-        if (b.phone) doc.text(b.phone, 15, (personalY += 5));
-        if (b.email) doc.text(b.email, 15, (personalY += 5));
         const street = [b.address1, b.address2].filter(Boolean).join(', ');
         if (street) doc.text(street, 15, (personalY += 5));
-        const cityZip = [b.postcode, b.city].filter(Boolean).join(' ');
-        if (cityZip) doc.text(cityZip, 15, (personalY += 5));
+        if (b.city) doc.text(b.city, 15, (personalY += 5));
+        if (b.postcode) doc.text(b.postcode, 15, (personalY += 5));
         if (b.country) doc.text(b.country, 15, (personalY += 5));
+        if (b.phone) doc.text(b.phone, 15, (personalY += 5));
+        if (b.email) doc.text(b.email, 15, (personalY += 5));
       }
 
       let shippingY = detailsY + 6;
       if (order.shipping_address) {
         const s = order.shipping_address;
-        if (s.name) doc.text(s.name, 110, shippingY);
+        // Skip "-" placeholder name, compose from firstname+lastname
+        const shippingName = (s.name && s.name !== '-') ? s.name
+          : [s.firstname, s.lastname].filter(Boolean).join(' ');
+        if (shippingName) doc.text(shippingName, 110, shippingY);
         if (s.company) doc.text(s.company, 110, (shippingY += 5));
         const street = [s.address1, s.address2].filter(Boolean).join(', ');
         if (street) doc.text(street, 110, (shippingY += 5));
-        const cityZip = [s.postcode, s.city].filter(Boolean).join(' ');
-        if (cityZip) doc.text(cityZip, 110, (shippingY += 5));
+        if (s.city) doc.text(s.city, 110, (shippingY += 5));
+        if (s.postcode) doc.text(s.postcode, 110, (shippingY += 5));
         if (s.country) doc.text(s.country, 110, (shippingY += 5));
       }
 
