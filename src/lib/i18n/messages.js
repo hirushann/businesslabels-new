@@ -773,6 +773,11 @@ export const MESSAGES_V4 = {
       readArticle: 'Read Article',
       noPostsTitle: 'No blog posts found',
       noPostsDescription: "We're currently working on new content. Please check back later!",
+      heroTitle: 'A resource for people who print labels.',
+      heroSubtitle: 'Not a news feed. Practical knowledge about equipment, materials, settings, and standards — written to stay relevant.',
+      breadcrumbKnowledgeCenter: 'Knowledge Center',
+      breadcrumbArticlesGuides: 'Articles & Guides',
+      categoryAll: 'All',
     },
     faqPage: {
       metadataTitle: "Frequently asked questions about Epson ColorWorks color label printers",
@@ -2835,6 +2840,11 @@ export const MESSAGES_V4 = {
       readArticle: 'Lees artikel',
       noPostsTitle: 'Geen blogberichten gevonden',
       noPostsDescription: 'We werken momenteel aan nieuwe content. Kom later nog eens terug!',
+      heroTitle: 'Een bron voor mensen die labels printen.',
+      heroSubtitle: 'Geen nieuwsfeed. Praktische kennis over apparatuur, materialen, instellingen en normen — geschreven om relevant te blijven.',
+      breadcrumbKnowledgeCenter: 'Kennisbank',
+      breadcrumbArticlesGuides: 'Artikelen & Gidsen',
+      categoryAll: 'Alle',
     },
     faqPage: {
       metadataTitle: "Veelgestelde vragen over Epson ColorWorks kleurenlabelprinters",

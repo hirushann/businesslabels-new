@@ -184,16 +184,16 @@ export default async function BlogsPage({
             <Breadcrumbs 
               className="text-zinc-500"
               items={[
-                { label: "Knowledge Center", href: localePath("/kennisbank-overzicht", locale) },
-                { label: "Articles & Guides" }
+                { label: t("blogsPage.breadcrumbKnowledgeCenter"), href: localePath("/kennisbank-overzicht", locale) },
+                { label: t("blogsPage.breadcrumbArticlesGuides") }
               ]} 
             />
             <div className="flex flex-col justify-end items-start gap-4">
               <h1 className="text-neutral-800 text-4xl md:text-5xl font-bold leading-tight">
-                A resource for people who print labels.
+                {t("blogsPage.heroTitle")}
               </h1>
               <p className="text-neutral-700 text-lg font-normal leading-6 max-w-3xl">
-                Not a news feed. Practical knowledge about equipment, materials, settings, and standards — written to stay relevant.
+                {t("blogsPage.heroSubtitle")}
               </p>
             </div>
           </div>
@@ -207,7 +207,7 @@ export default async function BlogsPage({
                   href={localePath("/blog?category=all", locale)}
                   className={`px-2.5 flex justify-center items-center gap-2.5 relative transition-colors ${activeCategory === "all" ? "text-brand font-bold" : "text-neutral-700 font-semibold hover:text-brand"}`}
                 >
-                  <span className="text-base leading-5 whitespace-nowrap p-3">All</span>
+                  <span className="text-base leading-5 whitespace-nowrap p-3">{t("blogsPage.categoryAll")}</span>
                   {activeCategory === "all" && (
                     <div className="w-full h-0.5 absolute bottom-0 bg-brand rounded-sm z-10"></div>
                   )}
