@@ -7,6 +7,7 @@ import {
   categoryPublicPath,
 } from "@/lib/categories/tree";
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
+import { localePath } from "@/lib/i18n/utils";
 
 type CategorySubnavProps = {
   /** Direct children of the category the visitor is currently browsing. */
@@ -44,13 +45,14 @@ export default async function CategorySubnav({
       >
         {subcategories.map((category) => {
           const name = categoryName(category, locale);
-          const href = categoryPublicPath(category, ancestors, locale);
+          const rawHref = categoryPublicPath(category, ancestors, locale);
+          const href = localePath(hrefForCategory?.(category) ?? rawHref, locale);
           const imageUrl = toDisplayImageUrl(category.image || category.main_image);
 
           return (
             <Link
               key={category.id}
-              href={hrefForCategory?.(category) ?? href}
+              href={href}
               className="group flex flex-col items-center justify-center gap-3 md:gap-6 rounded-xl border border-line bg-white px-2 py-4 md:px-4 md:py-6 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.1)] transition-colors hover:border-brand hover:bg-brand-soft h-[220px] sm:h-[260px] md:h-[280px]"
             >
               <div className="relative flex h-24 w-24 sm:h-32 sm:w-32 md:h-40 md:w-40 shrink-0 items-center justify-center">

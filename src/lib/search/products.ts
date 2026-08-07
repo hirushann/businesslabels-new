@@ -638,6 +638,24 @@ function exactKeywordFilter(field: string, values: string[]): estypes.QueryDslQu
   };
 }
 
+function wildcardKeywordFilter(field: string, values: string[]): estypes.QueryDslQueryContainer | null {
+  if (values.length === 0) return null;
+
+  return {
+    bool: {
+      minimum_should_match: 1,
+      should: values.map((value) => ({
+        wildcard: {
+          [field]: {
+            value: `*${value}*`,
+            case_insensitive: true,
+          },
+        },
+      })),
+    },
+  };
+}
+
 function categorySlugFilter(values: string[]): estypes.QueryDslQueryContainer | null {
   if (values.length === 0) return null;
 
@@ -912,7 +930,7 @@ function buildBaseFilters(
                   bool: {
                     must: [
                       { term: { "category_slugs.keyword": "tt-printlinten-nl" } },
-                      { terms: { "catalog_brand.keyword": [...brands, "Diamondlabels"] } },
+                      wildcardKeywordFilter("catalog_brand.keyword", [...brands, "Diamondlabels"]) as estypes.QueryDslQueryContainer,
                     ],
                   },
                 });
@@ -971,7 +989,7 @@ function buildFacetFilters(
 ): Partial<Record<CatalogOptionFilterKey, estypes.QueryDslQueryContainer>> {
   const entries: Array<[CatalogOptionFilterKey, estypes.QueryDslQueryContainer | null]> = [
     ["category", categorySlugFilter(params.categories)],
-    ["brand", termsFilter("catalog_brand.keyword", params.brands)],
+    ["brand", wildcardKeywordFilter("catalog_brand.keyword", params.brands)],
     ["material_code", termsFilter("catalog_material_code.keyword", params.materialCodes)],
     ["material", termsFilter("catalog_material.keyword", params.materials)],
     ["finishing", nestedTermsFilter("properties", "properties.afwerking.keyword", params.finishings)],

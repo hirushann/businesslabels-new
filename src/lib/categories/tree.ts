@@ -141,6 +141,19 @@ const publicCategoryPathBySlug: Record<string, string> = {
   "verbruiksmaterialen-nl": "/product-category/labelprinters/consumables",
 };
 
+const publicCategoryPathBySlugNl: Record<string, string> = {
+  labelprinters: "/product-categorie/labelprinters",
+  "color-labelprinters": "/product-categorie/labelprinters/kleuren-labelprinters-nl",
+  "color-label-printers": "/product-categorie/labelprinters/kleuren-labelprinters-nl",
+  "kleuren-labelprinters-nl": "/product-categorie/labelprinters/kleuren-labelprinters-nl",
+  "thermal-labelprinters": "/product-categorie/labelprinters/thermische-labelprinters-nl",
+  "thermal-label-printers": "/product-categorie/labelprinters/thermische-labelprinters-nl",
+  "thermische-labelprinters-nl": "/product-categorie/labelprinters/thermische-labelprinters-nl",
+  starterkits: "/product-categorie/labelprinters/starterkits",
+  consumables: "/product-categorie/labelprinters/verbruiksmaterialen-nl",
+  "verbruiksmaterialen-nl": "/product-categorie/labelprinters/verbruiksmaterialen-nl",
+};
+
 export function categoryPublicPathFromSlug(slug: string): string | null {
   return publicCategoryPathBySlug[slug] ?? null;
 }
@@ -152,9 +165,11 @@ export function categoryPublicPath(
 ): string {
   const chain = [...ancestors, category];
   const slugs = chain.map((node) => categoryRouteSlug(node, locale));
+  
+  const mapToUse = locale === "nl" ? publicCategoryPathBySlugNl : publicCategoryPathBySlug;
 
   for (let index = slugs.length - 1; index >= 0; index -= 1) {
-    const publicPath = publicCategoryPathBySlug[slugs[index]];
+    const publicPath = mapToUse[slugs[index]];
     if (publicPath) {
       const childPath = slugs
         .slice(index + 1)
