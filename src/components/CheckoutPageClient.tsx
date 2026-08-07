@@ -2842,10 +2842,10 @@ export default function CheckoutPageClient({
       ...(cart.couponCode ? { coupon_code: cart.couponCode } : {}),
     };
 
+    Object.assign(orderData, rawBillingFields);
+
     if (billingAddressId !== null) {
       orderData.billing_address_id = billingAddressId;
-    } else {
-      Object.assign(orderData, rawBillingFields);
     }
 
     if (form.sameAsBilling) {
@@ -3279,8 +3279,8 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
         name: `${firstName} ${lastName}`,
         firstname: firstName,
         lastname: lastName,
-        company_name: isBilling ? companyName : (label === 'office' ? 'Office' : ''),
-        company: isBilling ? companyName : (label === 'office' ? 'Office' : ''),
+        company_name: isBilling ? companyName : '',
+        company: isBilling ? companyName : '',
         vat_number: isBilling ? vatNumber : '',
         btw_number: isBilling ? vatNumber : '',
         vatNumber: isBilling ? vatNumber : '',

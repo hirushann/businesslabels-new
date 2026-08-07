@@ -270,6 +270,20 @@ export default function ThankYouPage() {
     readStringValue(payload, ["shipping_country_id", "shipping_country"]) ||
     (isRealOrder ? "" : demoShippingCountry);
 
+  const shippingPhone =
+    readStringValue(selectedShippingAddress, ["phone", "mobile", "telephone"]) ||
+    readStringValue(order, ["shipping_phone"]) ||
+    readStringValue(payload, ["shipping_phone"]) ||
+    shippingAddress?.phone ||
+    personalPhone;
+
+  const shippingEmail =
+    readStringValue(selectedShippingAddress, ["email"]) ||
+    readStringValue(order, ["shipping_email"]) ||
+    readStringValue(payload, ["shipping_email"]) ||
+    shippingAddress?.email ||
+    personalEmail;
+
   const fullShippingAddress = [shippingStreet, shippingCity, shippingPostcode, shippingCountry].filter(Boolean).join(", ") || (isRealOrder ? "" : t("thankYou.demoShippingAddress"));
 
   const rawPaymentMethod = readStringValue(order, ["payment_method", "payment_method_title"]) || readStringValue(payload, ["payment_method", "payment_method_title"]);
@@ -461,6 +475,8 @@ export default function ThankYouPage() {
       if (shippingCity) doc.text(shippingCity, 110, shippingY += 5);
       if (shippingPostcode) doc.text(shippingPostcode, 110, shippingY += 5);
       if (shippingCountry) doc.text(shippingCountry, 110, shippingY += 5);
+      if (shippingPhone) doc.text(shippingPhone, 110, shippingY += 5);
+      if (shippingEmail) doc.text(shippingEmail, 110, shippingY += 5);
 
       // Items Table Header starts dynamic to avoid any overlap with address lines
       const tableY = Math.max(personalY, shippingY) + 12;

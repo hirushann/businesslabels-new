@@ -1219,6 +1219,8 @@ function OrdersView() {
         if (s.city) doc.text(s.city, 110, (shippingY += 5));
         if (s.postcode) doc.text(s.postcode, 110, (shippingY += 5));
         if (s.country) doc.text(s.country, 110, (shippingY += 5));
+        if (s.phone) doc.text(s.phone, 110, (shippingY += 5));
+        if (s.email) doc.text(s.email, 110, (shippingY += 5));
       }
 
       const tableY = Math.max(personalY, shippingY) + 12;
@@ -2561,7 +2563,9 @@ function BillingAddressesView({ user }: { user: StoredUser }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full self-stretch">
               {billingAddresses.map((addr, index) => {
                 const isSelected = selectedAddressId ? String(addr.id) === String(selectedAddressId) : index === 0;
-                const name = addr.name || `${addr.firstname || ''} ${addr.lastname || ''}`.trim();
+                const companyName = addr.company?.trim() || '';
+                const personName = (addr.name || `${addr.firstname || ''} ${addr.lastname || ''}`).trim();
+                const displayName = companyName || personName || '-';
                 const addressStr = [addr.address1, addr.address2, addr.city, addr.postcode, addr.country].filter(Boolean).join(', ');
                 const isOffice = addr.company?.toLowerCase().includes('office') || addr.company?.toLowerCase().includes('company');
                 const vatNum = addr.vatNumber || addr.vat_number || (addr as any).btw_number;
@@ -2587,7 +2591,7 @@ function BillingAddressesView({ user }: { user: StoredUser }) {
 
                       <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
                         <div className="inline-flex justify-start items-center gap-1">
-                          <div className="justify-start text-neutral-800 text-xl font-bold leading-6">{name || '-'}</div>
+                          <div className="justify-start text-neutral-800 text-xl font-bold leading-6">{displayName}</div>
                           {isOffice ? (
                             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-[16px] h-[16px] text-copy fill-current">
                               <mask id={`mask0_billing_office_${addr.id}`} style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
@@ -2604,8 +2608,8 @@ function BillingAddressesView({ user }: { user: StoredUser }) {
                             </svg>
                           )}
                         </div>
-                        {addr.company ? (
-                          <div className="justify-center text-neutral-700 text-base font-normal leading-6">{addr.company}</div>
+                        {companyName && personName ? (
+                          <div className="justify-center text-neutral-700 text-base font-normal leading-6">{personName}</div>
                         ) : null}
                         {contactDetails.length > 0 ? (
                           <div className="flex justify-start items-center gap-2 flex-wrap text-copy text-[16px] font-normal leading-6">
@@ -3764,8 +3768,10 @@ function BillingAddressEditInline({
         firstname: firstName,
         lastname: lastName,
         company_name: company,
+        company: company,
         vat_number: vatNumber || undefined,
         btw_number: vatNumber || undefined,
+        vatNumber: vatNumber || undefined,
         address: street,
         address2: stateRegion,
         state: stateRegion,
