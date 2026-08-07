@@ -137,7 +137,7 @@ function formatEuro(value: number): string {
 }
 
 function inputClasses(hasError = false): string {
-  return `w-full h-[52px] px-5 py-4 rounded-full border bg-white text-neutral-800 text-[16px] outline-none transition-all placeholder:text-subtle ${
+  return `w-full h-[52px] px-5 py-3 rounded-full border bg-white text-neutral-800 text-[16px] outline-none transition-all placeholder:text-subtle ${
     hasError
       ? "border-red-300 focus:border-red-400 focus:ring-1 focus:ring-red-400"
       : "border-[#DDE1EA] focus:border-brand focus:ring-1 focus:ring-brand"
@@ -3333,7 +3333,7 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
 
   const labelClasses = "text-[18px] font-bold text-ink mb-2 block";
   const inputClasses = (hasError?: boolean) =>
-    `w-full h-[52px] px-5 py-4 rounded-full border bg-white text-neutral-800 text-[16px] outline-none transition-all placeholder:text-subtle ${
+    `w-full h-[52px] px-5 py-3 rounded-full border bg-white text-neutral-800 text-[16px] outline-none transition-all placeholder:text-subtle ${
       hasError
         ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/20'
         : 'border-[#DDE1EA] focus:border-brand focus:ring-1 focus:ring-brand'
