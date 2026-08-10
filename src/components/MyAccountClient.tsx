@@ -1684,7 +1684,7 @@ function OrdersView() {
                   <div className="p-5 rounded-2xl border border-slate-100 bg-white shadow-sm flex flex-col gap-1 text-sm font-medium text-neutral-600">
                     <span className="font-bold text-neutral-800 mb-1 text-base">{selectedOrder.billing_address?.name}</span>
                     {selectedOrder.billing_address?.company && <span>{selectedOrder.billing_address.company}</span>}
-                    {selectedOrder.billing_address?.vatNumber && <span>VAT: {selectedOrder.billing_address.vatNumber}</span>}
+                    {selectedOrder.billing_address?.vatNumber && <span>{t('account.vatLabel') || t('checkout.vatLabel') || 'BTW'}: {selectedOrder.billing_address.vatNumber}</span>}
                     {selectedOrder.billing_address?.address1 && <span>{selectedOrder.billing_address.address1}</span>}
                     {selectedOrder.billing_address?.address2 && <span>{selectedOrder.billing_address.address2}</span>}
                     <span>{selectedOrder.billing_address?.postcode} {selectedOrder.billing_address?.city}</span>
@@ -1698,7 +1698,7 @@ function OrdersView() {
                   <div className="p-5 rounded-2xl border border-slate-100 bg-white shadow-sm flex flex-col gap-1 text-sm font-medium text-neutral-600">
                     <span className="font-bold text-neutral-800 mb-1 text-base">{selectedOrder.shipping_address?.name}</span>
                     {selectedOrder.shipping_address?.company && <span>{selectedOrder.shipping_address.company}</span>}
-                    {selectedOrder.shipping_address?.vatNumber && <span>VAT: {selectedOrder.shipping_address.vatNumber}</span>}
+                    {selectedOrder.shipping_address?.vatNumber && <span>{t('account.vatLabel') || t('checkout.vatLabel') || 'BTW'}: {selectedOrder.shipping_address.vatNumber}</span>}
                     {selectedOrder.shipping_address?.address1 && <span>{selectedOrder.shipping_address.address1}</span>}
                     {selectedOrder.shipping_address?.address2 && <span>{selectedOrder.shipping_address.address2}</span>}
                     <span>{selectedOrder.shipping_address?.postcode} {selectedOrder.shipping_address?.city}</span>
@@ -4465,6 +4465,7 @@ function AddressProfile({
   onEdit: () => void;
 }) {
   const isShipping = variant === 'shipping';
+  const t = useTranslations();
 
   return (
     <div className="flex flex-col gap-6">
@@ -4491,7 +4492,7 @@ function AddressProfile({
             {address.email ? <p className="font-medium">{address.email}</p> : null}
             {address.phone ? <p className="font-medium">{address.phone}</p> : null}
             {!isShipping && (address.vatNumber || address.vat_number || (address as any).btw_number) ? (
-              <p className="font-medium">VAT: {address.vatNumber || address.vat_number || (address as any).btw_number}</p>
+              <p className="font-medium">{t('account.vatLabel') || t('checkout.vatLabel') || 'BTW'}: {address.vatNumber || address.vat_number || (address as any).btw_number}</p>
             ) : null}
             {address.address1 ? <p className="font-medium">{address.address1}</p> : null}
             {address.address2 ? <p className="font-medium">{address.address2}</p> : null}
