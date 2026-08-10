@@ -71,7 +71,8 @@ type CheckoutSavedAddress = {
   effective_label?: 'home' | 'office';
 };
 
-const DELIVERY_FEE = 9.95;
+const DEFAULT_FALLBACK_SHIPPING_COST = 0;
+const DEFAULT_FALLBACK_FREE_THRESHOLD = 500;
 
 const initialFormState: CheckoutFormState = {
   firstName: "",
@@ -348,7 +349,17 @@ function CheckoutShell({
   const locale = useLocale();
   const { shippingRules, defaultRule } = useShippingRules();
   const selectedCountry = form.sameAsBilling ? form.country : form.shippingCountry;
-  const selectedRule = shippingRules.find(r => r.country_name === selectedCountry) ?? defaultRule;
+  const selectedRule = useMemo(() => {
+    if (!selectedCountry) return defaultRule;
+    const search = selectedCountry.trim().toLowerCase();
+    return (
+      shippingRules.find(
+        r =>
+          r.country_name.toLowerCase() === search ||
+          r.country_code.toLowerCase() === search
+      ) ?? defaultRule
+    );
+  }, [selectedCountry, shippingRules, defaultRule]);
 
   const selectedBillingCountryObj = countriesList.find(
     (c: any) =>
@@ -390,7 +401,7 @@ function CheckoutShell({
     if (items.length === 0) return 0;
     if (appliedCoupon?.allow_free_shipping) return 0;
     if (!selectedRule) {
-      return taxableAmount >= 500 ? 0 : DELIVERY_FEE;
+      return taxableAmount >= DEFAULT_FALLBACK_FREE_THRESHOLD ? 0 : DEFAULT_FALLBACK_SHIPPING_COST;
     }
     return taxableAmount >= selectedRule.free_shipping_threshold ? 0 : selectedRule.shipping_cost;
   }, [items.length, taxableAmount, selectedRule, appliedCoupon]);
@@ -2739,7 +2750,7 @@ export default function CheckoutPageClient({
     } else if (selectedRule) {
       shippingAmount = taxableAmount >= selectedRule.free_shipping_threshold ? 0 : selectedRule.shipping_cost;
     } else {
-      shippingAmount = taxableAmount >= 500 ? 0 : DELIVERY_FEE;
+      shippingAmount = taxableAmount >= DEFAULT_FALLBACK_FREE_THRESHOLD ? 0 : DEFAULT_FALLBACK_SHIPPING_COST;
     }
     const paymentFee = form.paymentMethod === "creditcard" ? taxableAmount * 0.025 : 0;
     const taxAmount = (taxableAmount + shippingAmount + paymentFee) * 0.21;
