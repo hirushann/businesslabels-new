@@ -41,6 +41,7 @@ export type DemoProductDetail = {
     length: string;
   };
   categories: Array<{ id: number; name: string; slug: string }>;
+  labels_per_roll?: number;
 };
 
 function demoImage(index: number): string {
@@ -114,6 +115,7 @@ function createDemoProduct(index: number): DemoProductDetail {
       { id: 1, name: "Demo Labels", slug: "demo-labels" },
       { id: 2, name: `Demo Series ${Math.ceil(index / 6)}`, slug: `demo-series-${Math.ceil(index / 6)}` },
     ],
+    labels_per_roll: 500 + index * 100,
   };
 }
 

@@ -482,17 +482,19 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
           <div className="flex flex-col gap-10 lg:flex-row lg:items-start">
             {/* Left column */}
             <div className="flex min-w-0 flex-1 flex-col gap-6">
-              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-gray-100">
-                <Image
-                  src={materialImage}
-                  alt={t("materialsPage.materialAlt", { title: materialTitle })}
-                  fill
-                  priority
-                  sizes="(max-width: 1024px) 100vw, 720px"
-                  className="object-cover"
-                  unoptimized
-                />
-              </div>
+              {material.main_image ? (
+                <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-gray-100">
+                  <Image
+                    src={materialImage}
+                    alt={t("materialsPage.materialAlt", { title: materialTitle })}
+                    fill
+                    priority
+                    sizes="(max-width: 1024px) 100vw, 720px"
+                    className="object-cover"
+                    unoptimized
+                  />
+                </div>
+              ) : null}
 
               <div className="flex flex-col gap-6">
                 <Accordion title={t("materialDetail.aboutThisMaterial")}>

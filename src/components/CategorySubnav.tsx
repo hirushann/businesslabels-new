@@ -34,7 +34,7 @@ export default async function CategorySubnav({
   const t = await getTranslations();
 
   return (
-    <div className="relative overflow-hidden">
+    <div className="relative">
       {/* Decorative orange patches */}
       <div className="w-72 h-72 absolute -left-20 -top-20 bg-brand/20 rounded-full blur-[100px] pointer-events-none z-0" />
       <div className="w-72 h-72 absolute -right-20 -bottom-20 bg-brand/20 rounded-full blur-[100px] pointer-events-none z-0" />
