@@ -56,6 +56,8 @@ type OrderDetails = {
     postalcode?: string;
     country?: string;
     country_id?: string;
+    phone?: string;
+    email?: string;
   };
   items?: Array<{
     id?: number | string;
