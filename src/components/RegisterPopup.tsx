@@ -242,11 +242,14 @@ export default function RegisterPopup({
   const fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
 
   const selectedCountry = findOptionById(countries, countryId);
-  const activeCountryId = selectedCountry?.id ?? countryId;
+  const activeCountryId = (selectedCountry?.id ?? countryId).trim().toUpperCase();
+  const selectedLabel = (selectedCountry?.label ?? '').trim().toLowerCase();
   const isNetherlands =
-    activeCountryId.toUpperCase() === 'NL' ||
-    selectedCountry?.label.toLowerCase() === 'netherlands' ||
-    selectedCountry?.label.toLowerCase() === 'nederland';
+    activeCountryId === 'NL' ||
+    activeCountryId === 'NLD' ||
+    selectedLabel === 'netherlands' ||
+    selectedLabel === 'nederland' ||
+    countryId.trim().toUpperCase() === 'NL';
   const provinces = selectedCountry?.provinces || [];
   const selectedProvince = findOptionById(provinces, stateId);
 
