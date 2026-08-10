@@ -158,17 +158,11 @@ export default function FaqClient({ pagesList, initialPageData, locale }) {
               </div>
             </div>
             <div className="w-full lg:flex-1 relative rounded-xl overflow-hidden h-64 lg:h-auto min-h-[240px] lg:min-h-[390px] bg-slate-100 flex items-center justify-center">
-              {activePageData?.hero_image || activePageData?.hero_image_preview ? (
-                <img 
-                  src={activePageData.hero_image_preview || activePageData.hero_image} 
-                  alt="FAQ Hero" 
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="text-slate-400">
-                  [ FAQ Hero Image ]
-                </div>
-              )}
+              <img 
+                src={activePageData?.hero_image_preview || activePageData?.hero_image || "/Printer_printing_product_labels.jpeg"} 
+                alt="FAQ Hero" 
+                className="w-full h-full object-cover"
+              />
             </div>
           </div>
 

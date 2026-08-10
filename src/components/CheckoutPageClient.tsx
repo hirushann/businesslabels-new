@@ -635,7 +635,7 @@ function CheckoutShell({
                                               {vatNum && (
                                                 <>
                                                   {(address.email || address.phone) && <span className="text-[#C8D2DD]">|</span>}
-                                                  <span>{t('checkout.vatNumber') || 'VAT'}: {vatNum}</span>
+                                                  <span>{t('checkout.vatLabel')}: {vatNum}</span>
                                                 </>
                                               )}
                                             </div>
