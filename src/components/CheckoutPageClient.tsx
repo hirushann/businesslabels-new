@@ -532,7 +532,7 @@ function CheckoutShell({
             </div>
 
             {/* Form Section */}
-            <form id="checkout-form" onSubmit={handleSubmit} className="p-6 md:p-8 flex flex-col gap-6">
+            <form id="checkout-form" onSubmit={handleSubmit} noValidate className="p-6 md:p-8 flex flex-col gap-6">
                 
                 {/* LOGIN SECTION FOR GUESTS */}
                 {step === 1 && !isLoggedIn && (
@@ -1173,7 +1173,7 @@ function CheckoutShell({
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div className="flex flex-col gap-2">
-                                <span className="text-[18px] font-bold text-ink">{t('checkout.email')} *</span>
+                                <span className="text-[18px] font-bold text-ink">{t('checkout.email')}</span>
                                 <input
                                   type="email"
                                   value={form.shippingEmail}
@@ -1184,7 +1184,7 @@ function CheckoutShell({
                                 {errors.shippingEmail && <span className="text-xs text-red-500">{errors.shippingEmail}</span>}
                               </div>
                               <div className="flex flex-col gap-2">
-                                <span className="text-[18px] font-bold text-ink">{t('checkout.mobileNumber')} *</span>
+                                <span className="text-[18px] font-bold text-ink">{t('checkout.mobileNumber')}</span>
                                 <input
                                   type="tel"
                                   value={form.shippingMobileNumber}
@@ -2574,6 +2574,7 @@ export default function CheckoutPageClient({
 
     if (currentStep === 1) {
       const requiredFields: Array<keyof CheckoutFormState> = [
+        "companyName",
         "firstName",
         "lastName",
         "email",
@@ -2842,10 +2843,10 @@ export default function CheckoutPageClient({
       ...(cart.couponCode ? { coupon_code: cart.couponCode } : {}),
     };
 
+    Object.assign(orderData, rawBillingFields);
+
     if (billingAddressId !== null) {
       orderData.billing_address_id = billingAddressId;
-    } else {
-      Object.assign(orderData, rawBillingFields);
     }
 
     if (form.sameAsBilling) {
@@ -3279,8 +3280,8 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
         name: `${firstName} ${lastName}`,
         firstname: firstName,
         lastname: lastName,
-        company_name: isBilling ? companyName : (label === 'office' ? 'Office' : ''),
-        company: isBilling ? companyName : (label === 'office' ? 'Office' : ''),
+        company_name: isBilling ? companyName : '',
+        company: isBilling ? companyName : '',
         vat_number: isBilling ? vatNumber : '',
         btw_number: isBilling ? vatNumber : '',
         vatNumber: isBilling ? vatNumber : '',

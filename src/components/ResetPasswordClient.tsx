@@ -120,14 +120,14 @@ export default function ResetPasswordClient({ initialEmail, initialToken }: Rese
     <section className="bg-slate-50 px-6 py-10 sm:py-14 lg:py-16">
       <div className="mx-auto grid w-full max-w-360 grid-cols-1 overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-[2px_12px_44px_0px_rgba(109,109,120,0.08)] lg:grid-cols-[0.95fr_1.05fr]">
         <div className="relative hidden min-h-[640px] bg-sky-950 p-10 text-white lg:flex lg:flex-col lg:justify-between">
-          <Link href="/">
+          <Link href={localePath('/')}>
             <Image
-              src="/logo.png"
+              src="/footerlogo.png"
               alt="Businesslabels"
               width={205}
               height={40}
               priority
-              className="h-auto w-52 brightness-0 invert"
+              className="h-auto w-52"
             />
           </Link>
 
@@ -147,8 +147,8 @@ export default function ResetPasswordClient({ initialEmail, initialToken }: Rese
         <div className="flex min-h-[640px] items-center justify-center px-6 py-12 sm:px-10 lg:px-16">
           <div className="w-full max-w-md">
             <div className="mb-9 flex flex-col gap-3">
-              <Link href="/" className="mb-5 inline-flex lg:hidden">
-                <Image src="/logo.png" alt="Businesslabels" width={205} height={40} priority className="h-auto w-52" />
+              <Link href={localePath('/')} className="mb-5 inline-flex lg:hidden">
+                <Image src="/footerlogo.png" alt="Businesslabels" width={205} height={40} priority className="h-auto w-52" />
               </Link>
               <div>
                 <h2 className="text-4xl font-black tracking-tight text-neutral-800">
