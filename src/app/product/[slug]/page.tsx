@@ -243,6 +243,7 @@ type ProductDetail = {
   delivery_dates_no_stock?: NumericLike;
   packing_group?: string | number | null;
   allow_singulars?: string | number | boolean | null;
+  labels_per_roll?: string | number | null;
   discounts?: string | Array<{ discount?: string | number | null; quantity?: string | number | null }> | null;
   discount?: number | null;
   dimensions?: {
@@ -452,6 +453,8 @@ function getSpecLabel(key: string, locale: "en" | "nl", t: TranslationLookup): s
     compatibele_merken: t.has("filters.merken") ? t("filters.merken") : (locale === "nl" ? "Compatibele merken" : "Compatible Brands"),
     brand: t.has("filters.brand") ? t("filters.brand") : (locale === "nl" ? "Merk" : "Brand"),
     merk: t.has("filters.brand") ? t("filters.brand") : (locale === "nl" ? "Merk" : "Brand"),
+    labels_per_roll: t.has("product.labelsPerRoll") ? t("product.labelsPerRoll") : (locale === "nl" ? "Labels per rol" : "Labels per roll"),
+    labels_per_rol: t.has("product.labelsPerRoll") ? t("product.labelsPerRoll") : (locale === "nl" ? "Labels per rol" : "Labels per roll"),
     kleur: locale === "nl" ? "Kleur" : "Color",
     vorm: locale === "nl" ? "Vorm" : "Shape",
     perforatie: locale === "nl" ? "Perforatie" : "Perforation",
@@ -621,6 +624,14 @@ function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t:
     { label: "SKU", value: normalizeDisplayValue(product?.sku, booleanLabels) || missing },
     { label: getSpecLabel("category", locale, t), value: categoryNames || missing },
   ];
+
+  const isLabelProduct = product?.is_label_product === true || product?.meta?.is_label_product === true;
+  if (isLabelProduct && product?.packing_group) {
+    specRows.push({
+      label: getSpecLabel("labels_per_roll", locale, t),
+      value: normalizeDisplayValue(product.packing_group, booleanLabels) || missing,
+    });
+  }
 
   const metaRows = Object.entries(product?.properties ?? {})
     .map(([key, value]): { label: string; value: ReactNode } | null => {
