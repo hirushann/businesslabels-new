@@ -26,7 +26,7 @@ export default function CartTotals({
         <span>{primary.label}</span>
         <span>{primary.value}</span>
       </div>
-      <div data-cart-total={secondary.key} className="flex items-center justify-between text-sm font-normal text-subtle">
+      <div data-cart-total={secondary.key} className="flex items-center justify-between text-xl font-bold text-ink">
         <span>{secondary.label}</span>
         <span>{secondary.value}</span>
       </div>
