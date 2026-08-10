@@ -649,32 +649,12 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
               type="button"
               id="need-help-btn"
               onClick={openHelp}
-              className="pl-1.5 pr-8 py-2.5 bg-white rounded-full shadow border border-slate-100 flex items-center gap-2 hover:shadow-md hover:border-sky-200 transition-all cursor-pointer"
+              className="px-4 py-2.5 bg-white rounded-full shadow border border-slate-100 flex items-center gap-2 hover:shadow-md hover:border-sky-200 transition-all cursor-pointer"
               aria-label={t('header.openHelpDrawer')}
             >
-              <div className="flex items-center -space-x-2">
-                {headerMembers.length > 0 ? (
-                  headerMembers.map((member) => (
-                    <img
-                      key={member.id}
-                      src={member.profile_pic_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=f59e0b&color=fff`}
-                      alt={member.name}
-                      width={28}
-                      height={28}
-                      className="w-7 h-7 rounded-full object-cover border-2 border-white shadow-sm"
-                    />
-                  ))
-                ) : (
-                  [1, 2, 3].map((i) => (
-                    <div key={i} className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 border-2 border-white flex items-center justify-center shadow-sm">
-                      <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
-                        <circle cx="7" cy="5" r="2.5" fill="white" fillOpacity="0.8" />
-                        <path d="M2 12c0-2.76 2.24-5 5-5s5 2.24 5 5" fill="white" fillOpacity="0.8" />
-                      </svg>
-                    </div>
-                  ))
-                )}
-              </div>
+              <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
               <span className="text-neutral-800 text-sm font-bold leading-5">{t('header.needHelp')}</span>
             </button>
             {/* Language */}
