@@ -48,7 +48,7 @@ export default function ContactForm() {
       }
 
       setStatus('success');
-      setFormData({ name: '', company: '', email: '', phone: '', subject: '', message: '' });
+      setFormData({ name: '', company: '', email: '', phone: '', subject: '', message: '', website_url: '' });
     } catch (err: any) {
       console.error('Contact form error:', err);
       setStatus('error');
