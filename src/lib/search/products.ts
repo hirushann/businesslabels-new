@@ -316,9 +316,20 @@ export function parseCatalogSearchParams(params: URLSearchParams, locale?: "en" 
   };
 }
 
-export function textQuery(search: string): estypes.QueryDslQueryContainer {
+export function normalizeSearchQuery(search: string): string {
   const query = search.trim();
+  const dimension = query.match(/^(\d+(?:[.,]\d+)?)\s*[*x×]\s*(\d+(?:[.,]\d+)?)\s*(?:mm)?$/i);
+
+  return dimension
+    ? `${dimension[1].replace(",", ".")} x ${dimension[2].replace(",", ".")} mm`
+    : query;
+}
+
+export function textQuery(search: string): estypes.QueryDslQueryContainer {
+  const query = normalizeSearchQuery(search);
   if (!query) return { match_all: {} };
+
+  const dimension = query.match(/^(\d+(?:\.\d+)?) x (\d+(?:\.\d+)?) mm$/);
 
   const BOOST_SKU_EXACT = 100000;
   const BOOST_TITLE_PHRASE = 5000;
@@ -530,6 +541,14 @@ export function textQuery(search: string): estypes.QueryDslQueryContainer {
     bool: {
       should,
       minimum_should_match: 1,
+      ...(dimension
+        ? {
+            filter: [
+              { term: { "property_numbers.breedte": Number(dimension[1]) } },
+              { term: { "property_numbers.hoogte": Number(dimension[2]) } },
+            ],
+          }
+        : {}),
     },
   };
 }
