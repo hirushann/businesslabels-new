@@ -166,7 +166,10 @@ export async function GET(request: NextRequest) {
     materialParams.set("locale", locale);
 
     const [products, materials] = await Promise.all([
-      searchCatalogProducts(parseCatalogSearchParams(productParams, locale)),
+      searchCatalogProducts(parseCatalogSearchParams(productParams, locale), {
+        includeAggregations: false,
+        applyConfigOverrides: false,
+      }),
       searchMaterials(parseMaterialSearchParams(materialParams, locale)),
     ]);
 

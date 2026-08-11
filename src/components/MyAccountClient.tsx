@@ -656,6 +656,7 @@ function MyAccountContent() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const user = useStoredUser();
   const t = useTranslations();
+  const locale = useLocale();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
@@ -749,7 +750,7 @@ function MyAccountContent() {
       localStorage.removeItem('auth_user');
       window.dispatchEvent(new Event('auth-user-updated'));
       setIsLoggingOut(false);
-      window.location.replace('/');
+      window.location.replace(localePath('/', locale));
     }
   };
 

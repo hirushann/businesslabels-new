@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import ElasticsearchAPIConnector from '@elastic/search-ui-elasticsearch-connector';
 import type { QueryConfig, RequestState, ResponseState } from '@elastic/search-ui';
 import { getServerLocale } from '@/lib/i18n/server';
+import { catalogIndexForType } from '@/lib/search/client';
+import { textQuery } from '@/lib/search/products';
 
 function elasticHost(): string {
   const url = process.env.ELASTICSEARCH_URL;
@@ -32,20 +34,8 @@ function appendPortIfMissing(rawUrl: string): string {
   }
 }
 
-function elasticIndex(): string {
-  const configured = process.env.SEARCH_INDEX || process.env.ELASTICSEARCH_INDEX;
-  if (configured?.trim()) return configured.trim();
-
-  const prefix = process.env.SCOUT_PREFIX?.trim() ?? '';
-  const patterns = new Set<string>();
-
-  if (prefix) {
-    patterns.add(`${prefix}catalog_products_*`);
-  }
-
-  patterns.add('catalog_products_*');
-
-  return Array.from(patterns).join(',');
+export function elasticIndex(): string {
+  return catalogIndexForType().join(',');
 }
 
 function elasticConnectionHeaders(): Record<string, string> | undefined {
@@ -933,248 +923,6 @@ async function loadSearchStats(
   }
 }
 
-function buildRelevanceQuery(state: RequestState, _queryConfig: QueryConfig) {
-  const searchTerm = state.searchTerm?.trim();
-  if (!searchTerm) return { match_all: {} };
-
-  // Tiered boosts - aligned with products.ts
-  const BOOST_SKU_EXACT = 100000;
-  const BOOST_SKU_PREFIX = 10000;
-  const BOOST_TITLE_PHRASE = 5000;
-  const BOOST_TITLE_AND = 2000;
-  const BOOST_FEATURE_SECTION = 1000;
-  const BOOST_TITLE_PARTIAL = 100;
-  const BOOST_BRAND_GENUINE = 50;
-  const BOOST_SECONDARY = 10;
-  const BOOST_DESCRIPTION = 0.05;
-
-  const skuFields = ['sku', 'meta._sku.value', 'article_number', 'variant_skus'];
-  const titleFields = ['title', 'name', 'post_title'];
-  const featureFields = ['subtitle', 'catalog_material', 'catalog_material_code', 'excerpt'];
-  const brandFields = ['catalog_brand'];
-  const secondaryFields = [
-    'compatible_brands',
-    'excerpt',
-    'slug',
-    'post_name',
-    'meta.*.value',
-    'terms.*.name',
-  ];
-  const descriptionFields = ['description', 'content', 'post_content', 'product_information'];
-
-  const tokens = searchTerm.split(/\s+/).filter(Boolean);
-  const isMultiTerm = tokens.length > 1;
-  const productCodeRegex = /^[A-Z]{1,4}-?[0-9]{2,}[A-Z0-9]*$/i;
-  const isProductCodeIntent = tokens.every(t => productCodeRegex.test(t));
-  const hasNumericToken = tokens.some((t) => /[0-9]{2,}/.test(t));
-  const isPureNumeric = tokens.every(t => /^[0-9]+$/.test(t));
-
-  const should: Record<string, unknown>[] = [];
-  const must: Record<string, unknown>[] = [];
-
-  if (isMultiTerm) {
-    must.push({
-      multi_match: {
-        query: searchTerm,
-        fields: [
-          ...skuFields,
-          ...titleFields,
-          ...featureFields,
-          ...brandFields,
-          ...secondaryFields,
-          ...descriptionFields,
-        ],
-        type: 'bool_prefix',
-        operator: 'and',
-      },
-    });
-  }
-
-  // --- TIER 1: SKU Exact Matches ---
-  skuFields.forEach((field) => {
-    if (!field.includes('*')) {
-      should.push({
-        term: {
-          [`${field}.keyword`]: {
-            value: searchTerm,
-            boost: BOOST_SKU_EXACT,
-            case_insensitive: true,
-          },
-        },
-      });
-    }
-  });
-
-  // --- TIER 2: SKU Partial/Prefix Matches ---
-  should.push({
-    multi_match: {
-      query: searchTerm,
-      fields: skuFields.map((f) => `${f}^20`),
-      type: 'phrase_prefix',
-      boost: BOOST_SKU_PREFIX,
-    },
-  });
-
-  // --- TIER 3: Title/Name Matches ---
-  should.push({
-    multi_match: {
-      query: searchTerm,
-      fields: titleFields.map((f) => `${f}^10`),
-      type: 'phrase',
-      boost: BOOST_TITLE_PHRASE,
-    },
-  });
-
-  // 3b. Phrase Prefix for Titles
-  should.push({
-    multi_match: {
-      query: searchTerm,
-      fields: titleFields,
-      type: 'phrase_prefix',
-      boost: BOOST_TITLE_PHRASE * 0.4,
-    },
-  });
-
-  if (isMultiTerm) {
-    should.push({
-      multi_match: {
-        query: searchTerm,
-        fields: titleFields,
-        type: 'cross_fields',
-        operator: 'and',
-        boost: BOOST_TITLE_AND,
-      },
-    });
-
-    // For single words, allow edge n-gram style wildcard matching for brands and titles
-    if (searchTerm.trim().length >= 1) {
-      const wildcardFields = [...titleFields, ...brandFields];
-      wildcardFields.forEach((field) => {
-        should.push({
-          wildcard: {
-            [`${field}.keyword`]: {
-              value: `${searchTerm.trim().toLowerCase()}*`,
-              boost: BOOST_TITLE_PARTIAL * 2,
-              case_insensitive: true,
-            },
-          },
-        });
-      });
-    }
-  }
-
-  // Allow partial substring matching ONLY on SKU fields to find products like "C31CH83562" when searching "83562"
-  if (searchTerm.trim().length >= 3) {
-    skuFields.forEach((field) => {
-      if (!field.includes('*')) {
-        should.push({
-          wildcard: {
-            [`${field}.keyword`]: {
-              value: `*${searchTerm.trim().toLowerCase()}*`,
-              boost: BOOST_SKU_PREFIX * 0.5,
-              case_insensitive: true,
-            },
-          },
-        });
-      }
-    });
-  }
-
-  // --- TIER 4: Feature Section ---
-  should.push({
-    multi_match: {
-      query: searchTerm,
-      fields: featureFields,
-      type: 'best_fields',
-      operator: isMultiTerm ? 'and' : 'or',
-      boost: BOOST_FEATURE_SECTION,
-    },
-  });
-
-  // --- TIER 5: Brand & Secondary ---
-  should.push({
-    multi_match: {
-      query: searchTerm,
-      fields: brandFields,
-      type: 'best_fields',
-      boost: BOOST_BRAND_GENUINE,
-    },
-  });
-
-  // --- TIER 6: Secondary & Description ---
-  const useFuzzy = !isProductCodeIntent;
-
-  if (!isProductCodeIntent) {
-    const minShouldMatch = '2<67%';
-
-    should.push({
-      multi_match: {
-        query: searchTerm,
-        fields: titleFields,
-        type: 'best_fields',
-        operator: 'or',
-        minimum_should_match: minShouldMatch,
-        boost: BOOST_TITLE_PARTIAL,
-      },
-    });
-
-    should.push({
-      multi_match: {
-        query: searchTerm,
-        fields: secondaryFields,
-        type: 'best_fields',
-        operator: 'and',
-        boost: BOOST_SECONDARY,
-      },
-    });
-
-    if (useFuzzy) {
-      const fuzzyQuery = tokens.filter(t => !/[0-9]/.test(t)).join(' ');
-      if (fuzzyQuery) {
-        should.push({
-          multi_match: {
-            query: fuzzyQuery,
-            fields: [...titleFields, 'catalog_brand'],
-            type: 'best_fields',
-            fuzziness: 'AUTO',
-            prefix_length: 2,
-            boost: BOOST_SECONDARY * 0.5,
-          },
-        });
-      }
-    }
-
-    should.push({
-      multi_match: {
-        query: searchTerm,
-        fields: descriptionFields,
-        type: 'cross_fields',
-        operator: 'and',
-        boost: BOOST_DESCRIPTION,
-      },
-    });
-  } else {
-    should.push({
-      multi_match: {
-        query: searchTerm,
-        fields: titleFields,
-        type: 'phrase_prefix',
-        boost: BOOST_TITLE_PARTIAL,
-      },
-    });
-  }
-
-  return {
-    bool: {
-      ...(must.length > 0 ? { must } : {}),
-      should,
-      minimum_should_match: 1,
-    },
-  };
-}
-
-
-
 export async function POST(request: NextRequest) {
   const host = elasticHost();
   const index = elasticIndex();
@@ -1213,7 +961,7 @@ export async function POST(request: NextRequest) {
       index,
       ...(process.env.ELASTIC_API_KEY ? { apiKey: process.env.ELASTIC_API_KEY } : {}),
       ...(connectionHeaders ? { connectionOptions: { headers: connectionHeaders } } : {}),
-      getQueryFn: (state, queryConfig) => buildRelevanceQuery(state, queryConfig) as never,
+      getQueryFn: (state) => textQuery(state.searchTerm ?? '') as never,
       interceptSearchRequest: async ({ requestBody }, next) => {
         let safeRequestBody = withSafeSort(requestBody as ElasticsearchRequestBody);
         if (categorySlug) {
@@ -1221,13 +969,6 @@ export async function POST(request: NextRequest) {
         }
         if (brandSlug) {
           safeRequestBody = withBrandConstraint(safeRequestBody, brandSlug);
-        }
-
-        // Add min_score for multi-term searches to filter noise
-        const searchTerm = body?.state?.searchTerm?.trim() || '';
-        const tokens = searchTerm.split(/\s+/).filter(Boolean);
-        if (tokens.length >= 2) {
-          (safeRequestBody as any).min_score = tokens.length === 2 ? 3.0 : 2.0;
         }
 
         return next(safeRequestBody as never);
@@ -1273,7 +1014,17 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function injectProductOverrides(results: any[], locale?: string) {
+function rawResultValue(entry: unknown): unknown {
+  return entry && typeof entry === 'object' && 'raw' in entry ? entry.raw : undefined;
+}
+
+function nullableBoolean(value: unknown): boolean | null {
+  return value === true || value === 1 || value === '1'
+    ? true
+    : value === false || value === 0 || value === '0' ? false : null;
+}
+
+async function injectProductOverrides(results: Array<Record<string, unknown>>, locale?: string) {
   if (!results || results.length === 0) return;
 
   try {
@@ -1282,8 +1033,7 @@ async function injectProductOverrides(results: any[], locale?: string) {
 
     const slugs = results
       .map((r) => {
-        const entry = r.slug;
-        const val = entry && typeof entry === 'object' ? entry.raw : undefined;
+        const val = rawResultValue(r.slug);
         return typeof val === 'string' ? val : undefined;
       })
       .filter((slug): slug is string => typeof slug === 'string' && slug.length > 0);
@@ -1305,8 +1055,8 @@ async function injectProductOverrides(results: any[], locale?: string) {
 
     if (!res.ok) return;
 
-    const json = await res.json();
-    if (!json || !Array.isArray(json.data)) return;
+    const json: unknown = await res.json();
+    if (!json || typeof json !== 'object' || !('data' in json) || !Array.isArray(json.data)) return;
 
     const productConfigMap = new Map<
       string,
@@ -1314,21 +1064,24 @@ async function injectProductOverrides(results: any[], locale?: string) {
         isLabelProduct: boolean | null;
         isGroupProduct: boolean | null;
         packingGroup: number | null;
-        allowSingulars: any;
-        discounts: any;
-        warranty: any;
+        allowSingulars: unknown;
+        discounts: unknown;
+        warranty: unknown;
       }
     >();
 
-    json.data.forEach((p: any) => {
+    json.data.forEach((value: unknown) => {
+      if (!value || typeof value !== 'object') return;
+      const p = value as Record<string, unknown>;
       if (!p?.slug) return;
 
-      const resolvedSlug = typeof p.slug === "string" ? p.slug : (p.slug.en || p.slug.nl || "");
+      const localizedSlug = p.slug && typeof p.slug === 'object' ? p.slug as Record<string, unknown> : {};
+      const resolvedSlug = typeof p.slug === "string" ? p.slug : String(localizedSlug.en || localizedSlug.nl || "");
       if (!resolvedSlug) return;
 
       productConfigMap.set(resolvedSlug, {
-        isLabelProduct: p.is_label_product ?? p.is_label ?? null,
-        isGroupProduct: p.is_group_product ?? null,
+        isLabelProduct: nullableBoolean(p.is_label_product ?? p.is_label),
+        isGroupProduct: nullableBoolean(p.is_group_product),
         packingGroup: p.packing_group != null ? Number(p.packing_group) : null,
         allowSingulars: p.allow_singulars ?? null,
         discounts: p.discounts ?? null,
@@ -1337,8 +1090,7 @@ async function injectProductOverrides(results: any[], locale?: string) {
     });
 
     results.forEach((r) => {
-      const slugEntry = r.slug;
-      const slug = slugEntry && typeof slugEntry === 'object' ? slugEntry.raw : undefined;
+      const slug = rawResultValue(r.slug);
       if (typeof slug !== 'string' || !productConfigMap.has(slug)) return;
 
       const config = productConfigMap.get(slug);

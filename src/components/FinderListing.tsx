@@ -203,8 +203,9 @@ export default function FinderListing({
   }, [printers, favoriteIds, locale]);
 
   const sortedPrinters = useMemo(() => {
+    if (searchValue.trim()) return printers;
     return [...sortedMyPrinters, ...otherPrinters];
-  }, [sortedMyPrinters, otherPrinters]);
+  }, [searchValue, printers, sortedMyPrinters, otherPrinters]);
 
   const displayedPrinters = useMemo(() => {
     return sortedPrinters.slice(0, currentPage * 24);

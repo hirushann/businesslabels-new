@@ -335,17 +335,37 @@ export function textQuery(search: string): estypes.QueryDslQueryContainer {
   const BOOST_TITLE_PHRASE = 5000;
   const BOOST_TITLE_AND = 2500;
   const BOOST_TITLE_TOKEN = 750;
-  const BOOST_SKU_PHRASE = 400;
-  const BOOST_SKU_PREFIX = 150;
+  const BOOST_IDENTIFIER_PHRASE = 400;
+  const BOOST_IDENTIFIER_PREFIX = 150;
+  const BOOST_BUSINESS_FIELD = 600;
+  const BOOST_PROPERTY = 500;
   const BOOST_TITLE_FUZZY = 50;
   const BOOST_FUZZY_PER_TOKEN = 150;
   const BOOST_DESCRIPTION = 1;
   const BOOST_SHORT_DESCRIPTION = 0.5;
 
-  const skuFields = ["sku", "variant_skus"];
-  const titleFields = ["name", "title", "post_title"];
-  const descriptionFields = ["description", "content", "product_information"];
-  const shortDescriptionFields = ["short_description", "excerpt", "subtitle"];
+  const identifierFields = ["sku", "variant_skus", "article_number"];
+  const titleFields = ["name", "title", "name_locales", "title_locales", "post_title"];
+  const businessFields = [
+    "catalog_brand^4",
+    "catalog_material_code^3",
+    "catalog_material^3",
+    "category_titles_nl^2",
+    "category_titles_en^2",
+  ];
+  const propertyFields = [
+    "properties.printmethode",
+    "properties.afwerking",
+    "properties.lijm",
+    "properties.detectie",
+    "properties.kern",
+    "properties.breedte",
+    "properties.hoogte",
+    "properties.buiten-diameter",
+    "properties.materiaal-code",
+  ];
+  const descriptionFields = ["description", "description_locales", "content", "content_locales", "product_information"];
+  const shortDescriptionFields = ["short_description", "excerpt", "excerpt_locales", "subtitle", "subtitle_locales"];
 
   const tokens = query.split(/\s+/).filter(Boolean);
   const isMultiTerm = tokens.length > 1;
@@ -353,7 +373,7 @@ export function textQuery(search: string): estypes.QueryDslQueryContainer {
   // Pattern for product/model codes like C4000, CW-C4000, TM-C3500, D6000.
   // These searches should be precise: no SKU fuzziness and no description fallback.
   const productCodeRegex = /^[A-Z]{1,4}-?[0-9]{2,}[A-Z0-9]*$|^[A-Z]{2,}-[A-Z][0-9]{2,}[A-Z0-9]*$/i;
-  const isProductCodeIntent = tokens.every((token) => productCodeRegex.test(token)) || /[-0-9]/.test(query);
+  const isProductCodeIntent = tokens.length === 1 && productCodeRegex.test(query);
   const hasNumericToken = tokens.some((t) => /[0-9]{2,}/.test(t));
 
   const should: estypes.QueryDslQueryContainer[] = [];
@@ -362,7 +382,7 @@ export function textQuery(search: string): estypes.QueryDslQueryContainer {
   // product codes. Partial SKU/code hits stay below strong title matches:
   // a query like "beer labels" should rank a full title hit above a SKU that
   // merely contains part of the query or a printer-code fragment.
-  skuFields.forEach((field) => {
+  identifierFields.forEach((field) => {
     should.push({
       term: {
         [`${field}.keyword`]: {
@@ -375,10 +395,29 @@ export function textQuery(search: string): estypes.QueryDslQueryContainer {
   });
 
   should.push({
-    match_phrase: {
-      sku: {
-        query,
-        boost: BOOST_SKU_PHRASE,
+    multi_match: {
+      query,
+      fields: identifierFields,
+      type: "phrase",
+      boost: BOOST_IDENTIFIER_PHRASE,
+    },
+  });
+
+  should.push({
+    multi_match: {
+      query,
+      fields: identifierFields,
+      type: "phrase_prefix",
+      boost: BOOST_IDENTIFIER_PREFIX,
+    },
+  });
+
+  should.push({
+    term: {
+      "category_slugs.keyword": {
+        value: query.toLowerCase().replace(/\s+/g, "-"),
+        case_insensitive: true,
+        boost: BOOST_BUSINESS_FIELD,
       },
     },
   });
@@ -386,9 +425,27 @@ export function textQuery(search: string): estypes.QueryDslQueryContainer {
   should.push({
     multi_match: {
       query,
-      fields: skuFields,
-      type: "phrase_prefix",
-      boost: BOOST_SKU_PREFIX,
+      fields: businessFields,
+      type: "cross_fields",
+      operator: "and",
+      boost: BOOST_BUSINESS_FIELD,
+    },
+  });
+
+  should.push({
+    nested: {
+      path: "properties",
+      ignore_unmapped: true,
+      score_mode: "max",
+      query: {
+        multi_match: {
+          query,
+          fields: propertyFields,
+          type: "cross_fields",
+          operator: "and",
+          boost: BOOST_PROPERTY,
+        },
+      },
     },
   });
 
@@ -434,16 +491,30 @@ export function textQuery(search: string): estypes.QueryDslQueryContainer {
   });
 
   if (hasNumericToken) {
-    const wildcardQuery = tokens
-      .map((token) => (/[0-9]{2,}/.test(token) ? `*${token}*` : token))
-      .join(" AND ");
     should.push({
-      query_string: {
-        query: wildcardQuery,
-        fields: titleFields,
+      bool: {
+        must: tokens.map((token) => /[0-9]{2,}/.test(token)
+          ? {
+              bool: {
+                minimum_should_match: 1,
+                should: titleFields.map((field) => ({
+                  wildcard: {
+                    [`${field}.keyword`]: {
+                      value: `*${token.toLowerCase()}*`,
+                      case_insensitive: true,
+                    },
+                  },
+                })),
+              },
+            }
+          : {
+              multi_match: {
+                query: token,
+                fields: titleFields,
+                operator: "and",
+              },
+            }),
         boost: BOOST_TITLE_AND,
-        default_operator: "AND",
-        analyze_wildcard: true,
       },
     });
   }
@@ -468,15 +539,14 @@ export function textQuery(search: string): estypes.QueryDslQueryContainer {
     if (isMultiTerm) {
       const searchFields = [
         ...titleFields,
+        ...businessFields,
         "catalog_brand",
-        "compatible_brands",
         ...descriptionFields,
         ...shortDescriptionFields,
       ];
       const prefixFields = [
         ...titleFields,
         "catalog_brand",
-        "compatible_brands",
       ];
 
       const tokenClauses: estypes.QueryDslQueryContainer[] = tokens.map((token) => ({
@@ -578,6 +648,14 @@ export function exactSkuQuery(search: string): estypes.QueryDslQueryContainer {
         },
         {
           term: {
+            "article_number.keyword": {
+              value: query,
+              case_insensitive: true,
+            },
+          },
+        },
+        {
+          term: {
             "sku.normalized": query.toLowerCase(),
           },
         },
@@ -589,17 +667,6 @@ export function exactSkuQuery(search: string): estypes.QueryDslQueryContainer {
       ],
     },
   };
-}
-
-function searchMinScore(search: string): number | undefined {
-  const query = search.trim();
-  if (!query) return undefined;
-
-  const tokens = query.split(/\s+/).filter(Boolean);
-  const productCodeRegex = /^[A-Z]{1,4}-?[0-9]{2,}[A-Z0-9]*$|^[A-Z]{2,}-[A-Z][0-9]{2,}[A-Z0-9]*$/i;
-  const isProductCodeIntent = tokens.every((token) => productCodeRegex.test(token)) || /[-0-9]/.test(query);
-
-  return isProductCodeIntent ? 100 : 25;
 }
 
 
@@ -1899,7 +1966,15 @@ async function applyProductConfigOverrides(products: CatalogProductResult[], loc
   }
 }
 
-export async function searchCatalogProducts(params: CatalogSearchParams): Promise<CatalogSearchResponse> {
+type CatalogSearchOptions = {
+  includeAggregations?: boolean;
+  applyConfigOverrides?: boolean;
+};
+
+export async function searchCatalogProducts(
+  params: CatalogSearchParams,
+  { includeAggregations = true, applyConfigOverrides = true }: CatalogSearchOptions = {},
+): Promise<CatalogSearchResponse> {
   const client = elasticClient();
   let printerInfo: PrinterInfo | undefined;
   if (params.printerIds && params.printerIds.length > 0) {
@@ -1930,12 +2005,12 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
           filter: filters,
         },
       },
-      aggs: aggregations(params, printerInfo),
+      ...(includeAggregations ? { aggs: aggregations(params, printerInfo) } : {}),
     });
 
     if (exactSkuResponse.hits.hits.length > 0) {
       const products = exactSkuResponse.hits.hits.map((hit, index) => mapProductHit(hit, index, params.locale));
-      await applyProductConfigOverrides(products, params.locale);
+      if (applyConfigOverrides) await applyProductConfigOverrides(products, params.locale);
 
       return {
         products,
@@ -1943,7 +2018,9 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
         currentPage: 1,
         lastPage: 1,
         perPage: params.perPage,
-        filters: buildCatalogFilters(exactSkuResponse.aggregations as Record<string, unknown> | undefined, params),
+        filters: includeAggregations
+          ? buildCatalogFilters(exactSkuResponse.aggregations as Record<string, unknown> | undefined, params)
+          : { ranges: [], options: [] },
       };
     }
   }
@@ -1963,9 +2040,8 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
     track_total_hits: true,
     _source: RESULT_SOURCE_FIELDS as unknown as string[],
     query,
-    ...(searchMinScore(params.search) ? { min_score: searchMinScore(params.search) } : {}),
     ...(sortClauses(params.sort) ? { sort: sortClauses(params.sort) } : {}),
-    aggs: aggregations(params, printerInfo),
+    ...(includeAggregations ? { aggs: aggregations(params, printerInfo) } : {}),
   });
 
   console.log(`[Search] Query locale: ${params.locale}, Total hits: ${totalHitsValue(response.hits.total)}`);
@@ -1973,55 +2049,10 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
   const total = totalHitsValue(response.hits.total);
   const lastPage = Math.max(1, Math.ceil(total / params.perPage));
 
-  // Extract "Did you mean" suggestion
-  let suggestion: string | undefined;
-  if (params.search && total === 0) {
-    // Try fuzzy search to find similar terms when exact search returns nothing
-    try {
-      const fuzzyResponse = await client.search<ProductSource>({
-        index: catalogIndexForType(params.type),
-        ignore_unavailable: true,
-        size: 1,
-        _source: ["name", "catalog_brand", "sku"] as unknown as string[],
-        query: {
-          bool: {
-            should: [
-              {
-                multi_match: {
-                  query: params.search,
-                  fields: ["name^3", "catalog_brand^2", "sku"],
-                  fuzziness: "AUTO",
-                  prefix_length: 0,
-                },
-              },
-            ],
-            filter: filters,
-          },
-        },
-      });
-
-      if (fuzzyResponse.hits.hits.length > 0) {
-        const hit = fuzzyResponse.hits.hits[0];
-        const source = hit._source as ProductSource;
-        // Return the name or brand from the closest match as suggestion
-        suggestion = stringValue(source.name) || stringValue(source.catalog_brand) || params.search;
-        
-        // Only suggest if it's different from the original search
-        if (suggestion.toLowerCase() === params.search.toLowerCase()) {
-          suggestion = undefined;
-        }
-      }
-    } catch (fuzzyError) {
-      console.error("Failed to generate search suggestion:", fuzzyError);
-    }
-  }
-
-
-
   const products = response.hits.hits.map((hit, index) => mapProductHit(hit, index, params.locale));
 
   // Secondary fetch to Laravel database to resolve correct packing_group values
-  await applyProductConfigOverrides(products, params.locale);
+  if (applyConfigOverrides) await applyProductConfigOverrides(products, params.locale);
 
   return {
     products,
@@ -2029,7 +2060,8 @@ export async function searchCatalogProducts(params: CatalogSearchParams): Promis
     currentPage: Math.min(params.page, lastPage),
     lastPage,
     perPage: params.perPage,
-    filters: buildCatalogFilters(response.aggregations as Record<string, unknown> | undefined, params),
-    ...(suggestion ? { suggestion } : {}),
+    filters: includeAggregations
+      ? buildCatalogFilters(response.aggregations as Record<string, unknown> | undefined, params)
+      : { ranges: [], options: [] },
   };
 }

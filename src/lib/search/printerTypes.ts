@@ -5,9 +5,9 @@ export type PrinterCardData = ProductCardData & {
   featured?: boolean | string | number | null;
 };
 
-export type PrinterSortValue = "latest" | "oldest" | "title_asc" | "title_desc";
+export type PrinterSortValue = "relevance" | "latest" | "oldest" | "title_asc" | "title_desc";
 
-export const PRINTER_SORT_VALUES: PrinterSortValue[] = ["latest", "oldest", "title_asc", "title_desc"];
+export const PRINTER_SORT_VALUES: PrinterSortValue[] = ["relevance", "latest", "oldest", "title_asc", "title_desc"];
 
 export type PrinterOptionFilterKey = "druktype" | "kern" | "detectie" | "width" | "buiten_diameter";
 
