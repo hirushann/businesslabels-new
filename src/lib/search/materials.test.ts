@@ -72,4 +72,12 @@ describe("material search ranking", () => {
       { "title_sort.keyword": { order: "asc", unmapped_type: "keyword" } },
     ]);
   });
+
+  it("adds only a low-weight fuzzy fallback for textual searches", () => {
+    const textClauses = (buildMaterialTextQuery("glanznd") as estypes.QueryDslQueryContainer).bool?.should as estypes.QueryDslQueryContainer[];
+    const codeClauses = (buildMaterialTextQuery("DIA740H") as estypes.QueryDslQueryContainer).bool?.should as estypes.QueryDslQueryContainer[];
+
+    expect(textClauses.find((clause) => clause.multi_match?.fuzziness === "AUTO")?.multi_match?.boost).toBe(2);
+    expect(codeClauses.some((clause) => clause.multi_match?.fuzziness === "AUTO")).toBe(false);
+  });
 });

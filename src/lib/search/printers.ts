@@ -175,8 +175,10 @@ function mapFinderPrinter(source: PrinterSource, locale?: "en" | "nl"): FinderPr
   };
 }
 
-function parseSortValue(value: string | null): PrinterSortValue {
-  return PRINTER_SORT_VALUES.includes(value as PrinterSortValue) ? (value as PrinterSortValue) : "title_asc";
+function parseSortValue(value: string | null, hasSearch: boolean): PrinterSortValue {
+  return PRINTER_SORT_VALUES.includes(value as PrinterSortValue)
+    ? (value as PrinterSortValue)
+    : hasSearch ? "relevance" : "title_asc";
 }
 
 export function parsePrinterSearchParams(params: URLSearchParams, locale?: "en" | "nl"): PrinterSearchParams {
@@ -192,7 +194,7 @@ export function parsePrinterSearchParams(params: URLSearchParams, locale?: "en" 
     search,
     page,
     perPage,
-    sort: parseSortValue(params.get("sort")),
+    sort: parseSortValue(params.get("sort"), Boolean(search.trim())),
     druktype: params.getAll("druktype").flatMap(v => v.split(",")).filter(Boolean),
     kern: params.getAll("kern").flatMap(v => v.split(",")).filter(Boolean),
     detectie: params.getAll("detectie").flatMap(v => v.split(",")).filter(Boolean),
@@ -238,7 +240,7 @@ export async function getPrinterById(id: number, locale?: "en" | "nl"): Promise<
   return source ? mapFinderPrinter(source, locale) : null;
 }
 
-function buildSortClause(sort: PrinterSortValue): estypes.Sort {
+function buildSortClause(sort: PrinterSortValue): estypes.Sort | undefined {
   const featuredSort = { featured: { order: "desc" } } as const;
   switch (sort) {
     case "oldest":
@@ -247,18 +249,22 @@ function buildSortClause(sort: PrinterSortValue): estypes.Sort {
       return [featuredSort, { created_at_timestamp: { order: "desc" } }];
     case "title_desc":
       return [featuredSort, { "title_sort.keyword": { order: "desc" } }];
+    case "relevance":
+      return undefined;
     case "title_asc":
     default:
       return [featuredSort, { "title_sort.keyword": { order: "asc" } }];
   }
 }
 
-function buildTextQuery(search: string): estypes.QueryDslQueryContainer {
+export function buildPrinterTextQuery(search: string): estypes.QueryDslQueryContainer {
   const query = search.trim();
   if (!query) return { match_all: {} };
 
   const lowerQuery = query.toLowerCase();
-  const isMultiTerm = query.split(/\s+/).filter(Boolean).length > 1;
+  const tokens = query.split(/\s+/).filter(Boolean);
+  const isMultiTerm = tokens.length > 1;
+  const isModelSearch = tokens.some((token) => /\d/.test(token));
 
   // STRICT matching on title only - prioritize exact phrase matches
   // This ensures "Godex ZX1200i" shows ZX1200i, not all Godex printers
@@ -302,6 +308,55 @@ function buildTextQuery(search: string): estypes.QueryDslQueryContainer {
       },
     },
   ];
+
+  should.push({
+    multi_match: {
+      query,
+      fields: ["subtitle^3", "excerpt^2", "content", "category_titles_nl^2", "category_titles_en^2"],
+      type: "cross_fields",
+      operator: "and",
+      boost: 100,
+    },
+  });
+
+  should.push({
+    nested: {
+      path: "properties",
+      ignore_unmapped: true,
+      score_mode: "max",
+      query: {
+        multi_match: {
+          query,
+          fields: [
+            "properties.label_type",
+            "properties.druktype",
+            "properties.detectie",
+            "properties.width",
+            "properties.label_breedte",
+            "properties.kern",
+            "properties.buiten_diameter",
+            "properties.max_buiten_diameter",
+          ],
+          type: "cross_fields",
+          operator: "and",
+          boost: 250,
+        },
+      },
+    },
+  });
+
+  if (!isModelSearch && query.length >= 3) {
+    should.push({
+      match: {
+        title: {
+          query,
+          fuzziness: "AUTO",
+          prefix_length: 1,
+          boost: 100,
+        },
+      },
+    });
+  }
 
   // For single words, allow even more permissive partial matching
   if (!isMultiTerm) {
@@ -353,7 +408,7 @@ export async function searchPrinters(params: PrinterSearchParams): Promise<Print
 
   // Add text search
   if (params.search) {
-    mustClauses.push(buildTextQuery(params.search));
+    mustClauses.push(buildPrinterTextQuery(params.search));
   }
 
   // Add property filters
@@ -445,27 +500,8 @@ export async function searchPrinters(params: PrinterSearchParams): Promise<Print
       ],
     };
 
-    // Add rescore to prioritize exact phrase matches (only when sorting by relevance)
-    if (params.search && params.sort === "latest") {
-      searchBody.rescore = {
-        window_size: 100,
-        query: {
-          rescore_query: {
-            match_phrase: {
-              title: {
-                query: params.search,
-                slop: 0,
-              },
-            },
-          },
-          query_weight: 0.1,
-          rescore_query_weight: 10000,
-        },
-      };
-    } else {
-      // Use explicit sort only when not rescoring
-      searchBody.sort = buildSortClause(params.sort);
-    }
+    const sort = buildSortClause(params.sort);
+    if (sort) searchBody.sort = sort;
 
     const response = await client.search({
       index,

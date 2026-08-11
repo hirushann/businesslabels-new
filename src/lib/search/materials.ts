@@ -255,6 +255,15 @@ export function buildMaterialTextQuery(search: string): estypes.QueryDslQueryCon
         { multi_match: { query, fields: ["categories.name^3", "category_slugs^3", "brand", "brand_label"], boost: 40 } },
         { multi_match: { query, fields: ["specifications.*"], boost: 20 } },
         { multi_match: { query, fields: ["description", "description_locales"], boost: 5 } },
+        ...(!/\d/.test(query) && query.length >= 4 ? [{
+          multi_match: {
+            query,
+            fields: ["title^3", "title_locales^3", "brand", "brand_label", "description", "description_locales", "specifications.*"],
+            fuzziness: "AUTO" as const,
+            prefix_length: 2,
+            boost: 2,
+          },
+        }] : []),
         { wildcard: { "code.keyword": { value: `${query.toLowerCase()}*`, boost: 50, case_insensitive: true } } },
       ],
     },

@@ -86,6 +86,14 @@ describe('textQuery Accuracy & Precision', () => {
             'sku.normalized': 'tm-c3500',
           },
         }),
+        expect.objectContaining({
+          term: {
+            'article_number.keyword': {
+              value: 'TM-C3500',
+              case_insensitive: true,
+            },
+          },
+        }),
       ]),
     );
   });
@@ -104,8 +112,8 @@ describe('textQuery Accuracy & Precision', () => {
     const query = textQuery('epson printer') as estypes.QueryDslQueryContainer;
     const should = query.bool?.should as estypes.QueryDslQueryContainer[];
 
-    const phraseBoost = should.find((s) => s.multi_match && s.multi_match.type === 'phrase')!.multi_match!.boost;
-    const titleAndBoost = should.find((s) => s.multi_match && s.multi_match.type === 'cross_fields')!.multi_match!.boost;
+    const phraseBoost = should.find((s) => s.multi_match?.type === 'phrase' && s.multi_match.fields?.includes('name^10'))!.multi_match!.boost;
+    const titleAndBoost = should.find((s) => s.multi_match?.type === 'cross_fields' && s.multi_match.fields?.includes('name'))!.multi_match!.boost;
     const fuzzyBoost = should.find((s) => s.multi_match && s.multi_match.fuzziness === 'AUTO')!.multi_match!.boost;
 
     expect(phraseBoost).toBe(5000);
@@ -117,10 +125,10 @@ describe('textQuery Accuracy & Precision', () => {
     const query = textQuery('C4000') as estypes.QueryDslQueryContainer;
     const should = query.bool?.should as estypes.QueryDslQueryContainer[];
 
-    const titleWildcardBoost = should.find((s) => s.query_string)?.query_string?.boost;
-    const titlePhraseBoost = should.find((s) => s.multi_match && s.multi_match.type === 'phrase')!.multi_match!.boost as number;
-    const titleTokenBoost = should.find((s) => s.multi_match && s.multi_match.type === 'best_fields')!.multi_match!.boost as number;
-    const skuPhraseBoost = (should.find((s) => s.match_phrase)?.match_phrase as Record<string, estypes.QueryDslMatchPhraseQuery>).sku.boost as number;
+    const titleWildcardBoost = should.find((s) => s.bool?.boost === 2500)?.bool?.boost;
+    const titlePhraseBoost = should.find((s) => s.multi_match?.type === 'phrase' && s.multi_match.fields?.includes('name^10'))!.multi_match!.boost as number;
+    const titleTokenBoost = should.find((s) => s.multi_match?.type === 'best_fields' && s.multi_match.fields?.includes('name'))!.multi_match!.boost as number;
+    const skuPhraseBoost = should.find((s) => s.multi_match?.type === 'phrase' && s.multi_match.fields?.includes('sku'))!.multi_match!.boost as number;
     const skuPrefix = should.find((s) => s.multi_match && s.multi_match.type === 'phrase_prefix' && Array.isArray(s.multi_match.fields) && s.multi_match.fields.includes('sku'));
 
     expect(titleWildcardBoost).toBe(2500);
@@ -128,7 +136,7 @@ describe('textQuery Accuracy & Precision', () => {
     expect(titleTokenBoost).toBeGreaterThan(skuPhraseBoost);
     expect(skuPhraseBoost).toBe(400);
     expect(skuPrefix!.multi_match!.boost).toBe(150);
-    expect(skuPrefix!.multi_match!.fields).toEqual(['sku', 'variant_skus']);
+    expect(skuPrefix!.multi_match!.fields).toEqual(['sku', 'variant_skus', 'article_number']);
   });
 
   it('should require BOTH words for 2-word search (e.g. inkt 8500)', () => {
@@ -139,8 +147,8 @@ describe('textQuery Accuracy & Precision', () => {
     const titleAndMatch = should.find((s) => s.multi_match && s.multi_match.type === 'cross_fields' && s.multi_match.operator === 'and');
     expect(titleAndMatch).toBeDefined();
 
-    const looseDescriptionMatch = should.find((s) => s.multi_match && Array.isArray(s.multi_match.fields) && s.multi_match.fields.includes('description'));
-    expect(looseDescriptionMatch).toBeUndefined();
+    const descriptionMatch = should.find((s) => s.multi_match && Array.isArray(s.multi_match.fields) && s.multi_match.fields.includes('description'));
+    expect(descriptionMatch?.multi_match?.operator).toBe('and');
   });
 
   it('should apply fuzziness only to text queries, not numeric or product-code queries', () => {
@@ -153,16 +161,17 @@ describe('textQuery Accuracy & Precision', () => {
     expect(shouldFindFuzzy(queryCode)).toBeUndefined();
 
     const queryNumeric = textQuery('inkt 8500') as estypes.QueryDslQueryContainer;
-    expect(shouldFindFuzzy(queryNumeric)).toBeUndefined();
+    expect(shouldFindFuzzy(queryNumeric)?.multi_match?.query).toBe('inkt');
   });
 
-  it('should allow partial numeric matching (e.g. inkt 8000) using query_string wildcard', () => {
+  it('should allow partial numeric matching without query_string syntax', () => {
     const query = textQuery('inkt 8000') as estypes.QueryDslQueryContainer;
     const should = query.bool?.should as estypes.QueryDslQueryContainer[];
     
-    const wildcardMatch = should.find((s) => s.query_string);
+    const wildcardMatch = should.find((s) => s.bool?.boost === 2500);
     expect(wildcardMatch).toBeDefined();
-    expect(wildcardMatch!.query_string!.query).toBe('inkt AND *8000*');
+    expect(JSON.stringify(wildcardMatch)).toContain('"value":"*8000*"');
+    expect(JSON.stringify(query)).not.toContain('query_string');
   });
 
   it('should verify ranking hierarchy: exact SKU (100k) > Title (5k) > partial SKU (400) > Description (1)', () => {
@@ -173,8 +182,8 @@ describe('textQuery Accuracy & Precision', () => {
       | estypes.QueryDslTermQuery
       | undefined;
     const skuBoost = skuTerm?.boost;
-    const titleBoost = should.find((s) => s.multi_match && s.multi_match.type === 'phrase')!.multi_match!.boost;
-    const skuPhraseBoost = (should.find((s) => s.match_phrase)?.match_phrase as Record<string, estypes.QueryDslMatchPhraseQuery>).sku.boost;
+    const titleBoost = should.find((s) => s.multi_match?.type === 'phrase' && s.multi_match.fields?.includes('name^10'))!.multi_match!.boost;
+    const skuPhraseBoost = should.find((s) => s.multi_match?.type === 'phrase' && s.multi_match.fields?.includes('sku'))!.multi_match!.boost;
     const descriptionBoost = should.find((s) => s.multi_match && Array.isArray(s.multi_match.fields) && s.multi_match.fields.includes('description'))!.multi_match!.boost;
     const shortDescriptionBoost = should.find((s) => s.multi_match && Array.isArray(s.multi_match.fields) && s.multi_match.fields.includes('short_description'))!.multi_match!.boost;
     
@@ -183,6 +192,29 @@ describe('textQuery Accuracy & Precision', () => {
     expect(skuPhraseBoost).toBe(400);
     expect(descriptionBoost).toBe(1);
     expect(shortDescriptionBoost).toBe(0.5);
+  });
+
+  it('searches localized titles, catalog fields, and nested product properties', () => {
+    const query = textQuery('glanzend') as estypes.QueryDslQueryContainer;
+    const serialized = JSON.stringify(query);
+
+    expect(serialized).toContain('title_locales');
+    expect(serialized).toContain('category_titles_nl');
+    expect(serialized).toContain('catalog_brand');
+    expect(serialized).toContain('properties.afwerking');
+  });
+
+  it('treats mixed text/model searches as text while keeping the numeric token precise', () => {
+    const query = textQuery('ink C4000') as estypes.QueryDslQueryContainer;
+    const serialized = JSON.stringify(query);
+
+    expect(serialized).toContain('description');
+    expect(serialized).toContain('*c4000*');
+  });
+
+  it('keeps special characters as data rather than query syntax', () => {
+    const query = textQuery('SKU+(A):42') as estypes.QueryDslQueryContainer;
+    expect(JSON.stringify(query)).not.toContain('query_string');
   });
 
   it('should keep multi-term matching in should clauses so min_score can reject weak matches', () => {
