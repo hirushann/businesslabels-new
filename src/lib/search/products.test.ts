@@ -1,7 +1,38 @@
 import { describe, it, expect } from 'vitest';
 import type { estypes } from '@elastic/elasticsearch';
 import type { CatalogSearchParams } from './types';
-import { buildCatalogFilters, exactSkuQuery, textQuery } from './products';
+import { buildCatalogFilters, exactSkuQuery, normalizeSearchQuery, textQuery } from './products';
+
+describe('dimension search normalization', () => {
+  const equivalentDimensions = [
+    '102*76mm',
+    '102 * 76 mm',
+    '102x76mm',
+    '102 x 76 mm',
+    '102 × 76 mm',
+    '102 X 76 MM',
+    '  102   x   76   mm  ',
+  ];
+
+  it.each(equivalentDimensions)('normalizes %s to the indexed title format', (search) => {
+    expect(normalizeSearchQuery(search)).toBe('102 x 76 mm');
+    expect(textQuery(search)).toEqual(textQuery('102 x 76 mm'));
+  });
+
+  it('filters pure dimension searches by indexed width and height', () => {
+    expect(textQuery('102*76mm').bool?.filter).toEqual([
+      { term: { 'property_numbers.breedte': 102 } },
+      { term: { 'property_numbers.hoogte': 76 } },
+    ]);
+  });
+
+  it('leaves normal text and SKU searches untouched', () => {
+    expect(normalizeSearchQuery('Epson printer')).toBe('Epson printer');
+    expect(normalizeSearchQuery('GM-Wood-C35-102x76')).toBe('GM-Wood-C35-102x76');
+    expect(textQuery('Epson printer').bool?.filter).toBeUndefined();
+    expect(textQuery('GM-Wood-C35-102x76').bool?.filter).toBeUndefined();
+  });
+});
 
 describe('textQuery Accuracy & Precision', () => {
   it('should prioritize SKU exact matches with highest boost (100000)', () => {
