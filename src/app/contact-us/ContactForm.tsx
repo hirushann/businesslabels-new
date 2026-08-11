@@ -2,10 +2,12 @@
 
 import React, { useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 
 export default function ContactForm() {
   const locale = useLocale();
   const t = useTranslations("contactPage.form");
+  const { executeRecaptcha } = useGoogleReCaptcha();
   const [formData, setFormData] = useState({
     name: '',
     company: '',
@@ -28,10 +30,15 @@ export default function ContactForm() {
     setErrorMessage('');
 
     try {
+      if (!executeRecaptcha) {
+        throw new Error('reCAPTCHA is not ready. Please try again.');
+      }
+      const recaptcha_token = await executeRecaptcha('contact_form');
+
       const response = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, locale }),
+        body: JSON.stringify({ ...formData, locale, recaptcha_token }),
       });
 
       if (!response.ok) {

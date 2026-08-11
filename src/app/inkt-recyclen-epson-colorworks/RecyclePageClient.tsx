@@ -4,6 +4,7 @@ import { useState, ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import Image from 'next/image';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -129,6 +130,7 @@ function CollectionBoxForm() {
   const [city, setCity] = useState<string>('');
   const [extra, setExtra] = useState<string>('');
 
+  const { executeRecaptcha } = useGoogleReCaptcha();
   const [submitState, setSubmitState] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -138,12 +140,17 @@ function CollectionBoxForm() {
     setErrorMsg(null);
 
     try {
+      if (!executeRecaptcha) {
+        throw new Error('reCAPTCHA is not ready. Please try again.');
+      }
+      const recaptcha_token = await executeRecaptcha('recycle_box_form');
+
       const response = await fetch('/api/recycle-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'box',
-          company, phone, email, country, street, postal, city, extra, locale
+          company, phone, email, country, street, postal, city, extra, locale, recaptcha_token
         }),
       });
 
@@ -285,8 +292,10 @@ function PickupForm() {
   const [street, setStreet] = useState<string>('');
   const [postal, setPostal] = useState<string>('');
   const [city, setCity] = useState<string>('');
+  const [extra, setExtra] = useState<string>('');
   const [newBox, setNewBox] = useState<boolean>(false);
 
+  const { executeRecaptcha } = useGoogleReCaptcha();
   const [submitState, setSubmitState] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -296,12 +305,17 @@ function PickupForm() {
     setErrorMsg(null);
 
     try {
+      if (!executeRecaptcha) {
+        throw new Error('reCAPTCHA is not ready. Please try again.');
+      }
+      const recaptcha_token = await executeRecaptcha('recycle_pickup_form');
+
       const response = await fetch('/api/recycle-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'pickup',
-          company, phone, email, country, street, postal, city, newBox, locale
+          company, phone, email, country, street, postal, city, extra, newBox, locale, recaptcha_token
         }),
       });
 

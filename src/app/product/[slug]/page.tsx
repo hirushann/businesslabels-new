@@ -626,10 +626,10 @@ function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t:
   ];
 
   const isLabelProduct = product?.is_label_product === true || product?.meta?.is_label_product === true;
-  if (isLabelProduct && product?.packing_group) {
+  if (isLabelProduct && product?.labels_per_roll) {
     specRows.push({
       label: getSpecLabel("labels_per_roll", locale, t),
-      value: normalizeDisplayValue(product.packing_group, booleanLabels) || missing,
+      value: normalizeDisplayValue(product.labels_per_roll, booleanLabels) || missing,
     });
   }
 

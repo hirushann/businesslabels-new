@@ -11,6 +11,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from '@/lib/i18n/getMessages';
 import { localizedSeoPaths } from '@/lib/i18n/utils';
 import { LOCALE_PATH_HEADER } from '@/lib/i18n/config';
+import ReCaptchaProvider from '@/components/ReCaptchaProvider';
 
 import { cookies, headers } from "next/headers";
 import { ScrollToTop } from "@/components/ScrollToTop";
@@ -73,9 +74,11 @@ export default async function RootLayout({ children }) {
           <CartProvider>
             <WishlistProvider>
               <HelpProvider>
-                <Header hasAuthToken={hasAuthToken} />
-                <main className="flex-1">{children}</main>
-                <Footer />
+                <ReCaptchaProvider>
+                  <Header hasAuthToken={hasAuthToken} />
+                  <main className="flex-1">{children}</main>
+                  <Footer />
+                </ReCaptchaProvider>
               </HelpProvider>
             </WishlistProvider>
           </CartProvider>

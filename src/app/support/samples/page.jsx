@@ -3,12 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { DM_Sans } from 'next/font/google';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 
 const dmSans = DM_Sans({ subsets: ['latin'] });
 
 export default function PrintSamplePage() {
   const locale = useLocale();
   const t = useTranslations('printSample');
+  const { executeRecaptcha } = useGoogleReCaptcha();
 
   const [selectedPrinter, setSelectedPrinter] = useState('');
   const [printerOptions, setPrinterOptions] = useState([]);
@@ -100,6 +102,11 @@ export default function PrintSamplePage() {
 
     setIsSubmitting(true);
     try {
+      if (!executeRecaptcha) {
+        throw new Error('reCAPTCHA is not ready. Please try again.');
+      }
+      const recaptcha_token = await executeRecaptcha('support_samples_form');
+
       const formData = new FormData();
       Object.entries(form).forEach(([key, value]) => {
         formData.append(key, value);
@@ -108,6 +115,8 @@ export default function PrintSamplePage() {
       if (selectedSubstrate) formData.append('substrate', selectedSubstrate);
       if (selectedFinish) formData.append('finish', selectedFinish);
       formData.append('locale', locale);
+      formData.append('recaptcha_token', recaptcha_token);
+
       if (file) {
         formData.append('file', file);
       }
