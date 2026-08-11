@@ -4,7 +4,7 @@ import type { FormEvent } from 'react';
 import { useEffect, useState, useRef } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { toast } from 'sonner';
-import { ReCAPTCHA, ReCAPTCHARef } from './ui/ReCAPTCHA';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import LocaleLink from './LocaleLink';
 
 interface HelpDrawerProps {
@@ -247,10 +247,6 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
   const [contactStatusMessage, setContactStatusMessage] = useState('');
   const [availabilityByDate, setAvailabilityByDate] = useState<Map<string, AvailabilitySlot>>(() => new Map());
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const bookingRecaptchaRef = useRef<ReCAPTCHARef>(null);
-  const contactRecaptchaRef = useRef<ReCAPTCHARef>(null);
-  const recaptchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '';
-  const shouldBypassRecaptcha = process.env.NODE_ENV === 'development' && !recaptchaSiteKey;
 
   const selectedCountry = europeanCountries.find((country) => country.code === selectedCountryCode) ?? europeanCountries[0];
   const schedule = getCurrentWeekSchedule(availabilityByDate, locale);
@@ -367,13 +363,14 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
     setBookingStatus('submitting');
     setBookingMessage('');
 
-    let recaptchaToken = shouldBypassRecaptcha ? 'development-recaptcha-bypass' : null;
-    if (!recaptchaToken) {
-      try {
-        recaptchaToken = await bookingRecaptchaRef.current?.execute('booking') || null;
-      } catch (e) {
-        console.error(e);
+    let recaptchaToken = null;
+    try {
+      if (!executeRecaptcha) {
+        throw new Error('reCAPTCHA is not ready.');
       }
+      recaptchaToken = await executeRecaptcha('drawer_booking');
+    } catch (e) {
+      console.error(e);
     }
 
     if (!recaptchaToken) {
@@ -437,13 +434,14 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
     setContactStatus('submitting');
     setContactStatusMessage('');
 
-    let recaptchaToken = shouldBypassRecaptcha ? 'development-recaptcha-bypass' : null;
-    if (!recaptchaToken) {
-      try {
-        recaptchaToken = await contactRecaptchaRef.current?.execute('contact') || null;
-      } catch (e) {
-        console.error(e);
+    let recaptchaToken = null;
+    try {
+      if (!executeRecaptcha) {
+        throw new Error('reCAPTCHA is not ready.');
       }
+      recaptchaToken = await executeRecaptcha('drawer_contact');
+    } catch (e) {
+      console.error(e);
     }
 
     if (!recaptchaToken) {
@@ -637,12 +635,6 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                       className="h-11 px-5 py-2 rounded-xl border border-zinc-200 outline-none text-neutral-700 text-base font-normal placeholder-neutral-400 focus:border-brand transition-colors w-full"
                     />
                   </label>
-                  {recaptchaSiteKey && (
-                    <ReCAPTCHA
-                      ref={bookingRecaptchaRef}
-                      siteKey={recaptchaSiteKey}
-                    />
-                  )}
                   <p className="text-[11px] text-zinc-500 text-center">
                     This site is protected by reCAPTCHA and the Google{' '}
                     <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline">Privacy Policy</a> and{' '}
@@ -781,12 +773,6 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
                   rows={4}
                   className="px-3 py-2 rounded-xl border border-zinc-200 outline-none text-neutral-700 text-sm font-normal placeholder-neutral-400 focus:border-brand transition-colors w-full resize-none"
                 />
-                {recaptchaSiteKey && (
-                  <ReCAPTCHA
-                    ref={contactRecaptchaRef}
-                    siteKey={recaptchaSiteKey}
-                  />
-                )}
                 <p className="text-[11px] text-zinc-500 text-center">
                   This site is protected by reCAPTCHA and the Google{' '}
                   <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline">Privacy Policy</a> and{' '}

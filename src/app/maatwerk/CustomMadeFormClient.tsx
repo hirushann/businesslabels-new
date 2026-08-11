@@ -6,6 +6,7 @@ import { Sparkles, FileText, ShieldCheck, Shield, Eye, Star, ChevronRight } from
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import PrinterModelSelect from '@/components/PrinterModelSelect';
 import MaterialModelSelect from '@/components/MaterialModelSelect';
 import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogHeader, DialogDescription, DialogClose } from '@/components/ui/dialog';
@@ -130,6 +131,7 @@ function getStoredAuthUser() {
 export default function CustomMadeFormClient({ matCode }: { matCode: string | undefined }) {
   const t = useTranslations('customForm');
   const locale = useLocale() === 'nl' ? 'nl' : 'en';
+  const { executeRecaptcha } = useGoogleReCaptcha();
 
   const SHAPES = getShapes(t);
   const MATERIALS = getMaterials(t);
@@ -298,6 +300,11 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
           : 'Not specified';
 
     try {
+      if (!executeRecaptcha) {
+        throw new Error('reCAPTCHA is not ready. Please try again.');
+      }
+      const recaptcha_token = await executeRecaptcha('custom_made_form');
+
       const response = await fetch('/api/custom-made-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -315,6 +322,7 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
           quantity,
           comments,
           locale,
+          recaptcha_token,
         }),
       });
 

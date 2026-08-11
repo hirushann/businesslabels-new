@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { toast } from "sonner";
 
 type IccProfileModalProps = {
@@ -80,9 +81,11 @@ function getAuthUserFormValues() {
   };
 }
 
-export default function IccProfileModal({ materialTitle, isNl = false }: IccProfileModalProps) {
+export default function IccProfileModal({ materialTitle, isNl: isNlProp = false }: IccProfileModalProps) {
   const t = useTranslations();
-  const currentLocale = useLocale() === "nl" ? "nl" : "en";
+  const currentLocale = useLocale();
+  const isNl = currentLocale === "nl" || isNlProp;
+  const { executeRecaptcha } = useGoogleReCaptcha();
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -166,6 +169,11 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
     setIsSubmitting(true);
 
     try {
+      if (!executeRecaptcha) {
+        throw new Error('reCAPTCHA is not ready. Please try again.');
+      }
+      const recaptcha_token = await executeRecaptcha('icc_profile_modal');
+
       const res = await fetch('/api/icc-profile-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -176,6 +184,7 @@ export default function IccProfileModal({ materialTitle, isNl = false }: IccProf
           phone: form.phone,
           materialTitle,
           locale: currentLocale,
+          recaptcha_token,
         }),
       });
 
