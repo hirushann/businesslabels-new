@@ -248,6 +248,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
   const [availabilityByDate, setAvailabilityByDate] = useState<Map<string, AvailabilitySlot>>(() => new Map());
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
 
+  const { executeRecaptcha } = useGoogleReCaptcha();
   const selectedCountry = europeanCountries.find((country) => country.code === selectedCountryCode) ?? europeanCountries[0];
   const schedule = getCurrentWeekSchedule(availabilityByDate, locale);
   const displayMembers = teamMembers.length > 0 ? teamMembers.slice(0, 6) : [
