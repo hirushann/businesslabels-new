@@ -24,6 +24,7 @@ import ResourcesMenu, { columnOne as resourceColumnOne, columnTwo as resourceCol
 import BrandsMenu, { brands as brandMenuItems } from './nav/BrandsMenu';
 import { useLocale, useTranslations } from 'next-intl';
 import { useLocalePath } from '@/hooks/useLocalePath';
+import { localePath } from '@/lib/i18n/utils';
 import { getAccessoryCategoryPath } from '@/lib/routes/accessoryCategories';
 import { getLabelCategoryPath } from '@/lib/routes/labelCategories';
 import { getPrinterCategoryPath } from '@/lib/routes/printerCategories';
@@ -160,7 +161,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
       if (typeof window !== 'undefined') {
         const currentPath = window.location.pathname;
         if (currentPath.includes('/my-account')) {
-          router.push('/?auth=login&redirect=' + encodeURIComponent(currentPath));
+          router.push(localePath('/?auth=login&redirect=' + encodeURIComponent(currentPath), locale));
         } else {
           setIsLoginPopupOpen(true);
         }
@@ -176,7 +177,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
       window.removeEventListener('auth-user-updated', checkAuth);
       window.removeEventListener('auth-expired', handleAuthExpired);
     };
-  }, [router]);
+  }, [router, locale]);
 
   const isAuthenticated = hasAuthToken || clientAuthState === true;
   const accountHref = lp('/my-account');
@@ -227,8 +228,11 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
   }, [searchParams, router, pathname, isAuthenticated]);
 
   const handleAuthPopupLoginSuccess = () => {
-    if (pendingAuthRedirect) {
-      router.push(pendingAuthRedirect);
+    const redirectTo = pendingAuthRedirect;
+    setPendingAuthRedirect(null);
+
+    if (redirectTo) {
+      router.push(redirectTo);
       router.refresh();
     }
   };

@@ -466,7 +466,7 @@ export default function RegisterPopup({
 
       toast.success(t('register.accountCreated'));
       handleOpenChange(false);
-      router.push('/my-account');
+      router.push(lp('/my-account'));
       router.refresh();
     } catch {
       setFormMessage(t('register.registerError'));
