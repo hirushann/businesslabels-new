@@ -30,6 +30,7 @@ type CheckoutFormState = {
   // Shipping fields
   shippingFirstName: string;
   shippingLastName: string;
+  shippingCompanyName: string;
   shippingEmail: string;
   shippingMobileNumber: string;
   shippingStreetAddress: string;
@@ -89,6 +90,7 @@ const initialFormState: CheckoutFormState = {
   paymentMethod: "",
   shippingFirstName: "",
   shippingLastName: "",
+  shippingCompanyName: "",
   shippingEmail: "",
   shippingMobileNumber: "",
   shippingStreetAddress: "",
@@ -116,6 +118,7 @@ const demoFormState: CheckoutFormState = {
   paymentMethod: "ideal",
   shippingFirstName: "Emma",
   shippingLastName: "van Dijk",
+  shippingCompanyName: "",
   shippingEmail: "emma.vandijk@example.com",
   shippingMobileNumber: "+31 6 1234 5678",
   shippingStreetAddress: "Keizersgracht 214",
@@ -1154,6 +1157,17 @@ function CheckoutShell({
                                 onAddressSelect={(addr) => onAddressSelect(addr, true)}
                                 className={inputClasses(Boolean(errors.shippingStreetAddress))}
                                 placeholder={t('checkout.quickAddressSearch')}
+                              />
+                            </div>
+                            
+                            <div className="flex flex-col gap-2">
+                              <span className="text-[18px] font-bold text-ink">{t('checkout.companyName')} ({t('checkout.optional')})</span>
+                              <input
+                                type="text"
+                                value={form.shippingCompanyName}
+                                onChange={(e) => handleChange("shippingCompanyName", e.target.value)}
+                                placeholder={t('checkout.companyNamePlaceholder') || 'e.g. Acme Corp'}
+                                className={inputClasses()}
                               />
                             </div>
 
@@ -2836,6 +2850,7 @@ export default function CheckoutPageClient({
     const rawShippingFields = {
       shipping_firstname: shippingFirst,
       shipping_lastname: shippingLast,
+      shipping_company_name: form.sameAsBilling ? form.companyName : form.shippingCompanyName,
       shipping_email: shippingEmailVal,
       shipping_phone: shippingPhoneVal,
       shipping_address: shippingStreet,
@@ -3291,8 +3306,8 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
         name: `${firstName} ${lastName}`,
         firstname: firstName,
         lastname: lastName,
-        company_name: isBilling ? companyName : '',
-        company: isBilling ? companyName : '',
+        company_name: companyName,
+        company: companyName,
         vat_number: isBilling ? vatNumber : '',
         btw_number: isBilling ? vatNumber : '',
         vatNumber: isBilling ? vatNumber : '',
@@ -3396,7 +3411,7 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
         {/* Scrollable Body */}
         <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
           <form onSubmit={handleSubmit} noValidate className="w-full flex flex-col gap-6">
-            {isBilling && (
+            {isBilling ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-2">
                   <span className={labelClasses}>{getLabel('checkout.companyName', 'Bedrijfsnaam')} *</span>
@@ -3427,6 +3442,23 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
                     placeholder={getLabel('checkout.vatNumberPlaceholder', 'NL123456789B01')} 
                   />
                   {fieldErrors.vatNumber && <span className="text-xs text-red-500 font-medium">{fieldErrors.vatNumber}</span>}
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <span className={labelClasses}>{getLabel('checkout.companyName', 'Bedrijfsnaam')} ({getLabel('checkout.optional', 'Optional')})</span>
+                  <input 
+                    type="text" 
+                    value={companyName} 
+                    onChange={(e) => {
+                      setCompanyName(e.target.value);
+                      clearFieldError('companyName');
+                    }} 
+                    className={inputClasses(Boolean(fieldErrors.companyName))} 
+                    placeholder={getLabel('checkout.companyNamePlaceholder', 'Van Dijk Labels BV')} 
+                  />
+                  {fieldErrors.companyName && <span className="text-xs text-red-500 font-medium">{fieldErrors.companyName}</span>}
                 </div>
               </div>
             )}

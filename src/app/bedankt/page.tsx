@@ -240,6 +240,14 @@ export default function ThankYouPage() {
     ].filter(Boolean).join(" ") ||
     personalName;
 
+  const shippingCompany =
+    readStringValue(selectedShippingAddress, ["company", "company_name"]) ||
+    (shippingAddress as any)?.company_name ||
+    shippingAddress?.company ||
+    readStringValue(order, ["shipping_company", "shipping_company_name"]) ||
+    readStringValue(payload, ["shipping_company", "shipping_company_name"]) ||
+    "";
+
   const shippingStreet =
     readStringValue(selectedShippingAddress, ["address", "address1", "address_1", "street"]) ||
     shippingAddress?.address1 ||
@@ -472,6 +480,10 @@ export default function ThankYouPage() {
 
       // Shipping
       let shippingY = detailsY + 6;
+      if (shippingCompany) {
+        doc.text(shippingCompany, 110, shippingY);
+        shippingY += 5;
+      }
       doc.text(shippingNameFormatted, 110, shippingY);
       if (shippingStreet) doc.text(shippingStreet, 110, shippingY += 5);
       if (shippingCity) doc.text(shippingCity, 110, shippingY += 5);
@@ -736,8 +748,10 @@ export default function ThankYouPage() {
                     </svg>
                     <span className="text-ink text-[16px] md:text-[18px] font-bold">{t("thankYou.shippingAddress")}</span>
                   </div>
-                  <div className="text-copy text-[15px] md:text-[16px] font-normal leading-relaxed">
-                    {fullShippingAddress}
+                  <div className="text-copy text-[15px] md:text-[16px] font-normal leading-relaxed flex flex-col">
+                    {shippingCompany && <span>{shippingCompany}</span>}
+                    <span>{shippingNameFormatted}</span>
+                    <span>{fullShippingAddress}</span>
                   </div>
                 </div>
               )}

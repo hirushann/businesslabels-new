@@ -3243,6 +3243,22 @@ function ShippingAddressEditInline({
           </div>
         </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className={labelClasses}>{getLabel('account.companyName', 'Company name')} ({getLabel('checkout.optional', 'Optional')})</label>
+            <input 
+              type="text" 
+              value={company} 
+              onChange={(e) => {
+                setCompany(e.target.value);
+                clearFieldError('company');
+              }} 
+              className={getInputClasses(Boolean(fieldErrors.company))} 
+              placeholder="Company Ltd." 
+            />
+            {fieldErrors.company && <span className="text-xs text-red-500 font-medium mt-1 block ml-3">{fieldErrors.company}</span>}
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
