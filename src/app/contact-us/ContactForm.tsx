@@ -177,7 +177,7 @@ export default function ContactForm() {
         )}
 
         {/* Honeypot field - hidden from humans, filled by bots */}
-        <div style={{ display: 'none' }} aria-hidden="true">
+        <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }} aria-hidden="true">
           <label htmlFor="website_url">Website</label>
           <input
             type="text"
