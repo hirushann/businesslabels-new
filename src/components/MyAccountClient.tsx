@@ -53,6 +53,8 @@ type AccountOrder = {
     packingGroup?: number | null;
     allowSingulars?: boolean | null;
     isLabelProduct?: boolean | null;
+    basePrice?: number | null;
+    discounts?: string | Array<{ discount?: string | number | null; quantity?: string | number | null }> | null;
   }>;
   billing_address?: AccountAddress;
   shipping_address?: AccountAddress;
@@ -330,6 +332,7 @@ function normalizeOrders(payload: unknown): AccountOrder[] {
           const quantity = readNumberValue(itemRecord, ['quantity', 'qty']) || 1;
           const price = readNumberValue(itemRecord, ['price', 'unit_price']) || 0;
           const total = readNumberValue(itemRecord, ['total', 'line_total']) || (price * quantity);
+          const discounts = itemRecord.discounts ?? product.discounts;
 
           const imagesArray = Array.isArray(itemRecord.images) ? itemRecord.images : Array.isArray(product.images) ? product.images : [];
           const firstImageObj = imagesArray.length > 0 && isPlainObject(imagesArray[0]) ? imagesArray[0] : null;
@@ -375,9 +378,15 @@ function normalizeOrders(payload: unknown): AccountOrder[] {
               (isPlainObject(itemRecord.image) ? readStringValue(itemRecord.image, ['url', 'src']) : '') ||
               (isPlainObject(itemRecord.main_image) ? readStringValue(itemRecord.main_image, ['url', 'src']) : '')
             ) || null,
-            packingGroup: readNumberValue(product, ['packingGroup', 'packing_group']) || null,
-            allowSingulars: product.allow_singulars !== undefined ? Boolean(product.allow_singulars) : null,
-            isLabelProduct: Boolean(product.is_label_product ?? product.is_label ?? false),
+            packingGroup: readNumberValue(itemRecord, ['packingGroup', 'packing_group']) ?? readNumberValue(product, ['packingGroup', 'packing_group']),
+            allowSingulars: itemRecord.allow_singulars !== undefined
+              ? Boolean(itemRecord.allow_singulars)
+              : product.allow_singulars !== undefined
+                ? Boolean(product.allow_singulars)
+                : null,
+            isLabelProduct: Boolean(itemRecord.is_label_product ?? product.is_label_product ?? product.is_label ?? false),
+            basePrice: readNumberValue(itemRecord, ['base_price', 'original_price']) ?? readNumberValue(product, ['price', 'base_price', 'original_price']),
+            discounts: typeof discounts === 'string' || Array.isArray(discounts) ? discounts : null,
           };
         }),
         billing_address: billingRaw ? normalizeAddress(billingRaw, index) : undefined,
@@ -1311,6 +1320,8 @@ function OrdersView() {
           packingGroup: item.packingGroup ?? null,
           allowSingulars: item.allowSingulars ?? null,
           isLabelProduct: item.isLabelProduct ?? null,
+          basePrice: item.basePrice ?? item.price ?? null,
+          discounts: item.discounts ?? null,
         },
         item.quantity
       );

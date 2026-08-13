@@ -133,7 +133,7 @@ function isCartDiscountTier(value: unknown): value is CartDiscountTier {
   return typeof value === "object" && value !== null;
 }
 
-function calculateUnitPrice(item: CartItem): number | null | undefined {
+export function calculateUnitPrice(item: CartItem): number | null | undefined {
   if (item.itemKind === "warranty") return item.price;
   const priceToUse = item.basePrice ?? item.price;
   if (typeof priceToUse !== "number") return item.price;
@@ -282,12 +282,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         });
       }
 
+      const newItem = {
+        ...item,
+        key,
+        quantity: normalizedQuantity,
+      };
+
       return [
         ...currentItems,
         {
-          ...item,
-          key,
-          quantity: normalizedQuantity,
+          ...newItem,
+          price: calculateUnitPrice(newItem) ?? newItem.price,
         },
       ];
     });
