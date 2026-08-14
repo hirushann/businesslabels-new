@@ -1,17 +1,18 @@
 // @vitest-environment jsdom
 
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const navigation = vi.hoisted(() => ({
   push: vi.fn(),
   refresh: vi.fn(),
   replace: vi.fn(),
+  pathname: '/',
   searchParams: new URLSearchParams(),
 }));
 
 vi.mock('next/navigation', () => ({
-  usePathname: () => '/',
+  usePathname: () => navigation.pathname,
   useRouter: () => navigation,
   useSearchParams: () => navigation.searchParams,
 }));
@@ -41,11 +42,14 @@ vi.mock('@/components/RegisterPopup', () => ({ default: () => null }));
 import Header from './Header';
 
 describe('Header authentication redirects', () => {
+  afterEach(cleanup);
+
   beforeEach(() => {
     localStorage.clear();
     navigation.push.mockClear();
     navigation.refresh.mockClear();
     navigation.replace.mockClear();
+    navigation.pathname = '/';
     navigation.searchParams = new URLSearchParams('auth=login&redirect=%2Fen%2Fmy-account');
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ json: async () => ({ data: [] }) }));
   });
@@ -61,5 +65,24 @@ describe('Header authentication redirects', () => {
     fireEvent.click(completeLogin);
 
     expect(navigation.push).not.toHaveBeenCalled();
+  });
+
+  it('does not let stale local auth suppress the login dialog', async () => {
+    localStorage.setItem('auth_user', JSON.stringify({ id: 1 }));
+
+    render(<Header />);
+
+    expect(await screen.findByRole('button', { name: 'complete login' })).toBeTruthy();
+  });
+
+  it('clears expired auth cookies before redirecting back to login', async () => {
+    navigation.pathname = '/my-account';
+    navigation.searchParams = new URLSearchParams();
+    render(<Header hasAuthToken />);
+
+    window.dispatchEvent(new CustomEvent('auth-expired'));
+
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/logout', { method: 'POST' }));
+    await waitFor(() => expect(navigation.push).toHaveBeenCalledWith('/en/?auth=login&redirect=%2Fmy-account'));
   });
 });

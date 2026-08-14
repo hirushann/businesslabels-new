@@ -17,7 +17,7 @@ describe("CartTotals", () => {
 
     expect(html.indexOf('data-cart-total="excl-vat"')).toBeLessThan(html.indexOf('data-cart-total="incl-vat"'));
     expect(html).toContain('data-cart-total="excl-vat" class="flex items-center justify-between text-xl font-bold');
-    expect(html).toContain('data-cart-total="incl-vat" class="flex items-center justify-between text-sm font-normal');
+    expect(html).toContain('data-cart-total="incl-vat" class="flex items-center justify-between text-xl font-bold');
   });
 
   it("renders incl.-VAT as the primary total for normal customers", () => {
@@ -33,7 +33,7 @@ describe("CartTotals", () => {
 
     expect(html.indexOf('data-cart-total="incl-vat"')).toBeLessThan(html.indexOf('data-cart-total="excl-vat"'));
     expect(html).toContain('data-cart-total="incl-vat" class="flex items-center justify-between text-xl font-bold');
-    expect(html).toContain('data-cart-total="excl-vat" class="flex items-center justify-between text-sm font-normal');
+    expect(html).toContain('data-cart-total="excl-vat" class="flex items-center justify-between text-xl font-bold');
   });
 
   it("uses explicit customer type first and company details as the existing fallback", () => {

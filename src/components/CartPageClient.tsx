@@ -145,14 +145,6 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
   }
 
   const mainItems = items.filter((item) => item.itemKind !== 'warranty');
-  const discountTotal = items.reduce((sum, item) => {
-    const unitPrice = typeof item.price === 'number' ? item.price : 0;
-    const baseUnitPrice = typeof item.basePrice === 'number' ? item.basePrice : unitPrice;
-    return sum + (baseUnitPrice - unitPrice) * item.quantity;
-  }, 0);
-
-
-
   return (
     <>
       <div className="px-4 md:px-8 lg:px-10 py-12">
@@ -189,6 +181,11 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
               {/* Products List Body */}
               <div className="p-4 md:p-6 flex flex-col gap-6">
                 {mainItems.map((item, index) => {
+                  const unitPrice = typeof item.price === 'number' && Number.isFinite(item.price) ? item.price : 0;
+                  const originalUnitPrice =
+                    typeof item.basePrice === 'number' && Number.isFinite(item.basePrice)
+                      ? item.basePrice
+                      : unitPrice;
                   const productSlug = item.slug?.trim();
                   const href = productSlug
                     ? localePath(`/product/${productSlug}${item.type ? `?type=${item.type}` : ''}`, locale)
@@ -266,16 +263,19 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                             <span className="text-xs font-semibold text-subtle uppercase tracking-wide lg:hidden mb-0.5">
                               {t('cart.unitPrice')}
                             </span>
-                            <div className="flex flex-wrap items-baseline gap-x-1">
+                            <div className="flex flex-wrap items-baseline gap-x-1 text-subtle">
                               {hasTierPrices && (
-                                <span className="text-copy text-base font-normal">
+                                <span className="text-base font-normal">
                                   {t('product.fromPrice')}
                                 </span>
                               )}
-                              <span className="text-lg md:text-xl font-bold text-ink">
-                                {formatEuro(item.price ?? 0)}
+                              <span className="text-base font-normal line-through">
+                                {formatEuro(originalUnitPrice)}
                               </span>
                             </div>
+                            <span className="text-lg md:text-xl font-bold text-danger">
+                              {formatEuro(unitPrice)}
+                            </span>
                             <span className="text-sm font-normal text-subtle">
                               {t('product.exVat')}
                             </span>
@@ -533,18 +533,6 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                       {formatEuro(tax)}
                     </span>
                   </div>
-
-                  {/* Discount */}
-                  {discountTotal > 0 ? (
-                    <div className="flex justify-between items-center bg-white/50">
-                      <span className="text-lg font-bold text-ink">
-                        {t('cart.discount')}
-                      </span>
-                      <span className="text-lg font-semibold text-danger">
-                        -{formatEuro(discountTotal)}
-                      </span>
-                    </div>
-                  ) : null}
 
                   {/* Coupon Discount */}
                   {appliedCoupon && couponDiscountAmount > 0 ? (

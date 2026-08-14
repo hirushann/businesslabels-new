@@ -18,6 +18,7 @@ type OrderDetails = {
   shipping_amount?: number | string;
   payment_fee?: number | string;
   tax_amount?: number | string;
+  vat_shifted?: boolean | number | string;
   discount_amount?: number | string;
   discount_total?: number | string;
   payment_method?: string;
@@ -356,6 +357,7 @@ export default function ThankYouPage() {
   const shipping = isRealOrder ? (readNumberValue(order, ["shipping_amount", "shipping_total"]) ?? 0) : 100.00;
   const paymentFee = isRealOrder ? (readNumberValue(order, ["payment_fee", "payment_fee_amount", "payment_method_fee"]) ?? 0) : 0;
   const tax = isRealOrder ? (readNumberValue(order, ["tax_amount", "tax_total"]) ?? 0) : 988.00;
+  const vatShifted = order?.vat_shifted === true || order?.vat_shifted === 1 || order?.vat_shifted === "1";
   const discount = isRealOrder ? (readNumberValue(order, ["discount_amount", "discount_total"]) ?? 0) : -100.00;
   const total = isRealOrder ? (readNumberValue(order, ["total", "grand_total"]) ?? 0) : 5792.67;
 
@@ -537,8 +539,8 @@ export default function ThankYouPage() {
         doc.text(formatEuro(paymentFee), 175, totalsY);
       }
 
-      doc.text(`${t("checkout.vat")} (21%)`, 130, totalsY += 6);
-      doc.text(formatEuro(tax), 175, totalsY);
+      doc.text(vatShifted ? "Verlegd" : `${t("checkout.vat")} (21%)`, 130, totalsY += 6);
+      doc.text(vatShifted ? "Verlegd" : formatEuro(tax), 175, totalsY);
 
       if (discount !== 0) {
         doc.setTextColor(221, 51, 51);
@@ -550,7 +552,7 @@ export default function ThankYouPage() {
       // Grand Total
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
-      doc.text(t("thankYou.totalInclVat"), 130, totalsY += 8);
+      doc.text(vatShifted ? t("checkout.total") : t("thankYou.totalInclVat"), 130, totalsY += 8);
       doc.text(formatEuro(total), 175, totalsY);
 
       // Save PDF
@@ -678,8 +680,8 @@ export default function ThankYouPage() {
                 </div>
               )}
               <div className="flex justify-between items-center text-ink text-[16px] md:text-[18px] font-bold">
-                <span>{t("checkout.vat")} (21%)</span>
-                <span>{formatEuro(tax)}</span>
+                <span>{vatShifted ? "Verlegd" : `${t("checkout.vat")} (21%)`}</span>
+                <span>{vatShifted ? "Verlegd" : formatEuro(tax)}</span>
               </div>
               
               {discount !== 0 && (
@@ -693,7 +695,7 @@ export default function ThankYouPage() {
               <div className="w-full h-px bg-[#D9E3ED] my-1"></div>
 
               <div className="flex justify-between items-center text-ink text-[18px] md:text-[20px] font-bold">
-                <span>{t("thankYou.totalInclVat")}</span>
+                <span>{vatShifted ? t("checkout.total") : t("thankYou.totalInclVat")}</span>
                 <span className="font-semibold text-[18px] md:text-[20px]">{formatEuro(total)}</span>
               </div>
             </div>
