@@ -2390,6 +2390,7 @@ function AddressesView() {
             void fetchAddresses();
           }}
           address={editingAddress === 'billing' ? billingAddress : shippingAddress}
+          billingCompanyName={billingAddress?.company || ''}
         />
       )}
     </div>
@@ -2864,6 +2865,7 @@ function ShippingAddressesView({ user }: { user: StoredUser }) {
             void fetchAddresses();
           }}
           address={editingAddress === 'new' ? undefined : editingAddress}
+          billingCompanyName={addresses.find((a) => a.type?.toLowerCase() === 'billing' || a.type?.toLowerCase().includes('billing'))?.company || ''}
         />
       ) : (
         <>
@@ -3004,11 +3006,13 @@ function ShippingAddressesView({ user }: { user: StoredUser }) {
 function ShippingAddressEditInline({ 
   onClose, 
   onSave, 
-  address 
+  address,
+  billingCompanyName,
 }: { 
   onClose: () => void; 
   onSave: (savedId?: string | number) => void;
   address?: AccountAddress;
+  billingCompanyName?: string;
 }) {
   const t = useTranslations();
   const getLabel = (key: string, fallback: string) => {
@@ -3157,14 +3161,16 @@ function ShippingAddressEditInline({
         ? (isNaN(Number(address.id)) ? address.id : Number(address.id)) 
         : undefined;
 
+      const finalCompany = company.trim() ? company.trim() : (billingCompanyName?.trim() || '');
+
       const payload = {
         id: cleanId,
         type: 'shipping',
         name: `${firstName} ${lastName}`,
         firstname: firstName,
         lastname: lastName,
-        company: company,
-        company_name: company,
+        company: finalCompany,
+        company_name: finalCompany,
         address: street,
         address2: stateRegion,
         state: stateRegion,
@@ -4075,12 +4081,14 @@ function AddressEditModal({
   type, 
   onClose, 
   onSave, 
-  address 
+  address,
+  billingCompanyName,
 }: { 
   type: 'billing' | 'shipping'; 
   onClose: () => void; 
   onSave: () => void;
   address?: AccountAddress;
+  billingCompanyName?: string;
 }) {
   const t = useTranslations();
   const locale = useLocale();
@@ -4174,13 +4182,18 @@ function AddressEditModal({
         ? (isNaN(Number(address.id)) ? address.id : Number(address.id)) 
         : undefined;
 
+      const finalCompany = isBilling
+        ? company.trim()
+        : (company.trim() ? company.trim() : (billingCompanyName?.trim() || ''));
+
       const payload = {
         id: cleanId,
         type,
         name: `${firstName} ${lastName}`,
         firstname: firstName,
         lastname: lastName,
-        company_name: company,
+        company: finalCompany,
+        company_name: finalCompany,
         ...(isBilling ? { vat_number: vatNumber } : {}),
         address: street,
         address2: street2,

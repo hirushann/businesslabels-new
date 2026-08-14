@@ -1855,6 +1855,7 @@ function CheckoutShell({
         open={isAddAddressPopupOpen}
         editingAddress={editingAddress}
         addressType={addressPopupType}
+        billingCompanyName={form.companyName || savedBillingAddresses.find((a) => String(a.id) === String(selectedSavedBillingAddressId))?.company || ''}
         onOpenChange={(open) => {
           setIsAddAddressPopupOpen(open);
           if (!open) {
@@ -2170,9 +2171,11 @@ function applySavedShippingAddressToForm(
   const lastname = address.lastname || address.name?.split(' ').slice(1).join(' ') || current.shippingLastName || current.lastName;
   const email = address.email || current.shippingEmail || current.email;
   const phone = address.phone || current.shippingMobileNumber || current.mobileNumber;
+  const company = (address.company && address.company.trim()) ? address.company : current.companyName;
 
   return {
     ...current,
+    shippingCompanyName: company,
     shippingFirstName: firstname,
     shippingLastName: lastname,
     shippingEmail: email,
@@ -2594,7 +2597,11 @@ export default function CheckoutPageClient({
       }
 
       setForm((current) => {
-        const next = { ...current, sameAsBilling: false };
+        const next = {
+          ...current,
+          sameAsBilling: false,
+          shippingCompanyName: current.shippingCompanyName.trim() ? current.shippingCompanyName : current.companyName,
+        };
         return selectedAddress ? applySavedShippingAddressToForm(next, selectedAddress, countriesList) : next;
       });
       setErrors((current) => ({ ...current, sameAsBilling: undefined }));
@@ -2880,10 +2887,15 @@ export default function CheckoutPageClient({
     const shippingEmailVal = form.sameAsBilling ? form.email : (form.shippingEmail || form.email);
     const shippingPhoneVal = form.sameAsBilling ? form.mobileNumber : (form.shippingMobileNumber || form.mobileNumber);
 
+    const shippingCompanyVal = form.sameAsBilling
+      ? form.companyName
+      : (form.shippingCompanyName?.trim() ? form.shippingCompanyName : form.companyName);
+
     const rawShippingFields = {
       shipping_firstname: shippingFirst,
       shipping_lastname: shippingLast,
-      shipping_company_name: form.sameAsBilling ? form.companyName : form.shippingCompanyName,
+      shipping_company_name: shippingCompanyVal,
+      shipping_company: shippingCompanyVal,
       shipping_email: shippingEmailVal,
       shipping_phone: shippingPhoneVal,
       shipping_address: shippingStreet,
@@ -2916,6 +2928,8 @@ export default function CheckoutPageClient({
       }
     } else if (shippingAddressId !== null) {
       orderData.shipping_address_id = shippingAddressId;
+      orderData.shipping_company_name = shippingCompanyVal;
+      orderData.shipping_company = shippingCompanyVal;
     } else {
       Object.assign(orderData, rawShippingFields);
     }
@@ -3140,9 +3154,17 @@ interface AddAddressPopupProps {
   onSuccess: (savedId?: string | number) => void;
   editingAddress?: CheckoutSavedAddress | null;
   addressType?: 'billing' | 'shipping';
+  billingCompanyName?: string;
 }
 
-function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addressType = 'shipping' }: AddAddressPopupProps) {
+function AddAddressPopup({
+  open,
+  onOpenChange,
+  onSuccess,
+  editingAddress,
+  addressType = 'shipping',
+  billingCompanyName,
+}: AddAddressPopupProps) {
   const t = useTranslations();
   const locale = useLocale();
   const getLabel = (key: string, fallback: string) => {
@@ -3326,13 +3348,17 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
 
     setIsSaving(true);
     try {
+      const finalCompanyName = isBilling
+        ? companyName
+        : (companyName.trim() ? companyName.trim() : (billingCompanyName?.trim() || ''));
+
       const payload: Record<string, unknown> = {
         type: addressType,
         name: `${firstName} ${lastName}`,
         firstname: firstName,
         lastname: lastName,
-        company_name: companyName,
-        company: companyName,
+        company_name: finalCompanyName,
+        company: finalCompanyName,
         ...(isBilling ? { vat_number: vatNumber, btw_number: vatNumber, vatNumber } : {}),
         address: street,
         address2: stateRegion,
