@@ -36,6 +36,7 @@ type AccountOrder = {
   rawTax?: number;
   rawDiscount?: number;
   rawTotal?: number;
+  vat_shifted?: boolean;
   payment_method?: string;
   purchase_reference?: string;
   mollie_id?: string;
@@ -323,6 +324,7 @@ function normalizeOrders(payload: unknown): AccountOrder[] {
         rawTax,
         rawDiscount,
         rawTotal,
+        vat_shifted: order.vat_shifted === true || order.vat_shifted === 1 || order.vat_shifted === '1',
         payment_method: rawPaymentMethod,
         purchase_reference: purchaseRef,
         mollie_id: mollieId,
@@ -1274,8 +1276,8 @@ function OrdersView() {
         doc.text(order.payment_fee || formatEuro(order.rawPaymentFee), 175, totalsY);
       }
 
-      doc.text(`${t('checkout.vat')} (21%)`, 130, (totalsY += 6));
-      doc.text(order.tax_amount || formatEuro(order.rawTax || 0), 175, totalsY);
+      doc.text(order.vat_shifted ? 'Verlegd' : `${t('checkout.vat')} (21%)`, 130, (totalsY += 6));
+      doc.text(order.vat_shifted ? 'Verlegd' : (order.tax_amount || formatEuro(order.rawTax || 0)), 175, totalsY);
 
       if (order.rawDiscount && order.rawDiscount !== 0) {
         doc.setTextColor(221, 51, 51);
@@ -1286,7 +1288,7 @@ function OrdersView() {
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
-      doc.text(t('thankYou.totalInclVat'), 130, (totalsY += 8));
+      doc.text(order.vat_shifted ? t('checkout.total') : t('thankYou.totalInclVat'), 130, (totalsY += 8));
       doc.text(order.total || formatEuro(order.rawTotal || 0), 175, totalsY);
 
       doc.save(`Order_Confirmation_${order.id}.pdf`);
@@ -1710,7 +1712,6 @@ function OrdersView() {
                   <div className="p-5 rounded-2xl border border-slate-100 bg-white shadow-sm flex flex-col gap-1 text-sm font-medium text-neutral-600">
                     <span className="font-bold text-neutral-800 mb-1 text-base">{selectedOrder.shipping_address?.name}</span>
                     {selectedOrder.shipping_address?.company && <span>{selectedOrder.shipping_address.company}</span>}
-                    {selectedOrder.shipping_address?.vatNumber && <span>{t('account.vatLabel') || t('checkout.vatLabel') || 'BTW'}: {selectedOrder.shipping_address.vatNumber}</span>}
                     {selectedOrder.shipping_address?.address1 && <span>{selectedOrder.shipping_address.address1}</span>}
                     {selectedOrder.shipping_address?.address2 && <span>{selectedOrder.shipping_address.address2}</span>}
                     <span>{selectedOrder.shipping_address?.postcode} {selectedOrder.shipping_address?.city}</span>
@@ -1738,8 +1739,8 @@ function OrdersView() {
                   </div>
                 ) : null}
                 <div className="flex justify-between text-sm text-neutral-400 font-bold">
-                  <span>{t('account.tax')}</span>
-                  <span>{selectedOrder.tax_amount}</span>
+                  <span>{selectedOrder.vat_shifted ? 'Verlegd' : t('account.tax')}</span>
+                  <span>{selectedOrder.vat_shifted ? 'Verlegd' : selectedOrder.tax_amount}</span>
                 </div>
                 <div className="h-px bg-white/10 my-1" />
                 <div className="flex justify-between text-xl font-black">
@@ -2492,8 +2493,7 @@ function BillingAddressesView({ user }: { user: StoredUser }) {
   });
 
   const getLabel = (key: string, fallback: string) => {
-    const val = t(key);
-    return val === key ? fallback : val;
+    return t.has(key) ? t(key) : fallback;
   };
 
   if (isLoading) {
@@ -2793,8 +2793,7 @@ function ShippingAddressesView({ user }: { user: StoredUser }) {
   });
 
   const getLabel = (key: string, fallback: string) => {
-    const val = t(key);
-    return val === key ? fallback : val;
+    return t.has(key) ? t(key) : fallback;
   };
 
   if (isLoading) {
@@ -3013,8 +3012,7 @@ function ShippingAddressEditInline({
 }) {
   const t = useTranslations();
   const getLabel = (key: string, fallback: string) => {
-    const val = t(key);
-    return val === key ? fallback : val;
+    return t.has(key) ? t(key) : fallback;
   };
   const [firstName, setFirstName] = useState(address?.firstname || '');
   const [lastName, setLastName] = useState(address?.lastname || '');
@@ -3567,13 +3565,12 @@ function SingleAddressView({ type }: { type: 'billing_address' | 'shipping_addre
   }
 
   const getLabel = (key: string, fallback: string) => {
-    const val = t(key);
-    return val === key ? fallback : val;
+    return t.has(key) ? t(key) : fallback;
   };
   const { firstName, lastName } = splitAddressName(targetAddress);
   const displayFields = [
     { label: getLabel('account.company', 'Company name'), value: targetAddress?.company },
-    { label: getLabel('account.vatNumber', 'VAT number'), value: targetAddress?.vatNumber },
+    ...(isBilling ? [{ label: getLabel('account.vatNumber', 'VAT number'), value: targetAddress?.vatNumber }] : []),
     { label: getLabel('account.firstName', 'First name'), value: firstName },
     { label: getLabel('account.lastName', 'Last name'), value: lastName },
     { label: getLabel('account.emailAddress', 'Email address'), value: targetAddress?.email },
@@ -3637,9 +3634,9 @@ function BillingAddressEditInline({
   address?: AccountAddress;
 }) {
   const t = useTranslations();
+  const locale = useLocale();
   const getLabel = (key: string, fallback: string) => {
-    const val = t(key);
-    return val === key ? fallback : val;
+    return t.has(key) ? t(key) : fallback;
   };
 
   const [firstName, setFirstName] = useState(address?.firstname || '');
@@ -3769,9 +3766,6 @@ function BillingAddressEditInline({
     reqField(postcode, 'postcode', getLabel('account.postCode', 'Postcode'));
     reqField(city, 'city', getLabel('account.city', 'Place'));
 
-    if (countryId !== 'NL') {
-      reqField(vatNumber, 'vatNumber', getLabel('account.vatNumber', 'VAT number'));
-    }
     if (vatNumber && vatNumber.trim().length > 17) {
       errors.vatNumber = t.has && typeof t.has === 'function' && t.has('validation.vatNumberLength')
         ? t('validation.vatNumberLength')
@@ -3874,7 +3868,7 @@ function BillingAddressEditInline({
           </div>
           <div>
             <label className={labelClasses}>
-              {getLabel('account.vatNumber', 'VAT number')} {countryId !== 'NL' ? '*' : '(Optional)'}
+              {getLabel('account.vatNumber', 'VAT number')} ({locale === 'nl' ? 'Optioneel' : 'Optional'})
             </label>
             <input 
               type="text" 
@@ -4147,9 +4141,6 @@ function AddressEditModal({
     reqField(lastName, 'lastName', t('account.lastName') || (locale === 'nl' ? 'Achternaam' : 'Last Name'));
     if (isBilling) {
       reqField(company, 'company', t('account.companyName') || (locale === 'nl' ? 'Bedrijfsnaam' : 'Company Name'));
-      if (countryId !== 'NL') {
-        reqField(vatNumber, 'vatNumber', t('account.vatNumber') || (locale === 'nl' ? 'BTW-nummer' : 'VAT number'));
-      }
       if (vatNumber && vatNumber.trim().length > 17) {
         errors.vatNumber = t.has && typeof t.has === 'function' && t.has('validation.vatNumberLength')
           ? t('validation.vatNumberLength')
@@ -4190,7 +4181,7 @@ function AddressEditModal({
         firstname: firstName,
         lastname: lastName,
         company_name: company,
-        vat_number: vatNumber,
+        ...(isBilling ? { vat_number: vatNumber } : {}),
         address: street,
         address2: street2,
         state: street2,
@@ -4347,7 +4338,7 @@ function AddressEditModal({
                   {fieldErrors.company && <span className="text-xs text-red-500 font-medium mt-1.5 block ml-1">{fieldErrors.company}</span>}
                 </div>
                 <div>
-                  <label className={labelClasses}>{(locale === 'nl' ? 'BTW-nummer' : 'VAT number')} {countryId !== 'NL' ? '*' : (locale === 'nl' ? '(Optioneel)' : '(Optional)')}</label>
+                  <label className={labelClasses}>{locale === 'nl' ? 'BTW-nummer (Optioneel)' : 'VAT number (Optional)'}</label>
                   <input 
                     type="text" 
                     value={vatNumber} 
@@ -4594,8 +4585,7 @@ function AccountDetailsView({ user }: { user: StoredUser }) {
   const lastName = name.substring(name.indexOf(' ') + 1) || '-';
 
   const getLabel = (key: string, fallback: string) => {
-    const val = t(key);
-    return val === key ? fallback : val;
+    return t.has(key) ? t(key) : fallback;
   };
 
   if (!isEditing) {

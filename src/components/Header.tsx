@@ -145,6 +145,8 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
   const router = useRouter();
 
   useEffect(() => {
+    let isHandlingAuthExpiry = false;
+
     const checkAuth = () => {
       if (typeof window !== 'undefined') {
         const stored = localStorage.getItem('auth_user');
@@ -154,12 +156,15 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
 
     checkAuth();
 
-    const handleAuthExpired = () => {
+    const handleAuthExpired = async () => {
+      if (isHandlingAuthExpiry) return;
+      isHandlingAuthExpiry = true;
       setClientAuthState(false);
+      await fetch('/api/logout', { method: 'POST' }).catch(() => null);
       // Soft redirect to home page and trigger login popup
       // without causing a full browser refresh
       if (typeof window !== 'undefined') {
-        const currentPath = window.location.pathname;
+        const currentPath = pathname;
         if (currentPath.includes('/my-account')) {
           router.push(localePath('/?auth=login&redirect=' + encodeURIComponent(currentPath), locale));
         } else {
@@ -177,9 +182,9 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
       window.removeEventListener('auth-user-updated', checkAuth);
       window.removeEventListener('auth-expired', handleAuthExpired);
     };
-  }, [router, locale]);
+  }, [router, locale, pathname]);
 
-  const isAuthenticated = hasAuthToken || clientAuthState === true;
+  const isAuthenticated = hasAuthToken && clientAuthState !== false;
   const accountHref = lp('/my-account');
 
   const handleAccountClick = (event: MouseEvent<HTMLAnchorElement>) => {
@@ -233,8 +238,8 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
 
     if (redirectTo) {
       router.push(redirectTo);
-      router.refresh();
     }
+    router.refresh();
   };
 
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);

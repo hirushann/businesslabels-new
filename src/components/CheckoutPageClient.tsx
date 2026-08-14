@@ -12,6 +12,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip
 import { localePath } from "@/lib/i18n/utils";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { useShippingRules } from "@/hooks/useShippingRules";
+import { calculateDisplayedCheckoutTotals } from "@/lib/checkout/vat";
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
 
 type CheckoutFormState = {
@@ -44,6 +45,18 @@ type CheckoutFormState = {
 };
 
 type CheckoutMode = "live" | "demo";
+
+type VatStatus = {
+  vat_validation_status: "missing" | "invalid" | "valid" | "unavailable";
+  vat_shifted: boolean;
+  tax_rate: number;
+};
+
+const chargedVatStatus: VatStatus = {
+  vat_validation_status: "missing",
+  vat_shifted: false,
+  tax_rate: 0.21,
+};
 
 type CheckoutPageClientProps = {
   mode?: CheckoutMode;
@@ -209,6 +222,7 @@ function resolveCountryId(countryName: string, countriesList: any[] = []): strin
   if (lower === 'netherlands' || lower === 'nederland' || lower === 'nl') return 'NL';
   if (lower === 'belgium' || lower === 'belgië' || lower === 'belgique' || lower === 'be') return 'BE';
   if (lower === 'germany' || lower === 'duitsland' || lower === 'deutschland' || lower === 'de') return 'DE';
+  if (/^[a-z]{2}$/.test(lower)) return lower.toUpperCase();
   return 'NL';
 }
 
@@ -399,6 +413,50 @@ function CheckoutShell({
   }, [form.shippingState, shippingProvinces]);
 
   const taxableAmount = Math.max(0, totalAmount - couponDiscountAmount);
+  const billingCountryCode = resolveCountryId(form.country, countriesList);
+  const shippingCountryCode = resolveCountryId(form.sameAsBilling ? form.country : form.shippingCountry, countriesList);
+  const vatRequestKey = `${billingCountryCode}:${form.vatNumber.trim()}:${shippingCountryCode}`;
+  const [vatResponse, setVatResponse] = useState<{ key: string; status: VatStatus }>();
+  const vatStatus = vatResponse?.key === vatRequestKey
+    ? vatResponse.status
+    : {
+        ...chargedVatStatus,
+        vat_validation_status: form.vatNumber.trim() ? "unavailable" as const : "missing" as const,
+      };
+
+  useEffect(() => {
+    if (!form.vatNumber.trim()) return;
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(async () => {
+      try {
+        const response = await fetch("/api/checkout/vat-status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            billing_country: billingCountryCode,
+            vat_number: form.vatNumber,
+            shipping_country: shippingCountryCode,
+          }),
+          signal: controller.signal,
+        });
+        const payload = await response.json();
+        if (response.ok && payload?.data) setVatResponse({ key: vatRequestKey, status: payload.data });
+      } catch (error) {
+        if (!(error instanceof DOMException && error.name === "AbortError")) {
+          setVatResponse({
+            key: vatRequestKey,
+            status: { ...chargedVatStatus, vat_validation_status: "unavailable" },
+          });
+        }
+      }
+    }, 400);
+
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [billingCountryCode, shippingCountryCode, form.vatNumber, vatRequestKey]);
 
   const shippingAmount = useMemo(() => {
     if (items.length === 0) return 0;
@@ -409,8 +467,10 @@ function CheckoutShell({
     return taxableAmount >= selectedRule.free_shipping_threshold ? 0 : selectedRule.shipping_cost;
   }, [items.length, taxableAmount, selectedRule, appliedCoupon]);
   const paymentFee = useMemo(() => (form.paymentMethod === "creditcard" ? taxableAmount * 0.025 : 0), [taxableAmount, form.paymentMethod]);
-  const taxAmount = useMemo(() => (taxableAmount + shippingAmount + paymentFee) * 0.21, [taxableAmount, shippingAmount, paymentFee]);
-  const finalTotal = useMemo(() => taxableAmount + shippingAmount + paymentFee + taxAmount, [taxableAmount, shippingAmount, paymentFee, taxAmount]);
+  const { taxAmount, finalTotal } = useMemo(
+    () => calculateDisplayedCheckoutTotals(taxableAmount, shippingAmount, paymentFee, vatStatus.tax_rate),
+    [taxableAmount, shippingAmount, paymentFee, vatStatus.tax_rate],
+  );
   const [isLoginPopupOpen, setIsLoginPopupOpen] = useState(false);
   const [isRegisterPopupOpen, setIsRegisterPopupOpen] = useState(false);
   const [isAddAddressPopupOpen, setIsAddAddressPopupOpen] = useState(false);
@@ -739,11 +799,7 @@ function CheckoutShell({
                           <div className="flex flex-col gap-2">
                             <span className="text-[18px] font-bold text-ink">
                               {t('checkout.vatNumber')}{' '}
-                              {resolveCountryId(form.country, countriesList) !== 'NL' ? (
-                                <span className="text-red-500">*</span>
-                              ) : (
-                                <span className="text-neutral-400 font-normal text-sm">{locale.startsWith('nl') ? '(Optioneel)' : '(Optional)'}</span>
-                              )}
+                              <span className="text-neutral-400 font-normal text-sm">{locale.startsWith('nl') ? '(Optioneel)' : '(Optional)'}</span>
                             </span>
                             <input
                               type="text"
@@ -753,6 +809,20 @@ function CheckoutShell({
                               placeholder={t('checkout.vatNumberPlaceholder')}
                               className={inputClasses(Boolean(errors.vatNumber))}
                             />
+                            <p className="mt-2 text-sm text-subtle">
+                              {locale.startsWith("nl")
+                                ? "Bij een geldig niet-Nederlands EU-btw-nummer en levering buiten Nederland wordt de btw verlegd. Anders geldt 21% btw."
+                                : "A valid non-NL EU VAT number shifts VAT only when delivery is outside the Netherlands. Otherwise 21% VAT applies."}
+                            </p>
+                            {form.vatNumber.trim() && (
+                              <p className={`mt-1 text-sm font-semibold ${vatStatus.vat_shifted ? "text-green-700" : "text-subtle"}`}>
+                                {vatStatus.vat_shifted
+                                  ? "Verlegd"
+                                  : vatStatus.vat_validation_status === "valid"
+                                    ? (locale.startsWith("nl") ? "BTW wordt berekend" : "VAT is charged")
+                                    : (locale.startsWith("nl") ? "BTW-nummer niet bevestigd; 21% btw wordt berekend" : "VAT number not confirmed; 21% VAT is charged")}
+                              </p>
+                            )}
                             {errors.vatNumber && <span className="text-xs text-red-500">{errors.vatNumber}</span>}
                           </div>
                         </div>
@@ -1703,8 +1773,8 @@ function CheckoutShell({
                     <span className="text-ink font-bold">{formatEuro(shippingAmount)}</span>
                   </div>
                   <div className="flex justify-between items-center text-[18px]">
-                    <span className="text-ink font-bold">{t('checkout.vat')} (21%)</span>
-                    <span className="text-ink font-bold">{formatEuro(taxAmount)}</span>
+                    <span className="text-ink font-bold">{vatStatus.vat_shifted ? "Verlegd" : `${t('checkout.vat')} (21%)`}</span>
+                    <span className="text-ink font-bold">{vatStatus.vat_shifted ? "Verlegd" : formatEuro(taxAmount)}</span>
                   </div>
                   {paymentFee > 0 && (
                     <div className="flex justify-between items-center text-[18px]">
@@ -1722,7 +1792,7 @@ function CheckoutShell({
                   <div className="h-px bg-[#D9E3ED] w-full mt-1" />
 
                   <div className="flex justify-between items-center mt-1">
-                    <span className="text-ink text-[20px] font-bold">{t('checkout.totalInclVat')}</span>
+                    <span className="text-ink text-[20px] font-bold">{vatStatus.vat_shifted ? t('checkout.total') : t('checkout.totalInclVat')}</span>
                     <span className="text-ink text-[20px] font-semibold">{formatEuro(finalTotal)}</span>
                   </div>
                 </div>
@@ -2325,8 +2395,6 @@ export default function CheckoutPageClient({
     setIsEditingBilling(false);
   };
   
-  const { shippingRules, defaultRule } = useShippingRules();
-
   const autofillCustomerDetails = useCallback(async () => {
     if (isDemoMode) return;
 
@@ -2622,10 +2690,6 @@ export default function CheckoutPageClient({
           ? t('validation.invalidPhone')
           : (locale.startsWith('nl') ? 'Voer een geldig Europees telefoonnummer in' : 'Enter a valid European phone number');
       }
-      const selectedCountryCode = resolveCountryId(form.country, countriesList);
-      if (selectedCountryCode !== 'NL' && (!form.vatNumber || !form.vatNumber.trim())) {
-        nextErrors.vatNumber = t('validation.required', { field: fieldLabels.vatNumber || 'VAT number' });
-      }
       if (form.vatNumber && form.vatNumber.trim().length > 17) {
         nextErrors.vatNumber = t.has && typeof t.has === 'function' && t.has('validation.vatNumberLength')
           ? t('validation.vatNumberLength')
@@ -2754,22 +2818,6 @@ export default function CheckoutPageClient({
 
     setIsPending(true);
 
-    const selectedCountry = form.sameAsBilling ? form.country : form.shippingCountry;
-    const selectedRule = shippingRules.find(r => r.country_name === selectedCountry) ?? defaultRule;
-    const taxableAmount = Math.max(0, totalAmount - (cart.couponDiscountAmount || 0));
-    
-    let shippingAmount = 0;
-    if (cart.appliedCoupon?.allow_free_shipping) {
-      shippingAmount = 0;
-    } else if (selectedRule) {
-      shippingAmount = taxableAmount >= selectedRule.free_shipping_threshold ? 0 : selectedRule.shipping_cost;
-    } else {
-      shippingAmount = taxableAmount >= DEFAULT_FALLBACK_FREE_THRESHOLD ? 0 : DEFAULT_FALLBACK_SHIPPING_COST;
-    }
-    const paymentFee = form.paymentMethod === "creditcard" ? taxableAmount * 0.025 : 0;
-    const taxAmount = (taxableAmount + shippingAmount + paymentFee) * 0.21;
-    const finalTotal = taxableAmount + shippingAmount + paymentFee + taxAmount;
-
     const isSavedBillingSelected =
       isLoggedIn &&
       !isEditingBilling &&
@@ -2796,22 +2844,7 @@ export default function CheckoutPageClient({
         : selectedSavedShippingAddressId
       : null;
 
-    const getCountryId = (countryName: string) => {
-      return (
-        countriesList.find(
-          (c: any) =>
-            c.name.toLowerCase() === countryName.toLowerCase() ||
-            c.id.toLowerCase() === countryName.toLowerCase()
-        )?.id ||
-        (countryName === "Netherlands"
-          ? "NL"
-          : countryName === "Belgium"
-          ? "BE"
-          : countryName === "Germany"
-          ? "DE"
-          : "NL")
-      ).toUpperCase();
-    };
+    const getCountryId = (countryName: string) => resolveCountryId(countryName, countriesList);
 
     const shippingFirst = form.sameAsBilling ? form.firstName : form.shippingFirstName;
     const shippingLast = form.sameAsBilling ? form.lastName : form.shippingLastName;
@@ -2888,11 +2921,6 @@ export default function CheckoutPageClient({
     }
 
     Object.assign(orderData, {
-      shipping_amount: shippingAmount,
-      tax_amount: taxAmount,
-      payment_fee: paymentFee,
-      discount_amount: cart.couponDiscountAmount || 0,
-      total: finalTotal,
       payment_method: form.paymentMethod,
       lang: locale.split('-')[0] === 'nl' ? 'nl' : 'en',
       order_items: buildCheckoutOrderItems(items),
@@ -3269,9 +3297,6 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
       reqField(firstName, 'firstName', getLabel('checkout.firstName', 'First Name').replace(/\s*\*\s*$/, ''));
       reqField(lastName, 'lastName', getLabel('checkout.lastName', 'Last Name').replace(/\s*\*\s*$/, ''));
       reqField(companyName, 'companyName', getLabel('checkout.companyName', 'Company name').replace(/\s*\*\s*$/, ''));
-      if (countryId !== 'NL') {
-        reqField(vatNumber, 'vatNumber', getLabel('checkout.vatNumber', 'VAT number').replace(/\s*\*\s*$/, ''));
-      }
       if (vatNumber && vatNumber.trim().length > 17) {
         errors.vatNumber = t.has && typeof t.has === 'function' && t.has('validation.vatNumberLength')
           ? t('validation.vatNumberLength')
@@ -3308,9 +3333,7 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
         lastname: lastName,
         company_name: companyName,
         company: companyName,
-        vat_number: isBilling ? vatNumber : '',
-        btw_number: isBilling ? vatNumber : '',
-        vatNumber: isBilling ? vatNumber : '',
+        ...(isBilling ? { vat_number: vatNumber, btw_number: vatNumber, vatNumber } : {}),
         address: street,
         address2: stateRegion,
         state: stateRegion,
@@ -3429,7 +3452,7 @@ function AddAddressPopup({ open, onOpenChange, onSuccess, editingAddress, addres
                 </div>
                 <div className="flex flex-col gap-2">
                   <span className={labelClasses}>
-                    {getLabel('checkout.vatNumber', 'BTW-nummer')} {countryId !== 'NL' ? '*' : (locale.startsWith('nl') ? '(Optioneel)' : '(Optional)')}
+                    {getLabel('checkout.vatNumber', 'BTW-nummer')} {locale.startsWith('nl') ? '(Optioneel)' : '(Optional)'}
                   </span>
                   <input 
                     type="text" 
