@@ -242,14 +242,6 @@ export default function RegisterPopup({
   const fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
 
   const selectedCountry = findOptionById(countries, countryId);
-  const activeCountryId = (selectedCountry?.id ?? countryId).trim().toUpperCase();
-  const selectedLabel = (selectedCountry?.label ?? '').trim().toLowerCase();
-  const isNetherlands =
-    activeCountryId === 'NL' ||
-    activeCountryId === 'NLD' ||
-    selectedLabel === 'netherlands' ||
-    selectedLabel === 'nederland' ||
-    countryId.trim().toUpperCase() === 'NL';
   const provinces = selectedCountry?.provinces || [];
   const selectedProvince = findOptionById(provinces, stateId);
 
@@ -373,7 +365,6 @@ export default function RegisterPopup({
     if (!firstName.trim()) nextErrors.first_name = [required];
     if (!lastName.trim()) nextErrors.last_name = [required];
     if (!company.trim()) nextErrors.company = [required];
-    if (!isNetherlands && !vatNumber.trim()) nextErrors.vat_number = [required];
 
     if (!email.trim()) {
       nextErrors.email = [required];
@@ -545,7 +536,6 @@ export default function RegisterPopup({
           <TextInput
             id="popup-vat-number"
             label={t('register.vatNumber')}
-            required={!isNetherlands}
             value={vatNumber}
             onChange={setVatNumber}
             autoComplete="off"
