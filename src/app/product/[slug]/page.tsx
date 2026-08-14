@@ -243,6 +243,7 @@ type ProductDetail = {
   delivery_dates_no_stock?: NumericLike;
   packing_group?: string | number | null;
   allow_singulars?: string | number | boolean | null;
+  moq?: number | null;
   labels_per_roll?: string | number | null;
   discounts?: string | Array<{ discount?: string | number | null; quantity?: string | number | null }> | null;
   discount?: number | null;
@@ -1315,6 +1316,7 @@ export default async function SingleProductPage({
               mainImage={product?.main_image}
               packingGroup={normalizePackingGroup(product?.packing_group)}
               allowSingulars={normalizeBoolean(product?.allow_singulars)}
+              moq={normalizeNumber(product?.moq)}
               stock={product?.stock}
               deliveryDatesInStock={product?.delivery_dates_in_stock}
               deliveryDatesNoStock={product?.delivery_dates_no_stock}

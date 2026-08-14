@@ -24,6 +24,7 @@ export type CartItem = {
   quantity: number;
   packingGroup?: number | null;
   allowSingulars?: boolean | null;
+  moq?: number | null;
   isLabelProduct?: boolean | null;
   itemKind?: "product" | "warranty";
   linkedToKey?: string | null;
@@ -93,15 +94,20 @@ function normalizePackingGroup(value: unknown): number | null {
 
 function nextQuantityForItem(item: CartItem): number {
   const packingGroup = normalizePackingGroup(item.packingGroup);
+  const moq = item.moq ?? null;
+  
   if (!packingGroup) {
     return item.quantity + 1;
   }
 
-  if (item.allowSingulars && item.quantity < packingGroup) {
-    return item.quantity + 1;
+  if (moq && item.quantity < moq) {
+    return moq;
   }
 
   if (item.quantity < packingGroup) {
+    if (item.allowSingulars || (moq && item.quantity >= moq)) {
+      return item.quantity + 1;
+    }
     return packingGroup;
   }
 
