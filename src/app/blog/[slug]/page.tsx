@@ -297,7 +297,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
                         <div className="w-7 h-7 rounded-full bg-amber-100 flex items-center justify-center text-[10px] font-bold text-brand">{authorInitials}</div>
                       )}
                       <div className="text-neutral-800 text-lg font-bold leading-7">
-                        {post.author?.name || "Businesslabels"}
+                        {/* {post.author?.name || "Businesslabels"} */}Levi van der Molen
                       </div>
                     </div>
                   </div>
