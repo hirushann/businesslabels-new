@@ -1,0 +1,4185 @@
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "Category",
+      "slug": "category",
+      "count": 0,
+      "translations": {
+        "nl": {
+          "name": "Category",
+          "slug": "category"
+        },
+        "en": {
+          "name": null,
+          "slug": null
+        }
+      },
+      "categories": [
+        {
+          "id": 7,
+          "name": "Labelprinters",
+          "slug": "labelprinters",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Labelprinters",
+              "slug": "labelprinters",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": [
+            {
+              "id": 16,
+              "name": "Accessoires",
+              "slug": "accessoires",
+              "meta_title": null,
+              "meta_description": null,
+              "main_image": null,
+              "image": null,
+              "parent_id": 7,
+              "count": 0,
+              "translations": {
+                "nl": {
+                  "name": "Accessoires",
+                  "slug": "accessoires",
+                  "meta_title": null,
+                  "meta_description": null
+                },
+                "en": {
+                  "name": null,
+                  "slug": null,
+                  "meta_title": null,
+                  "meta_description": null
+                }
+              },
+              "children": [
+                {
+                  "id": 24,
+                  "name": "Applicatoren",
+                  "slug": "applicatoren",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 16,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Applicatoren",
+                      "slug": "applicatoren",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                },
+                {
+                  "id": 25,
+                  "name": "Dispenser",
+                  "slug": "dispenser-nl",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 16,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Dispenser",
+                      "slug": "dispenser-nl",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                },
+                {
+                  "id": 26,
+                  "name": "Diversen",
+                  "slug": "diversen",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 16,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Diversen",
+                      "slug": "diversen",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": [
+                    {
+                      "id": 31,
+                      "name": "Kabels",
+                      "slug": "kabels",
+                      "meta_title": null,
+                      "meta_description": null,
+                      "main_image": null,
+                      "image": null,
+                      "parent_id": 26,
+                      "count": 0,
+                      "translations": {
+                        "nl": {
+                          "name": "Kabels",
+                          "slug": "kabels",
+                          "meta_title": null,
+                          "meta_description": null
+                        },
+                        "en": {
+                          "name": null,
+                          "slug": null,
+                          "meta_title": null,
+                          "meta_description": null
+                        }
+                      },
+                      "children": []
+                    },
+                    {
+                      "id": 32,
+                      "name": "Onderhoud",
+                      "slug": "onderhoud",
+                      "meta_title": null,
+                      "meta_description": null,
+                      "main_image": null,
+                      "image": null,
+                      "parent_id": 26,
+                      "count": 0,
+                      "translations": {
+                        "nl": {
+                          "name": "Onderhoud",
+                          "slug": "onderhoud",
+                          "meta_title": null,
+                          "meta_description": null
+                        },
+                        "en": {
+                          "name": null,
+                          "slug": null,
+                          "meta_title": null,
+                          "meta_description": null
+                        }
+                      },
+                      "children": []
+                    },
+                    {
+                      "id": 33,
+                      "name": "Overig",
+                      "slug": "overig",
+                      "meta_title": null,
+                      "meta_description": null,
+                      "main_image": null,
+                      "image": null,
+                      "parent_id": 26,
+                      "count": 0,
+                      "translations": {
+                        "nl": {
+                          "name": "Overig",
+                          "slug": "overig",
+                          "meta_title": null,
+                          "meta_description": null
+                        },
+                        "en": {
+                          "name": null,
+                          "slug": null,
+                          "meta_title": null,
+                          "meta_description": null
+                        }
+                      },
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "id": 27,
+                  "name": "Re- &amp; unwinders",
+                  "slug": "re-unwinders-nl",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 16,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Re- &amp; unwinders",
+                      "slug": "re-unwinders-nl",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                },
+                {
+                  "id": 28,
+                  "name": "Cutters",
+                  "slug": "cutters",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 16,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Cutters",
+                      "slug": "cutters",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                },
+                {
+                  "id": 29,
+                  "name": "WiFi en Bluetooth dongles",
+                  "slug": "wifi-en-bluetooth-dongles",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 16,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "WiFi en Bluetooth dongles",
+                      "slug": "wifi-en-bluetooth-dongles",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                },
+                {
+                  "id": 30,
+                  "name": "CW-C4000 accessoires",
+                  "slug": "cw-c4000-accessoires",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 16,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "CW-C4000 accessoires",
+                      "slug": "cw-c4000-accessoires",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": 17,
+              "name": "Kleuren labelprinters",
+              "slug": "kleuren-labelprinters-nl",
+              "meta_title": null,
+              "meta_description": null,
+              "main_image": null,
+              "image": null,
+              "parent_id": 7,
+              "count": 0,
+              "translations": {
+                "nl": {
+                  "name": "Kleuren labelprinters",
+                  "slug": "kleuren-labelprinters-nl",
+                  "meta_title": null,
+                  "meta_description": null
+                },
+                "en": {
+                  "name": null,
+                  "slug": null,
+                  "meta_title": null,
+                  "meta_description": null
+                }
+              },
+              "children": [
+                {
+                  "id": 34,
+                  "name": "Desktop Labelprinters",
+                  "slug": "desktop-labelprinters-nl",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 17,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Desktop Labelprinters",
+                      "slug": "desktop-labelprinters-nl",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                },
+                {
+                  "id": 35,
+                  "name": "Industriële Labelprinters",
+                  "slug": "industriele-labelprinters-nl",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 17,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Industriële Labelprinters",
+                      "slug": "industriele-labelprinters-nl",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                },
+                {
+                  "id": 36,
+                  "name": "Midrange Labelprinters",
+                  "slug": "midrange-labelprinters-nl",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 17,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Midrange Labelprinters",
+                      "slug": "midrange-labelprinters-nl",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                },
+                {
+                  "id": 37,
+                  "name": "Starterkit kleuren labelprinters",
+                  "slug": "starterkit-kleuren-labelprinters",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 17,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Starterkit kleuren labelprinters",
+                      "slug": "starterkit-kleuren-labelprinters",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": 18,
+              "name": "Thermische labelprinters",
+              "slug": "thermische-labelprinters-nl",
+              "meta_title": null,
+              "meta_description": null,
+              "main_image": null,
+              "image": null,
+              "parent_id": 7,
+              "count": 0,
+              "translations": {
+                "nl": {
+                  "name": "Thermische labelprinters",
+                  "slug": "thermische-labelprinters-nl",
+                  "meta_title": null,
+                  "meta_description": null
+                },
+                "en": {
+                  "name": null,
+                  "slug": null,
+                  "meta_title": null,
+                  "meta_description": null
+                }
+              },
+              "children": [
+                {
+                  "id": 38,
+                  "name": "Desktop Labelprinters",
+                  "slug": "desktop-labelprinters-nl-2",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 18,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Desktop Labelprinters",
+                      "slug": "desktop-labelprinters-nl-2",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                },
+                {
+                  "id": 39,
+                  "name": "Industriële Labelprinters",
+                  "slug": "industriele-labelprinters-nl-2",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 18,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Industriële Labelprinters",
+                      "slug": "industriele-labelprinters-nl-2",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                },
+                {
+                  "id": 40,
+                  "name": "Midrange Labelprinters",
+                  "slug": "midrange-labelprinters-nl-2",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 18,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Midrange Labelprinters",
+                      "slug": "midrange-labelprinters-nl-2",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                },
+                {
+                  "id": 41,
+                  "name": "Verzendetiketten labelprinter",
+                  "slug": "verzendetiketten-labelprinter",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 18,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Verzendetiketten labelprinter",
+                      "slug": "verzendetiketten-labelprinter",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": 19,
+              "name": "Verbruiksmaterialen",
+              "slug": "verbruiksmaterialen-nl",
+              "meta_title": null,
+              "meta_description": null,
+              "main_image": null,
+              "image": null,
+              "parent_id": 7,
+              "count": 0,
+              "translations": {
+                "nl": {
+                  "name": "Verbruiksmaterialen",
+                  "slug": "verbruiksmaterialen-nl",
+                  "meta_title": null,
+                  "meta_description": null
+                },
+                "en": {
+                  "name": null,
+                  "slug": null,
+                  "meta_title": null,
+                  "meta_description": null
+                }
+              },
+              "children": [
+                {
+                  "id": 42,
+                  "name": "Inkt cartridges",
+                  "slug": "inkt-cartridges-nl",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 19,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Inkt cartridges",
+                      "slug": "inkt-cartridges-nl",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": [
+                    {
+                      "id": 45,
+                      "name": "Inkt cartridges – TM-C3500",
+                      "slug": "inkt-cartridges-tm-c3500-nl",
+                      "meta_title": null,
+                      "meta_description": null,
+                      "main_image": null,
+                      "image": null,
+                      "parent_id": 42,
+                      "count": 0,
+                      "translations": {
+                        "nl": {
+                          "name": "Inkt cartridges – TM-C3500",
+                          "slug": "inkt-cartridges-tm-c3500-nl",
+                          "meta_title": null,
+                          "meta_description": null
+                        },
+                        "en": {
+                          "name": null,
+                          "slug": null,
+                          "meta_title": null,
+                          "meta_description": null
+                        }
+                      },
+                      "children": []
+                    },
+                    {
+                      "id": 46,
+                      "name": "Inkt cartridges - TM-C3400",
+                      "slug": "inkt-cartridges-tm-c3400",
+                      "meta_title": null,
+                      "meta_description": null,
+                      "main_image": null,
+                      "image": null,
+                      "parent_id": 42,
+                      "count": 0,
+                      "translations": {
+                        "nl": {
+                          "name": "Inkt cartridges - TM-C3400",
+                          "slug": "inkt-cartridges-tm-c3400",
+                          "meta_title": null,
+                          "meta_description": null
+                        },
+                        "en": {
+                          "name": null,
+                          "slug": null,
+                          "meta_title": null,
+                          "meta_description": null
+                        }
+                      },
+                      "children": []
+                    },
+                    {
+                      "id": 47,
+                      "name": "Inkt cartridges – TM-C7500",
+                      "slug": "inkt-cartridges-tm-c7500-nl",
+                      "meta_title": null,
+                      "meta_description": null,
+                      "main_image": null,
+                      "image": null,
+                      "parent_id": 42,
+                      "count": 0,
+                      "translations": {
+                        "nl": {
+                          "name": "Inkt cartridges – TM-C7500",
+                          "slug": "inkt-cartridges-tm-c7500-nl",
+                          "meta_title": null,
+                          "meta_description": null
+                        },
+                        "en": {
+                          "name": null,
+                          "slug": null,
+                          "meta_title": null,
+                          "meta_description": null
+                        }
+                      },
+                      "children": []
+                    },
+                    {
+                      "id": 48,
+                      "name": "Inkt cartridges - TM-C7500G",
+                      "slug": "inkt-cartridges-tm-c7500g-nl",
+                      "meta_title": null,
+                      "meta_description": null,
+                      "main_image": null,
+                      "image": null,
+                      "parent_id": 42,
+                      "count": 0,
+                      "translations": {
+                        "nl": {
+                          "name": "Inkt cartridges - TM-C7500G",
+                          "slug": "inkt-cartridges-tm-c7500g-nl",
+                          "meta_title": null,
+                          "meta_description": null
+                        },
+                        "en": {
+                          "name": null,
+                          "slug": null,
+                          "meta_title": null,
+                          "meta_description": null
+                        }
+                      },
+                      "children": []
+                    },
+                    {
+                      "id": 49,
+                      "name": "Inkt cartridges - GP-C831",
+                      "slug": "inkt-cartridges-gp-c831",
+                      "meta_title": null,
+                      "meta_description": null,
+                      "main_image": null,
+                      "image": null,
+                      "parent_id": 42,
+                      "count": 0,
+                      "translations": {
+                        "nl": {
+                          "name": "Inkt cartridges - GP-C831",
+                          "slug": "inkt-cartridges-gp-c831",
+                          "meta_title": null,
+                          "meta_description": null
+                        },
+                        "en": {
+                          "name": null,
+                          "slug": null,
+                          "meta_title": null,
+                          "meta_description": null
+                        }
+                      },
+                      "children": []
+                    },
+                    {
+                      "id": 50,
+                      "name": "Inkt cartridges – CW-C6000 series",
+                      "slug": "inkt-cartridges-cw-c6000-series",
+                      "meta_title": null,
+                      "meta_description": null,
+                      "main_image": null,
+                      "image": null,
+                      "parent_id": 42,
+                      "count": 0,
+                      "translations": {
+                        "nl": {
+                          "name": "Inkt cartridges – CW-C6000 series",
+                          "slug": "inkt-cartridges-cw-c6000-series",
+                          "meta_title": null,
+                          "meta_description": null
+                        },
+                        "en": {
+                          "name": null,
+                          "slug": null,
+                          "meta_title": null,
+                          "meta_description": null
+                        }
+                      },
+                      "children": []
+                    },
+                    {
+                      "id": 51,
+                      "name": "Inkt cartridges - CW-C4000",
+                      "slug": "inkt-epson-cw-c4000",
+                      "meta_title": null,
+                      "meta_description": null,
+                      "main_image": null,
+                      "image": null,
+                      "parent_id": 42,
+                      "count": 0,
+                      "translations": {
+                        "nl": {
+                          "name": "Inkt cartridges - CW-C4000",
+                          "slug": "inkt-epson-cw-c4000",
+                          "meta_title": null,
+                          "meta_description": null
+                        },
+                        "en": {
+                          "name": null,
+                          "slug": null,
+                          "meta_title": null,
+                          "meta_description": null
+                        }
+                      },
+                      "children": []
+                    },
+                    {
+                      "id": 52,
+                      "name": "Inkt cartridges - Epson CW-C8000",
+                      "slug": "inkt-cartridges-epson-cw-c8000",
+                      "meta_title": null,
+                      "meta_description": null,
+                      "main_image": null,
+                      "image": null,
+                      "parent_id": 42,
+                      "count": 0,
+                      "translations": {
+                        "nl": {
+                          "name": "Inkt cartridges - Epson CW-C8000",
+                          "slug": "inkt-cartridges-epson-cw-c8000",
+                          "meta_title": null,
+                          "meta_description": null
+                        },
+                        "en": {
+                          "name": null,
+                          "slug": null,
+                          "meta_title": null,
+                          "meta_description": null
+                        }
+                      },
+                      "children": [
+                        {
+                          "id": 102,
+                          "name": "Inkt cartridges - CW-C8000 BK",
+                          "slug": "inkt-cartridges-cw-c8000-bk",
+                          "meta_title": null,
+                          "meta_description": null,
+                          "main_image": null,
+                          "image": null,
+                          "parent_id": 52,
+                          "count": 0,
+                          "translations": {
+                            "nl": {
+                              "name": "Inkt cartridges - CW-C8000 BK",
+                              "slug": "inkt-cartridges-cw-c8000-bk",
+                              "meta_title": null,
+                              "meta_description": null
+                            },
+                            "en": {
+                              "name": null,
+                              "slug": null,
+                              "meta_title": null,
+                              "meta_description": null
+                            }
+                          },
+                          "children": []
+                        },
+                        {
+                          "id": 103,
+                          "name": "Inkt cartridges - CW-C8000 MK",
+                          "slug": "inkt-cartridges-cw-c8000-mk",
+                          "meta_title": null,
+                          "meta_description": null,
+                          "main_image": null,
+                          "image": null,
+                          "parent_id": 52,
+                          "count": 0,
+                          "translations": {
+                            "nl": {
+                              "name": "Inkt cartridges - CW-C8000 MK",
+                              "slug": "inkt-cartridges-cw-c8000-mk",
+                              "meta_title": null,
+                              "meta_description": null
+                            },
+                            "en": {
+                              "name": null,
+                              "slug": null,
+                              "meta_title": null,
+                              "meta_description": null
+                            }
+                          },
+                          "children": []
+                        }
+                      ]
+                    },
+                    {
+                      "id": 53,
+                      "name": "Inkt cartridges – CW-D6000 series",
+                      "slug": "inkt-cartridges-cw-d6000-series",
+                      "meta_title": null,
+                      "meta_description": null,
+                      "main_image": null,
+                      "image": null,
+                      "parent_id": 42,
+                      "count": 0,
+                      "translations": {
+                        "nl": {
+                          "name": "Inkt cartridges – CW-D6000 series",
+                          "slug": "inkt-cartridges-cw-d6000-series",
+                          "meta_title": null,
+                          "meta_description": null
+                        },
+                        "en": {
+                          "name": null,
+                          "slug": null,
+                          "meta_title": null,
+                          "meta_description": null
+                        }
+                      },
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "id": 43,
+                  "name": "Maintenance boxen",
+                  "slug": "maintenance-boxen-nl",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 19,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Maintenance boxen",
+                      "slug": "maintenance-boxen-nl",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": [
+                    {
+                      "id": 54,
+                      "name": "Maintenance box - TM-C3500",
+                      "slug": "maintenance-box-tm-c3500",
+                      "meta_title": null,
+                      "meta_description": null,
+                      "main_image": null,
+                      "image": null,
+                      "parent_id": 43,
+                      "count": 0,
+                      "translations": {
+                        "nl": {
+                          "name": "Maintenance box - TM-C3500",
+                          "slug": "maintenance-box-tm-c3500",
+                          "meta_title": null,
+                          "meta_description": null
+                        },
+                        "en": {
+                          "name": null,
+                          "slug": null,
+                          "meta_title": null,
+                          "meta_description": null
+                        }
+                      },
+                      "children": []
+                    },
+                    {
+                      "id": 55,
+                      "name": "Maintenance box - TM-C7500",
+                      "slug": "maintenance-box-tm-c7500",
+                      "meta_title": null,
+                      "meta_description": null,
+                      "main_image": null,
+                      "image": null,
+                      "parent_id": 43,
+                      "count": 0,
+                      "translations": {
+                        "nl": {
+                          "name": "Maintenance box - TM-C7500",
+                          "slug": "maintenance-box-tm-c7500",
+                          "meta_title": null,
+                          "meta_description": null
+                        },
+                        "en": {
+                          "name": null,
+                          "slug": null,
+                          "meta_title": null,
+                          "meta_description": null
+                        }
+                      },
+                      "children": []
+                    },
+                    {
+                      "id": 56,
+                      "name": "Maintenance box – Epson CW-C6000 &amp; CW-D6000 series",
+                      "slug": "maintenance-box-cw-c6000-series",
+                      "meta_title": null,
+                      "meta_description": null,
+                      "main_image": null,
+                      "image": null,
+                      "parent_id": 43,
+                      "count": 0,
+                      "translations": {
+                        "nl": {
+                          "name": "Maintenance box – Epson CW-C6000 &amp; CW-D6000 series",
+                          "slug": "maintenance-box-cw-c6000-series",
+                          "meta_title": null,
+                          "meta_description": null
+                        },
+                        "en": {
+                          "name": null,
+                          "slug": null,
+                          "meta_title": null,
+                          "meta_description": null
+                        }
+                      },
+                      "children": []
+                    },
+                    {
+                      "id": 57,
+                      "name": "Maintenance box – CW-C4000",
+                      "slug": "maintenance-box-epson-cw-c4000",
+                      "meta_title": null,
+                      "meta_description": null,
+                      "main_image": null,
+                      "image": null,
+                      "parent_id": 43,
+                      "count": 0,
+                      "translations": {
+                        "nl": {
+                          "name": "Maintenance box – CW-C4000",
+                          "slug": "maintenance-box-epson-cw-c4000",
+                          "meta_title": null,
+                          "meta_description": null
+                        },
+                        "en": {
+                          "name": null,
+                          "slug": null,
+                          "meta_title": null,
+                          "meta_description": null
+                        }
+                      },
+                      "children": []
+                    },
+                    {
+                      "id": 160,
+                      "name": "Maintenance box – CW-C8000",
+                      "slug": "maintenance-box-cw-c8000",
+                      "meta_title": null,
+                      "meta_description": null,
+                      "main_image": null,
+                      "image": null,
+                      "parent_id": 43,
+                      "count": 0,
+                      "translations": {
+                        "nl": {
+                          "name": "Maintenance box – CW-C8000",
+                          "slug": "maintenance-box-cw-c8000",
+                          "meta_title": null,
+                          "meta_description": null
+                        },
+                        "en": {
+                          "name": null,
+                          "slug": null,
+                          "meta_title": null,
+                          "meta_description": null
+                        }
+                      },
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "id": 44,
+                  "name": "TT printlinten",
+                  "slug": "tt-printlinten-nl",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 19,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "TT printlinten",
+                      "slug": "tt-printlinten-nl",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": 20,
+              "name": "Starterkits",
+              "slug": "starterkits",
+              "meta_title": null,
+              "meta_description": null,
+              "main_image": null,
+              "image": null,
+              "parent_id": 7,
+              "count": 0,
+              "translations": {
+                "nl": {
+                  "name": "Starterkits",
+                  "slug": "starterkits",
+                  "meta_title": null,
+                  "meta_description": null
+                },
+                "en": {
+                  "name": null,
+                  "slug": null,
+                  "meta_title": null,
+                  "meta_description": null
+                }
+              },
+              "children": [
+                {
+                  "id": 59,
+                  "name": "Expobadge starterkits",
+                  "slug": "expobadge-starterkits",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 20,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Expobadge starterkits",
+                      "slug": "expobadge-starterkits",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                },
+                {
+                  "id": 60,
+                  "name": "Verzendetiketten starterkits",
+                  "slug": "verzendetiketten-starterkits",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 20,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Verzendetiketten starterkits",
+                      "slug": "verzendetiketten-starterkits",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                },
+                {
+                  "id": 61,
+                  "name": "Juweliersetiketten starterkits",
+                  "slug": "juweliersetiketten-starterkits",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 20,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Juweliersetiketten starterkits",
+                      "slug": "juweliersetiketten-starterkits",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                },
+                {
+                  "id": 62,
+                  "name": "Wijnetiketten starterkits",
+                  "slug": "wijnetiketten-starterkits",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 20,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Wijnetiketten starterkits",
+                      "slug": "wijnetiketten-starterkits",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                },
+                {
+                  "id": 63,
+                  "name": "Starterkits Bier etiketten",
+                  "slug": "starterkits-bier-labels",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 20,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Starterkits Bier etiketten",
+                      "slug": "starterkits-bier-labels",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": 21,
+              "name": "Thermal labelprinters",
+              "slug": "thermal-labelprinters-labelprinters",
+              "meta_title": null,
+              "meta_description": null,
+              "main_image": null,
+              "image": null,
+              "parent_id": 7,
+              "count": 0,
+              "translations": {
+                "nl": {
+                  "name": "Thermal labelprinters",
+                  "slug": "thermal-labelprinters-labelprinters",
+                  "meta_title": null,
+                  "meta_description": null
+                },
+                "en": {
+                  "name": null,
+                  "slug": null,
+                  "meta_title": null,
+                  "meta_description": null
+                }
+              },
+              "children": [
+                {
+                  "id": 175,
+                  "name": "Desktop Labelprinters",
+                  "slug": "desktop-labelprinters-thermal-labelprinters-labelprinters",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 21,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Desktop Labelprinters",
+                      "slug": "desktop-labelprinters-thermal-labelprinters-labelprinters",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": 158,
+              "name": "Color labelprinters",
+              "slug": "color-labelprinters-labelprinters",
+              "meta_title": null,
+              "meta_description": null,
+              "main_image": null,
+              "image": null,
+              "parent_id": 7,
+              "count": 0,
+              "translations": {
+                "nl": {
+                  "name": "Color labelprinters",
+                  "slug": "color-labelprinters-labelprinters",
+                  "meta_title": null,
+                  "meta_description": null
+                },
+                "en": {
+                  "name": null,
+                  "slug": null,
+                  "meta_title": null,
+                  "meta_description": null
+                }
+              },
+              "children": [
+                {
+                  "id": 178,
+                  "name": "Industrial Labelprinters",
+                  "slug": "industrial-labelprinters-color-labelprinters-labelprinters",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 158,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Industrial Labelprinters",
+                      "slug": "industrial-labelprinters-color-labelprinters-labelprinters",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": 159,
+              "name": "Accessories",
+              "slug": "accessories",
+              "meta_title": null,
+              "meta_description": null,
+              "main_image": null,
+              "image": null,
+              "parent_id": 7,
+              "count": 0,
+              "translations": {
+                "nl": {
+                  "name": "Accessories",
+                  "slug": "accessories",
+                  "meta_title": null,
+                  "meta_description": null
+                },
+                "en": {
+                  "name": null,
+                  "slug": null,
+                  "meta_title": null,
+                  "meta_description": null
+                }
+              },
+              "children": [
+                {
+                  "id": 179,
+                  "name": "Re- &amp; unwinders",
+                  "slug": "re-unwinders-accessories",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 159,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Re- &amp; unwinders",
+                      "slug": "re-unwinders-accessories",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": 8,
+          "name": "Labels en tickets",
+          "slug": "labels-en-tickets",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Labels en tickets",
+              "slug": "labels-en-tickets",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": [
+            {
+              "id": 64,
+              "name": "Thermal direct",
+              "slug": "thermal-direct",
+              "meta_title": null,
+              "meta_description": null,
+              "main_image": null,
+              "image": null,
+              "parent_id": 8,
+              "count": 0,
+              "translations": {
+                "nl": {
+                  "name": "Thermal direct",
+                  "slug": "thermal-direct",
+                  "meta_title": null,
+                  "meta_description": null
+                },
+                "en": {
+                  "name": null,
+                  "slug": null,
+                  "meta_title": null,
+                  "meta_description": null
+                }
+              },
+              "children": [
+                {
+                  "id": 77,
+                  "name": "Verzendetiketten",
+                  "slug": "verzendetiketten",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 64,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Verzendetiketten",
+                      "slug": "verzendetiketten",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                },
+                {
+                  "id": 78,
+                  "name": "Juweliersetiketten",
+                  "slug": "juweliersetiketten-thermisch-directe-printer-media",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 64,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Juweliersetiketten",
+                      "slug": "juweliersetiketten-thermisch-directe-printer-media",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": 65,
+              "name": "Thermal Transfer",
+              "slug": "thermal-transfer",
+              "meta_title": null,
+              "meta_description": null,
+              "main_image": null,
+              "image": null,
+              "parent_id": 8,
+              "count": 0,
+              "translations": {
+                "nl": {
+                  "name": "Thermal Transfer",
+                  "slug": "thermal-transfer",
+                  "meta_title": null,
+                  "meta_description": null
+                },
+                "en": {
+                  "name": null,
+                  "slug": null,
+                  "meta_title": null,
+                  "meta_description": null
+                }
+              },
+              "children": [
+                {
+                  "id": 79,
+                  "name": "Juweliersetiketten",
+                  "slug": "juweliersetiketten-thermische-overdracht-printer-media",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 65,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Juweliersetiketten",
+                      "slug": "juweliersetiketten-thermische-overdracht-printer-media",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": 66,
+              "name": "Inkjet printer media",
+              "slug": "inkjet-printer-media",
+              "meta_title": null,
+              "meta_description": null,
+              "main_image": null,
+              "image": null,
+              "parent_id": 8,
+              "count": 0,
+              "translations": {
+                "nl": {
+                  "name": "Inkjet printer media",
+                  "slug": "inkjet-printer-media",
+                  "meta_title": null,
+                  "meta_description": null
+                },
+                "en": {
+                  "name": null,
+                  "slug": null,
+                  "meta_title": null,
+                  "meta_description": null
+                }
+              },
+              "children": [
+                {
+                  "id": 80,
+                  "name": "Bezoekersbadges",
+                  "slug": "bezoekersbadges",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 66,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Bezoekersbadges",
+                      "slug": "bezoekersbadges",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                },
+                {
+                  "id": 82,
+                  "name": "Wijn labels",
+                  "slug": "wijn-labels",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 66,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Wijn labels",
+                      "slug": "wijn-labels",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                },
+                {
+                  "id": 83,
+                  "name": "Specials",
+                  "slug": "specials",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 66,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Specials",
+                      "slug": "specials",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                },
+                {
+                  "id": 84,
+                  "name": "Bierfles labels",
+                  "slug": "bierfles-labels",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 66,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Bierfles labels",
+                      "slug": "bierfles-labels",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                },
+                {
+                  "id": 87,
+                  "name": "Bakkers &amp; chocolaterie",
+                  "slug": "bakkers",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 66,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Bakkers &amp; chocolaterie",
+                      "slug": "bakkers",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                },
+                {
+                  "id": 88,
+                  "name": "Banderol",
+                  "slug": "banderol-inkjet-printer-media-labels-en-tickets",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 66,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Banderol",
+                      "slug": "banderol-inkjet-printer-media-labels-en-tickets",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                },
+                {
+                  "id": 89,
+                  "name": "Banderol",
+                  "slug": "banderol",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 66,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Banderol",
+                      "slug": "banderol",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                },
+                {
+                  "id": 150,
+                  "name": "Banderol",
+                  "slug": "banderol-inkjet-printer-media",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 66,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Banderol",
+                      "slug": "banderol-inkjet-printer-media",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                },
+                {
+                  "id": 151,
+                  "name": "Visitors badges",
+                  "slug": "visitors-badges",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 66,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Visitors badges",
+                      "slug": "visitors-badges",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                },
+                {
+                  "id": 168,
+                  "name": "Visitors badges",
+                  "slug": "visitors-badges-inkjet-printer-media",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 66,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Visitors badges",
+                      "slug": "visitors-badges-inkjet-printer-media",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                },
+                {
+                  "id": 169,
+                  "name": "Wine labels",
+                  "slug": "wine-labels",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 66,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Wine labels",
+                      "slug": "wine-labels",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                },
+                {
+                  "id": 170,
+                  "name": "Beerbottle labels",
+                  "slug": "beerbottle-labels-inkjet-printer-media",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 66,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Beerbottle labels",
+                      "slug": "beerbottle-labels-inkjet-printer-media",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": 72,
+              "name": "Thermisch Directe printer media",
+              "slug": "thermisch-directe-printer-media",
+              "meta_title": null,
+              "meta_description": null,
+              "main_image": null,
+              "image": null,
+              "parent_id": 8,
+              "count": 0,
+              "translations": {
+                "nl": {
+                  "name": "Thermisch Directe printer media",
+                  "slug": "thermisch-directe-printer-media",
+                  "meta_title": null,
+                  "meta_description": null
+                },
+                "en": {
+                  "name": null,
+                  "slug": null,
+                  "meta_title": null,
+                  "meta_description": null
+                }
+              },
+              "children": [
+                {
+                  "id": 95,
+                  "name": "Juweliersetiketten",
+                  "slug": "juweliersetiketten-thermisch-directe-printer-media-labels-en-tickets",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 72,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Juweliersetiketten",
+                      "slug": "juweliersetiketten-thermisch-directe-printer-media-labels-en-tickets",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                },
+                {
+                  "id": 96,
+                  "name": "Verzendetiketten",
+                  "slug": "verzendetiketten-thermisch-directe-printer-media",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 72,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Verzendetiketten",
+                      "slug": "verzendetiketten-thermisch-directe-printer-media",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": 73,
+              "name": "Thermische Overdracht printer media",
+              "slug": "thermische-overdracht-printer-media",
+              "meta_title": null,
+              "meta_description": null,
+              "main_image": null,
+              "image": null,
+              "parent_id": 8,
+              "count": 0,
+              "translations": {
+                "nl": {
+                  "name": "Thermische Overdracht printer media",
+                  "slug": "thermische-overdracht-printer-media",
+                  "meta_title": null,
+                  "meta_description": null
+                },
+                "en": {
+                  "name": null,
+                  "slug": null,
+                  "meta_title": null,
+                  "meta_description": null
+                }
+              },
+              "children": [
+                {
+                  "id": 97,
+                  "name": "Juweliersetiketten",
+                  "slug": "juweliersetiketten-thermische-overdracht-printer-media-labels-en-tickets",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 73,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Juweliersetiketten",
+                      "slug": "juweliersetiketten-thermische-overdracht-printer-media-labels-en-tickets",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": 76,
+              "name": "Inkjet printer media|Labels en tickets",
+              "slug": "inkjet-printer-medialabels-en-tickets",
+              "meta_title": null,
+              "meta_description": null,
+              "main_image": null,
+              "image": null,
+              "parent_id": 8,
+              "count": 0,
+              "translations": {
+                "nl": {
+                  "name": "Inkjet printer media|Labels en tickets",
+                  "slug": "inkjet-printer-medialabels-en-tickets",
+                  "meta_title": null,
+                  "meta_description": null
+                },
+                "en": {
+                  "name": null,
+                  "slug": null,
+                  "meta_title": null,
+                  "meta_description": null
+                }
+              },
+              "children": [
+                {
+                  "id": 101,
+                  "name": "Inkjet printer media",
+                  "slug": "inkjet-printer-media-inkjet-printer-medialabels-en-tickets",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 76,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Inkjet printer media",
+                      "slug": "inkjet-printer-media-inkjet-printer-medialabels-en-tickets",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": 161,
+              "name": "Thermal Transfer printer media",
+              "slug": "thermal-transfer-printer-media-labels-en-tickets",
+              "meta_title": null,
+              "meta_description": null,
+              "main_image": null,
+              "image": null,
+              "parent_id": 8,
+              "count": 0,
+              "translations": {
+                "nl": {
+                  "name": "Thermal Transfer printer media",
+                  "slug": "thermal-transfer-printer-media-labels-en-tickets",
+                  "meta_title": null,
+                  "meta_description": null
+                },
+                "en": {
+                  "name": null,
+                  "slug": null,
+                  "meta_title": null,
+                  "meta_description": null
+                }
+              },
+              "children": [
+                {
+                  "id": 171,
+                  "name": "Juweliersetiketten",
+                  "slug": "juweliersetiketten",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 161,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Juweliersetiketten",
+                      "slug": "juweliersetiketten",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                },
+                {
+                  "id": 172,
+                  "name": "Jewellery labels",
+                  "slug": "jewellery-labels-thermal-transfer-printer-media-labels-en-tickets",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 161,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Jewellery labels",
+                      "slug": "jewellery-labels-thermal-transfer-printer-media-labels-en-tickets",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": 162,
+              "name": "Thermal Direct printer media",
+              "slug": "thermal-direct-printer-media-labels-en-tickets",
+              "meta_title": null,
+              "meta_description": null,
+              "main_image": null,
+              "image": null,
+              "parent_id": 8,
+              "count": 0,
+              "translations": {
+                "nl": {
+                  "name": "Thermal Direct printer media",
+                  "slug": "thermal-direct-printer-media-labels-en-tickets",
+                  "meta_title": null,
+                  "meta_description": null
+                },
+                "en": {
+                  "name": null,
+                  "slug": null,
+                  "meta_title": null,
+                  "meta_description": null
+                }
+              },
+              "children": [
+                {
+                  "id": 173,
+                  "name": "Shipping labels",
+                  "slug": "shipping-labels-thermal-direct-printer-media-labels-en-tickets",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 162,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Shipping labels",
+                      "slug": "shipping-labels-thermal-direct-printer-media-labels-en-tickets",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                },
+                {
+                  "id": 174,
+                  "name": "Jewellery labels",
+                  "slug": "jewellery-labels-thermal-direct-printer-media-labels-en-tickets",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 162,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Jewellery labels",
+                      "slug": "jewellery-labels-thermal-direct-printer-media-labels-en-tickets",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": 163,
+              "name": "Visitors badges",
+              "slug": "visitors-badges-labels-en-tickets",
+              "meta_title": null,
+              "meta_description": null,
+              "main_image": null,
+              "image": null,
+              "parent_id": 8,
+              "count": 0,
+              "translations": {
+                "nl": {
+                  "name": "Visitors badges",
+                  "slug": "visitors-badges-labels-en-tickets",
+                  "meta_title": null,
+                  "meta_description": null
+                },
+                "en": {
+                  "name": null,
+                  "slug": null,
+                  "meta_title": null,
+                  "meta_description": null
+                }
+              },
+              "children": []
+            },
+            {
+              "id": 164,
+              "name": "Shipping labels",
+              "slug": "shipping-labels-labels-en-tickets",
+              "meta_title": null,
+              "meta_description": null,
+              "main_image": null,
+              "image": null,
+              "parent_id": 8,
+              "count": 0,
+              "translations": {
+                "nl": {
+                  "name": "Shipping labels",
+                  "slug": "shipping-labels-labels-en-tickets",
+                  "meta_title": null,
+                  "meta_description": null
+                },
+                "en": {
+                  "name": null,
+                  "slug": null,
+                  "meta_title": null,
+                  "meta_description": null
+                }
+              },
+              "children": []
+            },
+            {
+              "id": 165,
+              "name": "Jewellery labels",
+              "slug": "jewellery-labels-labels-en-tickets",
+              "meta_title": null,
+              "meta_description": null,
+              "main_image": null,
+              "image": null,
+              "parent_id": 8,
+              "count": 0,
+              "translations": {
+                "nl": {
+                  "name": "Jewellery labels",
+                  "slug": "jewellery-labels-labels-en-tickets",
+                  "meta_title": null,
+                  "meta_description": null
+                },
+                "en": {
+                  "name": null,
+                  "slug": null,
+                  "meta_title": null,
+                  "meta_description": null
+                }
+              },
+              "children": []
+            },
+            {
+              "id": 166,
+              "name": "Inkjet printer media|Labels and tickets",
+              "slug": "inkjet-printer-medialabels-and-tickets",
+              "meta_title": null,
+              "meta_description": null,
+              "main_image": null,
+              "image": null,
+              "parent_id": 8,
+              "count": 0,
+              "translations": {
+                "nl": {
+                  "name": "Inkjet printer media|Labels and tickets",
+                  "slug": "inkjet-printer-medialabels-and-tickets",
+                  "meta_title": null,
+                  "meta_description": null
+                },
+                "en": {
+                  "name": null,
+                  "slug": null,
+                  "meta_title": null,
+                  "meta_description": null
+                }
+              },
+              "children": [
+                {
+                  "id": 176,
+                  "name": "Inkjet printer media",
+                  "slug": "inkjet-printer-media-inkjet-printer-medialabels-and-tickets",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 166,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Inkjet printer media",
+                      "slug": "inkjet-printer-media-inkjet-printer-medialabels-and-tickets",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": 167,
+              "name": "Thermal Transfer printer media|Labels and tickets",
+              "slug": "thermal-transfer-printer-medialabels-and-tickets",
+              "meta_title": null,
+              "meta_description": null,
+              "main_image": null,
+              "image": null,
+              "parent_id": 8,
+              "count": 0,
+              "translations": {
+                "nl": {
+                  "name": "Thermal Transfer printer media|Labels and tickets",
+                  "slug": "thermal-transfer-printer-medialabels-and-tickets",
+                  "meta_title": null,
+                  "meta_description": null
+                },
+                "en": {
+                  "name": null,
+                  "slug": null,
+                  "meta_title": null,
+                  "meta_description": null
+                }
+              },
+              "children": [
+                {
+                  "id": 177,
+                  "name": "Thermische Overdracht printer media",
+                  "slug": "thermische-overdracht-printer-media-thermal-transfer-printer-medialabels-and-tickets",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 167,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Thermische Overdracht printer media",
+                      "slug": "thermische-overdracht-printer-media-thermal-transfer-printer-medialabels-and-tickets",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": 9,
+          "name": "Epson ColorWorks printers",
+          "slug": "epson-colorworks-printers",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Epson ColorWorks printers",
+              "slug": "epson-colorworks-printers",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": [
+            {
+              "id": 94,
+              "name": "CW-C4000 series",
+              "slug": "cw-c4000-series",
+              "meta_title": null,
+              "meta_description": null,
+              "main_image": null,
+              "image": null,
+              "parent_id": 9,
+              "count": 0,
+              "translations": {
+                "nl": {
+                  "name": "CW-C4000 series",
+                  "slug": "cw-c4000-series",
+                  "meta_title": null,
+                  "meta_description": null
+                },
+                "en": {
+                  "name": null,
+                  "slug": null,
+                  "meta_title": null,
+                  "meta_description": null
+                }
+              },
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": 15,
+          "name": "Vervallen producten (archief en alternatieven)",
+          "slug": "vervallen-producten",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Vervallen producten (archief en alternatieven)",
+              "slug": "vervallen-producten",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 148,
+          "name": "Labels and tickets",
+          "slug": "labels-en-tickets-en",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Labels and tickets",
+              "slug": "labels-en-tickets-en",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": [
+            {
+              "id": 149,
+              "name": "Thermal Direct printer media",
+              "slug": "thermal-direct-printer-media",
+              "meta_title": null,
+              "meta_description": null,
+              "main_image": null,
+              "image": null,
+              "parent_id": 148,
+              "count": 0,
+              "translations": {
+                "nl": {
+                  "name": "Thermal Direct printer media",
+                  "slug": "thermal-direct-printer-media",
+                  "meta_title": null,
+                  "meta_description": null
+                },
+                "en": {
+                  "name": null,
+                  "slug": null,
+                  "meta_title": null,
+                  "meta_description": null
+                }
+              },
+              "children": [
+                {
+                  "id": 3,
+                  "name": "Shipping labels",
+                  "slug": "shipping-labels",
+                  "meta_title": null,
+                  "meta_description": null,
+                  "main_image": null,
+                  "image": null,
+                  "parent_id": 149,
+                  "count": 0,
+                  "translations": {
+                    "nl": {
+                      "name": "Shipping labels",
+                      "slug": "shipping-labels",
+                      "meta_title": null,
+                      "meta_description": null
+                    },
+                    "en": {
+                      "name": null,
+                      "slug": null,
+                      "meta_title": null,
+                      "meta_description": null
+                    }
+                  },
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": 152,
+              "name": "Thermal Transfer printer media",
+              "slug": "thermal-transfer-printer-media",
+              "meta_title": null,
+              "meta_description": null,
+              "main_image": null,
+              "image": null,
+              "parent_id": 148,
+              "count": 0,
+              "translations": {
+                "nl": {
+                  "name": "Thermal Transfer printer media",
+                  "slug": "thermal-transfer-printer-media",
+                  "meta_title": null,
+                  "meta_description": null
+                },
+                "en": {
+                  "name": null,
+                  "slug": null,
+                  "meta_title": null,
+                  "meta_description": null
+                }
+              },
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": 153,
+          "name": "Beerbottle labels",
+          "slug": "beerbottle-labels-2",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Beerbottle labels",
+              "slug": "beerbottle-labels-2",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 154,
+          "name": "Visitors badges",
+          "slug": "visitors-badges-2",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Visitors badges",
+              "slug": "visitors-badges-2",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 155,
+          "name": "Wine labels",
+          "slug": "wine-labels-2",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Wine labels",
+              "slug": "wine-labels-2",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 156,
+          "name": "Specials",
+          "slug": "specials-2",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Specials",
+              "slug": "specials-2",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 157,
+          "name": "Shipping labels",
+          "slug": "shipping-labels-2",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Shipping labels",
+              "slug": "shipping-labels-2",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Kennis Category",
+      "slug": "kennis-category",
+      "count": 0,
+      "translations": {
+        "nl": {
+          "name": "Kennis Category",
+          "slug": "kennis-category"
+        },
+        "en": {
+          "name": null,
+          "slug": null
+        }
+      },
+      "categories": [
+        {
+          "id": 191,
+          "name": "test kennis 1",
+          "slug": "test-kennis-1",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "test kennis 1",
+              "slug": "test-kennis-1",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 192,
+          "name": "test kennis 2",
+          "slug": "test-kennis-2",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "test kennis 2",
+              "slug": "test-kennis-2",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Material Category",
+      "slug": "material-category",
+      "count": 0,
+      "translations": {
+        "nl": {
+          "name": "Material Category",
+          "slug": "material-category"
+        },
+        "en": {
+          "name": null,
+          "slug": null
+        }
+      },
+      "categories": [
+        {
+          "id": 106,
+          "name": "Creative by Diamondlabels",
+          "slug": "creative-by-diamondlabels",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Creative by Diamondlabels",
+              "slug": "creative-by-diamondlabels",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 107,
+          "name": "Diamondlabels",
+          "slug": "diamondlabels",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Diamondlabels",
+              "slug": "diamondlabels",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 108,
+          "name": "Ecologische labels",
+          "slug": "ecologische-labels",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Ecologische labels",
+              "slug": "ecologische-labels",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 109,
+          "name": "Epson",
+          "slug": "epson",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Epson",
+              "slug": "epson",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 111,
+          "name": "ExpoBadge",
+          "slug": "expobadge",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "ExpoBadge",
+              "slug": "expobadge",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 112,
+          "name": "Extra luxe inkjet labels",
+          "slug": "wijnlabels",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Extra luxe inkjet labels",
+              "slug": "wijnlabels",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 113,
+          "name": "Geschikt voor buiten gebruik-TT",
+          "slug": "geschikt-voor-buiten-gebruik",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Geschikt voor buiten gebruik-TT",
+              "slug": "geschikt-voor-buiten-gebruik",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 114,
+          "name": "GHS inkjet labels",
+          "slug": "ghs-inkjet-labels",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "GHS inkjet labels",
+              "slug": "ghs-inkjet-labels",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 115,
+          "name": "Glanzende labels",
+          "slug": "glanzende-labels",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Glanzende labels",
+              "slug": "glanzende-labels",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 116,
+          "name": "Glanzende labels-TT",
+          "slug": "glanzende-labels-tt",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Glanzende labels-TT",
+              "slug": "glanzende-labels-tt",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 117,
+          "name": "inkjet",
+          "slug": "inkjet",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "inkjet",
+              "slug": "inkjet",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 119,
+          "name": "Kunststof inkjet labels",
+          "slug": "kunststof-inkjet-labels",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Kunststof inkjet labels",
+              "slug": "kunststof-inkjet-labels",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 120,
+          "name": "Kunststof labels-TD",
+          "slug": "kunststof-labels-td",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Kunststof labels-TD",
+              "slug": "kunststof-labels-td",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 121,
+          "name": "Kunststof labels-TT",
+          "slug": "kunststof-labels-tt",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Kunststof labels-TT",
+              "slug": "kunststof-labels-tt",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 122,
+          "name": "Kunststof tickets-TT",
+          "slug": "kunststof-tickets-tt",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Kunststof tickets-TT",
+              "slug": "kunststof-tickets-tt",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 123,
+          "name": "Labels met lijm",
+          "slug": "labels-met-lijm",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Labels met lijm",
+              "slug": "labels-met-lijm",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 124,
+          "name": "Labels met lijm-TD",
+          "slug": "labels-met-lijm-td",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Labels met lijm-TD",
+              "slug": "labels-met-lijm-td",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 125,
+          "name": "Labels met lijm-TT",
+          "slug": "labels-met-lijm-tt",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Labels met lijm-TT",
+              "slug": "labels-met-lijm-tt",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 126,
+          "name": "Linerless",
+          "slug": "linerless",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Linerless",
+              "slug": "linerless",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 127,
+          "name": "materialen",
+          "slug": "materialen",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "materialen",
+              "slug": "materialen",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 128,
+          "name": "Matte labels",
+          "slug": "matte-labels",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Matte labels",
+              "slug": "matte-labels",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 129,
+          "name": "Matte labels-TT",
+          "slug": "matte-labels-tt",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Matte labels-TT",
+              "slug": "matte-labels-tt",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 131,
+          "name": "Opake labels-TD",
+          "slug": "opake-labels-td",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Opake labels-TD",
+              "slug": "opake-labels-td",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 132,
+          "name": "Papieren inkjet labels",
+          "slug": "inkjetpapier-labels",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Papieren inkjet labels",
+              "slug": "inkjetpapier-labels",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 133,
+          "name": "Papieren labels-TD",
+          "slug": "papieren-labels-td",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Papieren labels-TD",
+              "slug": "papieren-labels-td",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 134,
+          "name": "Papieren labels-TT",
+          "slug": "papieren-labels-tt",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Papieren labels-TT",
+              "slug": "papieren-labels-tt",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 135,
+          "name": "Seiko SII",
+          "slug": "seiko-sii",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Seiko SII",
+              "slug": "seiko-sii",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 136,
+          "name": "Thermisch Direct",
+          "slug": "td",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Thermisch Direct",
+              "slug": "td",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 137,
+          "name": "Ticket inkjet (zonder lijm)",
+          "slug": "inkjet-tickets",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Ticket inkjet (zonder lijm)",
+              "slug": "inkjet-tickets",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 138,
+          "name": "Tickets (zonder lijm)-TD",
+          "slug": "thermische-tickets",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Tickets (zonder lijm)-TD",
+              "slug": "thermische-tickets",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 139,
+          "name": "Tickets (zonder lijm)-TT",
+          "slug": "tickets-zonder-lijm-tt",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Tickets (zonder lijm)-TT",
+              "slug": "tickets-zonder-lijm-tt",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 140,
+          "name": "Transparante inkjet labels",
+          "slug": "transparante-inkjet-labels",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Transparante inkjet labels",
+              "slug": "transparante-inkjet-labels",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 141,
+          "name": "Transparante labels-TT",
+          "slug": "transparante-labels-tt",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Transparante labels-TT",
+              "slug": "transparante-labels-tt",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 142,
+          "name": "Verwijderbare labels",
+          "slug": "verwijderbare-labels",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Verwijderbare labels",
+              "slug": "verwijderbare-labels",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 143,
+          "name": "Verwijderbare labels-TD",
+          "slug": "verwijderbare-labels-td",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Verwijderbare labels-TD",
+              "slug": "verwijderbare-labels-td",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 144,
+          "name": "Verwijderbare labels-TT",
+          "slug": "verwijderbare-labels-tt",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Verwijderbare labels-TT",
+              "slug": "verwijderbare-labels-tt",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 146,
+          "name": "Zebra",
+          "slug": "zebra",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Zebra",
+              "slug": "zebra",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 147,
+          "name": "Zilver kleurige labels-TT",
+          "slug": "zilver-kleurige-labels-tt",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Zilver kleurige labels-TT",
+              "slug": "zilver-kleurige-labels-tt",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 180,
+          "name": "ExpoBadge",
+          "slug": "expobadge-3",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "ExpoBadge",
+              "slug": "expobadge-3",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 181,
+          "name": "Klantverhalen",
+          "slug": "klantverhalen",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Klantverhalen",
+              "slug": "klantverhalen",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 182,
+          "name": "nieuws",
+          "slug": "nieuws",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "nieuws",
+              "slug": "nieuws",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 183,
+          "name": "Video",
+          "slug": "video",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Video",
+              "slug": "video",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 6,
+          "name": "Uncategorized",
+          "slug": "uncategorized",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Uncategorized",
+              "slug": "uncategorized",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Post Category",
+      "slug": "post-category",
+      "count": 0,
+      "translations": {
+        "nl": {
+          "name": "Post Category",
+          "slug": "post-category"
+        },
+        "en": {
+          "name": null,
+          "slug": null
+        }
+      },
+      "categories": [
+        {
+          "id": 184,
+          "name": "Printer Setup & Installation",
+          "slug": "printer-setup-installation",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Printer Setup & Installation",
+              "slug": "printer-setup-installation",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 185,
+          "name": "Materials & Substrates",
+          "slug": "materials-substrates",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Materials & Substrates",
+              "slug": "materials-substrates",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 186,
+          "name": "Print Configuration",
+          "slug": "print-configuration",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Print Configuration",
+              "slug": "print-configuration",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 187,
+          "name": "Troubleshooting Guide",
+          "slug": "troubleshooting-guide",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Troubleshooting Guide",
+              "slug": "troubleshooting-guide",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 188,
+          "name": "Software & Drivers",
+          "slug": "software-drivers",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Software & Drivers",
+              "slug": "software-drivers",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 189,
+          "name": "Printer Maintenance",
+          "slug": "printer-maintenance",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "Printer Maintenance",
+              "slug": "printer-maintenance",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        },
+        {
+          "id": 190,
+          "name": "test cat",
+          "slug": "test-cat",
+          "meta_title": null,
+          "meta_description": null,
+          "main_image": null,
+          "image": null,
+          "parent_id": null,
+          "count": 0,
+          "translations": {
+            "nl": {
+              "name": "test cat",
+              "slug": "test-cat",
+              "meta_title": null,
+              "meta_description": null
+            },
+            "en": {
+              "name": null,
+              "slug": null,
+              "meta_title": null,
+              "meta_description": null
+            }
+          },
+          "children": []
+        }
+      ]
+    }
+  ]
+}

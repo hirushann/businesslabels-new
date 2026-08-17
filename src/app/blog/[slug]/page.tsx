@@ -375,7 +375,8 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
                     )}
                     <div className="flex-1 flex flex-col justify-center items-start gap-2.5">
                       <div className="text-neutral-800 text-[32px] font-bold leading-[38.40px] line-clamp-1">
-                        {post.author?.name || t("blogDetail.teamName")}
+                        {/* {post.author?.name || t("blogDetail.teamName")} */}
+                        Levi van der Molen
                       </div>
                       <div className="text-neutral-700 text-lg font-medium leading-[27px]">
                         {post.author?.about || t("blogDetail.teamDescription")}
