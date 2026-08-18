@@ -28,6 +28,7 @@ type ProductPurchaseProps = {
   type?: ProductRouteType | null;
   name?: string | null;
   sku?: string | null;
+  articleNumber?: string | null;
   subtitle?: string | null;
   excerpt?: string | null;
   materialTitle?: string | null;
@@ -183,6 +184,7 @@ export default function ProductPurchase({
   type,
   name,
   sku,
+  articleNumber,
   subtitle,
   excerpt,
   materialTitle,
@@ -384,6 +386,7 @@ export default function ProductPurchase({
   };
 
   const displaySku = sku?.trim() ? sku : "-";
+  const displayArticleNumber = articleNumber?.trim() ? articleNumber : "-";
   const displayName = name?.trim() ? name : t("product.unnamedProduct");
   const hasPrice = typeof price === "number" && Number.isFinite(price);
   const hasOriginalPrice =
@@ -756,7 +759,7 @@ export default function ProductPurchase({
         {/* Price Section */}
         <div className="flex flex-col gap-3">
           <div className="flex justify-between items-center">
-            <span className="text-link text-base font-bold leading-5">{t("product.sku", { sku: displaySku })}</span>
+            <span className="text-link text-base font-bold leading-5">{t("product.articleNumber", { number: displayArticleNumber })}</span>
             {((stockCount != null && stockCount > 0) || deliveryDatesNoStockCount == null || deliveryDatesNoStockCount < 10) ? (
               <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${resolvedInStock ? "bg-success" : "bg-zinc-400"}`}>
                 {resolvedInStock ? (

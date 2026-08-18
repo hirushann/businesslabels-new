@@ -434,6 +434,7 @@ function getSpecLabel(key: string, locale: "en" | "nl", t: TranslationLookup): s
 
   const mapping: Record<string, string> = {
     sku: "SKU",
+    article_number: locale === "nl" ? "Artikelnummer" : "Article Number",
     category: t.has("filters.category") ? t("filters.category") : (locale === "nl" ? "Categorie" : "Category"),
     breedte: t.has("filters.width") ? t("filters.width") : (locale === "nl" ? "Breedte" : "Width"),
     hoogte: t.has("filters.height") ? t("filters.height") : (locale === "nl" ? "Hoogte" : "Height"),
@@ -625,7 +626,7 @@ function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t:
     })
     .filter((entry): entry is { name: string; slug: string | null } => Boolean(entry));
   const specRows: Array<{ label: string; value: ReactNode }> = [
-    { label: "SKU", value: normalizeDisplayValue(product?.sku, booleanLabels) || missing },
+    { label: getSpecLabel("article_number", locale, t), value: normalizeDisplayValue(product?.article_number, booleanLabels) || missing },
     {
       label: getSpecLabel("category", locale, t),
       value:
@@ -1334,6 +1335,7 @@ export default async function SingleProductPage({
               type={normalizeType(product?.type) || (product?.is_group_product || (product?.component_products?.length ?? 0) > 0 ? "group_product" : null)}
               name={productName}
               sku={product?.sku}
+              articleNumber={product?.article_number}
               subtitle={normalizeValue(product?.subtitle)}
               excerpt={normalizeValue(product?.excerpt)}
               materialTitle={normalizeValue(product?.material?.title)}
