@@ -187,6 +187,7 @@ type CheckoutOrderItem = {
   price: number;
   quantity: number;
   is_group_product: boolean;
+  article_number?: string | null;
   warranty_option_id?: number;
   extended_warranty_id?: number;
   extended_warranty_name?: string;
@@ -244,6 +245,7 @@ function buildCheckoutOrderItems(items: CartItem[]): CheckoutOrderItem[] {
       price: typeof item.price === "number" && Number.isFinite(item.price) ? item.price : 0,
       quantity: item.quantity,
       is_group_product: item.type === "group_product" || (item.componentCount ?? 0) > 0,
+      ...(item.article_number ? { article_number: item.article_number } : {}),
     };
 
     const warrantyItem = getLinkedWarrantyItem(items, item);

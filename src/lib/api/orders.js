@@ -29,7 +29,7 @@ export async function getOrder(orderId) {
  * Create a new order.
  * @param {Object} orderData - See StoreOrderRequest for fields
  * @param {string} orderData.status
- * @param {Array<{ product_id: number, name: string, price: number, quantity: number }>} orderData.order_items
+ * @param {Array<{ product_id: number, name: string, price: number, quantity: number, article_number?: string }>} orderData.order_items
  * @param {string} [orderData.billing_firstname]
  * @param {string} [orderData.billing_address]
  * @param {string} [orderData.billing_city]
