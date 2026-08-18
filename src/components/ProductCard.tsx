@@ -109,6 +109,7 @@ export type ProductCardCategory = {
 export type ProductCardData = {
   id: string | number;
   sku: string;
+  article_number?: string | null;
   name: string;
   title?: string | null;
   subtitle?: string | null;
@@ -648,7 +649,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between gap-2">
               <span className="text-link text-sm font-medium leading-5">
-                {t("product.sku", { sku: product.sku })}
+                {t("product.articleNumber", { number: product.article_number?.trim() ? product.article_number : product.sku })}
               </span>
             </div>
             <Link href={localizedHref || "#"} className="block" onClick={onClick}>

@@ -218,6 +218,10 @@ function skuForProduct(result: unknown): string | null {
   return valueAsString(getRaw(result, "sku")) ?? valueAsString(getMetaValue(result, "_sku"));
 }
 
+function articleNumberForProduct(result: unknown): string | null {
+  return valueAsString(getRaw(result, "article_number")) ?? valueAsString(getMetaValue(result, "_article_number"));
+}
+
 function toDisplayImageUrl(url: string | null): string | null {
   if (!url?.trim()) return null;
   if (url.startsWith("/") || url.startsWith("data:") || url.startsWith("blob:")) return url;
@@ -309,6 +313,7 @@ export function mapProductListingResult(
   const product: ProductCardData = {
     id,
     sku: skuForProduct(result) || "-",
+    article_number: articleNumberForProduct(result),
     name,
     subtitle: localizedString(result, "subtitle", locale) ?? valueAsString(getRaw(result, "subtitle")),
     excerpt: localizedString(result, "excerpt", locale) ?? valueAsString(getRaw(result, "excerpt")),

@@ -255,6 +255,10 @@ function skuForProduct(result: unknown): string | null {
   return valueAsString(getRaw(result, 'sku')) ?? valueAsString(getMetaValue(result, '_sku'));
 }
 
+function articleNumberForProduct(result: unknown): string | null {
+  return valueAsString(getRaw(result, 'article_number')) ?? valueAsString(getMetaValue(result, '_article_number'));
+}
+
 function toDisplayImageUrl(url: string | null): string | null {
   if (!url || url.trim() === '') return null;
   if (url.startsWith('/') || url.startsWith('data:') || url.startsWith('blob:')) return url;
@@ -289,10 +293,12 @@ function mapOverlayResult(result: unknown, resultIndex: number, locale: string):
   const slug = localizedSlug ?? valueAsString(getRaw(result, 'slug')) ?? valueAsString(getRaw(result, 'post_name'));
   const image = toDisplayImageUrl(imageForProduct(result));
   const sku = skuForProduct(result);
+  const articleNumber = articleNumberForProduct(result);
   const id = valueAsString(getRaw(result, 'id')) ?? valueAsString(getRaw(result, 'ID')) ?? `result-${resultIndex}`;
   const product: ProductCardData = {
     id,
     sku: sku || '-',
+    article_number: articleNumber,
     name: localizedTitle ?? titleForProduct(result),
     subtitle: valueAsString(getRaw(result, 'subtitle')),
     excerpt: valueAsString(getRaw(result, 'excerpt')),
