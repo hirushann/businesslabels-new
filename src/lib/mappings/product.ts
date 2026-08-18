@@ -30,6 +30,7 @@ type LaravelProductTranslation = {
 export type LaravelProduct = {
   id: number | string;
   sku?: string | null;
+  article_number?: string | null;
   title?: string | null;
   name?: string | LocalizedString | null;
   subtitle?: string | LocalizedString | null;
@@ -116,6 +117,7 @@ export function mapLaravelProductToCardData(product: LaravelProduct, locale: str
   return {
     id: product.id,
     sku: product.sku || "-",
+    article_number: product.article_number ?? null,
     name,
     subtitle,
     excerpt,

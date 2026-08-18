@@ -113,12 +113,14 @@ function groupForProduct(product: CatalogProductResult): ProductSuggestionGroupI
   return nameMatch?.id ?? null;
 }
 
-function mapProductItem(result: CatalogProductResult): HeaderSuggestionItem {
-  const sku = result.product.sku && result.product.sku !== "-" ? `SKU: ${result.product.sku}` : undefined;
+function mapProductItem(result: CatalogProductResult, locale: "en" | "nl"): HeaderSuggestionItem {
+  const articleNumber = result.product.article_number?.trim() ? result.product.article_number : result.product.sku;
+  const label = locale === "nl" ? "Artikelnummer" : "Article Number";
+  const meta = articleNumber && articleNumber !== "-" ? `${label}: ${articleNumber}` : undefined;
   return {
     id: result.id,
     title: result.product.name,
-    meta: sku,
+    meta,
     href: productHref(result),
     image: result.product.mainImage ?? undefined,
   };
@@ -189,7 +191,7 @@ export async function GET(request: NextRequest) {
           title: group.title[locale],
           href: withSearch(group.path(locale), query),
           total: groupedProducts.length,
-          items: groupedProducts.slice(0, PRODUCTS_PER_GROUP).map(mapProductItem),
+          items: groupedProducts.slice(0, PRODUCTS_PER_GROUP).map((product) => mapProductItem(product, locale)),
         };
       })
       .filter((group) => group.items.length > 0);
@@ -209,7 +211,7 @@ export async function GET(request: NextRequest) {
         title: groupProductsTitle,
         href: withSearch(productListingPath, query),
         total: groupProductResults.length,
-        items: groupProductResults.slice(0, GROUP_PRODUCTS_LIMIT).map(mapProductItem),
+        items: groupProductResults.slice(0, GROUP_PRODUCTS_LIMIT).map((product) => mapProductItem(product, locale)),
       },
     });
   } catch (error) {

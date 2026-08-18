@@ -1786,6 +1786,7 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number, loc
   const product: ProductCardData = {
     id,
     sku: stringValue(source.sku) ?? "-",
+    article_number: stringValue(source.article_number) ?? null,
     name: title,
     subtitle,
     excerpt,
