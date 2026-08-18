@@ -617,13 +617,40 @@ function appendUnitIfMissing(value: string, unit: string = "mm"): string {
 function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t: TranslationLookup): Array<{ label: string; value: ReactNode }> {
   const missing = "-";
   const booleanLabels = { yes: t("common.yes"), no: t("common.no") };
-  const categoryNames = (product?.categories ?? [])
-    .map((category) => localizedCategoryName(category, locale))
-    .filter((name): name is string => Boolean(name))
-    .join(", ");
+  const categoryLinks = (product?.categories ?? [])
+    .map((category) => {
+      const name = localizedCategoryName(category, locale);
+      if (!name) return null;
+      return { name, slug: localizedCategorySlug(category, locale) };
+    })
+    .filter((entry): entry is { name: string; slug: string | null } => Boolean(entry));
   const specRows: Array<{ label: string; value: ReactNode }> = [
     { label: "SKU", value: normalizeDisplayValue(product?.sku, booleanLabels) || missing },
-    { label: getSpecLabel("category", locale, t), value: categoryNames || missing },
+    {
+      label: getSpecLabel("category", locale, t),
+      value:
+        categoryLinks.length > 0 ? (
+          <>
+            {categoryLinks.map((category, index) => (
+              <span key={`${category.slug ?? category.name}-${index}`}>
+                {category.slug ? (
+                  <LocaleLink
+                    href={`/category/${encodeURIComponent(category.slug)}`}
+                    className="text-brand hover:text-brand underline font-semibold transition-colors cursor-pointer"
+                  >
+                    {category.name}
+                  </LocaleLink>
+                ) : (
+                  category.name
+                )}
+                {index < categoryLinks.length - 1 ? ", " : ""}
+              </span>
+            ))}
+          </>
+        ) : (
+          missing
+        ),
+    },
   ];
 
   const isLabelProduct = product?.is_label_product === true || product?.meta?.is_label_product === true;
