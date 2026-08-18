@@ -240,10 +240,10 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                               )}
                             </div>
                             
-                            {/* SKU & Name */}
+                            {/* SKU / Article Number & Name */}
                             <div className="flex-1 flex flex-col gap-1 min-w-0">
                               <span className="text-sm font-light text-link truncate">
-                                {item.sku}
+                                {item.article_number || item.sku}
                               </span>
                               <h3 className="text-lg font-bold text-ink leading-tight min-w-0">
                                 {href ? (

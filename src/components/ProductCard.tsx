@@ -109,6 +109,8 @@ export type ProductCardCategory = {
 export type ProductCardData = {
   id: string | number;
   sku: string;
+  article_number?: string | null;
+  articleNumber?: string | null;
   name: string;
   title?: string | null;
   subtitle?: string | null;
@@ -452,6 +454,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
         type: product.type,
         name: productName,
         sku: product.sku,
+        article_number: (product as { article_number?: string | null; articleNumber?: string | null }).article_number ?? (product as { article_number?: string | null; articleNumber?: string | null }).articleNumber ?? null,
         price: finalPrice,
         basePrice: productPrice,
         discounts: product.discounts,

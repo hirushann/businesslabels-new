@@ -1379,6 +1379,7 @@ export default async function SingleProductPage({
                       productName={productName}
                       productImage={product.main_image}
                       productSku={product.sku}
+                      productArticleNumber={product.article_number}
                       productSlug={product.slug}
                       productType={normalizeType(product.type) || (product.is_group_product || (product.component_products?.length ?? 0) > 0 ? "group_product" : null)}
                       productPrice={price}

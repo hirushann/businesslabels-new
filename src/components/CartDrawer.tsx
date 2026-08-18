@@ -194,7 +194,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                             <div className="flex justify-between items-start gap-2">
                               <div className="min-w-0 flex-1">
                                 <span className="text-link text-sm font-normal leading-[18.2px] block">
-                                  SKU: {item.sku}
+                                  {item.article_number || item.sku}
                                 </span>
                                 <h3 className="text-ink text-base font-bold leading-[21.6px] mt-0.5 line-clamp-2">
                                   {href ? (
