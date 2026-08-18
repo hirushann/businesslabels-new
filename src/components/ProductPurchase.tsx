@@ -577,6 +577,7 @@ export default function ProductPurchase({
         type,
         name: displayName,
         sku: displaySku,
+        article_number: articleNumber?.trim() ? articleNumber.trim() : null,
         price: itemPrice,
         basePrice: price,
         discounts: discounts,

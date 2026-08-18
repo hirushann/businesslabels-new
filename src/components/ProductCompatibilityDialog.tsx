@@ -31,6 +31,7 @@ type ProductCompatibilityDialogProps = {
   productName?: string | null;
   productImage?: string | null;
   productSku?: string | null;
+  productArticleNumber?: string | null;
   productSlug?: string | null;
   productType?: string | null;
   productPrice?: number | null;
@@ -156,6 +157,7 @@ export default function ProductCompatibilityDialog({
   productName = null,
   productImage = null,
   productSku = null,
+  productArticleNumber = null,
   productSlug = null,
   productType = null,
   productPrice = null,
@@ -219,6 +221,7 @@ export default function ProductCompatibilityDialog({
         type: normalizedProductType,
         name: productName ?? "",
         sku: productSku ?? "",
+        article_number: productArticleNumber ?? null,
         price: productPrice,
         mainImage: productImage,
         packingGroup: packingGroup ? Math.floor(Number(packingGroup)) : undefined,

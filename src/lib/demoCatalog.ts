@@ -130,6 +130,7 @@ export const demoCheckoutItems: CartItem[] = demoProducts.slice(0, 5).map((produ
   type: product.type,
   name: product.title,
   sku: product.sku,
+  article_number: product.article_number,
   price: product.price,
   mainImage: toDisplayImageUrl(product.main_image),
   quantity: index % 2 === 0 ? 1 : 2,
@@ -143,6 +144,7 @@ export function mapDemoProductToCard(product: DemoProductDetail): ProductCardDat
   return {
     id: product.id,
     sku: product.sku,
+    article_number: product.article_number,
     name: product.title,
     subtitle: product.subtitle,
     excerpt: product.excerpt,

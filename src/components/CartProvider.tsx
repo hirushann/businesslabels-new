@@ -19,6 +19,7 @@ export type CartItem = {
   type?: ProductRouteType | null;
   name: string;
   sku: string;
+  article_number?: string | null;
   price?: number | null;
   mainImage?: string | null;
   quantity: number;
