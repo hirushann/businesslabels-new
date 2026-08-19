@@ -10,9 +10,19 @@ import type { MaterialSearchResponse } from "@/lib/search/materials";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations();
+  const locale = await getServerLocale();
+
   return {
     title: `Thermal Direct ${t("common.materials")} — Businesslabels`,
     description: t("materialsPage.metadataDescription"),
+    alternates: {
+      canonical: locale === "en" ? "/en/material/thermal-direct" : "/material/thermal-direct",
+      languages: {
+        en: "/en/material/thermal-direct",
+        nl: "/material/thermal-direct",
+        "x-default": "/material/thermal-direct",
+      },
+    },
   };
 }
 

@@ -10,10 +10,19 @@ import type { MaterialSearchResponse } from "@/lib/search/materials";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations();
+  const locale = await getServerLocale();
 
   return {
     title: t("materialsPage.metadataTitle"),
     description: t("materialsPage.metadataDescription"),
+    alternates: {
+      canonical: locale === "en" ? "/en/material" : "/material",
+      languages: {
+        en: "/en/material",
+        nl: "/material",
+        "x-default": "/material",
+      },
+    },
   };
 }
 

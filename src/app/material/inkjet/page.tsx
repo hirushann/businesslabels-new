@@ -10,9 +10,19 @@ import type { MaterialSearchResponse } from "@/lib/search/materials";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations();
+  const locale = await getServerLocale();
+
   return {
     title: `Inkjet ${t("common.materials")} — Businesslabels`,
     description: t("materialsPage.metadataDescription"),
+    alternates: {
+      canonical: locale === "en" ? "/en/material/inkjet" : "/material/inkjet",
+      languages: {
+        en: "/en/material/inkjet",
+        nl: "/material/inkjet",
+        "x-default": "/material/inkjet",
+      },
+    },
   };
 }
 

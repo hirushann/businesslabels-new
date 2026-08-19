@@ -242,4 +242,41 @@ describe("proxy locale routing", () => {
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe("http://localhost/algemene-voorwaarden");
   });
+
+  it("redirects /brand to /merken", () => {
+    const response = proxy(makeRequest("/brand"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/merken");
+  });
+
+  it("redirects /en/brand to /en/brands", () => {
+    const response = proxy(makeRequest("/en/brand"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/en/brands");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("redirects /en/brands/expobadge to /en/brand/expobadge", () => {
+    const response = proxy(makeRequest("/en/brands/expobadge"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/en/brand/expobadge");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("redirects /brands/epson to /brand/epson", () => {
+    const response = proxy(makeRequest("/brands/epson"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/brand/epson");
+  });
+
+  it("redirects legacy /bierfles-labels-printen to /material", () => {
+    const response = proxy(makeRequest("/bierfles-labels-printen"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/material");
+  });
 });
