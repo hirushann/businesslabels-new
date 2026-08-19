@@ -116,6 +116,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const nlEntries: MetadataRoute.Sitemap = [];
   const enEntries: MetadataRoute.Sitemap = [];
+  const seenUrls = new Set<string>();
 
   // Helper to add matching NL/EN entries
   const addEntry = (
@@ -125,19 +126,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: number = 0.8,
     changeFrequency: 'daily' | 'weekly' | 'monthly' = 'weekly'
   ) => {
-    nlEntries.push({
-      url: `${frontendUrl}${nlPath}`,
-      lastModified,
-      changeFrequency,
-      priority,
-    });
+    const nlUrl = `${frontendUrl}${nlPath}`;
+    const enUrl = `${frontendUrl}${enPath}`;
 
-    enEntries.push({
-      url: `${frontendUrl}${enPath}`,
-      lastModified,
-      changeFrequency,
-      priority,
-    });
+    if (!seenUrls.has(nlUrl)) {
+      seenUrls.add(nlUrl);
+      nlEntries.push({
+        url: nlUrl,
+        lastModified,
+        changeFrequency,
+        priority,
+      });
+    }
+
+    if (!seenUrls.has(enUrl)) {
+      seenUrls.add(enUrl);
+      enEntries.push({
+        url: enUrl,
+        lastModified,
+        changeFrequency,
+        priority,
+      });
+    }
   };
 
   // Add static routes
@@ -159,8 +169,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Add Materials
   materials.forEach((material) => {
-    const nlSlug = localizedSitemapSlug(material, 'nl');
-    const enSlug = localizedSitemapSlug(material, 'en');
+    const nlSlug = localizedSitemapSlug(material, 'nl')?.toLowerCase();
+    const enSlug = localizedSitemapSlug(material, 'en')?.toLowerCase();
     if (nlSlug && enSlug) {
       addEntry(`/material/${nlSlug}`, `/en/material/${enSlug}`, new Date(material.updated_at || new Date()), 0.7, 'weekly');
     }
@@ -168,8 +178,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Add Products
   products.forEach((product) => {
-    const nlSlug = localizedSitemapSlug(product, 'nl');
-    const enSlug = localizedSitemapSlug(product, 'en');
+    const nlSlug = localizedSitemapSlug(product, 'nl')?.toLowerCase();
+    const enSlug = localizedSitemapSlug(product, 'en')?.toLowerCase();
     if (nlSlug && enSlug) {
       addEntry(`/product/${nlSlug}`, `/en/product/${enSlug}`, new Date(product.updated_at || new Date()), 0.9, 'weekly');
     }
@@ -211,8 +221,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Add Printers
   printers.forEach((printer) => {
-    const nlSlug = localizedSitemapSlug(printer, 'nl');
-    const enSlug = localizedSitemapSlug(printer, 'en');
+    const nlSlug = localizedSitemapSlug(printer, 'nl')?.toLowerCase();
+    const enSlug = localizedSitemapSlug(printer, 'en')?.toLowerCase();
     if (nlSlug && enSlug) {
       addEntry(`/printers/${nlSlug}`, `/en/printers/${enSlug}`, new Date(printer.updated_at || new Date()), 0.7, 'weekly');
     }
@@ -220,16 +230,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Add Blogs
   blogs.forEach((blog) => {
-    const nlSlug = localizedSitemapSlug(blog, 'nl');
-    const enSlug = localizedSitemapSlug(blog, 'en');
+    const nlSlug = localizedSitemapSlug(blog, 'nl')?.toLowerCase();
+    const enSlug = localizedSitemapSlug(blog, 'en')?.toLowerCase();
     if (nlSlug && enSlug) {
       addEntry(`/blog/${nlSlug}`, `/en/blog/${enSlug}`, new Date(blog.updated_at || new Date()), 0.6, 'monthly');
     }
   });
 
   brands.forEach((brand) => {
-    const nlSlug = localizedSitemapSlug(brand, 'nl');
-    const enSlug = localizedSitemapSlug(brand, 'en');
+    const nlSlug = localizedSitemapSlug(brand, 'nl')?.toLowerCase();
+    const enSlug = localizedSitemapSlug(brand, 'en')?.toLowerCase();
     if (nlSlug && enSlug) {
       addEntry(`/brand/${publicBrandSlug(nlSlug)}`, `/en/brand/${publicBrandSlug(enSlug)}`, new Date(), 0.7, 'weekly');
     }

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import Accordion from "@/components/Accordion";
 import CTABanner from "@/components/CTABanner";
@@ -236,10 +236,19 @@ export async function generateMetadata({ params }: MaterialPageProps): Promise<M
   const richDescription = resolveLocalizedText(material.description, locale);
   const description = plainText(material.subtitle || richDescription);
   const title = materialHeading(material);
+  const canonicalSlug = (material.slug || slug).toLowerCase();
 
   return {
     title: `${title} — Businesslabels`,
     description,
+    alternates: {
+      canonical: locale === "en" ? `/en/material/${canonicalSlug}` : `/material/${canonicalSlug}`,
+      languages: {
+        en: `/en/material/${canonicalSlug}`,
+        nl: `/material/${canonicalSlug}`,
+        "x-default": `/material/${canonicalSlug}`,
+      },
+    },
   };
 }
 
@@ -372,6 +381,14 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
   const material = await getMaterial(slug);
 
   if (!material) notFound();
+
+  const canonicalSlug = (material.slug || slug).toLowerCase();
+  if (decodeURIComponent(slug) !== canonicalSlug) {
+    const routeQuery = toUrlSearchParams(query);
+    const queryString = routeQuery.toString();
+    const destination = locale === "en" ? `/en/material/${canonicalSlug}` : `/material/${canonicalSlug}`;
+    permanentRedirect(queryString ? `${destination}?${queryString}` : destination);
+  }
 
   const isNl = locale === "nl";
   const category = material.categories?.[0] ?? null;

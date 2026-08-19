@@ -10,9 +10,19 @@ import type { MaterialSearchResponse } from "@/lib/search/materials";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations();
+  const locale = await getServerLocale();
+
   return {
     title: `Thermal Transfer ${t("common.materials")} — Businesslabels`,
     description: t("materialsPage.metadataDescription"),
+    alternates: {
+      canonical: locale === "en" ? "/en/material/thermal-transfer" : "/material/thermal-transfer",
+      languages: {
+        en: "/en/material/thermal-transfer",
+        nl: "/material/thermal-transfer",
+        "x-default": "/material/thermal-transfer",
+      },
+    },
   };
 }
 

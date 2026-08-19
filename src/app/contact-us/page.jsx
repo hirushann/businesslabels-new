@@ -57,7 +57,7 @@ export default async function ContactPage() {
                               <div className="justify-start text-zinc-500 text-sm font-normal leading-5">/</div>
                               <div className="self-stretch justify-start text-neutral-700 text-sm font-bold leading-5">{t("breadcrumb")}</div>
                            </div>
-                           <div className="self-stretch justify-start text-neutral-800 text-4xl sm:text-5xl lg:text-7xl font-bold leading-tight lg:leading-[86.40px]">{t("title")}</div>
+                           <h1 className="self-stretch justify-start text-neutral-800 text-4xl sm:text-5xl lg:text-7xl font-bold leading-tight lg:leading-[86.40px]">{t("title")}</h1>
                            <div className="self-stretch justify-start text-neutral-700 text-xl font-normal leading-8">
                               {t("subtitle")}
                            </div>
@@ -189,9 +189,9 @@ export default async function ContactPage() {
 
             <div className="w-full mx-auto px-4 sm:px-6 lg:px-10 py-16 sm:py-24 lg:py-32 bg-gray-50 flex flex-col justify-start items-start gap-12">
                <div className="max-w-360 mx-auto self-stretch flex flex-col justify-start items-center gap-4">
-                  <div className="self-stretch text-center justify-start text-neutral-800 text-4xl font-bold leading-[48px]">
+                  <h2 className="self-stretch text-center justify-start text-neutral-800 text-4xl font-bold leading-[48px]">
                      {t("teamTitle")}
-                  </div>
+                  </h2>
                   <div className="text-center justify-start text-neutral-700 text-lg font-normal leading-7">
                      {t("teamDesc")}
                   </div>
@@ -209,9 +209,9 @@ export default async function ContactPage() {
                         />
                         <div className="self-stretch flex flex-col justify-center items-center gap-5">
                            <div className="self-stretch flex flex-col justify-start items-center gap-2">
-                              <div className="self-stretch text-center justify-start text-neutral-800 text-2xl font-bold leading-7">
+                              <h3 className="self-stretch text-center justify-start text-neutral-800 text-2xl font-bold leading-7">
                                  {member.name}
-                              </div>
+                              </h3>
                               {member.function && (
                                  <div className="text-center text-brand text-lg font-semibold leading-relaxed">
                                     {member.function}
