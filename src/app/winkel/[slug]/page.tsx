@@ -6,7 +6,7 @@ import ProductCompatibilityDialog from "@/components/ProductCompatibilityDialog"
 import ProductImage from "@/components/ProductImage";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 import { localePath } from "@/lib/i18n/utils";
-import { notFound, redirect } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { getTranslations } from 'next-intl/server';
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 import {
@@ -1084,7 +1084,7 @@ export default async function SingleProductPage({
 
   const canonicalSlug = product.locale_slugs?.[locale] ?? product.slug;
   if (canonicalSlug && decodeURIComponent(slug) !== canonicalSlug) {
-    redirect(productPathForSlug(canonicalSlug, productRouteType(product, selectedType), locale));
+    permanentRedirect(productPathForSlug(canonicalSlug, productRouteType(product, selectedType), locale));
   }
 
   console.log("[SingleProductPage] Full product details:", JSON.stringify(product, null, 2));

@@ -80,111 +80,111 @@ export function proxy(request: NextRequest) {
 
   if (pathname === '/en/support' || pathname === '/en/support/') {
     const redirectUrl = new URL(`${EN_PREFIX}/support-2/${search}`, request.url);
-    return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+    return persistLocale(NextResponse.redirect(redirectUrl, 301), 'en');
   }
 
   if (pathname === '/inkt-recyclen-epson-colorworks' || pathname === '/inkt-recyclen-epson-colorworks/') {
     if (locale === 'en') {
       const redirectUrl = new URL(`${EN_PREFIX}/inkt-recyclen-epson-colorworks${search}`, request.url);
-      return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+      return persistLocale(NextResponse.redirect(redirectUrl, 301), 'en');
     }
   }
 
   if (pathname === '/en/custom-made-form' || pathname === '/en/custom-made-form/' || pathname === '/en/maatwerk' || pathname === '/en/maatwerk/' || pathname === '/en/custom-made-labels' || pathname === '/en/custom-made-labels/') {
     const redirectUrl = new URL(`${EN_PREFIX}/material-customization${search}`, request.url);
-    return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+    return persistLocale(NextResponse.redirect(redirectUrl, 301), 'en');
   }
 
   if (pathname === '/en/kennisbank-overzicht') {
     const redirectUrl = new URL(`${EN_PREFIX}/knowledge-base${search}`, request.url);
-    return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+    return persistLocale(NextResponse.redirect(redirectUrl, 301), 'en');
   }
 
   if (pathname === '/en/merken') {
     const redirectUrl = new URL(`${EN_PREFIX}/brands${search}`, request.url);
-    return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+    return persistLocale(NextResponse.redirect(redirectUrl, 301), 'en');
   }
 
   if (pathname === '/en/winkel' || pathname === '/en/winkel/') {
     const redirectUrl = new URL(`${EN_PREFIX}/shop${search}`, request.url);
-    return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+    return persistLocale(NextResponse.redirect(redirectUrl, 301), 'en');
   }
 
   if (pathname === '/winkel' || pathname === '/winkel/') {
     if (locale === 'en') {
       const redirectUrl = new URL(`${EN_PREFIX}/shop${search}`, request.url);
-      return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+      return persistLocale(NextResponse.redirect(redirectUrl, 301), 'en');
     }
   }
 
   if (pathname === '/en/winkelmand') {
     const redirectUrl = new URL(`${EN_PREFIX}/cart${search}`, request.url);
-    return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+    return persistLocale(NextResponse.redirect(redirectUrl, 301), 'en');
   }
 
 
 
   if (pathname === '/en/algemene-voorwaarden' || pathname === '/en/algemene-voorwaarden/') {
     const redirectUrl = new URL(`${EN_PREFIX}/terms-and-conditions${search}`, request.url);
-    return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+    return persistLocale(NextResponse.redirect(redirectUrl, 301), 'en');
   }
 
   if (pathname === '/terms-and-conditions' || pathname === '/terms-and-conditions/') {
     const redirectUrl = new URL(`/algemene-voorwaarden${search}`, request.url);
-    return persistLocale(NextResponse.redirect(redirectUrl), locale);
+    return persistLocale(NextResponse.redirect(redirectUrl, 301), locale);
   }
 
   if (pathname === '/contact' || pathname === '/contact/') {
     const redirectUrl = new URL(`/contact-us${search}`, request.url);
-    return persistLocale(NextResponse.redirect(redirectUrl), locale);
+    return persistLocale(NextResponse.redirect(redirectUrl, 301), locale);
   }
 
   if (pathname === '/en/contact' || pathname === '/en/contact/') {
     const redirectUrl = new URL(`${EN_PREFIX}/contact-us${search}`, request.url);
-    return persistLocale(NextResponse.redirect(redirectUrl), 'en');
+    return persistLocale(NextResponse.redirect(redirectUrl, 301), 'en');
   }
 
   if (cleanPathname === '/brand' || cleanPathname === '/brand/') {
     const redirectUrl = new URL(hasEnglishPrefix ? `${EN_PREFIX}/brands${search}` : `/merken${search}`, request.url);
-    return persistLocale(NextResponse.redirect(redirectUrl), locale);
+    return persistLocale(NextResponse.redirect(redirectUrl, 301), locale);
   }
 
   if (cleanPathname.startsWith('/brands/')) {
     const brandSlug = cleanPathname.slice('/brands/'.length).replace(/\/$/, '');
     if (brandSlug) {
       const redirectUrl = new URL(hasEnglishPrefix ? `${EN_PREFIX}/brand/${brandSlug}${search}` : `/brand/${brandSlug}${search}`, request.url);
-      return persistLocale(NextResponse.redirect(redirectUrl), locale);
+      return persistLocale(NextResponse.redirect(redirectUrl, 301), locale);
     }
   }
 
   if (cleanPathname === '/bierfles-labels-printen' || cleanPathname === '/bierfles-labels-printen/') {
     const redirectUrl = new URL(hasEnglishPrefix ? `${EN_PREFIX}/material${search}` : `/material${search}`, request.url);
-    return persistLocale(NextResponse.redirect(redirectUrl), locale);
+    return persistLocale(NextResponse.redirect(redirectUrl, 301), locale);
   }
 
   if (cleanPathname === '/shipping-labels' || cleanPathname === '/verzendetiketten' || cleanPathname === '/trouble-free-shipping-labels') {
     const redirectUrl = new URL(hasEnglishPrefix ? `${EN_PREFIX}/material${search}` : `/material${search}`, request.url);
-    return persistLocale(NextResponse.redirect(redirectUrl), locale);
+    return persistLocale(NextResponse.redirect(redirectUrl, 301), locale);
   }
 
   if (cleanPathname === '/nieuw-epson-cw-c4000-colorworks') {
     const redirectUrl = new URL(hasEnglishPrefix ? `${EN_PREFIX}/epson-cw-c4000-printer-preview${search}` : `/epson-cw-c4000-printer-preview${search}`, request.url);
-    return persistLocale(NextResponse.redirect(redirectUrl), locale);
+    return persistLocale(NextResponse.redirect(redirectUrl, 301), locale);
   }
 
   if (cleanPathname === '/epson-colorworks-c8000e') {
     const redirectUrl = new URL(hasEnglishPrefix ? `${EN_PREFIX}/printers${search}` : `/printers${search}`, request.url);
-    return persistLocale(NextResponse.redirect(redirectUrl), locale);
+    return persistLocale(NextResponse.redirect(redirectUrl, 301), locale);
   }
 
   if (decodeURIComponent(cleanPathname).startsWith('/epson-mk-bk')) {
     const redirectUrl = new URL(hasEnglishPrefix ? `${EN_PREFIX}/epson-colorworks-faq${search}` : `/epson-colorworks-faq${search}`, request.url);
-    return persistLocale(NextResponse.redirect(redirectUrl), locale);
+    return persistLocale(NextResponse.redirect(redirectUrl, 301), locale);
   }
 
   if (cleanPathname === '/software/afinity-designer') {
     const redirectUrl = new URL(hasEnglishPrefix ? `${EN_PREFIX}/software-2${search}` : `/software${search}`, request.url);
-    return persistLocale(NextResponse.redirect(redirectUrl), locale);
+    return persistLocale(NextResponse.redirect(redirectUrl, 301), locale);
   }
 
   // ── Locale routing ──────────────────────────────────────────────────────────

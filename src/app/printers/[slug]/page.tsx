@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import ProductsListing from "@/components/ProductsListing";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
@@ -384,6 +384,14 @@ export default async function PrinterFinderDetailPage({
 
   if (!apiPrinter) {
     notFound();
+  }
+
+  const canonicalSlug = (apiPrinter.slug || slug).toLowerCase();
+  if (decodeURIComponent(slug) !== canonicalSlug) {
+    const routeQuery = toUrlSearchParams(await searchParams);
+    const queryString = routeQuery.toString();
+    const destination = locale === "en" ? `/en/printers/${canonicalSlug}` : `/printers/${canonicalSlug}`;
+    permanentRedirect(queryString ? `${destination}?${queryString}` : destination);
   }
 
   const printer = toFinderPrinter(apiPrinter);
