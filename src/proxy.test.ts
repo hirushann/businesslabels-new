@@ -279,4 +279,11 @@ describe("proxy locale routing", () => {
     expect(response.status).toBe(301);
     expect(response.headers.get("location")).toBe("http://localhost/material");
   });
+
+  it("redirects /wp-content/uploads/ to backend media URL", () => {
+    const response = proxy(makeRequest("/wp-content/uploads/2023/06/Inkt-kosten-ColorWorks-LR.pdf"));
+
+    expect(response.status).toBe(301);
+    expect(response.headers.get("location")).toContain("/wp-content/uploads/2023/06/Inkt-kosten-ColorWorks-LR.pdf");
+  });
 });

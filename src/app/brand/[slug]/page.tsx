@@ -130,7 +130,7 @@ export default async function BrandArchivePage({
               <Breadcrumbs 
                 className="text-white/70"
                 items={[
-                  { label: t("common.brands"), href: "/brand" },
+                  { label: t("common.brands"), href: "/brands" },
                   { label: brandTitle }
                 ]} 
               />
