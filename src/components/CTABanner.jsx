@@ -13,7 +13,7 @@ export default function CTABanner() {
       {/* Background */}
       <Image
         src="/images/cta_image.jpg"
-        alt=""
+        alt="Call to action Image - Businesslabels"
         fill
         sizes="100vw"
         className="object-cover"
