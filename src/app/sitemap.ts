@@ -46,6 +46,21 @@ export function localizedSitemapSlug(item: SitemapApiItem, locale: Locale): stri
   return typeof item.slug === 'string' ? item.slug : null;
 }
 
+export function cleanSlug(rawSlug?: string | null): string | null {
+  if (!rawSlug || typeof rawSlug !== 'string') return null;
+  const trimmed = rawSlug.trim();
+  if (!trimmed || trimmed === '/' || trimmed === '#') return null;
+
+  const normalized = trimmed
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/\/+/g, '')
+    .replace(/[^a-z0-9-_]/g, '')
+    .replace(/-+/g, '-');
+
+  return normalized && normalized !== '-' && normalized !== '_' ? normalized : null;
+}
+
 function publicBrandSlug(slug: string): string {
   return slug === 'diamondlabels' ? 'diamondlabels-nl' : slug;
 }
@@ -86,7 +101,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Static routes
   const staticRoutes = [
     { path: '' },
-    { path: '/about' },
     { path: '/contact-us' },
     { path: '/epson-colorworks-faq' },
     { path: '/material' },
@@ -169,8 +183,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Add Materials
   materials.forEach((material) => {
-    const nlSlug = localizedSitemapSlug(material, 'nl')?.toLowerCase();
-    const enSlug = localizedSitemapSlug(material, 'en')?.toLowerCase();
+    const nlSlug = cleanSlug(localizedSitemapSlug(material, 'nl'));
+    const enSlug = cleanSlug(localizedSitemapSlug(material, 'en'));
     if (nlSlug && enSlug) {
       addEntry(`/material/${nlSlug}`, `/en/material/${enSlug}`, new Date(material.updated_at || new Date()), 0.7, 'weekly');
     }
@@ -178,8 +192,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Add Products
   products.forEach((product) => {
-    const nlSlug = localizedSitemapSlug(product, 'nl')?.toLowerCase();
-    const enSlug = localizedSitemapSlug(product, 'en')?.toLowerCase();
+    const nlSlug = cleanSlug(localizedSitemapSlug(product, 'nl'));
+    const enSlug = cleanSlug(localizedSitemapSlug(product, 'en'));
     if (nlSlug && enSlug) {
       addEntry(`/product/${nlSlug}`, `/en/product/${enSlug}`, new Date(product.updated_at || new Date()), 0.9, 'weekly');
     }
@@ -221,8 +235,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Add Printers
   printers.forEach((printer) => {
-    const nlSlug = localizedSitemapSlug(printer, 'nl')?.toLowerCase();
-    const enSlug = localizedSitemapSlug(printer, 'en')?.toLowerCase();
+    const nlSlug = cleanSlug(localizedSitemapSlug(printer, 'nl'));
+    const enSlug = cleanSlug(localizedSitemapSlug(printer, 'en'));
     if (nlSlug && enSlug) {
       addEntry(`/printers/${nlSlug}`, `/en/printers/${enSlug}`, new Date(printer.updated_at || new Date()), 0.7, 'weekly');
     }
@@ -230,18 +244,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Add Blogs
   blogs.forEach((blog) => {
-    const nlSlug = localizedSitemapSlug(blog, 'nl')?.toLowerCase();
-    const enSlug = localizedSitemapSlug(blog, 'en')?.toLowerCase();
+    const nlSlug = cleanSlug(localizedSitemapSlug(blog, 'nl'));
+    const enSlug = cleanSlug(localizedSitemapSlug(blog, 'en'));
     if (nlSlug && enSlug) {
       addEntry(`/blog/${nlSlug}`, `/en/blog/${enSlug}`, new Date(blog.updated_at || new Date()), 0.6, 'monthly');
     }
   });
 
   brands.forEach((brand) => {
-    const nlSlug = localizedSitemapSlug(brand, 'nl')?.toLowerCase();
-    const enSlug = localizedSitemapSlug(brand, 'en')?.toLowerCase();
-    if (nlSlug && enSlug) {
-      addEntry(`/brand/${publicBrandSlug(nlSlug)}`, `/en/brand/${publicBrandSlug(enSlug)}`, new Date(), 0.7, 'weekly');
+    const nlSlug = cleanSlug(localizedSitemapSlug(brand, 'nl'));
+    const enSlug = cleanSlug(localizedSitemapSlug(brand, 'en'));
+    if (nlSlug && enSlug && nlSlug !== 'brand' && enSlug !== 'brand') {
+      const publicNl = publicBrandSlug(nlSlug);
+      const publicEn = publicBrandSlug(enSlug);
+      if (publicNl && publicEn) {
+        addEntry(`/brand/${publicNl}`, `/en/brand/${publicEn}`, new Date(), 0.7, 'weekly');
+      }
     }
   });
 

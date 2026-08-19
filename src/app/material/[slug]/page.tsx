@@ -215,10 +215,20 @@ async function getMaterial(slug: string): Promise<Material | null> {
   if (!baseUrl) return null;
   try {
     const locale = await getServerLocale();
-    const response = await fetch(
+    let response = await fetch(
       withLocaleParam(`${baseUrl}/api/materials/slug/${slug}`, locale),
       { cache: "no-store" },
     );
+    if (!response.ok) {
+      const decoded = decodeURIComponent(slug).toLowerCase().trim();
+      const normalizedSlug = decoded.replace(/\s+/g, "-");
+      if (normalizedSlug !== slug) {
+        response = await fetch(
+          withLocaleParam(`${baseUrl}/api/materials/slug/${normalizedSlug}`, locale),
+          { cache: "no-store" },
+        );
+      }
+    }
     if (!response.ok) return null;
     const json = (await response.json()) as MaterialResponse;
     return json.data;

@@ -55,10 +55,20 @@ async function getPrinter(slug: string): Promise<Printer | null> {
 
   try {
     const locale = await getServerLocale();
-    const response = await fetch(
+    let response = await fetch(
       withLocaleParam(`${baseUrl}/api/printers/slug/${slug}`, locale),
       { cache: "no-store" },
     );
+
+    if (!response.ok) {
+      const cleaned = slug.toLowerCase().replace(/-kopie(-kopie)*/i, "").replace(/-\d+$/, "");
+      if (cleaned && cleaned !== slug.toLowerCase()) {
+        response = await fetch(
+          withLocaleParam(`${baseUrl}/api/printers/slug/${cleaned}`, locale),
+          { cache: "no-store" },
+        );
+      }
+    }
 
     if (!response.ok) return null;
 

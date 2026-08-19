@@ -814,12 +814,21 @@ function productRouteType(
 
 async function fetchProductByType(baseUrl: string, type: "simple" | "variable", slug: string, locale: "en" | "nl"): Promise<ProductDetail | null> {
   try {
-    const response = await fetch(withLocaleParam(`${baseUrl}/api/products/${type}/slug/${encodeURIComponent(slug)}`, locale), {
+    let response = await fetch(withLocaleParam(`${baseUrl}/api/products/${type}/slug/${encodeURIComponent(slug)}`, locale), {
       cache: "no-store",
       headers: {
         Accept: "application/json",
       },
     });
+
+    if (!response.ok && slug !== slug.toLowerCase()) {
+      response = await fetch(withLocaleParam(`${baseUrl}/api/products/${type}/slug/${encodeURIComponent(slug.toLowerCase())}`, locale), {
+        cache: "no-store",
+        headers: {
+          Accept: "application/json",
+        },
+      });
+    }
 
     if (!response.ok) {
       return null;
@@ -835,12 +844,21 @@ async function fetchProductByType(baseUrl: string, type: "simple" | "variable", 
 
 async function fetchGroupProductBySlug(baseUrl: string, slug: string, locale: "en" | "nl"): Promise<ProductDetail | null> {
   try {
-    const response = await fetch(withLocaleParam(`${baseUrl}/api/group-products/slug/${encodeURIComponent(slug)}`, locale), {
+    let response = await fetch(withLocaleParam(`${baseUrl}/api/group-products/slug/${encodeURIComponent(slug)}`, locale), {
       cache: "no-store",
       headers: {
         Accept: "application/json",
       },
     });
+
+    if (!response.ok && slug !== slug.toLowerCase()) {
+      response = await fetch(withLocaleParam(`${baseUrl}/api/group-products/slug/${encodeURIComponent(slug.toLowerCase())}`, locale), {
+        cache: "no-store",
+        headers: {
+          Accept: "application/json",
+        },
+      });
+    }
 
     if (!response.ok) {
       return null;
@@ -922,7 +940,20 @@ async function fetchProductBySlug(
     if (product) return product;
   }
 
-  return fetchGroupProductBySlugWithFallback(baseUrl, slug, locale);
+  const groupProduct = await fetchGroupProductBySlugWithFallback(baseUrl, slug, locale);
+  if (groupProduct) return groupProduct;
+
+  // Fallback for WooCommerce duplicate slugs (e.g. -kopie, -kopie-kopie, -2)
+  const cleanedSlug = slug.replace(/-kopie(-kopie)*/i, "").replace(/-\d+$/, "");
+  if (cleanedSlug && cleanedSlug !== slug) {
+    for (const type of tryTypes) {
+      const product = await fetchProductByTypeWithSlugFallback(baseUrl, type, cleanedSlug, locale);
+      if (product) return product;
+    }
+    return fetchGroupProductBySlugWithFallback(baseUrl, cleanedSlug, locale);
+  }
+
+  return null;
 }
 
 function toTitleCaseFromSlug(raw: string): string {

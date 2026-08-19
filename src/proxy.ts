@@ -144,6 +144,49 @@ export function proxy(request: NextRequest) {
     return persistLocale(NextResponse.redirect(redirectUrl), 'en');
   }
 
+  if (cleanPathname === '/brand' || cleanPathname === '/brand/') {
+    const redirectUrl = new URL(hasEnglishPrefix ? `${EN_PREFIX}/brands${search}` : `/merken${search}`, request.url);
+    return persistLocale(NextResponse.redirect(redirectUrl), locale);
+  }
+
+  if (cleanPathname.startsWith('/brands/')) {
+    const brandSlug = cleanPathname.slice('/brands/'.length).replace(/\/$/, '');
+    if (brandSlug) {
+      const redirectUrl = new URL(hasEnglishPrefix ? `${EN_PREFIX}/brand/${brandSlug}${search}` : `/brand/${brandSlug}${search}`, request.url);
+      return persistLocale(NextResponse.redirect(redirectUrl), locale);
+    }
+  }
+
+  if (cleanPathname === '/bierfles-labels-printen' || cleanPathname === '/bierfles-labels-printen/') {
+    const redirectUrl = new URL(hasEnglishPrefix ? `${EN_PREFIX}/material${search}` : `/material${search}`, request.url);
+    return persistLocale(NextResponse.redirect(redirectUrl), locale);
+  }
+
+  if (cleanPathname === '/shipping-labels' || cleanPathname === '/verzendetiketten' || cleanPathname === '/trouble-free-shipping-labels') {
+    const redirectUrl = new URL(hasEnglishPrefix ? `${EN_PREFIX}/material${search}` : `/material${search}`, request.url);
+    return persistLocale(NextResponse.redirect(redirectUrl), locale);
+  }
+
+  if (cleanPathname === '/nieuw-epson-cw-c4000-colorworks') {
+    const redirectUrl = new URL(hasEnglishPrefix ? `${EN_PREFIX}/epson-cw-c4000-printer-preview${search}` : `/epson-cw-c4000-printer-preview${search}`, request.url);
+    return persistLocale(NextResponse.redirect(redirectUrl), locale);
+  }
+
+  if (cleanPathname === '/epson-colorworks-c8000e') {
+    const redirectUrl = new URL(hasEnglishPrefix ? `${EN_PREFIX}/printers${search}` : `/printers${search}`, request.url);
+    return persistLocale(NextResponse.redirect(redirectUrl), locale);
+  }
+
+  if (decodeURIComponent(cleanPathname).startsWith('/epson-mk-bk')) {
+    const redirectUrl = new URL(hasEnglishPrefix ? `${EN_PREFIX}/epson-colorworks-faq${search}` : `/epson-colorworks-faq${search}`, request.url);
+    return persistLocale(NextResponse.redirect(redirectUrl), locale);
+  }
+
+  if (cleanPathname === '/software/afinity-designer') {
+    const redirectUrl = new URL(hasEnglishPrefix ? `${EN_PREFIX}/software-2${search}` : `/software${search}`, request.url);
+    return persistLocale(NextResponse.redirect(redirectUrl), locale);
+  }
+
   // ── Locale routing ──────────────────────────────────────────────────────────
 
   // ── Auth guard (/my-account) ─────────────────────────────────────────────────

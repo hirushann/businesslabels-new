@@ -17,6 +17,8 @@ const BRAND_TITLES: Record<string, string> = {
   "diamondlabels-nl": "Diamondlabels",
   diamondlabels: "Diamondlabels",
   expo_badge: "ExpoBadge",
+  expobadge: "ExpoBadge",
+  "expo-badge": "ExpoBadge",
   zebra: "Zebra",
   botlr: "Botlr",
   creative: "Creative",
