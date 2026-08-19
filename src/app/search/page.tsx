@@ -4,6 +4,14 @@ import SearchPageClient from './SearchPageClient';
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
+  alternates: {
+    canonical: null,
+    languages: {
+      en: null,
+      nl: null,
+      'x-default': null,
+    },
+  },
 };
 
 function SearchPageFallback() {

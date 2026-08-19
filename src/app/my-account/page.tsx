@@ -14,6 +14,14 @@ export async function generateMetadata(): Promise<Metadata> {
     title: t("pages.myAccountMetadataTitle"),
     description: t("pages.myAccountMetadataDescription"),
     robots: { index: false, follow: false },
+    alternates: {
+      canonical: null,
+      languages: {
+        en: null,
+        nl: null,
+        'x-default': null,
+      },
+    },
   };
 }
 

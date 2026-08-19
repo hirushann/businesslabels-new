@@ -7,6 +7,14 @@ export async function generateMetadata() {
     title: `${t('pages.myFavorites') || 'Favorites'} | Businesslabels`,
     description: 'View and manage your favorite label printers and supplies.',
     robots: { index: false, follow: false },
+    alternates: {
+      canonical: null,
+      languages: {
+        en: null,
+        nl: null,
+        'x-default': null,
+      },
+    },
   };
 }
 
