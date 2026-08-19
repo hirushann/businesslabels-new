@@ -15,13 +15,6 @@ export async function generateMetadata() {
   return {
     title: t("pages.homeMetadataTitle"),
     description: t("pages.homeMetadataDescription"),
-    alternates: {
-      canonical: siteUrl,
-      languages: {
-        en: `${siteUrl}/en`,
-        nl: `${siteUrl}/`,
-      },
-    },
     robots: {
       index: true,
       follow: true,
