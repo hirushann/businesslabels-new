@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import LocaleLink from '@/components/LocaleLink';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import {
   Laptop,
@@ -316,9 +317,9 @@ export default function EpsonLabelprintersPageClient() {
                 "Zolang de labelprinter goed werkt is alles fantastisch. Maar wat als de Epson labelprinter besluit om vervelend te gaan doen? Storingen zijn heel vervelend, zeker omdat het altijd gebeurt als het net even niet uitkomt. Voor klanten van Businesslabels is de oplossing eenvoudig want support is gratis. Dus even bellen of mailen en het probleem wordt samen doorgelopen en vaak opgelost. Gratis support is slechts 1 van de vele voordelen als je de Epson labelprinters bij Businesslabels koopt!"
               </p>
               <div className="mt-8">
-                <Link href="/support-2/" className="inline-block rounded-full bg-neutral-900 px-8 py-3.5 text-sm font-bold uppercase tracking-wider text-white transition-all hover:-translate-y-0.5 hover:bg-neutral-800 hover:shadow-lg">
+                <LocaleLink href="/support" className="inline-block rounded-full bg-neutral-900 px-8 py-3.5 text-sm font-bold uppercase tracking-wider text-white transition-all hover:-translate-y-0.5 hover:bg-neutral-800 hover:shadow-lg">
                   Gratis support via Businesslabels
-                </Link>
+                </LocaleLink>
               </div>
             </div>
           </div>

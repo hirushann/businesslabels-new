@@ -690,9 +690,13 @@ function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t:
         cleanKey === "material-code" ||
         cleanKey === "materiaal-code"
       ) {
+        const materialSlug = normalizedValue
+          .toLowerCase()
+          .trim()
+          .replace(/\s+/g, "-");
         finalValue = (
           <LocaleLink
-            href={`/material/${encodeURIComponent(normalizedValue)}`}
+            href={`/material/${encodeURIComponent(materialSlug)}`}
             className="text-brand hover:text-brand underline font-semibold transition-colors cursor-pointer"
           >
             {normalizedValue}

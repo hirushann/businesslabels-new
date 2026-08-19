@@ -187,6 +187,12 @@ export function proxy(request: NextRequest) {
     return persistLocale(NextResponse.redirect(redirectUrl, 301), locale);
   }
 
+  if (cleanPathname.startsWith('/wp-content/uploads/')) {
+    const backendBase = process.env.BBNL_API_BASE_URL || 'https://bbnl.dayzsolutions.com';
+    const redirectUrl = new URL(cleanPathname + search, backendBase);
+    return persistLocale(NextResponse.redirect(redirectUrl, 301), locale);
+  }
+
   // ── Locale routing ──────────────────────────────────────────────────────────
 
   // ── Auth guard (/my-account) ─────────────────────────────────────────────────
