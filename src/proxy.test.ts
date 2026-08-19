@@ -94,7 +94,7 @@ describe("proxy locale routing", () => {
   it("redirects /en/kennisbank-overzicht to /en/knowledge-base", () => {
     const response = proxy(makeRequest("/en/kennisbank-overzicht"));
 
-    expect(response.status).toBe(307);
+    expect(response.status).toBe(301);
     expect(response.headers.get("location")).toBe("http://localhost/en/knowledge-base");
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
@@ -109,7 +109,7 @@ describe("proxy locale routing", () => {
   it("redirects /en/merken to /en/brands", () => {
     const response = proxy(makeRequest("/en/merken"));
 
-    expect(response.status).toBe(307);
+    expect(response.status).toBe(301);
     expect(response.headers.get("location")).toBe("http://localhost/en/brands");
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
@@ -131,7 +131,7 @@ describe("proxy locale routing", () => {
   it("redirects /en/support to /en/support-2/", () => {
     const response = proxy(makeRequest("/en/support"));
 
-    expect(response.status).toBe(307);
+    expect(response.status).toBe(301);
     expect(response.headers.get("location")).toBe("http://localhost/en/support-2/");
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
@@ -147,7 +147,7 @@ describe("proxy locale routing", () => {
   it("redirects /en/custom-made-form to /en/material-customization", () => {
     const response = proxy(makeRequest("/en/custom-made-form"));
 
-    expect(response.status).toBe(307);
+    expect(response.status).toBe(301);
     expect(response.headers.get("location")).toBe("http://localhost/en/material-customization");
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
@@ -155,7 +155,7 @@ describe("proxy locale routing", () => {
   it("redirects /en/maatwerk to /en/material-customization", () => {
     const response = proxy(makeRequest("/en/maatwerk"));
 
-    expect(response.status).toBe(307);
+    expect(response.status).toBe(301);
     expect(response.headers.get("location")).toBe("http://localhost/en/material-customization");
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
@@ -177,7 +177,7 @@ describe("proxy locale routing", () => {
   it("redirects /en/winkel to /en/shop", () => {
     const response = proxy(makeRequest("/en/winkel"));
 
-    expect(response.status).toBe(307);
+    expect(response.status).toBe(301);
     expect(response.headers.get("location")).toBe("http://localhost/en/shop");
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
@@ -200,7 +200,7 @@ describe("proxy locale routing", () => {
   it("redirects /en/winkelmand to /en/cart", () => {
     const response = proxy(makeRequest("/en/winkelmand"));
 
-    expect(response.status).toBe(307);
+    expect(response.status).toBe(301);
     expect(response.headers.get("location")).toBe("http://localhost/en/cart");
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
@@ -209,14 +209,14 @@ describe("proxy locale routing", () => {
   it("redirects /contact to /contact-us", () => {
     const response = proxy(makeRequest("/contact"));
 
-    expect(response.status).toBe(307);
+    expect(response.status).toBe(301);
     expect(response.headers.get("location")).toBe("http://localhost/contact-us");
   });
 
   it("redirects /en/contact to /en/contact-us", () => {
     const response = proxy(makeRequest("/en/contact"));
 
-    expect(response.status).toBe(307);
+    expect(response.status).toBe(301);
     expect(response.headers.get("location")).toBe("http://localhost/en/contact-us");
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
@@ -231,7 +231,7 @@ describe("proxy locale routing", () => {
   it("redirects /en/algemene-voorwaarden to /en/terms-and-conditions", () => {
     const response = proxy(makeRequest("/en/algemene-voorwaarden"));
 
-    expect(response.status).toBe(307);
+    expect(response.status).toBe(301);
     expect(response.headers.get("location")).toBe("http://localhost/en/terms-and-conditions");
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
@@ -239,21 +239,21 @@ describe("proxy locale routing", () => {
   it("redirects /terms-and-conditions to /algemene-voorwaarden", () => {
     const response = proxy(makeRequest("/terms-and-conditions"));
 
-    expect(response.status).toBe(307);
+    expect(response.status).toBe(301);
     expect(response.headers.get("location")).toBe("http://localhost/algemene-voorwaarden");
   });
 
   it("redirects /brand to /merken", () => {
     const response = proxy(makeRequest("/brand"));
 
-    expect(response.status).toBe(307);
+    expect(response.status).toBe(301);
     expect(response.headers.get("location")).toBe("http://localhost/merken");
   });
 
   it("redirects /en/brand to /en/brands", () => {
     const response = proxy(makeRequest("/en/brand"));
 
-    expect(response.status).toBe(307);
+    expect(response.status).toBe(301);
     expect(response.headers.get("location")).toBe("http://localhost/en/brands");
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
@@ -261,7 +261,7 @@ describe("proxy locale routing", () => {
   it("redirects /en/brands/expobadge to /en/brand/expobadge", () => {
     const response = proxy(makeRequest("/en/brands/expobadge"));
 
-    expect(response.status).toBe(307);
+    expect(response.status).toBe(301);
     expect(response.headers.get("location")).toBe("http://localhost/en/brand/expobadge");
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
@@ -269,14 +269,14 @@ describe("proxy locale routing", () => {
   it("redirects /brands/epson to /brand/epson", () => {
     const response = proxy(makeRequest("/brands/epson"));
 
-    expect(response.status).toBe(307);
+    expect(response.status).toBe(301);
     expect(response.headers.get("location")).toBe("http://localhost/brand/epson");
   });
 
   it("redirects legacy /bierfles-labels-printen to /material", () => {
     const response = proxy(makeRequest("/bierfles-labels-printen"));
 
-    expect(response.status).toBe(307);
+    expect(response.status).toBe(301);
     expect(response.headers.get("location")).toBe("http://localhost/material");
   });
 });
