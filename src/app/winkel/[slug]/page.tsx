@@ -1191,7 +1191,7 @@ export default async function SingleProductPage({
       "@type": "Offer",
       "url": productUrl,
       "priceCurrency": "EUR",
-      "price": price.toFixed(2),
+      "price": (price * 1.23).toFixed(2),
       "itemCondition": "https://schema.org/NewCondition",
       "availability": product?.in_stock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
       "seller": {
