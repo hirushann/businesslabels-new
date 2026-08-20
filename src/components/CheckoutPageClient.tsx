@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useMemo, useState, useEffect } from "react";
+import { useCallback, useMemo, useRef, useState, useEffect } from "react";
 import { type CartItem, useCart } from "@/components/CartProvider";
 import { toast } from "sonner";
 import LoginPopup from "@/components/LoginPopup";
@@ -12,8 +12,8 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip
 import { localePath } from "@/lib/i18n/utils";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { useShippingRules } from "@/hooks/useShippingRules";
-import { calculateDisplayedCheckoutTotals } from "@/lib/checkout/vat";
-import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
+import { calculateDisplayedCheckoutTotals, shouldPromptForInvalidVat } from "@/lib/checkout/vat";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 type CheckoutFormState = {
   firstName: string;
@@ -57,6 +57,23 @@ const chargedVatStatus: VatStatus = {
   vat_shifted: false,
   tax_rate: 0.21,
 };
+
+async function fetchVatStatus(
+  billingCountry: string,
+  vatNumber: string,
+  shippingCountry: string,
+  signal?: AbortSignal,
+): Promise<VatStatus | undefined> {
+  const response = await fetch("/api/checkout/vat-status", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ billing_country: billingCountry, vat_number: vatNumber, shipping_country: shippingCountry }),
+    signal,
+  });
+  const payload = await response.json();
+
+  return response.ok ? payload?.data : undefined;
+}
 
 type CheckoutPageClientProps = {
   mode?: CheckoutMode;
@@ -432,18 +449,8 @@ function CheckoutShell({
     const controller = new AbortController();
     const timeout = window.setTimeout(async () => {
       try {
-        const response = await fetch("/api/checkout/vat-status", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            billing_country: billingCountryCode,
-            vat_number: form.vatNumber,
-            shipping_country: shippingCountryCode,
-          }),
-          signal: controller.signal,
-        });
-        const payload = await response.json();
-        if (response.ok && payload?.data) setVatResponse({ key: vatRequestKey, status: payload.data });
+        const status = await fetchVatStatus(billingCountryCode, form.vatNumber, shippingCountryCode, controller.signal);
+        if (status) setVatResponse({ key: vatRequestKey, status });
       } catch (error) {
         if (!(error instanceof DOMException && error.name === "AbortError")) {
           setVatResponse({
@@ -804,6 +811,7 @@ function CheckoutShell({
                               <span className="text-neutral-400 font-normal text-sm">{locale.startsWith('nl') ? '(Optioneel)' : '(Optional)'}</span>
                             </span>
                             <input
+                              id="checkout-vat-number"
                               type="text"
                               value={form.vatNumber}
                               disabled={isLoggedIn && !isEditingBilling && savedBillingAddresses.length > 0}
@@ -2256,6 +2264,9 @@ export default function CheckoutPageClient({
   const [isEditingBilling, setIsEditingBilling] = useState(false);
   const [billingSnapshot, setBillingSnapshot] = useState<Partial<CheckoutFormState> | null>(null);
   const [countriesList, setCountriesList] = useState<any[]>([]);
+  const [isInvalidVatDialogOpen, setIsInvalidVatDialogOpen] = useState(false);
+  const [requiresValidVatCorrection, setRequiresValidVatCorrection] = useState(false);
+  const invalidVatAccepted = useRef(false);
 
   useEffect(() => {
     async function loadCountries() {
@@ -2309,6 +2320,19 @@ export default function CheckoutPageClient({
         : (locale.startsWith('nl') ? "Vul a.u.b. alle verplichte velden in." : "Please fill in all required fields.");
       toast.error(incompleteMsg);
       return;
+    }
+
+    if (requiresValidVatCorrection) {
+      const status = await fetchVatStatus(
+        resolveCountryId(form.country, countriesList),
+        form.vatNumber,
+        resolveCountryId(form.sameAsBilling ? form.country : form.shippingCountry, countriesList),
+      ).catch(() => undefined);
+
+      if (status?.vat_validation_status !== "valid") {
+        setErrors((current) => ({ ...current, vatNumber: t("checkout.invalidVatCorrection") }));
+        return;
+      }
     }
 
     if (isLoggedIn) {
@@ -2398,6 +2422,7 @@ export default function CheckoutPageClient({
 
     setBillingSnapshot(null);
     setIsEditingBilling(false);
+    setRequiresValidVatCorrection(false);
   };
   
   const autofillCustomerDetails = useCallback(async () => {
@@ -2827,6 +2852,21 @@ export default function CheckoutPageClient({
 
     setIsPending(true);
 
+    if (form.vatNumber.trim() && !invalidVatAccepted.current) {
+      const status = await fetchVatStatus(
+        resolveCountryId(form.country, countriesList),
+        form.vatNumber,
+        resolveCountryId(form.sameAsBilling ? form.country : form.shippingCountry, countriesList),
+      ).catch(() => undefined);
+
+      if (shouldPromptForInvalidVat(status?.vat_validation_status || "unavailable", false)) {
+        setIsPending(false);
+        setIsInvalidVatDialogOpen(true);
+        return;
+      }
+    }
+    invalidVatAccepted.current = false;
+
     const isSavedBillingSelected =
       isLoggedIn &&
       !isEditingBilling &&
@@ -3065,6 +3105,7 @@ export default function CheckoutPageClient({
   };
 
   return (
+    <>
     <CheckoutShell
       items={items}
       totalAmount={totalAmount}
@@ -3148,6 +3189,41 @@ export default function CheckoutPageClient({
       saveEditingBilling={saveEditingBilling}
       countriesList={countriesList}
     />
+    <Dialog open={isInvalidVatDialogOpen} onOpenChange={setIsInvalidVatDialogOpen}>
+      <DialogContent showCloseButton={false} className="rounded-2xl bg-white p-6 sm:max-w-md">
+        <DialogTitle className="text-xl font-bold text-ink">{t("checkout.invalidVatTitle")}</DialogTitle>
+        <DialogDescription className="text-base leading-6 text-copy">
+          {t("checkout.invalidVatMessage")}
+        </DialogDescription>
+        <div className="mt-2 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={() => {
+              setIsInvalidVatDialogOpen(false);
+              setRequiresValidVatCorrection(true);
+              setStep(1);
+              if (isLoggedIn) startEditingBilling();
+              window.setTimeout(() => document.getElementById("checkout-vat-number")?.focus(), 0);
+            }}
+            className="h-11 rounded-full border border-brand px-5 font-bold text-brand hover:bg-brand-soft"
+          >
+            {t("checkout.editVatNumber")}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              invalidVatAccepted.current = true;
+              setIsInvalidVatDialogOpen(false);
+              document.querySelector<HTMLFormElement>("#checkout-form")?.requestSubmit();
+            }}
+            className="h-11 rounded-full bg-brand px-5 font-bold text-white hover:bg-brand-hover"
+          >
+            {t("checkout.continueAnyway")}
+          </button>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
 interface AddAddressPopupProps {

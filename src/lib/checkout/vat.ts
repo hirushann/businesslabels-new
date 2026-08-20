@@ -9,3 +9,7 @@ export function calculateDisplayedCheckoutTotals(
 
   return { taxAmount, finalTotal: netTotal + taxAmount };
 }
+
+export function shouldPromptForInvalidVat(status: string, accepted: boolean) {
+  return status === 'invalid' && !accepted;
+}
