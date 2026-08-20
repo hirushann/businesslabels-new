@@ -33,8 +33,6 @@ export default function robots(): MetadataRoute.Robots {
       disallow: [
         '/*?add-to-cart=*',
         '/*&add-to-cart=*',
-        '/favorites',
-        '/en/favorites',
         '/api/',
         '/login',
         '/en/login',

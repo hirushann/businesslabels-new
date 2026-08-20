@@ -166,9 +166,9 @@ export default function FavoritesPageClient() {
             className="object-contain mb-8"
             unoptimized
           />
-          <h2 className="text-3xl md:text-4xl font-bold text-neutral-800 mb-4">
+          <h1 className="text-3xl md:text-4xl font-bold text-neutral-800 mb-4">
             {t('favoritesPage.emptyTitle') || 'Your Favorite list is Empty'}
-          </h2>
+          </h1>
           <p className="text-neutral-500 text-sm md:text-base max-w-md mx-auto mb-8 font-normal leading-relaxed">
             {t('favoritesPage.emptyDescription') || "It seems you haven't saved any items yet. Explore our collection and add your favorites!"}
           </p>

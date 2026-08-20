@@ -10,6 +10,14 @@ export async function generateMetadata() {
     title: t('pages.cartMetadataTitle'),
     description: t('pages.cartMetadataDescription'),
     robots: { index: false, follow: false },
+    alternates: {
+      canonical: null,
+      languages: {
+        en: null,
+        nl: null,
+        'x-default': null,
+      },
+    },
   };
 }
 
