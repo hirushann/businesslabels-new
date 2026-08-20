@@ -95,11 +95,16 @@ function toFinderPrinter(printer: Printer): FinderPrinterDetails {
     product_url: printer.product_url ?? null,
   };
 }
+import {
+  getPrinterLocaleSlugs,
+  getPrinterTranslation,
+} from "@/lib/routes/printers";
 
 export async function generateMetadata({
   params,
 }: Pick<PrinterPageProps, "params">): Promise<Metadata> {
   const { slug } = await params;
+  const locale = await getServerLocale();
   const printer = await getPrinter(slug);
 
   if (!printer) {
@@ -108,9 +113,39 @@ export async function generateMetadata({
     };
   }
 
+  const translation = getPrinterTranslation(printer, locale);
+  const title =
+    translation?.meta_title ||
+    (translation?.title || printer.title
+      ? `${translation?.title || printer.title} — Businesslabels`
+      : "Printer — Businesslabels");
+  const description =
+    translation?.meta_description ||
+    translation?.subtitle ||
+    printer.subtitle ||
+    undefined;
+
+  const { en: enSlug, nl: nlSlug } = getPrinterLocaleSlugs(printer, slug);
+  const siteUrl = (
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    "https://businesslabels.nl"
+  ).replace(/\/$/, "");
+
+  const canonicalPath =
+    locale === "en" ? `/en/printers/${enSlug}` : `/printers/${nlSlug}`;
+
   return {
-    title: `${printer.title} — Businesslabels`,
-    description: printer.subtitle || undefined,
+    title,
+    description,
+    alternates: {
+      canonical: `${siteUrl}${canonicalPath}`,
+      languages: {
+        en: `${siteUrl}/en/printers/${enSlug}`,
+        nl: `${siteUrl}/printers/${nlSlug}`,
+        "x-default": `${siteUrl}/printers/${nlSlug}`,
+      },
+    },
   };
 }
 
