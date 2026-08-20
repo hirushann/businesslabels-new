@@ -58,16 +58,22 @@ export async function generateMetadata({
   const productType = productRouteType(product, selectedType);
   const localeSlugs = getProductLocaleSlugs(product);
   const canonicalSlug = localeSlugs[locale] ?? product.slug ?? slug;
+  const siteUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || "https://businesslabels.nl").replace(/\/$/, "");
+  const enSlug = localeSlugs.en ?? canonicalSlug;
+  const nlSlug = localeSlugs.nl ?? canonicalSlug;
+  const enPath = productPathForSlug(enSlug, null, "en");
+  const nlPath = productPathForSlug(nlSlug, null, "nl");
+  const canonicalPath = productPathForSlug(canonicalSlug, null, locale);
 
   return {
     title,
     description,
     alternates: {
-      canonical: productPathForSlug(canonicalSlug, null, locale),
+      canonical: `${siteUrl}${canonicalPath}`,
       languages: {
-        en: productPathForSlug(localeSlugs.en ?? canonicalSlug, null, "en"),
-        nl: productPathForSlug(localeSlugs.nl ?? canonicalSlug, null, "nl"),
-        "x-default": productPathForSlug(localeSlugs.nl ?? canonicalSlug, null, "nl"),
+        en: `${siteUrl}${enPath}`,
+        nl: `${siteUrl}${nlPath}`,
+        "x-default": `${siteUrl}${nlPath}`,
       },
     },
     openGraph: {
@@ -1088,7 +1094,7 @@ export default async function SingleProductPage({
 
   const canonicalSlug = product.locale_slugs?.[locale] ?? product.slug;
   if (canonicalSlug && decodeURIComponent(slug) !== canonicalSlug) {
-    permanentRedirect(productPathForSlug(canonicalSlug, productRouteType(product, selectedType), locale));
+    permanentRedirect(productPathForSlug(canonicalSlug, null, locale));
   }
 
   console.log("[SingleProductPage] Full product details:", JSON.stringify(product, null, 2));
@@ -1158,8 +1164,8 @@ export default async function SingleProductPage({
     price = price - (price * (discount / 100));
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://businesslabels.nl";
-  const productUrl = `${siteUrl}${productPathForSlug(canonicalSlug || slug, productRouteType(product, selectedType), locale)}`;
+  const siteUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || "https://businesslabels.nl").replace(/\/$/, "");
+  const productUrl = `${siteUrl}${productPathForSlug(canonicalSlug || slug, null, locale)}`;
   
   let brandName = "Businesslabels";
   if (product?.make) {
@@ -1254,7 +1260,7 @@ export default async function SingleProductPage({
                     return (
                       <div key={item.id}>
                         <Link
-                          href={item.slug ? productPathForSlug(item.slug, "simple", locale) : "#"}
+                          href={item.slug ? productPathForSlug(item.slug, null, locale) : "#"}
                           className="group flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3 text-start transition-colors hover:border-brand/30 hover:bg-brand-soft"
                         >
                           {proxiedImage ? (
