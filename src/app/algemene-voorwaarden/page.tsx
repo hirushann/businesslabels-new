@@ -40,9 +40,9 @@ export default async function TermsAndConditions() {
 
         <div className="rounded-[32px] bg-white p-8 sm:p-12 lg:p-16 shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-slate-100">
           <div className="max-w-none text-slate-600 text-base sm:text-lg
-            [&_h1]:text-2xl [&_h1]:font-black [&_h1]:uppercase [&_h1]:tracking-tight [&_h1]:text-slate-900 [&_h1]:mb-6 [&_h1]:mt-14 [&_h1:first-child]:mt-0
-            [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-slate-900 [&_h2]:mb-5 [&_h2]:mt-12
-            [&_h3]:text-lg [&_h3]:font-bold [&_h3]:text-slate-900 [&_h3]:mb-5 [&_h3]:mt-12
+            [&_h2]:text-2xl [&_h2]:font-black [&_h2]:uppercase [&_h2]:tracking-tight [&_h2]:text-slate-900 [&_h2]:mb-6 [&_h2]:mt-14 [&_h2:first-child]:mt-0
+            [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-slate-900 [&_h3]:mb-5 [&_h3]:mt-12
+            [&_h4]:text-lg [&_h4]:font-bold [&_h4]:text-slate-900 [&_h4]:mb-5 [&_h4]:mt-12
             [&_p]:mb-6 [&_p]:leading-relaxed
             [&_ol]:list-decimal [&_ol]:ml-6 [&_ol]:mb-8 [&_ol_li]:mb-3 [&_ol_li]:pl-2 [&_ol]:marker:text-slate-400 [&_ol]:marker:font-semibold
             [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:mb-8 [&_ul_li]:mb-3 [&_ul_li]:pl-2 [&_ul]:marker:text-slate-400
@@ -62,13 +62,13 @@ export default async function TermsAndConditions() {
 }
 
 const dutchContent = `
-<h1>ALGEMENE VOORWAARDEN SMART2B B.V.</h1>
+<h2>ALGEMENE VOORWAARDEN SMART2B B.V.</h2>
 <p><span style="text-decoration: underline;"><em>Versie: mei 2025</em></span></p>
 <p>Deze algemene voorwaarden zijn van toepassing op alle aanbiedingen, overeenkomsten en leveringen van Smart2B B.V. en haar geregistreerde handelsnamen, waaronder Businesslabels.nl, IDbeheer.nl, Smart2B.nl en Kleurenlabelprinter.nl. De klant erkent dat hij handelt in de uitoefening van zijn beroep of bedrijf. Smart2B B.V. levert uitsluitend aan zakelijke klanten (B2B).</p>
 <p>Voor vragen over deze voorwaarden kun je contact opnemen via:</p>
 <p>📧 sales@smart2b.nl</p>
 <p>📞 +31(0)318 590 212</p>
-<h1>INHOUDSOPGAVE</h1>
+<h2>INHOUDSOPGAVE</h2>
 <ol>
 <li>Definities</li>
 <li>Identiteit van Smart2B B.V.</li>
@@ -86,12 +86,12 @@ const dutchContent = `
 <li>Conversie</li>
 <li>Geen herroepingsrecht</li>
 </ol>
-<p><strong>ARTIKEL 1 – Definities</strong></p>
+<h3>ARTIKEL 1 – Definities</h3>
 <p>In deze voorwaarden wordt verstaan onder:</p>
 <p><strong>Klant</strong>: de rechtspersoon of natuurlijke persoon die handelt in de uitoefening van zijn beroep of bedrijf en een overeenkomst aangaat met Smart2B B.V. of één van haar geregistreerde handelsnamen. Smart2B B.V. levert uitsluitend aan zakelijke klanten. Overeenkomsten met consumenten in de zin van artikel 6:230g BW worden niet aangegaan.</p>
 <p><strong>Overeenkomst</strong>: een overeenkomst tussen Smart2B B.V. (of een van haar geregistreerde handelsnamen) en een klant voor de verkoop van producten en/of diensten, waarbij uitsluitend B2B-transacties plaatsvinden.</p>
 <p><strong>Dag</strong>: kalenderdag.</p>
-<p><strong>ARTIKEL 2 – Identiteit van Smart2B B.V.</strong></p>
+<h3>ARTIKEL 2 – Identiteit van Smart2B B.V.</h3>
 <p>Smart2B B.V.</p>
 <p>Lenderinkweg 8</p>
 <p>6733 AX WEKEROM</p>
@@ -108,53 +108,53 @@ const dutchContent = `
 <li>Kleurenlabelprinter.nl</li>
 <li>ExpoBadge<strong><br /></strong></li>
 </ul>
-<p><strong>ARTIKEL 3 – Toepasselijkheid</strong></p>
+<h3>ARTIKEL 3 – Toepasselijkheid</h3>
 <ol>
 <li>Deze algemene voorwaarden zijn van toepassing op alle aanbiedingen, offertes, rechtsbetrekkingen en overeenkomsten waarbij Smart2B B.V., handelend onder één van haar handelsnamen, goederen en/of diensten levert aan zakelijke klanten.</li>
 <li>Afwijkingen op deze voorwaarden zijn slechts geldig indien schriftelijk overeengekomen.</li>
 <li>De toepasselijkheid van algemene voorwaarden van de klant wordt uitdrukkelijk uitgesloten, tenzij schriftelijk anders overeengekomen.</li>
 </ol>
-<p><strong>ARTIKEL 4 – Aanbiedingen en totstandkoming van overeenkomsten</strong></p>
+<h3>ARTIKEL 4 – Aanbiedingen en totstandkoming van overeenkomsten</h3>
 <ol>
 <li>Alle aanbiedingen en offertes van Smart2B B.V. zijn vrijblijvend, tenzij uitdrukkelijk anders vermeld.</li>
 <li>Een overeenkomst komt tot stand zodra Smart2B B.V. de opdracht van de klant schriftelijk of per e-mail bevestigt of wanneer Smart2B B.V. met de uitvoering van de opdracht is begonnen.</li>
 </ol>
-<p><strong>ARTIKEL 5 – Prijzen en betaling</strong></p>
+<h3>ARTIKEL 5 – Prijzen en betaling</h3>
 <ol>
 <li>Alle vermelde prijzen zijn exclusief btw en andere heffingen van overheidswege.</li>
 <li>Betaling dient te geschieden binnen 30 dagen na factuurdatum, tenzij schriftelijk anders is overeengekomen.</li>
 <li>Bij niet-tijdige betaling is de klant van rechtswege in verzuim. Smart2B B.V. is gerechtigd wettelijke handelsrente en incassokosten in rekening te brengen.</li>
 <li>Smart2B B.V. is in dat geval gerechtigd haar verplichtingen op te schorten, waaronder het uitstellen van leveringen of het stopzetten van toegang tot diensten.</li>
 </ol>
-<p><strong>ARTIKEL 6 – Annulering</strong></p>
+<h3>ARTIKEL 6 – Annulering</h3>
 <ol>
 <li>Annulering van geplaatste orders is uitsluitend mogelijk na schriftelijke instemming van Smart2B B.V.</li>
 <li>In geval van annulering kunnen annuleringskosten in rekening worden gebracht, afhankelijk van het stadium van de uitvoering.</li>
 </ol>
-<p><strong>ARTIKEL 7 – Levering en risico-overgang</strong></p>
+<h3>ARTIKEL 7 – Levering en risico-overgang</h3>
 <ol>
 <li>De opgegeven leveringstermijnen zijn indicatief en geen fatale termijnen, tenzij schriftelijk anders overeengekomen. Vertragingen in levering kunnen onder geen beding leiden tot schadevergoeding tenzij vooraf specifiek schriftelijk vastgelegd.</li>
 <li>Het risico van verlies, diefstal of beschadiging van de zaken gaat over op de klant op het moment van levering.</li>
 </ol>
-<p><strong>ARTIKEL 8 – Eigendomsvoorbehoud</strong></p>
+<h3>ARTIKEL 8 – Eigendomsvoorbehoud</h3>
 <ol>
 <li>Alle door Smart2B B.V. geleverde producten blijven eigendom van Smart2B B.V. totdat de klant alle verplichtingen uit de overeenkomst volledig is nagekomen.</li>
 <li>Hieronder vallen in ieder geval de betaling van de overeengekomen prijs, eventuele rente, kosten en schadevergoedingen.</li>
 <li>Zolang het eigendom niet is overgegaan, mag de klant de producten niet verpanden, doorverkopen of op andere wijze bezwaren tenzij vooraf schriftelijk anders overeengekomen.</li>
 <li>Indien de klant in gebreke blijft, is Smart2B B.V. gerechtigd de goederen terug te nemen.</li>
 </ol>
-<p><strong>ARTIKEL 9 – Aansprakelijkheid</strong></p>
+<h3>ARTIKEL 9 – Aansprakelijkheid</h3>
 <ol>
 <li>Smart2B B.V. is slechts aansprakelijk voor directe schade die het gevolg is van opzet of grove nalatigheid.</li>
 <li>Aansprakelijkheid voor indirecte schade, waaronder gevolgschade, winstderving en schade door bedrijfsstagnatie, is uitgesloten.</li>
 <li>In alle gevallen is de aansprakelijkheid beperkt tot het bedrag dat de klant voor de betreffende overeenkomst heeft betaald.</li>
 </ol>
-<p><strong>ARTIKEL 10 – Overmacht</strong></p>
+<h3>ARTIKEL 10 – Overmacht</h3>
 <ol>
 <li>Onder overmacht wordt verstaan iedere omstandigheid die buiten de macht van Smart2B B.V. ligt en die de nakoming van de verplichtingen tijdelijk of blijvend verhindert.</li>
 <li>In geval van overmacht is Smart2B B.V. gerechtigd haar verplichtingen op te schorten of de overeenkomst geheel of gedeeltelijk te ontbinden.</li>
 </ol>
-<p><strong>ARTIKEL 11 – Intellectueel eigendom</strong></p>
+<h3>ARTIKEL 11 – Intellectueel eigendom</h3>
 <ol>
 <li>Alle intellectuele eigendomsrechten met betrekking tot door Smart2B B.V. geleverde producten en diensten, blijven eigendom van Smart2B B.V. en/of haar licentiegevers, tenzij schriftelijk anders is overeengekomen.</li>
 <li>Hieronder vallen uitdrukkelijk ook digitale bestanden zoals ontwerpen, digitale voorbeelden, opmaakbestanden, grafische producties, technische tekeningen, drukvoorbeelden, en overige digitaal aangestuurde of bewerkte materialen.</li>
@@ -163,24 +163,24 @@ const dutchContent = `
 <li>Elk ongeautoriseerd gebruik of verspreiding van deze eigendommen zal onherroepelijk leiden tot een schadeclaim van ten minste €500,- per kalenderdag dat dit gebruik plaatsvindt, te vermeerderen met alle directe en indirecte gevolgschade, waaronder juridische en administratieve kosten.</li>
 <li>De klant is verantwoordelijk voor het bewijzen van verkregen toestemming bij betwisting. Smart2B B.V. behoudt zich het recht voor toezicht te houden op het gebruik van haar intellectuele eigendom en zal hiertegen optreden bij schending.</li>
 </ol>
-<p><strong>ARTIKEL 12 – Klachten</strong></p>
+<h3>ARTIKEL 12 – Klachten</h3>
 <p>Klachten dienen binnen 7 dagen na levering schriftelijk en gemotiveerd te worden ingediend. Na deze termijn wordt aangenomen dat de levering correct is.</p>
-<p><strong>ARTIKEL 13 – Toepasselijk recht en bevoegde rechter</strong></p>
+<h3>ARTIKEL 13 – Toepasselijk recht en bevoegde rechter</h3>
 <p>Op alle overeenkomsten is uitsluitend Nederlands recht van toepassing. Alle geschillen worden bij uitsluiting voorgelegd aan de bevoegde rechter in het arrondissement waarin Smart2B B.V. is gevestigd.</p>
-<p><strong>ARTIKEL 14 – Conversie</strong></p>
+<h3>ARTIKEL 14 – Conversie</h3>
 <p>Indien enige bepaling van deze voorwaarden nietig of vernietigbaar blijkt, tast dit de geldigheid van de overige bepalingen niet aan. De ongeldige bepaling zal worden vervangen door een bepaling die zoveel mogelijk aansluit bij de bedoeling daarvan.</p>
-<p><strong>ARTIKEL 15 – Geen herroepingsrecht</strong></p>
+<h3>ARTIKEL 15 – Geen herroepingsrecht</h3>
 <p>De klant erkent dat hij handelt in de uitoefening van een beroep of bedrijf. Het wettelijke herroepingsrecht, zoals bedoeld in artikel 6:230o BW, is uitdrukkelijk uitgesloten. Smart2B B.V. levert uitsluitend aan zakelijke klanten (B2B).</p>
 `;
 
 const englishContent = `
-<h1>GENERAL TERMS AND CONDITIONS OF SMART2B B.V.</h1>
+<h2>GENERAL TERMS AND CONDITIONS OF SMART2B B.V.</h2>
 <p><span style="text-decoration: underline;"><em>Version: May 2025</em></span></p>
 <p>These general terms and conditions apply to all offers, agreements and deliveries of Smart2B B.V. and its registered trade names, including Businesslabels.nl, IDbeheer.nl, Smart2B.nl and Kleurenlabelprinter.nl. The customer acknowledges that they are acting in the course of their trade or profession. Smart2B B.V. supplies exclusively to business customers (B2B).</p>
 <p>For questions regarding these terms and conditions, you can contact us at:</p>
 <p>📧 sales@smart2b.nl</p>
 <p>📞 +31(0)318 590 212</p>
-<p><strong>TABLE OF CONTENTS</strong></p>
+<h2>TABLE OF CONTENTS</h2>
 <ol>
 <li>Definitions</li>
 <li>Identity of Smart2B B.V.</li>
