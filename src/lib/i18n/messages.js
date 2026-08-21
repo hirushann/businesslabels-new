@@ -1623,11 +1623,7 @@ export const MESSAGES_V4 = {
       },
     },
     software: {
-<<<<<<< HEAD
       metadataTitle: 'Label Software & Design • BusinessLabels.nl',
-=======
-      metadataTitle: 'Label printing software | Businesslabels',
->>>>>>> a49ff9edf6b4af1b2564724bb7aec5bad5dd18d4
       metadataDescription: 'To make the most beautiful and smartest labels, you often have to use special software to do this efficiently. Because a label often differs greatly functionally from a traditional A4 piece of paper, the needs and ways to create it are also different. But there are also various applications in label design that require a […]',
       title: 'Software',
       intro: 'To create the most beautiful and smart labels, you often need to use special software to work efficiently. Because a label is often functionally very different from a traditional A4 paper, the needs and ways to create them are also different.',
@@ -2079,11 +2075,7 @@ export const MESSAGES_V4 = {
       how3: "You install TeamViewer QuickSupport — no account needed.",
       how4: "We connect, view your screen, and walk through the settings together.",
       downloadQs: "Download TeamViewer QuickSupport",
-<<<<<<< HEAD
       metadataTitle: "Technical Support & Help • BusinessLabels.nl",
-=======
-      metadataTitle: "Label printer support & service | Businesslabels",
->>>>>>> a49ff9edf6b4af1b2564724bb7aec5bad5dd18d4
       metadataDescription: "Support Are label printer issues casing a headache? Businesslabels support is ready to help! Experiencing problems with your label printer? If your label printer does not function properly, it’s often very annoying. Especially since label printers are often used in critical places that are crucial for business processes and there can’t stand still for to […]"
     },
     videos: {
@@ -3727,11 +3719,7 @@ export const MESSAGES_V4 = {
       },
     },
     software: {
-<<<<<<< HEAD
       metadataTitle: 'Software voor Labelprinters • BusinessLabels.nl',
-=======
-      metadataTitle: 'Labelsoftware voor printers | Businesslabels',
->>>>>>> a49ff9edf6b4af1b2564724bb7aec5bad5dd18d4
       metadataDescription: 'Om de mooiste en slimste labels te maken moet je vaak gebruik maken van speciale software om efficiënt te kunnen werken. Omdat een label functioneel vaak enorm verschild met een  traditioneel A4 papiertje zijn de behoeften en manieren om deze te creëren ook anders. Maar ook in label design zijn er uiteenlopende toepassingen die om […]',
       title: 'Software',
       intro: 'Om de mooiste en slimste labels te maken moet je vaak gebruik maken van speciale software om efficiënt te kunnen werken. Omdat een label functioneel vaak enorm verschild met een traditioneel A4 papiertje zijn de behoeften en manieren om deze te creëren ook anders.',
@@ -4184,11 +4172,7 @@ export const MESSAGES_V4 = {
       how3: "U installeert TeamViewer QuickSupport — geen account nodig.",
       how4: "We maken verbinding, bekijken uw scherm en nemen samen de instellingen door.",
       downloadQs: "Download TeamViewer QuickSupport",
-<<<<<<< HEAD
       metadataTitle: "Support & Technische Hulp • BusinessLabels.nl",
-=======
-      metadataTitle: "Label printer support & service | Businesslabels",
->>>>>>> a49ff9edf6b4af1b2564724bb7aec5bad5dd18d4
       metadataDescription: "Support Wanneer het allemaal tegen zit doen wij ons best voor u! Heeft u een probleem met uw printer? Als uw labelprinter niet naar behoren functioneert, is dat erg vervelend. Zeker omdat deze vaak op cruciale plekken staat binnen bedrijfsprocessen. Wij beschikken over de kennis en ervaring om problemen snel op te lossen. Ook bij […]"
     },
     videos: {
