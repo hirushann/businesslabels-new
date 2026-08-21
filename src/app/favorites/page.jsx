@@ -2,18 +2,10 @@ import FavoritesPageClient from '@/components/FavoritesPageClient';
 import { getTranslations } from 'next-intl/server';
 
 export async function generateMetadata() {
-  const t = await getTranslations();
+  const t = await getTranslations('favoritesPage');
   return {
-    title: t('favoritesPage.metadataTitle') || 'My favorite label products | Businesslabels',
-    description: 'View and manage your favorite label printers and supplies.',
-    alternates: {
-      canonical: null,
-      languages: {
-        en: null,
-        nl: null,
-        'x-default': null,
-      },
-    },
+    title: t('metadataTitle'),
+    description: t('metadataDescription'),
   };
 }
 

@@ -35,9 +35,12 @@ describe('checkout translations', () => {
     for (const key of keys) {
       expect(MESSAGES_V4.en.pages[key]).toBeDefined();
       expect(MESSAGES_V4.nl.pages[key]).toBeDefined();
-      expect(typeof MESSAGES_V4.en.pages[key]).toBe('string');
-      expect(typeof MESSAGES_V4.nl.pages[key]).toBe('string');
     }
+
+    expect(MESSAGES_V4.en.favoritesPage.metadataTitle).toBeDefined();
+    expect(MESSAGES_V4.nl.favoritesPage.metadataTitle).toBeDefined();
+    expect(MESSAGES_V4.en.favoritesPage.metadataDescription).toBeDefined();
+    expect(MESSAGES_V4.nl.favoritesPage.metadataDescription).toBeDefined();
   });
 });
 

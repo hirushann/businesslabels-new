@@ -575,6 +575,8 @@ export const MESSAGES_V4 = {
       outOfStock: 'Out of Stock',
     },
     favoritesPage: {
+      metadataTitle: 'My Favorite Products | Businesslabels',
+      metadataDescription: 'View and manage your favorite label printers, materials, and supplies.',
       emptyTitle: 'Your Favorite list is Empty',
       emptyDescription: 'It seems you haven\'t saved any items yet. Explore our collection and add your favorites!',
       exploreProduct: 'Explore Product',
@@ -2670,6 +2672,8 @@ export const MESSAGES_V4 = {
       outOfStock: 'Niet op voorraad',
     },
     favoritesPage: {
+      metadataTitle: 'Mijn favorieten • BusinessLabels.nl',
+      metadataDescription: 'Bekijk en beheer uw favoriete labelprinters, materialen en benodigdheden.',
       emptyTitle: 'Je favorietenlijst is leeg',
       emptyDescription: 'Het lijkt erop dat je nog geen items hebt opgeslagen. Ontdek onze collectie en voeg je favorieten toe!',
       exploreProduct: 'Producten ontdekken',
