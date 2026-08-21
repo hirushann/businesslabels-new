@@ -1,12 +1,16 @@
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import BadgeMakenPageClient from './BadgeMakenPageClient';
 
-export const metadata: Metadata = {
-  title: 'Badge maken — Evenement badges printen | Businesslabels',
-  description:
-    'Maak en ontwerp uw eigen badge tijdens uw evenement met de ExpoBadges van Diamondlabels. Snel, goedkoop en eenvoudig te printen op de Epson TM-C3500.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('pages');
+  return {
+    title: t('badgeMakenMetadataTitle'),
+    description: t('badgeMakenMetadataDescription'),
+  };
+}
 
 export default function BadgeMakenPage() {
   return <BadgeMakenPageClient />;
 }
+

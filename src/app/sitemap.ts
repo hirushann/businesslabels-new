@@ -61,8 +61,18 @@ export function cleanSlug(rawSlug?: string | null): string | null {
   return normalized && normalized !== '-' && normalized !== '_' ? normalized : null;
 }
 
+const BRAND_CANONICAL_SLUGS: Record<string, string> = {
+  diamondlabels: 'diamondlabels-nl',
+  'epson-nl': 'epson',
+  expobadge: 'expo_badge',
+  'expobadge-2': 'expo_badge',
+  'expo-badge': 'expo_badge',
+  seiko: 'sii',
+  'seiko-nl': 'sii',
+};
+
 function publicBrandSlug(slug: string): string {
-  return slug === 'diamondlabels' ? 'diamondlabels-nl' : slug;
+  return BRAND_CANONICAL_SLUGS[slug.toLowerCase()] ?? slug;
 }
 
 async function fetchApi<T extends SitemapApiItem>(path: string): Promise<T[]> {

@@ -15,8 +15,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations();
 
   return {
-    title: t("pages.productsMetadataTitle"),
-    description: t("pages.productsMetadataDescription"),
+    title: t("pages.shopMetadataTitle"),
+    description: t("pages.shopMetadataDescription"),
   };
 }
 
