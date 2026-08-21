@@ -92,6 +92,8 @@ export function localizedPrinterText(source: PrinterSource, locale?: "en" | "nl"
     subtitle: cleanString(source.subtitle),
     excerpt: cleanString(source.excerpt),
     content: cleanString(source.content),
+    meta_title: cleanString(source.meta_title),
+    meta_description: cleanString(source.meta_description),
   };
 
   if (!locale) return fallback;
