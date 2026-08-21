@@ -20,8 +20,41 @@ import type { CatalogSearchResponse } from "@/lib/search/types";
 import type { PrinterSearchResponse } from "@/lib/search/printerTypes";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<FinderPageSearchParams>;
+}): Promise<Metadata> {
   const t = await getTranslations();
+  const rawParams = await searchParams;
+
+  if (rawParams.printer_id) {
+    const printerId = Number.parseInt(
+      Array.isArray(rawParams.printer_id)
+        ? rawParams.printer_id[0]
+        : rawParams.printer_id,
+      10,
+    );
+    if (Number.isFinite(printerId)) {
+      const { getServerLocale } = await import("@/lib/i18n");
+      const locale = await getServerLocale();
+      const printer = await getPrinterById(printerId, locale);
+
+      if (printer) {
+        const title =
+          printer.meta_title ||
+          (printer.title
+            ? `${printer.title} — Businesslabels`
+            : "Printer — Businesslabels");
+        const description = printer.meta_description || printer.subtitle || undefined;
+
+        return {
+          title,
+          description,
+        };
+      }
+    }
+  }
 
   return {
     title: t("pages.finderMetadataTitle"),

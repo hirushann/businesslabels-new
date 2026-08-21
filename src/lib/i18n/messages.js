@@ -689,7 +689,7 @@ export const MESSAGES_V4 = {
       discount: 'Discount',
     },
     pages: {
-      homeMetadataTitle: 'Home • BusinessLabels.nl',
+      homeMetadataTitle: 'All your color and thermal label printing solutions | Businesslabels',
       homeMetadataDescription: 'Professional and personal advice on the best color label printers and thermal label printers. Check out our range!',
       about: 'About',
       contact: 'Contact',
@@ -703,7 +703,7 @@ export const MESSAGES_V4 = {
       brandDescription: 'Discover the full range of {brand} products for your label printer at BusinessLabels. Fast delivery and expert advice.',
       finderMetadataTitle: 'Product Finder — Businesslabels',
       finderMetadataDescription: 'Find compatible labels and ink for your Epson ColorWorks printer',
-      productsMetadataTitle: 'All Products — Businesslabels',
+      productsMetadataTitle: 'Shop labels & label printers | Businesslabels',
       productsMetadataDescription: 'Browse our full product range with search, filters, sorting, and pagination.',
       categoryMetadataTitle: '{category} — Businesslabels',
       categoryMetadataDescription: 'Browse our full range of {category} products.',
@@ -863,7 +863,7 @@ export const MESSAGES_V4 = {
       downloadMarkdownButton: 'Download as markdown',
     },
     materialsPage: {
-      metadataTitle: 'Materials • BusinessLabels.nl',
+      metadataTitle: 'Label materials & options | Businesslabels',
       metadataDescription: 'Discover printer media materials selected for precision, durability, color accuracy, and reliable professional output.',
       title: 'Material Overview',
       subtitle: 'Explore our printer media materials, engineered for precision, durability, and high-quality output. From standard to specialty stocks, each is chosen to boost performance, color accuracy, and reliability-ensuring professional results without compromise.',
@@ -1623,7 +1623,11 @@ export const MESSAGES_V4 = {
       },
     },
     software: {
+<<<<<<< HEAD
       metadataTitle: 'Label Software & Design • BusinessLabels.nl',
+=======
+      metadataTitle: 'Label printing software | Businesslabels',
+>>>>>>> a49ff9edf6b4af1b2564724bb7aec5bad5dd18d4
       metadataDescription: 'To make the most beautiful and smartest labels, you often have to use special software to do this efficiently. Because a label often differs greatly functionally from a traditional A4 piece of paper, the needs and ways to create it are also different. But there are also various applications in label design that require a […]',
       title: 'Software',
       intro: 'To create the most beautiful and smart labels, you often need to use special software to work efficiently. Because a label is often functionally very different from a traditional A4 paper, the needs and ways to create them are also different.',
@@ -1734,6 +1738,7 @@ export const MESSAGES_V4 = {
       ctaBtnPrinters: 'View all desktop printers',
     },
     printSample: {
+      metadataTitle: 'Request a label print sample | Businesslabels',
       errorIncomplete: "Please fill in your first name, last name, and email address.",
       errorGeneric: "Something went wrong. Please try again.",
       printerDesc: "Printer",
@@ -2074,11 +2079,15 @@ export const MESSAGES_V4 = {
       how3: "You install TeamViewer QuickSupport — no account needed.",
       how4: "We connect, view your screen, and walk through the settings together.",
       downloadQs: "Download TeamViewer QuickSupport",
+<<<<<<< HEAD
       metadataTitle: "Technical Support & Help • BusinessLabels.nl",
+=======
+      metadataTitle: "Label printer support & service | Businesslabels",
+>>>>>>> a49ff9edf6b4af1b2564724bb7aec5bad5dd18d4
       metadataDescription: "Support Are label printer issues casing a headache? Businesslabels support is ready to help! Experiencing problems with your label printer? If your label printer does not function properly, it’s often very annoying. Especially since label printers are often used in critical places that are crucial for business processes and there can’t stand still for to […]"
     },
     videos: {
-      metadataTitle: "Videos • BusinessLabels.nl",
+      metadataTitle: "Label printer videos & guides | Businesslabels",
       metadataDescription: "The video database of Businesslabels – Smart2B Not everyone likes to read everything. Also not everything can be conveyed well in a piece of text. That is why videos are sometimes ideal. By showing something, no matter how simple or straightforward, many things can be conveyed better. That is why Businesslabels in […]"
     },
     brands: {
@@ -2292,7 +2301,7 @@ export const MESSAGES_V4 = {
       subSilverPoly: '(Metallic uitstraling)',
       stepContact: 'Contact',
       unknown: 'Onbekend',
-      metadataTitle: "Maatwerk • BusinessLabels.nl",
+      metadataTitle: "Maatwerk labels en etiketten | Businesslabels",
       metadataDescription: "Wanneer het gewenste label niet tussen onze voorraad artikelen zit kunnen wij het product precies zoals u wenst laten maken. Dit kan bij juiste volumes erg interessant zijn, bij maatwerk is echter de prijs altijd zeer afhankelijk van het bestel volume. We hebben wel alle juiste informatie nodig om een passend voorstel te kunnen maken […]"
     },
     recycle: {
@@ -3718,7 +3727,11 @@ export const MESSAGES_V4 = {
       },
     },
     software: {
+<<<<<<< HEAD
       metadataTitle: 'Software voor Labelprinters • BusinessLabels.nl',
+=======
+      metadataTitle: 'Labelsoftware voor printers | Businesslabels',
+>>>>>>> a49ff9edf6b4af1b2564724bb7aec5bad5dd18d4
       metadataDescription: 'Om de mooiste en slimste labels te maken moet je vaak gebruik maken van speciale software om efficiënt te kunnen werken. Omdat een label functioneel vaak enorm verschild met een  traditioneel A4 papiertje zijn de behoeften en manieren om deze te creëren ook anders. Maar ook in label design zijn er uiteenlopende toepassingen die om […]',
       title: 'Software',
       intro: 'Om de mooiste en slimste labels te maken moet je vaak gebruik maken van speciale software om efficiënt te kunnen werken. Omdat een label functioneel vaak enorm verschild met een traditioneel A4 papiertje zijn de behoeften en manieren om deze te creëren ook anders.',
@@ -3829,6 +3842,7 @@ export const MESSAGES_V4 = {
       ctaBtnPrinters: 'Bekijk alle desktop printers',
     },
     printSample: {
+      metadataTitle: 'Vraag een label print sample aan | Businesslabels',
       errorIncomplete: "Vul uw voornaam, achternaam en e-mailadres in.",
       errorGeneric: "Er is iets misgegaan. Probeer het opnieuw.",
       printerDesc: "Printer",
@@ -4106,10 +4120,11 @@ export const MESSAGES_V4 = {
         errorFailed: "Bericht verzenden mislukt.",
         errorUnexpected: "Er is een onverwachte fout opgetreden. Probeer het opnieuw."
       },
-      metadataTitle: "Contact • BusinessLabels.nl",
+      metadataTitle: "Contact met Businesslabels | Label experts",
       metadataDescription: "Contact Wij helpen u graag persoonlijk! Telefoon: +31(0) 318 590 465Email: verkoop@businesslabels.nl Openingstijden:Maandag t/m vrijdag08:30 tot 17:00 Mail ons Bel ons BusinesslabelsLenderinkweg 86733 AX WekeromTHE NETHERLANDS IBAN: NL62 RABO 0347 6231 74BIC-code: RABONL2UKVK: 71774599BtwNr: NL858844217B01 Route"
     },
     supportPage: {
+      metadataTitle: "Support voor labelprinters | Businesslabels",
       breadcrumbSupport: "Support",
       heroTitle: "Wij helpen u om uw printer werkend te krijgen.",
       heroDesc: "Ons supportteam is beschikbaar om u via verschillende kanalen te helpen, waaronder telefoongesprekken, e-mailcorrespondentie en sessies op afstand via TeamViewer. Houd er rekening mee dat we momenteel geen ondersteuning bieden via WhatsApp.",
@@ -4169,15 +4184,19 @@ export const MESSAGES_V4 = {
       how3: "U installeert TeamViewer QuickSupport — geen account nodig.",
       how4: "We maken verbinding, bekijken uw scherm en nemen samen de instellingen door.",
       downloadQs: "Download TeamViewer QuickSupport",
+<<<<<<< HEAD
       metadataTitle: "Support & Technische Hulp • BusinessLabels.nl",
+=======
+      metadataTitle: "Label printer support & service | Businesslabels",
+>>>>>>> a49ff9edf6b4af1b2564724bb7aec5bad5dd18d4
       metadataDescription: "Support Wanneer het allemaal tegen zit doen wij ons best voor u! Heeft u een probleem met uw printer? Als uw labelprinter niet naar behoren functioneert, is dat erg vervelend. Zeker omdat deze vaak op cruciale plekken staat binnen bedrijfsprocessen. Wij beschikken over de kennis en ervaring om problemen snel op te lossen. Ook bij […]"
     },
     videos: {
-      metadataTitle: "Video's • BusinessLabels.nl",
+      metadataTitle: "Labelprinter video's & uitleg | Businesslabels",
       metadataDescription: "De video database van Businesslabels – Smart2B Niet iedereen houdt er van om alles maar te lezen. Ook niet alles is goed over te brengen in een stuk tekst. Daarom zijn video’s soms ideaal. Door iets te laten zien, hoe simpel of eenvoudig ook, zijn veel zaken beter over te brengen. Daarom is Businesslabels in […]"
     },
     brands: {
-      metadataTitle: "Merken • BusinessLabels.nl",
+      metadataTitle: "Labelprinter merken bekijken | Businesslabels",
       metadataDescription: "Deze merken komt u tegen in de webshop van Businesslabels"
     },
     terms: {

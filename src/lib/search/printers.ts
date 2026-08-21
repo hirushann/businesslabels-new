@@ -59,6 +59,8 @@ export type FinderPrinterDetails = {
   properties?: Record<string, string[]>;
   excerpt?: string | null;
   content?: string | null;
+  meta_title?: string | null;
+  meta_description?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
   product_url?: string | null;
@@ -90,6 +92,8 @@ export function localizedPrinterText(source: PrinterSource, locale?: "en" | "nl"
     subtitle: cleanString(source.subtitle),
     excerpt: cleanString(source.excerpt),
     content: cleanString(source.content),
+    meta_title: cleanString(source.meta_title),
+    meta_description: cleanString(source.meta_description),
   };
 
   if (!locale) return fallback;
@@ -109,6 +113,8 @@ export function localizedPrinterText(source: PrinterSource, locale?: "en" | "nl"
     subtitle: cleanString(translation?.subtitle),
     excerpt: cleanString(translation?.excerpt),
     content: cleanString(translation?.content),
+    meta_title: cleanString(translation?.meta_title),
+    meta_description: cleanString(translation?.meta_description),
   };
 
   return locale === "en"
@@ -118,6 +124,8 @@ export function localizedPrinterText(source: PrinterSource, locale?: "en" | "nl"
         subtitle: translated.subtitle ?? fallback.subtitle,
         excerpt: translated.excerpt ?? fallback.excerpt,
         content: translated.content ?? fallback.content,
+        meta_title: translated.meta_title ?? undefined,
+        meta_description: translated.meta_description ?? undefined,
       };
 }
 
@@ -156,7 +164,7 @@ function stringArrayMap(value: unknown): Record<string, string[]> | undefined {
 
 function mapFinderPrinter(source: PrinterSource, locale?: "en" | "nl"): FinderPrinterDetails | null {
   const id = numberValue(source.id);
-  const { title, subtitle, excerpt, content } = localizedPrinterText(source, locale);
+  const { title, subtitle, excerpt, content, meta_title, meta_description } = localizedPrinterText(source, locale);
 
   if (id === null || !title) return null;
 
@@ -169,6 +177,8 @@ function mapFinderPrinter(source: PrinterSource, locale?: "en" | "nl"): FinderPr
     properties: stringArrayMap(source.properties),
     excerpt,
     content,
+    meta_title,
+    meta_description,
     created_at: stringValue(source.created_at),
     updated_at: stringValue(source.updated_at),
     product_url: stringValue(source.product_url),

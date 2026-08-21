@@ -4,7 +4,7 @@ import { getTranslations } from 'next-intl/server';
 export async function generateMetadata() {
   const t = await getTranslations();
   return {
-    title: `${t('pages.myFavorites') || 'Favorites'} | Businesslabels`,
+    title: t('favoritesPage.metadataTitle') || 'My favorite label products | Businesslabels',
     description: 'View and manage your favorite label printers and supplies.',
     alternates: {
       canonical: null,
