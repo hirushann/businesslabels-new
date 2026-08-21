@@ -10,8 +10,12 @@ import {
 } from "@/lib/search/products";
 import type { CatalogSearchResponse } from "@/lib/search/types";
 import type { FinderPrinterDetails } from "@/lib/search/printers";
-import type { Printer } from "@/lib/types/printer";
+import type { Printer, PrinterTranslation } from "@/lib/types/printer";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
+import {
+  getPrinterLocaleSlugs,
+  getPrinterTranslation,
+} from "@/lib/routes/printers";
 
 type PrinterResponse = {
   data: Printer;
@@ -80,25 +84,24 @@ async function getPrinter(slug: string): Promise<Printer | null> {
   }
 }
 
-function toFinderPrinter(printer: Printer): FinderPrinterDetails {
+function toFinderPrinter(
+  printer: Printer,
+  translation?: PrinterTranslation | null,
+): FinderPrinterDetails {
   return {
     id: printer.id,
-    title: printer.title ?? "",
-    subtitle: printer.subtitle,
-    slug: printer.slug ?? "",
+    title: translation?.title || printer.title || "",
+    subtitle: translation?.subtitle || printer.subtitle,
+    slug: translation?.slug || printer.slug || "",
     image: printer.image ?? printer.thumbnail,
     properties: printer.properties as Record<string, string[]>,
-    excerpt: printer.excerpt,
-    content: printer.content,
+    excerpt: translation?.excerpt || printer.excerpt,
+    content: translation?.content || printer.content,
     created_at: printer.created_at,
     updated_at: printer.updated_at,
     product_url: printer.product_url ?? null,
   };
 }
-import {
-  getPrinterLocaleSlugs,
-  getPrinterTranslation,
-} from "@/lib/routes/printers";
 
 export async function generateMetadata({
   params,
@@ -421,15 +424,18 @@ export default async function PrinterFinderDetailPage({
     notFound();
   }
 
-  const canonicalSlug = (apiPrinter.slug || slug).toLowerCase();
-  if (decodeURIComponent(slug) !== canonicalSlug) {
+  const { en: enSlug, nl: nlSlug } = getPrinterLocaleSlugs(apiPrinter, slug);
+  const expectedSlug = (locale === "en" ? enSlug : nlSlug) || apiPrinter.slug || slug;
+  const canonicalSlug = expectedSlug.toLowerCase();
+  if (decodeURIComponent(slug).toLowerCase() !== canonicalSlug) {
     const routeQuery = toUrlSearchParams(await searchParams);
     const queryString = routeQuery.toString();
     const destination = locale === "en" ? `/en/printers/${canonicalSlug}` : `/printers/${canonicalSlug}`;
     permanentRedirect(queryString ? `${destination}?${queryString}` : destination);
   }
 
-  const printer = toFinderPrinter(apiPrinter);
+  const translation = getPrinterTranslation(apiPrinter, locale);
+  const printer = toFinderPrinter(apiPrinter, translation);
   const routeQuery = toUrlSearchParams(await searchParams);
   const printerId = String(printer.id);
   routeQuery.delete("printer_id");
