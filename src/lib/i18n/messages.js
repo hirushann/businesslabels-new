@@ -575,6 +575,8 @@ export const MESSAGES_V4 = {
       outOfStock: 'Out of Stock',
     },
     favoritesPage: {
+      metadataTitle: 'My Favorite Products | Businesslabels',
+      metadataDescription: 'View and manage your favorite label printers, materials, and supplies.',
       emptyTitle: 'Your Favorite list is Empty',
       emptyDescription: 'It seems you haven\'t saved any items yet. Explore our collection and add your favorites!',
       exploreProduct: 'Explore Product',
@@ -699,7 +701,8 @@ export const MESSAGES_V4 = {
       myOrders: 'My Orders',
       myFavorites: 'My Favorites',
       pageNotFound: 'Page Not Found',
-      brandDescription: 'Browse {brand} products from Businesslabels.',
+      brandMetadataTitle: '{brand} products for your label printer | BusinessLabels',
+      brandDescription: 'Discover the full range of {brand} products for your label printer at BusinessLabels. Fast delivery and expert advice.',
       finderMetadataTitle: 'Product Finder — Businesslabels',
       finderMetadataDescription: 'Find compatible labels and ink for your Epson ColorWorks printer',
       productsMetadataTitle: 'Shop labels & label printers | Businesslabels',
@@ -726,6 +729,20 @@ export const MESSAGES_V4 = {
       demoCheckoutDescription: 'Preview the Businesslabels checkout experience with demo products.',
       printersMetadataTitle: 'Printer Products — Businesslabels',
       printersMetadataDescription: 'Discover printer media materials selected for precision, durability, color accuracy, and reliable professional output.',
+      categoriesMetadataTitle: 'Product Categories • BusinessLabels.nl',
+      categoriesMetadataDescription: 'Explore all product categories at BusinessLabels. Browse color label printers, thermal printers, labels, inks, and software.',
+      shopMetadataTitle: 'Online Shop — All Products | BusinessLabels',
+      shopMetadataDescription: 'Order label printers, blank labels, ribbons, and ink cartridges directly from the BusinessLabels online shop.',
+      printSampleMetadataTitle: 'Request Free Print Samples • BusinessLabels.nl',
+      printSampleMetadataDescription: 'Request a free printed sample of your label artwork on an Epson ColorWorks printer. Test quality and materials before ordering.',
+      supportSamplesMetadataTitle: 'Epson ColorWorks Sample Request — Support • BusinessLabels.nl',
+      supportSamplesMetadataDescription: 'Request personalized print samples and material tests for your Epson ColorWorks label printer.',
+      badgeMakenMetadataTitle: 'Create Badges — Event Badge Printing | BusinessLabels',
+      badgeMakenMetadataDescription: 'Design and print your own badges during events with ExpoBadges from Diamondlabels. Fast, cost-effective and easy to print on the Epson TM-C3500.',
+      epsonColorworksMetadataTitle: 'Epson ColorWorks Label Printers — Desktop, Midrange & Industrial | BusinessLabels',
+      epsonColorworksMetadataDescription: 'Why choose an Epson ColorWorks label printer? Discover unique printhead technology, reliability, and categories: Desktop, Midrange, and Industrial.',
+      epsonCwc4000MetadataTitle: 'Epson CW-C4000 ColorWorks Label Printer — Preview & Specifications | BusinessLabels',
+      epsonCwc4000MetadataDescription: 'Discover the Epson CW-C4000 ColorWorks label printer. Desktop model with PrecisionCore printhead, 1200×1200 dpi, and UltraChrome DL inks. View specs and pricing.',
       loadingProducts: 'Loading products...',
     },
     pagination: {
@@ -772,7 +789,7 @@ export const MESSAGES_V4 = {
       paymentFee: 'Payment Fee',
     },
     blogsPage: {
-      metadataTitle: 'Labelprinter & etiketten blog | Businesslabels',
+      metadataTitle: 'Blog & Articles • BusinessLabels.nl',
       metadataDescription: 'Stay updated with the latest tips, guides, and news about labeling and printing solutions.',
       titlePrefix: 'Our',
       titleHighlight: 'Blogs',
@@ -1608,7 +1625,7 @@ export const MESSAGES_V4 = {
       },
     },
     software: {
-      metadataTitle: 'Label printing software | Businesslabels',
+      metadataTitle: 'Label Software & Design • BusinessLabels.nl',
       metadataDescription: 'To make the most beautiful and smartest labels, you often have to use special software to do this efficiently. Because a label often differs greatly functionally from a traditional A4 piece of paper, the needs and ways to create it are also different. But there are also various applications in label design that require a […]',
       title: 'Software',
       intro: 'To create the most beautiful and smart labels, you often need to use special software to work efficiently. Because a label is often functionally very different from a traditional A4 paper, the needs and ways to create them are also different.',
@@ -2060,7 +2077,7 @@ export const MESSAGES_V4 = {
       how3: "You install TeamViewer QuickSupport — no account needed.",
       how4: "We connect, view your screen, and walk through the settings together.",
       downloadQs: "Download TeamViewer QuickSupport",
-      metadataTitle: "Label printer support & service | Businesslabels",
+      metadataTitle: "Technical Support & Help • BusinessLabels.nl",
       metadataDescription: "Support Are label printer issues casing a headache? Businesslabels support is ready to help! Experiencing problems with your label printer? If your label printer does not function properly, it’s often very annoying. Especially since label printers are often used in critical places that are crucial for business processes and there can’t stand still for to […]"
     },
     videos: {
@@ -2655,6 +2672,8 @@ export const MESSAGES_V4 = {
       outOfStock: 'Niet op voorraad',
     },
     favoritesPage: {
+      metadataTitle: 'Mijn favorieten • BusinessLabels.nl',
+      metadataDescription: 'Bekijk en beheer uw favoriete labelprinters, materialen en benodigdheden.',
       emptyTitle: 'Je favorietenlijst is leeg',
       emptyDescription: 'Het lijkt erop dat je nog geen items hebt opgeslagen. Ontdek onze collectie en voeg je favorieten toe!',
       exploreProduct: 'Producten ontdekken',
@@ -2779,7 +2798,8 @@ export const MESSAGES_V4 = {
       myOrders: 'Mijn bestellingen',
       myFavorites: 'Mijn favorieten',
       pageNotFound: 'Pagina niet gevonden',
-      brandDescription: 'Bekijk {brand} producten van Businesslabels.',
+      brandMetadataTitle: '{brand} producten voor jouw labelprinter | BusinessLabels',
+      brandDescription: 'Ontdek het volledige assortiment {brand} producten voor jouw labelprinter bij BusinessLabels. Snelle levering en deskundig advies.',
       finderMetadataTitle: 'Productzoeker — Businesslabels',
       finderMetadataDescription: 'Vind compatibele labels en inkt voor je Epson ColorWorks printer',
       productsMetadataTitle: 'Alle producten — Businesslabels',
@@ -2806,6 +2826,20 @@ export const MESSAGES_V4 = {
       demoCheckoutDescription: 'Bekijk de Businesslabels checkout-ervaring met demoproducten.',
       printersMetadataTitle: 'Printerproducten — Businesslabels',
       printersMetadataDescription: 'Ontdek printermaterialen geselecteerd voor precisie, duurzaamheid, kleurnauwkeurigheid en betrouwbare professionele output.',
+      categoriesMetadataTitle: 'Productcategorieën • BusinessLabels.nl',
+      categoriesMetadataDescription: 'Bekijk alle productcategorieën bij BusinessLabels. Vind kleurenlabelprinters, thermische printers, etiketten, inkt en software.',
+      shopMetadataTitle: 'Online Winkel — Alle Producten | Businesslabels',
+      shopMetadataDescription: 'Bestel labelprinters, blanco etiketten, printlinten en inktcartridges direct in de online winkel van Businesslabels.',
+      printSampleMetadataTitle: 'Gratis Proefdruk Aanvragen • BusinessLabels.nl',
+      printSampleMetadataDescription: 'Vraag een gratis proefdruk aan van uw eigen labelontwerp op een Epson ColorWorks printer. Test de afdrukkwaliteit en materialen.',
+      supportSamplesMetadataTitle: 'Epson ColorWorks Proefdruk Aanvragen — Support • BusinessLabels.nl',
+      supportSamplesMetadataDescription: 'Vraag een proefdruk en materiaalmonsters aan voor uw Epson ColorWorks labelprinter.',
+      badgeMakenMetadataTitle: 'Badge maken — Evenement badges printen | Businesslabels',
+      badgeMakenMetadataDescription: 'Maak en ontwerp uw eigen badge tijdens uw evenement met de ExpoBadges van Diamondlabels. Snel, goedkoop en eenvoudig te printen op de Epson TM-C3500.',
+      epsonColorworksMetadataTitle: 'Epson Labelprinters — Desktop, Midrange & Industrieel | Businesslabels',
+      epsonColorworksMetadataDescription: 'Waarom kiezen voor een Epson ColorWorks labelprinter? Ontdek de unieke printkoptechnologie, betrouwbaarheid en de verschillende categorieën: Desktop, Midrange en Industrieel.',
+      epsonCwc4000MetadataTitle: 'Epson CW-C4000 ColorWorks Labelprinter — Preview & Specificaties | Businesslabels',
+      epsonCwc4000MetadataDescription: 'Ontdek de nieuwe Epson CW-C4000 ColorWorks labelprinter. Desktop model met Precision Core printkop, 1200×1200 dpi en UltraChrome DL inkten. Bekijk specs, snelheden en prijzen.',
       loadingProducts: 'Producten laden...',
     },
     pagination: {
@@ -2852,7 +2886,7 @@ export const MESSAGES_V4 = {
       paymentFee: 'Transactiekosten',
     },
     blogsPage: {
-      metadataTitle: 'Blog • BusinessLabels.nl',
+      metadataTitle: 'Blog & Artikelen • BusinessLabels.nl',
       metadataDescription: 'Blijf op de hoogte van de nieuwste tips, gidsen en nieuwtjes over etiketteren en printoplossingen.',
       titlePrefix: 'Onze',
       titleHighlight: 'Blogs',
@@ -3689,7 +3723,7 @@ export const MESSAGES_V4 = {
       },
     },
     software: {
-      metadataTitle: 'Labelsoftware voor printers | Businesslabels',
+      metadataTitle: 'Software voor Labelprinters • BusinessLabels.nl',
       metadataDescription: 'Om de mooiste en slimste labels te maken moet je vaak gebruik maken van speciale software om efficiënt te kunnen werken. Omdat een label functioneel vaak enorm verschild met een  traditioneel A4 papiertje zijn de behoeften en manieren om deze te creëren ook anders. Maar ook in label design zijn er uiteenlopende toepassingen die om […]',
       title: 'Software',
       intro: 'Om de mooiste en slimste labels te maken moet je vaak gebruik maken van speciale software om efficiënt te kunnen werken. Omdat een label functioneel vaak enorm verschild met een traditioneel A4 papiertje zijn de behoeften en manieren om deze te creëren ook anders.',
@@ -4142,7 +4176,7 @@ export const MESSAGES_V4 = {
       how3: "U installeert TeamViewer QuickSupport — geen account nodig.",
       how4: "We maken verbinding, bekijken uw scherm en nemen samen de instellingen door.",
       downloadQs: "Download TeamViewer QuickSupport",
-      metadataTitle: "Label printer support & service | Businesslabels",
+      metadataTitle: "Support & Technische Hulp • BusinessLabels.nl",
       metadataDescription: "Support Wanneer het allemaal tegen zit doen wij ons best voor u! Heeft u een probleem met uw printer? Als uw labelprinter niet naar behoren functioneert, is dat erg vervelend. Zeker omdat deze vaak op cruciale plekken staat binnen bedrijfsprocessen. Wij beschikken over de kennis en ervaring om problemen snel op te lossen. Ook bij […]"
     },
     videos: {
@@ -4158,7 +4192,7 @@ export const MESSAGES_V4 = {
       metadataDescription: "Lees hier de algemene voorwaarden van Businesslabels. Heldere afspraken over levering, garantie en service voor uw labeloplossingen. Bekijk ze direct online."
     },
     privacyPolicy: {
-      metadataTitle: "Privacy Policy • BusinessLabels.nl",
+      metadataTitle: "Privacybeleid • BusinessLabels.nl",
       metadataDescription: "Smart2B respecteert de privacy van u als bezoeker op 1 van onze websites en draagt er zorg voor dat de persoonlijke informatie die u ons verschaft vertrouwelijk wordt behandeld.  Inleiding en toepasselijkheid privacyverklaringOm onze activiteiten goed uit te kunnen voeren, is het soms nodig om persoonsgegevens van u te verwerken. Dat doen we altijd zorgvuldig […]"
     }
   },

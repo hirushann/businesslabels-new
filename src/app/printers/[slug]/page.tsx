@@ -16,6 +16,7 @@ import {
   getPrinterLocaleSlugs,
   getPrinterTranslation,
 } from "@/lib/routes/printers";
+import { htmlToText } from "@/lib/utils";
 
 type PrinterResponse = {
   data: Printer;
@@ -117,16 +118,18 @@ export async function generateMetadata({
   }
 
   const translation = getPrinterTranslation(printer, locale);
-  const title =
+  const rawTitle =
     translation?.meta_title ||
     (translation?.title || printer.title
       ? `${translation?.title || printer.title} — Businesslabels`
       : "Printer — Businesslabels");
-  const description =
+  const title = htmlToText(rawTitle);
+  const rawDescription =
     translation?.meta_description ||
     translation?.subtitle ||
     printer.subtitle ||
-    undefined;
+    "";
+  const description = htmlToText(rawDescription) || undefined;
 
   const { en: enSlug, nl: nlSlug } = getPrinterLocaleSlugs(printer, slug);
   const siteUrl = (

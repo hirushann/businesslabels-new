@@ -44,8 +44,8 @@ type LocalizedText = string | { en?: string | null; nl?: string | null } | null 
 
 type Material = {
   id: number;
-  title: string;
-  subtitle: string;
+  title: string | LocalizedText;
+  subtitle?: string | LocalizedText | null;
   slug: string;
   code: string;
   brand: string;
@@ -54,6 +54,33 @@ type Material = {
   description?: LocalizedText;
   excerpt?: LocalizedText;
   short_description?: LocalizedText;
+  meta_title?: LocalizedText | string | null;
+  meta_description?: LocalizedText | string | null;
+  seo_title?: LocalizedText | string | null;
+  seo_description?: LocalizedText | string | null;
+  meta?: {
+    meta_title?: string | null;
+    meta_description?: string | null;
+    [key: string]: unknown;
+  } | null;
+  translations?: Record<string, {
+    title?: string | null;
+    subtitle?: string | null;
+    description?: string | null;
+    excerpt?: string | null;
+    meta_title?: string | null;
+    meta_description?: string | null;
+    [key: string]: unknown;
+  }> | null;
+  locales?: Record<string, {
+    title?: string | null;
+    subtitle?: string | null;
+    description?: string | null;
+    excerpt?: string | null;
+    meta_title?: string | null;
+    meta_description?: string | null;
+    [key: string]: unknown;
+  }> | null;
   main_image?: string | null;
   specifications: { material_specs?: MaterialSpec[] } | null;
   print_method: string | null;
@@ -242,14 +269,37 @@ export async function generateMetadata({ params }: MaterialPageProps): Promise<M
   const { slug } = await params;
   const material = await getMaterial(slug);
   if (!material) return { title: "Material — Businesslabels" };
-  const locale = await getServerLocale();
-  const richDescription = resolveLocalizedText(material.description, locale);
-  const description = plainText(material.subtitle || richDescription);
-  const title = materialHeading(material);
+  const locale = (await getServerLocale()) as "en" | "nl";
   const canonicalSlug = (material.slug || slug).toLowerCase();
 
+  const trans = material.translations?.[locale] || material.locales?.[locale];
+  const backendMetaTitle =
+    trans?.meta_title ||
+    resolveLocalizedText(material.meta_title || material.seo_title, locale) ||
+    material.meta?.meta_title;
+
+  const heading = materialHeading({
+    title: trans?.title || resolveLocalizedText(material.title, locale) || (typeof material.title === "string" ? material.title : ""),
+    subtitle: trans?.subtitle || resolveLocalizedText(material.subtitle, locale) || (typeof material.subtitle === "string" ? material.subtitle : ""),
+    code: material.code,
+  });
+
+  const title = backendMetaTitle || `${heading} — Businesslabels`;
+
+  const backendMetaDesc =
+    trans?.meta_description ||
+    resolveLocalizedText(material.meta_description || material.seo_description, locale) ||
+    material.meta?.meta_description;
+
+  const localizedSubtitle = trans?.subtitle || resolveLocalizedText(material.subtitle, locale);
+  const richDescription = trans?.description || resolveLocalizedText(material.description, locale);
+  const localizedExcerpt = trans?.excerpt || resolveLocalizedText(material.excerpt || material.short_description, locale);
+
+  const rawDescription = backendMetaDesc || localizedSubtitle || localizedExcerpt || richDescription || heading;
+  const description = plainText(rawDescription);
+
   return {
-    title: `${title} — Businesslabels`,
+    title,
     description,
     alternates: {
       canonical: locale === "en" ? `/en/material/${canonicalSlug}` : `/material/${canonicalSlug}`,
@@ -431,8 +481,15 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
     resolveLocalizedText(material.excerpt, locale) ||
     resolveLocalizedText(material.short_description, locale);
   const materialDescriptionText = plainText(materialDescription);
-  const materialTitle = materialHeading(material);
-  const materialSummary = plainText(material.subtitle);
+  const trans = material.translations?.[locale] || material.locales?.[locale];
+  const localizedTitle = trans?.title || resolveLocalizedText(material.title, locale) || (typeof material.title === "string" ? material.title : "");
+  const localizedSubtitle = trans?.subtitle || resolveLocalizedText(material.subtitle, locale) || (typeof material.subtitle === "string" ? material.subtitle : "");
+  const materialTitle = materialHeading({
+    title: localizedTitle,
+    subtitle: localizedSubtitle,
+    code: material.code,
+  });
+  const materialSummary = plainText(localizedSubtitle);
   const specEntries = material.specifications?.material_specs ?? [];
   const brand = derivedBrand(material);
   const printMethod = derivedPrintMethod(material);
@@ -468,7 +525,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
           materialId={material.id}
           materialTitle={materialTitle}
           materialCode={material.code}
-          materialSubtitle={material.subtitle || undefined}
+          materialSubtitle={localizedSubtitle || undefined}
           hasUploadedSpecSheet={!!material.has_uploaded_spec_sheet}
           specSheetUrl={material.spec_sheet_url}
           aboutRows={aboutRows}

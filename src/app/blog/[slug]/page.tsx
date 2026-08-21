@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { unescapeHtml } from "@/lib/utils";
+import { unescapeHtml, htmlToText } from "@/lib/utils";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 import { localePath } from "@/lib/i18n/utils";
@@ -178,8 +178,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const siteUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || "https://businesslabels.nl").replace(/\/$/, "");
 
   return {
-    title: localized.meta_title || localized.title,
-    description: localized.meta_description || localized.excerpt,
+    title: htmlToText(localized.meta_title || localized.title || ""),
+    description: htmlToText(localized.meta_description || localized.excerpt || ""),
     alternates: {
       canonical: locale === "en" ? `${siteUrl}/en/blog/${enSlug}` : `${siteUrl}/blog/${nlSlug}`,
       languages: {

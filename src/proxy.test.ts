@@ -258,12 +258,41 @@ describe("proxy locale routing", () => {
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
   });
 
-  it("redirects /en/brands/expobadge to /en/brand/expobadge", () => {
+  it("redirects /en/brands/expobadge to canonical /en/brand/expo_badge", () => {
     const response = proxy(makeRequest("/en/brands/expobadge"));
 
     expect(response.status).toBe(301);
-    expect(response.headers.get("location")).toBe("http://localhost/en/brand/expobadge");
+    expect(response.headers.get("location")).toBe("http://localhost/en/brand/expo_badge");
     expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("redirects alias /brand/expobadge to canonical /brand/expo_badge", () => {
+    const response = proxy(makeRequest("/brand/expobadge"));
+
+    expect(response.status).toBe(301);
+    expect(response.headers.get("location")).toBe("http://localhost/brand/expo_badge");
+  });
+
+  it("redirects alias /en/brand/seiko to canonical /en/brand/sii", () => {
+    const response = proxy(makeRequest("/en/brand/seiko"));
+
+    expect(response.status).toBe(301);
+    expect(response.headers.get("location")).toBe("http://localhost/en/brand/sii");
+    expect(response.cookies.get(LOCALE_COOKIE)?.value).toBe("en");
+  });
+
+  it("redirects alias /brand/epson-nl to canonical /brand/epson", () => {
+    const response = proxy(makeRequest("/brand/epson-nl"));
+
+    expect(response.status).toBe(301);
+    expect(response.headers.get("location")).toBe("http://localhost/brand/epson");
+  });
+
+  it("redirects alias /brand/diamondlabels to canonical /brand/diamondlabels-nl", () => {
+    const response = proxy(makeRequest("/brand/diamondlabels"));
+
+    expect(response.status).toBe(301);
+    expect(response.headers.get("location")).toBe("http://localhost/brand/diamondlabels-nl");
   });
 
   it("redirects /brands/epson to /brand/epson", () => {

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { unescapeHtml } from "@/lib/utils";
+import { unescapeHtml, htmlToText } from "@/lib/utils";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
@@ -83,8 +83,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 
   return {
-    title: page.meta?.meta_title || page.title,
-    description: page.meta?.meta_description || page.excerpt,
+    title: htmlToText(page.meta?.meta_title || page.title || ""),
+    description: htmlToText(page.meta?.meta_description || page.excerpt || ""),
   };
 }
 

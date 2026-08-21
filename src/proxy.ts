@@ -149,10 +149,36 @@ export function proxy(request: NextRequest) {
     return persistLocale(NextResponse.redirect(redirectUrl, 301), locale);
   }
 
+  const BRAND_CANONICAL_SLUGS: Record<string, string> = {
+    diamondlabels: 'diamondlabels-nl',
+    'epson-nl': 'epson',
+    expobadge: 'expo_badge',
+    'expobadge-2': 'expo_badge',
+    'expo-badge': 'expo_badge',
+    seiko: 'sii',
+    'seiko-nl': 'sii',
+  };
+
+  if (cleanPathname.startsWith('/brand/')) {
+    const rawBrandSlug = cleanPathname.slice('/brand/'.length).replace(/\/$/, '').toLowerCase();
+    const canonicalBrandSlug = BRAND_CANONICAL_SLUGS[rawBrandSlug];
+    if (canonicalBrandSlug && canonicalBrandSlug !== rawBrandSlug) {
+      const redirectUrl = new URL(
+        hasEnglishPrefix ? `${EN_PREFIX}/brand/${canonicalBrandSlug}${search}` : `/brand/${canonicalBrandSlug}${search}`,
+        request.url
+      );
+      return persistLocale(NextResponse.redirect(redirectUrl, 301), locale);
+    }
+  }
+
   if (cleanPathname.startsWith('/brands/')) {
-    const brandSlug = cleanPathname.slice('/brands/'.length).replace(/\/$/, '');
-    if (brandSlug) {
-      const redirectUrl = new URL(hasEnglishPrefix ? `${EN_PREFIX}/brand/${brandSlug}${search}` : `/brand/${brandSlug}${search}`, request.url);
+    const rawBrandSlug = cleanPathname.slice('/brands/'.length).replace(/\/$/, '').toLowerCase();
+    const canonicalBrandSlug = BRAND_CANONICAL_SLUGS[rawBrandSlug] || rawBrandSlug;
+    if (canonicalBrandSlug) {
+      const redirectUrl = new URL(
+        hasEnglishPrefix ? `${EN_PREFIX}/brand/${canonicalBrandSlug}${search}` : `/brand/${canonicalBrandSlug}${search}`,
+        request.url
+      );
       return persistLocale(NextResponse.redirect(redirectUrl, 301), locale);
     }
   }

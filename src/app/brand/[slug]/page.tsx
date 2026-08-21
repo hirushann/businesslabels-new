@@ -24,6 +24,16 @@ const BRAND_TITLES: Record<string, string> = {
   creative: "Creative",
 };
 
+const BRAND_CANONICAL_SLUGS: Record<string, string> = {
+  diamondlabels: "diamondlabels-nl",
+  "epson-nl": "epson",
+  expobadge: "expo_badge",
+  "expobadge-2": "expo_badge",
+  "expo-badge": "expo_badge",
+  seiko: "sii",
+  "seiko-nl": "sii",
+};
+
 function fallbackBrandTitle(slug: string): string {
   return slug
     .split(/[-_]+/)
@@ -33,7 +43,8 @@ function fallbackBrandTitle(slug: string): string {
 }
 
 function brandTitleForSlug(slug: string): string {
-  return BRAND_TITLES[slug.toLowerCase()] ?? fallbackBrandTitle(slug);
+  const canonical = BRAND_CANONICAL_SLUGS[slug.toLowerCase()] ?? slug;
+  return BRAND_TITLES[canonical.toLowerCase()] ?? BRAND_TITLES[slug.toLowerCase()] ?? fallbackBrandTitle(slug);
 }
 
 export async function generateMetadata({
@@ -42,12 +53,31 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const brandTitle = brandTitleForSlug(slug);
+  const canonicalSlug = BRAND_CANONICAL_SLUGS[slug.toLowerCase()] ?? slug;
+  const brandTitle = brandTitleForSlug(canonicalSlug);
+  const locale = await getServerLocale();
   const t = await getTranslations();
+  const siteUrl = (
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    "https://businesslabels.nl"
+  ).replace(/\/$/, "");
+
+  const nlPath = `/brand/${canonicalSlug}`;
+  const enPath = `/en/brand/${canonicalSlug}`;
+  const canonicalPath = locale === "en" ? enPath : nlPath;
 
   return {
-    title: `${brandTitle} — Businesslabels`,
+    title: t("pages.brandMetadataTitle", { brand: brandTitle }),
     description: t("pages.brandDescription", { brand: brandTitle }),
+    alternates: {
+      canonical: `${siteUrl}${canonicalPath}`,
+      languages: {
+        en: `${siteUrl}${enPath}`,
+        nl: `${siteUrl}${nlPath}`,
+        "x-default": `${siteUrl}${nlPath}`,
+      },
+    },
   };
 }
 

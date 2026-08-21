@@ -23,6 +23,7 @@ import {
   searchCatalogProducts,
 } from "@/lib/search/products";
 import type { CatalogSearchResponse } from "@/lib/search/types";
+import { htmlToText } from "@/lib/utils";
 
 type ProductCategoryPageProps = {
   params: Promise<{ slug: string[] }>;
@@ -116,8 +117,8 @@ export async function generateMetadata({ params }: ProductCategoryPageProps): Pr
   if (!resolved) return {};
 
   return {
-    title: resolved.archive.meta_title || resolved.archive.name,
-    description: resolved.archive.meta_description || resolved.archive.description || undefined,
+    title: htmlToText(resolved.archive.meta_title || resolved.archive.name || ""),
+    description: htmlToText(resolved.archive.meta_description || resolved.archive.description || "") || undefined,
     alternates: {
       canonical: resolved.archive.canonical_url,
       languages: {

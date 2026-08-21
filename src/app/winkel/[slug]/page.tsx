@@ -25,6 +25,8 @@ import { categoryNameFallback } from "@/lib/categories/tree";
 import { localizeProductSpecValue } from "@/lib/products/specValues";
 import { mapLaravelProductToCardData, type LaravelProduct } from "@/lib/mappings/product";
 import ProductDescriptionAccordion from "@/components/ProductDescriptionAccordion";
+import { htmlToText } from "@/lib/utils";
+
 export async function generateMetadata({
   params,
   searchParams,
@@ -52,8 +54,9 @@ export async function generateMetadata({
   const productTranslation = getProductTranslation(product, locale);
   const metaTitle = productTranslation?.meta_title || product.meta_title;
   const titleSource = productTranslation?.title || product.title || product.name;
-  const title = metaTitle || (titleSource ? `${titleSource} — Businesslabels` : t("pages.productMetadataTitle"));
-  const description = productTranslation?.meta_description || product.meta_description || productTranslation?.description || product.description || productTranslation?.excerpt || product.excerpt || t("pages.productMetadataDescription");
+  const title = htmlToText(metaTitle || (titleSource ? `${titleSource} — Businesslabels` : t("pages.productMetadataTitle")));
+  const rawDescription = productTranslation?.meta_description || product.meta_description || productTranslation?.description || product.description || productTranslation?.excerpt || product.excerpt || t("pages.productMetadataDescription");
+  const description = htmlToText(rawDescription || "");
   const mainImage = product.main_image || "";
   const productType = productRouteType(product, selectedType);
   const localeSlugs = getProductLocaleSlugs(product);
