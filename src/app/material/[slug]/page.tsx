@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { notFound, permanentRedirect } from "next/navigation";
+import { notFound, permanentRedirect, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import Accordion from "@/components/Accordion";
 import CTABanner from "@/components/CTABanner";
@@ -440,7 +440,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
   const locale = await getServerLocale();
   const material = await getMaterial(slug);
 
-  if (!material) notFound();
+  if (!material) redirect(localePath("/material", locale));
 
   const canonicalSlug = (material.slug || slug).toLowerCase();
   if (decodeURIComponent(slug) !== canonicalSlug) {
