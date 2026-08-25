@@ -61,8 +61,6 @@ type Material = {
   meta?: {
     meta_title?: string | null;
     meta_description?: string | null;
-    seo_title?: string | null;
-    seo_description?: string | null;
     [key: string]: unknown;
   } | null;
   translations?: Record<string, {
@@ -72,8 +70,6 @@ type Material = {
     excerpt?: string | null;
     meta_title?: string | null;
     meta_description?: string | null;
-    seo_title?: string | null;
-    seo_description?: string | null;
     [key: string]: unknown;
   }> | null;
   locales?: Record<string, {
@@ -83,8 +79,6 @@ type Material = {
     excerpt?: string | null;
     meta_title?: string | null;
     meta_description?: string | null;
-    seo_title?: string | null;
-    seo_description?: string | null;
     [key: string]: unknown;
   }> | null;
   main_image?: string | null;
@@ -281,11 +275,8 @@ export async function generateMetadata({ params }: MaterialPageProps): Promise<M
   const trans = material.translations?.[locale] || material.locales?.[locale];
   const backendMetaTitle =
     trans?.meta_title ||
-    trans?.seo_title ||
-    resolveLocalizedText(material.meta_title, locale) ||
-    resolveLocalizedText(material.seo_title, locale) ||
-    material.meta?.meta_title ||
-    material.meta?.seo_title;
+    resolveLocalizedText(material.meta_title || material.seo_title, locale) ||
+    material.meta?.meta_title;
 
   const heading = materialHeading({
     title: trans?.title || resolveLocalizedText(material.title, locale) || (typeof material.title === "string" ? material.title : ""),
@@ -297,18 +288,15 @@ export async function generateMetadata({ params }: MaterialPageProps): Promise<M
 
   const backendMetaDesc =
     trans?.meta_description ||
-    trans?.seo_description ||
-    resolveLocalizedText(material.meta_description, locale) ||
-    resolveLocalizedText(material.seo_description, locale) ||
-    material.meta?.meta_description ||
-    material.meta?.seo_description;
+    resolveLocalizedText(material.meta_description || material.seo_description, locale) ||
+    material.meta?.meta_description;
 
   const localizedSubtitle = trans?.subtitle || resolveLocalizedText(material.subtitle, locale);
   const richDescription = trans?.description || resolveLocalizedText(material.description, locale);
   const localizedExcerpt = trans?.excerpt || resolveLocalizedText(material.excerpt || material.short_description, locale);
 
   const rawDescription = backendMetaDesc || localizedSubtitle || localizedExcerpt || richDescription || heading;
-  const description = plainText(rawDescription as string);
+  const description = plainText(rawDescription);
 
   return {
     title,
