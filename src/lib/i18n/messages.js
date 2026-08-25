@@ -2085,7 +2085,7 @@ export const MESSAGES_V4 = {
       metadataDescription: "The video database of Businesslabels – Smart2B Not everyone likes to read everything. Also not everything can be conveyed well in a piece of text. That is why videos are sometimes ideal. By showing something, no matter how simple or straightforward, many things can be conveyed better. That is why Businesslabels in […]"
     },
     brands: {
-      metadataTitle: "Brands • BusinessLabels.nl",
+      metadataTitle: "Label Printer Brands | BusinessLabels.nl",
       metadataDescription: "You can find the following brands on BusinessLabels"
     },
     terms: {

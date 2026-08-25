@@ -12,6 +12,8 @@ describe('checkout translations', () => {
     expect(MESSAGES_V4.en.pages.brandMetadataTitle).toBe('{brand} products for your label printer | BusinessLabels');
     expect(MESSAGES_V4.nl.pages.brandDescription).toContain('labelprinter bij BusinessLabels');
     expect(MESSAGES_V4.en.pages.brandDescription).toContain('label printer at BusinessLabels');
+    expect(MESSAGES_V4.en.brands.metadataTitle).toBe('Label Printer Brands | BusinessLabels.nl');
+    expect(MESSAGES_V4.nl.brands.metadataTitle).toBe('Labelprinter merken bekijken | Businesslabels');
   });
 
   it('provides distinct metadata for previously hardcoded/duplicate pages in both locales', () => {
