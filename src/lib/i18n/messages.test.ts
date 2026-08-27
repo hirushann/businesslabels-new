@@ -44,5 +44,32 @@ describe('checkout translations', () => {
     expect(MESSAGES_V4.en.favoritesPage.metadataDescription).toBeDefined();
     expect(MESSAGES_V4.nl.favoritesPage.metadataDescription).toBeDefined();
   });
+
+  it('keeps important page meta titles between 30 and 60 characters for SEO', () => {
+    const pagesToCheck = [
+      'homeMetadataTitle',
+      'supportSamplesMetadataTitle',
+      'epsonColorworksMetadataTitle',
+      'epsonCwc4000MetadataTitle',
+    ] as const;
+
+    for (const key of pagesToCheck) {
+      const enTitle = MESSAGES_V4.en.pages[key] as string;
+      const nlTitle = MESSAGES_V4.nl.pages[key] as string;
+
+      expect(enTitle.length).toBeGreaterThanOrEqual(30);
+      expect(enTitle.length).toBeLessThanOrEqual(60);
+
+      expect(nlTitle.length).toBeGreaterThanOrEqual(30);
+      expect(nlTitle.length).toBeLessThanOrEqual(60);
+    }
+
+    const enFaqTitle = MESSAGES_V4.en.faqPage.metadataTitle;
+    const nlFaqTitle = MESSAGES_V4.nl.faqPage.metadataTitle;
+    expect(enFaqTitle.length).toBeGreaterThanOrEqual(30);
+    expect(enFaqTitle.length).toBeLessThanOrEqual(60);
+    expect(nlFaqTitle.length).toBeGreaterThanOrEqual(30);
+    expect(nlFaqTitle.length).toBeLessThanOrEqual(60);
+  });
 });
 

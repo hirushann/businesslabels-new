@@ -265,10 +265,59 @@ async function getMaterial(slug: string): Promise<Material | null> {
   }
 }
 
+function formatMaterialMetaTitle(
+  backendMetaTitle: string | null | undefined,
+  heading: string,
+  maxLength = 60,
+  minLength = 30,
+): string {
+  const brandSuffix = " | Businesslabels";
+  const title = (backendMetaTitle || "").trim();
+
+  if (title) {
+    const suffixPattern = /\s*([—–\-|•]\s*Business[Ll]abels(\.nl)?)\s*$/i;
+    const match = title.match(suffixPattern);
+    if (match) {
+      const base = title.slice(0, match.index).trim();
+      if (base.length + brandSuffix.length <= maxLength) {
+        const result = `${base}${brandSuffix}`;
+        return result.length < minLength ? `${base} Material${brandSuffix}` : result;
+      }
+      const maxBaseLen = maxLength - brandSuffix.length - 1;
+      const truncated = base.slice(0, maxBaseLen).replace(/\s+\S*$/, "");
+      return `${truncated}${brandSuffix}`;
+    }
+
+    if (title.length <= maxLength && title.length >= minLength) {
+      return title;
+    }
+    if (title.length + brandSuffix.length <= maxLength) {
+      const result = `${title}${brandSuffix}`;
+      return result.length < minLength ? `${title} Material${brandSuffix}` : result;
+    }
+    const maxBaseLen = maxLength - brandSuffix.length - 1;
+    const truncated = title.slice(0, maxBaseLen).replace(/\s+\S*$/, "");
+    return `${truncated}${brandSuffix}`;
+  }
+
+  const cleanHeading = heading.trim();
+  if (cleanHeading.length + brandSuffix.length <= maxLength) {
+    const candidate = `${cleanHeading}${brandSuffix}`;
+    if (candidate.length < minLength) {
+      return `${cleanHeading} Material${brandSuffix}`;
+    }
+    return candidate;
+  }
+
+  const maxBaseLen = maxLength - brandSuffix.length - 1;
+  const truncated = cleanHeading.slice(0, maxBaseLen).replace(/\s+\S*$/, "");
+  return `${truncated}${brandSuffix}`;
+}
+
 export async function generateMetadata({ params }: MaterialPageProps): Promise<Metadata> {
   const { slug } = await params;
   const material = await getMaterial(slug);
-  if (!material) return { title: "Material — Businesslabels" };
+  if (!material) return { title: "Material Details | Businesslabels" };
   const locale = (await getServerLocale()) as "en" | "nl";
   const canonicalSlug = (material.slug || slug).toLowerCase();
 
@@ -284,7 +333,7 @@ export async function generateMetadata({ params }: MaterialPageProps): Promise<M
     code: material.code,
   });
 
-  const title = backendMetaTitle || `${heading} — Businesslabels`;
+  const title = formatMaterialMetaTitle(backendMetaTitle, heading);
 
   const backendMetaDesc =
     trans?.meta_description ||
