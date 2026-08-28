@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     title: `Inkjet ${t("common.materials")} — Businesslabels`,
-    description: t("materialsPage.metadataDescription"),
+    description: t("materialsPage.inkjetMetadataDescription"),
     alternates: {
       canonical: locale === "en" ? "/en/material/inkjet" : "/material/inkjet",
       languages: {

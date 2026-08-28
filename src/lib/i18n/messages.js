@@ -866,6 +866,9 @@ export const MESSAGES_V4 = {
     materialsPage: {
       metadataTitle: 'Label materials & options | Businesslabels',
       metadataDescription: 'Discover printer media materials selected for precision, durability, color accuracy, and reliable professional output.',
+      inkjetMetadataDescription: 'Explore inkjet label materials designed for vibrant full-color printing, sharp detail, dependable adhesion, and consistently professional results.',
+      thermalDirectMetadataDescription: 'Discover direct thermal label materials for fast, reliable ribbon-free printing, ideal for shipping, logistics, retail, and short-term use.',
+      thermalTransferMetadataDescription: 'Browse thermal transfer label materials made for durable, long-lasting prints with excellent resistance to handling, heat, and abrasion.',
       title: 'Material Overview',
       subtitle: 'Explore our printer media materials, engineered for precision, durability, and high-quality output. From standard to specialty stocks, each is chosen to boost performance, color accuracy, and reliability-ensuring professional results without compromise.',
       allMaterials: 'All Materials',
@@ -2964,6 +2967,9 @@ export const MESSAGES_V4 = {
     materialsPage: {
       metadataTitle: 'Materialen • BusinessLabels.nl',
       metadataDescription: 'Ontdek printermaterialen geselecteerd voor precisie, duurzaamheid, kleurnauwkeurigheid en betrouwbare professionele output.',
+      inkjetMetadataDescription: 'Ontdek inkjet labelmaterialen voor levendige full-color prints, scherpe details, betrouwbare hechting en consistente professionele resultaten.',
+      thermalDirectMetadataDescription: 'Ontdek thermisch-direct labelmaterialen voor snel en betrouwbaar printen zonder lint, ideaal voor verzending, logistiek, retail en kortdurend gebruik.',
+      thermalTransferMetadataDescription: 'Bekijk thermisch-transfer labelmaterialen voor duurzame prints die uitstekend bestand zijn tegen gebruik, warmte en slijtage.',
       title: 'Materiaaloverzicht',
       subtitle: 'Ontdek onze printermaterialen, ontwikkeld voor precisie, duurzaamheid en hoogwaardige output. Van standaard tot speciale materialen: elk materiaal is gekozen om prestaties, kleurnauwkeurigheid en betrouwbaarheid te verbeteren, voor professionele resultaten zonder compromis.',
       allMaterials: 'Alle materialen',

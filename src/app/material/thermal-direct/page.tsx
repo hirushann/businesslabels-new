@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     title: `Thermal Direct ${t("common.materials")} — Businesslabels`,
-    description: t("materialsPage.metadataDescription"),
+    description: t("materialsPage.thermalDirectMetadataDescription"),
     alternates: {
       canonical: locale === "en" ? "/en/material/thermal-direct" : "/material/thermal-direct",
       languages: {
