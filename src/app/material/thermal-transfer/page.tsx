@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     title: `Thermal Transfer ${t("common.materials")} — Businesslabels`,
-    description: t("materialsPage.metadataDescription"),
+    description: t("materialsPage.thermalTransferMetadataDescription"),
     alternates: {
       canonical: locale === "en" ? "/en/material/thermal-transfer" : "/material/thermal-transfer",
       languages: {
