@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { getAvailableDeliveryDates, getEffectiveDeliveryDays, getExpectedDeliveryMessage, isDeliverableInStock } from "./delivery";
+import { getAvailableDeliveryDates, getEffectiveDeliveryDays, getExpectedDeliveryMessage, isDeliverableInStock, isEndOfLife } from "./delivery";
 
 describe("delivery lead times", () => {
-  it("uses the required null and undefined fallbacks without replacing zero", () => {
-    expect(getEffectiveDeliveryDays({ stock: 5, delivery_dates_in_stock: null })).toBe(1);
-    expect(getEffectiveDeliveryDays({ stock: 0, delivery_dates_no_stock: undefined })).toBe(7);
+  it("returns no estimate for missing backend data without replacing zero", () => {
+    expect(getEffectiveDeliveryDays({ stock: 5, delivery_dates_in_stock: null })).toBeNull();
+    expect(getEffectiveDeliveryDays({ stock: 0, delivery_dates_no_stock: undefined })).toBeNull();
     expect(getEffectiveDeliveryDays({ stock: 5, delivery_dates_in_stock: 0 })).toBe(0);
   });
 
@@ -13,6 +13,13 @@ describe("delivery lead times", () => {
     expect(getEffectiveDeliveryDays({ stock: 0, delivery_dates_in_stock: 2, delivery_dates_no_stock: 14 })).toBe(14);
     expect(isDeliverableInStock({ stock: 5, delivery_dates_in_stock: 10 })).toBe(true);
     expect(isDeliverableInStock({ stock: 5, delivery_dates_in_stock: 11 })).toBe(false);
+  });
+
+  it("marks only non-positive stock with a 100-day no-stock value as end of life", () => {
+    expect(isEndOfLife({ stock: 0, delivery_dates_no_stock: 100 })).toBe(true);
+    expect(isEndOfLife({ stock: -1, delivery_dates_no_stock: "100" })).toBe(true);
+    expect(isEndOfLife({ stock: 1, delivery_dates_no_stock: 100 })).toBe(false);
+    expect(isEndOfLife({ stock: 0, delivery_dates_no_stock: 99 })).toBe(false);
   });
 });
 

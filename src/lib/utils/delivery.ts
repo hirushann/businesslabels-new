@@ -1,7 +1,5 @@
 /** Delivery estimates at or below this many days count as in stock. */
 export const IN_STOCK_DELIVERY_DAY_LIMIT = 10;
-export const DEFAULT_DELIVERY_DATES_IN_STOCK = 1;
-export const DEFAULT_DELIVERY_DATES_NO_STOCK = 7;
 
 const DEFAULT_BUSINESS_TIMEZONE = "Europe/Amsterdam";
 
@@ -29,8 +27,8 @@ export function getEffectiveDeliveryDays({
 }: StockStatusParams): number | null {
   const stockCount = toFiniteNumber(stock);
   const value = stockCount !== null && stockCount > 0
-    ? delivery_dates_in_stock ?? DEFAULT_DELIVERY_DATES_IN_STOCK
-    : delivery_dates_no_stock ?? DEFAULT_DELIVERY_DATES_NO_STOCK;
+    ? delivery_dates_in_stock
+    : delivery_dates_no_stock;
   const days = toFiniteNumber(value);
   return days !== null && days >= 0 ? days : null;
 }
@@ -38,6 +36,11 @@ export function getEffectiveDeliveryDays({
 export function isDeliverableInStock(params: StockStatusParams): boolean | null {
   const days = getEffectiveDeliveryDays(params);
   return days === null ? null : days <= IN_STOCK_DELIVERY_DAY_LIMIT;
+}
+
+export function isEndOfLife({ stock, delivery_dates_no_stock }: StockStatusParams): boolean {
+  const stockCount = toFiniteNumber(stock);
+  return stockCount !== null && stockCount <= 0 && toFiniteNumber(delivery_dates_no_stock) === 100;
 }
 
 type DeliveryMessageParams = StockStatusParams & {

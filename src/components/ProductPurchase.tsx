@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import type { ProductRouteType } from "@/components/ProductCard";
 import { buildCartItemKey, useCart } from "@/components/CartProvider";
 import { useWishlist } from "@/components/WishlistProvider";
-import { getEffectiveDeliveryDays, getExpectedDeliveryMessage, isDeliverableInStock } from "@/lib/utils/delivery";
+import { getEffectiveDeliveryDays, getExpectedDeliveryMessage, isDeliverableInStock, isEndOfLife } from "@/lib/utils/delivery";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -400,14 +400,24 @@ export default function ProductPurchase({
       delivery_dates_no_stock: deliveryDatesNoStock,
     }) ?? Boolean(inStock);
   const stockCount = normalizeOptionalNumber(stock);
-  const deliveryDatesNoStockCount = normalizeOptionalNumber(deliveryDatesNoStock);
+  const endOfLife = isEndOfLife({ stock, delivery_dates_no_stock: deliveryDatesNoStock });
+  const isBackorder = stockCount !== null && stockCount <= 0 && !endOfLife;
   const hasDeliveryEstimate = getEffectiveDeliveryDays({
     stock,
     delivery_dates_in_stock: deliveryDatesInStock,
     delivery_dates_no_stock: deliveryDatesNoStock,
   }) !== null;
 
-  const stockText = resolvedInStock ? t("product.inStock") : t("product.outOfStock");
+  const stockText = endOfLife
+    ? t("product.endOfLife")
+    : isBackorder
+      ? t("product.onBackorder")
+      : resolvedInStock
+        ? t("product.inStock")
+        : t("product.outOfStock");
+  const stockBadgeClass = endOfLife ? "bg-red-600" : isBackorder ? "bg-amber-400" : resolvedInStock ? "bg-success" : "bg-zinc-400";
+  const stockBadgeTextClass = isBackorder ? "text-neutral-900" : "text-white";
+  const canOrder = resolvedInStock || isBackorder;
 
   const discountPercentage =
     hasPrice && hasOriginalPrice
@@ -503,6 +513,7 @@ export default function ProductPurchase({
   const deliveryInfo = useMemo(() => {
     if (
       stockCount === null ||
+      endOfLife ||
       !hasDeliveryEstimate ||
       !currentTime ||
       !availableDates?.length
@@ -523,7 +534,7 @@ export default function ProductPurchase({
       console.error("Failed to calculate delivery message:", error);
       return null;
     }
-  }, [stock, stockCount, deliveryDatesInStock, deliveryDatesNoStock, hasDeliveryEstimate, currentTime, availableDates, locale]);
+  }, [stock, stockCount, deliveryDatesInStock, deliveryDatesNoStock, endOfLife, hasDeliveryEstimate, currentTime, availableDates, locale]);
 
   const validateQuantity = (customQuantity?: number): number | null => {
     setQuantityError(null);
@@ -629,6 +640,8 @@ export default function ProductPurchase({
   };
 
   const handleAddToCart = (customQuantity?: number) => {
+    if (!canOrder) return;
+
     const qtyToAdd = validateQuantity(customQuantity);
     if (!qtyToAdd) {
       return;
@@ -761,35 +774,28 @@ export default function ProductPurchase({
         <div className="flex flex-col gap-3">
           <div className="flex justify-between items-center">
             <span className="text-link text-base font-bold leading-5">{t("product.articleNumber", { number: displayArticleNumber })}</span>
-            {((stockCount != null && stockCount > 0) || deliveryDatesNoStockCount == null || deliveryDatesNoStockCount < 10) ? (
-              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${resolvedInStock ? "bg-success" : "bg-zinc-400"}`}>
-                {resolvedInStock ? (
-                  <svg className="w-3 h-3 text-white" fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12">
-                    <g clipPath="url(#clip0_1768_8264)">
-                      <path d="M10.9013 4.99975C11.1296 6.1204 10.9669 7.28546 10.4402 8.30065C9.91352 9.31583 9.05473 10.1198 8.00704 10.5784C6.95935 11.037 5.7861 11.1226 4.68293 10.8209C3.57977 10.5192 2.61338 9.84845 1.94492 8.92046C1.27646 7.99247 0.946343 6.86337 1.00961 5.72144C1.07289 4.57952 1.52572 3.4938 2.29261 2.64534C3.05949 1.79688 4.09407 1.23697 5.22381 1.05898C6.35356 0.880989 7.51017 1.09568 8.50078 1.66725" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M4.5 5.5L6 7L11 2" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
-                    </g>
-                    <defs>
-                      <clipPath id="clip0_1768_8264">
-                        <rect width="12" height="12" fill="white" />
-                      </clipPath>
-                    </defs>
-                  </svg>
-                ) : (
-                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
-                    <circle cx="6" cy="6" r="5" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 4l4 4m0-4L4 8" />
-                  </svg>
-                )}
-                <span className="text-white text-xs font-normal leading-none">{stockText}</span>
-              </div>
-            ) : null}
+            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${stockBadgeClass} ${stockBadgeTextClass}`}>
+              {resolvedInStock || isBackorder ? (
+                <svg className="w-3 h-3" fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12">
+                  <g clipPath="url(#clip0_1768_8264)">
+                    <path d="M10.9013 4.99975C11.1296 6.1204 10.9669 7.28546 10.4402 8.30065C9.91352 9.31583 9.05473 10.1198 8.00704 10.5784C6.95935 11.037 5.7861 11.1226 4.68293 10.8209C3.57977 10.5192 2.61338 9.84845 1.94492 8.92046C1.27646 7.99247 0.946343 6.86337 1.00961 5.72144C1.07289 4.57952 1.52572 3.4938 2.29261 2.64534C3.05949 1.79688 4.09407 1.23697 5.22381 1.05898C6.35356 0.880989 7.51017 1.09568 8.50078 1.66725" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M4.5 5.5L6 7L11 2" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+                  </g>
+                  <defs>
+                    <clipPath id="clip0_1768_8264">
+                      <rect width="12" height="12" fill="white" />
+                    </clipPath>
+                  </defs>
+                </svg>
+              ) : (
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
+                  <circle cx="6" cy="6" r="5" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4l4 4m0-4L4 8" />
+                </svg>
+              )}
+              <span className="text-xs font-normal leading-none">{stockText}</span>
+            </div>
           </div>
-          {!resolvedInStock ? (
-            <p className="text-sm font-medium text-zinc-600 bg-zinc-100 rounded-lg px-3 py-2">
-              {t("product.outOfStockNotice")}
-            </p>
-          ) : null}
           <div className="flex items-baseline gap-2">
             <span className="text-neutral-800 text-4xl font-semibold leading-[48px]">
               {hasPrice ? formatEuro(activeUnitPrice ?? price ?? 0) : "-"}
@@ -917,7 +923,7 @@ export default function ProductPurchase({
                           e.preventDefault();
                           handleAddToCart(quantity);
                         }}
-                        disabled={!resolvedInStock}
+                        disabled={!canOrder}
                         aria-describedby={quantityError ? "quantity-error" : undefined}
                         className="w-full sm:flex-1 h-12 px-4 py-2.5 bg-brand rounded-[100px] justify-center items-center gap-2 hover:bg-brand-hover transition-colors shadow-sm flex disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:hover:bg-zinc-300"
                       >
@@ -975,7 +981,7 @@ export default function ProductPurchase({
                             e.preventDefault();
                             handleAddToCart(quantity);
                           }}
-                          disabled={!resolvedInStock}
+                          disabled={!canOrder}
                           aria-describedby={quantityError ? "quantity-error" : undefined}
                           className="w-full sm:flex-1 h-12 px-4 py-2.5 bg-brand rounded-[100px] justify-center items-center gap-2 hover:bg-brand-hover transition-colors shadow-sm flex disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:hover:bg-zinc-300"
                         >
@@ -997,7 +1003,7 @@ export default function ProductPurchase({
                             e.preventDefault();
                             handleAddToCart(Math.max(1, Math.ceil(quantity / (normalizedPackingGroup || 1))) * (normalizedPackingGroup || 1));
                           }}
-                          disabled={!resolvedInStock}
+                          disabled={!canOrder}
                           className="w-full sm:flex-1 h-12 px-4 py-2.5 bg-amber-100 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-amber-300 justify-center items-center gap-2 hover:bg-amber-300 transition-colors flex disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:outline-zinc-200 disabled:hover:bg-zinc-100"
                         >
                           <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1025,7 +1031,7 @@ export default function ProductPurchase({
                           e.preventDefault();
                           handleAddToCart(Math.max(1, Math.ceil(quantity / (normalizedPackingGroup || 1))) * (normalizedPackingGroup || 1));
                         }}
-                        disabled={!resolvedInStock}
+                        disabled={!canOrder}
                         className="w-full h-12 px-4 py-2.5 bg-amber-100 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-amber-300 justify-center items-center gap-2 hover:bg-amber-300 transition-colors flex disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:outline-zinc-200 disabled:hover:bg-zinc-100"
                       >
                         <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1090,7 +1096,7 @@ export default function ProductPurchase({
                       e.preventDefault();
                       handleAddToCart(quantity);
                     }}
-                    disabled={!resolvedInStock}
+                    disabled={!canOrder}
                     aria-describedby={quantityError ? "quantity-error" : undefined}
                     className="flex h-12 px-4 py-2.5 bg-brand rounded-[100px] justify-center items-center gap-2 hover:bg-brand-hover transition-colors shadow-sm disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:hover:bg-zinc-300"
                   >
@@ -1363,7 +1369,7 @@ export default function ProductPurchase({
                 <button
                   type="button"
                   onClick={() => handleAddToCart(quantity)}
-                  disabled={!resolvedInStock}
+                  disabled={!canOrder}
                   aria-describedby={quantityError ? "quantity-error" : undefined}
                   className="w-full h-11 px-4 bg-brand rounded-[100px] justify-center items-center gap-2 hover:bg-brand-hover transition-colors shadow-sm flex disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:hover:bg-zinc-300"
                 >
@@ -1378,7 +1384,7 @@ export default function ProductPurchase({
                     <button
                       type="button"
                       onClick={() => handleAddToCart(quantity)}
-                      disabled={!resolvedInStock}
+                      disabled={!canOrder}
                       aria-describedby={quantityError ? "quantity-error" : undefined}
                       className="w-full h-11 px-4 bg-brand rounded-[100px] justify-center items-center gap-2 hover:bg-brand-hover transition-colors shadow-sm flex disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:hover:bg-zinc-300"
                     >
@@ -1391,7 +1397,7 @@ export default function ProductPurchase({
                   <button
                     type="button"
                     onClick={() => handleAddToCart(Math.max(1, Math.ceil(quantity / (normalizedPackingGroup || 1))) * (normalizedPackingGroup || 1))}
-                    disabled={!resolvedInStock}
+                    disabled={!canOrder}
                     className="w-full h-11 px-4 bg-amber-100 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-amber-300 justify-center items-center gap-2 hover:bg-amber-300 transition-colors flex disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:outline-zinc-200 disabled:hover:bg-zinc-100"
                   >
                   <svg className="w-4 h-4 text-brand" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -1411,7 +1417,7 @@ export default function ProductPurchase({
             <button
               type="button"
               onClick={() => handleAddToCart(quantity)}
-              disabled={!resolvedInStock}
+              disabled={!canOrder}
               aria-describedby={quantityError ? "quantity-error" : undefined}
               className="w-full h-11 bg-brand rounded-[100px] justify-center items-center gap-2 hover:bg-brand-hover transition-colors shadow-sm flex disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:hover:bg-zinc-300"
             >
