@@ -3352,7 +3352,7 @@ export const MESSAGES_V4 = {
       inStock: 'Op voorraad',
       outOfStock: 'Niet op voorraad',
       onBackorder: 'In nabestelling',
-      endOfLife: 'Einde levensduur',
+      endOfLife: 'End of life',
       outOfStockNotice: 'Dit product is momenteel niet op voorraad en kan niet besteld worden. Neem contact met ons op voor de verwachte hersteldatum.',
       exVat: 'excl. btw',
       bulkDiscounts: 'Volumekortingen',
