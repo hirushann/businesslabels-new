@@ -322,6 +322,8 @@ export function mapProductListingResult(
     originalPrice: valueAsNumber(getRaw(result, "original_price")),
     inStock: (valueAsNumber(getRaw(result, "stock")) !== null) ? (valueAsNumber(getRaw(result, "stock"))! > 0) : valueAsBoolean(getRaw(result, "in_stock")),
     stock: valueAsNumber(getRaw(result, "stock")),
+    delivery_dates_in_stock: valueAsNumber(getRaw(result, "delivery_dates_in_stock")),
+    delivery_dates_no_stock: valueAsNumber(getRaw(result, "delivery_dates_no_stock")),
     mainImage: toDisplayImageUrl(imageForProduct(result)),
     categories: categoriesForProduct(result),
     slug,
