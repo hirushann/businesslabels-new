@@ -1793,6 +1793,9 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number, loc
     materialTitle: (locale && materialTranslations?.title?.[locale]) ?? stringValue(source.catalog_material) ?? stringValue(source.catalog_material_code),
     price,
     originalPrice,
+    stock: stockCount,
+    delivery_dates_in_stock: numberValue(source.delivery_dates_in_stock),
+    delivery_dates_no_stock: numberValue(source.delivery_dates_no_stock),
     discount: discount ?? 0,
     inStock: deliveryStockStatus ?? (booleanValue(source.in_stock) || Boolean((stockCount ?? 0) > 0)),
     packing_group: numberValue(source.packing_group),
@@ -1958,6 +1961,7 @@ async function applyProductConfigOverrides(products: CatalogProductResult[], loc
         delivery_dates_in_stock: deliveryWindow?.deliveryDatesInStock ?? null,
         delivery_dates_no_stock: deliveryWindow?.deliveryDatesNoStock ?? null,
       });
+      p.product.stock = liveStock;
       p.product.inStock = liveDeliveryStockStatus
         ?? productConfig.rawInStock
         ?? Boolean((liveStock ?? 0) > 0);

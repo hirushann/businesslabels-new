@@ -87,4 +87,20 @@ describe("mapLaravelProductToCardData", () => {
       name_nl: "Inkt cartridges – CW-D6000 series",
     });
   });
+
+  it("keeps stock delivery fields used by card availability badges", () => {
+    const product: LaravelProduct = {
+      id: 4,
+      sku: "EOL-001",
+      stock: 0,
+      delivery_dates_in_stock: null,
+      delivery_dates_no_stock: 100,
+    };
+
+    expect(mapLaravelProductToCardData(product)).toMatchObject({
+      stock: 0,
+      delivery_dates_in_stock: null,
+      delivery_dates_no_stock: 100,
+    });
+  });
 });

@@ -18,6 +18,7 @@ import { localePath } from "@/lib/i18n/utils";
 import { localizeProductSpecValue } from "@/lib/products/specValues";
 import { normalizeWarrantyOptions, type NormalizedWarrantyOption as WarrantyOption } from "@/lib/warranty/localize";
 import WarrantyDialogContent from "@/components/WarrantyDialogContent";
+import { isEndOfLife } from "@/lib/utils/delivery";
 
 export type ProductRouteType = "simple" | "variable" | "group_product";
 
@@ -120,6 +121,8 @@ export type ProductCardData = {
   originalPrice?: number | null;
   original_price?: number | null;
   stock?: number | string | null;
+  delivery_dates_in_stock?: number | string | null;
+  delivery_dates_no_stock?: number | string | null;
   inStock: boolean;
   in_stock?: boolean | null;
   mainImage?: string | null;
@@ -399,6 +402,17 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
   const productPrice = product.price;
   const productOriginalPrice = product.originalPrice ?? product.original_price;
   const productInStock = product.inStock ?? product.in_stock ?? normalizeBoolean(product.stock);
+  const stockCount = product.stock == null || product.stock === "" ? null : Number(product.stock);
+  const productEndOfLife = isEndOfLife({ stock: product.stock, delivery_dates_no_stock: product.delivery_dates_no_stock });
+  const productOnBackorder = stockCount !== null && Number.isFinite(stockCount) && stockCount <= 0 && !productEndOfLife;
+  const stockBadgeText = productEndOfLife
+    ? t("product.endOfLife")
+    : productOnBackorder
+      ? t("product.onBackorder")
+      : productInStock
+        ? t("product.inStock")
+        : t("product.outOfStock");
+  const stockBadgeClass = productEndOfLife ? "bg-red-600 text-white" : productOnBackorder ? "bg-amber-400 text-neutral-900" : productInStock ? "bg-green-600 text-white" : "bg-zinc-400 text-white";
   const productMainImage = product.mainImage ?? product.main_image ?? null;
   const hasPrice = typeof product.price === "number" && Number.isFinite(product.price);
   const hasOriginalPrice =
@@ -505,6 +519,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
   const handleAddToCart = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
+    if (productEndOfLife) return;
 
     // Products with bulk discounts get the dedicated pricing modal
     if (hasBulkDiscounts) {
@@ -601,12 +616,12 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
               )}
             </div>
           ) : <div className="w-8" />}
-          {productInStock ? (
-            <div className="px-2.5 py-1 bg-green-600 rounded-full flex items-center gap-1.5">
+          <div className={`px-2.5 py-1 rounded-full flex items-center gap-1.5 ${stockBadgeClass}`}>
+            {!productEndOfLife && (productInStock || productOnBackorder) ? (
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <g clipPath="url(#clip0_1768_8264)">
-                  <path d="M10.9013 4.99975C11.1296 6.1204 10.9669 7.28546 10.4402 8.30065C9.91352 9.31583 9.05473 10.1198 8.00704 10.5784C6.95935 11.037 5.7861 11.1226 4.68293 10.8209C3.57977 10.5192 2.61338 9.84845 1.94492 8.92046C1.27646 7.99247 0.946343 6.86337 1.00961 5.72144C1.07289 4.57952 1.52572 3.4938 2.29261 2.64534C3.05949 1.79688 4.09407 1.23697 5.22381 1.05898C6.35356 0.880989 7.51017 1.09568 8.50078 1.66725" stroke="white" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M4.5 5.5L6 7L11 2" stroke="white" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M10.9013 4.99975C11.1296 6.1204 10.9669 7.28546 10.4402 8.30065C9.91352 9.31583 9.05473 10.1198 8.00704 10.5784C6.95935 11.037 5.7861 11.1226 4.68293 10.8209C3.57977 10.5192 2.61338 9.84845 1.94492 8.92046C1.27646 7.99247 0.946343 6.86337 1.00961 5.72144C1.07289 4.57952 1.52572 3.4938 2.29261 2.64534C3.05949 1.79688 4.09407 1.23697 5.22381 1.05898C6.35356 0.880989 7.51017 1.09568 8.50078 1.66725" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M4.5 5.5L6 7L11 2" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
                 </g>
                 <defs>
                   <clipPath id="clip0_1768_8264">
@@ -614,17 +629,14 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
                   </clipPath>
                 </defs>
               </svg>
-              <span className="text-white text-xs font-normal leading-4">{t("product.inStock")}</span>
-            </div>
-          ) : (
-            <div className="px-2.5 py-1 bg-zinc-400 rounded-full flex items-center gap-1.5">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth={2} xmlns="http://www.w3.org/2000/svg">
+            ) : (
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth={2} xmlns="http://www.w3.org/2000/svg">
                 <circle cx="6" cy="6" r="5" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 4l4 4m0-4L4 8" />
               </svg>
-              <span className="text-white text-xs font-normal leading-4">{t("product.outOfStock")}</span>
-            </div>
-          )}
+            )}
+            <span className="text-xs font-normal leading-4">{stockBadgeText}</span>
+          </div>
         </div>
         <Link href={localizedHref || "#"} className="absolute inset-0 z-0" onClick={onClick}>
         <Image
@@ -706,7 +718,8 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
                 <button
                   type="button"
                   onClick={handleAddToCart}
-                  className="px-4 py-2.5 bg-brand rounded-full flex items-center gap-2 text-white text-base font-medium leading-6 hover:bg-brand-hover transition-colors"
+                  disabled={productEndOfLife}
+                  className="px-4 py-2.5 bg-brand rounded-full flex items-center gap-2 text-white text-base font-medium leading-6 hover:bg-brand-hover transition-colors disabled:cursor-not-allowed disabled:bg-zinc-300"
                   aria-label={t(hasBulkDiscounts ? "product.selectProductQuantity" : "product.addProductToCart", { name: productName })}
                 >
                   {t(hasBulkDiscounts ? "common.select" : "common.add")}

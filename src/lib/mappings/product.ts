@@ -40,6 +40,8 @@ export type LaravelProduct = {
   price?: number | null;
   original_price?: number | null;
   stock?: number | null;
+  delivery_dates_in_stock?: number | string | null;
+  delivery_dates_no_stock?: number | string | null;
   in_stock?: boolean | null;
   main_image?: string | null;
   material?: {
@@ -124,6 +126,9 @@ export function mapLaravelProductToCardData(product: LaravelProduct, locale: str
     materialTitle,
     price: product.price,
     originalPrice: product.original_price,
+    stock: product.stock,
+    delivery_dates_in_stock: product.delivery_dates_in_stock,
+    delivery_dates_no_stock: product.delivery_dates_no_stock,
     inStock: product.in_stock ?? (product.stock ?? 0) > 0,
     mainImage: toDisplayImageUrl(product.main_image),
     categories,
