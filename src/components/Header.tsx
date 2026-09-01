@@ -139,6 +139,19 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
     loadTeamMembers();
     return () => { ignore = true; };
   }, []);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrolled = window.scrollY > 20;
+      setIsScrolled((prev) => (prev !== scrolled ? scrolled : prev));
+    };
+
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const [clientAuthState, setClientAuthState] = useState<boolean | null>(null);
   const [isLoginPopupOpen, setIsLoginPopupOpen] = useState(false);
   const [isRegisterPopupOpen, setIsRegisterPopupOpen] = useState(false);
@@ -534,8 +547,14 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
   const accessoryCategoryHref = getAccessoryCategoryPath(locale);
 
   return (
-    <header className="w-full left-0 top-0 z-50 flex flex-col items-center">
-      {/* Top bar */}
+    <header
+      className={`sticky top-0 lg:-top-[40px] z-40 w-full flex flex-col items-center bg-white transition-[box-shadow,border-color] duration-300 ${
+        isScrolled
+          ? 'shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] border-b border-slate-200/80'
+          : ''
+      }`}
+    >
+      {/* Top bar (non-sticky) */}
       <div className="hidden lg:flex w-full px-10 py-2.5 bg-sky-950 flex-col">
         <div className="max-w-360 mx-auto w-full flex justify-between items-center">
           <div className="flex items-center gap-8">

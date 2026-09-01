@@ -52,7 +52,7 @@ export default function InThisArticle({ headings, title }: InThisArticleProps) {
     setActiveId(id);
     const el = document.getElementById(id);
     if (el) {
-      const headerOffset = 100; // Offset for sticky site header
+      const headerOffset = 128; // Offset for sticky site header
       const elementPosition = el.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
       window.scrollTo({

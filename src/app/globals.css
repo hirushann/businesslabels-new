@@ -5,6 +5,10 @@
 
 @custom-variant dark (&:is(.dark *));
 
+html {
+  scroll-padding-top: 128px;
+}
+
 html,
 body {
   max-width: 100%;

@@ -654,7 +654,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
             </div>
 
             {/* Right sidebar */}
-            <aside className="flex w-full flex-col gap-6 lg:sticky lg:top-24 lg:w-96">
+            <aside className="flex w-full flex-col gap-6 lg:sticky lg:top-[128px] lg:w-96">
               <SidebarCard title={t("materialDetail.availableStockItemsTitle")} description={t("materialDetail.availableStockItemsDesc")}>
                 <ScrollToMaterialProductsButton targetId={MATERIAL_PRODUCTS_SECTION_ID}>
                   {t("materialDetail.viewStockItems")}

@@ -1372,7 +1372,7 @@ export default async function SingleProductPage({
           </div>
 
           {/* RIGHT: Purchase Card */}
-          <div className="w-full lg:w-[400px] xl:w-[420px] flex flex-col gap-6 lg:sticky lg:top-24">
+          <div className="w-full lg:w-[400px] xl:w-[420px] flex flex-col gap-6 lg:sticky lg:top-[128px]">
             <ProductPurchase
               id={product?.id}
               slug={product?.slug}

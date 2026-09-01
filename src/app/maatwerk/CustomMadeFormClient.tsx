@@ -1090,7 +1090,7 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
         </div>
 
         {/* ── Sidebar ── */}
-        <div className="w-full lg:w-96 flex flex-col gap-6 lg:sticky lg:top-24">
+        <div className="w-full lg:w-96 flex flex-col gap-6 lg:sticky lg:top-[128px]">
           {/* Overview card */}
           <div className="bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-gray-100 overflow-hidden">
             <div className="p-4 bg-gray-100 outline outline-1 outline-offset-[-1px] outline-gray-200">

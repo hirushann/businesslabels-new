@@ -543,7 +543,7 @@ export default function MaterialsCatalogClient({
         <div className={`flex flex-col gap-6 lg:grid ${isSidebarOpen ? "lg:grid-cols-4 lg:items-start" : "lg:grid-cols-4"}`}>
           {/* Collapsible Filters Sidebar */}
           {isSidebarOpen && (
-            <aside className="w-full shrink-0 rounded-xl border border-slate-100 bg-white p-4 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.08)] lg:col-span-1 lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto custom-scrollbar">
+            <aside className="w-full shrink-0 rounded-xl border border-slate-100 bg-white p-4 shadow-[2px_4px_20px_0px_rgba(109,109,120,0.08)] lg:col-span-1 lg:sticky lg:top-[128px] lg:self-start lg:max-h-[calc(100vh-148px)] lg:overflow-y-auto custom-scrollbar">
               <div className="flex flex-col gap-5">
                 <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-2">

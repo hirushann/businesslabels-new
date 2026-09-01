@@ -170,7 +170,7 @@ export default function FaqClient({ pagesList, initialPageData, locale }) {
           <div className="w-full mt-12 flex flex-col lg:flex-row items-start gap-10">
             
             {/* Sidebar / Tabs */}
-            <div className="w-full lg:w-80 p-4 lg:p-6 lg:sticky lg:top-24 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col items-start gap-4 overflow-hidden shrink-0">
+            <div className="w-full lg:w-80 p-4 lg:p-6 lg:sticky lg:top-[128px] bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col items-start gap-4 overflow-hidden shrink-0">
               {/* Desktop view (Vertical with active indicator line) */}
               <div className="hidden lg:flex relative pl-4 flex-col items-start w-full">
                 {/* Active Indicator Line */}
