@@ -2841,7 +2841,7 @@ export const MESSAGES_V4 = {
       badgeMakenMetadataDescription: 'Maak en ontwerp uw eigen badge tijdens uw evenement met de ExpoBadges van Diamondlabels. Snel, goedkoop en eenvoudig te printen op de Epson TM-C3500.',
       epsonColorworksMetadataTitle: 'Epson ColorWorks Labelprinters | Businesslabels',
       epsonColorworksMetadataDescription: 'Waarom kiezen voor een Epson ColorWorks labelprinter? Ontdek de unieke printkoptechnologie, betrouwbaarheid en de verschillende categorieën: Desktop, Midrange en Industrieel.',
-      epsonCwc4000MetadataTitle: 'Epson CW-C4000 Printer Preview & Specs | Businesslabels',
+      epsonCwc4000MetadataTitle: 'Epson CW-C4000 Preview & Specificaties | Businesslabels',
       epsonCwc4000MetadataDescription: 'Ontdek de nieuwe Epson CW-C4000 ColorWorks labelprinter. Desktop model met Precision Core printkop, 1200×1200 dpi en UltraChrome DL inkten. Bekijk specs, snelheden en prijzen.',
       loadingProducts: 'Producten laden...',
     },
