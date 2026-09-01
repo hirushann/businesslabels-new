@@ -43,6 +43,8 @@ describe('checkout translations', () => {
     expect(MESSAGES_V4.nl.favoritesPage.metadataTitle).toBeDefined();
     expect(MESSAGES_V4.en.favoritesPage.metadataDescription).toBeDefined();
     expect(MESSAGES_V4.nl.favoritesPage.metadataDescription).toBeDefined();
+
+    expect(MESSAGES_V4.en.pages.epsonCwc4000MetadataTitle).not.toBe(MESSAGES_V4.nl.pages.epsonCwc4000MetadataTitle);
   });
 
   it('keeps important page meta titles between 30 and 60 characters for SEO', () => {
