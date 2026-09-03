@@ -7,7 +7,12 @@
  */
 export function toDisplayImageUrl(url: string | null | undefined): string | null {
   if (!url?.trim()) return null;
-  if (url.startsWith("/") || url.startsWith("data:") || url.startsWith("blob:")) return url;
+  const trimmed = url.trim();
+  if (trimmed.startsWith("/") || trimmed.startsWith("data:") || trimmed.startsWith("blob:")) return trimmed;
+  if (trimmed.includes("/api/media-proxy?url=")) {
+    const idx = trimmed.indexOf("/api/media-proxy");
+    return trimmed.slice(idx);
+  }
 
-  return `/api/media-proxy?url=${encodeURIComponent(url)}`;
+  return `/api/media-proxy?url=${encodeURIComponent(trimmed)}`;
 }

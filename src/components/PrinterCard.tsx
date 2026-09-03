@@ -16,6 +16,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 
 export type PrinterCardData = {
   id: string | number;
@@ -59,7 +60,7 @@ export default function PrinterCard({ printer, href }: PrinterCardProps) {
 
   const printerName = printer.name ?? "";
   const subtitle = normalizeText(printer.subtitle);
-  const imageSrc = normalizeText(printer.mainImage) || "/image-placeholder.svg";
+  const imageSrc = toDisplayImageUrl(printer.mainImage) || "/image-placeholder.svg";
   const [imgError, setImgError] = useState(false);
 
   const cardContent = (

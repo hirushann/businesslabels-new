@@ -8,6 +8,7 @@ import { useLocalePath } from '@/hooks/useLocalePath';
 import { useShippingRules } from '@/hooks/useShippingRules';
 import CartTotals from '@/components/CartTotals';
 import { useIsBusinessCustomer } from '@/hooks/useIsBusinessCustomer';
+import { toDisplayImageUrl } from '@/lib/utils/imageProxy';
 
 type CartDrawerProps = {
   onClose: () => void;
@@ -157,11 +158,9 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                       ? Math.round(linkedWarranty.warranty.durationMonths / 12)
                       : null;
 
-                    const imageSrc = item.mainImage?.trim() || '/image-placeholder.svg';
+                    const imageSrc = toDisplayImageUrl(item.mainImage) || '/image-placeholder.svg';
                     const productSlug = item.slug?.trim();
-                    const href = productSlug
-                      ? lp(`/product/${productSlug}${item.type ? `?type=${item.type}` : ''}`)
-                      : undefined;
+                    const href = productSlug ? lp(`/product/${productSlug}`) : undefined;
 
                     return (
                       <div key={item.key} className="py-4 flex flex-col gap-3">

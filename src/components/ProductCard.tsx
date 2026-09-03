@@ -19,6 +19,7 @@ import { localizeProductSpecValue } from "@/lib/products/specValues";
 import { normalizeWarrantyOptions, type NormalizedWarrantyOption as WarrantyOption } from "@/lib/warranty/localize";
 import WarrantyDialogContent from "@/components/WarrantyDialogContent";
 import { isEndOfLife } from "@/lib/utils/delivery";
+import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 
 export type ProductRouteType = "simple" | "variable" | "group_product";
 
@@ -419,7 +420,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
     typeof productOriginalPrice === "number" &&
     Number.isFinite(productOriginalPrice) &&
     (!hasPrice || (hasPrice && productPrice !== undefined && productPrice !== null && productOriginalPrice > productPrice));
-  const imageSrc = normalizeText(productMainImage) || "/image-placeholder.svg";
+  const imageSrc = toDisplayImageUrl(productMainImage) || "/image-placeholder.svg";
   const [imgError, setImgError] = useState(false);
   
   const properties = product.properties as Record<string, unknown> | null;

@@ -21,16 +21,16 @@ const SPEED_MODES = [
 ];
 
 const CAROUSEL_ITEMS = [
-  { src: 'https://businesslabels.nl/wp-content/uploads/2022/01/Epson-left-CW-C4000-LR-1-150x131.png',            alt: 'Printer CW-C4000'      },
-  { src: 'https://businesslabels.nl/wp-content/uploads/2022/01/Epson_C4000e_maintenance_box_SJMB4000-1-e1643380482940-150x120.png', alt: 'Maintenance box'   },
-  { src: 'https://businesslabels.nl/wp-content/uploads/2022/01/Epson_SJIC42P-BK_Black_C13T52M140-150x121.png',   alt: 'Cartridge Zwart BK'    },
-  { src: 'https://businesslabels.nl/wp-content/uploads/2022/01/Epson_SJIC42P-MK_matt_Black_C13T52M540-150x121.png', alt: 'Cartridge Zwart MK' },
-  { src: 'https://businesslabels.nl/wp-content/uploads/2022/01/Epson_SJIC42P-C_Cyan_C13T52M240-150x121.png',     alt: 'Cartridge Cyaan'       },
-  { src: 'https://businesslabels.nl/wp-content/uploads/2022/01/Epson_SJIC42P-M_Magenta_C13T52M340-150x121.png', alt: 'Cartridge Magenta'      },
-  { src: 'https://businesslabels.nl/wp-content/uploads/2022/01/Epson_SJIC42P-Y_Yellow_C13T52M440-150x121.png',  alt: 'Cartridge Geel'         },
-  { src: 'https://businesslabels.nl/wp-content/uploads/2022/01/Epson-CW-C4000-paper-tray-part-150x121.png',     alt: 'Opvang bak'             },
-  { src: 'https://businesslabels.nl/wp-content/uploads/2022/01/Epson-CW-C4000-WiFi-dongle-150x119.png',         alt: 'WiFi Dongle'            },
-  { src: 'https://businesslabels.nl/wp-content/uploads/2022/01/Epson-Cw-C4000-auto-cutter-unit-150x104.png',    alt: 'Automatisch snijmes'    },
+  { src: '/api/media-proxy?url=' + encodeURIComponent('https://dashboard.businesslabels.nl/storage/10883/Epson-left-CW-C4000-Europe.png'), alt: 'Printer CW-C4000' },
+  { src: '/api/media-proxy?url=' + encodeURIComponent('https://dashboard.businesslabels.nl/storage/12263/Epson_C4000e_maintenance_box_SJMB4000-1-e1643380482940.png'), alt: 'Maintenance box' },
+  { src: '/api/media-proxy?url=' + encodeURIComponent('https://dashboard.businesslabels.nl/storage/12268/Epson_SJIC42P-BK_Black_C13T52M140.png'), alt: 'Cartridge Zwart BK' },
+  { src: '/api/media-proxy?url=' + encodeURIComponent('https://dashboard.businesslabels.nl/storage/12267/Epson_SJIC42P-MK_matt_Black_C13T52M540.png'), alt: 'Cartridge Zwart MK' },
+  { src: '/api/media-proxy?url=' + encodeURIComponent('https://dashboard.businesslabels.nl/storage/12265/Epson_SJIC42P-C_Cyan_C13T52M240.png'), alt: 'Cartridge Cyaan' },
+  { src: '/api/media-proxy?url=' + encodeURIComponent('https://dashboard.businesslabels.nl/storage/12266/Epson_SJIC42P-M_Magenta_C13T52M340.png'), alt: 'Cartridge Magenta' },
+  { src: '/api/media-proxy?url=' + encodeURIComponent('https://dashboard.businesslabels.nl/storage/12264/Epson_SJIC42P-Y_Yellow_C13T52M440.png'), alt: 'Cartridge Geel' },
+  { src: '/api/media-proxy?url=' + encodeURIComponent('https://dashboard.businesslabels.nl/storage/7540/Epson-CW-C4000-paper-tray-opvangbakje.png'), alt: 'Opvang bak' },
+  { src: '/api/media-proxy?url=' + encodeURIComponent('https://dashboard.businesslabels.nl/storage/7542/Epson-CW-C4000-WiFi-dongle.png'), alt: 'WiFi Dongle' },
+  { src: '/api/media-proxy?url=' + encodeURIComponent('https://dashboard.businesslabels.nl/storage/7543/Epson-Cw-C4000-auto-cutter-unit.png'), alt: 'Automatisch snijmes' },
 ];
 
 const PRICING = [
@@ -254,7 +254,7 @@ export default function EpsonCWC4000PageClient() {
               {/* Glow ring */}
               <div className="absolute inset-[-24px] rounded-full bg-brand/15 blur-2xl" />
               <img
-                src="https://businesslabels.nl/wp-content/uploads/2022/02/Epson-left-CW-C4000-Europe.png"
+                src={'/api/media-proxy?url=' + encodeURIComponent('https://dashboard.businesslabels.nl/storage/10883/Epson-left-CW-C4000-Europe.png')}
                 alt="Epson CW-C4000 ColorWorks labelprinter"
                 className="relative max-h-80 w-full object-contain drop-shadow-2xl transition-transform duration-700 hover:scale-105"
                 loading="eager"

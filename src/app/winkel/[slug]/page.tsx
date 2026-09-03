@@ -57,11 +57,15 @@ export async function generateMetadata({
   const title = htmlToText(metaTitle || (titleSource ? `${titleSource} — Businesslabels` : t("pages.productMetadataTitle")));
   const rawDescription = productTranslation?.meta_description || product.meta_description || productTranslation?.description || product.description || productTranslation?.excerpt || product.excerpt || t("pages.productMetadataDescription");
   const description = htmlToText(rawDescription || "");
-  const mainImage = product.main_image || "";
+  const siteUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || "https://businesslabels.nl").replace(/\/$/, "");
+  const rawMainImage = product.main_image || "";
+  const proxiedMainImage = toDisplayImageUrl(rawMainImage);
+  const ogImageUrl = proxiedMainImage
+    ? (proxiedMainImage.startsWith("http") ? proxiedMainImage : `${siteUrl}${proxiedMainImage}`)
+    : "";
   const productType = productRouteType(product, selectedType);
   const localeSlugs = getProductLocaleSlugs(product);
   const canonicalSlug = localeSlugs[locale] ?? product.slug ?? slug;
-  const siteUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || "https://businesslabels.nl").replace(/\/$/, "");
   const enSlug = localeSlugs.en ?? canonicalSlug;
   const nlSlug = localeSlugs.nl ?? canonicalSlug;
   const enPath = productPathForSlug(enSlug, null, "en");
@@ -82,14 +86,14 @@ export async function generateMetadata({
     openGraph: {
       title,
       description,
-      images: mainImage ? [mainImage] : [],
+      images: ogImageUrl ? [ogImageUrl] : [],
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: mainImage ? [mainImage] : [],
+      images: ogImageUrl ? [ogImageUrl] : [],
     },
     robots: {
       index: true,
@@ -1175,7 +1179,7 @@ export default async function SingleProductPage({
     "@context": "https://schema.org/",
     "@type": "Product",
     "name": productName,
-    "image": [mainImage, ...galleryImages].filter(Boolean),
+    "image": [mainImage, ...galleryImages].filter(Boolean).map((img) => img.startsWith("http") ? img : `${siteUrl}${img}`),
     "description": product?.meta_description || shortDescription || t("pages.productMetadataDescription"),
     "sku": product?.sku,
     "mpn": product?.sku || product?.article_number,

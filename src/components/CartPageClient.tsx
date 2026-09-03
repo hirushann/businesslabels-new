@@ -13,6 +13,7 @@ import { useShippingRules } from '@/hooks/useShippingRules';
 import { useDeliveryAvailability } from '@/hooks/useDeliveryAvailability';
 import CartTotals from '@/components/CartTotals';
 import { useIsBusinessCustomer } from '@/hooks/useIsBusinessCustomer';
+import { toDisplayImageUrl } from '@/lib/utils/imageProxy';
 
 function formatEuro(value: number): string {
   return new Intl.NumberFormat('nl-NL', {
@@ -226,14 +227,14 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                               {href ? (
                                 <Link href={href} className="w-full h-full block">
                                   <img
-                                    src={item.mainImage || '/image-placeholder.svg'}
+                                    src={toDisplayImageUrl(item.mainImage) || '/image-placeholder.svg'}
                                     alt={item.name}
                                     className="w-full h-full object-contain"
                                   />
                                 </Link>
                               ) : (
                                 <img
-                                  src={item.mainImage || '/image-placeholder.svg'}
+                                  src={toDisplayImageUrl(item.mainImage) || '/image-placeholder.svg'}
                                   alt={item.name}
                                   className="w-full h-full object-contain"
                                 />

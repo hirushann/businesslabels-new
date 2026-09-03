@@ -330,7 +330,7 @@ describe("proxy locale routing", () => {
 
     expect(response.status).toBe(301);
     expect(response.headers.get("location")).toBe(
-      "http://localhost/product-categorie/labelprinters/kleuren-labelprinters/midrange-kleurenprinters",
+      "http://localhost/product-categorie/labelprinters/kleuren-labelprinters-nl/midrange-labelprinters-nl",
     );
   });
 
@@ -348,11 +348,41 @@ describe("proxy locale routing", () => {
     expect(response.headers.get("location")).toBe("http://localhost/brand/epson");
   });
 
-  it("rewrites /wp-content/uploads/ internally to /api/media-proxy", () => {
-    const response = proxy(makeRequest("/wp-content/uploads/2023/06/Inkt-kosten-ColorWorks-LR.pdf"));
+  it("redirects legacy category archive paths to canonical routes", () => {
+    const response = proxy(makeRequest("/product-categorie/labelprinters/kleuren-labelprinters/midrange-kleurenprinters"));
+    expect(response.status).toBe(301);
+    expect(response.headers.get("location")).toBe("http://localhost/product-categorie/labelprinters/kleuren-labelprinters-nl/midrange-labelprinters-nl");
+
+    const enResponse = proxy(makeRequest("/en/product-category/labels/applications/shipping-labels"));
+    expect(enResponse.status).toBe(301);
+    expect(enResponse.headers.get("location")).toBe("http://localhost/en/product-category/shipping-labels");
+  });
+
+  it("redirects legacy /category/materialen paths to material catalog", () => {
+    const response = proxy(makeRequest("/category/materialen/inkjet-nl/labels-met-lijm-nl/ghs-inkjet-labels-nl"));
+    expect(response.status).toBe(301);
+    expect(response.headers.get("location")).toBe("http://localhost/material/inkjet");
+
+    const wineResponse = proxy(makeRequest("/category/materialen/inkjet-nl/wijnlabels"));
+    expect(wineResponse.status).toBe(301);
+    expect(wineResponse.headers.get("location")).toBe("http://localhost/material/inkjet");
+  });
+
+  it("redirects known legacy uploads directly to media proxy or canonical pages", () => {
+    const pdfResponse = proxy(makeRequest("/wp-content/uploads/2023/06/Inkt-kosten-ColorWorks-LR.pdf"));
+    expect(pdfResponse.status).toBe(301);
+    expect(pdfResponse.headers.get("location")).toBe("http://localhost/epson-colorworks-faq");
+
+    const imgResponse = proxy(makeRequest("/wp-content/uploads/2022/01/Epson_SJIC42P-C_Cyan_C13T52M240-150x121.png"));
+    expect(imgResponse.status).toBe(301);
+    expect(imgResponse.headers.get("location")).toContain("/api/media-proxy?url=");
+  });
+
+  it("rewrites unknown /wp-content/uploads/ internally to /api/media-proxy", () => {
+    const response = proxy(makeRequest("/wp-content/uploads/2024/01/some-new-image.png"));
 
     expect(response.status).not.toBeGreaterThanOrEqual(300);
     expect(response.headers.get("x-middleware-rewrite")).toContain("/api/media-proxy?url=");
-    expect(response.headers.get("x-middleware-rewrite")).toContain("Inkt-kosten-ColorWorks-LR.pdf");
+    expect(response.headers.get("x-middleware-rewrite")).toContain("some-new-image.png");
   });
 });

@@ -8,6 +8,7 @@ import DrawerProductCard from '@/components/DrawerProductCard';
 import { useWishlist } from '@/components/WishlistProvider';
 import { useCart } from '@/components/CartProvider';
 import { useLocalePath } from '@/hooks/useLocalePath';
+import { toDisplayImageUrl } from '@/lib/utils/imageProxy';
 
 type WishlistDrawerProps = {
   onClose: () => void;
@@ -194,7 +195,7 @@ export default function WishlistDrawer({ onClose }: WishlistDrawerProps) {
           ) : (
             <div className="flex flex-col gap-4">
               {mergedItems.map((item) => {
-                const imageSrc = item.mainImage?.trim() || '/image-placeholder.svg';
+                const imageSrc = toDisplayImageUrl(item.mainImage) || '/image-placeholder.svg';
                 const hasPrice = typeof item.price === 'number' && Number.isFinite(item.price);
                 const href = item.slug ? `/product/${item.slug}` : undefined;
 

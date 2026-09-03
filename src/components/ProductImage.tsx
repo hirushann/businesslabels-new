@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
+import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 
 type ProductImageProps = {
   productName: string;
@@ -20,7 +21,9 @@ type ResponsiveImageProps = {
 
 function normalizeImages(mainImage: string, galleryImages: string[]): string[] {
   const seen = new Set<string>();
-  const orderedImages = [mainImage, ...galleryImages].filter((image): image is string => Boolean(image?.trim()));
+  const orderedImages = [mainImage, ...galleryImages]
+    .map((img) => toDisplayImageUrl(img) || img)
+    .filter((image): image is string => Boolean(image?.trim()));
 
   return orderedImages.filter((image) => {
     const normalized = image.trim();
