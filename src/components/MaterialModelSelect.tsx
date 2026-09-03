@@ -12,6 +12,7 @@ import {
   PopoverContent,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 import type { Material } from "@/lib/search/materials";
 
 export function materialLabel(material: Material) {
@@ -208,7 +209,7 @@ export default function MaterialModelSelect({
                 {material.main_image ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={material.main_image}
+                    src={toDisplayImageUrl(material.main_image) || material.main_image}
                     alt=""
                     className="size-10 shrink-0 rounded-md border border-border object-contain"
                   />

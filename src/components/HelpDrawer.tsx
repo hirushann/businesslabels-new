@@ -6,6 +6,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { toast } from 'sonner';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import LocaleLink from './LocaleLink';
+import { toDisplayImageUrl } from '@/lib/utils/imageProxy';
 
 interface HelpDrawerProps {
   onClose: () => void;
@@ -534,7 +535,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
               {displayMembers.map((member) => (
                 <div key={member.id} className="group relative flex justify-center z-0 hover:z-30 transition-all duration-200">
                   <img
-                    src={member.profile_pic_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=f59e0b&color=fff`}
+                    src={toDisplayImageUrl(member.profile_pic_url) || member.profile_pic_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=f59e0b&color=fff`}
                     alt={member.name}
                     width={64}
                     height={64}

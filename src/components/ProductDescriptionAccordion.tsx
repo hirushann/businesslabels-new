@@ -1,5 +1,5 @@
 import Accordion from "@/components/Accordion";
-import { htmlToText } from "@/lib/utils";
+import { htmlToText, sanitizeCmsHtml } from "@/lib/utils";
 
 export function hasProductDescription(description?: string | null): boolean {
   if (!description) return false;
@@ -21,7 +21,7 @@ export default function ProductDescriptionAccordion({
     <Accordion title={title}>
       <div
         className="text-neutral-700 text-base font-normal leading-6 cms-content [&_a]:text-brand [&_a]:underline hover:[&_a]:text-[var(--brand-hover)] [&_a]:transition-colors"
-        dangerouslySetInnerHTML={{ __html: description! }}
+        dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(description) }}
       />
     </Accordion>
   );

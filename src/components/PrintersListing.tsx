@@ -343,13 +343,7 @@ function PrintersListingContent({ printers }: { printers: PrinterCardData[] }) {
                       <ProductCard
                         key={String(product.id)}
                         product={product}
-                        href={
-                          product.slug && product.type
-                            ? { pathname: `/product/${product.slug}`, query: { type: product.type } }
-                            : product.slug
-                              ? `/product/${product.slug}`
-                              : undefined
-                        }
+                        href={product.slug ? `/product/${product.slug}` : undefined}
                       />
                     ))}
               </div>

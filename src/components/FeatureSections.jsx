@@ -79,6 +79,7 @@ export default function FeatureSections() {
               </div>
               <Link
                 href={localePath(section.href)}
+                rel={section.href.includes('/my-account') ? 'nofollow' : undefined}
                 className="px-7 py-4 bg-brand rounded-full inline-flex items-center gap-2.5 text-white text-base sm:text-lg font-normal leading-6 hover:bg-brand-hover transition-colors self-start"
               >
                 {t(`features.${section.key}Cta`)}

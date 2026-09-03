@@ -12,6 +12,7 @@ import {
   PopoverContent,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 
 export type PrinterSearchResult = {
   id: number;
@@ -217,7 +218,7 @@ export default function PrinterModelSelect({
                 {printer.image ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={printer.image}
+                    src={toDisplayImageUrl(printer.image) || printer.image}
                     alt=""
                     className="size-10 shrink-0 rounded-md border border-border object-contain"
                   />

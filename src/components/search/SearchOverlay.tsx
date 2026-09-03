@@ -320,15 +320,7 @@ function mapOverlayResult(result: unknown, resultIndex: number, locale: string):
     is_group_product: valueAsBoolean(getRaw(result, 'is_group_product')) || valueAsBoolean(getMetaValue(result, 'is_group_product')) || null,
     translations: getRaw(result, 'translations') as ProductCardData['translations'],
   };
-  const href =
-    slug && normalizedType
-      ? {
-          pathname: `/product/${slug}`,
-          query: { type: normalizedType },
-        }
-      : slug
-        ? `/product/${slug}`
-        : undefined;
+  const href = slug ? `/product/${slug}` : undefined;
 
   return { id, product, href };
 }

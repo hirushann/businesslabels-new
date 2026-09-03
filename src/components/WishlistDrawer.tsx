@@ -196,11 +196,7 @@ export default function WishlistDrawer({ onClose }: WishlistDrawerProps) {
               {mergedItems.map((item) => {
                 const imageSrc = item.mainImage?.trim() || '/image-placeholder.svg';
                 const hasPrice = typeof item.price === 'number' && Number.isFinite(item.price);
-                const href = item.slug
-                  ? item.type
-                    ? { pathname: `/product/${item.slug}`, query: { type: item.type } }
-                    : { pathname: `/product/${item.slug}` }
-                  : undefined;
+                const href = item.slug ? `/product/${item.slug}` : undefined;
 
                 return (
                   <DrawerProductCard
@@ -246,6 +242,7 @@ export default function WishlistDrawer({ onClose }: WishlistDrawerProps) {
           <Link
             href={lp('/my-account?tab=favourites')}
             onClick={onClose}
+            rel="nofollow"
             className="w-full h-11 bg-brand text-white rounded-full font-black text-sm hover:shadow-lg shadow-brand/20 transition-all flex items-center justify-center gap-2"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -256,6 +253,7 @@ export default function WishlistDrawer({ onClose }: WishlistDrawerProps) {
           <Link
             href={lp('/my-account?tab=printers')}
             onClick={onClose}
+            rel="nofollow"
             className="w-full h-11 bg-white border border-slate-200 text-neutral-700 hover:bg-slate-50 rounded-full font-bold text-sm transition-all flex items-center justify-center gap-2"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

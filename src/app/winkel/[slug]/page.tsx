@@ -25,7 +25,7 @@ import { categoryNameFallback } from "@/lib/categories/tree";
 import { localizeProductSpecValue } from "@/lib/products/specValues";
 import { mapLaravelProductToCardData, type LaravelProduct } from "@/lib/mappings/product";
 import ProductDescriptionAccordion from "@/components/ProductDescriptionAccordion";
-import { htmlToText } from "@/lib/utils";
+import { htmlToText, sanitizeCmsHtml } from "@/lib/utils";
 
 export async function generateMetadata({
   params,
@@ -961,13 +961,6 @@ function productHref(product: ProductCardData): { pathname: string; query?: { ty
     return null;
   }
 
-  if (product.type === "simple" || product.type === "variable") {
-    return {
-      pathname: `/product/${product.slug}`,
-      query: { type: product.type },
-    };
-  }
-
   return { pathname: `/product/${product.slug}` };
 }
 
@@ -1239,7 +1232,7 @@ export default async function SingleProductPage({
                 </h1>
               ) : null}
               {shortDescription ? (
-                <div className="text-neutral-700 text-lg font-normal leading-7 [&_a]:text-brand [&_a]:underline hover:[&_a]:text-[var(--brand-hover)] [&_a]:transition-colors" dangerouslySetInnerHTML={{ __html: shortDescription }}>
+                <div className="text-neutral-700 text-lg font-normal leading-7 [&_a]:text-brand [&_a]:underline hover:[&_a]:text-[var(--brand-hover)] [&_a]:transition-colors" dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(shortDescription) }}>
                 </div>
               ) : null}
             </div>

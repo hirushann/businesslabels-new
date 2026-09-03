@@ -80,11 +80,7 @@ export default async function PopularProducts() {
             products.map((product) => {
               const cardProduct = mapLaravelProductToCardData(product, locale);
 
-              const href = cardProduct.slug
-                ? (cardProduct.type === "simple" || cardProduct.type === "variable")
-                  ? { pathname: `/product/${cardProduct.slug}`, query: { type: cardProduct.type } }
-                  : { pathname: `/product/${cardProduct.slug}` }
-                : undefined;
+              const href = cardProduct.slug ? `/product/${cardProduct.slug}` : undefined;
 
               return <ProductCard key={cardProduct.sku} product={cardProduct} href={href} />;
             })

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
@@ -159,6 +160,15 @@ export default async function BlogsPage({
   const locale = await getServerLocale();
   const searchParamsResolved = await searchParams;
   const search = searchParamsResolved.search;
+
+  if (searchParamsResolved.category === "all") {
+    const nextParams = new URLSearchParams();
+    if (search) nextParams.set("search", search);
+    const qs = nextParams.toString();
+    const destination = localePath(`/blog${qs ? `?${qs}` : ""}`, locale);
+    permanentRedirect(destination);
+  }
+
   const activeCategory = searchParamsResolved.category || "all";
   
   const allPosts = await getPosts(search, locale);
@@ -204,7 +214,7 @@ export default async function BlogsPage({
             <div className="w-full flex flex-col justify-end items-start">
               <div className="w-full flex overflow-x-auto no-scrollbar items-start">
                 <Link
-                  href={localePath("/blog?category=all", locale)}
+                  href={localePath("/blog", locale)}
                   className={`px-2.5 flex justify-center items-center gap-2.5 relative transition-colors ${activeCategory === "all" ? "text-brand font-bold" : "text-neutral-700 font-semibold hover:text-brand"}`}
                 >
                   <span className="text-base leading-5 whitespace-nowrap p-3">{t("blogsPage.categoryAll")}</span>

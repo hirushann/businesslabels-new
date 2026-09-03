@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { unescapeHtml, htmlToText } from "@/lib/utils";
+import { unescapeHtml, htmlToText, sanitizeCmsHtml } from "@/lib/utils";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 import { localePath } from "@/lib/i18n/utils";
@@ -356,7 +356,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
               <div className="flex-1 flex flex-col justify-start items-start gap-8 min-w-0 w-full">
                 <div 
                   className="cms-content w-full prose prose-neutral max-w-none prose-headings:font-bold prose-headings:text-neutral-800 prose-p:text-neutral-700 prose-p:text-lg prose-p:leading-8 prose-a:text-brand hover:prose-a:text-[var(--brand-hover)] prose-a:underline prose-img:rounded-xl"
-                  dangerouslySetInnerHTML={{ __html: localizedContent }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(localizedContent) }}
                 />
                 
                 {/* About Author */}

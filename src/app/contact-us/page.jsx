@@ -1,6 +1,7 @@
 import { getTranslations, getLocale } from "next-intl/server";
 import Link from "next/link";
 import { localePath } from "@/lib/i18n/utils";
+import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 import ReviewsSection from "@/components/ReviewsSection";
 import AvailabilityStatus from "./AvailabilityStatus";
 import ContactForm from "./ContactForm";
@@ -204,7 +205,7 @@ export default async function ContactPage() {
                      >
                         <img
                            className="size-28 relative rounded-[230px] object-cover"
-                           src={member.profile_pic_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=f59e0b&color=fff`}
+                           src={toDisplayImageUrl(member.profile_pic_url) || member.profile_pic_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=f59e0b&color=fff`}
                            alt={member.name}
                         />
                         <div className="self-stretch flex flex-col justify-center items-center gap-5">

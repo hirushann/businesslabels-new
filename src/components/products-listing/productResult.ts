@@ -336,12 +336,7 @@ export function mapProductListingResult(
     translations: getRaw(result, "translations") as ProductCardData["translations"],
   };
 
-  const href =
-    slug && normalizedType
-      ? { pathname: `/product/${slug}`, query: { type: normalizedType } }
-      : slug
-        ? `/product/${slug}`
-        : undefined;
+  const href = slug ? `/product/${slug}` : undefined;
 
   return { id, product, href };
 }

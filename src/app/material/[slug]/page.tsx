@@ -662,7 +662,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
               </SidebarCard>
 
               <SidebarCard title={t("materialDetail.customSizeTitle")} description={t("materialDetail.customSizeDesc")}>
-                <Link href={localePath(`/maatwerk?materialId=${material.code}`, locale)} className="flex h-12 items-center justify-center rounded-full border border-brand bg-white px-4 text-base font-bold leading-6 text-brand transition-colors hover:bg-brand/20">
+                <Link href={localePath(`/maatwerk?materialId=${material.code}`, locale)} rel="nofollow" className="flex h-12 items-center justify-center rounded-full border border-brand bg-white px-4 text-base font-bold leading-6 text-brand transition-colors hover:bg-brand/20">
                   {t("materialDetail.requestCustomMade")}
                 </Link>
                 <div className="h-px w-full bg-line" />

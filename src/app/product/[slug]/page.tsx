@@ -25,7 +25,7 @@ import { categoryNameFallback } from "@/lib/categories/tree";
 import { localizeProductSpecValue } from "@/lib/products/specValues";
 import { mapLaravelProductToCardData, type LaravelProduct } from "@/lib/mappings/product";
 import ProductDescriptionAccordion from "@/components/ProductDescriptionAccordion";
-import { htmlToText } from "@/lib/utils";
+import { htmlToText, sanitizeCmsHtml } from "@/lib/utils";
 
 export async function generateMetadata({
   params,
@@ -810,11 +810,8 @@ function applyProductTranslation(product: ProductDetail, locale: "en" | "nl"): P
   return out;
 }
 
-function productPathForSlug(slug: string, selectedType: "simple" | "variable" | "group_product" | null, locale: "en" | "nl"): string {
-  const params = new URLSearchParams();
-  if (selectedType) params.set("type", selectedType);
-  const qs = params.toString();
-  return localePath(`/product/${encodeURIComponent(slug)}${qs ? `?${qs}` : ""}`, locale);
+function productPathForSlug(slug: string, _selectedType: "simple" | "variable" | "group_product" | null, locale: "en" | "nl"): string {
+  return localePath(`/product/${encodeURIComponent(slug)}`, locale);
 }
 
 function productRouteType(
@@ -987,16 +984,9 @@ function mapUpsellToProductCard(upsell: UpsellProduct, locale: "en" | "nl"): Pro
   };
 }
 
-function productHref(product: ProductCardData): { pathname: string; query?: { type: ProductRouteType } } | null {
+function productHref(product: ProductCardData): { pathname: string } | null {
   if (!product.slug) {
     return null;
-  }
-
-  if (product.type === "simple" || product.type === "variable") {
-    return {
-      pathname: `/product/${product.slug}`,
-      query: { type: product.type },
-    };
   }
 
   return { pathname: `/product/${product.slug}` };
@@ -1126,8 +1116,8 @@ export default async function SingleProductPage({
     notFound();
   }
 
-  const canonicalSlug = product.locale_slugs?.[locale] ?? product.slug;
-  if (canonicalSlug && decodeURIComponent(slug) !== canonicalSlug) {
+  const canonicalSlug = product.locale_slugs?.[locale] ?? product.slug ?? slug;
+  if ((canonicalSlug && decodeURIComponent(slug) !== canonicalSlug) || query.type) {
     permanentRedirect(productPathForSlug(canonicalSlug, null, locale));
   }
 
@@ -1270,7 +1260,7 @@ export default async function SingleProductPage({
                 </h1>
               ) : null}
               {shortDescription ? (
-                <div className="text-neutral-700 text-lg font-normal leading-7 [&_a]:text-brand [&_a]:underline hover:[&_a]:text-[var(--brand-hover)] [&_a]:transition-colors" dangerouslySetInnerHTML={{ __html: shortDescription }}>
+                <div className="text-neutral-700 text-lg font-normal leading-7 [&_a]:text-brand [&_a]:underline hover:[&_a]:text-[var(--brand-hover)] [&_a]:transition-colors" dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(shortDescription) }}>
                 </div>
               ) : null}
             </div>

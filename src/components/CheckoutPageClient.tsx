@@ -3077,6 +3077,7 @@ export default function CheckoutPageClient({
           <div className="flex flex-col gap-4 w-full pt-4">
             <Link 
               href={localePath("/my-account", locale)}
+              rel="nofollow"
               className="h-12 w-full rounded-full bg-brand px-6 text-base font-bold text-white transition-colors hover:bg-brand-hover flex items-center justify-center"
             >
               {t('checkout.viewMyOrders')}

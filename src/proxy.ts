@@ -5,6 +5,37 @@ import { CHECKOUT_RETURN_LOCALE_COOKIE, DEFAULT_LOCALE, LOCALE_COOKIE, LOCALE_CO
 const EN_PREFIX = '/en';
 const COOKIE_OPTIONS = { path: '/', sameSite: 'lax' as const, maxAge: LOCALE_COOKIE_MAX_AGE };
 
+const LEGACY_PRODUCT_CAT_MAP: Record<string, { path: string; locale: 'nl' | 'en' }> = {
+  'printer-nl/kleuren-labelprinters-nl/midrange-labelprinters-nl': {
+    path: '/product-categorie/labelprinters/kleuren-labelprinters/midrange-kleurenprinters',
+    locale: 'nl',
+  },
+  'printer-nl/kleuren-labelprinters-nl/industriele-labelprinters-nl': {
+    path: '/product-categorie/labelprinters/kleuren-labelprinters/industriele-labelprinters',
+    locale: 'nl',
+  },
+  'labels-en-tickets/toepassingen/verzendetiketten': {
+    path: '/product-categorie/etiketten/toepassing/verzendetiketten',
+    locale: 'nl',
+  },
+  'printer/color-labelprinters/midrange-labelprinters': {
+    path: '/en/product-category/label-printers/color-label-printers/mid-range-color-printers',
+    locale: 'en',
+  },
+  'ink-cartridges-epson-cw-c8000': {
+    path: '/product-categorie/labelprinters/inktcartridges/epson-cw-c8000-inktcartridges',
+    locale: 'nl',
+  },
+  'shipping-label-starter-kits': {
+    path: '/product-categorie/etiketten/toepassing/verzendetiketten',
+    locale: 'nl',
+  },
+  'labels-and-tickets/applications/shipping-labels': {
+    path: '/en/product-category/labels/applications/shipping-labels',
+    locale: 'en',
+  },
+};
+
 function requestHeadersWithLocale(request: NextRequest, locale: 'en' | 'nl') {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set(LOCALE_HEADER, locale);
@@ -32,10 +63,68 @@ function persistLocale(response: NextResponse, locale: 'en' | 'nl') {
  */
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
+
+  // Normalize consecutive slashes (e.g. //product/... -> /product/...)
+  if (pathname.includes('//')) {
+    const clean = pathname.replace(/\/+/g, '/');
+    const redirectUrl = new URL(clean + search, request.url);
+    return NextResponse.redirect(redirectUrl, 301);
+  }
+
   const hasEnglishPrefix = pathname.startsWith(EN_PREFIX + '/') || pathname === EN_PREFIX;
   const hasDutchArchivePrefix =
     pathname.startsWith('/product-categorie/') || pathname === '/product-categorie';
   const locale = hasEnglishPrefix ? 'en' : hasDutchArchivePrefix ? 'nl' : DEFAULT_LOCALE;
+
+  // Handle legacy WordPress ?product_cat= query param
+  if (request.nextUrl.searchParams.has('product_cat')) {
+    const rawCat = request.nextUrl.searchParams.get('product_cat') || '';
+    const cleanCat = rawCat.replace(/^\/+|\/+$/g, '').toLowerCase();
+    const mapped = LEGACY_PRODUCT_CAT_MAP[cleanCat] || LEGACY_PRODUCT_CAT_MAP[rawCat];
+    if (mapped) {
+      const redirectUrl = new URL(mapped.path, request.url);
+      return persistLocale(NextResponse.redirect(redirectUrl, 301), mapped.locale);
+    }
+    const defaultTarget = hasEnglishPrefix || locale === 'en'
+      ? `/en/product-category/${cleanCat}`
+      : `/product-categorie/${cleanCat}`;
+    const redirectUrl = new URL(defaultTarget, request.url);
+    return persistLocale(NextResponse.redirect(redirectUrl, 301), locale);
+  }
+
+  // Handle legacy WordPress plain permalinks (?post_type=product or /?p=...)
+  if (
+    request.nextUrl.searchParams.has('post_type') ||
+    ((pathname === '/' || pathname === '/en') && request.nextUrl.searchParams.has('p'))
+  ) {
+    const postType = request.nextUrl.searchParams.get('post_type');
+    if (postType === 'product' || request.nextUrl.searchParams.has('p')) {
+      const target = hasEnglishPrefix ? `${EN_PREFIX}/product` : '/product';
+      const redirectUrl = new URL(target, request.url);
+      return persistLocale(NextResponse.redirect(redirectUrl, 301), locale);
+    }
+  }
+
+  // Handle redundant / legacy ?lang= query param
+  if (request.nextUrl.searchParams.has('lang')) {
+    const langParam = request.nextUrl.searchParams.get('lang');
+    const nextSearch = new URLSearchParams(request.nextUrl.searchParams);
+    nextSearch.delete('lang');
+    const qs = nextSearch.toString();
+    const searchSuffix = qs ? `?${qs}` : '';
+
+    if (langParam === 'en' && !hasEnglishPrefix) {
+      const redirectUrl = new URL(`${EN_PREFIX}${pathname}${searchSuffix}`, request.url);
+      return persistLocale(NextResponse.redirect(redirectUrl, 301), 'en');
+    } else if (langParam === 'nl' && hasEnglishPrefix) {
+      const targetPath = (pathname.slice(EN_PREFIX.length) || '/');
+      const redirectUrl = new URL(`${targetPath}${searchSuffix}`, request.url);
+      return persistLocale(NextResponse.redirect(redirectUrl, 301), 'nl');
+    } else {
+      const redirectUrl = new URL(`${pathname}${searchSuffix}`, request.url);
+      return persistLocale(NextResponse.redirect(redirectUrl, 301), locale);
+    }
+  }
   let cleanPathname = hasEnglishPrefix ? (pathname.slice(EN_PREFIX.length) || '/') : pathname;
   if (cleanPathname === '/software-2') {
     cleanPathname = '/software';
@@ -161,10 +250,21 @@ export function proxy(request: NextRequest) {
 
   if (cleanPathname.startsWith('/brand/')) {
     const rawBrandSlug = cleanPathname.slice('/brand/'.length).replace(/\/$/, '').toLowerCase();
-    const canonicalBrandSlug = BRAND_CANONICAL_SLUGS[rawBrandSlug];
-    if (canonicalBrandSlug && canonicalBrandSlug !== rawBrandSlug) {
+    const canonicalBrandSlug = BRAND_CANONICAL_SLUGS[rawBrandSlug] || rawBrandSlug;
+    const hasLegacyParams =
+      request.nextUrl.searchParams.has('really_curr_tax') ||
+      request.nextUrl.searchParams.has('bbnl') ||
+      request.nextUrl.searchParams.has('paged');
+
+    if (canonicalBrandSlug !== rawBrandSlug || hasLegacyParams) {
+      const nextSearch = new URLSearchParams(request.nextUrl.searchParams);
+      nextSearch.delete('really_curr_tax');
+      nextSearch.delete('bbnl');
+      nextSearch.delete('paged');
+      const qs = nextSearch.toString();
+      const searchSuffix = qs ? `?${qs}` : '';
       const redirectUrl = new URL(
-        hasEnglishPrefix ? `${EN_PREFIX}/brand/${canonicalBrandSlug}${search}` : `/brand/${canonicalBrandSlug}${search}`,
+        hasEnglishPrefix ? `${EN_PREFIX}/brand/${canonicalBrandSlug}${searchSuffix}` : `/brand/${canonicalBrandSlug}${searchSuffix}`,
         request.url
       );
       return persistLocale(NextResponse.redirect(redirectUrl, 301), locale);
@@ -215,8 +315,9 @@ export function proxy(request: NextRequest) {
 
   if (cleanPathname.startsWith('/wp-content/uploads/')) {
     const backendBase = process.env.BBNL_API_BASE_URL || 'https://bbnl.dayzsolutions.com';
-    const redirectUrl = new URL(cleanPathname + search, backendBase);
-    return persistLocale(NextResponse.redirect(redirectUrl, 301), locale);
+    const targetUrl = new URL(cleanPathname + search, backendBase);
+    const rewriteUrl = new URL(`/api/media-proxy?url=${encodeURIComponent(targetUrl.toString())}`, request.url);
+    return NextResponse.rewrite(rewriteUrl);
   }
 
   // ── Locale routing ──────────────────────────────────────────────────────────

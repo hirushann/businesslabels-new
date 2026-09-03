@@ -309,10 +309,50 @@ describe("proxy locale routing", () => {
     expect(response.headers.get("location")).toBe("http://localhost/material");
   });
 
-  it("redirects /wp-content/uploads/ to backend media URL", () => {
-    const response = proxy(makeRequest("/wp-content/uploads/2023/06/Inkt-kosten-ColorWorks-LR.pdf"));
+  it("redirects double slashes to normalized single slash", () => {
+    const response = proxy(makeRequest("//product/colorworks-cw-c6500ae-bk"));
 
     expect(response.status).toBe(301);
-    expect(response.headers.get("location")).toContain("/wp-content/uploads/2023/06/Inkt-kosten-ColorWorks-LR.pdf");
+    expect(response.headers.get("location")).toBe("http://localhost/product/colorworks-cw-c6500ae-bk");
+  });
+
+  it("strips redundant ?lang=en from /en URLs", () => {
+    const response = proxy(makeRequest("/en/product/zx1200i?lang=en"));
+
+    expect(response.status).toBe(301);
+    expect(response.headers.get("location")).toBe("http://localhost/en/product/zx1200i");
+  });
+
+  it("redirects legacy product_cat parameters to modern category archives", () => {
+    const response = proxy(
+      makeRequest("/?product_cat=printer-nl/kleuren-labelprinters-nl/midrange-labelprinters-nl&lang=nl"),
+    );
+
+    expect(response.status).toBe(301);
+    expect(response.headers.get("location")).toBe(
+      "http://localhost/product-categorie/labelprinters/kleuren-labelprinters/midrange-kleurenprinters",
+    );
+  });
+
+  it("redirects legacy post_type=product plain permalinks to /product", () => {
+    const response = proxy(makeRequest("/en?post_type=product&p=52555"));
+
+    expect(response.status).toBe(301);
+    expect(response.headers.get("location")).toBe("http://localhost/en/product");
+  });
+
+  it("strips legacy filter query parameters from brand archive URLs", () => {
+    const response = proxy(makeRequest("/brand/epson?bbnl=1&paged=1&really_curr_tax=5005-brand"));
+
+    expect(response.status).toBe(301);
+    expect(response.headers.get("location")).toBe("http://localhost/brand/epson");
+  });
+
+  it("rewrites /wp-content/uploads/ internally to /api/media-proxy", () => {
+    const response = proxy(makeRequest("/wp-content/uploads/2023/06/Inkt-kosten-ColorWorks-LR.pdf"));
+
+    expect(response.status).not.toBeGreaterThanOrEqual(300);
+    expect(response.headers.get("x-middleware-rewrite")).toContain("/api/media-proxy?url=");
+    expect(response.headers.get("x-middleware-rewrite")).toContain("Inkt-kosten-ColorWorks-LR.pdf");
   });
 });

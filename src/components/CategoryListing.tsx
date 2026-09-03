@@ -301,9 +301,7 @@ function CategoryListingContent({ products }: { products: CategoryCardData[] }) 
                           const isPrinter = product.categories?.some(c => c.slug === "labelprinters" || categoryNameText(c.name).toLowerCase().includes("printer"));
                           const prefix = isPrinter ? "printers" : "product";
                           
-                          return product.type
-                            ? { pathname: `/${prefix}/${product.slug}`, query: { type: product.type } }
-                            : `/${prefix}/${product.slug}`;
+                          return `/${prefix}/${product.slug}`;
                         })()}
                       />
                     ))}

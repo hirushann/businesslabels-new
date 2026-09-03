@@ -83,11 +83,7 @@ export default function RecommendedProductsSlider({
         {products.map((product) => {
           const cardProduct = mapLaravelProductToCardData(product, locale as "en" | "nl");
 
-          const href = cardProduct.slug
-            ? (cardProduct.type === "simple" || cardProduct.type === "variable")
-              ? { pathname: `/product/${cardProduct.slug}`, query: { type: cardProduct.type } }
-              : { pathname: `/product/${cardProduct.slug}` }
-            : undefined;
+          const href = cardProduct.slug ? `/product/${cardProduct.slug}` : undefined;
 
           return (
             <CarouselItem key={cardProduct.sku} className="pl-6 basis-full sm:basis-1/2 md:basis-1/3">

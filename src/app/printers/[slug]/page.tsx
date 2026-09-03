@@ -16,7 +16,7 @@ import {
   getPrinterLocaleSlugs,
   getPrinterTranslation,
 } from "@/lib/routes/printers";
-import { htmlToText } from "@/lib/utils";
+import { htmlToText, sanitizeCmsHtml } from "@/lib/utils";
 
 type PrinterResponse = {
   data: Printer;
@@ -332,7 +332,7 @@ function PrinterSummary({
               </div> */}
               <div
                 className="mt-2 text-base font-normal leading-relaxed text-neutral-700 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_a]:text-brand [&_a]:underline hover:[&_a]:text-[var(--brand-hover)] [&_a]:transition-colors"
-                dangerouslySetInnerHTML={{ __html: printer.content }}
+                dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(printer.content) }}
               />
             </div>
           ) : printer.excerpt ? (
@@ -342,7 +342,7 @@ function PrinterSummary({
               </div>
               <div
                 className="mt-2 text-base font-normal leading-relaxed text-neutral-700 [&_p]:mb-2 [&_a]:text-brand [&_a]:underline hover:[&_a]:text-[var(--brand-hover)] [&_a]:transition-colors"
-                dangerouslySetInnerHTML={{ __html: printer.excerpt }}
+                dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(printer.excerpt) }}
               />
             </div>
           ) : null}
@@ -430,7 +430,7 @@ export default async function PrinterFinderDetailPage({
   const { en: enSlug, nl: nlSlug } = getPrinterLocaleSlugs(apiPrinter, slug);
   const expectedSlug = (locale === "en" ? enSlug : nlSlug) || apiPrinter.slug || slug;
   const canonicalSlug = expectedSlug.toLowerCase();
-  if (decodeURIComponent(slug).toLowerCase() !== canonicalSlug) {
+  if (decodeURIComponent(slug) !== canonicalSlug) {
     const routeQuery = toUrlSearchParams(await searchParams);
     const queryString = routeQuery.toString();
     const destination = locale === "en" ? `/en/printers/${canonicalSlug}` : `/printers/${canonicalSlug}`;

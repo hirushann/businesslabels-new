@@ -108,11 +108,7 @@ export default function CartProductSlider({ products }: CartProductSliderProps) 
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {products.map((product) => {
-            const href = product.slug
-              ? (product.type === 'simple' || product.type === 'variable')
-                ? { pathname: `/product/${product.slug}`, query: { type: product.type } }
-                : { pathname: `/product/${product.slug}` }
-              : undefined;
+            const href = product.slug ? `/product/${product.slug}` : undefined;
 
             return (
               <div key={product.sku} className="shrink-0 w-[calc(100%-24px)] sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] snap-start flex">

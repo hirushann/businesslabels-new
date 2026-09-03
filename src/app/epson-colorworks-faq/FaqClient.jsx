@@ -6,6 +6,8 @@ import { Home } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import CTABanner from '@/components/CTABanner';
 import { useLocalePath } from '@/hooks/useLocalePath';
+import { toDisplayImageUrl } from '@/lib/utils/imageProxy';
+import { sanitizeCmsHtml } from '@/lib/utils';
 
 // Simple SVG Icons for Accordion state
 const ChevronIcon = ({ open }) => (
@@ -45,7 +47,7 @@ const FaqItem = ({ question, answer, defaultOpen = false }) => {
         className="w-full overflow-hidden transition-all duration-300 ease-in-out"
         style={{ maxHeight: open ? '1000px' : '0px', opacity: open ? 1 : 0, marginTop: open ? '16px' : '0px' }}
       >
-        <div className="text-neutral-700 text-base font-normal leading-6 cms-content prose prose-slate max-w-none prose-headings:font-bold prose-headings:text-slate-900 prose-p:text-base prose-p:leading-relaxed prose-p:text-slate-600 prose-a:font-semibold prose-a:text-brand prose-a:no-underline hover:prose-a:underline prose-strong:text-slate-900 prose-ul:my-3 prose-li:my-1 prose-li:text-slate-600 prose-li:marker:text-brand" dangerouslySetInnerHTML={{ __html: answer || "More information about this topic will be provided soon." }} />
+        <div className="text-neutral-700 text-base font-normal leading-6 cms-content prose prose-slate max-w-none prose-headings:font-bold prose-headings:text-slate-900 prose-p:text-base prose-p:leading-relaxed prose-p:text-slate-600 prose-a:font-semibold prose-a:text-brand prose-a:no-underline hover:prose-a:underline prose-strong:text-slate-900 prose-ul:my-3 prose-li:my-1 prose-li:text-slate-600 prose-li:marker:text-brand" dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(answer || "More information about this topic will be provided soon.") }} />
       </div>
     </div>
   );
@@ -139,7 +141,7 @@ export default function FaqClient({ pagesList, initialPageData, locale }) {
                 {activeContent?.intro ? (
                   <div 
                     className="text-neutral-700 text-base md:text-lg font-normal leading-6 cms-content" 
-                    dangerouslySetInnerHTML={{ __html: activeContent.intro }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(activeContent.intro) }}
                   />
                 ) : (
                   <p className="text-neutral-700 text-base md:text-lg font-normal leading-6">
@@ -159,7 +161,7 @@ export default function FaqClient({ pagesList, initialPageData, locale }) {
             </div>
             <div className="w-full lg:flex-1 relative rounded-xl overflow-hidden h-64 lg:h-auto min-h-[240px] lg:min-h-[390px] bg-slate-100 flex items-center justify-center">
               <img 
-                src={activePageData?.hero_image_preview || activePageData?.hero_image || "/Printer_printing_product_labels.jpeg"} 
+                src={toDisplayImageUrl(activePageData?.hero_image_preview || activePageData?.hero_image) || activePageData?.hero_image_preview || activePageData?.hero_image || "/Printer_printing_product_labels.jpeg"} 
                 alt="FAQ Hero" 
                 className="w-full h-full object-cover"
               />
