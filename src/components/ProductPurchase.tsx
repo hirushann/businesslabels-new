@@ -774,7 +774,8 @@ export default function ProductPurchase({
         <div className="flex flex-col gap-3">
           <div className="flex justify-between items-center">
             <span className="text-link text-base font-bold leading-5">{t("product.articleNumber", { number: displayArticleNumber })}</span>
-            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${stockBadgeClass} ${stockBadgeTextClass}`}>
+            {/* Stock Badge — hidden per UI requirement */}
+            {/* <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${stockBadgeClass} ${stockBadgeTextClass}`}>
               {resolvedInStock || isBackorder ? (
                 <svg className="w-3 h-3" fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12">
                   <g clipPath="url(#clip0_1768_8264)">
@@ -794,7 +795,7 @@ export default function ProductPurchase({
                 </svg>
               )}
               <span className="text-xs font-normal leading-none">{stockText}</span>
-            </div>
+            </div> */}
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-neutral-800 text-4xl font-semibold leading-[48px]">
@@ -1227,8 +1228,8 @@ export default function ProductPurchase({
           </Popover>
         </div>
 
-        {/* Delivery Estimate */}
-        {deliveryInfo && (
+        {/* Delivery Estimate — hidden per UI requirement */}
+        {false && deliveryInfo && (
           <div className="p-3 bg-green-600/10 rounded-[10px] outline outline-1 outline-offset-[-1px] outline-green-600/20">
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-2">
@@ -1240,10 +1241,10 @@ export default function ProductPurchase({
               <p className="text-xs text-neutral-700 leading-5">
                 {t("product.orderWithinPrefix")}
                 <span className="text-green-600 font-semibold">
-                  {deliveryInfo.countdown.hours} {t("product.hours")} {deliveryInfo.countdown.formattedMinutes} {t("product.minutes")}
+                  {deliveryInfo!.countdown.hours} {t("product.hours")} {deliveryInfo!.countdown.formattedMinutes} {t("product.minutes")}
                 </span>
                 {t("product.forDelivery")}
-                <span className="text-green-600 font-semibold">{deliveryInfo.deliveryLabel}</span>
+                <span className="text-green-600 font-semibold">{deliveryInfo!.deliveryLabel}</span>
               </p>
             </div>
           </div>
