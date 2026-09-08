@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Onderhoud — Businesslabels</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="Businesslabels is tijdelijk offline voor onderhoud. Bel of mail ons, we helpen je direct verder.">
+<link rel="icon" href="/favicon.ico">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  /* ------------------------------------------------------------------
+     BRAND TOKENS — change these three and the whole page follows.
+     Set --accent to the exact Businesslabels button/link colour.
+     ------------------------------------------------------------------ */
+  :root{
+    --accent:        #1B5FA8;   /* primary action colour  */
+    --accent-dark:   #14497f;   /* hover state            */
+    --ink:           #10233D;   /* headings + body        */
+
+    --muted:         #5A6B80;
+    --liner:         #EBEFF4;   /* page background (label liner) */
+    --liner-2:       #DFE5EC;
+    --label:         #FFFFFF;   /* the label face         */
+    --hairline:      #D7DEE7;
+
+    --measure: 46ch;
+    --radius: 14px;
+  }
+
+  *,*::before,*::after{ box-sizing:border-box; }
+
+  html,body{ height:100%; }
+
+  body{
+    margin:0;
+    padding:40px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:
+      radial-gradient(120% 80% at 50% 0%, #F6F8FB 0%, var(--liner) 55%, var(--liner-2) 100%);
+    font-family:"IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+
+  .stage{
+    width:100%;
+    max-width:600px;
+    text-align:center;
+  }
+
+  /* --- logo ------------------------------------------------------- */
+  .brand{ margin-bottom:34px; }
+
+  .brand img{
+    height:44px;
+    width:auto;
+    max-width:260px;
+    object-fit:contain;
+  }
+
+  .brand .wordmark{
+    font-size:1.375rem;
+    font-weight:600;
+    letter-spacing:-0.02em;
+    color:var(--ink);
+  }
+
+  /* --- printer slot the label emerges from ------------------------ */
+  .slot{
+    height:7px;
+    margin:0 auto -3px;
+    width:min(100%, 560px);
+    border-radius:99px;
+    background:linear-gradient(180deg, var(--liner-2), #C7D0DB);
+    box-shadow:inset 0 1px 2px rgba(16,35,61,.18);
+  }
+
+  /* --- the label -------------------------------------------------- */
+  .label{
+    position:relative;
+    background:var(--label);
+    border-radius:var(--radius);
+    padding:44px 38px 40px;
+    box-shadow:
+      0 1px 0 rgba(16,35,61,.04),
+      0 18px 40px -18px rgba(16,35,61,.28);
+    animation:print .9s cubic-bezier(.22,.61,.36,1) both;
+  }
+
+  /* die-cut notches, like the ticket stock they sell */
+  .label::before,
+  .label::after{
+    content:"";
+    position:absolute;
+    top:50%;
+    width:18px;
+    height:18px;
+    border-radius:50%;
+    background:var(--liner);
+    transform:translateY(-50%);
+  }
+  .label::before{ left:-9px; }
+  .label::after{ right:-9px; }
+
+  @keyframes print{
+    from{ clip-path:inset(100% 0 0 0); }
+    to{   clip-path:inset(0 0 0 0); }
+  }
+
+  /* colour registration strip — the thing a ColorWorks actually prints */
+  .registration{
+    display:flex;
+    gap:3px;
+    justify-content:center;
+    margin-bottom:26px;
+  }
+  .registration span{
+    width:22px;
+    height:5px;
+    border-radius:2px;
+  }
+  .registration span:nth-child(1){ background:#00A6D6; }
+  .registration span:nth-child(2){ background:#D6006E; }
+  .registration span:nth-child(3){ background:#F5C400; }
+  .registration span:nth-child(4){ background:var(--ink); }
+
+  h1{
+    margin:0 0 14px;
+    font-size:clamp(1.6rem, 4.4vw, 2.125rem);
+    font-weight:600;
+    letter-spacing:-0.025em;
+    line-height:1.2;
+  }
+
+  .lead{
+    margin:0 auto 10px;
+    max-width:var(--measure);
+    font-size:1.0625rem;
+    line-height:1.65;
+    color:var(--muted);
+  }
+
+  .lead-en{
+    margin:0 auto;
+    max-width:var(--measure);
+    font-size:.9375rem;
+    line-height:1.6;
+    color:#8494A6;
+  }
+
+  /* --- actions ---------------------------------------------------- */
+  .actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    justify-content:center;
+    margin-top:30px;
+    padding-top:28px;
+    border-top:1px dashed var(--hairline);
+  }
+
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:46px;
+    padding:0 22px;
+    border-radius:9px;
+    font-size:.9375rem;
+    font-weight:500;
+    text-decoration:none;
+    transition:background-color .18s ease, border-color .18s ease, color .18s ease;
+  }
+
+  .btn-primary{
+    background:var(--accent);
+    color:#fff;
+  }
+  .btn-primary:hover{ background:var(--accent-dark); }
+
+  .btn-secondary{
+    border:1px solid var(--hairline);
+    color:var(--ink);
+  }
+  .btn-secondary:hover{
+    border-color:var(--accent);
+    color:var(--accent);
+  }
+
+  .btn:focus-visible{
+    outline:2px solid var(--accent);
+    outline-offset:3px;
+  }
+
+  .hours{
+    margin:22px 0 0;
+    font-size:.875rem;
+    color:#8494A6;
+  }
+
+  /* --- footer ----------------------------------------------------- */
+  footer{
+    margin-top:30px;
+    font-size:.8125rem;
+    line-height:1.7;
+    color:#8494A6;
+  }
+  footer a{ color:var(--muted); text-decoration:none; }
+  footer a:hover{ text-decoration:underline; }
+  footer a:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+
+  @media (max-width:480px){
+    .label{ padding:36px 24px 32px; }
+    .btn{ width:100%; }
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    .label{ animation:none; }
+  }
+</style>
+</head>
+<body>
+
+  <main class="stage">
+
+    <div class="brand">
+      <!-- Falls back to a wordmark if the app server is down and /logo.png can't be served -->
+      <img src="/logo.png" alt="Businesslabels"
+           onerror="this.outerHTML='&lt;div class=\'wordmark\'&gt;Businesslabels&lt;/div&gt;'">
+    </div>
+
+    <div class="slot" aria-hidden="true"></div>
+
+    <section class="label">
+
+      <div class="registration" aria-hidden="true">
+        <span></span><span></span><span></span><span></span>
+      </div>
+
+      <h1>De webshop is even offline</h1>
+
+      <p class="lead">
+        We voeren onderhoud uit aan Businesslabels. Bestellen kan binnenkort weer.
+        Heb je labels, inkt of advies nodig? Bel of mail ons — we helpen je gewoon verder.
+      </p>
+
+      <p class="lead-en">
+        We're carrying out maintenance. Call or email us and we'll help you right away.
+      </p>
+
+      <div class="actions">
+        <a class="btn btn-primary" href="tel:+31318590465">Bel +31 318 590 465</a>
+        <a class="btn btn-secondary" href="mailto:verkoop@businesslabels.nl">Mail verkoop@businesslabels.nl</a>
+      </div>
+
+      <!-- Edit or remove this line depending on your actual support hours -->
+      <p class="hours">Bereikbaar op werkdagen van 08:30 tot 17:00</p>
+
+    </section>
+
+    <footer>
+      Businesslabels is onderdeel van <a href="https://www.smart2b.nl">Smart2B BV</a><br>
+      © 2026 Businesslabels. Alle rechten voorbehouden.
+    </footer>
+
+  </main>
+
+</body>
+</html>

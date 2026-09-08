@@ -7,6 +7,8 @@ import Header from "@/components/Header";
 
 
 import StoreNotice from "@/components/StoreNotice";
+import MaintenancePage from "@/components/MaintenancePage";
+import { isMaintenanceMode } from "@/lib/maintenance";
 
 
 import Footer from "@/components/Footer";
@@ -25,6 +27,13 @@ const isStaging = process.env.NEXT_PUBLIC_APP_ENV === 'staging' || process.env.V
 const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
 
 export async function generateMetadata() {
+  if (isMaintenanceMode()) {
+    return {
+      title: 'Onderhoud — Businesslabels',
+      description: 'Businesslabels is tijdelijk offline voor onderhoud. Bel of mail ons, we helpen je direct verder.',
+      robots: { index: false, follow: false },
+    };
+  }
   const locale = await getServerLocale();
   const messages = await getMessages(locale);
   const requestHeaders = await headers();
@@ -56,6 +65,26 @@ export const viewport = {
 };
 
 export default async function RootLayout({ children }) {
+  if (isMaintenanceMode()) {
+    return (
+      <html lang="nl" suppressHydrationWarning>
+        <head>
+          <meta charSet="utf-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <meta name="robots" content="noindex, nofollow" />
+          <meta name="description" content="Businesslabels is tijdelijk offline voor onderhoud. Bel of mail ons, we helpen je direct verder." />
+          <link rel="icon" href="/favicon.ico" />
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+          <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+        </head>
+        <body suppressHydrationWarning>
+          <MaintenancePage />
+        </body>
+      </html>
+    );
+  }
+
   const locale = await getServerLocale();
   const messages = await getMessages(locale);
   const cookieStore = await cookies();

@@ -1,7 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 
 import { LOCALE_COOKIE } from "@/lib/i18n/config";
+
+let mockMaintenanceMode = false;
+vi.mock("@/lib/maintenance", () => ({
+  isMaintenanceMode: () => mockMaintenanceMode,
+}));
+
 import { proxy } from "./proxy";
 
 function makeRequest(path: string, cookie?: string) {
@@ -384,5 +390,35 @@ describe("proxy locale routing", () => {
     expect(response.status).not.toBeGreaterThanOrEqual(300);
     expect(response.headers.get("x-middleware-rewrite")).toContain("/api/media-proxy?url=");
     expect(response.headers.get("x-middleware-rewrite")).toContain("some-new-image.png");
+  });
+});
+
+describe("proxy maintenance mode", () => {
+  it("rewrites all site pages to /maintenance.html when maintenance is active", () => {
+    mockMaintenanceMode = true;
+    try {
+      const homeResponse = proxy(makeRequest("/"));
+      expect(homeResponse.headers.get("x-middleware-rewrite")).toBe("http://localhost/maintenance.html");
+
+      const productResponse = proxy(makeRequest("/product/epson-cw-c4000"));
+      expect(productResponse.headers.get("x-middleware-rewrite")).toBe("http://localhost/maintenance.html");
+
+      const categoryResponse = proxy(makeRequest("/category/labelprinters"));
+      expect(categoryResponse.headers.get("x-middleware-rewrite")).toBe("http://localhost/maintenance.html");
+
+      const enResponse = proxy(makeRequest("/en/checkout"));
+      expect(enResponse.headers.get("x-middleware-rewrite")).toBe("http://localhost/maintenance.html");
+
+      const directResponse = proxy(makeRequest("/maintenance.html"));
+      expect(directResponse.headers.get("x-middleware-rewrite")).toBeNull();
+    } finally {
+      mockMaintenanceMode = false;
+    }
+  });
+
+  it("does not rewrite to maintenance.html when maintenance is inactive", () => {
+    mockMaintenanceMode = false;
+    const homeResponse = proxy(makeRequest("/"));
+    expect(homeResponse.headers.get("x-middleware-rewrite")).not.toBe("http://localhost/maintenance.html");
   });
 });
