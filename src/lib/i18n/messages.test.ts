@@ -73,5 +73,21 @@ describe('checkout translations', () => {
     expect(nlFaqTitle.length).toBeGreaterThanOrEqual(30);
     expect(nlFaqTitle.length).toBeLessThanOrEqual(60);
   });
+
+  it('provides store notice translations in both Dutch and English', () => {
+    expect(MESSAGES_V4.nl.storeNotice.plain).toBe(
+      'Wegens serverproblemen functioneert de website momenteel niet zoals hoort. Bel of mail ons en wij helpen u graag met uw order.'
+    );
+    expect(MESSAGES_V4.nl.storeNotice.message).toContain('Wegens serverproblemen');
+    expect(MESSAGES_V4.nl.storeNotice.message).toContain('<phone>Bel</phone>');
+    expect(MESSAGES_V4.nl.storeNotice.message).toContain('<email>mail</email>');
+
+    expect(MESSAGES_V4.en.storeNotice.plain).toBe(
+      'Due to server issues, the website is currently not functioning properly. Call or email us and we will gladly help you with your order.'
+    );
+    expect(MESSAGES_V4.en.storeNotice.message).toContain('Due to server issues');
+    expect(MESSAGES_V4.en.storeNotice.message).toContain('<phone>Call</phone>');
+    expect(MESSAGES_V4.en.storeNotice.message).toContain('<email>email</email>');
+  });
 });
 

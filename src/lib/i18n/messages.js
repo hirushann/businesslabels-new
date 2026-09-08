@@ -360,6 +360,14 @@ export const MESSAGES_V4 = {
         support: 'Support',
       },
     },
+    storeNotice: {
+      message: 'Due to server issues, the website is currently not functioning properly. <phone>Call</phone> or <email>email</email> us and we will gladly help you with your order.',
+      plain: 'Due to server issues, the website is currently not functioning properly. Call or email us and we will gladly help you with your order.',
+      phoneLabel: 'Call',
+      emailLabel: 'Email',
+      phoneNumber: '+31 318 590 465',
+      emailAddress: 'verkoop@businesslabels.nl',
+    },
     finder: {
       productFinder: 'Product Finder',
       heroDescription: "Find products engineered to match your printer's needs — from premium media and inks to specialized materials for compatibility, reliability, and performance.",
@@ -2461,6 +2469,14 @@ export const MESSAGES_V4 = {
         brands: 'Merken',
         support: 'Support',
       },
+    },
+    storeNotice: {
+      message: 'Wegens serverproblemen functioneert de website momenteel niet zoals hoort. <phone>Bel</phone> of <email>mail</email> ons en wij helpen u graag met uw order.',
+      plain: 'Wegens serverproblemen functioneert de website momenteel niet zoals hoort. Bel of mail ons en wij helpen u graag met uw order.',
+      phoneLabel: 'Bel',
+      emailLabel: 'Mail',
+      phoneNumber: '+31 318 590 465',
+      emailAddress: 'verkoop@businesslabels.nl',
     },
     finder: {
       productFinder: 'Product Finder',
