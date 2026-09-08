@@ -617,7 +617,8 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
               )}
             </div>
           ) : <div className="w-8" />}
-          <div className={`px-2.5 py-1 rounded-full flex items-center gap-1.5 ${stockBadgeClass}`}>
+          {/* Stock Badge — hidden per UI requirement */}
+          {/* <div className={`px-2.5 py-1 rounded-full flex items-center gap-1.5 ${stockBadgeClass}`}>
             {!productEndOfLife && (productInStock || productOnBackorder) ? (
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <g clipPath="url(#clip0_1768_8264)">
@@ -637,7 +638,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
               </svg>
             )}
             <span className="text-xs font-normal leading-4">{stockBadgeText}</span>
-          </div>
+          </div> */}
         </div>
         <Link href={localizedHref || "#"} className="absolute inset-0 z-0" onClick={onClick}>
         <Image
