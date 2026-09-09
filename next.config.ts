@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from 'next-intl/plugin';
 
+const mediaPublicUrl = process.env.MEDIA_PUBLIC_URL?.replace(/\/$/, '');
+
 const nextConfig: NextConfig = {
+  env: {
+    NEXT_PUBLIC_MEDIA_PUBLIC_URL: mediaPublicUrl ?? '',
+  },
   images: {
     remotePatterns: [
       {
@@ -16,6 +21,7 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "bbnl.dayzsolutions.com",
       },
+      ...(mediaPublicUrl ? [new URL(`${mediaPublicUrl}/**`)] : []),
     ],
     localPatterns: [
       {
