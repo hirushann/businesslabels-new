@@ -109,7 +109,6 @@ export default async function RootLayout({ children }) {
             <WishlistProvider>
               <HelpProvider>
                 <ReCaptchaProvider>
-                  <StoreNotice />
                   <Header hasAuthToken={hasAuthToken} />
                   <main className="flex-1">{children}</main>
                   <Footer />
