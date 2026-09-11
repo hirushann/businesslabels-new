@@ -21,8 +21,8 @@ export function htmlToText(html: string) {
 
 /**
  * Normalizes media and PDF links in CMS HTML so that:
- * 1. Links to /wp-content/uploads/ point to the local domain (which rewrites to media proxy)
- * 2. Remote storage images point to /api/media-proxy
+ * 1. Links to /wp-content/uploads/ point to the local domain
+ * 2. Unwraps any legacy /api/media-proxy image sources to direct URLs
  */
 export function sanitizeCmsHtml(html: string | null | undefined): string {
   if (!html) return '';
@@ -33,8 +33,8 @@ export function sanitizeCmsHtml(html: string | null | undefined): string {
       '/wp-content/uploads/'
     )
     .replace(
-      /(<img[^>]+src=["'])(https?:\/\/(?:dashboard\.businesslabels\.nl|bbnl\.dayzsolutions\.com|businesslabels\.test)\/storage\/[^"']+)(["'])/gi,
-      (_match, p1, p2, p3) => `${p1}/api/media-proxy?url=${encodeURIComponent(p2)}${p3}`
+      /(<img[^>]+src=["'])(?:\/api\/media-proxy\?url=)(https?[^"']+)(["'])/gi,
+      (_match, p1, p2, p3) => `${p1}${decodeURIComponent(p2)}${p3}`
     );
 }
 

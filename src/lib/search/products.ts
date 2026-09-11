@@ -4,6 +4,7 @@ import type { ProductCardCategory, ProductCardData, ProductRouteType, ProductWar
 import { catalogIndexForType, elasticClient } from "@/lib/search/client";
 import type { LaravelProduct } from "@/lib/mappings/product";
 import { isDeliverableInStock } from "@/lib/utils/delivery";
+import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 import {
   CATALOG_SORT_VALUES,
   type CatalogFilters,
@@ -1635,9 +1636,7 @@ function productType(value: unknown): ProductRouteType | null {
 }
 
 function imageUrl(url: string | null): string | null {
-  if (!url?.trim()) return null;
-  if (url.startsWith("/") || url.startsWith("data:") || url.startsWith("blob:")) return url;
-  return `/api/media-proxy?url=${encodeURIComponent(url)}`;
+  return toDisplayImageUrl(url);
 }
 
 function warrantyFromSource(source: ProductSource): ProductWarrantyData | null | undefined {

@@ -2,6 +2,7 @@
 
 import type { LinkProps } from "next/link";
 import type { ProductCardCategory, ProductCardData } from "@/components/ProductCard";
+import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 
 function getRaw(result: unknown, field: string): unknown {
   const entry = (result as Record<string, { raw?: unknown }>)?.[field];
@@ -220,13 +221,6 @@ function skuForProduct(result: unknown): string | null {
 
 function articleNumberForProduct(result: unknown): string | null {
   return valueAsString(getRaw(result, "article_number")) ?? valueAsString(getMetaValue(result, "_article_number"));
-}
-
-function toDisplayImageUrl(url: string | null): string | null {
-  if (!url?.trim()) return null;
-  if (url.startsWith("/") || url.startsWith("data:") || url.startsWith("blob:")) return url;
-
-  return `/api/media-proxy?url=${encodeURIComponent(url)}`;
 }
 
 function localizedString(result: unknown, field: string, locale?: string): string | null {

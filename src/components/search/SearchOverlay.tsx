@@ -11,6 +11,7 @@ import { useDebouncedSearchParam } from './useDebouncedSearchParam';
 import EmptyState from '@/components/EmptyState';
 import ProductCard, { type ProductCardCategory, type ProductCardData } from '@/components/ProductCard';
 import SearchFilters from './SearchFilters';
+import { toDisplayImageUrl } from '@/lib/utils/imageProxy';
 
 type SearchOverlayProps = {
   onClose: () => void;
@@ -257,14 +258,6 @@ function skuForProduct(result: unknown): string | null {
 
 function articleNumberForProduct(result: unknown): string | null {
   return valueAsString(getRaw(result, 'article_number')) ?? valueAsString(getMetaValue(result, '_article_number'));
-}
-
-function toDisplayImageUrl(url: string | null): string | null {
-  if (!url || url.trim() === '') return null;
-  if (url.startsWith('/') || url.startsWith('data:') || url.startsWith('blob:')) return url;
-
-  // Load remote product media through same-origin route to avoid browser-side host/protocol issues.
-  return `/api/media-proxy?url=${encodeURIComponent(url)}`;
 }
 
 function sortValueFromState(sortField?: string, sortDirection?: string, queryMode = false): OverlaySortValue {

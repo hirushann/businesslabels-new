@@ -20,9 +20,15 @@ describe("HTML entity decoding", () => {
     expect(output).toBe('<a href="/wp-content/uploads/2025/04/colorworks-d6500pe-datasheet.pdf">Download</a>');
   });
 
-  it("rewrites dashboard storage images to /api/media-proxy", () => {
+  it("preserves direct image URLs in CMS HTML", () => {
     const input = '<img src="https://dashboard.businesslabels.nl/storage/12327/C6500A-printer-plate-17.png" alt="Plate" />';
     const output = sanitizeCmsHtml(input);
-    expect(output).toContain('/api/media-proxy?url=https%3A%2F%2Fdashboard.businesslabels.nl%2Fstorage%2F12327%2FC6500A-printer-plate-17.png');
+    expect(output).toBe('<img src="https://dashboard.businesslabels.nl/storage/12327/C6500A-printer-plate-17.png" alt="Plate" />');
+  });
+
+  it("unwraps /api/media-proxy in CMS HTML images", () => {
+    const input = '<img src="/api/media-proxy?url=https%3A%2F%2Fdashboard.businesslabels.nl%2Fstorage%2F12327%2FC6500A-printer-plate-17.png" alt="Plate" />';
+    const output = sanitizeCmsHtml(input);
+    expect(output).toBe('<img src="https://dashboard.businesslabels.nl/storage/12327/C6500A-printer-plate-17.png" alt="Plate" />');
   });
 });

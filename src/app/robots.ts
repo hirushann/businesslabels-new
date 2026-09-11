@@ -29,7 +29,7 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: '*',
-      allow: ['/', '/api/media-proxy'],
+      allow: ['/'],
       disallow: [
         '/*?add-to-cart=*',
         '/*&add-to-cart=*',

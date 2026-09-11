@@ -19,6 +19,7 @@ import {
 import type { CatalogSearchResponse } from "@/lib/search/types";
 import type { PrinterSearchResponse } from "@/lib/search/printerTypes";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 
 export async function generateMetadata({
   searchParams,
@@ -100,18 +101,6 @@ function firstQueryValue(
   value: string | string[] | undefined,
 ): string | undefined {
   return Array.isArray(value) ? value[0] : value;
-}
-
-function toDisplayImageUrl(url: string | null | undefined): string | null {
-  if (!url?.trim()) return null;
-  const trimmed = url.trim();
-  if (
-    trimmed.startsWith("/") ||
-    trimmed.startsWith("data:") ||
-    trimmed.startsWith("blob:")
-  )
-    return trimmed;
-  return `/api/media-proxy?url=${encodeURIComponent(trimmed)}`;
 }
 
 function flattenPropertyValues(value: unknown): string[] {

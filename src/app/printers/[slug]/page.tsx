@@ -17,6 +17,7 @@ import {
   getPrinterTranslation,
 } from "@/lib/routes/printers";
 import { htmlToText, sanitizeCmsHtml } from "@/lib/utils";
+import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 
 type PrinterResponse = {
   data: Printer;
@@ -153,19 +154,6 @@ export async function generateMetadata({
       },
     },
   };
-}
-
-function toDisplayImageUrl(url: string | null | undefined): string | null {
-  if (!url?.trim()) return null;
-  const trimmed = url.trim();
-  if (
-    trimmed.startsWith("/") ||
-    trimmed.startsWith("data:") ||
-    trimmed.startsWith("blob:")
-  ) {
-    return trimmed;
-  }
-  return `/api/media-proxy?url=${encodeURIComponent(trimmed)}`;
 }
 
 function flattenPropertyValues(value: unknown): string[] {
