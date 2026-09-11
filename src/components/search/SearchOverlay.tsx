@@ -264,7 +264,7 @@ function toDisplayImageUrl(url: string | null): string | null {
   if (url.startsWith('/') || url.startsWith('data:') || url.startsWith('blob:')) return url;
 
   // Load remote product media through same-origin route to avoid browser-side host/protocol issues.
-  return `${encodeURIComponent(url)}`;
+  return `${url}`;
 }
 
 function sortValueFromState(sortField?: string, sortDirection?: string, queryMode = false): OverlaySortValue {

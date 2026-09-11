@@ -165,7 +165,7 @@ function toDisplayImageUrl(url: string | null | undefined): string | null {
   ) {
     return trimmed;
   }
-  return `${encodeURIComponent(trimmed)}`;
+  return `${trimmed}`;
 }
 
 function flattenPropertyValues(value: unknown): string[] {
