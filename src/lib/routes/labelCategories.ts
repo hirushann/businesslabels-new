@@ -1,5 +1,6 @@
 import { normalizeLocale } from "@/lib/i18n/config";
 import { localePath, stripLocalePath } from "@/lib/i18n/utils";
+import type { CategoryCanonicalUrlsById } from "@/lib/categories/tree";
 
 export type LabelCategoryKey =
   | "root"
@@ -18,7 +19,7 @@ const labelCategoryRoutes: Record<"en" | "nl", Record<LabelCategoryKey, string>>
     thermalDirect: "/product-category/labels-en-tickets-en/thermal-direct-printer-media",
     thermalTransfer: "/product-category/labels-en-tickets-en/thermal-transfer-printer-media",
     applications: "/product-category/labels-en-tickets-en/applications",
-    shippingLabels: "/product-category/labels-en-tickets-en/thermal-direct-printer-media/shipping-labels",
+    shippingLabels: "/product-category/shipping-labels",
     visitorBadges: "/product-category/labels-en-tickets-en/inkjet-printer-media/visitors-badges",
     jewelryLabels: "/product-category/jewellery-labels",
   },
@@ -32,6 +33,17 @@ const labelCategoryRoutes: Record<"en" | "nl", Record<LabelCategoryKey, string>>
     visitorBadges: "/product-categorie/labels-en-tickets/inkjet-printer-media/bezoekersbadges",
     jewelryLabels: "/product-categorie/labels-en-tickets/thermal-transfer/juweliersetiketten-thermische-overdracht-printer-media",
   },
+};
+
+const labelCategoryIdentityIds: Record<LabelCategoryKey, number | null> = {
+  root: 47,
+  inkjet: 105,
+  thermalDirect: 103,
+  thermalTransfer: 264,
+  applications: null,
+  shippingLabels: 116,
+  visitorBadges: 119,
+  jewelryLabels: 272,
 };
 
 const legacyLabelCategoryRoutes: Partial<Record<LabelCategoryKey, string[]>> = {
@@ -66,8 +78,12 @@ function segmentsPath(segments: string[]): string {
 export function getLabelCategoryPath(
   locale: string,
   category: LabelCategoryKey = "root",
+  canonicalUrls?: CategoryCanonicalUrlsById,
 ): string {
   const normalizedLocale = normalizeLocale(locale);
+  const identityId = labelCategoryIdentityIds[category];
+  const canonicalPath = identityId === null ? null : canonicalUrls?.[identityId]?.[normalizedLocale];
+  if (canonicalPath) return canonicalPath;
   return localePath(labelCategoryRoutes[normalizedLocale][category], normalizedLocale);
 }
 
@@ -92,6 +108,8 @@ export type LabelVirtualGroup = {
   title: Record<"en" | "nl", string>;
   parentKey: "root";
   childKeys: LabelCategoryKey[];
+  parentId: number;
+  childIds: number[];
 };
 
 const labelVirtualGroups: LabelVirtualGroup[] = [
@@ -103,6 +121,8 @@ const labelVirtualGroups: LabelVirtualGroup[] = [
     },
     parentKey: "root",
     childKeys: ["visitorBadges", "shippingLabels", "jewelryLabels"],
+    parentId: 47,
+    childIds: [119, 116, 272],
   },
 ];
 
@@ -116,6 +136,16 @@ export function getLabelVirtualGroupForSegments(
   return labelVirtualGroups.find((group) => {
     return cleanPath === normalizePath(`/${routeSegments(labelCategoryRoutes[normalizedLocale][group.key]).join("/")}`);
   }) ?? null;
+}
+
+export function getLegacyLabelCategoryIdentityForSegments(
+  segments: string[],
+  locale: string,
+): number | null {
+  const cleanPath = segmentsPath(segments);
+  return normalizeLocale(locale) === "en" && cleanPath === "/labels-en-tickets-en/thermal-direct-printer-media/shipping-labels"
+    ? 116
+    : null;
 }
 
 export function getLabelCategoryRouteSegments(

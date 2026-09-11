@@ -22,6 +22,8 @@ export type CategoryTranslation = {
 };
 
 export type CategoryTranslations = Partial<Record<"en" | "nl", CategoryTranslation>>;
+export type CategoryCanonicalUrls = Partial<Record<"en" | "nl", string>>;
+export type CategoryCanonicalUrlsById = Record<number, CategoryCanonicalUrls>;
 
 export type CategoryNode = {
   id: number;
@@ -30,6 +32,7 @@ export type CategoryNode = {
   meta_title?: LocalizedValue;
   meta_description?: LocalizedValue;
   translations?: CategoryTranslations | null;
+  canonical_urls?: CategoryCanonicalUrls | null;
   parent_id: number | null;
   count: number;
   image?: string | null;
@@ -163,6 +166,9 @@ export function categoryPublicPath(
   ancestors: CategoryNode[],
   locale: string,
 ): string {
+  const canonicalPath = category.canonical_urls?.[locale as "en" | "nl"];
+  if (canonicalPath) return canonicalPath;
+
   const chain = [...ancestors, category];
   const slugs = chain.map((node) => categoryRouteSlug(node, locale));
   
@@ -181,6 +187,40 @@ export function categoryPublicPath(
   }
 
   return `/category/${encodeURIComponent(categoryRouteSlug(category, locale))}`;
+}
+
+export function findCategoryById(
+  groups: CategoryGroup[],
+  id: number,
+): CategoryLookup | null {
+  const visit = (nodes: CategoryNode[], ancestors: CategoryNode[]): CategoryLookup | null => {
+    for (const node of nodes) {
+      if (node.id === id) return { category: node, ancestors };
+      const found = visit(node.children ?? [], [...ancestors, node]);
+      if (found) return found;
+    }
+    return null;
+  };
+
+  for (const group of groups ?? []) {
+    const found = visit(group.categories ?? [], []);
+    if (found) return found;
+  }
+  return null;
+}
+
+export function categoryCanonicalUrlsById(
+  groups: CategoryGroup[],
+): CategoryCanonicalUrlsById {
+  const urls: CategoryCanonicalUrlsById = {};
+  const visit = (nodes: CategoryNode[]) => {
+    for (const node of nodes) {
+      if (node.canonical_urls) urls[node.id] = node.canonical_urls;
+      visit(node.children ?? []);
+    }
+  };
+  for (const group of groups ?? []) visit(group.categories ?? []);
+  return urls;
 }
 
 function categoryMatchesSlug(
@@ -370,15 +410,7 @@ export function localizedProductCategoryPath(
   const lookup = findCategoryByLocalizedPath(groups, route.segments);
 
   if (!lookup) return null;
-
-  const translatedSegments = [...lookup.ancestors, lookup.category]
-    .map((category) => categoryRouteSlug(category, targetLocale))
-    .filter(Boolean)
-    .map((slug) => encodeURIComponent(slug));
-  if (translatedSegments.length === 0) return null;
-
-  const base = targetLocale === "en" ? "/en/product-category" : "/product-categorie";
-  return `${base}/${translatedSegments.join("/")}`;
+  return lookup.category.canonical_urls?.[targetLocale] ?? null;
 }
 
 /**

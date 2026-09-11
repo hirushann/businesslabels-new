@@ -1,6 +1,8 @@
 import { MetadataRoute } from 'next';
 import { localePath } from '@/lib/i18n/utils';
-import { fetchCategoryGroups, categoryRouteSlug, type CategoryNode } from '@/lib/categories/tree';
+import { fetchCategoryGroups, type CategoryNode } from '@/lib/categories/tree';
+import { getAccessoryCategoryPath } from '@/lib/routes/accessoryCategories';
+import { getLabelCategoryPath } from '@/lib/routes/labelCategories';
 
 // Define the API base URL
 const baseUrl = process.env.BBNL_API_BASE_URL || 'http://localhost:8000';
@@ -213,35 +215,34 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const categoryGroups = await fetchCategoryGroups();
     
-    const getCategoryPath = (node: CategoryNode, ancestors: CategoryNode[], locale: 'nl' | 'en') => {
-      const segments = [...ancestors, node]
-        .map((category) => categoryRouteSlug(category, locale))
-        .filter(Boolean)
-        .map((slug) => encodeURIComponent(slug));
-      
-      const base = locale === 'en' ? '/en/product-category' : '/product-categorie';
-      return `${base}/${segments.join('/')}`;
-    };
-
-    const walkCategoryTree = (node: CategoryNode, ancestors: CategoryNode[]) => {
-      if (node.slug) {
-        const nlPath = getCategoryPath(node, ancestors, 'nl');
-        const enPath = getCategoryPath(node, ancestors, 'en');
+    const walkCategoryTree = (node: CategoryNode) => {
+      const nlPath = node.canonical_urls?.nl;
+      const enPath = node.canonical_urls?.en;
+      if (nlPath && enPath) {
         addEntry(nlPath, enPath, new Date(), 0.8, 'weekly');
       }
-      if (node.children) {
-        node.children.forEach((child) => walkCategoryTree(child, [...ancestors, node]));
-      }
+      node.children?.forEach(walkCategoryTree);
     };
 
     categoryGroups.forEach((group) => {
-      if (group.categories) {
-        group.categories.forEach((category) => walkCategoryTree(category, []));
-      }
+      group.categories?.forEach(walkCategoryTree);
     });
   } catch (e) {
     console.error('Failed to parse categories for sitemap:', e);
   }
+
+  addEntry(
+    getAccessoryCategoryPath('nl', 'applicatorsDispensers'),
+    getAccessoryCategoryPath('en', 'applicatorsDispensers'),
+  );
+  addEntry(
+    getAccessoryCategoryPath('nl', 'printerAddOns'),
+    getAccessoryCategoryPath('en', 'printerAddOns'),
+  );
+  addEntry(
+    getLabelCategoryPath('nl', 'applications'),
+    getLabelCategoryPath('en', 'applications'),
+  );
 
   // Add Printers
   printers.forEach((printer) => {

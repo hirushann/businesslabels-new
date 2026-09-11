@@ -22,6 +22,7 @@ import ReCaptchaProvider from '@/components/ReCaptchaProvider';
 
 import { cookies, headers } from "next/headers";
 import { ScrollToTop } from "@/components/ScrollToTop";
+import { categoryCanonicalUrlsById, fetchCategoryGroups } from "@/lib/categories/tree";
 
 const isStaging = process.env.NEXT_PUBLIC_APP_ENV === 'staging' || process.env.VERCEL_ENV === 'preview';
 const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
@@ -89,6 +90,12 @@ export default async function RootLayout({ children }) {
   const messages = await getMessages(locale);
   const cookieStore = await cookies();
   const hasAuthToken = !!(cookieStore.get("auth_token")?.value || cookieStore.get("auth_session")?.value);
+  let categoryCanonicalUrls = {};
+  try {
+    categoryCanonicalUrls = categoryCanonicalUrlsById(await fetchCategoryGroups());
+  } catch (error) {
+    console.error('Failed to load canonical category URLs for navigation.', error);
+  }
 
   return (
     <html lang={locale} className="font-sans" suppressHydrationWarning>
@@ -109,7 +116,7 @@ export default async function RootLayout({ children }) {
             <WishlistProvider>
               <HelpProvider>
                 <ReCaptchaProvider>
-                  <Header hasAuthToken={hasAuthToken} />
+                  <Header hasAuthToken={hasAuthToken} categoryCanonicalUrls={categoryCanonicalUrls} />
                   <main className="flex-1">{children}</main>
                   <Footer />
                 </ReCaptchaProvider>

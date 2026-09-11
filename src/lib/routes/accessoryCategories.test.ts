@@ -78,13 +78,25 @@ describe("getAccessoryCategoryPath", () => {
         "nl",
       )?.childKeys,
     ).toEqual(["applicators", "dispensers"]);
+    expect(
+      getAccessoryVirtualGroupForSegments(
+        ["labelprinters", "accessoires", "applicatoren-en-dispensers"],
+        "nl",
+      )?.childIds,
+    ).toEqual([63, 64]);
 
     expect(
       getAccessoryVirtualGroupForSegments(
         ["labelprinters", "accessories-1", "printer-add-ons"],
         "en",
-      )?.childKeys,
+    )?.childKeys,
     ).toEqual(["cutters", "wifiBluetooth", "cwC4000"]);
+    expect(
+      getAccessoryVirtualGroupForSegments(
+        ["labelprinters", "accessories-1", "printer-add-ons"],
+        "en",
+      )?.childIds,
+    ).toEqual([67, 68, 69]);
   });
 
   it("uses Dutch source segments for category tree lookup", () => {

@@ -6,6 +6,11 @@ import { parseCatalogSearchParams, searchCatalogProducts } from "@/lib/search/pr
 import { parseMaterialSearchParams, searchMaterials } from "@/lib/search/materials";
 import type { Material } from "@/lib/search/materials";
 import type { CatalogProductResult } from "@/lib/search/types";
+import {
+  categoryCanonicalUrlsById,
+  fetchCategoryGroups,
+  type CategoryCanonicalUrlsById,
+} from "@/lib/categories/tree";
 
 const PRODUCTS_PER_GROUP = 4;
 const MATERIALS_LIMIT = 4;
@@ -24,28 +29,28 @@ type ProductSuggestionGroupId = "printers" | "labels" | "accessories";
 const PRODUCT_GROUPS: Array<{
   id: ProductSuggestionGroupId;
   title: Record<"en" | "nl", string>;
-  path: (locale: string) => string;
+  path: (locale: string, canonicalUrls?: CategoryCanonicalUrlsById) => string;
   slugs: string[];
   names: string[];
 }> = [
   {
     id: "printers",
     title: { en: "Label Printers", nl: "Labelprinters" },
-    path: getPrinterCategoryPath,
+    path: (locale, canonicalUrls) => getPrinterCategoryPath(locale, "root", canonicalUrls),
     slugs: ["labelprinters", "label-printers", "color-labelprinters", "kleuren-labelprinters", "thermal-labelprinters", "thermische-labelprinters"],
     names: ["label printer", "labelprinter", "printer"],
   },
   {
     id: "labels",
     title: { en: "Labels and tickets", nl: "Labels en tickets" },
-    path: getLabelCategoryPath,
+    path: (locale, canonicalUrls) => getLabelCategoryPath(locale, "root", canonicalUrls),
     slugs: ["labels-en-tickets", "labels-en-tickets-en", "inkjet-printer-media", "thermal-direct", "thermal-transfer", "jewellery-labels"],
     names: ["label", "ticket", "etiket"],
   },
   {
     id: "accessories",
     title: { en: "Accessories", nl: "Accessoires" },
-    path: getAccessoryCategoryPath,
+    path: (locale, canonicalUrls) => getAccessoryCategoryPath(locale, "root", canonicalUrls),
     slugs: ["accessories", "accessoires", "re-unwinders", "applicators", "dispensers", "printer-add-ons", "cutters", "dongles", "maintenance"],
     names: ["accessory", "accessories", "accessoire", "applicator", "dispenser", "cutter", "rewinder"],
   },
@@ -167,13 +172,18 @@ export async function GET(request: NextRequest) {
     materialParams.set("per_page", String(MATERIALS_LIMIT));
     materialParams.set("locale", locale);
 
-    const [products, materials] = await Promise.all([
+    const [products, materials, categoryGroups] = await Promise.all([
       searchCatalogProducts(parseCatalogSearchParams(productParams, locale), {
         includeAggregations: false,
         applyConfigOverrides: false,
       }),
       searchMaterials(parseMaterialSearchParams(materialParams, locale)),
+      fetchCategoryGroups().catch((error) => {
+        console.error("Failed to load canonical category URLs for search suggestions.", error);
+        return [];
+      }),
     ]);
+    const canonicalUrls = categoryCanonicalUrlsById(categoryGroups);
 
     const groupProductResults = products.products.filter(isGroupProduct);
     const buckets = new Map<ProductSuggestionGroupId, CatalogProductResult[]>();
@@ -189,7 +199,7 @@ export async function GET(request: NextRequest) {
         return {
           id: group.id,
           title: group.title[locale],
-          href: withSearch(group.path(locale), query),
+          href: withSearch(group.path(locale, canonicalUrls), query),
           total: groupedProducts.length,
           items: groupedProducts.slice(0, PRODUCTS_PER_GROUP).map((product) => mapProductItem(product, locale)),
         };

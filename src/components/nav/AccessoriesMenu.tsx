@@ -5,6 +5,7 @@ import Image from 'next/image';
 import type { ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { getAccessoryCategoryPath, type AccessoryCategoryKey } from '@/lib/routes/accessoryCategories';
+import type { CategoryCanonicalUrlsById } from '@/lib/categories/tree';
 
 export const menuItems = [
   {
@@ -46,7 +47,7 @@ export const menuItems = [
   icon: ReactNode;
 }>;
 
-export default function AccessoriesMenu() {
+export default function AccessoriesMenu({ canonicalUrls = {} }: { canonicalUrls?: CategoryCanonicalUrlsById }) {
   const t = useTranslations();
   const locale = useLocale();
 
@@ -59,7 +60,7 @@ export default function AccessoriesMenu() {
             {menuItems.map((item, i) => (
               <Link
                 key={item.titleKey}
-                href={getAccessoryCategoryPath(locale, item.categoryKey)}
+                href={getAccessoryCategoryPath(locale, item.categoryKey, canonicalUrls)}
                 className={`w-full flex items-center gap-5 group py-5 first:pt-1 last:pb-1 ${i !== menuItems.length - 1 ? 'border-b border-slate-100' : ''}`}
               >
                 <div className="w-[56px] h-[56px] bg-white rounded-[14px] border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.03)] flex items-center justify-center flex-shrink-0 group-hover:border-brand/30 group-hover:shadow-[0_4px_12px_rgba(241,136,0,0.1)] transition-all">
@@ -130,7 +131,7 @@ export default function AccessoriesMenu() {
 
       {/* Bottom CTA bar */}
       <Link
-        href={getAccessoryCategoryPath(locale)}
+        href={getAccessoryCategoryPath(locale, 'root', canonicalUrls)}
         className="self-stretch px-6 py-4 bg-brand rounded-bl-xl rounded-br-xl inline-flex justify-between items-center hover:bg-brand-hover transition-colors"
       >
         <span className="text-white text-base font-medium leading-6">

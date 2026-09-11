@@ -3,6 +3,7 @@ import {
   getLabelCategoryLookupSegments,
   getLabelCategoryPath,
   getLabelVirtualGroupForSegments,
+  getLegacyLabelCategoryIdentityForSegments,
   getLocalizedLabelCategoryPathForPath,
 } from "./labelCategories";
 
@@ -47,7 +48,7 @@ describe("getLabelCategoryPath", () => {
       "/en/product-category/labels-en-tickets-en/applications",
     );
     expect(getLabelCategoryPath("en", "shippingLabels")).toBe(
-      "/en/product-category/labels-en-tickets-en/thermal-direct-printer-media/shipping-labels",
+      "/en/product-category/shipping-labels",
     );
     expect(getLabelCategoryPath("en", "visitorBadges")).toBe(
       "/en/product-category/labels-en-tickets-en/inkjet-printer-media/visitors-badges",
@@ -77,7 +78,7 @@ describe("getLabelCategoryPath", () => {
         "/product-categorie/labels-en-tickets/thermal-direct/verzendetiketten",
         "en",
       ),
-    ).toBe("/en/product-category/labels-en-tickets-en/thermal-direct-printer-media/shipping-labels");
+    ).toBe("/en/product-category/shipping-labels");
 
     expect(
       getLocalizedLabelCategoryPathForPath(
@@ -101,6 +102,12 @@ describe("getLabelCategoryPath", () => {
         "nl",
       )?.childKeys,
     ).toEqual(["visitorBadges", "shippingLabels", "jewelryLabels"]);
+    expect(
+      getLabelVirtualGroupForSegments(
+        ["labels-en-tickets", "toepassingen"],
+        "nl",
+      )?.childIds,
+    ).toEqual([119, 116, 272]);
 
     expect(
       getLabelVirtualGroupForSegments(
@@ -108,6 +115,15 @@ describe("getLabelCategoryPath", () => {
         "en",
       )?.childKeys,
     ).toEqual(["visitorBadges", "shippingLabels", "jewelryLabels"]);
+  });
+
+  it("recognizes the stale nested English shipping-label route", () => {
+    expect(
+      getLegacyLabelCategoryIdentityForSegments(
+        ["labels-en-tickets-en", "thermal-direct-printer-media", "shipping-labels"],
+        "en",
+      ),
+    ).toBe(116);
   });
 
   it("uses Dutch source segments for category tree lookup", () => {

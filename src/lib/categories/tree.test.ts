@@ -4,7 +4,9 @@ import {
   categoryRouteSlug,
   categorySlug,
   fetchCategoryGroups,
+  findCategoryById,
   findCategoryBySlug,
+  categoryCanonicalUrlsById,
   localizedProductCategoryPath,
   type CategoryGroup,
 } from "./tree";
@@ -41,6 +43,13 @@ describe("category tree helpers", () => {
 
     expect(findCategoryBySlug(groups, "labels", "en")?.category.id).toBe(1);
     expect(findCategoryBySlug(groups, "etiketten", "nl")?.category.id).toBe(1);
+  });
+
+  it("finds categories and canonical urls by stable identity", () => {
+    expect(findCategoryById(nestedCategoryGroups, 73)?.ancestors.map((node) => node.id)).toEqual([46, 56]);
+    expect(categoryCanonicalUrlsById(nestedCategoryGroups)[73]?.en).toBe(
+      "/en/product-category/label-printers/color-labelprinters/desktop-label-printers",
+    );
   });
 
   it("rebuilds a nested Dutch category URL with every English slug", () => {
@@ -91,7 +100,7 @@ describe("category tree helpers", () => {
     );
   });
 
-  it("only falls back to the stored slug for a category missing a translation", () => {
+  it("uses the canonical url when a category translation is missing", () => {
     const missingLeafTranslation = structuredClone(nestedCategoryGroups);
     missingLeafTranslation[0].categories[0].children![0].children![0].translations!.en!.slug = null;
 
@@ -102,7 +111,7 @@ describe("category tree helpers", () => {
         "en",
       ),
     ).toBe(
-      "/en/product-category/label-printers/color-labelprinters/desktop-labelprinters-nl",
+      "/en/product-category/label-printers/color-labelprinters/desktop-label-printers",
     );
   });
 
@@ -163,9 +172,13 @@ const nestedCategoryGroups: CategoryGroup[] = [
                   nl: { name: "Desktop Labelprinters", slug: "desktop-labelprinters-nl" },
                   en: { name: "Desktop Label printers", slug: "desktop-label-printers" },
                 },
-                parent_id: 56,
-                count: 3,
-                children: [],
+              parent_id: 56,
+              count: 3,
+              canonical_urls: {
+                nl: "/product-categorie/labelprinters/kleuren-labelprinters-nl/desktop-labelprinters-nl",
+                en: "/en/product-category/label-printers/color-labelprinters/desktop-label-printers",
+              },
+              children: [],
               },
               {
                 id: 75,
@@ -175,9 +188,13 @@ const nestedCategoryGroups: CategoryGroup[] = [
                   nl: { name: "Midrange Labelprinters", slug: "midrange-labelprinters-nl" },
                   en: { name: "Midrange Label printers", slug: "midrange-label-printers" },
                 },
-                parent_id: 56,
-                count: 3,
-                children: [],
+              parent_id: 56,
+              count: 3,
+              canonical_urls: {
+                nl: "/product-categorie/labelprinters/kleuren-labelprinters-nl/midrange-labelprinters-nl",
+                en: "/en/product-category/label-printers/color-labelprinters/midrange-label-printers",
+              },
+              children: [],
               },
               {
                 id: 76,
@@ -187,9 +204,13 @@ const nestedCategoryGroups: CategoryGroup[] = [
                   nl: { name: "Starterkit kleuren labelprinters", slug: "starterkit-kleuren-labelprinters" },
                   en: { name: "Starterkit full color labelprinters", slug: "starterkit-full-color-labelprinters" },
                 },
-                parent_id: 56,
-                count: 3,
-                children: [],
+              parent_id: 56,
+              count: 3,
+              canonical_urls: {
+                nl: "/product-categorie/labelprinters/kleuren-labelprinters-nl/starterkit-kleuren-labelprinters",
+                en: "/en/product-category/label-printers/color-labelprinters/starterkit-full-color-labelprinters",
+              },
+              children: [],
               },
             ],
           },

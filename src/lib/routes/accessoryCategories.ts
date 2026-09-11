@@ -1,5 +1,6 @@
 import { normalizeLocale } from "@/lib/i18n/config";
 import { localePath, stripLocalePath } from "@/lib/i18n/utils";
+import type { CategoryCanonicalUrlsById } from "@/lib/categories/tree";
 
 export type AccessoryCategoryKey =
   | "root"
@@ -49,6 +50,22 @@ const accessoryCategoryRoutes: Record<"en" | "nl", Record<AccessoryCategoryKey, 
   },
 };
 
+const accessoryCategoryIdentityIds: Record<AccessoryCategoryKey, number | null> = {
+  root: 55,
+  reUnwinders: 66,
+  applicatorsDispensers: null,
+  applicators: 63,
+  dispensers: 64,
+  printerAddOns: null,
+  cutters: 67,
+  wifiBluetooth: 68,
+  cwC4000: 69,
+  miscellaneous: 65,
+  cables: 70,
+  maintenance: 71,
+  other: 72,
+};
+
 const legacyAccessoryCategoryRoutes: Partial<Record<AccessoryCategoryKey, string[]>> = {
   root: ["/category/accessoires", "/category/accessories"],
   reUnwinders: ["/category/re-unwinders-nl"],
@@ -63,6 +80,8 @@ export type AccessoryVirtualGroup = {
   title: Record<"en" | "nl", string>;
   parentKey: "root";
   childKeys: AccessoryCategoryKey[];
+  parentId: number;
+  childIds: number[];
 };
 
 const accessoryVirtualGroups: AccessoryVirtualGroup[] = [
@@ -74,6 +93,8 @@ const accessoryVirtualGroups: AccessoryVirtualGroup[] = [
     },
     parentKey: "root",
     childKeys: ["applicators", "dispensers"],
+    parentId: 55,
+    childIds: [63, 64],
   },
   {
     key: "printerAddOns",
@@ -83,6 +104,8 @@ const accessoryVirtualGroups: AccessoryVirtualGroup[] = [
     },
     parentKey: "root",
     childKeys: ["cutters", "wifiBluetooth", "cwC4000"],
+    parentId: 55,
+    childIds: [67, 68, 69],
   },
 ];
 
@@ -102,8 +125,12 @@ function decodeSegment(segment: string): string {
 export function getAccessoryCategoryPath(
   locale: string,
   category: AccessoryCategoryKey = "root",
+  canonicalUrls?: CategoryCanonicalUrlsById,
 ): string {
   const normalizedLocale = normalizeLocale(locale);
+  const identityId = accessoryCategoryIdentityIds[category];
+  const canonicalPath = identityId === null ? null : canonicalUrls?.[identityId]?.[normalizedLocale];
+  if (canonicalPath) return canonicalPath;
   return localePath(accessoryCategoryRoutes[normalizedLocale][category], normalizedLocale);
 }
 

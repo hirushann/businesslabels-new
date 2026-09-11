@@ -41,6 +41,7 @@ import {
 } from '@/components/ui/navigation-menu';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
+import type { CategoryCanonicalUrlsById } from '@/lib/categories/tree';
 
 type DropdownKey = 'printers' | 'labels' | 'accessories' | 'resources' | 'brands' | null;
 type SearchSurface = 'desktop' | 'mobile';
@@ -89,7 +90,13 @@ const getViewAllText = (key: DropdownKey, locale: string) => {
   return locale === 'nl' ? 'Alles bekijken' : 'View all';
 };
 
-export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolean }) {
+export default function Header({
+  hasAuthToken = false,
+  categoryCanonicalUrls = {},
+}: {
+  hasAuthToken?: boolean;
+  categoryCanonicalUrls?: CategoryCanonicalUrlsById;
+}) {
   const t = useTranslations();
   const locale = useLocale();
   const lp = useLocalePath();
@@ -536,15 +543,15 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
   };
 
   const dropdownMap: Record<string, React.ReactNode> = {
-    printers: <PrintersMenu />,
-    labels: <LabelsMenu />,
-    accessories: <AccessoriesMenu />,
+    printers: <PrintersMenu canonicalUrls={categoryCanonicalUrls} />,
+    labels: <LabelsMenu canonicalUrls={categoryCanonicalUrls} />,
+    accessories: <AccessoriesMenu canonicalUrls={categoryCanonicalUrls} />,
     resources: <ResourcesMenu />,
     brands: <BrandsMenu />,
   };
-  const printerCategoryHref = getPrinterCategoryPath(locale);
-  const labelCategoryHref = getLabelCategoryPath(locale);
-  const accessoryCategoryHref = getAccessoryCategoryPath(locale);
+  const printerCategoryHref = getPrinterCategoryPath(locale, 'root', categoryCanonicalUrls);
+  const labelCategoryHref = getLabelCategoryPath(locale, 'root', categoryCanonicalUrls);
+  const accessoryCategoryHref = getAccessoryCategoryPath(locale, 'root', categoryCanonicalUrls);
 
   return (
     <header
@@ -1040,7 +1047,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                       {item.dropdownKey === 'printers' && printerMenuItems.map((sub) => (
                         <Link
                           key={sub.titleKey}
-                          href={getPrinterCategoryPath(locale, sub.categoryKey)}
+                          href={getPrinterCategoryPath(locale, sub.categoryKey, categoryCanonicalUrls)}
                           onClick={() => setIsMobileMenuOpen(false)}
                           className="px-3 py-2 text-sm text-stone-600 hover:bg-slate-100 rounded-md transition-colors flex items-center gap-2"
                         >
@@ -1052,7 +1059,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                       {item.dropdownKey === 'labels' && labelMenuItems.map((sub) => (
                         <Link
                           key={sub.titleKey}
-                          href={getLabelCategoryPath(locale, sub.categoryKey)}
+                          href={getLabelCategoryPath(locale, sub.categoryKey, categoryCanonicalUrls)}
                           onClick={() => setIsMobileMenuOpen(false)}
                           className="px-3 py-2 text-sm text-stone-600 hover:bg-slate-100 rounded-md transition-colors flex items-center gap-2"
                         >
@@ -1064,7 +1071,7 @@ export default function Header({ hasAuthToken = false }: { hasAuthToken?: boolea
                       {item.dropdownKey === 'accessories' && accessoryMenuItems.map((sub) => (
                         <Link
                           key={sub.titleKey}
-                          href={getAccessoryCategoryPath(locale, sub.categoryKey)}
+                          href={getAccessoryCategoryPath(locale, sub.categoryKey, categoryCanonicalUrls)}
                           onClick={() => setIsMobileMenuOpen(false)}
                           className="px-3 py-2 text-sm text-stone-600 hover:bg-slate-100 rounded-md transition-colors flex items-center gap-2"
                         >

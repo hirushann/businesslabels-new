@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { permanentRedirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import CategorySubnav from "@/components/CategorySubnav";
@@ -15,29 +14,12 @@ import ReviewsSection from "@/components/ReviewsSection";
 import {
   CATEGORY_SOURCE_LOCALE,
   categoryName,
-  categoryRouteSlug,
   categorySlug,
   fetchCategoryGroups,
-  findCategoryByLocalizedPath,
-  findCategoryByPath,
   findCategoryBySlug,
   flattenCategorySlugs,
-  type CategoryNode,
 } from "@/lib/categories/tree";
 import { localePath } from "@/lib/i18n/utils";
-import {
-  getAccessoryCategoryPath,
-  getAccessoryCategoryLookupSegmentsForSegments,
-  getAccessoryCategoryRouteSegments,
-  getAccessoryVirtualGroupForSegments,
-} from "@/lib/routes/accessoryCategories";
-import {
-  getLabelCategoryLookupSegments,
-  getLabelCategoryLookupSegmentsForSegments,
-  getLabelCategoryPath,
-  getLabelVirtualGroupForSegments,
-} from "@/lib/routes/labelCategories";
-import { getPrinterCategoryLookupSlug } from "@/lib/routes/printerCategories";
 
 function slugToTitle(slug: string): string {
   return slug
@@ -107,75 +89,17 @@ const emptyCatalogResponse: CatalogSearchResponse = {
   filters: { ranges: [], options: [] },
 };
 
-type CategoryArchiveRouteMode = "legacy" | "productCategory";
-type ProductCategoryRouteBase = "product-category" | "product-categorie";
-
-function liveProductCategoryPath(locale: string, segments: string[]): string {
-  const basePath = locale === "nl" ? "/product-categorie" : "/product-category";
-  const encodedSegments = segments.map((segment) => encodeURIComponent(segment));
-  return localePath(`${basePath}/${encodedSegments.join("/")}`, locale);
-}
-
-function lastSegment(segments: string[]): string {
-  return segments.at(-1) ?? "";
-}
-
-function decodeRouteSegment(segment: string): string {
-  try {
-    return decodeURIComponent(segment);
-  } catch {
-    return segment;
-  }
-}
-
-function visibleSubcategories({
-  currentCategory,
-  children,
-  sourceLocale,
-  virtualChildSlugs,
-}: {
-  currentCategory?: CategoryNode;
-  children: CategoryNode[];
-  sourceLocale: string;
-  virtualChildSlugs: Set<string> | null;
-}): CategoryNode[] {
-  const currentSlug = currentCategory ? categoryRouteSlug(currentCategory, sourceLocale) : "";
-
-  return children.filter((child) => {
-    const childSlug = categoryRouteSlug(child, sourceLocale);
-    if (virtualChildSlugs) return virtualChildSlugs.has(childSlug);
-    if (currentSlug === "labelprinters" && (childSlug === "accessoires" || childSlug === "accessories-1")) {
-      return false;
-    }
-    return true;
-  });
-}
-
 export async function renderCategoryArchivePage({
   slug,
-  routeSegments,
   searchParams,
-  routeMode = "legacy",
-  requestedRouteBase,
 }: {
   slug: string;
-  routeSegments?: string[];
   searchParams: Promise<CategoryPageSearchParams>;
-  routeMode?: CategoryArchiveRouteMode;
-  requestedRouteBase?: ProductCategoryRouteBase;
 }) {
   const rawParams = await searchParams;
   const t = await getTranslations();
   const locale = await getServerLocale();
   const categorySourceLocale = CATEGORY_SOURCE_LOCALE;
-  const categoryLookupSlug = routeMode === "productCategory"
-    ? getPrinterCategoryLookupSlug(slug)
-    : slug;
-  const categoryLookupSegments = routeMode === "productCategory" && routeSegments?.length
-    ? getLabelCategoryLookupSegmentsForSegments(routeSegments, locale)
-      ?? getAccessoryCategoryLookupSegmentsForSegments(routeSegments, locale)
-      ?? routeSegments.map((segment) => getPrinterCategoryLookupSlug(segment))
-    : undefined;
   const routeQuery = toUrlSearchParams(rawParams);
 
 
@@ -187,90 +111,22 @@ export async function renderCategoryArchivePage({
   try {
     categoryGroups = await fetchCategoryGroups();
   } catch (error) {
-    console.error(`Failed to load category tree for slug '${categoryLookupSlug}'.`, error);
+    console.error(`Failed to load category tree for slug '${slug}'.`, error);
   }
 
-  const virtualAccessoryGroup = routeMode === "productCategory" && routeSegments?.length
-    ? getAccessoryVirtualGroupForSegments(routeSegments, locale)
-    : null;
-  const virtualLabelGroup = routeMode === "productCategory" && routeSegments?.length
-    ? getLabelVirtualGroupForSegments(routeSegments, locale)
-    : null;
-  const virtualAccessoryParentSegments = virtualAccessoryGroup
-    ? getAccessoryCategoryRouteSegments(categorySourceLocale, virtualAccessoryGroup.parentKey)
-    : null;
-  const virtualLabelParentSegments = virtualLabelGroup
-    ? getLabelCategoryLookupSegments(categorySourceLocale, virtualLabelGroup.parentKey)
-    : null;
-  const localizedRouteLookup = routeMode === "productCategory" && routeSegments?.length
-    ? findCategoryByLocalizedPath(categoryGroups, routeSegments)
-    : null;
-
-  const lookup = virtualAccessoryParentSegments
-    ? findCategoryByPath(categoryGroups, virtualAccessoryParentSegments, categorySourceLocale)
-    : virtualLabelParentSegments
-    ? findCategoryByPath(categoryGroups, virtualLabelParentSegments, categorySourceLocale)
-    : localizedRouteLookup
-    ? localizedRouteLookup
-    : categoryLookupSegments
-    ? findCategoryByPath(categoryGroups, categoryLookupSegments, categorySourceLocale)
-      ?? findCategoryBySlug(categoryGroups, categoryLookupSlug, categorySourceLocale)
-    : findCategoryBySlug(categoryGroups, categoryLookupSlug, categorySourceLocale);
+  const lookup = findCategoryBySlug(categoryGroups, slug, categorySourceLocale);
   const currentCategory = lookup?.category;
   const ancestors = lookup?.ancestors ?? [];
-
-  if (routeMode === "productCategory" && localizedRouteLookup && routeSegments?.length) {
-    const canonicalSegments = [...localizedRouteLookup.ancestors, localizedRouteLookup.category]
-      .map((category) => categoryRouteSlug(category, locale));
-    const expectedRouteBase: ProductCategoryRouteBase = locale === "en"
-      ? "product-category"
-      : "product-categorie";
-    const hasCanonicalSegments = canonicalSegments.length === routeSegments.length
-      && canonicalSegments.every((segment, index) => segment === decodeRouteSegment(routeSegments[index]));
-
-    if (!hasCanonicalSegments || requestedRouteBase !== expectedRouteBase) {
-      const canonicalPath = liveProductCategoryPath(locale, canonicalSegments);
-      const queryString = routeQuery.toString();
-      permanentRedirect(queryString ? `${canonicalPath}?${queryString}` : canonicalPath);
-    }
-  }
-  const virtualChildSlugs = virtualAccessoryGroup
-    ? new Set(
-        virtualAccessoryGroup.childKeys.map((key) =>
-          lastSegment(getAccessoryCategoryRouteSegments(categorySourceLocale, key)),
-        ),
-      )
-    : virtualLabelGroup
-    ? new Set(
-        virtualLabelGroup.childKeys.map((key) =>
-          lastSegment(getLabelCategoryLookupSegments(categorySourceLocale, key)),
-        ),
-      )
-    : null;
-  const virtualLabelSubcategories = virtualLabelGroup
-    ? virtualLabelGroup.childKeys
-        .map((key) => findCategoryByPath(categoryGroups, getLabelCategoryLookupSegments(categorySourceLocale, key), categorySourceLocale)?.category)
-        .filter((category): category is CategoryNode => Boolean(category))
-    : null;
-  const subcategories = visibleSubcategories({
-    currentCategory,
-    children: virtualLabelSubcategories ?? currentCategory?.children ?? [],
-    sourceLocale: categorySourceLocale,
-    virtualChildSlugs,
-  });
+  const subcategories = currentCategory?.children ?? [];
   const hasSubcategories = subcategories.length > 0;
 
   const scopeQuery = new URLSearchParams();
-  if (virtualChildSlugs && subcategories.length > 0) {
-    subcategories.forEach((subcategory) => {
-      scopeQuery.append("category_id", String(subcategory.id));
-    });
-  } else if (currentCategory) {
+  if (currentCategory) {
     scopeQuery.set("category_id", String(currentCategory.id));
   } else {
     // Fallback when the slug isn't in the tree (stale cache, etc.) — keep the
     // old slug-based scoping so the page still renders something useful.
-    scopeQuery.set("category", indexedCategorySlugForRoute(categoryLookupSlug));
+    scopeQuery.set("category", indexedCategorySlugForRoute(slug));
   }
   const initialSearchQuery = new URLSearchParams(scopeQuery);
 
@@ -287,69 +143,19 @@ export async function renderCategoryArchivePage({
       searchCatalogProducts(parseCatalogSearchParams(scopeQuery, locale)),
     ]);
   } catch (error) {
-    console.error(`Failed to load category catalog for slug '${categoryLookupSlug}'.`, error);
+    console.error(`Failed to load category catalog for slug '${slug}'.`, error);
   }
 
-  const categoryTitle = virtualAccessoryGroup
-    ? virtualAccessoryGroup.title[locale as "en" | "nl"] ?? virtualAccessoryGroup.title.en
-    : virtualLabelGroup
-    ? virtualLabelGroup.title[locale as "en" | "nl"] ?? virtualLabelGroup.title.en
-    : currentCategory
+  const categoryTitle = currentCategory
     ? categoryName(currentCategory, locale)
-    : categoryTitleForSlug(categoryLookupSlug);
-  const currentSegments = currentCategory
-    ? [...ancestors, currentCategory].map((category) => categoryRouteSlug(category, locale))
-    : [categoryLookupSlug];
-
-  const hrefForCategory =
-    routeMode === "productCategory"
-      ? (category: CategoryNode) => {
-          if (virtualAccessoryGroup) {
-            const childKey = virtualAccessoryGroup.childKeys.find((key) => {
-              return lastSegment(getAccessoryCategoryRouteSegments(categorySourceLocale, key)) === categoryRouteSlug(category, categorySourceLocale);
-            });
-
-            if (childKey) return getAccessoryCategoryPath(locale, childKey);
-          }
-
-          if (virtualLabelGroup) {
-            const childKey = virtualLabelGroup.childKeys.find((key) => {
-              return lastSegment(getLabelCategoryLookupSegments(categorySourceLocale, key)) === categoryRouteSlug(category, categorySourceLocale);
-            });
-
-            if (childKey) return getLabelCategoryPath(locale, childKey);
-          }
-
-          return liveProductCategoryPath(locale, [
-            ...currentSegments,
-            categoryRouteSlug(category, locale),
-          ]);
-        }
-      : undefined;
+    : categoryTitleForSlug(slug);
 
   const breadcrumbItems = [
     { label: t("common.products"), href: localePath("/product", locale) },
-    ...ancestors.map((ancestor, index) => {
-      const ancestorSlug = categoryRouteSlug(ancestor, locale);
-      const href =
-        routeMode === "productCategory"
-          ? liveProductCategoryPath(
-              locale,
-              ancestors.slice(0, index + 1).map((item) => categoryRouteSlug(item, locale)),
-            )
-          : `/category/${encodeURIComponent(ancestorSlug)}`;
-
-      return {
-        label: categoryName(ancestor, locale),
-        href,
-      };
-    }),
-    ...((virtualAccessoryGroup || virtualLabelGroup) && currentCategory
-      ? [{
-          label: categoryName(currentCategory, locale),
-          href: virtualAccessoryGroup ? getAccessoryCategoryPath(locale) : getLabelCategoryPath(locale),
-        }]
-      : []),
+    ...ancestors.map((ancestor) => ({
+      label: categoryName(ancestor, locale),
+      href: `/category/${encodeURIComponent(categorySlug(ancestor, categorySourceLocale))}`,
+    })),
     { label: categoryTitle },
   ];
 
@@ -382,7 +188,6 @@ export async function renderCategoryArchivePage({
               subcategories={subcategories}
               ancestors={ancestors}
               locale={locale}
-              hrefForCategory={hrefForCategory}
             />
           ) : null}
 

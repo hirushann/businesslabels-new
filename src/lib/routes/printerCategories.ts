@@ -1,5 +1,6 @@
 import { normalizeLocale } from "@/lib/i18n/config";
 import { localePath, stripLocalePath } from "@/lib/i18n/utils";
+import type { CategoryCanonicalUrlsById } from "@/lib/categories/tree";
 
 export type PrinterCategoryKey =
   | "root"
@@ -25,6 +26,14 @@ const printerCategoryRoutes: Record<"en" | "nl", Record<PrinterCategoryKey, stri
   },
 };
 
+const printerCategoryIdentityIds: Record<PrinterCategoryKey, number> = {
+  root: 46,
+  color: 56,
+  thermal: 57,
+  starterkits: 59,
+  consumables: 58,
+};
+
 const printerCategorySlugAliases: Partial<Record<PrinterCategoryKey, string[]>> = {
   root: ["label-printers"],
   starterkits: ["starter-kits"],
@@ -42,8 +51,11 @@ function normalizePath(path: string): string {
 export function getPrinterCategoryPath(
   locale: string,
   category: PrinterCategoryKey = "root",
+  canonicalUrls?: CategoryCanonicalUrlsById,
 ): string {
   const normalizedLocale = normalizeLocale(locale);
+  const canonicalPath = canonicalUrls?.[printerCategoryIdentityIds[category]]?.[normalizedLocale];
+  if (canonicalPath) return canonicalPath;
   return localePath(printerCategoryRoutes[normalizedLocale][category], normalizedLocale);
 }
 
