@@ -212,7 +212,7 @@ function categoriesForProduct(result: unknown): ProductCardCategory[] {
   if (!Array.isArray(productCategories)) return [];
 
   return productCategories
-      .map((category): ProductCardCategory | null => {
+    .map((category): ProductCardCategory | null => {
       if (typeof category === 'string') {
         return { name: category };
       }
@@ -264,7 +264,7 @@ function toDisplayImageUrl(url: string | null): string | null {
   if (url.startsWith('/') || url.startsWith('data:') || url.startsWith('blob:')) return url;
 
   // Load remote product media through same-origin route to avoid browser-side host/protocol issues.
-  return `/api/media-proxy?url=${encodeURIComponent(url)}`;
+  return `${encodeURIComponent(url)}`;
 }
 
 function sortValueFromState(sortField?: string, sortDirection?: string, queryMode = false): OverlaySortValue {
@@ -552,7 +552,7 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
               <div className="flex items-center justify-between px-1">
                 <h2 className="text-neutral-800 text-xl font-bold">{t('common.filters')}</h2>
                 {activeFilters.length > 0 && (
-                  <button 
+                  <button
                     type="button"
                     onClick={() => {
                       activeFilters.forEach(f => removeFilter(f.field));
@@ -575,42 +575,42 @@ function OverlayContent({ onClose }: SearchOverlayProps) {
                 {isLoading ? t('search.searching') : t('search.results', { count: totalResults || 0 })}
               </div>
 
-            {error ? (
-              <div className="bg-red-50 text-red-700 border border-red-200 rounded-lg p-4">{String(error)}</div>
-            ) : isLoading && accumulatedResults.length === 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-5">
-                {Array.from({ length: 8 }, (_, i) => (
-                  <div key={i} className="h-72 rounded-xl bg-slate-200 animate-pulse" />
-                ))}
-              </div>
-            ) : accumulatedResults.length === 0 ? (
-              <EmptyState
-                title={t('common.noProductsFound')}
-                description={t('search.tryDifferentSearch')}
-              />
-            ) : (
-              <>
+              {error ? (
+                <div className="bg-red-50 text-red-700 border border-red-200 rounded-lg p-4">{String(error)}</div>
+              ) : isLoading && accumulatedResults.length === 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-5">
-                  {accumulatedResults.map(({ id, product, href }) => {
-                    return <ProductCard key={id} product={product} href={href} onClick={onClose} />;
-                  })}
+                  {Array.from({ length: 8 }, (_, i) => (
+                    <div key={i} className="h-72 rounded-xl bg-slate-200 animate-pulse" />
+                  ))}
                 </div>
-
-                {isLoading ? (
-                  <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-5">
-                    {Array.from({ length: 6 }, (_, i) => (
-                      <div key={i} className="h-72 rounded-xl bg-slate-200 animate-pulse" />
-                    ))}
+              ) : accumulatedResults.length === 0 ? (
+                <EmptyState
+                  title={t('common.noProductsFound')}
+                  description={t('search.tryDifferentSearch')}
+                />
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-5">
+                    {accumulatedResults.map(({ id, product, href }) => {
+                      return <ProductCard key={id} product={product} href={href} onClick={onClose} />;
+                    })}
                   </div>
-                ) : null}
 
-                {hasMoreResults ? (
-                  <div ref={loadMoreRef} className="flex min-h-16 items-center justify-center pt-4 text-sm text-slate-500">
-                    {isFetchingMore || isLoading ? t('search.loadingMoreProducts') : t('search.scrollForMoreProducts')}
-                  </div>
-                ) : null}
-              </>
-            )}
+                  {isLoading ? (
+                    <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-5">
+                      {Array.from({ length: 6 }, (_, i) => (
+                        <div key={i} className="h-72 rounded-xl bg-slate-200 animate-pulse" />
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {hasMoreResults ? (
+                    <div ref={loadMoreRef} className="flex min-h-16 items-center justify-center pt-4 text-sm text-slate-500">
+                      {isFetchingMore || isLoading ? t('search.loadingMoreProducts') : t('search.scrollForMoreProducts')}
+                    </div>
+                  ) : null}
+                </>
+              )}
             </div>
           </div>
         </div>

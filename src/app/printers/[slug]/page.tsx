@@ -165,7 +165,7 @@ function toDisplayImageUrl(url: string | null | undefined): string | null {
   ) {
     return trimmed;
   }
-  return `/api/media-proxy?url=${encodeURIComponent(trimmed)}`;
+  return `${encodeURIComponent(trimmed)}`;
 }
 
 function flattenPropertyValues(value: unknown): string[] {
