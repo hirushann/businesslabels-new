@@ -92,19 +92,19 @@ const OPTION_FILTERS: Array<{
     | "outerDiameterStrings"
   >;
 }> = [
-  { key: "category", title: "Product Type", field: "category_slugs.keyword", paramValues: "categories" },
-  { key: "brand", title: "Brand", field: "catalog_brand.keyword", paramValues: "brands" },
-  { key: "print_method", title: "Print Method", field: "properties.printmethode.keyword", nestedPath: "properties", paramValues: "printMethods" },
-  { key: "printer_type", title: "Printer Type", field: "properties.printer_type.keyword", nestedPath: "properties", paramValues: "printerTypes" },
-  { key: "detectie", title: "Detection", field: "properties.detectie.keyword", nestedPath: "properties", paramValues: "detections" },
-  { key: "merken", title: "Compatible Brand", field: "compatible_brands.keyword", paramValues: "marks" },
-  { key: "material_code", title: "Material Code", field: "catalog_material_code.keyword", paramValues: "materialCodes" },
-  { key: "material", title: "Material Type", field: "catalog_material.keyword", paramValues: "materials" },
-  { key: "finishing", title: "Finishing", field: "properties.afwerking.keyword", nestedPath: "properties", paramValues: "finishings" },
-  { key: "glue", title: "Glue", field: "properties.lijm.keyword", nestedPath: "properties", paramValues: "glues" },
-  { key: "kern_string", title: "Core Type", field: "properties.kern.keyword", nestedPath: "properties", paramValues: "kernStrings" },
-  { key: "outer_diameter_string", title: "Outer Diameter Type", field: "properties.buiten-diameter.keyword", nestedPath: "properties", paramValues: "outerDiameterStrings" },
-];
+    { key: "category", title: "Product Type", field: "category_slugs.keyword", paramValues: "categories" },
+    { key: "brand", title: "Brand", field: "catalog_brand.keyword", paramValues: "brands" },
+    { key: "print_method", title: "Print Method", field: "properties.printmethode.keyword", nestedPath: "properties", paramValues: "printMethods" },
+    { key: "printer_type", title: "Printer Type", field: "properties.printer_type.keyword", nestedPath: "properties", paramValues: "printerTypes" },
+    { key: "detectie", title: "Detection", field: "properties.detectie.keyword", nestedPath: "properties", paramValues: "detections" },
+    { key: "merken", title: "Compatible Brand", field: "compatible_brands.keyword", paramValues: "marks" },
+    { key: "material_code", title: "Material Code", field: "catalog_material_code.keyword", paramValues: "materialCodes" },
+    { key: "material", title: "Material Type", field: "catalog_material.keyword", paramValues: "materials" },
+    { key: "finishing", title: "Finishing", field: "properties.afwerking.keyword", nestedPath: "properties", paramValues: "finishings" },
+    { key: "glue", title: "Glue", field: "properties.lijm.keyword", nestedPath: "properties", paramValues: "glues" },
+    { key: "kern_string", title: "Core Type", field: "properties.kern.keyword", nestedPath: "properties", paramValues: "kernStrings" },
+    { key: "outer_diameter_string", title: "Outer Diameter Type", field: "properties.buiten-diameter.keyword", nestedPath: "properties", paramValues: "outerDiameterStrings" },
+  ];
 
 const RANGE_FILTERS: Array<{
   key: CatalogRangeKey;
@@ -115,19 +115,19 @@ const RANGE_FILTERS: Array<{
   unitPrefix?: string;
   unitSuffix?: string;
 }> = [
-  { key: "price", title: "Price Range", field: "price", minParam: "priceMin", maxParam: "priceMax", unitPrefix: "€" },
-  { key: "width", title: "Label Width", field: "property_numbers.breedte", minParam: "widthMin", maxParam: "widthMax", unitSuffix: "mm" },
-  { key: "height", title: "Label Height", field: "property_numbers.hoogte", minParam: "heightMin", maxParam: "heightMax", unitSuffix: "mm" },
-  { key: "core", title: "Core Size", field: "property_numbers.kern", minParam: "coreMin", maxParam: "coreMax", unitSuffix: "mm" },
-  {
-    key: "outer_diameter",
-    title: "Outer Diameter",
-    field: "property_numbers.buiten-diameter",
-    minParam: "outerDiameterMin",
-    maxParam: "outerDiameterMax",
-    unitSuffix: "mm",
-  },
-];
+    { key: "price", title: "Price Range", field: "price", minParam: "priceMin", maxParam: "priceMax", unitPrefix: "€" },
+    { key: "width", title: "Label Width", field: "property_numbers.breedte", minParam: "widthMin", maxParam: "widthMax", unitSuffix: "mm" },
+    { key: "height", title: "Label Height", field: "property_numbers.hoogte", minParam: "heightMin", maxParam: "heightMax", unitSuffix: "mm" },
+    { key: "core", title: "Core Size", field: "property_numbers.kern", minParam: "coreMin", maxParam: "coreMax", unitSuffix: "mm" },
+    {
+      key: "outer_diameter",
+      title: "Outer Diameter",
+      field: "property_numbers.buiten-diameter",
+      minParam: "outerDiameterMin",
+      maxParam: "outerDiameterMax",
+      unitSuffix: "mm",
+    },
+  ];
 
 const RESULT_SOURCE_FIELDS = [
   "id",
@@ -495,25 +495,25 @@ export function textQuery(search: string): estypes.QueryDslQueryContainer {
       bool: {
         must: tokens.map((token) => /[0-9]{2,}/.test(token)
           ? {
-              bool: {
-                minimum_should_match: 1,
-                should: titleFields.map((field) => ({
-                  wildcard: {
-                    [`${field}.keyword`]: {
-                      value: `*${token.toLowerCase()}*`,
-                      case_insensitive: true,
-                    },
+            bool: {
+              minimum_should_match: 1,
+              should: titleFields.map((field) => ({
+                wildcard: {
+                  [`${field}.keyword`]: {
+                    value: `*${token.toLowerCase()}*`,
+                    case_insensitive: true,
                   },
-                })),
-              },
-            }
+                },
+              })),
+            },
+          }
           : {
-              multi_match: {
-                query: token,
-                fields: titleFields,
-                operator: "and",
-              },
-            }),
+            multi_match: {
+              query: token,
+              fields: titleFields,
+              operator: "and",
+            },
+          }),
         boost: BOOST_TITLE_AND,
       },
     });
@@ -613,11 +613,11 @@ export function textQuery(search: string): estypes.QueryDslQueryContainer {
       minimum_should_match: 1,
       ...(dimension
         ? {
-            filter: [
-              { term: { "property_numbers.breedte": Number(dimension[1]) } },
-              { term: { "property_numbers.hoogte": Number(dimension[2]) } },
-            ],
-          }
+          filter: [
+            { term: { "property_numbers.breedte": Number(dimension[1]) } },
+            { term: { "property_numbers.hoogte": Number(dimension[2]) } },
+          ],
+        }
         : {}),
     },
   };
@@ -793,26 +793,26 @@ function rangeOrStringFilter(
   const hasStringValues = stringValues.length > 0;
   const stringClause = hasStringValues
     ? {
-        bool: {
-          minimum_should_match: 1,
-          should: stringValues.map((value) => ({
-            term: {
-              [stringField]: {
-                value,
-                case_insensitive: true,
-              },
+      bool: {
+        minimum_should_match: 1,
+        should: stringValues.map((value) => ({
+          term: {
+            [stringField]: {
+              value,
+              case_insensitive: true,
             },
-          })),
-        },
-      } satisfies estypes.QueryDslQueryContainer
+          },
+        })),
+      },
+    } satisfies estypes.QueryDslQueryContainer
     : null;
   const nestedStringClause = stringClause && stringNestedPath
     ? ({
-        nested: {
-          path: stringNestedPath,
-          query: stringClause,
-        },
-      } satisfies estypes.QueryDslQueryContainer)
+      nested: {
+        path: stringNestedPath,
+        query: stringClause,
+      },
+    } satisfies estypes.QueryDslQueryContainer)
     : stringClause;
 
   if (!rangeClause && !hasStringValues) {
@@ -924,7 +924,7 @@ export async function getPrinterInfo(printerIds: number[]): Promise<PrinterInfo>
           }
         }
       }
-      
+
       const slugVal = hit._source?.slug;
       if (Array.isArray(slugVal)) {
         result.slugs.push(...slugVal.filter((s): s is string => typeof s === "string"));
@@ -966,71 +966,71 @@ function buildBaseFilters(
     { term: { "state.keyword": "active" } },
     params.printerIds && params.printerIds.length > 0
       ? {
-          bool: {
-            must_not: [
-              { term: { is_group_product: true } },
-              { term: { "product_type.keyword": "group" } }
-            ]
-          }
+        bool: {
+          must_not: [
+            { term: { is_group_product: true } },
+            { term: { "product_type.keyword": "group" } }
+          ]
         }
+      }
       : null,
     params.type ? { term: { product_type: params.type } } : null,
     termsFilter("id", params.ids),
     params.printerIds && params.printerIds.length > 0
       ? (() => {
-          const printerShould: estypes.QueryDslQueryContainer[] = [
-            {
-              bool: {
-                should: [
-                  { terms: { printer_ids: params.printerIds } },
-                  ...(printerInfo && printerInfo.productIds.length > 0
-                    ? [{ terms: { id: printerInfo.productIds } }]
-                    : []),
-                ],
-                minimum_should_match: 1,
-              },
-            },
-          ];
-
-          if (printerInfo) {
-            const isEpson = printerInfo.slugs.some(slug => slug.toLowerCase().includes("epson"));
-            if (isEpson) {
-              const inkSlugs = printerInfo.slugs.flatMap(getCompatibleInkCategorySlugs);
-              if (inkSlugs.length > 0) {
-                printerShould.push({
-                  bool: {
-                    must: [
-                      { terms: { "category_slugs.keyword": ["inkt-cartridges-nl", "maintenance-boxen-nl"] } },
-                      { terms: { "category_slugs.keyword": inkSlugs } },
-                    ],
-                  },
-                });
-              }
-            } else {
-              const brands = printerInfo.slugs
-                .map(getPrinterBrandFromSlug)
-                .filter((b): b is string => b !== null);
-              
-              if (brands.length > 0) {
-                printerShould.push({
-                  bool: {
-                    must: [
-                      { term: { "category_slugs.keyword": "tt-printlinten-nl" } },
-                      wildcardKeywordFilter("catalog_brand.keyword", [...brands, "Diamondlabels"]) as estypes.QueryDslQueryContainer,
-                    ],
-                  },
-                });
-              }
-            }
-          }
-
-          return {
+        const printerShould: estypes.QueryDslQueryContainer[] = [
+          {
             bool: {
-              should: printerShould,
+              should: [
+                { terms: { printer_ids: params.printerIds } },
+                ...(printerInfo && printerInfo.productIds.length > 0
+                  ? [{ terms: { id: printerInfo.productIds } }]
+                  : []),
+              ],
               minimum_should_match: 1,
             },
-          };
-        })()
+          },
+        ];
+
+        if (printerInfo) {
+          const isEpson = printerInfo.slugs.some(slug => slug.toLowerCase().includes("epson"));
+          if (isEpson) {
+            const inkSlugs = printerInfo.slugs.flatMap(getCompatibleInkCategorySlugs);
+            if (inkSlugs.length > 0) {
+              printerShould.push({
+                bool: {
+                  must: [
+                    { terms: { "category_slugs.keyword": ["inkt-cartridges-nl", "maintenance-boxen-nl"] } },
+                    { terms: { "category_slugs.keyword": inkSlugs } },
+                  ],
+                },
+              });
+            }
+          } else {
+            const brands = printerInfo.slugs
+              .map(getPrinterBrandFromSlug)
+              .filter((b): b is string => b !== null);
+
+            if (brands.length > 0) {
+              printerShould.push({
+                bool: {
+                  must: [
+                    { term: { "category_slugs.keyword": "tt-printlinten-nl" } },
+                    wildcardKeywordFilter("catalog_brand.keyword", [...brands, "Diamondlabels"]) as estypes.QueryDslQueryContainer,
+                  ],
+                },
+              });
+            }
+          }
+        }
+
+        return {
+          bool: {
+            should: printerShould,
+            minimum_should_match: 1,
+          },
+        };
+      })()
       : null,
     exactKeywordFilter("slug.keyword", params.slugs),
     exactKeywordFilter("sku.keyword", params.skus),
@@ -1053,13 +1053,13 @@ function buildBaseFilters(
     omittedRangeKey === "outer_diameter"
       ? null
       : rangeOrStringFilter(
-          "property_numbers.buiten-diameter",
-          params.outerDiameterMin,
-          params.outerDiameterMax,
-          "properties.buiten-diameter.keyword",
-          params.outerDiameterStrings,
-          "properties",
-        ),
+        "property_numbers.buiten-diameter",
+        params.outerDiameterMin,
+        params.outerDiameterMax,
+        "properties.buiten-diameter.keyword",
+        params.outerDiameterStrings,
+        "properties",
+      ),
   ];
 
   return filters.filter((filter): filter is estypes.QueryDslQueryContainer => filter !== null);
@@ -1153,9 +1153,9 @@ function aggregations(
 
       const innerAgg: estypes.AggregationsAggregationContainer = filter.nestedPath
         ? {
-            nested: { path: filter.nestedPath },
-            aggs: { values: termsAgg },
-          }
+          nested: { path: filter.nestedPath },
+          aggs: { values: termsAgg },
+        }
         : termsAgg;
 
       return [
@@ -1512,23 +1512,23 @@ function stringValue(value: unknown): string | null {
 
 function getLocalizedValue(value: unknown, locale?: "en" | "nl"): string | null {
   if (!value) return null;
-  
+
   if (Array.isArray(value)) {
     const strings = value.filter(v => typeof v === 'string' && v.trim() !== '') as string[];
     if (strings.length === 0) return null;
     if (strings.length === 1) return strings[0];
-    
+
     // Assuming backend flattens ['en' => '...', 'nl' => '...']
     // English is index 0, Dutch is index 1
     if (locale === 'nl') return strings[1] || strings[0];
     return strings[0];
   }
-  
+
   if (typeof value === 'string') {
     const trimmed = value.trim();
     return trimmed !== '' ? trimmed : null;
   }
-  
+
   return stringValue(value);
 }
 
@@ -1637,7 +1637,7 @@ function productType(value: unknown): ProductRouteType | null {
 function imageUrl(url: string | null): string | null {
   if (!url?.trim()) return null;
   if (url.startsWith("/") || url.startsWith("data:") || url.startsWith("blob:")) return url;
-  return `/api/media-proxy?url=${encodeURIComponent(url)}`;
+  return `${url}`;
 }
 
 function warrantyFromSource(source: ProductSource): ProductWarrantyData | null | undefined {
@@ -1741,7 +1741,7 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number, loc
     type = "group_product";
   }
   const frontendPath = stringValue(source.frontend_path);
-  
+
   const translations = source.translations;
   const materialTranslations = source.material_translations as Record<string, Record<string, string>> | undefined;
 
@@ -1752,11 +1752,11 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number, loc
   const tTitle = localizedTranslationField(translations, locale, ["title", "name"]);
   const explicitTitle = locale ? (source[`title_${locale}`] ?? source[`name_${locale}`]) : undefined;
   const title = tTitle ?? getLocalizedValue(explicitTitle ?? source.title, locale) ?? getLocalizedValue(source.name, locale) ?? getLocalizedValue(source.post_title, locale) ?? "Unnamed product";
-  
+
   const tSubtitle = localizedTranslationField(translations, locale, ["subtitle"]);
   const explicitSubtitle = locale ? source[`subtitle_${locale}`] : undefined;
   const subtitle = tSubtitle ?? getLocalizedValue(explicitSubtitle ?? source.subtitle, locale);
-  
+
   const tExcerpt = localizedTranslationField(translations, locale, ["excerpt", "short_description"]);
   const explicitExcerpt = locale ? source[`excerpt_${locale}`] : undefined;
   const excerpt = tExcerpt ?? getLocalizedValue(explicitExcerpt ?? source.excerpt, locale);

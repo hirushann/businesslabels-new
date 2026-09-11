@@ -16,5 +16,5 @@ export function toDisplayImageUrl(url: string | null | undefined): string | null
 
   if (trimmed.startsWith("/") || trimmed.startsWith("data:") || trimmed.startsWith("blob:")) return trimmed;
 
-  return `/api/media-proxy?url=${encodeURIComponent(trimmed)}`;
+  return `${trimmed}`;
 }

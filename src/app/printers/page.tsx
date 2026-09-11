@@ -111,7 +111,7 @@ function toDisplayImageUrl(url: string | null | undefined): string | null {
     trimmed.startsWith("blob:")
   )
     return trimmed;
-  return `/api/media-proxy?url=${encodeURIComponent(trimmed)}`;
+  return `${(trimmed)}`;
 }
 
 function flattenPropertyValues(value: unknown): string[] {
@@ -452,7 +452,7 @@ export default async function PrintersPage({
       const path = require('path');
       const logPath = path.join(process.cwd(), 'api-log.txt');
       fs.appendFileSync(logPath, `[${new Date().toISOString()}] PAGE RENDER ERROR: ${(error as any).message}\n\n`);
-    } catch {}
+    } catch { }
   }
 
   return (
@@ -559,5 +559,5 @@ export default async function PrintersPage({
       <CTABanner />
     </div>
   );
-  
+
 }

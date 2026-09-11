@@ -226,7 +226,7 @@ function toDisplayImageUrl(url: string | null): string | null {
   if (!url?.trim()) return null;
   if (url.startsWith("/") || url.startsWith("data:") || url.startsWith("blob:")) return url;
 
-  return `/api/media-proxy?url=${encodeURIComponent(url)}`;
+  return `${url}`;
 }
 
 function localizedString(result: unknown, field: string, locale?: string): string | null {
@@ -250,30 +250,30 @@ function localizedString(result: unknown, field: string, locale?: string): strin
 
   if (Array.isArray(translations)) {
     for (let t of translations) {
-       if (typeof t === "string") {
-         try {
-           t = JSON.parse(t);
-         } catch {
-           continue;
-         }
-       }
-       if (!t || typeof t !== "object") continue;
-       const record = t as Record<string, unknown>;
+      if (typeof t === "string") {
+        try {
+          t = JSON.parse(t);
+        } catch {
+          continue;
+        }
+      }
+      if (!t || typeof t !== "object") continue;
+      const record = t as Record<string, unknown>;
 
-       // Structure 1: { "en": { "language": "en", "subtitle": "..." } }
-       const locObj = record[locale];
-       if (locObj && typeof locObj === "object") {
-         const localizedValue = (locObj as Record<string, unknown>)[field];
-         if (typeof localizedValue === "string" && localizedValue.trim() !== "") {
-            return localizedValue;
-         }
-       }
+      // Structure 1: { "en": { "language": "en", "subtitle": "..." } }
+      const locObj = record[locale];
+      if (locObj && typeof locObj === "object") {
+        const localizedValue = (locObj as Record<string, unknown>)[field];
+        if (typeof localizedValue === "string" && localizedValue.trim() !== "") {
+          return localizedValue;
+        }
+      }
 
-       // Structure 2: { "language": "en", "subtitle": "..." }
-       const directValue = record[field];
-       if (record.language === locale && typeof directValue === "string" && directValue.trim() !== "") {
-          return directValue;
-       }
+      // Structure 2: { "language": "en", "subtitle": "..." }
+      const directValue = record[field];
+      if (record.language === locale && typeof directValue === "string" && directValue.trim() !== "") {
+        return directValue;
+      }
     }
   }
   return null;
@@ -284,14 +284,14 @@ function localizedMaterialTitle(result: unknown, locale?: string): string | null
   const translations = getRaw(result, "material_translations");
   if (Array.isArray(translations)) {
     for (const t of translations) {
-       if (!t || typeof t !== "object") continue;
-       const locObj = (t as Record<string, unknown>)[locale];
-       if (locObj && typeof locObj === "object") {
-         const title = (locObj as Record<string, unknown>).title;
-         if (typeof title === "string" && title !== "") {
-            return title;
-         }
-       }
+      if (!t || typeof t !== "object") continue;
+      const locObj = (t as Record<string, unknown>)[locale];
+      if (locObj && typeof locObj === "object") {
+        const title = (locObj as Record<string, unknown>).title;
+        if (typeof title === "string" && title !== "") {
+          return title;
+        }
+      }
     }
   }
   return null;
