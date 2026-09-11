@@ -21,31 +21,13 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "bbnl.dayzsolutions.com",
       },
-      {
-        protocol: "https",
-        hostname: "dashboard.businesslabels.nl",
-      },
-      {
-        protocol: "https",
-        hostname: "media.businesslabels.nl",
-      },
-      ...(mediaPublicUrl
-        ? (() => {
-            try {
-              const u = new URL(mediaPublicUrl);
-              return [
-                {
-                  protocol: (u.protocol.replace(/:$/, '') || 'https') as 'http' | 'https',
-                  hostname: u.hostname,
-                },
-              ];
-            } catch {
-              return [];
-            }
-          })()
-        : []),
+      ...(mediaPublicUrl ? [new URL(`${mediaPublicUrl}/**`)] : []),
     ],
     localPatterns: [
+      {
+        pathname: '/api/media-proxy',
+        search: '',
+      },
       {
         pathname: '/**',
       },

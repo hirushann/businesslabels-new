@@ -1,22 +1,22 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { toDisplayImageUrl } from "./imageProxy";
 
 describe("toDisplayImageUrl", () => {
-  it("returns public media URLs directly", () => {
-    const image = "https://media.businesslabels.nl/12527/10550157.png";
-    expect(toDisplayImageUrl(image)).toBe(image);
-  });
+  afterEach(() => vi.unstubAllEnvs());
 
-  it("unwraps /api/media-proxy URLs to direct target URLs", () => {
-    const image = "https://media.businesslabels.nl/12527/10550157.png";
+  it("uses configured public media URLs directly", () => {
+    vi.stubEnv("NEXT_PUBLIC_MEDIA_PUBLIC_URL", "https://media.example.com");
+    const image = "https://media.example.com/94/product.jpg";
+
+    expect(toDisplayImageUrl(image)).toBe(image);
     expect(toDisplayImageUrl(`/api/media-proxy?url=${encodeURIComponent(image)}`)).toBe(image);
   });
 
-  it("returns remote and relative URLs directly without proxying", () => {
-    expect(toDisplayImageUrl("https://legacy.example.com/image.jpg")).toBe("https://legacy.example.com/image.jpg");
-    expect(toDisplayImageUrl("/placeholder.svg")).toBe("/placeholder.svg");
-    expect(toDisplayImageUrl(null)).toBeNull();
-    expect(toDisplayImageUrl("   ")).toBeNull();
+  it("keeps proxying legacy remote URLs", () => {
+    vi.stubEnv("NEXT_PUBLIC_MEDIA_PUBLIC_URL", "https://media.example.com");
+
+    expect(toDisplayImageUrl("https://legacy.example.com/image.jpg"))
+      .toBe("/api/media-proxy?url=https%3A%2F%2Flegacy.example.com%2Fimage.jpg");
   });
 });

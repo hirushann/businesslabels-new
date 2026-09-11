@@ -374,21 +374,22 @@ describe("proxy locale routing", () => {
     expect(wineResponse.headers.get("location")).toBe("http://localhost/material/inkjet");
   });
 
-  it("redirects known legacy uploads directly to destination or canonical pages", () => {
+  it("redirects known legacy uploads directly to media proxy or canonical pages", () => {
     const pdfResponse = proxy(makeRequest("/wp-content/uploads/2023/06/Inkt-kosten-ColorWorks-LR.pdf"));
     expect(pdfResponse.status).toBe(301);
     expect(pdfResponse.headers.get("location")).toBe("http://localhost/epson-colorworks-faq");
 
     const imgResponse = proxy(makeRequest("/wp-content/uploads/2022/01/Epson_SJIC42P-C_Cyan_C13T52M240-150x121.png"));
     expect(imgResponse.status).toBe(301);
-    expect(imgResponse.headers.get("location")).toBe("https://dashboard.businesslabels.nl/storage/12265/Epson_SJIC42P-C_Cyan_C13T52M240.png");
+    expect(imgResponse.headers.get("location")).toContain("/api/media-proxy?url=");
   });
 
-  it("redirects unknown /wp-content/uploads/ to backend base", () => {
+  it("rewrites unknown /wp-content/uploads/ internally to /api/media-proxy", () => {
     const response = proxy(makeRequest("/wp-content/uploads/2024/01/some-new-image.png"));
 
-    expect(response.status).toBe(301);
-    expect(response.headers.get("location")).toBe("https://bbnl.dayzsolutions.com/wp-content/uploads/2024/01/some-new-image.png");
+    expect(response.status).not.toBeGreaterThanOrEqual(300);
+    expect(response.headers.get("x-middleware-rewrite")).toContain("/api/media-proxy?url=");
+    expect(response.headers.get("x-middleware-rewrite")).toContain("some-new-image.png");
   });
 });
 

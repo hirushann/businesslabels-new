@@ -66,7 +66,7 @@ const LEGACY_ARCHIVE_PATH_MAP: Record<string, { path: string; locale: 'nl' | 'en
 
 const LEGACY_UPLOADS_REDIRECT_MAP: Record<string, string> = {
   '/wp-content/uploads/2021/08/STARTER-SET-DHL-100x210-SHIPPING-LABELS-ZX420I-13.png':
-    'https://bbnl.dayzsolutions.com/storage/7709/STARTER-SET-DHL-100%C3%97210-SHIPPING-LABELS-ZX420I-13.png',
+    '/api/media-proxy?url=https%3A%2F%2Fbbnl.dayzsolutions.com%2Fstorage%2F7709%2FSTARTER-SET-DHL-100%25C3%2597210-SHIPPING-LABELS-ZX420I-13.png',
   '/wp-content/uploads/2023/06/Inkt-kosten-ColorWorks-LR.pdf':
     '/epson-colorworks-faq',
   '/wp-content/uploads/2025/04/colorworks-d6500pe-datasheet.pdf':
@@ -78,27 +78,27 @@ const LEGACY_UPLOADS_REDIRECT_MAP: Record<string, string> = {
   '/wp-content/uploads/2025/04/colorworks-d6000pe-datasheet.pdf':
     '/product/colorworks-cw-d6000pe',
   '/wp-content/uploads/2022/01/Epson_SJIC42P-Y_Yellow_C13T52M440-150x121.png':
-    'https://dashboard.businesslabels.nl/storage/12264/Epson_SJIC42P-Y_Yellow_C13T52M440.png',
+    '/api/media-proxy?url=https%3A%2F%2Fdashboard.businesslabels.nl%2Fstorage%2F12264%2FEpson_SJIC42P-Y_Yellow_C13T52M440.png',
   '/wp-content/uploads/2022/01/Epson-CW-C4000-WiFi-dongle-150x119.png':
-    'https://dashboard.businesslabels.nl/storage/7542/Epson-CW-C4000-WiFi-dongle.png',
+    '/api/media-proxy?url=https%3A%2F%2Fdashboard.businesslabels.nl%2Fstorage%2F7542%2FEpson-CW-C4000-WiFi-dongle.png',
   '/wp-content/uploads/2022/01/Epson-Cw-C4000-auto-cutter-unit-150x104.png':
-    'https://dashboard.businesslabels.nl/storage/7543/Epson-Cw-C4000-auto-cutter-unit.png',
+    '/api/media-proxy?url=https%3A%2F%2Fdashboard.businesslabels.nl%2Fstorage%2F7543%2FEpson-Cw-C4000-auto-cutter-unit.png',
   '/wp-content/uploads/2022/01/Epson_SJIC42P-MK_matt_Black_C13T52M540-150x121.png':
-    'https://dashboard.businesslabels.nl/storage/12267/Epson_SJIC42P-MK_matt_Black_C13T52M540.png',
+    '/api/media-proxy?url=https%3A%2F%2Fdashboard.businesslabels.nl%2Fstorage%2F12267%2FEpson_SJIC42P-MK_matt_Black_C13T52M540.png',
   '/wp-content/uploads/2022/01/Epson-CW-C4000-paper-tray-part-150x121.png':
-    'https://dashboard.businesslabels.nl/storage/7540/Epson-CW-C4000-paper-tray-opvangbakje.png',
+    '/api/media-proxy?url=https%3A%2F%2Fdashboard.businesslabels.nl%2Fstorage%2F7540%2FEpson-CW-C4000-paper-tray-opvangbakje.png',
   '/wp-content/uploads/2022/01/Epson_SJIC42P-M_Magenta_C13T52M340-150x121.png':
-    'https://dashboard.businesslabels.nl/storage/12266/Epson_SJIC42P-M_Magenta_C13T52M340.png',
+    '/api/media-proxy?url=https%3A%2F%2Fdashboard.businesslabels.nl%2Fstorage%2F12266%2FEpson_SJIC42P-M_Magenta_C13T52M340.png',
   '/wp-content/uploads/2022/01/Epson_SJIC42P-BK_Black_C13T52M140-150x121.png':
-    'https://dashboard.businesslabels.nl/storage/12268/Epson_SJIC42P-BK_Black_C13T52M140.png',
+    '/api/media-proxy?url=https%3A%2F%2Fdashboard.businesslabels.nl%2Fstorage%2F12268%2FEpson_SJIC42P-BK_Black_C13T52M140.png',
   '/wp-content/uploads/2022/02/Epson-left-CW-C4000-Europe.png':
-    'https://dashboard.businesslabels.nl/storage/10883/Epson-left-CW-C4000-Europe.png',
+    '/api/media-proxy?url=https%3A%2F%2Fdashboard.businesslabels.nl%2Fstorage%2F10883%2FEpson-left-CW-C4000-Europe.png',
   '/wp-content/uploads/2022/01/Epson-left-CW-C4000-LR-1-150x131.png':
-    'https://dashboard.businesslabels.nl/storage/10883/Epson-left-CW-C4000-Europe.png',
+    '/api/media-proxy?url=https%3A%2F%2Fdashboard.businesslabels.nl%2Fstorage%2F10883%2FEpson-left-CW-C4000-Europe.png',
   '/wp-content/uploads/2022/01/Epson_SJIC42P-C_Cyan_C13T52M240-150x121.png':
-    'https://dashboard.businesslabels.nl/storage/12265/Epson_SJIC42P-C_Cyan_C13T52M240.png',
+    '/api/media-proxy?url=https%3A%2F%2Fdashboard.businesslabels.nl%2Fstorage%2F12265%2FEpson_SJIC42P-C_Cyan_C13T52M240.png',
   '/wp-content/uploads/2022/01/Epson_C4000e_maintenance_box_SJMB4000-1-e1643380482940-150x120.png':
-    'https://dashboard.businesslabels.nl/storage/12263/Epson_C4000e_maintenance_box_SJMB4000-1-e1643380482940.png',
+    '/api/media-proxy?url=https%3A%2F%2Fdashboard.businesslabels.nl%2Fstorage%2F12263%2FEpson_C4000e_maintenance_box_SJMB4000-1-e1643380482940.png',
 };
 
 function requestHeadersWithLocale(request: NextRequest, locale: 'en' | 'nl') {
@@ -412,7 +412,8 @@ export function proxy(request: NextRequest) {
     }
     const backendBase = process.env.BBNL_API_BASE_URL || 'https://bbnl.dayzsolutions.com';
     const targetUrl = new URL(cleanPathname + search, backendBase);
-    return NextResponse.redirect(targetUrl, 301);
+    const rewriteUrl = new URL(`/api/media-proxy?url=${encodeURIComponent(targetUrl.toString())}`, request.url);
+    return NextResponse.rewrite(rewriteUrl);
   }
 
   // ── Locale routing ──────────────────────────────────────────────────────────
