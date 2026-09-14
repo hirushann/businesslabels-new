@@ -247,6 +247,9 @@ export default function MaintenancePage() {
 
           <footer className="maintenance-footer">
             Businesslabels is onderdeel van <a href="https://www.smart2b.nl" target="_blank" rel="noopener noreferrer">Smart2B BV</a><br />
+            Lenderinkweg 8<br />
+            6733 AX Wekerom<br />
+            The Netherlands<br />
             © 2026 Businesslabels. Alle rechten voorbehouden.
           </footer>
         </main>

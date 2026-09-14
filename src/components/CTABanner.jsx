@@ -1,22 +1,30 @@
 "use client";
 
+import { useState } from 'react';
 import Image from 'next/image';
 import LocaleLink from '@/components/LocaleLink';
 import { useHelp } from './HelpProvider';
 import { useTranslations } from 'next-intl';
+import { toDisplayImageUrl } from '@/lib/utils/imageProxy';
 
-export default function CTABanner() {
+export default function CTABanner({ footerBanner = null } = {}) {
   const t = useTranslations();
   const { openHelp } = useHelp();
+
+  const defaultBg = "/images/cta_image.webp";
+  const [hasError, setHasError] = useState(false);
+  const bgSrc = hasError ? defaultBg : (toDisplayImageUrl(footerBanner) || defaultBg);
+
   return (
     <section className="relative min-h-[400px] lg:h-120 w-full py-16 lg:py-12 overflow-hidden flex items-center">
       {/* Background */}
       <Image
-        src="/images/cta_image.webp"
+        src={bgSrc}
         alt="Call to action Image - Businesslabels"
         fill
         sizes="100vw"
         className="object-cover"
+        onError={() => setHasError(true)}
       />
       <div className="absolute inset-0 bg-gradient-to-l from-black/50 via-black/50 to-black/0" />
       <div className="absolute inset-0 bg-gradient-to-br from-stone-700/70 to-yellow-950/60" />

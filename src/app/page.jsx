@@ -7,10 +7,10 @@ import FeatureSections from "@/components/FeatureSections";
 import ReviewsSection from "@/components/ReviewsSection";
 import CTABanner from "@/components/CTABanner";
 import { getTranslations } from "next-intl/server";
+import { getHomeData } from "@/lib/api/home";
 
 export async function generateMetadata() {
   const t = await getTranslations();
-  const siteUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || "https://businesslabels.nl").replace(/\/$/, "");
 
   return {
     title: t("pages.homeMetadataTitle"),
@@ -22,17 +22,20 @@ export async function generateMetadata() {
   };
 }
 
-export default function Home() {
+export default async function Home() {
+  const homeData = await getHomeData();
+
   return (
     <>
-      <HeroSection />
+      <HeroSection heroBanner={homeData?.hero_banner} />
       <StatsBar />
       <CategorySection />
-      <WhyChooseUs />
+      <WhyChooseUs images={homeData?.why_choose_business_label} />
       <PopularProducts />
-      <FeatureSections />
+      <FeatureSections quickLinks={homeData?.quick_links} />
       <ReviewsSection />
-      <CTABanner />
+      <CTABanner footerBanner={homeData?.footer_banner} />
     </>
   );
 }
+

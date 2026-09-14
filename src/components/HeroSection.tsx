@@ -15,6 +15,7 @@ import {
   getAvailablePrinterProductCategories,
   type AvailablePrinterProductCategory,
 } from "@/lib/printerProductCategories";
+import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 
 type CategoryCard = {
   label: string;
@@ -44,7 +45,11 @@ const CATEGORY_CARDS = {
   },
 } satisfies Record<AvailablePrinterProductCategory["id"], CategoryCard>;
 
-export default function HeroSection() {
+interface HeroSectionProps {
+  heroBanner?: string | null;
+}
+
+export default function HeroSection({ heroBanner }: HeroSectionProps = {}) {
   const t = useTranslations();
   const locale = useLocale();
   const router = useRouter();
@@ -56,6 +61,10 @@ export default function HeroSection() {
     printerId: number | null;
     categories: AvailablePrinterProductCategory[];
   }>({ printerId: null, categories: [] });
+
+  const defaultBg = "/Herobg.webp";
+  const [bgError, setBgError] = useState(false);
+  const bgSrc = bgError ? defaultBg : (toDisplayImageUrl(heroBanner) || defaultBg);
 
   const printerId = searchParams.get("printer_id");
 
@@ -148,13 +157,14 @@ export default function HeroSection() {
     <section className="relative w-full min-h-[85vh] lg:h-[85vh] py-12 lg:py-0 flex items-center overflow-hidden px-4 md:px-8 lg:px-10">
       {/* Background image */}
       <Image
-        src="/Herobg.webp"
+        src={bgSrc}
         alt="Hero background"
         fill
         sizes="100vw"
         priority
         fetchPriority="high"
         className="object-cover object-center"
+        onError={() => setBgError(true)}
       />
       {/* Gradient overlays */}
       <div className="absolute inset-0 bg-gradient-to-l from-black/40 via-black/40 to-black/0" />

@@ -1,42 +1,58 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useLocalePath } from '@/hooks/useLocalePath';
+import { toDisplayImageUrl } from '@/lib/utils/imageProxy';
 
-const sections = [
+const defaultSections = [
   {
     key: 'section1',
     href: '/product-categorie/labelprinters',
-    image: '/home_epson_printer.webp',
+    defaultImage: '/home_epson_printer.webp',
     imageLeft: false,
     bullets: 3,
   },
   {
     key: 'section2',
     href: '/product-categorie/labels-en-tickets',
-    image: '/find_labels_and_materials.webp',
+    defaultImage: '/find_labels_and_materials.webp',
     imageLeft: true,
     bullets: 3,
   },
   {
     key: 'section3',
     href: '/my-account?tab=favourites',
-    image: '/quick_reorder.webp',
+    defaultImage: '/quick_reorder.webp',
     imageLeft: false,
     bullets: 3,
   },
 ];
 
-export default function FeatureSections() {
+export default function FeatureSections({ quickLinks = {} } = {}) {
   const t = useTranslations();
   const localePath = useLocalePath();
+
+  const [imageErrors, setImageErrors] = useState({});
+
+  const sectionImages = {
+    section1: imageErrors.section1
+      ? defaultSections[0].defaultImage
+      : (toDisplayImageUrl(quickLinks?.find_the_right_printer_image) || defaultSections[0].defaultImage),
+    section2: imageErrors.section2
+      ? defaultSections[1].defaultImage
+      : (toDisplayImageUrl(quickLinks?.find_labels_materials_image) || defaultSections[1].defaultImage),
+    section3: imageErrors.section3
+      ? defaultSections[2].defaultImage
+      : (toDisplayImageUrl(quickLinks?.quick_reorder_image) || defaultSections[2].defaultImage),
+  };
   
   return (
     <section className="w-full px-4 md:px-8 lg:px-10 py-16 lg:py-24 bg-slate-50 flex flex-col gap-16 lg:gap-24">
       <div className="max-w-360 mx-auto w-full flex flex-col gap-16 lg:gap-24">
-        {sections.map((section, index) => (
+        {defaultSections.map((section, index) => (
           <div
             key={section.key}
             className={`flex flex-col lg:flex-row items-center gap-8 lg:gap-12 ${section.imageLeft ? '' : 'lg:flex-row-reverse'}`}
@@ -44,12 +60,18 @@ export default function FeatureSections() {
             {/* Image */}
             <div className="w-full lg:flex-1 h-64 sm:h-96 relative rounded-xl overflow-hidden">
               <Image
-                src={section.image}
+                src={sectionImages[section.key]}
                 alt={t(`features.${section.key}Title`)}
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"
                 priority={index === 0}
                 className="object-cover object-center"
+                onError={() => {
+                  setImageErrors((prev) => ({
+                    ...prev,
+                    [section.key]: true,
+                  }));
+                }}
               />
             </div>
             {/* Content */}
