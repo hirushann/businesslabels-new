@@ -15,6 +15,7 @@ import RecommendedMaterialsSlider from "@/components/materials/RecommendedMateri
 import CTABanner from "@/components/CTABanner";
 import InThisArticle from "@/components/blog/InThisArticle";
 import CopyLinkButton from "@/components/blog/CopyLinkButton";
+import ImageCompareSlider from "@/components/blog/ImageCompareSlider";
 
 type PostTranslation = {
   language: string;
@@ -85,12 +86,64 @@ async function getPost(slug: string): Promise<PostData | null> {
       if (found) return found;
     }
 
+    if (
+      slug === "epson-mk-bk-keuze" ||
+      slug === "epson-bk-vs-mk-which-should-you-choose-matte-or-gloss"
+    ) {
+      return EPSON_MK_BK_FALLBACK;
+    }
+
     return null;
   } catch (error) {
+    if (
+      slug === "epson-mk-bk-keuze" ||
+      slug === "epson-bk-vs-mk-which-should-you-choose-matte-or-gloss"
+    ) {
+      return EPSON_MK_BK_FALLBACK;
+    }
     console.error("Error fetching post:", error);
     return null;
   }
 }
+
+const EPSON_MK_BK_FALLBACK: PostData = {
+  id: 10857,
+  title: "Epson BK vs MK - Welke moet je kiezen, mat of glans?",
+  slug: "epson-mk-bk-keuze",
+  excerpt: "Weet eindelijk welk Epson ColorWorks model je wilt hebben, BK of MK welke past het beste bij jou?",
+  status: "published",
+  image: "https://media.businesslabels.nl/10857/BK-vs-MK-Epson-ColorWorks-ink-featured-image.png",
+  created_at: "2026-06-02T10:00:00.000000Z",
+  updated_at: "2026-06-02T10:00:00.000000Z",
+  author: {
+    name: "Levi van der Molen",
+    email: "verkoop@businesslabels.nl",
+    avatar: "https://media.businesslabels.nl/10836/Thumbs-up.JPG",
+    about: "Je vertrouwde partner voor hoogwaardige labels en printoplossingen. We delen inzichten over labelontwerp, materiaalkeuze en industrienormen om je bedrijf te laten groeien.",
+  },
+  categories: [{ name: "Article", slug: "all" }],
+  content: `<h2 id="heading-0">Epson BK vs MK: welke zwarte inkt moet je kiezen?</h2><p>Bij Epson ColorWorks labelprinters kom je vaak de aanduidingen <strong>BK</strong> en <strong>MK</strong> tegen. Beide varianten staan voor zwarte pigmentinkt, maar ze hebben verschillende eigenschappen afhankelijk van het type materiaal.</p><h3 id="heading-1">Wat betekent BK?</h3><p><strong>BK</strong> staat voor <strong>Photo Black</strong> (glanszwart). Deze inkt is speciaal ontwikkeld voor glanzende etiketten zoals Glossy papier en Glossy PP. Op gladde materialen hecht BK inkt optimaal en levert het een diepe, krasvaste zwarte afdruk.</p><h3 id="heading-2">Wat betekent MK?</h3><p><strong>MK</strong> staat voor <strong>Matte Black</strong> (matzwart). Deze inkt heeft een hogere pigmentdichtheid en is geoptimaliseerd voor matte en poreuze media, zoals mat papier, gestructureerd papier en PE. Op matte dragers zorgt MK voor een aanzienlijk hogere optische zwartdichtheid (D-max) dan BK inkt.</p><h3 id="heading-3">Wanneer kies je BK?</h3><ul><li>Voor glanzende etiketten (Glossy papier en folie)</li><li>Wanneer je een egale glans over het hele etiket wilt</li><li>Voor toepassingen met hoog contrast op gladde media</li></ul><h3 id="heading-4">Wanneer kies je MK?</h3><ul><li>Voor matte etiketten (mat papier, PE, textured papier)</li><li>Voor diepere zwarttinten en hogere contrasten op poreuze media</li><li>Voor chemische en industriële labels volgens GHS/BS5609 normen</li></ul><h3 id="heading-5">Vergelijking in de praktijk</h3><p>Hieronder kun je de afdrukresultaten van de BK inkt en MK inkt direct met elkaar vergelijken. Verschuif de balk om het verschil in zwartdiepte en schaduwen te bekijken.</p>`,
+  translations: [
+    {
+      nl: {
+        language: "nl",
+        title: "Epson BK vs MK - Welke moet je kiezen, mat of glans?",
+        slug: "epson-mk-bk-keuze",
+        excerpt: "Weet eindelijk welk Epson ColorWorks model je wilt hebben, BK of MK welke past het beste bij jou?",
+        content: `<h2 id="heading-0">Epson BK vs MK: welke zwarte inkt moet je kiezen?</h2><p>Bij Epson ColorWorks labelprinters kom je vaak de aanduidingen <strong>BK</strong> en <strong>MK</strong> tegen. Beide varianten staan voor zwarte pigmentinkt, maar ze hebben verschillende eigenschappen afhankelijk van het type materiaal.</p><h3 id="heading-1">Wat betekent BK?</h3><p><strong>BK</strong> staat voor <strong>Photo Black</strong> (glanszwart). Deze inkt is speciaal ontwikkeld voor glanzende etiketten zoals Glossy papier en Glossy PP. Op gladde materialen hecht BK inkt optimaal en levert het een diepe, krasvaste zwarte afdruk.</p><h3 id="heading-2">Wat betekent MK?</h3><p><strong>MK</strong> staat voor <strong>Matte Black</strong> (matzwart). Deze inkt heeft een hogere pigmentdichtheid en is geoptimaliseerd voor matte en poreuze media, zoals mat papier, gestructureerd papier en PE. Op matte dragers zorgt MK voor een aanzienlijk hogere optische zwartdichtheid (D-max) dan BK inkt.</p><h3 id="heading-3">Wanneer kies je BK?</h3><ul><li>Voor glanzende etiketten (Glossy papier en folie)</li><li>Wanneer je een egale glans over het hele etiket wilt</li><li>Voor toepassingen met hoog contrast op gladde media</li></ul><h3 id="heading-4">Wanneer kies je MK?</h3><ul><li>Voor matte etiketten (mat papier, PE, textured papier)</li><li>Voor diepere zwarttinten en hogere contrasten op poreuze media</li><li>Voor chemische en industriële labels volgens GHS/BS5609 normen</li></ul><h3 id="heading-5">Vergelijking in de praktijk</h3><p>Hieronder kun je de afdrukresultaten van de BK inkt en MK inkt direct met elkaar vergelijken. Verschuif de balk om het verschil in zwartdiepte en schaduwen te bekijken.</p>`,
+      },
+    },
+    {
+      en: {
+        language: "en",
+        title: "Epson BK vs MK - Which should you choose, matte or gloss?",
+        slug: "epson-bk-vs-mk-which-should-you-choose-matte-or-gloss",
+        excerpt: "Finally know which Epson ColorWorks model you want, BK or MK which suits you best?",
+        content: `<h2 id="heading-0">Epson BK vs MK: which black ink should you choose?</h2><p>When choosing Epson ColorWorks label printers, you will often encounter <strong>BK</strong> and <strong>MK</strong> designations. Both use black pigment ink, but with different properties depending on your label substrate.</p><h3 id="heading-1">What does BK mean?</h3><p><strong>BK</strong> stands for <strong>Photo Black</strong> (glossy black). Formulated specifically for glossy media like gloss paper and gloss PP films, BK adheres cleanly and produces deep, smudge-resistant black print on smooth surfaces.</p><h3 id="heading-2">What does MK mean?</h3><p><strong>MK</strong> stands for <strong>Matte Black</strong>. Featuring a higher pigment load, MK is optimized for matte and textured papers or synthetic PE. On matte substrates, MK achieves noticeably deeper optical black density than BK.</p><h3 id="heading-3">When to choose BK?</h3><ul><li>For glossy labels (glossy paper and film)</li><li>When you require a consistent gloss sheen across the entire label</li><li>For high-contrast prints on smooth materials</li></ul><h3 id="heading-4">When to choose MK?</h3><ul><li>For matte materials (matte paper, PE, textured substrates)</li><li>For deeper black tones and richer contrast on porous media</li><li>For industrial and GHS/BS5609 chemical labeling applications</li></ul><h3 id="heading-5">Side-by-side comparison</h3><p>Compare actual printed results from BK ink and MK ink below. Drag the slider to observe differences in black depth and shadow detail.</p>`,
+      },
+    },
+  ],
+};
 
 /** Pick the right translation for the active locale, falling back to root fields. */
 function getLocalizedFields(post: PostData, locale: string): PostTranslation {
@@ -358,6 +411,21 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
                   className="cms-content w-full prose prose-neutral max-w-none prose-headings:font-bold prose-headings:text-neutral-800 prose-p:text-neutral-700 prose-p:text-lg prose-p:leading-8 prose-a:text-brand hover:prose-a:text-[var(--brand-hover)] prose-a:underline prose-img:rounded-xl"
                   dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(localizedContent) }}
                 />
+                
+                {/* Interactive comparison slider for BK vs. MK blog post */}
+                {(slug === "epson-mk-bk-keuze" ||
+                  slug === "epson-bk-vs-mk-which-should-you-choose-matte-or-gloss" ||
+                  post?.slug === "epson-mk-bk-keuze" ||
+                  post?.slug === "epson-bk-vs-mk-which-should-you-choose-matte-or-gloss") && (
+                  <div className="w-full my-6">
+                    <ImageCompareSlider
+                      topImage="/Schaap-BK-print.jpg"
+                      bottomImage="/Schaap-MK-print.jpg"
+                      topLabel="BK"
+                      bottomLabel="MK"
+                    />
+                  </div>
+                )}
                 
                 {/* About Author */}
                 <div className="w-full p-6 bg-white shadow-[2px_4px_20px_rgba(109,109,120,0.06)] rounded-xl border border-[#EDF2F7] flex flex-col justify-start items-start gap-4 mt-8">
