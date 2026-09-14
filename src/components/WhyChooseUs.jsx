@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
+import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 
 const features = [
    {
@@ -84,8 +86,26 @@ const features = [
    },
 ];
 
-export default function WhyChooseUs() {
+export default function WhyChooseUs({ images = {} } = {}) {
    const t = useTranslations();
+
+   const defaultMainImage = "/whychoose.png";
+   const defaultLeftLogo = "/images/diamond-partner.png";
+   const defaultRightLogo = "/images/label-authorised.png";
+
+   const [mainImgError, setMainImgError] = useState(false);
+   const [leftLogoError, setLeftLogoError] = useState(false);
+   const [rightLogoError, setRightLogoError] = useState(false);
+
+   const mainImgSrc = mainImgError
+      ? defaultMainImage
+      : (toDisplayImageUrl(images?.why_choose_business_label_image) || defaultMainImage);
+   const leftLogoSrc = leftLogoError
+      ? defaultLeftLogo
+      : (toDisplayImageUrl(images?.left_logo) || defaultLeftLogo);
+   const rightLogoSrc = rightLogoError
+      ? defaultRightLogo
+      : (toDisplayImageUrl(images?.right_logo) || defaultRightLogo);
 
    const translatedFeatures = [
       {
@@ -128,16 +148,33 @@ export default function WhyChooseUs() {
                {/* Left image column */}
                <div className="w-full lg:flex-1 relative h-[250px] sm:h-[400px] lg:h-[500px] rounded-xl overflow-hidden">
                   <Image
-                     src="/whychoose.png"
+                     src={mainImgSrc}
                      alt={t("whyChoose.altImage")}
                      fill
                      sizes="(max-width: 768px) 100vw, 50vw"
                      className="object-cover object-center"
+                     onError={() => setMainImgError(true)}
                   />
 
                   <div className="absolute bottom-0 top-auto inset-0 pointer-events-none grid grid-cols-2 gap-4 p-4 sm:p-6 lg:p-8">
-                     <Image src="/images/diamond-partner.png" alt="Diamond Partner" className="w-full h-auto object-contain rounded-2xl" width={300} height={300} unoptimized />
-                     <Image src="/images/label-authorised.png" alt="Label Authorised" className="w-full h-auto object-contain max-h-[100px] bg-[#10218B] rounded-2xl" width={300} height={300} unoptimized />
+                     <Image
+                        src={leftLogoSrc}
+                        alt="Diamond Partner"
+                        className="w-full h-auto object-contain rounded-2xl"
+                        width={300}
+                        height={300}
+                        unoptimized
+                        onError={() => setLeftLogoError(true)}
+                     />
+                     <Image
+                        src={rightLogoSrc}
+                        alt="Label Authorised"
+                        className="w-full h-auto object-contain max-h-[100px] bg-[#10218B] rounded-2xl"
+                        width={300}
+                        height={300}
+                        unoptimized
+                        onError={() => setRightLogoError(true)}
+                     />
                   </div>
                </div>
 
