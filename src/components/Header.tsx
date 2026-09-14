@@ -65,9 +65,11 @@ type HeaderSearchGroup = {
 };
 
 type HeaderSearchSuggestions = {
+  query?: string;
   productGroups: HeaderSearchGroup[];
   materials: HeaderSearchGroup;
   groupProducts?: HeaderSearchGroup;
+  singleProduct?: HeaderSearchItem | null;
   error?: string;
 };
 
@@ -282,6 +284,7 @@ export default function Header({
   const [searchPopoverWidth, setSearchPopoverWidth] = useState<number | null>(null);
   const [searchSuggestions, setSearchSuggestions] = useState<HeaderSearchSuggestions | null>(null);
   const [isSearchLoading, setIsSearchLoading] = useState(false);
+  const submittedSearchQueryRef = useRef<string | null>(null);
   const headerSearchInput = manualHeaderSearchInput ?? headerSearchValue;
   const groupProductsTitle = locale === 'nl' ? 'Groepsproducten' : 'Group Products';
 
@@ -313,6 +316,13 @@ export default function Header({
         }
 
         setSearchSuggestions(data);
+        if (submittedSearchQueryRef.current === query) {
+          submittedSearchQueryRef.current = null;
+          if (data.singleProduct) {
+            setIsSearchPopoverOpen(false);
+            router.push(data.singleProduct.href);
+          }
+        }
       } catch (error) {
         if (controller.signal.aborted) return;
         setSearchSuggestions({
@@ -332,7 +342,7 @@ export default function Header({
       controller.abort('cleanup');
       window.clearTimeout(timeout);
     };
-  }, [groupProductsTitle, headerSearchInput, isSearchPopoverOpen, locale, productListingPath, t]);
+  }, [groupProductsTitle, headerSearchInput, isSearchPopoverOpen, locale, productListingPath, router, t]);
 
   const measureSearchPopoverWidth = (surface: SearchSurface) => {
     const node = surface === 'desktop' ? desktopSearchFormRef.current : mobileSearchFormRef.current;
@@ -349,6 +359,7 @@ export default function Header({
   };
 
   const handleHeaderSearchChange = (value: string, surface: SearchSurface) => {
+    submittedSearchQueryRef.current = null;
     setActiveSearchSurface(surface);
     measureSearchPopoverWidth(surface);
     setManualHeaderSearchInput(value);
@@ -361,6 +372,19 @@ export default function Header({
 
   const handleHeaderSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const query = headerSearchInput.trim();
+
+    if (
+      !isSearchLoading &&
+      searchSuggestions?.query?.trim() === query &&
+      searchSuggestions.singleProduct
+    ) {
+      setIsSearchPopoverOpen(false);
+      router.push(searchSuggestions.singleProduct.href);
+      return;
+    }
+
+    submittedSearchQueryRef.current = query || null;
     setIsSearchPopoverOpen(true);
   };
 
