@@ -39,6 +39,7 @@ export type CategoryNode = {
   count: number;
   image?: string | null;
   main_image?: string | null;
+  hero_image?: string | null;
   children?: CategoryNode[];
 };
 

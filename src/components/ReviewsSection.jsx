@@ -1,100 +1,122 @@
 import React from 'react';
-import { getTranslations } from 'next-intl/server';
 import ReviewsSlider from './ReviewsSlider';
-
-async function getFallbackReviews() {
-  const t = await getTranslations();
-  return [
-    {
-      text: t('reviews.fallback1Text'),
-      author_name: t('reviews.fallback1Author'),
-      relative_time_description: t('reviews.fallback1Time'),
-      rating: 5,
-    },
-    {
-      text: t('reviews.fallback2Text'),
-      author_name: t('reviews.fallback2Author'),
-      relative_time_description: t('reviews.fallback2Time'),
-      rating: 5,
-    },
-    {
-      text: t('reviews.fallback3Text'),
-      author_name: t('reviews.fallback3Author'),
-      relative_time_description: t('reviews.fallback3Time'),
-      rating: 5,
-    },
-  ];
-}
+import { ALL_GOOGLE_REVIEWS } from '@/data/googleReviews';
 
 async function getGoogleReviews() {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   const placeId = process.env.GOOGLE_PLACE_ID;
-  
-  if (!apiKey || !placeId) {
-    console.warn("Missing NEXT_PUBLIC_GOOGLE_MAPS_API_KEY or GOOGLE_PLACE_ID in environment variables.");
-    return null;
-  }
-  
-  // Try Legacy Places API first
-  try {
-    const res = await fetch(
-      `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=reviews,rating,user_ratings_total&key=${apiKey}&reviews_sort=newest`,
-      { next: { revalidate: 86400 } }
-    );
 
-    if (res.ok) {
-      const data = await res.json();
-      if (data.status === "OK" && data.result?.reviews?.length) {
-        return data.result;
+  let totalRatings = 25;
+  const liveReviews = [];
+
+  if (apiKey && placeId) {
+    // 1. Fetch from Places API (New) with languageCode=nl and FORCE originalText
+    try {
+      const resNew = await fetch(
+        `https://places.googleapis.com/v1/places/${placeId}?languageCode=nl`,
+        {
+          headers: {
+            "X-Goog-Api-Key": apiKey,
+            "X-Goog-FieldMask": "reviews,rating,userRatingCount",
+          },
+          next: { revalidate: 3600 },
+        }
+      );
+
+      if (resNew.ok) {
+        const newData = await resNew.json();
+        if (newData.userRatingCount) {
+          totalRatings = newData.userRatingCount;
+        }
+        if (Array.isArray(newData.reviews)) {
+          for (const r of newData.reviews) {
+            // FORCE the original untranslated review text!
+            const text = r.originalText?.text || r.text?.text || "";
+            if (text.trim()) {
+              liveReviews.push({
+                text: text.trim(),
+                author_name: r.authorAttribution?.displayName || "Google Customer",
+                profile_photo_url: r.authorAttribution?.photoUri || "",
+                relative_time_description: r.relativePublishTimeDescription || "",
+                rating: r.rating || 5,
+              });
+            }
+          }
+        }
       }
+    } catch (error) {
+      console.error("Places API (New) fetch error:", error);
     }
-  } catch (error) {
-    console.error("Legacy Places API fetch error:", error);
-  }
 
-  // Fallback to Places API (New)
-  try {
-    const resNew = await fetch(
-      `https://places.googleapis.com/v1/places/${placeId}`,
-      {
-        headers: {
-          "X-Goog-Api-Key": apiKey,
-          "X-Goog-FieldMask": "reviews,rating,userRatingCount",
-        },
-        next: { revalidate: 86400 },
-      }
-    );
+    // 2. Also try Legacy Places API with language=nl & translated=false
+    try {
+      const resLegacy = await fetch(
+        `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=reviews,rating,user_ratings_total&key=${apiKey}&language=nl&reviews_sort=newest&translated=false`,
+        { next: { revalidate: 3600 } }
+      );
 
-    if (resNew.ok) {
-      const newData = await resNew.json();
-      if (newData.reviews?.length) {
-        return {
-          reviews: newData.reviews.map((r) => ({
-            text: r.text?.text || r.originalText?.text || "",
-            author_name: r.authorAttribution?.displayName || "Google Customer",
-            profile_photo_url: r.authorAttribution?.photoUri || "",
-            relative_time_description: r.relativePublishTimeDescription || "",
-            rating: r.rating || 5,
-          })),
-          user_ratings_total: newData.userRatingCount || "1000",
-        };
+      if (resLegacy.ok) {
+        const legacyData = await resLegacy.json();
+        if (legacyData.status === "OK" && legacyData.result) {
+          if (legacyData.result.user_ratings_total) {
+            totalRatings = legacyData.result.user_ratings_total;
+          }
+          if (Array.isArray(legacyData.result.reviews)) {
+            for (const r of legacyData.result.reviews) {
+              if (r.text && !r.translated) {
+                liveReviews.push({
+                  text: r.text.trim(),
+                  author_name: r.author_name || "Google Customer",
+                  profile_photo_url: r.profile_photo_url || "",
+                  relative_time_description: r.relative_time_description || "",
+                  rating: r.rating || 5,
+                });
+              }
+            }
+          }
+        }
       }
+    } catch (error) {
+      console.error("Legacy Places API fetch error:", error);
     }
-  } catch (error) {
-    console.error("Places API (New) fetch error:", error);
   }
 
-  return null;
+  // Combine and deduplicate: start with all 25+ verified original Google reviews
+  const reviewMap = new Map();
+  ALL_GOOGLE_REVIEWS.forEach((r) => {
+    reviewMap.set(r.author_name.toLowerCase().trim(), { ...r });
+  });
+
+  // Overlay live Google API reviews (updating photos, relative time, and adding any new ones)
+  liveReviews.forEach((r) => {
+    const key = r.author_name.toLowerCase().trim();
+    const existing = reviewMap.get(key);
+    if (existing) {
+      reviewMap.set(key, {
+        ...existing,
+        ...r,
+        // Always preserve original text
+        text: r.text || existing.text,
+        profile_photo_url: r.profile_photo_url || existing.profile_photo_url,
+      });
+    } else {
+      // New review not in baseline: insert at the beginning
+      reviewMap.set(key, r);
+    }
+  });
+
+  return {
+    reviews: Array.from(reviewMap.values()),
+    user_ratings_total: totalRatings,
+  };
 }
 
 export default async function ReviewsSection() {
   const googleData = await getGoogleReviews();
-  const fallbackReviews = await getFallbackReviews();
-  const reviews = googleData?.reviews?.length ? googleData.reviews : fallbackReviews;
-  const totalRatings = googleData?.user_ratings_total || "1000";
+  const reviews = googleData?.reviews?.length ? googleData.reviews : ALL_GOOGLE_REVIEWS;
+  const totalRatings = googleData?.user_ratings_total || 25;
 
   return (
-    // <section className="relative w-full px-4 md:px-8 lg:px-10 py-16 lg:py-24 overflow-hidden" style={{ background: "linear-gradient(135deg, #FFFDF8 0%, #FFFFFF 100%)" }}>
     <section className="relative w-full px-4 md:px-8 lg:px-10 py-16 lg:py-24 overflow-hidden bg-surface">
       {/* Decorative blobs matching the softer design background */}
       <div className="w-48 h-48 absolute left-0 top-0 bg-[#F188004D] rounded-full blur-[132px] pointer-events-none" />

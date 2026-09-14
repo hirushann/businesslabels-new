@@ -846,62 +846,39 @@ export default function Header({
                 {item.dropdownKey ? (
                   <>
                     <NavigationMenuTrigger asChild>
-                      {item.dropdownKey === 'resources' ? (
-                        <div
-                          className="group -m-3 block p-3 cursor-pointer"
+                      <Link
+                        href={
+                          item.dropdownKey === 'printers'
+                            ? printerCategoryHref
+                            : item.dropdownKey === 'labels'
+                              ? labelCategoryHref
+                              : item.dropdownKey === 'accessories'
+                                ? accessoryCategoryHref
+                              : item.dropdownKey === 'resources'
+                                ? lp('/kennisbank-overzicht')
+                              : lp(item.href)
+                        }
+                        className="group -m-3 block p-3"
+                      >
+                        <span
+                          className={`flex items-end gap-2 relative ${
+                            item.active
+                              ? 'text-sky-950 font-semibold'
+                              : 'text-stone-500 font-normal group-hover:text-sky-950 transition-colors'
+                          } text-base leading-5`}
                         >
-                          <span
-                            className={`flex items-end gap-2 relative ${
-                              item.active
-                                ? 'text-sky-950 font-semibold'
-                                : 'text-stone-500 font-normal group-hover:text-sky-950 transition-colors'
-                            } text-base leading-5`}
+                          {t.has(item.labelKey) ? t(item.labelKey) : item.fallbackLabel}
+                          <svg
+                            width="16" height="16" viewBox="0 0 16 16" fill="none"
+                            className="transition-transform duration-200 group-data-[state=open]:rotate-180"
                           >
-                            {t.has(item.labelKey) ? t(item.labelKey) : item.fallbackLabel}
-                            <svg
-                              width="16" height="16" viewBox="0 0 16 16" fill="none"
-                              className="transition-transform duration-200 group-data-[state=open]:rotate-180"
-                            >
-                              <path d="M4 6L8 10L12 6" stroke="currentColor" />
-                            </svg>
-                            {item.active && (
-                              <span className="absolute -bottom-4 left-0 w-11 h-0.5 bg-sky-950 rounded" />
-                            )}
-                          </span>
-                        </div>
-                      ) : (
-                        <Link
-                          href={
-                            item.dropdownKey === 'printers'
-                              ? printerCategoryHref
-                              : item.dropdownKey === 'labels'
-                                ? labelCategoryHref
-                                : item.dropdownKey === 'accessories'
-                                  ? accessoryCategoryHref
-                                : lp(item.href)
-                          }
-                          className="group -m-3 block p-3"
-                        >
-                          <span
-                            className={`flex items-end gap-2 relative ${
-                              item.active
-                                ? 'text-sky-950 font-semibold'
-                                : 'text-stone-500 font-normal group-hover:text-sky-950 transition-colors'
-                            } text-base leading-5`}
-                          >
-                            {t.has(item.labelKey) ? t(item.labelKey) : item.fallbackLabel}
-                            <svg
-                              width="16" height="16" viewBox="0 0 16 16" fill="none"
-                              className="transition-transform duration-200 group-data-[state=open]:rotate-180"
-                            >
-                              <path d="M4 6L8 10L12 6" stroke="currentColor" />
-                            </svg>
-                            {item.active && (
-                              <span className="absolute -bottom-4 left-0 w-11 h-0.5 bg-sky-950 rounded" />
-                            )}
-                          </span>
-                        </Link>
-                      )}
+                            <path d="M4 6L8 10L12 6" stroke="currentColor" />
+                          </svg>
+                          {item.active && (
+                            <span className="absolute -bottom-4 left-0 w-11 h-0.5 bg-sky-950 rounded" />
+                          )}
+                        </span>
+                      </Link>
                     </NavigationMenuTrigger>
 
                     <NavigationMenuContent

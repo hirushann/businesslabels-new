@@ -21,6 +21,14 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "bbnl.dayzsolutions.com",
       },
+      {
+        protocol: "https",
+        hostname: "ui-avatars.com",
+      },
+      {
+        protocol: "https",
+        hostname: "randomuser.me",
+      },
       ...(mediaPublicUrl ? [new URL(`${mediaPublicUrl}/**`)] : []),
     ],
     localPatterns: [

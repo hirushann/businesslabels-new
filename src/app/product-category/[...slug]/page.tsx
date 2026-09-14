@@ -28,6 +28,7 @@ import {
 } from "@/lib/search/products";
 import type { CatalogSearchResponse } from "@/lib/search/types";
 import { htmlToText, unescapeHtml } from "@/lib/utils";
+import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 import {
   getAccessoryCategoryPath,
   getAccessoryVirtualGroupForSegments,
@@ -63,17 +64,18 @@ function toSearchParams(query: Record<string, string | string[] | undefined>): U
   return params;
 }
 
-type CategoryImages = Pick<CategoryNode, "image" | "main_image">;
+type CategoryImages = Pick<CategoryNode, "image" | "main_image" | "hero_image">;
 
 function categoryImagesByIdentity(groups: CategoryGroup[]): Map<number, CategoryImages> {
   const images = new Map<number, CategoryImages>();
 
   const visit = (categories: CategoryNode[]) => {
     categories.forEach((category) => {
-      if (category.image || category.main_image) {
+      if (category.image || category.main_image || category.hero_image) {
         images.set(category.id, {
           image: category.image,
           main_image: category.main_image,
+          hero_image: category.hero_image,
         });
       }
       visit(category.children ?? []);
@@ -111,6 +113,7 @@ function asCategoryNode(
     count: archive.count,
     image: archive.image ?? fallbackImages?.image,
     main_image: archive.main_image ?? fallbackImages?.main_image,
+    hero_image: fallbackImages?.hero_image,
     children: (archive.children ?? []).map((child) =>
       asCategoryNode(child, imagesByIdentity),
     ),
@@ -299,13 +302,23 @@ export async function ProductCategoryPage({
     { label: categoryTitle },
   ];
 
+  const currentIdentityId = route.virtual
+    ? virtualParent?.category.id
+    : resolved?.archive.identity_id;
+  const currentHeroImage =
+    (currentIdentityId ? imagesByIdentity.get(currentIdentityId)?.hero_image : null) ??
+    (route.virtual ? virtualParent?.category.hero_image : null);
+  const heroImageUrl =
+    (currentHeroImage && toDisplayImageUrl(currentHeroImage)) ||
+    "/images/archive-banner.jpg";
+
   return (
     <div className="bg-white">
       <div className="px-4 py-10 sm:px-6 lg:px-10">
         <div className="mx-auto flex max-w-360 flex-col gap-12">
           <div className="relative h-56 w-full overflow-hidden rounded-xl shadow-md">
             <Image
-              src="/images/archive-banner.jpg"
+              src={heroImageUrl}
               alt={`${categoryTitle} banner`}
               fill
               sizes="100vw"
