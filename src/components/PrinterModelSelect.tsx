@@ -220,6 +220,10 @@ export default function PrinterModelSelect({
                   <img
                     src={toDisplayImageUrl(printer.image) || printer.image}
                     alt=""
+                    width={40}
+                    height={40}
+                    loading="lazy"
+                    decoding="async"
                     className="size-10 shrink-0 rounded-md border border-border object-contain"
                   />
                 ) : (
