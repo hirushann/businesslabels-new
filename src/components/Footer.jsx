@@ -46,10 +46,10 @@ const trustItems = [
 
 const footerLinks = {
   products: [
-    { nameKey: 'footer.links.labelPrinters', href: '/category/labelprinters' },
-    { nameKey: 'footer.links.labelRolls', href: '/category/labels-en-tickets' },
-    { nameKey: 'footer.links.inkSupplies', href: '/category/inkt-cartridges-nl' },
-    { nameKey: 'footer.links.specialLabels', href: '/category/specials' },
+    { nameKey: 'footer.links.labelPrinters', href: '/product-categorie/labelprinters' },
+    { nameKey: 'footer.links.labelRolls', href: '/product-categorie/labels-en-tickets' },
+    { nameKey: 'footer.links.inkSupplies', href: '/product-categorie/labelprinters/verbruiksmaterialen-nl' },
+    { nameKey: 'footer.links.specialLabels', href: '/product-categorie/specials' },
   ],
   printers: [
     { name: 'CW-D3800e', href: '/product/epson-colorworks-cw-d3800e-labelprinter-dye-inkt' },
@@ -62,6 +62,7 @@ const footerLinks = {
   support: [
     { nameKey: 'footer.links.contact', href: '/contact-us' },
     { nameKey: 'footer.links.support', href: '/support' },
+    { nameKey: 'footer.links.samplePrints', href: '/print-sample' },
     { nameKey: 'footer.links.knowledgeBase', href: '/kennisbank-overzicht' },
     { nameKey: 'footer.links.faq', href: '/epson-colorworks-faq' },
   ],
@@ -104,7 +105,7 @@ export default function Footer() {
               {/* Logo */}
               <div>
                 <Image
-                  src="/footerlogo.png"
+                  src="/footerlogo.webp"
                   alt="Businesslabels"
                   width={205}
                   height={40}
@@ -122,6 +123,17 @@ export default function Footer() {
                     )
                   })}
                 </p>
+                <div className="flex items-start gap-2 mt-3">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0 mt-0.5">
+                    <path d="M8 1.33334C5.42267 1.33334 3.33334 3.42267 3.33334 6C3.33334 10.1667 8 14.6667 8 14.6667C8 14.6667 12.6667 10.1667 12.6667 6C12.6667 3.42267 10.5773 1.33334 8 1.33334Z" stroke="#F1F4F8" strokeLinecap="round" strokeLinejoin="round"/>
+                    <circle cx="8" cy="6" r="1.75" stroke="#F1F4F8"/>
+                  </svg>
+                  <address className="not-italic text-white/80 text-base font-light leading-5">
+                    {t('footer.address.street')}<br />
+                    {t('footer.address.postalCode')}<br />
+                    <span className="capitalize">{t('footer.address.country')}</span>
+                  </address>
+                </div>
               </div>
             </div>
             <div className="flex flex-col gap-4">

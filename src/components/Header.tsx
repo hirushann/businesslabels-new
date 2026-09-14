@@ -11,12 +11,18 @@ interface TeamMember {
   name: string;
   profile_pic_url: string | null;
 }
+import dynamic from 'next/dynamic';
 import { useCart } from './CartProvider';
-import CartDrawer from './CartDrawer';
-import WishlistDrawer from './WishlistDrawer';
 import { useWishlist } from './WishlistProvider';
-import HelpDrawer from './HelpDrawer';
 import { useHelp } from './HelpProvider';
+import ReCaptchaProvider from './ReCaptchaProvider';
+
+const CartDrawer = dynamic(() => import('./CartDrawer'), { ssr: false });
+const WishlistDrawer = dynamic(() => import('./WishlistDrawer'), { ssr: false });
+const HelpDrawer = dynamic(() => import('./HelpDrawer'), { ssr: false });
+const LoginPopup = dynamic(() => import('@/components/LoginPopup'), { ssr: false });
+const RegisterPopup = dynamic(() => import('@/components/RegisterPopup'), { ssr: false });
+
 import PrintersMenu, { menuItems as printerMenuItems } from './nav/PrintersMenu';
 import LabelsMenu, { menuItems as labelMenuItems } from './nav/LabelsMenu';
 import AccessoriesMenu, { menuItems as accessoryMenuItems } from './nav/AccessoriesMenu';
@@ -28,8 +34,6 @@ import { localePath } from '@/lib/i18n/utils';
 import { getAccessoryCategoryPath } from '@/lib/routes/accessoryCategories';
 import { getLabelCategoryPath } from '@/lib/routes/labelCategories';
 import { getPrinterCategoryPath } from '@/lib/routes/printerCategories';
-import LoginPopup from '@/components/LoginPopup';
-import RegisterPopup from '@/components/RegisterPopup';
 import { Button } from '@/components/ui/button';
 import {
   NavigationMenu,
@@ -75,9 +79,9 @@ type HeaderSearchSuggestions = {
 
 const navItems = [
   { labelKey: 'header.nav.home', fallbackLabel: 'Home', href: '/', active: true, dropdownKey: null },
-  { labelKey: 'header.nav.printers', fallbackLabel: 'Label Printers', href: '/product-category/labelprinters', dropdown: true, dropdownKey: 'printers' as DropdownKey },
-  { labelKey: 'header.nav.labels', fallbackLabel: 'Labels and tickets', href: '/category/labels-en-tickets', dropdown: true, dropdownKey: 'labels' as DropdownKey },
-  { labelKey: 'header.nav.accessories', fallbackLabel: 'Accessories', href: '/category/accessoires', dropdown: true, dropdownKey: 'accessories' as DropdownKey },
+  { labelKey: 'header.nav.printers', fallbackLabel: 'Label Printers', href: '/product-categorie/labelprinters', dropdown: true, dropdownKey: 'printers' as DropdownKey },
+  { labelKey: 'header.nav.labels', fallbackLabel: 'Labels and tickets', href: '/product-categorie/labels-en-tickets', dropdown: true, dropdownKey: 'labels' as DropdownKey },
+  { labelKey: 'header.nav.accessories', fallbackLabel: 'Accessories', href: '/product-categorie/labelprinters/accessoires', dropdown: true, dropdownKey: 'accessories' as DropdownKey },
   { labelKey: 'header.nav.materials', fallbackLabel: 'Materials', href: '/material', dropdownKey: null },
   { labelKey: 'header.nav.resources', fallbackLabel: 'Resources', href: '/resources', dropdown: true, dropdownKey: 'resources' as DropdownKey },
   { labelKey: 'header.nav.brands', fallbackLabel: 'Brands', href: '/brands', dropdown: true, dropdownKey: 'brands' as DropdownKey },
@@ -645,7 +649,7 @@ export default function Header({
           {/* Logo */}
           <Link href="/" className="flex shrink-0 items-center">
             <Image
-              src="/logo.png"
+              src="/logo.webp"
               alt="Businesslabels"
               width={185}
               height={40}
@@ -709,7 +713,6 @@ export default function Header({
               id="need-help-btn"
               onClick={openHelp}
               className="px-4 py-2.5 bg-white rounded-full shadow border border-slate-100 flex items-center gap-2 hover:shadow-md hover:border-sky-200 transition-all cursor-pointer"
-              aria-label={t('header.openHelpDrawer')}
             >
               <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -777,7 +780,7 @@ export default function Header({
           {/* Center: Logo */}
           <Link href="/" className="flex items-center">
             <Image
-              src="/logo.png"
+              src="/logo.webp"
               alt="Businesslabels"
               width={140}
               height={27}
@@ -871,8 +874,9 @@ export default function Header({
                   <>
                     <NavigationMenuTrigger asChild>
                       {item.dropdownKey === 'resources' ? (
-                        <div
-                          className="group -m-3 block p-3 cursor-pointer"
+                        <button
+                          type="button"
+                          className="group -m-3 block p-3 cursor-pointer bg-transparent border-0 text-left"
                         >
                           <span
                             className={`flex items-end gap-2 relative ${
@@ -892,7 +896,7 @@ export default function Header({
                               <span className="absolute -bottom-4 left-0 w-11 h-0.5 bg-sky-950 rounded" />
                             )}
                           </span>
-                        </div>
+                        </button>
                       ) : (
                         <Link
                           href={
@@ -1181,20 +1185,28 @@ export default function Header({
         </div>
       )}
 
-      {isHelpOpen && <HelpDrawer onClose={closeHelp} />}
+      {isHelpOpen && (
+        <ReCaptchaProvider>
+          <HelpDrawer onClose={closeHelp} />
+        </ReCaptchaProvider>
+      )}
       {isWishlistOpen && <WishlistDrawer onClose={() => setIsWishlistOpen(false)} />}
       {isCartOpen && <CartDrawer onClose={closeCart} />}
-      <LoginPopup
-        open={isLoginPopupOpen && !isAuthenticated}
-        onOpenChange={setIsLoginPopupOpen}
-        onSwitchToRegister={() => setIsRegisterPopupOpen(true)}
-        onLoginSuccess={handleAuthPopupLoginSuccess}
-      />
-      <RegisterPopup
-        open={isRegisterPopupOpen && !isAuthenticated}
-        onOpenChange={setIsRegisterPopupOpen}
-        onSwitchToLogin={() => setIsLoginPopupOpen(true)}
-      />
+      {isLoginPopupOpen && !isAuthenticated && (
+        <LoginPopup
+          open={isLoginPopupOpen && !isAuthenticated}
+          onOpenChange={setIsLoginPopupOpen}
+          onSwitchToRegister={() => setIsRegisterPopupOpen(true)}
+          onLoginSuccess={handleAuthPopupLoginSuccess}
+        />
+      )}
+      {isRegisterPopupOpen && !isAuthenticated && (
+        <RegisterPopup
+          open={isRegisterPopupOpen && !isAuthenticated}
+          onOpenChange={setIsRegisterPopupOpen}
+          onSwitchToLogin={() => setIsLoginPopupOpen(true)}
+        />
+      )}
     </header>
   );
 }

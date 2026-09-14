@@ -1,9 +1,16 @@
 import "./globals.css";
+import { Inter } from "next/font/google";
 import { GoogleTagManager } from "@next/third-parties/google";
 import { CartProvider } from "@/components/CartProvider";
 import { WishlistProvider } from "@/components/WishlistProvider";
 import { HelpProvider } from "@/components/HelpProvider";
 import Header from "@/components/Header";
+
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-inter",
+});
 
 
 import StoreNotice from "@/components/StoreNotice";
@@ -18,7 +25,6 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from '@/lib/i18n/getMessages';
 import { localizedSeoPaths } from '@/lib/i18n/utils';
 import { LOCALE_PATH_HEADER } from '@/lib/i18n/config';
-import ReCaptchaProvider from '@/components/ReCaptchaProvider';
 
 import { cookies, headers } from "next/headers";
 import { ScrollToTop } from "@/components/ScrollToTop";
@@ -61,8 +67,6 @@ export async function generateMetadata() {
 export const viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
 };
 
 export default async function RootLayout({ children }) {
@@ -98,7 +102,7 @@ export default async function RootLayout({ children }) {
   }
 
   return (
-    <html lang={locale} className="font-sans" suppressHydrationWarning>
+    <html lang={locale} className={`${inter.variable} font-sans`} suppressHydrationWarning>
       <body className="bg-white min-h-screen flex flex-col" suppressHydrationWarning>
         {gtmId && (
           <noscript>
@@ -115,11 +119,9 @@ export default async function RootLayout({ children }) {
           <CartProvider>
             <WishlistProvider>
               <HelpProvider>
-                <ReCaptchaProvider>
-                  <Header hasAuthToken={hasAuthToken} categoryCanonicalUrls={categoryCanonicalUrls} />
-                  <main className="flex-1">{children}</main>
-                  <Footer />
-                </ReCaptchaProvider>
+                <Header hasAuthToken={hasAuthToken} categoryCanonicalUrls={categoryCanonicalUrls} />
+                <main className="flex-1">{children}</main>
+                <Footer />
               </HelpProvider>
             </WishlistProvider>
           </CartProvider>

@@ -16,7 +16,7 @@ export default function ReCaptchaProvider({ children }: { children: ReactNode })
       scriptProps={{
         async: true,
         defer: true,
-        appendTo: 'head',
+        appendTo: 'body',
       }}
     >
       {children}

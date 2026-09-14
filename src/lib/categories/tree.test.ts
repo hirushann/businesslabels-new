@@ -30,6 +30,14 @@ describe("category tree helpers", () => {
     expect(categoryRouteSlug(translatedCategory, "nl")).toBe("etiketten");
   });
 
+  it("supports hero_image field on CategoryNode", () => {
+    const categoryWithHero: typeof translatedCategory & { hero_image?: string | null } = {
+      ...translatedCategory,
+      hero_image: "https://example.test/storage/hero.jpg",
+    };
+    expect(categoryWithHero.hero_image).toBe("https://example.test/storage/hero.jpg");
+  });
+
   it("decodes HTML entities in category names", () => {
     const categoryWithEntities = {
       id: 99,

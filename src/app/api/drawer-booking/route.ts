@@ -47,51 +47,6 @@ export async function POST(request: NextRequest) {
     const phoneNumber = typeof body.phone_number === 'string' ? body.phone_number.trim() : '';
     const locale = body.locale === 'nl' ? 'nl' : 'en';
     const recaptchaToken = typeof body.recaptcha_token === 'string' ? body.recaptcha_token : '';
-    const isDevelopment = process.env.NODE_ENV === 'development';
-
-    if (!recaptchaToken) {
-      if (isDevelopment) {
-        console.warn('Bypassing missing reCAPTCHA token in development mode.');
-      } else {
-        return NextResponse.json(
-          { message: 'reCAPTCHA verification failed.' },
-          { status: 400 }
-        );
-      }
-    }
-
-    if (recaptchaToken) {
-      // Call google siteverify
-      const verifyUrl = 'https://www.google.com/recaptcha/api/siteverify';
-      const recaptchaSecret = process.env.RECAPTCHA_SECRET_KEY || '';
-
-      const verifyResponse = await fetch(verifyUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          secret: recaptchaSecret,
-          response: recaptchaToken,
-        }).toString(),
-      });
-
-      const verifyData = await verifyResponse.json() as { success: boolean; score?: number; 'error-codes'?: string[] };
-
-      if (!verifyData.success || (verifyData.score !== undefined && verifyData.score < 0.5)) {
-        console.error('reCAPTCHA verification failed:', verifyData['error-codes'] || `Score too low: ${verifyData.score}`);
-        
-        // In development, bypass reCAPTCHA failure
-        if (!isDevelopment) {
-          return NextResponse.json(
-            { message: 'reCAPTCHA verification failed.' },
-            { status: 400 }
-          );
-        } else {
-          console.warn('Bypassing reCAPTCHA failure in development mode.');
-        }
-      }
-    }
 
     if (!phoneNumber) {
       return NextResponse.json(
@@ -118,6 +73,7 @@ export async function POST(request: NextRequest) {
         locale,
         phone_number: phoneNumber,
         full_phone_number: body.full_phone_number || phoneNumber,
+        recaptcha_token: recaptchaToken,
       }),
     });
 

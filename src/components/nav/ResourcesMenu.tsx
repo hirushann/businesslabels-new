@@ -29,14 +29,6 @@ export const columnOne = [
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 7V21" stroke="var(--brand)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M3 18C2.73478 18 2.48043 17.8946 2.29289 17.7071C2.10536 17.5196 2 17.2652 2 17V4C2 3.73478 2.10536 3.48043 2.29289 3.29289C2.48043 3.10536 2.73478 3 3 3H8C9.06087 3 10.0783 3.42143 10.8284 4.17157C11.5786 4.92172 12 5.93913 12 7C12 5.93913 12.4214 4.92172 13.1716 4.17157C13.9217 3.42143 14.9391 3 16 3H21C21.2652 3 21.5196 3.10536 21.7071 3.29289C21.8946 3.48043 22 3.73478 22 4V17C22 17.2652 21.8946 17.5196 21.7071 17.7071C21.5196 17.8946 21.2652 18 21 18H15C14.2044 18 13.4413 18.3161 12.8787 18.8787C12.3161 19.4413 12 20.2044 12 21C12 20.2044 11.6839 19.4413 11.1213 18.8787C10.5587 18.3161 9.79565 18 9 18H3Z" stroke="var(--brand)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
     ),
   },
-  {
-    titleKey: 'menus.resources.videosTitle',
-    descriptionKey: 'menus.resources.videosDesc',
-    href: '/videos',
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 13L21.223 16.482C21.2983 16.5321 21.3858 16.5609 21.4761 16.5652C21.5664 16.5695 21.6563 16.5493 21.736 16.5066C21.8157 16.4639 21.8824 16.4004 21.9289 16.3228C21.9754 16.2452 22 16.1565 22 16.066V7.87002C22 7.78204 21.9768 7.69562 21.9328 7.61947C21.8887 7.54332 21.8253 7.48014 21.7491 7.43632C21.6728 7.3925 21.5863 7.36958 21.4983 7.36988C21.4103 7.37017 21.324 7.39368 21.248 7.43802L16 10.5" stroke="var(--brand)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M14 6H4C2.89543 6 2 6.89543 2 8V16C2 17.1046 2.89543 18 4 18H14C15.1046 18 16 17.1046 16 16V8C16 6.89543 15.1046 6 14 6Z" stroke="var(--brand)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-    ),
-  },
 ];
 
 export const columnTwo = [

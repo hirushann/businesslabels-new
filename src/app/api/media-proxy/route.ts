@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const ALLOWED_HOSTS = new Set(['businesslabels.test', 'localhost', '127.0.0.1', 'bbnl.dayzsolutions.com', 'dashboard.businesslabels.nl']);
+const ALLOWED_HOSTS = new Set([
+  'businesslabels.test',
+  'localhost',
+  '127.0.0.1',
+  'bbnl.dayzsolutions.com',
+  'dashboard.businesslabels.nl',
+  'ui-avatars.com',
+  'randomuser.me',
+]);
 
 function isAllowedUrl(url: URL): boolean {
   if (!['http:', 'https:'].includes(url.protocol)) return false;

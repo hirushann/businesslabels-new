@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import { permanentRedirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import CategorySubnav from "@/components/CategorySubnav";
@@ -14,6 +15,7 @@ import ReviewsSection from "@/components/ReviewsSection";
 import {
   CATEGORY_SOURCE_LOCALE,
   categoryName,
+  categoryPublicPathFromSlug,
   categorySlug,
   fetchCategoryGroups,
   findCategoryBySlug,
@@ -21,6 +23,7 @@ import {
 } from "@/lib/categories/tree";
 import { localePath } from "@/lib/i18n/utils";
 import { unescapeHtml } from "@/lib/utils";
+import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 
 function slugToTitle(slug: string): string {
   return slug
@@ -157,10 +160,14 @@ export async function renderCategoryArchivePage({
     { label: t("common.products"), href: localePath("/product", locale) },
     ...ancestors.map((ancestor) => ({
       label: categoryName(ancestor, locale),
-      href: `/category/${encodeURIComponent(categorySlug(ancestor, categorySourceLocale))}`,
+      href: localePath(categoryPublicPathFromSlug(categorySlug(ancestor, categorySourceLocale), locale), locale),
     })),
     { label: categoryTitle },
   ];
+
+  const heroImageUrl =
+    (currentCategory?.hero_image && toDisplayImageUrl(currentCategory.hero_image)) ||
+    "/images/archive-banner.jpg";
 
   return (
     <div className="bg-white">
@@ -168,7 +175,7 @@ export async function renderCategoryArchivePage({
         <div className="mx-auto flex max-w-360 flex-col gap-12">
           <div className="relative h-56 w-full overflow-hidden rounded-xl shadow-md">
             <Image
-              src="/images/archive-banner.jpg"
+              src={heroImageUrl}
               alt={`${categoryTitle} banner`}
               fill
               sizes="100vw"
@@ -240,6 +247,9 @@ export default async function CategoryArchivePage({
   searchParams: Promise<CategoryPageSearchParams>;
 }) {
   const { slug } = await params;
-
-  return renderCategoryArchivePage({ slug, searchParams });
+  const locale = await getServerLocale();
+  const rawQuery = await searchParams;
+  const destination = localePath(categoryPublicPathFromSlug(slug, locale), locale);
+  const query = toUrlSearchParams(rawQuery).toString();
+  permanentRedirect(query ? `${destination}?${query}` : destination);
 }

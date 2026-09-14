@@ -14,9 +14,11 @@ import {
 import {
   categoryCanonicalUrlsById,
   categoryName,
+  categoryPublicPath,
   categorySlug,
   fetchCategoryGroups,
   findCategoryById,
+  findCategoryBySlug,
   type CategoryGroup,
   type CategoryNode,
 } from "@/lib/categories/tree";
@@ -28,6 +30,7 @@ import {
 } from "@/lib/search/products";
 import type { CatalogSearchResponse } from "@/lib/search/types";
 import { htmlToText, unescapeHtml } from "@/lib/utils";
+import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 import {
   getAccessoryCategoryPath,
   getAccessoryVirtualGroupForSegments,
@@ -63,17 +66,18 @@ function toSearchParams(query: Record<string, string | string[] | undefined>): U
   return params;
 }
 
-type CategoryImages = Pick<CategoryNode, "image" | "main_image">;
+type CategoryImages = Pick<CategoryNode, "image" | "main_image" | "hero_image">;
 
 function categoryImagesByIdentity(groups: CategoryGroup[]): Map<number, CategoryImages> {
   const images = new Map<number, CategoryImages>();
 
   const visit = (categories: CategoryNode[]) => {
     categories.forEach((category) => {
-      if (category.image || category.main_image) {
+      if (category.image || category.main_image || category.hero_image) {
         images.set(category.id, {
           image: category.image,
           main_image: category.main_image,
+          hero_image: category.hero_image,
         });
       }
       visit(category.children ?? []);
@@ -111,6 +115,7 @@ function asCategoryNode(
     count: archive.count,
     image: archive.image ?? fallbackImages?.image,
     main_image: archive.main_image ?? fallbackImages?.main_image,
+    hero_image: fallbackImages?.hero_image,
     children: (archive.children ?? []).map((child) =>
       asCategoryNode(child, imagesByIdentity),
     ),
@@ -178,7 +183,24 @@ export async function generateMetadata({ params }: ProductCategoryPageProps): Pr
   }
 
   const resolved = await resolveCategoryArchive(route.locale, route.path);
-  if (!resolved) return {};
+  if (!resolved) {
+    const categoryGroups = await fetchCategoryGroups();
+    const lookup = findCategoryBySlug(categoryGroups, route.segments.at(-1)!, route.locale);
+    if (lookup) {
+      const name = unescapeHtml(categoryName(lookup.category, route.locale));
+      const canonical = lookup.category.canonical_urls?.[route.locale] || categoryPublicPath(lookup.category, lookup.ancestors, route.locale);
+      const rawMetaDesc = lookup.category.meta_description;
+      const metaDesc = typeof rawMetaDesc === "string" ? rawMetaDesc : rawMetaDesc?.[route.locale];
+      return {
+        title: name,
+        description: metaDesc ? htmlToText(metaDesc) : undefined,
+        alternates: {
+          canonical,
+        },
+      };
+    }
+    return {};
+  }
 
   return {
     title: htmlToText(resolved.archive.meta_title || resolved.archive.name || ""),
@@ -220,11 +242,17 @@ export async function ProductCategoryPage({
     permanentRedirect(queryString ? `${legacyDestination}?${queryString}` : legacyDestination);
   }
 
-  if (!resolved && !route.virtual) notFound();
+  const fallbackLookup = (!resolved && !route.virtual)
+    ? findCategoryBySlug(categoryGroups, route.segments.at(-1)!, locale)
+    : null;
+
+  if (!resolved && !route.virtual && !fallbackLookup) notFound();
 
   const expectedRouteBase = locale === "en" ? "product-category" : "product-categorie";
-  if (route.virtual && requestedRouteBase !== expectedRouteBase) {
-    const destination = route.virtual.paths[locale];
+  if ((route.virtual || fallbackLookup) && requestedRouteBase !== expectedRouteBase) {
+    const destination = route.virtual
+      ? route.virtual.paths[locale]
+      : (fallbackLookup!.category.canonical_urls?.[locale] || categoryPublicPath(fallbackLookup!.category, fallbackLookup!.ancestors, locale));
     const queryString = query.toString();
     permanentRedirect(queryString ? `${destination}?${queryString}` : destination);
   }
@@ -249,6 +277,8 @@ export async function ProductCategoryPage({
     virtualChildren.forEach((category) => scopeQuery.append("category_id", String(category.id)));
   } else if (resolved) {
     scopeQuery.set("category_term_id", String(resolved.archive.term_id));
+  } else if (fallbackLookup) {
+    scopeQuery.set("category_id", String(fallbackLookup.category.id));
   }
   const initialQuery = new URLSearchParams(scopeQuery);
   query.forEach((value, key) => initialQuery.append(key, value));
@@ -268,22 +298,33 @@ export async function ProductCategoryPage({
   const imagesByIdentity = categoryImagesByIdentity(categoryGroups);
   const childNodes = route.virtual
     ? virtualChildren
-    : archiveChildren.map((child) => asCategoryNode(child, imagesByIdentity));
+    : fallbackLookup
+      ? fallbackLookup.category.children ?? []
+      : archiveChildren.map((child) => asCategoryNode(child, imagesByIdentity));
   const childUrls = new Map(
     route.virtual
       ? virtualChildren.flatMap((child) => {
           const path = child.canonical_urls?.[locale];
           return path ? [[child.id, path] as const] : [];
         })
-      : archiveChildren.map((child) => [child.term_id, child.canonical_url] as const),
+      : fallbackLookup
+        ? (fallbackLookup.category.children ?? []).flatMap((child) => {
+            const path = child.canonical_urls?.[locale] || categoryPublicPath(child, [...fallbackLookup.ancestors, fallbackLookup.category], locale);
+            return path ? [[child.id, path] as const] : [];
+          })
+        : archiveChildren.map((child) => [child.term_id, child.canonical_url] as const),
   );
   const ancestorNodes = route.virtual && virtualParent
     ? [...virtualParent.ancestors, virtualParent.category]
-    : (resolved?.ancestors ?? []).map((ancestor) => asCategoryNode(ancestor, imagesByIdentity));
+    : fallbackLookup
+      ? fallbackLookup.ancestors
+      : (resolved?.ancestors ?? []).map((ancestor) => asCategoryNode(ancestor, imagesByIdentity));
   const categoryTitle = unescapeHtml(
     route.virtual
       ? route.virtual.group.title[locale]
-      : resolved?.archive.name ?? ""
+      : fallbackLookup
+        ? categoryName(fallbackLookup.category, locale)
+        : resolved?.archive.name ?? ""
   );
   const breadcrumbs = [
     { label: t("common.products"), href: localePath("/product", locale) },
@@ -292,12 +333,29 @@ export async function ProductCategoryPage({
           const href = category.canonical_urls?.[locale];
           return href ? [{ label: categoryName(category, locale), href }] : [];
         })
-      : (resolved?.ancestors ?? []).map((ancestor) => ({
-          label: unescapeHtml(ancestor.name),
-          href: ancestor.canonical_url,
-        }))),
+      : fallbackLookup
+        ? fallbackLookup.ancestors.flatMap((category) => {
+            const href = category.canonical_urls?.[locale] || categoryPublicPath(category, [], locale);
+            return href ? [{ label: unescapeHtml(categoryName(category, locale)), href }] : [];
+          })
+        : (resolved?.ancestors ?? []).map((ancestor) => ({
+            label: unescapeHtml(ancestor.name),
+            href: ancestor.canonical_url,
+          }))),
     { label: categoryTitle },
   ];
+
+  const currentIdentityId = route.virtual
+    ? virtualParent?.category.id
+    : fallbackLookup
+      ? fallbackLookup.category.id
+      : resolved?.archive.identity_id;
+  const currentHeroImage =
+    (currentIdentityId ? imagesByIdentity.get(currentIdentityId)?.hero_image : null) ??
+    (route.virtual ? virtualParent?.category.hero_image : null);
+  const heroImageUrl =
+    (currentHeroImage && toDisplayImageUrl(currentHeroImage)) ||
+    "/images/archive-banner.jpg";
 
   return (
     <div className="bg-white">
@@ -305,7 +363,7 @@ export async function ProductCategoryPage({
         <div className="mx-auto flex max-w-360 flex-col gap-12">
           <div className="relative h-56 w-full overflow-hidden rounded-xl shadow-md">
             <Image
-              src="/images/archive-banner.jpg"
+              src={heroImageUrl}
               alt={`${categoryTitle} banner`}
               fill
               sizes="100vw"

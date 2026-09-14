@@ -77,13 +77,27 @@ export default function ReviewsSlider({ reviews, totalRatings }: ReviewsSliderPr
     <div className="flex flex-col gap-10 relative z-10 w-full max-w-360 mx-auto">
       {/* Header & Controls */}
       <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-6">
-        <h2 className="text-neutral-900 text-3xl md:text-[40px] font-bold leading-tight">
-          {t('reviews.title', { count: totalRatings })}
-        </h2>
+        <div>
+          <h2 className="text-neutral-900 text-3xl md:text-[40px] font-bold leading-tight">
+            {t('reviews.title', { count: totalRatings })}
+          </h2>
+          <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center text-amber-400">
+              {[...Array(5)].map((_, i) => (
+                <svg key={i} className="w-5 h-5 fill-current" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              ))}
+            </div>
+            <span className="text-neutral-800 font-semibold text-sm">5.0</span>
+            <span className="text-neutral-400 text-sm">({totalRatings} Google reviews)</span>
+          </div>
+        </div>
         <div className="flex items-center gap-4 self-end sm:self-auto">
           <button
             onClick={scrollLeft}
             disabled={!canScrollLeft}
+            aria-label="Previous review"
             className={`w-12 h-12 rounded-full flex items-center justify-center border transition-colors ${canScrollLeft
               ? "bg-white border-brand text-brand hover:bg-brand-soft cursor-pointer"
               : "bg-neutral-50 border-gray-200 text-gray-400 cursor-not-allowed"
@@ -94,6 +108,7 @@ export default function ReviewsSlider({ reviews, totalRatings }: ReviewsSliderPr
           <button
             onClick={scrollRight}
             disabled={!canScrollRight}
+            aria-label="Next review"
             className={`w-12 h-12 rounded-full flex items-center justify-center border transition-colors ${canScrollRight
               ? "bg-white border-brand text-brand hover:bg-brand-soft cursor-pointer"
               : "bg-neutral-50 border-gray-200 text-gray-400 cursor-not-allowed"
@@ -121,7 +136,16 @@ export default function ReviewsSlider({ reviews, totalRatings }: ReviewsSliderPr
               <div className="flex items-center gap-4 mb-5">
                 <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 shrink-0">
                   {r.profile_photo_url ? (
-                    <img src={r.profile_photo_url} alt={r.author_name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    <img
+                      src={r.profile_photo_url}
+                      alt={r.author_name}
+                      width={48}
+                      height={48}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-amber-100 text-brand font-bold text-lg">
                       {r.author_name.charAt(0)}
@@ -142,7 +166,7 @@ export default function ReviewsSlider({ reviews, totalRatings }: ReviewsSliderPr
               <StarRating rating={r.rating || 5} />
 
               {/* Review Text */}
-              <p className="text-zinc-500 text-[15px] font-normal leading-[1.6] line-clamp-6">
+              <p className="text-zinc-600 text-[15px] font-normal leading-[1.6] line-clamp-6 whitespace-pre-line">
                 {r.text}
               </p>
             </div>
@@ -153,6 +177,10 @@ export default function ReviewsSlider({ reviews, totalRatings }: ReviewsSliderPr
               <img
                 src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg"
                 alt="Google"
+                width={59}
+                height={20}
+                loading="lazy"
+                decoding="async"
                 className="h-5 object-contain object-left"
               />
             </div>

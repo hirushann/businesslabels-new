@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { CHECKOUT_RETURN_LOCALE_COOKIE, DEFAULT_LOCALE, LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE, LOCALE_HEADER, LOCALE_PATH_HEADER } from '@/lib/i18n/config';
 import { isMaintenanceMode } from '@/lib/maintenance';
+import { categoryPublicPathFromSlug } from '@/lib/categories/tree';
 
 const EN_PREFIX = '/en';
 const COOKIE_OPTIONS = { path: '/', sameSite: 'lax' as const, maxAge: LOCALE_COOKIE_MAX_AGE };
@@ -215,6 +216,15 @@ export function proxy(request: NextRequest) {
     else if (cleanPathname.includes('/thermal-transfer')) target = '/material/thermal-transfer';
 
     const redirectUrl = new URL(hasEnglishPrefix ? `${EN_PREFIX}${target}` : target, request.url);
+    return persistLocale(NextResponse.redirect(redirectUrl, 301), locale);
+  }
+
+  // Handle legacy WordPress /category/* paths -> redirect to canonical category paths
+  if (cleanPathname === '/category' || cleanPathname.startsWith('/category/')) {
+    const rawSlug = cleanPathname.slice('/category'.length).replace(/^\/+/, '').replace(/\/+$/, '');
+    const mapped = rawSlug ? categoryPublicPathFromSlug(rawSlug, locale) : (locale === 'en' ? '/product-category' : '/product-categorie');
+    const target = hasEnglishPrefix ? (mapped.startsWith(EN_PREFIX) ? mapped : `${EN_PREFIX}${mapped}`) : mapped;
+    const redirectUrl = new URL(`${target}${search}`, request.url);
     return persistLocale(NextResponse.redirect(redirectUrl, 301), locale);
   }
   if (cleanPathname === '/software-2') {

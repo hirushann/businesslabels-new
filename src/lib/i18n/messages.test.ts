@@ -7,6 +7,16 @@ describe('checkout translations', () => {
     expect(MESSAGES_V4.nl.checkout.optional).toBe('Optioneel');
   });
 
+  it('provides footer address in both locales', () => {
+    expect(MESSAGES_V4.en.footer.address.street).toBe('Lenderinkweg 8');
+    expect(MESSAGES_V4.en.footer.address.postalCode).toBe('6733 AX Wekerom');
+    expect(MESSAGES_V4.en.footer.address.country).toBe('The Netherlands');
+
+    expect(MESSAGES_V4.nl.footer.address.street).toBe('Lenderinkweg 8');
+    expect(MESSAGES_V4.nl.footer.address.postalCode).toBe('6733 AX Wekerom');
+    expect(MESSAGES_V4.nl.footer.address.country).toBe('The Netherlands');
+  });
+
   it('provides brand metadata titles and descriptions in both locales', () => {
     expect(MESSAGES_V4.nl.pages.brandMetadataTitle).toBe('{brand} producten voor jouw labelprinter | BusinessLabels');
     expect(MESSAGES_V4.en.pages.brandMetadataTitle).toBe('{brand} products for your label printer | BusinessLabels');

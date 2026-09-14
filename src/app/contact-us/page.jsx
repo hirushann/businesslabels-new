@@ -1,7 +1,9 @@
 import { getTranslations, getLocale } from "next-intl/server";
+import Image from "next/image";
 import Link from "next/link";
 import { localePath } from "@/lib/i18n/utils";
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
+import ReCaptchaProvider from "@/components/ReCaptchaProvider";
 import ReviewsSection from "@/components/ReviewsSection";
 import AvailabilityStatus from "./AvailabilityStatus";
 import ContactForm from "./ContactForm";
@@ -184,7 +186,9 @@ export default async function ContactPage() {
                         </div>
                      </div>
                   </div>
-                  <ContactForm />
+                  <ReCaptchaProvider>
+                     <ContactForm />
+                  </ReCaptchaProvider>
                </div>
             </div>
 
@@ -203,10 +207,13 @@ export default async function ContactPage() {
                         key={member.id}
                         className="flex-1 min-w-[280px] px-6 py-10 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] flex flex-col justify-center items-center gap-6"
                      >
-                        <img
-                           className="size-28 relative rounded-[230px] object-cover"
+                        <Image
+                           className="size-28 rounded-full object-cover"
                            src={toDisplayImageUrl(member.profile_pic_url) || member.profile_pic_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=f59e0b&color=fff`}
                            alt={member.name}
+                           width={112}
+                           height={112}
+                           quality={80}
                         />
                         <div className="self-stretch flex flex-col justify-center items-center gap-5">
                            <div className="self-stretch flex flex-col justify-start items-center gap-2">

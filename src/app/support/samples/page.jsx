@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server';
+import ReCaptchaProvider from '@/components/ReCaptchaProvider';
 import SupportSamplesClient from './SupportSamplesClient';
 
 export async function generateMetadata() {
@@ -10,5 +11,9 @@ export async function generateMetadata() {
 }
 
 export default function SupportSamplesPage() {
-  return <SupportSamplesClient />;
+  return (
+    <ReCaptchaProvider>
+      <SupportSamplesClient />
+    </ReCaptchaProvider>
+  );
 }
