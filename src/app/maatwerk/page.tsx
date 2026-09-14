@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { getServerLocale } from '@/lib/i18n/server';
+import ReCaptchaProvider from '@/components/ReCaptchaProvider';
 import CustomMadeFormClient from './CustomMadeFormClient';
 
 type CustomMadeFormPageProps = {
@@ -39,5 +40,9 @@ export async function generateMetadata({ searchParams }: CustomMadeFormPageProps
 export default async function CustomMadeFormPage({ searchParams }: CustomMadeFormPageProps) {
   const materialCodeParam = (await searchParams).materialId;
   const materialCode = Array.isArray(materialCodeParam) ? materialCodeParam[0] : materialCodeParam;
-  return <CustomMadeFormClient matCode={materialCode} />;
+  return (
+    <ReCaptchaProvider>
+      <CustomMadeFormClient matCode={materialCode} />
+    </ReCaptchaProvider>
+  );
 }

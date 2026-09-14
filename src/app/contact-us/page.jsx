@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { localePath } from "@/lib/i18n/utils";
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
+import ReCaptchaProvider from "@/components/ReCaptchaProvider";
 import ReviewsSection from "@/components/ReviewsSection";
 import AvailabilityStatus from "./AvailabilityStatus";
 import ContactForm from "./ContactForm";
@@ -185,7 +186,9 @@ export default async function ContactPage() {
                         </div>
                      </div>
                   </div>
-                  <ContactForm />
+                  <ReCaptchaProvider>
+                     <ContactForm />
+                  </ReCaptchaProvider>
                </div>
             </div>
 

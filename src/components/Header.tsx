@@ -15,6 +15,7 @@ import dynamic from 'next/dynamic';
 import { useCart } from './CartProvider';
 import { useWishlist } from './WishlistProvider';
 import { useHelp } from './HelpProvider';
+import ReCaptchaProvider from './ReCaptchaProvider';
 
 const CartDrawer = dynamic(() => import('./CartDrawer'), { ssr: false });
 const WishlistDrawer = dynamic(() => import('./WishlistDrawer'), { ssr: false });
@@ -1160,7 +1161,11 @@ export default function Header({
         </div>
       )}
 
-      {isHelpOpen && <HelpDrawer onClose={closeHelp} />}
+      {isHelpOpen && (
+        <ReCaptchaProvider>
+          <HelpDrawer onClose={closeHelp} />
+        </ReCaptchaProvider>
+      )}
       {isWishlistOpen && <WishlistDrawer onClose={() => setIsWishlistOpen(false)} />}
       {isCartOpen && <CartDrawer onClose={closeCart} />}
       {isLoginPopupOpen && !isAuthenticated && (
