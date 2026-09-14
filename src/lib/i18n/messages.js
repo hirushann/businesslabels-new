@@ -454,6 +454,11 @@ export const MESSAGES_V4 = {
         shippingSub: 'Next day available',
       },
       companyText: 'Businesslabels is part of <smart2b>Smart2B BV</smart2b>',
+      address: {
+        street: 'Lenderinkweg 8',
+        postalCode: '6733 AX Wekerom',
+        country: 'The Netherlands',
+      },
       columns: {
         products: 'Products',
         printers: 'Popular Printers',
@@ -2564,6 +2569,11 @@ export const MESSAGES_V4 = {
         shippingSub: 'Levering volgende dag mogelijk',
       },
       companyText: 'Businesslabels is onderdeel van <smart2b>Smart2B BV</smart2b>',
+      address: {
+        street: 'Lenderinkweg 8',
+        postalCode: '6733 AX Wekerom',
+        country: 'The Netherlands',
+      },
       columns: {
         products: 'Producten',
         printers: 'Populaire printers',
