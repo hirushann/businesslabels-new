@@ -10,22 +10,22 @@ import { toDisplayImageUrl } from '@/lib/utils/imageProxy';
 const defaultSections = [
   {
     key: 'section1',
-    href: '/product-category/labelprinters',
-    defaultImage: '/home_epson_printer.png',
+    href: '/product-categorie/labelprinters',
+    defaultImage: '/home_epson_printer.webp',
     imageLeft: false,
     bullets: 3,
   },
   {
     key: 'section2',
-    href: '/category/labels-en-tickets',
-    defaultImage: '/find_labels_and_materials.jpeg',
+    href: '/product-categorie/labels-en-tickets',
+    defaultImage: '/find_labels_and_materials.webp',
     imageLeft: true,
     bullets: 3,
   },
   {
     key: 'section3',
     href: '/my-account?tab=favourites',
-    defaultImage: '/quick_reorder.jpeg',
+    defaultImage: '/quick_reorder.webp',
     imageLeft: false,
     bullets: 3,
   },

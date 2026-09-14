@@ -648,8 +648,8 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
           alt={productName || "Product"}
           width={600}
           height={400}
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           className="h-full w-auto object-contain mx-auto py-5"
-          unoptimized
           onError={() => setImgError(true)}
         />
         </Link>

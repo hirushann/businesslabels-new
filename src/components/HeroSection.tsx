@@ -62,7 +62,7 @@ export default function HeroSection({ heroBanner }: HeroSectionProps = {}) {
     categories: AvailablePrinterProductCategory[];
   }>({ printerId: null, categories: [] });
 
-  const defaultBg = "/Herobg.png";
+  const defaultBg = "/Herobg.webp";
   const [bgError, setBgError] = useState(false);
   const bgSrc = bgError ? defaultBg : (toDisplayImageUrl(heroBanner) || defaultBg);
 
@@ -160,8 +160,10 @@ export default function HeroSection({ heroBanner }: HeroSectionProps = {}) {
         src={bgSrc}
         alt="Hero background"
         fill
-        className="object-cover object-center"
+        sizes="100vw"
         priority
+        fetchPriority="high"
+        className="object-cover object-center"
         onError={() => setBgError(true)}
       />
       {/* Gradient overlays */}

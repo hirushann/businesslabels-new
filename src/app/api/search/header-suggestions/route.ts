@@ -208,6 +208,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       query,
+      singleProduct: products.total === 1 && products.products[0]
+        ? mapProductItem(products.products[0], locale)
+        : null,
       productGroups,
       materials: {
         id: "materials",

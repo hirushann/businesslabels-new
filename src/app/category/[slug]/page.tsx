@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import { permanentRedirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import CategorySubnav from "@/components/CategorySubnav";
@@ -14,6 +15,7 @@ import ReviewsSection from "@/components/ReviewsSection";
 import {
   CATEGORY_SOURCE_LOCALE,
   categoryName,
+  categoryPublicPathFromSlug,
   categorySlug,
   fetchCategoryGroups,
   findCategoryBySlug,
@@ -158,7 +160,7 @@ export async function renderCategoryArchivePage({
     { label: t("common.products"), href: localePath("/product", locale) },
     ...ancestors.map((ancestor) => ({
       label: categoryName(ancestor, locale),
-      href: `/category/${encodeURIComponent(categorySlug(ancestor, categorySourceLocale))}`,
+      href: localePath(categoryPublicPathFromSlug(categorySlug(ancestor, categorySourceLocale), locale), locale),
     })),
     { label: categoryTitle },
   ];
@@ -245,6 +247,9 @@ export default async function CategoryArchivePage({
   searchParams: Promise<CategoryPageSearchParams>;
 }) {
   const { slug } = await params;
-
-  return renderCategoryArchivePage({ slug, searchParams });
+  const locale = await getServerLocale();
+  const rawQuery = await searchParams;
+  const destination = localePath(categoryPublicPathFromSlug(slug, locale), locale);
+  const query = toUrlSearchParams(rawQuery).toString();
+  permanentRedirect(query ? `${destination}?${query}` : destination);
 }

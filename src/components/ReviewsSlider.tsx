@@ -136,7 +136,16 @@ export default function ReviewsSlider({ reviews, totalRatings }: ReviewsSliderPr
               <div className="flex items-center gap-4 mb-5">
                 <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 shrink-0">
                   {r.profile_photo_url ? (
-                    <img src={r.profile_photo_url} alt={r.author_name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    <img
+                      src={r.profile_photo_url}
+                      alt={r.author_name}
+                      width={48}
+                      height={48}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-amber-100 text-brand font-bold text-lg">
                       {r.author_name.charAt(0)}
@@ -168,6 +177,10 @@ export default function ReviewsSlider({ reviews, totalRatings }: ReviewsSliderPr
               <img
                 src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg"
                 alt="Google"
+                width={59}
+                height={20}
+                loading="lazy"
+                decoding="async"
                 className="h-5 object-contain object-left"
               />
             </div>

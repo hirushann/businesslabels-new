@@ -89,9 +89,9 @@ const features = [
 export default function WhyChooseUs({ images = {} } = {}) {
    const t = useTranslations();
 
-   const defaultMainImage = "/whychoose.png";
-   const defaultLeftLogo = "/images/diamond-partner.png";
-   const defaultRightLogo = "/images/label-authorised.png";
+   const defaultMainImage = "/whychoose.webp";
+   const defaultLeftLogo = "/images/diamond-partner.webp";
+   const defaultRightLogo = "/images/label-authorised.webp";
 
    const [mainImgError, setMainImgError] = useState(false);
    const [leftLogoError, setLeftLogoError] = useState(false);
@@ -163,7 +163,6 @@ export default function WhyChooseUs({ images = {} } = {}) {
                         className="w-full h-auto object-contain rounded-2xl"
                         width={300}
                         height={300}
-                        unoptimized
                         onError={() => setLeftLogoError(true)}
                      />
                      <Image
@@ -172,7 +171,6 @@ export default function WhyChooseUs({ images = {} } = {}) {
                         className="w-full h-auto object-contain max-h-[100px] bg-[#10218B] rounded-2xl"
                         width={300}
                         height={300}
-                        unoptimized
                         onError={() => setRightLogoError(true)}
                      />
                   </div>

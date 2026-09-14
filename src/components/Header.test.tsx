@@ -20,7 +20,7 @@ vi.mock('next-intl', () => ({
   useLocale: () => 'en',
   useTranslations: () => Object.assign((key: string) => key, { has: () => true }),
 }));
-vi.mock('next/image', () => ({ default: (props: Record<string, unknown>) => <span {...props} /> }));
+vi.mock('next/image', () => ({ default: ({ priority, ...props }: Record<string, unknown>) => <span {...props} /> }));
 vi.mock('./CartProvider', () => ({ useCart: () => ({ totalItemCount: 0, isCartOpen: false, openCart: vi.fn(), closeCart: vi.fn() }) }));
 vi.mock('./WishlistProvider', () => ({ useWishlist: () => ({ uniqueItemCount: 0 }) }));
 vi.mock('./HelpProvider', () => ({ useHelp: () => ({ isHelpOpen: false, openHelp: vi.fn(), closeHelp: vi.fn() }) }));
@@ -96,5 +96,65 @@ describe('Header authentication redirects', () => {
 
     await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/logout', { method: 'POST' }));
     await waitFor(() => expect(navigation.push).toHaveBeenCalledWith('/en/?auth=login&redirect=%2Fmy-account'));
+  });
+});
+
+describe('Header search', () => {
+  afterEach(cleanup);
+
+  beforeEach(() => {
+    localStorage.clear();
+    navigation.push.mockClear();
+    navigation.pathname = '/';
+    navigation.searchParams = new URLSearchParams();
+  });
+
+  it('opens the only matching product when the search form is submitted', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((input: string) => Promise.resolve({
+      ok: true,
+      json: async () => input.startsWith('/api/search/header-suggestions')
+        ? {
+            query: 'C32C882101',
+            singleProduct: { id: '1', title: 'Epson product', href: '/product/epson-product' },
+            productGroups: [{
+              id: 'printers',
+              title: 'Printers',
+              href: '/printers',
+              total: 1,
+              items: [{ id: '1', title: 'Epson product', href: '/product/epson-product' }],
+            }],
+            materials: { id: 'materials', title: 'Materials', href: '/material', total: 0, items: [] },
+          }
+        : { data: [] },
+    })));
+
+    render(<Header />);
+    const search = screen.getAllByRole('textbox', { name: 'header.productsSearchLink' })[0];
+    fireEvent.change(search, { target: { value: 'C32C882101' } });
+    fireEvent.submit(search.closest('form')!);
+
+    await waitFor(() => expect(navigation.push).toHaveBeenCalledWith('/product/epson-product'));
+  });
+
+  it('keeps the popover behavior when there is not exactly one product', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((input: string) => Promise.resolve({
+      ok: true,
+      json: async () => input.startsWith('/api/search/header-suggestions')
+        ? {
+            query: 'labels',
+            singleProduct: null,
+            productGroups: [],
+            materials: { id: 'materials', title: 'Materials', href: '/material', total: 0, items: [] },
+          }
+        : { data: [] },
+    })));
+
+    render(<Header />);
+    const search = screen.getAllByRole('textbox', { name: 'header.productsSearchLink' })[0];
+    fireEvent.change(search, { target: { value: 'labels' } });
+    await screen.findByText('search.popover.noResultsTitle');
+    fireEvent.submit(search.closest('form')!);
+
+    expect(navigation.push).not.toHaveBeenCalled();
   });
 });

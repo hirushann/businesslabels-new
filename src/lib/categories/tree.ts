@@ -146,6 +146,40 @@ const publicCategoryPathBySlug: Record<string, string> = {
   starterkits: "/product-category/labelprinters/starterkits",
   consumables: "/product-category/labelprinters/consumables",
   "verbruiksmaterialen-nl": "/product-category/labelprinters/consumables",
+  "labels-en-tickets": "/product-category/labels-en-tickets-en",
+  "labels-en-tickets-en": "/product-category/labels-en-tickets-en",
+  "inkjet-printer-media": "/product-category/labels-en-tickets-en/inkjet-printer-media",
+  "thermal-direct": "/product-category/labels-en-tickets-en/thermal-direct-printer-media",
+  "thermisch-directe-printer-media": "/product-category/labels-en-tickets-en/thermal-direct-printer-media",
+  "thermal-transfer": "/product-category/labels-en-tickets-en/thermal-transfer-printer-media",
+  "thermische-overdracht-printer-media": "/product-category/labels-en-tickets-en/thermal-transfer-printer-media",
+  toepassingen: "/product-category/labels-en-tickets-en/applications",
+  applications: "/product-category/labels-en-tickets-en/applications",
+  verzendetiketten: "/product-category/shipping-labels",
+  "shipping-labels": "/product-category/shipping-labels",
+  bezoekersbadges: "/product-category/labels-en-tickets-en/inkjet-printer-media/visitors-badges",
+  "visitors-badges": "/product-category/labels-en-tickets-en/inkjet-printer-media/visitors-badges",
+  juweliersetiketten: "/product-category/jewellery-labels",
+  "jewellery-labels": "/product-category/jewellery-labels",
+  "wijn-labels": "/product-category/labels-en-tickets-en",
+  "wine-labels": "/product-category/labels-en-tickets-en",
+  accessoires: "/product-category/labelprinters/accessories-1",
+  accessories: "/product-category/labelprinters/accessories-1",
+  "accessories-1": "/product-category/labelprinters/accessories-1",
+  applicatoren: "/product-category/labelprinters/accessories-1/applicators",
+  applicators: "/product-category/labelprinters/accessories-1/applicators",
+  "applicatoren-en-dispensers": "/product-category/labelprinters/accessories-1/applicators-and-dispensers",
+  "dispenser-nl": "/product-category/labelprinters/accessories-1/dispenser",
+  dispensers: "/product-category/labelprinters/accessories-1/dispenser",
+  "re-unwinders-nl": "/product-category/labelprinters/accessories-1/re-unwinders",
+  "re-unwinders": "/product-category/labelprinters/accessories-1/re-unwinders",
+  "printer-add-ons": "/product-category/labelprinters/accessories-1/printer-add-ons",
+  cutters: "/product-category/labelprinters/accessories-1/cutters-en",
+  "wifi-en-bluetooth-dongles": "/product-category/labelprinters/accessories-1/wifi-and-bluetooth-dongels",
+  "cw-c4000-accessoires": "/product-category/labelprinters/accessories-1/cw-c4000-accessories",
+  diversen: "/product-category/labelprinters/accessories-1/miscellaneous",
+  kabels: "/product-category/labelprinters/accessories-1/miscellaneous/cables",
+  onderhoud: "/product-category/labelprinters/accessories-1/miscellaneous/maintenance",
 };
 
 const publicCategoryPathBySlugNl: Record<string, string> = {
@@ -159,10 +193,49 @@ const publicCategoryPathBySlugNl: Record<string, string> = {
   starterkits: "/product-categorie/labelprinters/starterkits",
   consumables: "/product-categorie/labelprinters/verbruiksmaterialen-nl",
   "verbruiksmaterialen-nl": "/product-categorie/labelprinters/verbruiksmaterialen-nl",
+  "labels-en-tickets": "/product-categorie/labels-en-tickets",
+  "labels-en-tickets-en": "/product-categorie/labels-en-tickets",
+  "inkjet-printer-media": "/product-categorie/labels-en-tickets/inkjet-printer-media",
+  "thermal-direct": "/product-categorie/labels-en-tickets/thermal-direct",
+  "thermisch-directe-printer-media": "/product-categorie/labels-en-tickets/thermal-direct",
+  "thermal-transfer": "/product-categorie/labels-en-tickets/thermal-transfer",
+  "thermische-overdracht-printer-media": "/product-categorie/labels-en-tickets/thermal-transfer",
+  toepassingen: "/product-categorie/labels-en-tickets/toepassingen",
+  applications: "/product-categorie/labels-en-tickets/toepassingen",
+  verzendetiketten: "/product-categorie/labels-en-tickets/thermal-direct/verzendetiketten",
+  "shipping-labels": "/product-categorie/labels-en-tickets/thermal-direct/verzendetiketten",
+  bezoekersbadges: "/product-categorie/labels-en-tickets/inkjet-printer-media/bezoekersbadges",
+  "visitors-badges": "/product-categorie/labels-en-tickets/inkjet-printer-media/bezoekersbadges",
+  juweliersetiketten: "/product-categorie/labels-en-tickets/thermal-transfer/juweliersetiketten-thermische-overdracht-printer-media",
+  "jewellery-labels": "/product-categorie/labels-en-tickets/thermal-transfer/juweliersetiketten-thermische-overdracht-printer-media",
+  "wijn-labels": "/product-categorie/labels-en-tickets/wijn-labels",
+  "wine-labels": "/product-categorie/labels-en-tickets/wijn-labels",
+  accessoires: "/product-categorie/labelprinters/accessoires",
+  accessories: "/product-categorie/labelprinters/accessoires",
+  "re-unwinders-nl": "/product-categorie/labelprinters/accessoires/re-unwinders-nl",
+  "re-unwinders": "/product-categorie/labelprinters/accessoires/re-unwinders-nl",
+  applicatoren: "/product-categorie/labelprinters/accessoires/applicatoren",
+  applicators: "/product-categorie/labelprinters/accessoires/applicatoren",
+  "applicatoren-en-dispensers": "/product-categorie/labelprinters/accessoires/applicatoren-en-dispensers",
+  "dispenser-nl": "/product-categorie/labelprinters/accessoires/dispenser-nl",
+  dispensers: "/product-categorie/labelprinters/accessoires/dispenser-nl",
+  "printer-add-ons": "/product-categorie/labelprinters/accessoires/printer-add-ons",
+  cutters: "/product-categorie/labelprinters/accessoires/cutters",
+  "wifi-en-bluetooth-dongles": "/product-categorie/labelprinters/accessoires/wifi-en-bluetooth-dongles",
+  "cw-c4000-accessoires": "/product-categorie/labelprinters/accessoires/cw-c4000-accessoires",
+  diversen: "/product-categorie/labelprinters/accessoires/diversen",
+  kabels: "/product-categorie/labelprinters/accessoires/diversen/kabels",
+  onderhoud: "/product-categorie/labelprinters/accessoires/diversen/onderhoud",
+  specials: "/product-categorie/specials",
+  "inkt-cartridges-nl": "/product-categorie/labelprinters/verbruiksmaterialen-nl",
 };
 
-export function categoryPublicPathFromSlug(slug: string): string | null {
-  return publicCategoryPathBySlug[slug] ?? null;
+export function categoryPublicPathFromSlug(slug: string, locale: string = "nl"): string {
+  const mapToUse = locale === "nl" ? publicCategoryPathBySlugNl : publicCategoryPathBySlug;
+  const decoded = decodeURIComponent(slug);
+  if (mapToUse[decoded]) return mapToUse[decoded];
+  const base = locale === "nl" ? "/product-categorie" : "/product-category";
+  return `${base}/${encodeURIComponent(decoded)}`;
 }
 
 export function categoryPublicPath(
@@ -190,7 +263,8 @@ export function categoryPublicPath(
     }
   }
 
-  return `/category/${encodeURIComponent(categoryRouteSlug(category, locale))}`;
+  const base = locale === "nl" ? "/product-categorie" : "/product-category";
+  return `${base}/${encodeURIComponent(categoryRouteSlug(category, locale))}`;
 }
 
 export function findCategoryById(

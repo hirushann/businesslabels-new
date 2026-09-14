@@ -7,6 +7,7 @@ import { getTranslations } from "next-intl/server";
 import Accordion from "@/components/Accordion";
 import CTABanner from "@/components/CTABanner";
 import IccProfileModal from "@/components/materials/IccProfileModal";
+import ReCaptchaProvider from "@/components/ReCaptchaProvider";
 import ScrollToMaterialProductsButton from "@/components/materials/ScrollToMaterialProductsButton";
 import ProductsListing from "@/components/ProductsListing";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
@@ -17,6 +18,7 @@ import { parseCatalogSearchParams, searchCatalogProducts } from "@/lib/search/pr
 import type { CatalogSearchResponse } from "@/lib/search/types";
 import { htmlToText } from "@/lib/utils";
 import { materialHeading, resolveMaterialImage } from "@/lib/materials/presentation";
+import { categoryPublicPathFromSlug } from "@/lib/categories/tree";
 
 type MaterialProduct = {
   id: number;
@@ -601,7 +603,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
           <Breadcrumbs
             items={[
               { label: t("common.materials"), href: "/material" },
-              ...(category ? [{ label: category.name, href: `/category/${category.slug || category.id}` }] : []),
+              ...(category ? [{ label: category.name, href: categoryPublicPathFromSlug(category.slug || String(category.id), locale) }] : []),
               { label: materialTitle },
             ]}
           />
@@ -689,7 +691,9 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
                       : "Download ICC profiles to ensure precise and accurate printer color reproduction."}
                   </p>
                 </div>
-                <IccProfileModal materialTitle={materialTitle} isNl={isNl} />
+                <ReCaptchaProvider>
+                  <IccProfileModal materialTitle={materialTitle} isNl={isNl} />
+                </ReCaptchaProvider>
               </div>
 
               {/* {material.spec_sheet_url && (

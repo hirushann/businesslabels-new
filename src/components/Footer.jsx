@@ -46,10 +46,10 @@ const trustItems = [
 
 const footerLinks = {
   products: [
-    { nameKey: 'footer.links.labelPrinters', href: '/category/labelprinters' },
-    { nameKey: 'footer.links.labelRolls', href: '/category/labels-en-tickets' },
-    { nameKey: 'footer.links.inkSupplies', href: '/category/inkt-cartridges-nl' },
-    { nameKey: 'footer.links.specialLabels', href: '/category/specials' },
+    { nameKey: 'footer.links.labelPrinters', href: '/product-categorie/labelprinters' },
+    { nameKey: 'footer.links.labelRolls', href: '/product-categorie/labels-en-tickets' },
+    { nameKey: 'footer.links.inkSupplies', href: '/product-categorie/labelprinters/verbruiksmaterialen-nl' },
+    { nameKey: 'footer.links.specialLabels', href: '/product-categorie/specials' },
   ],
   printers: [
     { name: 'CW-D3800e', href: '/product/epson-colorworks-cw-d3800e-labelprinter-dye-inkt' },
@@ -105,7 +105,7 @@ export default function Footer() {
               {/* Logo */}
               <div>
                 <Image
-                  src="/footerlogo.png"
+                  src="/footerlogo.webp"
                   alt="Businesslabels"
                   width={205}
                   height={40}

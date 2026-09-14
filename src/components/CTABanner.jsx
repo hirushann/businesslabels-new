@@ -11,7 +11,7 @@ export default function CTABanner({ footerBanner = null } = {}) {
   const t = useTranslations();
   const { openHelp } = useHelp();
 
-  const defaultBg = "/images/cta_image.jpg";
+  const defaultBg = "/images/cta_image.webp";
   const [hasError, setHasError] = useState(false);
   const bgSrc = hasError ? defaultBg : (toDisplayImageUrl(footerBanner) || defaultBg);
 
