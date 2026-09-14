@@ -12,7 +12,7 @@ export default function CTABanner() {
     <section className="relative min-h-[400px] lg:h-120 w-full py-16 lg:py-12 overflow-hidden flex items-center">
       {/* Background */}
       <Image
-        src="/images/cta_image.jpg"
+        src="/images/cta_image.webp"
         alt="Call to action Image - Businesslabels"
         fill
         sizes="100vw"

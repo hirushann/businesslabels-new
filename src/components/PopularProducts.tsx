@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { connection } from 'next/server';
 import EmptyState from "@/components/EmptyState";
 import ProductCard from "@/components/ProductCard";
 import { getTranslations } from 'next-intl/server';
@@ -19,8 +18,6 @@ function shuffleArray<T>(array: T[]): T[] {
 }
 
 export default async function PopularProducts() {
-  await connection();
-
   const locale = await getServerLocale();
   const t = await getTranslations();
 

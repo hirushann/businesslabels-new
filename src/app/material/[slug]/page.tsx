@@ -17,6 +17,7 @@ import { parseCatalogSearchParams, searchCatalogProducts } from "@/lib/search/pr
 import type { CatalogSearchResponse } from "@/lib/search/types";
 import { htmlToText } from "@/lib/utils";
 import { materialHeading, resolveMaterialImage } from "@/lib/materials/presentation";
+import { categoryPublicPathFromSlug } from "@/lib/categories/tree";
 
 type MaterialProduct = {
   id: number;
@@ -601,7 +602,7 @@ export default async function SingleMaterialPage({ params, searchParams }: Mater
           <Breadcrumbs
             items={[
               { label: t("common.materials"), href: "/material" },
-              ...(category ? [{ label: category.name, href: `/category/${category.slug || category.id}` }] : []),
+              ...(category ? [{ label: category.name, href: categoryPublicPathFromSlug(category.slug || String(category.id), locale) }] : []),
               { label: materialTitle },
             ]}
           />

@@ -8,22 +8,22 @@ import { useLocalePath } from '@/hooks/useLocalePath';
 const sections = [
   {
     key: 'section1',
-    href: '/product-category/labelprinters',
-    image: '/home_epson_printer.png',
+    href: '/product-categorie/labelprinters',
+    image: '/home_epson_printer.webp',
     imageLeft: false,
     bullets: 3,
   },
   {
     key: 'section2',
-    href: '/category/labels-en-tickets',
-    image: '/find_labels_and_materials.jpeg',
+    href: '/product-categorie/labels-en-tickets',
+    image: '/find_labels_and_materials.webp',
     imageLeft: true,
     bullets: 3,
   },
   {
     key: 'section3',
     href: '/my-account?tab=favourites',
-    image: '/quick_reorder.jpeg',
+    image: '/quick_reorder.webp',
     imageLeft: false,
     bullets: 3,
   },

@@ -148,11 +148,13 @@ export default function HeroSection() {
     <section className="relative w-full min-h-[85vh] lg:h-[85vh] py-12 lg:py-0 flex items-center overflow-hidden px-4 md:px-8 lg:px-10">
       {/* Background image */}
       <Image
-        src="/Herobg.png"
+        src="/Herobg.webp"
         alt="Hero background"
         fill
-        className="object-cover object-center"
+        sizes="100vw"
         priority
+        fetchPriority="high"
+        className="object-cover object-center"
       />
       {/* Gradient overlays */}
       <div className="absolute inset-0 bg-gradient-to-l from-black/40 via-black/40 to-black/0" />

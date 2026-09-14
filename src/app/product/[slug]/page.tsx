@@ -21,7 +21,7 @@ import Image from "next/image";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import type { ReactNode } from "react";
 import LocaleLink from "@/components/LocaleLink";
-import { categoryNameFallback } from "@/lib/categories/tree";
+import { categoryNameFallback, categoryPublicPathFromSlug } from "@/lib/categories/tree";
 import { localizeProductSpecValue } from "@/lib/products/specValues";
 import { mapLaravelProductToCardData, type LaravelProduct } from "@/lib/mappings/product";
 import ProductDescriptionAccordion from "@/components/ProductDescriptionAccordion";
@@ -649,7 +649,7 @@ function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t:
               <span key={`${category.slug ?? category.name}-${index}`}>
                 {category.slug ? (
                   <LocaleLink
-                    href={`/category/${encodeURIComponent(category.slug)}`}
+                    href={categoryPublicPathFromSlug(category.slug, locale)}
                     className="text-brand hover:text-brand underline font-semibold transition-colors cursor-pointer"
                   >
                     {category.name}
@@ -1246,7 +1246,7 @@ export default async function SingleProductPage({
                 { label: t('common.products'), href: localePath('/product', locale) },
                 ...(breadcrumbCategory && breadcrumbCategoryName ? [{ 
                   label: breadcrumbCategoryName, 
-                  href: `/category/${breadcrumbCategorySlug || breadcrumbCategory.id}` 
+                  href: categoryPublicPathFromSlug(breadcrumbCategorySlug || String(breadcrumbCategory.id), locale) 
                 }] : []),
                 { label: productName }
               ]} 

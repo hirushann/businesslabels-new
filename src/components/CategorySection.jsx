@@ -2,14 +2,16 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
+import { localePath } from "@/lib/i18n/utils";
+import { categoryPublicPathFromSlug } from "@/lib/categories/tree";
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 
 // Configure the categories to display: slug (Dutch), and a fallback image per category
 const targetCategories = [
-  { slug: 'labelprinters', fallbackImage: '/labelprinters.jpeg' },
-  { slug: 'labels-en-tickets', fallbackImage: '/labelrolls.png' },
-  { slug: 'inkt-cartridges-nl', fallbackImage: '/inkandsupplies.png' },
-  { slug: 'specials', fallbackImage: '/speciallabels.png' },
+  { slug: 'labelprinters', fallbackImage: '/labelprinters.webp' },
+  { slug: 'labels-en-tickets', fallbackImage: '/labelrolls.webp' },
+  { slug: 'inkt-cartridges-nl', fallbackImage: '/inkandsupplies.webp' },
+  { slug: 'specials', fallbackImage: '/speciallabels.webp' },
 ];
 
 function flattenCategories(categories) {
@@ -71,7 +73,7 @@ export default async function CategorySection() {
 
     return {
       key: apiCat.slug,
-      href: `/category/${localizedSlug}`,
+      href: localePath(categoryPublicPathFromSlug(localizedSlug, locale), locale),
       name: localizedName,
       image: imageUrl,
     };

@@ -20,7 +20,7 @@ vi.mock('next-intl', () => ({
   useLocale: () => 'en',
   useTranslations: () => Object.assign((key: string) => key, { has: () => true }),
 }));
-vi.mock('next/image', () => ({ default: (props: Record<string, unknown>) => <span {...props} /> }));
+vi.mock('next/image', () => ({ default: ({ priority, ...props }: Record<string, unknown>) => <span {...props} /> }));
 vi.mock('./CartProvider', () => ({ useCart: () => ({ totalItemCount: 0, isCartOpen: false, openCart: vi.fn(), closeCart: vi.fn() }) }));
 vi.mock('./WishlistProvider', () => ({ useWishlist: () => ({ uniqueItemCount: 0 }) }));
 vi.mock('./HelpProvider', () => ({ useHelp: () => ({ isHelpOpen: false, openHelp: vi.fn(), closeHelp: vi.fn() }) }));

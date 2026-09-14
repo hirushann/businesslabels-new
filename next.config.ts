@@ -4,10 +4,13 @@ import createNextIntlPlugin from 'next-intl/plugin';
 const mediaPublicUrl = process.env.MEDIA_PUBLIC_URL?.replace(/\/$/, '');
 
 const nextConfig: NextConfig = {
+  compress: true,
   env: {
     NEXT_PUBLIC_MEDIA_PUBLIC_URL: mediaPublicUrl ?? '',
   },
   images: {
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 2592000,
     remotePatterns: [
       {
         protocol: "http",
@@ -20,6 +23,10 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "bbnl.dayzsolutions.com",
+      },
+      {
+        protocol: "https",
+        hostname: "dashboard.businesslabels.nl",
       },
       {
         protocol: "https",
@@ -124,6 +131,29 @@ const nextConfig: NextConfig = {
         source: '/en/merken',
         destination: '/en/brands',
         permanent: true,
+      },
+    ];
+  },
+  async headers() {
+    return [
+      {
+        source: '/:all*(svg|jpg|jpeg|png|webp|avif|woff|woff2|ico)',
+        locale: false,
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/_next/image/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
       },
     ];
   },

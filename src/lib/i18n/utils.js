@@ -100,6 +100,12 @@ export function localePath(path, locale) {
     if (basePath === '/algemene-voorwaarden') {
       return '/en/terms-and-conditions' + searchSuffix;
     }
+    if (basePath === '/product-categorie' || basePath.startsWith('/product-categorie/')) {
+      return '/en/product-category' + basePath.slice(18) + searchSuffix;
+    }
+    if (basePath === '/category' || basePath.startsWith('/category/')) {
+      return '/en/product-category' + basePath.slice(9) + searchSuffix;
+    }
     return '/en' + path;
   }
   if (basePath === '/brands') {
@@ -120,6 +126,12 @@ export function localePath(path, locale) {
   }
   if (basePath === '/terms-and-conditions') {
     return '/algemene-voorwaarden' + searchSuffix;
+  }
+  if (basePath === '/product-category' || basePath.startsWith('/product-category/')) {
+    return '/product-categorie' + basePath.slice(17) + searchSuffix;
+  }
+  if (basePath === '/category' || basePath.startsWith('/category/')) {
+    return '/product-categorie' + basePath.slice(9) + searchSuffix;
   }
   return path;
 }

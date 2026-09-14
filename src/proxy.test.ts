@@ -374,6 +374,24 @@ describe("proxy locale routing", () => {
     expect(wineResponse.headers.get("location")).toBe("http://localhost/material/inkjet");
   });
 
+  it("redirects legacy /category/* to canonical /product-categorie or /en/product-category", () => {
+    const printerResponse = proxy(makeRequest("/category/labelprinters"));
+    expect(printerResponse.status).toBe(301);
+    expect(printerResponse.headers.get("location")).toBe("http://localhost/product-categorie/labelprinters");
+
+    const labelsResponse = proxy(makeRequest("/category/labels-en-tickets"));
+    expect(labelsResponse.status).toBe(301);
+    expect(labelsResponse.headers.get("location")).toBe("http://localhost/product-categorie/labels-en-tickets");
+
+    const accessoriesResponse = proxy(makeRequest("/category/accessoires"));
+    expect(accessoriesResponse.status).toBe(301);
+    expect(accessoriesResponse.headers.get("location")).toBe("http://localhost/product-categorie/labelprinters/accessoires");
+
+    const enLabelsResponse = proxy(makeRequest("/en/category/labels-en-tickets"));
+    expect(enLabelsResponse.status).toBe(301);
+    expect(enLabelsResponse.headers.get("location")).toBe("http://localhost/en/product-category/labels-en-tickets-en");
+  });
+
   it("redirects known legacy uploads directly to media proxy or canonical pages", () => {
     const pdfResponse = proxy(makeRequest("/wp-content/uploads/2023/06/Inkt-kosten-ColorWorks-LR.pdf"));
     expect(pdfResponse.status).toBe(301);

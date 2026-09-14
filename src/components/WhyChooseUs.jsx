@@ -128,7 +128,7 @@ export default function WhyChooseUs() {
                {/* Left image column */}
                <div className="w-full lg:flex-1 relative h-[250px] sm:h-[400px] lg:h-[500px] rounded-xl overflow-hidden">
                   <Image
-                     src="/whychoose.png"
+                     src="/whychoose.webp"
                      alt={t("whyChoose.altImage")}
                      fill
                      sizes="(max-width: 768px) 100vw, 50vw"
@@ -136,8 +136,8 @@ export default function WhyChooseUs() {
                   />
 
                   <div className="absolute bottom-0 top-auto inset-0 pointer-events-none grid grid-cols-2 gap-4 p-4 sm:p-6 lg:p-8">
-                     <Image src="/images/diamond-partner.png" alt="Diamond Partner" className="w-full h-auto object-contain rounded-2xl" width={300} height={300} unoptimized />
-                     <Image src="/images/label-authorised.png" alt="Label Authorised" className="w-full h-auto object-contain max-h-[100px] bg-[#10218B] rounded-2xl" width={300} height={300} unoptimized />
+                     <Image src="/images/diamond-partner.webp" alt="Diamond Partner" className="w-full h-auto object-contain rounded-2xl" width={300} height={300} />
+                     <Image src="/images/label-authorised.webp" alt="Label Authorised" className="w-full h-auto object-contain max-h-[100px] bg-[#10218B] rounded-2xl" width={300} height={300} />
                   </div>
                </div>
 
