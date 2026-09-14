@@ -30,6 +30,31 @@ describe("category tree helpers", () => {
     expect(categoryRouteSlug(translatedCategory, "nl")).toBe("etiketten");
   });
 
+  it("decodes HTML entities in category names", () => {
+    const categoryWithEntities = {
+      id: 99,
+      name: "Re- &amp; unwinders",
+      slug: "re-and-unwinders",
+      parent_id: null,
+      count: 5,
+    };
+    expect(categoryName(categoryWithEntities, "en")).toBe("Re- & unwinders");
+
+    const categoryWithTranslatedEntities = {
+      id: 100,
+      name: "Re- &amp; unwinders",
+      slug: "re-and-unwinders",
+      translations: {
+        nl: { name: "Re- &#038; ontwinders", slug: "re-en-ontwinders" },
+        en: { name: "Re- &amp; unwinders", slug: "re-and-unwinders" },
+      },
+      parent_id: null,
+      count: 5,
+    };
+    expect(categoryName(categoryWithTranslatedEntities, "nl")).toBe("Re- & ontwinders");
+    expect(categoryName(categoryWithTranslatedEntities, "en")).toBe("Re- & unwinders");
+  });
+
   it("finds categories through translated or stored slugs", () => {
     const groups: CategoryGroup[] = [
       {

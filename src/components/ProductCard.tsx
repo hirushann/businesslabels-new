@@ -20,6 +20,7 @@ import { normalizeWarrantyOptions, type NormalizedWarrantyOption as WarrantyOpti
 import WarrantyDialogContent from "@/components/WarrantyDialogContent";
 import { isEndOfLife } from "@/lib/utils/delivery";
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
+import { unescapeHtml } from "@/lib/utils";
 
 export type ProductRouteType = "simple" | "variable" | "group_product";
 
@@ -351,7 +352,8 @@ export function lastCategoryLabel(categories: ProductCardData["categories"], loc
   const category = categories?.[categories.length - 1];
   if (!category) return null;
 
-  return localizedCategoryValue(category, locale, "name");
+  const value = localizedCategoryValue(category, locale, "name");
+  return value ? unescapeHtml(value) : null;
 }
 
 const truncateWords = (text: string, count: number) => {

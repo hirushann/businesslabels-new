@@ -7,6 +7,9 @@ describe("HTML entity decoding", () => {
   it("decodes numeric entities once for descriptions and metadata text", () => {
     expect(htmlToText("<p>Printer&#8217;s features&#8226;</p>")).toBe("Printer’s features•");
     expect(unescapeHtml("Title &amp;#8217;")).toBe("Title &#8217;");
+    expect(unescapeHtml("Re- &amp; unwinders")).toBe("Re- & unwinders");
+    expect(unescapeHtml("Re- &#038; unwinders")).toBe("Re- & unwinders");
+    expect(unescapeHtml("Labels &ndash; Premium &trade;")).toBe("Labels – Premium ™");
   });
 
   it("stays escaped when decoded content is rendered as text", () => {

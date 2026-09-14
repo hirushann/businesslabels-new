@@ -11,6 +11,8 @@
  * @see Laravel: App\Http\Resources\Api\CategoryResource
  */
 
+import { unescapeHtml } from "@/lib/utils";
+
 /** Localized fields may arrive as strings or older `{ en, nl }` objects. */
 export type LocalizedValue = string | { en?: string; nl?: string } | null | undefined;
 
@@ -81,7 +83,8 @@ const CATEGORY_NAME_FALLBACKS: Record<string, Partial<Record<"en" | "nl", string
 };
 
 export function categoryNameFallback(name: string, locale: string): string {
-  return CATEGORY_NAME_FALLBACKS[normalize(name)]?.[locale as "en" | "nl"] ?? name;
+  const unescaped = unescapeHtml(name);
+  return CATEGORY_NAME_FALLBACKS[normalize(unescaped)]?.[locale as "en" | "nl"] ?? unescaped;
 }
 
 export function resolveLocalized(value: LocalizedValue, locale: string): string {

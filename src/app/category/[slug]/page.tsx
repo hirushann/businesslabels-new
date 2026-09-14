@@ -20,6 +20,7 @@ import {
   flattenCategorySlugs,
 } from "@/lib/categories/tree";
 import { localePath } from "@/lib/i18n/utils";
+import { unescapeHtml } from "@/lib/utils";
 
 function slugToTitle(slug: string): string {
   return slug
@@ -56,7 +57,7 @@ export async function generateMetadata({
 
 export async function generateCategoryArchiveMetadata(slug: string): Promise<Metadata> {
   const t = await getTranslations();
-  const category = categoryTitleForSlug(slug);
+  const category = unescapeHtml(categoryTitleForSlug(slug));
 
   return {
     title: t("pages.categoryMetadataTitle", { category }),
@@ -146,9 +147,11 @@ export async function renderCategoryArchivePage({
     console.error(`Failed to load category catalog for slug '${slug}'.`, error);
   }
 
-  const categoryTitle = currentCategory
-    ? categoryName(currentCategory, locale)
-    : categoryTitleForSlug(slug);
+  const categoryTitle = unescapeHtml(
+    currentCategory
+      ? categoryName(currentCategory, locale)
+      : categoryTitleForSlug(slug)
+  );
 
   const breadcrumbItems = [
     { label: t("common.products"), href: localePath("/product", locale) },

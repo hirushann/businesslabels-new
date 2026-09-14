@@ -27,7 +27,7 @@ import {
   searchCatalogProducts,
 } from "@/lib/search/products";
 import type { CatalogSearchResponse } from "@/lib/search/types";
-import { htmlToText } from "@/lib/utils";
+import { htmlToText, unescapeHtml } from "@/lib/utils";
 import {
   getAccessoryCategoryPath,
   getAccessoryVirtualGroupForSegments,
@@ -91,16 +91,17 @@ function asCategoryNode(
   const fallbackImages = archive.identity_id
     ? imagesByIdentity.get(archive.identity_id)
     : undefined;
+  const name = unescapeHtml(archive.name);
 
   return {
     id: archive.term_id,
-    name: archive.name,
+    name,
     slug: archive.slug,
     meta_title: archive.meta_title,
     meta_description: archive.meta_description,
     translations: {
       [archive.locale]: {
-        name: archive.name,
+        name,
         slug: archive.slug,
         meta_title: archive.meta_title,
         meta_description: archive.meta_description,
@@ -279,9 +280,11 @@ export async function ProductCategoryPage({
   const ancestorNodes = route.virtual && virtualParent
     ? [...virtualParent.ancestors, virtualParent.category]
     : (resolved?.ancestors ?? []).map((ancestor) => asCategoryNode(ancestor, imagesByIdentity));
-  const categoryTitle = route.virtual
-    ? route.virtual.group.title[locale]
-    : resolved?.archive.name ?? "";
+  const categoryTitle = unescapeHtml(
+    route.virtual
+      ? route.virtual.group.title[locale]
+      : resolved?.archive.name ?? ""
+  );
   const breadcrumbs = [
     { label: t("common.products"), href: localePath("/product", locale) },
     ...(route.virtual && virtualParent
@@ -290,7 +293,7 @@ export async function ProductCategoryPage({
           return href ? [{ label: categoryName(category, locale), href }] : [];
         })
       : (resolved?.ancestors ?? []).map((ancestor) => ({
-          label: ancestor.name,
+          label: unescapeHtml(ancestor.name),
           href: ancestor.canonical_url,
         }))),
     { label: categoryTitle },

@@ -7,7 +7,22 @@ export function cn(...inputs: ClassValue[]) {
 
 export function unescapeHtml(html: string) {
   if (!html) return '';
-  const named: Record<string, string> = { amp: '&', apos: "'", gt: '>', lt: '<', nbsp: ' ', quot: '"' };
+  const named: Record<string, string> = {
+    amp: '&',
+    apos: "'",
+    gt: '>',
+    lt: '<',
+    nbsp: ' ',
+    quot: '"',
+    ndash: '–',
+    mdash: '—',
+    hellip: '…',
+    bull: '•',
+    euro: '€',
+    copy: '©',
+    reg: '®',
+    trade: '™',
+  };
   return html.replace(/&(?:#(\d+)|#x([\da-f]+)|([a-z]+));/gi, (entity, decimal: string, hex: string, name: string) => {
     if (name) return named[name.toLowerCase()] ?? entity;
     const codePoint = Number.parseInt(decimal || hex, decimal ? 10 : 16);
