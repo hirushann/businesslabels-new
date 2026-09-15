@@ -123,17 +123,22 @@ export default function Footer() {
                     )
                   })}
                 </p>
-                <div className="flex items-start gap-2 mt-3">
+                <a 
+                  href="https://maps.app.goo.gl/YqTUPVbsoN2bUAoU6" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="flex items-start gap-2 mt-3 text-white/80 hover:text-white transition-colors"
+                >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0 mt-0.5">
                     <path d="M8 1.33334C5.42267 1.33334 3.33334 3.42267 3.33334 6C3.33334 10.1667 8 14.6667 8 14.6667C8 14.6667 12.6667 10.1667 12.6667 6C12.6667 3.42267 10.5773 1.33334 8 1.33334Z" stroke="#F1F4F8" strokeLinecap="round" strokeLinejoin="round"/>
                     <circle cx="8" cy="6" r="1.75" stroke="#F1F4F8"/>
                   </svg>
-                  <address className="not-italic text-white/80 text-base font-light leading-5">
+                  <address className="not-italic text-base font-light leading-5">
                     {t('footer.address.street')}<br />
                     {t('footer.address.postalCode')}<br />
                     <span className="capitalize">{t('footer.address.country')}</span>
                   </address>
-                </div>
+                </a>
               </div>
             </div>
             <div className="flex flex-col gap-4">
