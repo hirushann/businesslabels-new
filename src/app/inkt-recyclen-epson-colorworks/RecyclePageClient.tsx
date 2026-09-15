@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
+import LocaleLink from '@/components/LocaleLink';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -671,12 +672,18 @@ export default function RecyclePageClient() {
             </p>
           </div>
           <div className="flex flex-wrap justify-center gap-4">
-            <button className="h-12 px-7 py-4 bg-brand rounded-[50px] flex justify-center items-center gap-2.5 hover:bg-brand-hover active:scale-[0.98] transition-all">
+            <LocaleLink
+              href="/product"
+              className="h-12 px-7 py-4 bg-brand rounded-[50px] flex justify-center items-center gap-2.5 hover:bg-brand-hover active:scale-[0.98] transition-all"
+            >
               <span className="text-white text-lg font-medium font-sans leading-6">{t('ctaBrowse')}</span>
-            </button>
-            <button className="h-12 px-7 py-4 bg-white/10 rounded-[50px] outline outline-1 outline-offset-[-1px] outline-white/20 backdrop-blur-sm flex justify-center items-center gap-2.5 hover:bg-white/20 active:scale-[0.98] transition-all">
+            </LocaleLink>
+            <LocaleLink
+              href="/support"
+              className="h-12 px-7 py-4 bg-white/10 rounded-[50px] outline outline-1 outline-offset-[-1px] outline-white/20 backdrop-blur-sm flex justify-center items-center gap-2.5 hover:bg-white/20 active:scale-[0.98] transition-all"
+            >
               <span className="text-white text-lg font-medium font-sans leading-6">{t('ctaExpert')}</span>
-            </button>
+            </LocaleLink>
           </div>
         </div>
       </section>

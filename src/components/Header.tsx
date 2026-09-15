@@ -6,11 +6,6 @@ import { useState, useRef, useEffect } from 'react';
 import type { FormEvent, MouseEvent } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
-interface TeamMember {
-  id: number;
-  name: string;
-  profile_pic_url: string | null;
-}
 import dynamic from 'next/dynamic';
 import { useCart } from './CartProvider';
 import { useWishlist } from './WishlistProvider';
@@ -109,49 +104,6 @@ export default function Header({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { isHelpOpen, openHelp, closeHelp } = useHelp();
-  const [headerMembers, setHeaderMembers] = useState<TeamMember[]>([]);
-
-  useEffect(() => {
-    let ignore = false;
-    async function loadTeamMembers() {
-      try {
-        const response = await fetch('/api/team-members', {
-          headers: { 'Accept': 'application/json' },
-        });
-        const data = await response.json();
-        const members = Array.isArray(data.data) ? data.data : [];
-        if (!ignore) {
-          const list = members.length > 0 ? members : [
-            { id: 1, name: 'Support Agent 1', profile_pic_url: 'https://randomuser.me/api/portraits/men/32.jpg' },
-            { id: 2, name: 'Support Agent 2', profile_pic_url: 'https://randomuser.me/api/portraits/men/44.jpg' },
-            { id: 3, name: 'Support Agent 3', profile_pic_url: 'https://randomuser.me/api/portraits/men/68.jpg' },
-            { id: 4, name: 'Support Agent 4', profile_pic_url: 'https://randomuser.me/api/portraits/women/12.jpg' },
-            { id: 5, name: 'Support Agent 5', profile_pic_url: 'https://randomuser.me/api/portraits/women/24.jpg' },
-            { id: 6, name: 'Support Agent 6', profile_pic_url: 'https://randomuser.me/api/portraits/women/45.jpg' },
-          ];
-          // Pick 3 random members
-          const shuffled = [...list].sort(() => 0.5 - Math.random());
-          setHeaderMembers(shuffled.slice(0, 3));
-        }
-      } catch (error) {
-        console.error('Error loading team members in header:', error);
-        if (!ignore) {
-          const fallbackList = [
-            { id: 1, name: 'Support Agent 1', profile_pic_url: 'https://randomuser.me/api/portraits/men/32.jpg' },
-            { id: 2, name: 'Support Agent 2', profile_pic_url: 'https://randomuser.me/api/portraits/men/44.jpg' },
-            { id: 3, name: 'Support Agent 3', profile_pic_url: 'https://randomuser.me/api/portraits/men/68.jpg' },
-            { id: 4, name: 'Support Agent 4', profile_pic_url: 'https://randomuser.me/api/portraits/women/12.jpg' },
-            { id: 5, name: 'Support Agent 5', profile_pic_url: 'https://randomuser.me/api/portraits/women/24.jpg' },
-            { id: 6, name: 'Support Agent 6', profile_pic_url: 'https://randomuser.me/api/portraits/women/45.jpg' },
-          ];
-          const shuffled = [...fallbackList].sort(() => 0.5 - Math.random());
-          setHeaderMembers(shuffled.slice(0, 3));
-        }
-      }
-    }
-    loadTeamMembers();
-    return () => { ignore = true; };
-  }, []);
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {

@@ -1,16 +1,9 @@
 import "./globals.css";
-import { Inter } from "next/font/google";
 import { GoogleTagManager } from "@next/third-parties/google";
 import { CartProvider } from "@/components/CartProvider";
 import { WishlistProvider } from "@/components/WishlistProvider";
 import { HelpProvider } from "@/components/HelpProvider";
 import Header from "@/components/Header";
-
-const inter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-inter",
-});
 
 
 import StoreNotice from "@/components/StoreNotice";
@@ -102,8 +95,8 @@ export default async function RootLayout({ children }) {
   }
 
   return (
-    <html lang={locale} className={`${inter.variable} font-sans`} suppressHydrationWarning>
-      <body className="bg-white min-h-screen flex flex-col" suppressHydrationWarning>
+    <html lang={locale} className="font-sans" suppressHydrationWarning>
+      <body className="font-sans bg-white min-h-screen flex flex-col" suppressHydrationWarning>
         {gtmId && (
           <noscript>
             <iframe

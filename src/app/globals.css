@@ -12,16 +12,68 @@ html,
 body {
   max-width: 100%;
   overflow-x: clip;
+  font-family: var(--font-sans);
+}
+
+@font-face {
+  font-family: 'Segoe UI';
+  src:
+    local("Segoe UI Light"),
+    url("//c.s-microsoft.com/static/fonts/segoe-ui/west-european/light/latest.woff2") format("woff2"),
+    url("//c.s-microsoft.com/static/fonts/segoe-ui/west-european/light/latest.woff") format("woff"),
+    url("//c.s-microsoft.com/static/fonts/segoe-ui/west-european/light/latest.ttf") format("truetype");
+  font-weight: 100 300;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Segoe UI';
+  src:
+    local("Segoe UI"),
+    url("//c.s-microsoft.com/static/fonts/segoe-ui/west-european/normal/latest.woff2") format("woff2"),
+    url("//c.s-microsoft.com/static/fonts/segoe-ui/west-european/normal/latest.woff") format("woff"),
+    url("//c.s-microsoft.com/static/fonts/segoe-ui/west-european/normal/latest.ttf") format("truetype");
+  font-weight: 400 500;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Segoe UI';
+  src:
+    local("Segoe UI Semibold"),
+    url("//c.s-microsoft.com/static/fonts/segoe-ui/west-european/semibold/latest.woff2") format("woff2"),
+    url("//c.s-microsoft.com/static/fonts/segoe-ui/west-european/semibold/latest.woff") format("woff"),
+    url("//c.s-microsoft.com/static/fonts/segoe-ui/west-european/semibold/latest.ttf") format("truetype");
+  font-weight: 600;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Segoe UI';
+  src:
+    local("Segoe UI Bold"),
+    url("//c.s-microsoft.com/static/fonts/segoe-ui/west-european/bold/latest.woff2") format("woff2"),
+    url("//c.s-microsoft.com/static/fonts/segoe-ui/west-european/bold/latest.woff") format("woff"),
+    url("//c.s-microsoft.com/static/fonts/segoe-ui/west-european/bold/latest.ttf") format("truetype");
+  font-weight: 700 900;
+  font-display: swap;
 }
 
 :root {
-  --font-sans: var(--font-inter), 'Segoe UI', 'Segoe UI Variable', system-ui, -apple-system,
+  --font-sans: 'Segoe UI', 'Segoe UI Variable', system-ui, -apple-system,
+    BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  --font-heading: 'Segoe UI', 'Segoe UI Variable', system-ui, -apple-system,
+    BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+}
+
+@theme {
+  --font-sans: 'Segoe UI', 'Segoe UI Variable', system-ui, -apple-system,
+    BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  --font-heading: 'Segoe UI', 'Segoe UI Variable', system-ui, -apple-system,
     BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
 }
 
 @theme inline {
-  --font-heading: var(--font-sans);
-  --font-sans: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);

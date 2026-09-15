@@ -1,13 +1,14 @@
 'use client';
 
 import type { FormEvent } from 'react';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useContext } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { toast } from 'sonner';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import LocaleLink from './LocaleLink';
 import Image from 'next/image';
 import { toDisplayImageUrl } from '@/lib/utils/imageProxy';
+import { HelpContext } from './HelpProvider';
 
 interface HelpDrawerProps {
   onClose: () => void;
@@ -248,19 +249,22 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
   const [contactStatus, setContactStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [contactStatusMessage, setContactStatusMessage] = useState('');
   const [availabilityByDate, setAvailabilityByDate] = useState<Map<string, AvailabilitySlot>>(() => new Map());
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const helpContext = useContext(HelpContext);
+  const contextMembers = helpContext?.teamMembers;
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(() => contextMembers ?? []);
+
+  useEffect(() => {
+    if (contextMembers && contextMembers.length > 0) {
+      setTeamMembers(contextMembers);
+    }
+  }, [contextMembers]);
 
   const { executeRecaptcha } = useGoogleReCaptcha();
   const selectedCountry = europeanCountries.find((country) => country.code === selectedCountryCode) ?? europeanCountries[0];
   const schedule = getCurrentWeekSchedule(availabilityByDate, locale);
-  const displayMembers = teamMembers.length > 0 ? teamMembers.slice(0, 6) : [
-    { id: 1, name: t('helpDrawer.fallbackAgent', { num: 1 }), profile_pic_url: 'https://randomuser.me/api/portraits/men/32.jpg' },
-    { id: 2, name: t('helpDrawer.fallbackAgent', { num: 2 }), profile_pic_url: 'https://randomuser.me/api/portraits/men/44.jpg' },
-    { id: 3, name: t('helpDrawer.fallbackAgent', { num: 3 }), profile_pic_url: 'https://randomuser.me/api/portraits/men/68.jpg' },
-    { id: 4, name: t('helpDrawer.fallbackAgent', { num: 4 }), profile_pic_url: 'https://randomuser.me/api/portraits/women/12.jpg' },
-    { id: 5, name: t('helpDrawer.fallbackAgent', { num: 5 }), profile_pic_url: 'https://randomuser.me/api/portraits/women/24.jpg' },
-    { id: 6, name: t('helpDrawer.fallbackAgent', { num: 6 }), profile_pic_url: 'https://randomuser.me/api/portraits/women/45.jpg' },
-  ];
+  const displayMembers = (contextMembers && contextMembers.length > 0)
+    ? contextMembers.slice(0, 6)
+    : teamMembers.slice(0, 6);
 
   // Close on Escape
   useEffect(() => {
@@ -317,8 +321,9 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
     };
   }, [t]);
 
-  // Load team members
+  // Load team members fallback if not already in context
   useEffect(() => {
+    if (contextMembers && contextMembers.length > 0) return;
     let ignore = false;
 
     async function loadTeamMembers() {
@@ -344,7 +349,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [contextMembers]);
 
   const resetBookingForm = () => {
     setPhoneNumber('');
@@ -532,25 +537,33 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
           {/* Avatars + contact cards */}
           <div className="flex flex-col gap-4">
             {/* Avatars */}
-            <div className="flex items-center justify-center -space-x-4 isolate">
-              {displayMembers.map((member) => (
-                <div key={member.id} className="group relative flex justify-center z-0 hover:z-30 transition-all duration-200">
-                  <Image
-                    src={toDisplayImageUrl(member.profile_pic_url) || member.profile_pic_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=f59e0b&color=fff`}
-                    alt={member.name}
-                    width={64}
-                    height={64}
-                    quality={80}
-                    className="w-16 h-16 rounded-full object-cover border-2 border-white shadow hover:scale-105 transition-transform duration-200"
-                  />
-                  {/* Tooltip */}
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-neutral-900/90 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap shadow-md border border-neutral-700/50 z-50">
-                    {member.name}
-                    {/* Tooltip arrow */}
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-neutral-900/90" />
+            <div className="flex items-center justify-center -space-x-4 isolate min-h-[64px]">
+              {displayMembers.length > 0 ? (
+                displayMembers.map((member) => (
+                  <div key={member.id} className="group relative flex justify-center z-0 hover:z-30 transition-all duration-200">
+                    <Image
+                      src={toDisplayImageUrl(member.profile_pic_url) || member.profile_pic_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=f59e0b&color=fff`}
+                      alt={member.name}
+                      width={64}
+                      height={64}
+                      priority
+                      quality={80}
+                      className="w-16 h-16 rounded-full object-cover border-2 border-white shadow hover:scale-105 transition-transform duration-200"
+                    />
+                    {/* Tooltip */}
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-neutral-900/90 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap shadow-md border border-neutral-700/50 z-50">
+                      {member.name}
+                      {/* Tooltip arrow */}
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-neutral-900/90" />
+                    </div>
                   </div>
+                ))
+              ) : (
+                <div className="flex items-center -space-x-4">
+                  <div className="w-16 h-16 rounded-full bg-slate-100 animate-pulse border-2 border-white shadow" />
+                  <div className="w-16 h-16 rounded-full bg-slate-100 animate-pulse border-2 border-white shadow" />
                 </div>
-              ))}
+              )}
             </div>
 
             {/* Call + Email cards */}
@@ -810,7 +823,7 @@ export default function HelpDrawer({ onClose }: HelpDrawerProps) {
 
           {/* ── Contact Support ── */}
           <div className="flex flex-col gap-4">
-            <LocaleLink href="/contact-us" className="w-full" onClick={onClose}>
+            <LocaleLink href="/support" className="w-full" onClick={onClose}>
               <div style={{ width: '100%', height: '100%', justifyContent: 'space-between', alignItems: 'center', display: 'inline-flex' }}>
                 <div style={{ color: '#F18800', fontSize: '18px', fontFamily: 'Segoe UI', fontWeight: 700, lineHeight: '27px', wordWrap: 'break-word' }}>Contact Support</div>
                 <svg width="20" height="17" viewBox="0 0 20 17" fill="none" xmlns="http://www.w3.org/2000/svg">

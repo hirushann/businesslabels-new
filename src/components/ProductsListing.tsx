@@ -693,7 +693,7 @@ function CatalogProductsListing({
   return (
     <div className="flex flex-col gap-8">
       {printer && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 max-w-4xl">
+        <div className="grid grid-cols-1 gap-3.5 sm:gap-4 sm:grid-cols-2 max-w-4xl">
           {categoryCards.map((card) => {
             const isActive = activeCategory === card.id;
             return (
@@ -701,33 +701,35 @@ function CatalogProductsListing({
                 key={card.id}
                 type="button"
                 onClick={() => handleCategoryClick(card.id)}
-                className={`group flex flex-col overflow-hidden text-left rounded-xl border p-3 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${isActive
-                  ? "border-brand ring-2 ring-brand/10 bg-brand-soft/5"
-                  : "border-slate-100 bg-white"
-                  }`}
+                className={`group flex items-center text-left rounded-xl border p-3 sm:p-3.5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md cursor-pointer ${
+                  isActive
+                    ? "border-brand ring-2 ring-brand/10 bg-brand-soft/5"
+                    : "border-slate-200/80 bg-white hover:border-slate-300"
+                }`}
               >
-                <div className="relative h-24 w-full overflow-hidden rounded-lg bg-slate-50">
+                <div className="relative h-20 w-20 sm:h-22 sm:w-22 shrink-0 overflow-hidden rounded-lg bg-slate-50 border border-slate-100">
                   <Image
                     src={card.image}
                     alt={card.title}
                     fill
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                    className="object-contain p-2 transition-transform duration-500 group-hover:scale-105"
+                    sizes="(max-width: 640px) 80px, 88px"
+                    className="object-contain p-2 transition-transform duration-300 group-hover:scale-105"
                   />
                 </div>
-                <div className="mt-3 flex flex-1 flex-col justify-between w-full">
-                  <div>
-                    <h3 className="text-base font-bold text-slate-800 flex items-center justify-between">
+                <div className="ml-3.5 sm:ml-4 flex flex-1 flex-col justify-center min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="text-sm sm:text-base font-bold text-slate-800 group-hover:text-brand transition-colors">
                       {card.title}
-                      <span
-                        className={`h-2 w-2 rounded-full transition-all duration-200 ${isActive ? "bg-brand scale-125" : "bg-slate-200"
-                          }`}
-                      />
                     </h3>
-                    <p className="mt-1 text-xs text-slate-500 leading-normal">
-                      {card.desc}
-                    </p>
+                    <span
+                      className={`h-2 w-2 shrink-0 rounded-full transition-all duration-200 ${
+                        isActive ? "bg-brand ring-4 ring-brand/20 scale-110" : "bg-slate-200 group-hover:bg-slate-300"
+                      }`}
+                    />
                   </div>
+                  <p className="mt-1 text-xs text-slate-500 leading-relaxed line-clamp-2">
+                    {card.desc}
+                  </p>
                 </div>
               </button>
             );
