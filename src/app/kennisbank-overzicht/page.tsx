@@ -309,7 +309,8 @@ export default async function KnowledgeBaseArchive() {
                             : "BL"}
                         </div>
                       )}
-                      <span className="font-medium text-neutral-700">{article.author?.name || "Admin"}</span>
+                      {/* <span className="font-medium text-neutral-700">{article.author?.name || "Admin"}</span> */}
+                      <span className="font-medium text-neutral-700">Levi van der Molen</span>
                     </div>
                   </div>
                 </Link>
