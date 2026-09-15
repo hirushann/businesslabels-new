@@ -145,10 +145,11 @@ export default function HeroSection({ heroBanner }: HeroSectionProps = {}) {
     return () => controller.abort();
   }, [locale, selectedPrinter]);
 
-  const handleShowCompatibleProducts = () => {
+  const handleShowCompatibleProducts = (categorySlug?: string) => {
     if (!selectedPrinter) return;
 
     const params = new URLSearchParams({ printer_id: String(selectedPrinter.id) });
+    if (categorySlug) params.set("category", categorySlug);
 
     router.push(localePath(`/printers?${params.toString()}`));
   };
@@ -307,9 +308,11 @@ export default function HeroSection({ heroBanner }: HeroSectionProps = {}) {
                       const Icon = category.icon;
 
                       return (
-                        <div
+                        <button
                           key={category.slug}
-                          className="flex h-auto flex-1 items-center gap-3 rounded-lg border border-zinc-100 bg-gray-50 px-3 py-3 text-left"
+                          type="button"
+                          onClick={() => handleShowCompatibleProducts(category.slug)}
+                          className="flex h-auto flex-1 cursor-pointer items-center gap-3 rounded-lg border border-zinc-100 bg-gray-50 px-3 py-3 text-left transition-colors hover:border-blue-300 hover:bg-blue-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
                         >
                           <Icon className="shrink-0 text-neutral-500" />
                           <span className="flex min-w-0 flex-col gap-0.5">
@@ -320,14 +323,14 @@ export default function HeroSection({ heroBanner }: HeroSectionProps = {}) {
                               {category.description}
                             </span>
                           </span>
-                        </div>
+                        </button>
                       );
                     })}
                   </div>
                 ) : null}
                 <Button
                   type="button"
-                  onClick={handleShowCompatibleProducts}
+                  onClick={() => handleShowCompatibleProducts()}
                   className="h-auto w-full rounded-full bg-blue-400 py-3 text-base font-bold text-white hover:bg-blue-500"
                 >
                   <Search data-icon="inline-start" />
