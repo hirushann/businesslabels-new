@@ -350,7 +350,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
                         <div className="w-7 h-7 rounded-full bg-amber-100 flex items-center justify-center text-[10px] font-bold text-brand">{authorInitials}</div>
                       )}
                       <div className="text-neutral-800 text-lg font-bold leading-7">
-                        {/* {post.author?.name || "Businesslabels"} */}Levi van der Molen
+                        {post.author?.name || "Businesslabels"}
                       </div>
                     </div>
                   </div>
@@ -443,8 +443,7 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
                     )}
                     <div className="flex-1 flex flex-col justify-center items-start gap-2.5">
                       <div className="text-neutral-800 text-[32px] font-bold leading-[38.40px] line-clamp-1">
-                        {/* {post.author?.name || t("blogDetail.teamName")} */}
-                        Levi van der Molen
+                        {post.author?.name || t("blogDetail.teamName")}
                       </div>
                       <div className="text-neutral-700 text-lg font-medium leading-[27px]">
                         {post.author?.about || t("blogDetail.teamDescription")}
