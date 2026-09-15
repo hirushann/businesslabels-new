@@ -522,18 +522,38 @@ export function flattenCategorySlugs(
  * The backend owns category ordering; keep this uncached so admin sort-order
  * changes are reflected on the next page request.
  */
-export async function fetchCategoryGroups(): Promise<CategoryGroup[]> {
+export async function fetchCategoryGroups(options?: {
+  cache?: RequestCache;
+  revalidate?: number;
+}): Promise<CategoryGroup[]> {
   const baseUrl = process.env.BBNL_API_BASE_URL;
   if (!baseUrl) return [];
 
   try {
     const url = `${baseUrl}/api/categories`;
-    const response = await fetch(url, { cache: "no-store" });
+    const fetchOptions: RequestInit = {};
+    if (options?.revalidate !== undefined) {
+      fetchOptions.next = { revalidate: options.revalidate };
+    } else if (options?.cache !== undefined) {
+      fetchOptions.cache = options.cache;
+    } else {
+      fetchOptions.cache = "no-store";
+    }
+
+    const response = await fetch(url, fetchOptions);
     if (!response.ok) return [];
 
     const json = (await response.json()) as { data?: CategoryGroup[] };
     return Array.isArray(json.data) ? json.data : [];
   } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "digest" in error &&
+      (error as { digest?: string }).digest === "DYNAMIC_SERVER_USAGE"
+    ) {
+      throw error;
+    }
     console.error("Failed to load category tree.", error);
     return [];
   }

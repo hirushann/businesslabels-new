@@ -44,6 +44,14 @@ export async function getHomeData(): Promise<HomePageData | null> {
     const json = (await response.json()) as HomeApiResponse;
     return json?.data ?? null;
   } catch (error) {
+    if (
+      error &&
+      typeof error === 'object' &&
+      'digest' in error &&
+      (error as { digest?: string }).digest === 'DYNAMIC_SERVER_USAGE'
+    ) {
+      throw error;
+    }
     console.error('Error fetching home data:', error);
     return null;
   }

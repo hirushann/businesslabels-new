@@ -9,6 +9,8 @@ import CTABanner from "@/components/CTABanner";
 import { getTranslations } from "next-intl/server";
 import { getHomeData } from "@/lib/api/home";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata() {
   const t = await getTranslations();
 

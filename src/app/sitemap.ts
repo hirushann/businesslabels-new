@@ -93,6 +93,37 @@ const BRAND_SLUGS = [
   'creative',
 ];
 
+export const revalidate = 3600;
+
+async function fetchDirectJson<T>(url: string): Promise<T | null> {
+  try {
+    const isHttps = url.startsWith('https:');
+    const httpModule = isHttps ? await import('https') : await import('http');
+    return await new Promise<T | null>((resolve) => {
+      const req = httpModule.get(url, { headers: { Accept: 'application/json' } }, (res) => {
+        if (res.statusCode && res.statusCode >= 400) {
+          resolve(null);
+          return;
+        }
+        let data = '';
+        res.on('data', (chunk) => {
+          data += chunk;
+        });
+        res.on('end', () => {
+          try {
+            resolve(JSON.parse(data));
+          } catch {
+            resolve(null);
+          }
+        });
+      });
+      req.on('error', () => resolve(null));
+    });
+  } catch {
+    return null;
+  }
+}
+
 async function fetchApi<T extends SitemapApiItem>(path: string): Promise<T[]> {
   try {
     const separator = path.includes('?') ? '&' : '?';
@@ -102,9 +133,16 @@ async function fetchApi<T extends SitemapApiItem>(path: string): Promise<T[]> {
 
     while (hasMore) {
       const url = `${baseUrl}${path}${separator}page=${page}`;
-      const res = await fetch(url, { next: { revalidate: 3600 } });
-      if (!res.ok) break;
-      const json = (await res.json()) as { data?: T[]; meta?: { last_page?: number; current_page?: number } };
+      let json: { data?: T[]; meta?: { last_page?: number; current_page?: number } } | null = null;
+
+      if (path.startsWith('/api/pages') && process.env.NODE_ENV !== 'test') {
+        json = await fetchDirectJson(url);
+        if (!json) break;
+      } else {
+        const res = await fetch(url, { next: { revalidate: 3600 } });
+        if (!res.ok) break;
+        json = (await res.json()) as { data?: T[]; meta?: { last_page?: number; current_page?: number } };
+      }
       
       if (Array.isArray(json.data)) {
         allData = allData.concat(json.data);
@@ -213,7 +251,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     apiBrands,
   ] = await Promise.all([
     fetchApi<SitemapApiItem>('/api/materials?per_page=1000'),
-    fetchApi<SitemapApiItem>('/api/products?per_page=1000'),
+    fetchApi<SitemapApiItem>('/api/products?per_page=100'),
     fetchApi<SitemapApiItem>('/api/printers?per_page=1000'),
     fetchApi<SitemapApiItem>('/api/posts?type=post'),
     fetchApi<SitemapApiItem>('/api/posts?type=kennisbank'),
@@ -255,7 +293,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Add Categories from tree structure
   try {
-    const categoryGroups = await fetchCategoryGroups();
+    const categoryGroups = await fetchCategoryGroups({ revalidate: 3600 });
 
     const walkCategoryTree = (node: CategoryNode, ancestors: CategoryNode[] = []) => {
       const rawNl = node.canonical_urls?.nl || categoryPublicPath(node, ancestors, 'nl');
