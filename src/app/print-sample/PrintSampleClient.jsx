@@ -7,20 +7,94 @@ import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 
 const dmSans = DM_Sans({ subsets: ['latin'] });
 
+const DEFAULT_PRINTERS = [
+  { id: 'tm-c3500', name: 'TM-C3500', desc: '4-color, up to 104 mm' },
+  { id: 'cw-c4000e', name: 'CW-C4000e serie', desc: '4-color, up to 127 mm' },
+  { id: 'cw-c6000', name: 'CW-C6000 serie', desc: '4-color, up to 203 mm' },
+  { id: 'cw-c8000e', name: 'CW-C8000e serie', desc: '4-color, up to 203 mm' },
+  { id: 'cw-d6000e', name: 'CW-D6000e serie', desc: '4-color, up to 203 mm' },
+  { id: 'cw-d3800', name: 'CW-D3800', desc: '4-color, up to 118 mm' },
+];
+
+const DEFAULT_SUBSTRATES = ['Paper', 'Foil'];
+const DEFAULT_FINISHES = ['Matte', 'Glossy'];
+
+function getPrintersFromEnv() {
+  const envVal = process.env.NEXT_PUBLIC_PRINT_SAMPLE_PRINTERS;
+  if (!envVal) return DEFAULT_PRINTERS;
+  try {
+    const parsed = JSON.parse(envVal);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed.map((item, idx) => {
+        if (typeof item === 'string') {
+          return { id: `p-${idx}`, name: item, desc: '' };
+        }
+        return {
+          id: item.id || `p-${idx}`,
+          name: item.name,
+          desc: item.desc || '',
+        };
+      });
+    }
+  } catch {
+    const items = envVal.split('|').map((s) => s.trim()).filter(Boolean);
+    if (items.length > 0) {
+      return items.map((item, idx) => {
+        const [name, ...descParts] = item.split(':');
+        return {
+          id: `p-${idx}`,
+          name: name.trim(),
+          desc: descParts.join(':').trim(),
+        };
+      });
+    }
+  }
+  return DEFAULT_PRINTERS;
+}
+
+function getSubstratesFromEnv() {
+  const envVal = process.env.NEXT_PUBLIC_PRINT_SAMPLE_SUBSTRATES;
+  if (!envVal) return DEFAULT_SUBSTRATES;
+  try {
+    const parsed = JSON.parse(envVal);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed.map((item) => (typeof item === 'object' && item.name ? item.name : String(item)));
+    }
+  } catch {
+    const items = envVal.split(',').map((s) => s.trim()).filter(Boolean);
+    if (items.length > 0) return items;
+  }
+  return DEFAULT_SUBSTRATES;
+}
+
+function getFinishesFromEnv() {
+  const envVal = process.env.NEXT_PUBLIC_PRINT_SAMPLE_FINISHES;
+  if (!envVal) return DEFAULT_FINISHES;
+  try {
+    const parsed = JSON.parse(envVal);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed.map((item) => (typeof item === 'object' && item.name ? item.name : String(item)));
+    }
+  } catch {
+    const items = envVal.split(',').map((s) => s.trim()).filter(Boolean);
+    if (items.length > 0) return items;
+  }
+  return DEFAULT_FINISHES;
+}
+
 export default function PrintSampleClient() {
   const locale = useLocale();
   const t = useTranslations('printSample');
   const { executeRecaptcha } = useGoogleReCaptcha();
 
-  const [selectedPrinter, setSelectedPrinter] = useState('');
-  const [printerQuery, setPrinterQuery] = useState('');
-  const [printerResults, setPrinterResults] = useState([]);
-  const [isSearchingPrinters, setIsSearchingPrinters] = useState(false);
+  const printerOptions = getPrintersFromEnv();
+  const substrateOptions = getSubstratesFromEnv();
+  const finishOptions = getFinishesFromEnv();
 
-  const [selectedMaterial, setSelectedMaterial] = useState('');
-  const [materialQuery, setMaterialQuery] = useState('');
-  const [materialResults, setMaterialResults] = useState([]);
-  const [isSearchingMaterials, setIsSearchingMaterials] = useState(false);
+  const [selectedPrinters, setSelectedPrinters] = useState([]);
+  const [selectedSubstrates, setSelectedSubstrates] = useState([]);
+  const [selectedFinishes, setSelectedFinishes] = useState([]);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
@@ -33,59 +107,35 @@ export default function PrintSampleClient() {
     place: '', state: '', application: '', special_material: '', comments: '',
   });
 
-  useEffect(() => {
-    const handler = setTimeout(async () => {
-      if (printerQuery.trim().length >= 3) {
-        setIsSearchingPrinters(true);
-        try {
-          const res = await fetch(`/api/printers/search?query=${encodeURIComponent(printerQuery)}`);
-          const json = await res.json();
-          if (json.data) {
-            setPrinterResults(json.data.map(p => ({
-              id: p.id,
-              name: p.name,
-              desc: p.brand || p.model || t('printerDesc')
-            })));
-          }
-        } catch (err) {
-          console.error("Error fetching printers", err);
-        } finally {
-          setIsSearchingPrinters(false);
-        }
-      } else {
-        setPrinterResults([]);
+  const togglePrinter = (name) => {
+    setSelectedPrinters((prev) =>
+      prev.includes(name) ? prev.filter((p) => p !== name) : [...prev, name]
+    );
+  };
+
+  const toggleSubstrate = (name) => {
+    setSelectedSubstrates((prev) =>
+      prev.includes(name) ? prev.filter((s) => s !== name) : [...prev, name]
+    );
+  };
+
+  const toggleFinish = (name) => {
+    setSelectedFinishes((prev) =>
+      prev.includes(name) ? prev.filter((f) => f !== name) : [...prev, name]
+    );
+  };
+
+  const getMaterialLabel = (val) => {
+    const key = val.toLowerCase();
+    if (['paper', 'foil', 'matte', 'glossy'].includes(key)) {
+      try {
+        return t(key);
+      } catch {
+        return val;
       }
-    }, 400);
-
-    return () => clearTimeout(handler);
-  }, [printerQuery]);
-
-  useEffect(() => {
-    const handler = setTimeout(async () => {
-      if (materialQuery.trim().length >= 3) {
-        setIsSearchingMaterials(true);
-        try {
-          const res = await fetch(`/api/materials?search=${encodeURIComponent(materialQuery)}&perPage=9`);
-          const json = await res.json();
-          if (json.materials) {
-            setMaterialResults(json.materials.map(m => ({
-              id: m.id,
-              name: m.title,
-              desc: m.subtitle || m.brand || t('materialDesc')
-            })));
-          }
-        } catch (err) {
-          console.error("Error fetching materials", err);
-        } finally {
-          setIsSearchingMaterials(false);
-        }
-      } else {
-        setMaterialResults([]);
-      }
-    }, 400);
-
-    return () => clearTimeout(handler);
-  }, [materialQuery]);
+    }
+    return val;
+  };
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -120,8 +170,9 @@ export default function PrintSampleClient() {
         if (val) formData.append(key, val);
       });
       formData.append('locale', locale);
-      formData.append('printer', selectedPrinter || printerQuery);
-      formData.append('substrate', selectedMaterial || materialQuery);
+      formData.append('printer', selectedPrinters.join(', '));
+      formData.append('substrate', selectedSubstrates.join(', '));
+      formData.append('finish', selectedFinishes.join(', '));
       formData.append('recaptcha_token', recaptcha_token);
 
       if (file) {
@@ -163,7 +214,19 @@ export default function PrintSampleClient() {
             {t('successDesc')}
           </p>
           <button
-            onClick={() => { setSubmitted(false); setForm({ first_name: '', last_name: '', email: '', phone: '', company: '', country: '', street: '', postcode: '', place: '', state: '', application: '', special_material: '', comments: '' }); setSelectedPrinter(''); setSelectedMaterial(''); setPrinterQuery(''); setMaterialQuery(''); setFile(null); setFileName(''); }}
+            onClick={() => {
+              setSubmitted(false);
+              setForm({
+                first_name: '', last_name: '', email: '', phone: '',
+                company: '', country: '', street: '', postcode: '',
+                place: '', state: '', application: '', special_material: '', comments: ''
+              });
+              setSelectedPrinters([]);
+              setSelectedSubstrates([]);
+              setSelectedFinishes([]);
+              setFile(null);
+              setFileName('');
+            }}
             className="h-12 px-8 bg-brand rounded-[100px] text-white text-base font-semibold hover:bg-brand-hover transition-all"
           >
             {t('submitAnother')}
@@ -207,7 +270,7 @@ export default function PrintSampleClient() {
               {/* Design file */}
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
-                  <h2 className="text-ink text-[24px] font-normal leading-[28px]">{t('designFile')}</h2>
+                  <h2 className="text-ink text-[24px] font-semibold leading-[28px]">{t('designFile')}</h2>
                   <p className="text-neutral-700 text-sm font-light leading-5">{t('uploadDesc')}</p>
                 </div>
                 <label htmlFor="file-upload" className="self-stretch h-48 min-h-36 bg-white rounded-md outline-dashed outline-2 outline-offset-[-2px] outline-black/10 flex flex-col justify-center items-center cursor-pointer hover:bg-slate-50 transition-colors">
@@ -238,96 +301,129 @@ export default function PrintSampleClient() {
               {/* Printer */}
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
-                  <h2 className="text-neutral-800 text-2xl font-medium leading-7">{t('printerTitle')}</h2>
+                  <h2 className="text-neutral-800 text-2xl font-semibold leading-7">{t('printerTitle')}</h2>
                   <p className="text-neutral-700 text-sm font-light leading-5">{t('printerSubtitle')}</p>
                 </div>
-                
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    placeholder={t('searchPrinterPlaceholder')} 
-                    value={printerQuery}
-                    onChange={(e) => setPrinterQuery(e.target.value)}
-                    className="w-full h-12 px-10 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-zinc-200 text-base text-neutral-800 placeholder:text-zinc-500 leading-6 focus:outline-amber-400 focus:outline-2 transition-all"
-                  />
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                      <path d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z" stroke="var(--subtle)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M20.9999 20.9999L16.6499 16.6499" stroke="var(--subtle)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                  {isSearchingPrinters && (
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                      <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="12" r="10" stroke="var(--subtle)" strokeWidth="3" strokeDasharray="31.4" strokeDashoffset="10"/>
-                      </svg>
-                    </div>
-                  )}
-                </div>
 
-                <div className="flex flex-col gap-3">
-                  {printerResults.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {printerResults.map((p) => (
-                        <SelectOption key={p.id} option={p} selected={selectedPrinter === p.name} onChange={() => setSelectedPrinter(p.name)} />
-                      ))}
-                    </div>
-                  ) : printerQuery.trim().length >= 3 && !isSearchingPrinters ? (
-                     <p className="text-zinc-500 text-sm italic">{t('noPrintersFound', { query: printerQuery })}</p>
-                  ) : printerQuery.trim().length === 0 ? (
-                     <p className="text-zinc-500 text-sm">{t('searchPrinterAbove')}</p>
-                  ) : null}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                  {printerOptions.map((printer) => {
+                    const isSelected = selectedPrinters.includes(printer.name);
+                    return (
+                      <button
+                        key={printer.id || printer.name}
+                        type="button"
+                        onClick={() => togglePrinter(printer.name)}
+                        className={`p-3.5 sm:p-4 rounded-xl flex items-start gap-3.5 transition-all text-left cursor-pointer border-2 ${
+                          isSelected
+                            ? 'bg-white border-brand ring-2 ring-brand/10 shadow-sm'
+                            : 'bg-slate-50 border-slate-100 hover:bg-slate-100/70 hover:border-slate-200'
+                        }`}
+                      >
+                        <div className="mt-0.5 flex-shrink-0">
+                          {isSelected ? (
+                            <div className="w-5 h-5 rounded-full bg-brand flex items-center justify-center text-white">
+                              <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
+                                <path d="M1.5 4.5L4 7L9.5 1.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </div>
+                          ) : (
+                            <div className="w-5 h-5 rounded-full border-[1.5px] border-slate-300 bg-white" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-neutral-900 text-base font-semibold leading-snug">{printer.name}</p>
+                          {printer.desc && (
+                            <p className="text-zinc-500 text-xs sm:text-sm font-normal leading-normal mt-0.5">{printer.desc}</p>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
               <div className="h-px bg-slate-100" />
 
               {/* Material */}
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-5">
                 <div className="flex flex-col gap-2">
-                  <h2 className="text-neutral-800 text-2xl font-bold leading-7">{t('materialTitle')}</h2>
+                  <h2 className="text-neutral-800 text-2xl font-semibold leading-7">{t('materialTitle')}</h2>
                   <p className="text-neutral-700 text-sm font-light leading-5">{t('materialSubtitle')}</p>
                 </div>
-                
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    placeholder={t('searchMaterialPlaceholder')} 
-                    value={materialQuery}
-                    onChange={(e) => setMaterialQuery(e.target.value)}
-                    className="w-full h-12 px-10 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-zinc-200 text-base text-neutral-800 placeholder:text-zinc-500 leading-6 focus:outline-amber-400 focus:outline-2 transition-all"
-                  />
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                      <path d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z" stroke="var(--subtle)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M20.9999 20.9999L16.6499 16.6499" stroke="var(--subtle)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+
+                {/* Substrate */}
+                <div className="flex flex-col gap-2.5">
+                  <h3 className="text-neutral-900 text-base font-semibold leading-5">{t('substrate')}</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl">
+                    {substrateOptions.map((sub) => {
+                      const isSelected = selectedSubstrates.includes(sub);
+                      return (
+                        <button
+                          key={sub}
+                          type="button"
+                          onClick={() => toggleSubstrate(sub)}
+                          className={`px-4 py-3 rounded-xl flex items-center gap-3 transition-all text-left cursor-pointer border-2 ${
+                            isSelected
+                              ? 'bg-white border-brand ring-2 ring-brand/10 shadow-sm'
+                              : 'bg-slate-50 border-slate-100 hover:bg-slate-100/70 hover:border-slate-200'
+                          }`}
+                        >
+                          <div className="flex-shrink-0">
+                            {isSelected ? (
+                              <div className="w-5 h-5 rounded-full bg-brand flex items-center justify-center text-white">
+                                <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
+                                  <path d="M1.5 4.5L4 7L9.5 1.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              </div>
+                            ) : (
+                              <div className="w-5 h-5 rounded-full border-[1.5px] border-slate-300 bg-white" />
+                            )}
+                          </div>
+                          <span className="text-neutral-800 text-sm sm:text-base font-medium">{getMaterialLabel(sub)}</span>
+                        </button>
+                      );
+                    })}
                   </div>
-                  {isSearchingMaterials && (
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                      <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="12" r="10" stroke="var(--subtle)" strokeWidth="3" strokeDasharray="31.4" strokeDashoffset="10"/>
-                      </svg>
-                    </div>
-                  )}
                 </div>
 
-                <div className="flex flex-col gap-3">
-                  {materialResults.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {materialResults.map((m) => (
-                        <SelectOption key={m.id} option={m} selected={selectedMaterial === m.name} onChange={() => setSelectedMaterial(m.name)} />
-                      ))}
-                    </div>
-                  ) : materialQuery.trim().length >= 3 && !isSearchingMaterials ? (
-                     <p className="text-zinc-500 text-sm italic">{t('noMaterialsFound', { query: materialQuery })}</p>
-                  ) : materialQuery.trim().length === 0 ? (
-                     <p className="text-zinc-500 text-sm">{t('searchMaterialAbove')}</p>
-                  ) : null}
+                {/* Finish */}
+                <div className="flex flex-col gap-2.5">
+                  <h3 className="text-neutral-900 text-base font-semibold leading-5">{t('finish')}</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl">
+                    {finishOptions.map((fin) => {
+                      const isSelected = selectedFinishes.includes(fin);
+                      return (
+                        <button
+                          key={fin}
+                          type="button"
+                          onClick={() => toggleFinish(fin)}
+                          className={`px-4 py-3 rounded-xl flex items-center gap-3 transition-all text-left cursor-pointer border-2 ${
+                            isSelected
+                              ? 'bg-white border-brand ring-2 ring-brand/10 shadow-sm'
+                              : 'bg-slate-50 border-slate-100 hover:bg-slate-100/70 hover:border-slate-200'
+                          }`}
+                        >
+                          <div className="flex-shrink-0">
+                            {isSelected ? (
+                              <div className="w-5 h-5 rounded-full bg-brand flex items-center justify-center text-white">
+                                <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
+                                  <path d="M1.5 4.5L4 7L9.5 1.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              </div>
+                            ) : (
+                              <div className="w-5 h-5 rounded-full border-[1.5px] border-slate-300 bg-white" />
+                            )}
+                          </div>
+                          <span className="text-neutral-800 text-sm sm:text-base font-medium">{getMaterialLabel(fin)}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
-                <div className="flex flex-col gap-2 mt-2">
-                  <p className="text-neutral-800 text-lg font-medium leading-5">{t('specialMaterialNeeds')}</p>
+                {/* Special material needs */}
+                <div className="flex flex-col gap-2 mt-1">
+                  <p className="text-neutral-800 text-base font-semibold leading-5">{t('specialMaterialNeeds')}</p>
                   <textarea name="special_material" value={form.special_material} onChange={handleChange} rows={4} placeholder={t('specialMaterialPlaceholder')} className="self-stretch px-5 py-4 rounded-xl outline outline-1 outline-offset-[-1px] outline-zinc-200 text-base text-neutral-800 placeholder:text-zinc-500 leading-6 resize-none focus:outline-amber-400 focus:outline-2 transition-all" />
                 </div>
               </div>
@@ -337,7 +433,7 @@ export default function PrintSampleClient() {
               {/* Request Details */}
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
-                  <h2 className="text-neutral-800 text-2xl font-bold leading-7">{t('requestDetails')}</h2>
+                  <h2 className="text-neutral-800 text-2xl font-semibold leading-7">{t('requestDetails')}</h2>
                   <p className="text-neutral-700 text-sm font-light leading-5">{t('requestDetailsDesc')}</p>
                 </div>
                 <div className="flex flex-col gap-4">
@@ -456,45 +552,6 @@ export default function PrintSampleClient() {
         </form>
       </div>
     </div>
-  );
-}
-
-function SelectOption({ option, selected, onChange }) {
-  return (
-    <button type="button" onClick={onChange} className={"flex-1 px-2 py-2.5 rounded-xl flex justify-start items-start gap-2.5 transition-all " + (selected ? 'bg-transparent outline outline-[1.5px] outline-offset-[-1.5px] outline-amber-500' : 'bg-slate-50 outline outline-1 outline-offset-[-1px] outline-gray-100 hover:outline-amber-300')}>
-      <div className="h-6 flex justify-start items-center gap-2.5">
-        <div className="size-4 relative flex-shrink-0">
-          {selected ? (
-            <div className="size-4 absolute inset-0 bg-brand rounded-full flex items-center justify-center">
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2.19 5L3.81 6.62L7.81 2.62" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            </div>
-          ) : (
-            <div className="size-4 absolute inset-0 bg-white rounded-full border border-gray-300" />
-          )}
-        </div>
-      </div>
-      <div className="flex-1 flex flex-col gap-1 text-left">
-        <p className="text-neutral-800 text-lg font-medium leading-5">{option.name}</p>
-        <p className="text-zinc-500 text-sm font-normal leading-5">{option.desc}</p>
-      </div>
-    </button>
-  );
-}
-
-function RadioChip({ label, selected, onChange }) {
-  return (
-    <button type="button" onClick={onChange} className={"w-60 px-2 py-2.5 rounded-lg flex justify-start items-center gap-2 transition-all " + (selected ? 'bg-transparent outline outline-[1.5px] outline-offset-[-1.5px] outline-amber-500' : 'bg-slate-50 outline outline-1 outline-offset-[-1px] outline-gray-100 hover:outline-amber-300')}>
-      <div className="size-4 relative flex-shrink-0">
-        {selected ? (
-          <div className="size-4 absolute inset-0 bg-brand rounded-full flex items-center justify-center">
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2.19 5L3.81 6.62L7.81 2.62" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          </div>
-        ) : (
-          <div className="size-4 absolute inset-0 bg-white rounded-full border border-gray-300" />
-        )}
-      </div>
-      <span className="text-neutral-700 text-sm font-semibold">{label}</span>
-    </button>
   );
 }
 
