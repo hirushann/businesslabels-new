@@ -98,6 +98,11 @@ export default async function RootLayout({ children }) {
     <html lang={locale} className="font-sans" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://c.s-microsoft.com" crossOrigin="anonymous" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.ga=window.ga||function(){(window.ga.q=window.ga.q||[]).push(arguments);};window.ga.l=+new Date;`,
+          }}
+        />
       </head>
       <body className="font-sans bg-white min-h-screen flex flex-col" suppressHydrationWarning>
         {gtmId && (
@@ -129,7 +134,6 @@ export default async function RootLayout({ children }) {
             strategy="afterInteractive"
             dangerouslySetInnerHTML={{
               __html: `
-                window.ga = window.ga || function() { (window.ga.q = window.ga.q || []).push(arguments); };
                 function loadGTM() {
                   if (window._gtmLoaded) return;
                   window._gtmLoaded = true;
@@ -139,7 +143,7 @@ export default async function RootLayout({ children }) {
                   'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
                   })(window,document,'script','dataLayer','${gtmId}');
                 }
-                var events = ['scroll', 'mousemove', 'touchstart', 'keydown', 'click'];
+                var events = ['scroll', 'touchstart', 'click', 'keydown', 'pointerdown'];
                 function triggerGTM() {
                   loadGTM();
                   events.forEach(function(e) { window.removeEventListener(e, triggerGTM, { passive: true }); });
