@@ -140,7 +140,8 @@ export default async function ContactPage() {
                            </div>
                         </div>
                         <div className="self-stretch h-0 outline outline-1 outline-offset-[-0.50px] outline-slate-100"></div>
-                        <div className="self-stretch flex flex-col sm:flex-row justify-start items-stretch gap-4">
+                        <div className="self-stretch grid grid-cols-1 sm:grid-cols-2 gap-4">
+                           {/* Box 1: Call */}
                            <a href="tel:+31318590465" className="group flex-1 self-stretch p-6 bg-gray-50 rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-200 flex flex-col justify-start items-center gap-4 hover:shadow-md hover:outline-amber-400 transition-all cursor-pointer">
                               <div className="self-stretch flex flex-col justify-center items-start gap-4">
                                  <div className="self-stretch flex justify-center items-center gap-3">
@@ -162,6 +163,8 @@ export default async function ContactPage() {
                                  </div>
                               </div>
                            </a>
+
+                           {/* Box 2: Email */}
                            <a href="mailto:verkoop@businesslabels.nl" className="group flex-1 self-stretch p-6 bg-gray-50 rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-200 flex flex-col justify-start items-center gap-4 hover:shadow-md hover:outline-amber-400 transition-all cursor-pointer">
                               <div className="self-stretch flex justify-center items-center gap-3">
                                  <div>
@@ -175,7 +178,7 @@ export default async function ContactPage() {
                                  <div className="text-center justify-start text-neutral-800 text-xl font-bold leading-6">{t("emailTitle")}</div>
                               </div>
                               <div className="self-stretch flex flex-col justify-start items-center gap-2">
-                                 <div className="self-stretch text-center justify-start text-neutral-700 text-lg font-bold leading-6 group-hover:text-brand transition-colors">
+                                 <div className="self-stretch text-center justify-start text-neutral-700 text-lg font-bold leading-6 group-hover:text-brand transition-colors break-all">
                                     verkoop@businesslabels.nl
                                  </div>
                                  <div className="self-stretch text-center justify-start text-zinc-500 text-base font-normal leading-6">
@@ -183,6 +186,54 @@ export default async function ContactPage() {
                                  </div>
                               </div>
                            </a>
+
+                           {/* Box 3: Address */}
+                           <a
+                              href="https://maps.app.goo.gl/YqTUPVbsoN2bUAoU6"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="group flex-1 self-stretch p-6 bg-gray-50 rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-200 flex flex-col justify-start items-center gap-4 hover:shadow-md hover:outline-amber-400 transition-all cursor-pointer"
+                           >
+                              <div className="self-stretch flex justify-center items-center gap-3">
+                                 <div>
+                                    <svg width="17" height="19" viewBox="0 0 17 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                       <path
+                                          d="M8.5 0C4.36 0 1 3.36 1 7.5C1 13.06 8.5 19 8.5 19C8.5 19 16 13.06 16 7.5C16 3.36 12.64 0 8.5 0ZM8.5 10.25C6.98 10.25 5.75 9.02 5.75 7.5C5.75 5.98 6.98 4.75 8.5 4.75C10.02 4.75 11.25 5.98 11.25 7.5C11.25 9.02 10.02 10.25 8.5 10.25Z"
+                                          fill="var(--subtle)"
+                                       />
+                                    </svg>
+                                 </div>
+                                 <div className="text-center justify-start text-neutral-800 text-xl font-bold leading-6">{t("addressTitle")}</div>
+                              </div>
+                              <div className="self-stretch flex flex-col justify-start items-center gap-2">
+                                 <div className="self-stretch text-center justify-start text-neutral-700 text-base font-bold leading-6 group-hover:text-brand transition-colors">
+                                    Lenderinkweg 8<br />
+                                    6733 AX Wekerom<br />
+                                    The Netherlands
+                                 </div>
+                              </div>
+                           </a>
+
+                           {/* Box 4: Business Details */}
+                           <div className="flex-1 self-stretch p-6 bg-gray-50 rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-200 flex flex-col justify-start items-center gap-4">
+                              <div className="self-stretch flex justify-center items-center gap-3">
+                                 <div>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                       <path
+                                          d="M12 1L2 6V8H22V6L12 1ZM4 10V18H7V10H4ZM10.5 10V18H13.5V10H10.5ZM17 10V18H20V10H17ZM2 20V22H22V20H2Z"
+                                          fill="var(--subtle)"
+                                       />
+                                    </svg>
+                                 </div>
+                                 <div className="text-center justify-start text-neutral-800 text-xl font-bold leading-6">{t("companyDetailsTitle")}</div>
+                              </div>
+                              <div className="self-stretch flex flex-col justify-center items-center gap-1.5 text-neutral-700 text-sm leading-5">
+                                 <div className="text-center"><span className="text-zinc-500 font-medium">IBAN:</span> NL62 RABO 0347 6231 74</div>
+                                 <div className="text-center"><span className="text-zinc-500 font-medium">BIC-code:</span> RABONL2U</div>
+                                 <div className="text-center"><span className="text-zinc-500 font-medium">KVK:</span> 71774599</div>
+                                 <div className="text-center"><span className="text-zinc-500 font-medium">BtwNr:</span> NL858844217B01</div>
+                              </div>
+                           </div>
                         </div>
                      </div>
                   </div>

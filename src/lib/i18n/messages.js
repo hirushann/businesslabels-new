@@ -2007,6 +2007,9 @@ export const MESSAGES_V4 = {
       },
       emailTitle: "Email",
       emailTime: "Response within 1 business day",
+      addressTitle: "Address",
+      routeLink: "View route",
+      companyDetailsTitle: "Company Details",
       teamTitle: "Our Amazing Team",
       teamDesc: "No anonymous support desk. You always speak with the same specialist who knows your situation.",
       form: {
@@ -4122,6 +4125,9 @@ export const MESSAGES_V4 = {
       },
       emailTitle: "E-mail",
       emailTime: "Reactie binnen 1 werkdag",
+      addressTitle: "Adres",
+      routeLink: "Route bekijken",
+      companyDetailsTitle: "Bedrijfsgegevens",
       teamTitle: "Ons geweldige team",
       teamDesc: "Geen anonieme helpdesk. U spreekt altijd met dezelfde specialist die uw situatie kent.",
       form: {
