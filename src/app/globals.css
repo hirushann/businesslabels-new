@@ -19,9 +19,7 @@ body {
   font-family: 'Segoe UI';
   src:
     local("Segoe UI Light"),
-    url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/light/latest.woff2") format("woff2"),
-    url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/light/latest.woff") format("woff"),
-    url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/light/latest.ttf") format("truetype");
+    url("/fonts/segoe-ui-light.woff2") format("woff2");
   font-weight: 100 300;
   font-display: swap;
 }
@@ -30,9 +28,7 @@ body {
   font-family: 'Segoe UI';
   src:
     local("Segoe UI"),
-    url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/normal/latest.woff2") format("woff2"),
-    url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/normal/latest.woff") format("woff"),
-    url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/normal/latest.ttf") format("truetype");
+    url("/fonts/segoe-ui-normal.woff2") format("woff2");
   font-weight: 400 500;
   font-display: swap;
 }
@@ -41,9 +37,7 @@ body {
   font-family: 'Segoe UI';
   src:
     local("Segoe UI Semibold"),
-    url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/semibold/latest.woff2") format("woff2"),
-    url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/semibold/latest.woff") format("woff"),
-    url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/semibold/latest.ttf") format("truetype");
+    url("/fonts/segoe-ui-semibold.woff2") format("woff2");
   font-weight: 600;
   font-display: swap;
 }
@@ -52,9 +46,7 @@ body {
   font-family: 'Segoe UI';
   src:
     local("Segoe UI Bold"),
-    url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/bold/latest.woff2") format("woff2"),
-    url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/bold/latest.woff") format("woff"),
-    url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/bold/latest.ttf") format("truetype");
+    url("/fonts/segoe-ui-bold.woff2") format("woff2");
   font-weight: 700 900;
   font-display: swap;
 }

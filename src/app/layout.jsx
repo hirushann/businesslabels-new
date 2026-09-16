@@ -97,10 +97,9 @@ export default async function RootLayout({ children }) {
   return (
     <html lang={locale} className="font-sans" suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://c.s-microsoft.com" crossOrigin="anonymous" />
         <link
           rel="preload"
-          href="https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/normal/latest.woff2"
+          href="/fonts/segoe-ui-normal.woff2"
           as="font"
           type="font/woff2"
           crossOrigin="anonymous"
@@ -157,9 +156,9 @@ export default async function RootLayout({ children }) {
                 }
                 events.forEach(function(e) { window.addEventListener(e, triggerGTM, { passive: true, once: true }); });
                 if ('requestIdleCallback' in window) {
-                  requestIdleCallback(function() { setTimeout(loadGTM, 6000); });
+                  requestIdleCallback(function() { setTimeout(loadGTM, 9000); });
                 } else {
-                  setTimeout(loadGTM, 6000);
+                  setTimeout(loadGTM, 9000);
                 }
               `,
             }}

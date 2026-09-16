@@ -162,7 +162,7 @@ export default function HeroSection({ heroBanner }: HeroSectionProps = {}) {
         alt="Hero background"
         fill
         sizes="100vw"
-        quality={70}
+        quality={60}
         priority
         fetchPriority="high"
         className="object-cover object-center"
