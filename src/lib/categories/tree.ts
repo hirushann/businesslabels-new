@@ -537,7 +537,7 @@ export async function fetchCategoryGroups(options?: {
     } else if (options?.cache !== undefined) {
       fetchOptions.cache = options.cache;
     } else {
-      fetchOptions.cache = "no-store";
+      fetchOptions.next = { revalidate: 3600 };
     }
 
     const response = await fetch(url, fetchOptions);

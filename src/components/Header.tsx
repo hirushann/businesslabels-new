@@ -603,10 +603,10 @@ export default function Header({
             <Image
               src="/logo.webp"
               alt="Businesslabels"
-              width={185}
+              width={205}
               height={40}
               priority
-              className="w-auto"
+              className="w-auto h-10"
             />
           </Link>
 
@@ -734,8 +734,8 @@ export default function Header({
             <Image
               src="/logo.webp"
               alt="Businesslabels"
-              width={140}
-              height={27}
+              width={144}
+              height={28}
               priority
               className="w-auto h-7 object-contain"
             />

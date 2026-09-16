@@ -30,7 +30,7 @@ export async function getHomeData(): Promise<HomePageData | null> {
 
   try {
     const response = await fetch(`${baseUrl}/api/home`, {
-      cache: 'no-store',
+      next: { revalidate: 300 },
       headers: {
         Accept: 'application/json',
       },
