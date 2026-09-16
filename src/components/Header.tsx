@@ -736,7 +736,6 @@ export default function Header({
               alt="Businesslabels"
               width={144}
               height={28}
-              priority
               className="w-auto h-7 object-contain"
             />
           </Link>

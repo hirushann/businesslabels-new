@@ -33,7 +33,7 @@ export default async function CategorySection() {
   let apiCategories = [];
   try {
     const response = await fetch(withLocaleParam(`${baseUrl}/api/categories`, locale), {
-      cache: "no-store",
+      next: { revalidate: 3600 },
       headers: {
         Accept: "application/json",
       },

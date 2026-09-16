@@ -98,9 +98,16 @@ export default async function RootLayout({ children }) {
     <html lang={locale} className="font-sans" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://c.s-microsoft.com" crossOrigin="anonymous" />
+        <link
+          rel="preload"
+          href="https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/normal/latest.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
         <script
           dangerouslySetInnerHTML={{
-            __html: `window.ga=window.ga||function(){(window.ga.q=window.ga.q||[]).push(arguments);};window.ga.l=+new Date;`,
+            __html: `window.ga=window.ga||function(){(window.ga.q=window.ga.q||[]).push(arguments);};window.ga.l=+new Date;window.ga.getAll=window.ga.getAll||function(){return[];};window.ga.getByName=window.ga.getByName||function(){return null;};`,
           }}
         />
       </head>
@@ -150,9 +157,9 @@ export default async function RootLayout({ children }) {
                 }
                 events.forEach(function(e) { window.addEventListener(e, triggerGTM, { passive: true, once: true }); });
                 if ('requestIdleCallback' in window) {
-                  requestIdleCallback(function() { setTimeout(loadGTM, 3500); });
+                  requestIdleCallback(function() { setTimeout(loadGTM, 6000); });
                 } else {
-                  setTimeout(loadGTM, 3500);
+                  setTimeout(loadGTM, 6000);
                 }
               `,
             }}

@@ -64,7 +64,6 @@ export default function FeatureSections({ quickLinks = {} } = {}) {
                 alt={t(`features.${section.key}Title`)}
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"
-                priority={index === 0}
                 className="object-cover object-center"
                 onError={() => {
                   setImageErrors((prev) => ({
