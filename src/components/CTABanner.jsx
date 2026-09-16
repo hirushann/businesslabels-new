@@ -43,7 +43,7 @@ export default function CTABanner({ footerBanner = null } = {}) {
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
             <LocaleLink
               href="/product"
-              className="w-full sm:w-auto justify-center px-7 py-4 bg-brand rounded-full flex items-center gap-2.5 text-white text-lg font-medium leading-6 hover:bg-brand-hover transition-colors"
+              className="w-full sm:w-auto justify-center px-7 py-4 bg-brand rounded-full flex items-center gap-2.5 text-white text-lg font-semibold leading-6 hover:bg-brand-hover transition-colors"
             >
               {t('cta.browseProducts')}
             </LocaleLink>
