@@ -651,7 +651,20 @@ function CatalogProductsListing({
   const toggleOption = (key: CatalogOptionFilterKey, value: string) => {
     setParams((params) => {
       const paramKey = OPTION_PARAM_KEY[key];
-      const selected = new Set(valuesFor(params, paramKey));
+      const selected = new Set(
+        valuesFor(params, paramKey).map((v) => {
+          const lower = v.toLowerCase();
+          if (key === "material") {
+            if (lower === "papier" || lower === "paper") return "Papier";
+            if (lower === "kunststof" || lower === "synthetic" || lower === "plastic") return "Kunststof";
+          }
+          if (key === "finishing") {
+            if (lower === "mat" || lower === "matte") return "Mat";
+            if (lower === "glanzend" || lower === "glossy" || lower === "gloss") return "Glanzend";
+          }
+          return v;
+        }),
+      );
       if (selected.has(value)) {
         selected.delete(value);
       } else {
@@ -1030,7 +1043,18 @@ function CatalogProductsListing({
                   const filter = entry.filter;
                   const paramKey = OPTION_PARAM_KEY[filter.key];
                   const selectedValues = new Set(
-                    valuesFor(displayParams, paramKey),
+                    valuesFor(displayParams, paramKey).map((v) => {
+                      const lower = v.toLowerCase();
+                      if (filter.key === "material") {
+                        if (lower === "papier" || lower === "paper") return "Papier";
+                        if (lower === "kunststof" || lower === "synthetic" || lower === "plastic") return "Kunststof";
+                      }
+                      if (filter.key === "finishing") {
+                        if (lower === "mat" || lower === "matte") return "Mat";
+                        if (lower === "glanzend" || lower === "glossy" || lower === "gloss") return "Glanzend";
+                      }
+                      return v;
+                    }),
                   );
                   const showAll = showAllFilters[filter.key] ?? false;
                   const DISPLAY_LIMIT = 10;
