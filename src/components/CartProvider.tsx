@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ProductRouteType } from "@/components/ProductCard";
+import { trackAddToCart, trackRemoveFromCart, trackViewCart } from "@/lib/analytics/dataLayer";
 
 const CART_STORAGE_KEY = "businesslabels-cart";
 const PURCHASE_REFERENCE_STORAGE_KEY = "businesslabels-purchase-reference";
@@ -267,6 +268,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const normalizedQuantity = Number.isFinite(quantity) && quantity > 0 ? Math.floor(quantity) : 1;
     const key = buildCartItemKey(item);
 
+    trackAddToCart({
+      item: {
+        item_id: String(item.sku || item.id),
+        item_name: item.name,
+        price: item.price ?? undefined,
+      },
+      quantity: normalizedQuantity,
+    });
+
     setItems((currentItems) => {
       const existingItem = currentItems.find((currentItem) => currentItem.key === key);
 
@@ -311,6 +321,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (!target) {
         return currentItems;
       }
+
+      trackRemoveFromCart({
+        item: {
+          item_id: String(target.sku || target.id),
+          item_name: target.name,
+          price: target.price ?? undefined,
+        },
+        quantity: target.quantity,
+      });
 
       if (target.itemKind === "warranty") {
         return currentItems.filter((item) => item.key !== key);
@@ -406,7 +425,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setCouponError(null);
   }, []);
 
-  const openCart = useCallback(() => setIsCartOpen(true), []);
+  const openCart = useCallback(() => {
+    setIsCartOpen(true);
+    if (items.length > 0) {
+      trackViewCart({
+        items: items.map((i) => ({
+          item_id: String(i.sku || i.id),
+          item_name: i.name,
+          price: i.price ?? undefined,
+          quantity: i.quantity,
+        })),
+      });
+    }
+  }, [items]);
   const closeCart = useCallback(() => setIsCartOpen(false), []);
 
   const applyCouponCode = useCallback(async (code: string) => {

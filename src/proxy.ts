@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server';
 import { CHECKOUT_RETURN_LOCALE_COOKIE, DEFAULT_LOCALE, LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE, LOCALE_HEADER, LOCALE_PATH_HEADER } from '@/lib/i18n/config';
 import { isMaintenanceMode } from '@/lib/maintenance';
 import { categoryPublicPathFromSlug } from '@/lib/categories/tree';
+import { isDevelopmentMode } from '@/lib/seo/indexing';
 
 const EN_PREFIX = '/en';
 const COOKIE_OPTIONS = { path: '/', sameSite: 'lax' as const, maxAge: LOCALE_COOKIE_MAX_AGE };
@@ -109,9 +110,16 @@ function requestHeadersWithLocale(request: NextRequest, locale: 'en' | 'nl') {
   return requestHeaders;
 }
 
+function applyResponseHeaders(response: NextResponse): NextResponse {
+  if (isDevelopmentMode()) {
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet');
+  }
+  return response;
+}
+
 function persistLocale(response: NextResponse, locale: 'en' | 'nl') {
   response.cookies.set(LOCALE_COOKIE, locale, COOKIE_OPTIONS);
-  return response;
+  return applyResponseHeaders(response);
 }
 
 /**
@@ -132,17 +140,17 @@ export function proxy(request: NextRequest) {
 
   if (isMaintenanceMode()) {
     if (pathname === '/maintenance.html') {
-      return NextResponse.next();
+      return applyResponseHeaders(NextResponse.next());
     }
     const rewriteUrl = new URL('/maintenance.html', request.url);
-    return NextResponse.rewrite(rewriteUrl);
+    return applyResponseHeaders(NextResponse.rewrite(rewriteUrl));
   }
 
   // Normalize consecutive slashes (e.g. //product/... -> /product/...)
   if (pathname.includes('//')) {
     const clean = pathname.replace(/\/+/g, '/');
     const redirectUrl = new URL(clean + search, request.url);
-    return NextResponse.redirect(redirectUrl, 301);
+    return applyResponseHeaders(NextResponse.redirect(redirectUrl, 301));
   }
 
   // Handle direct requests to legacy category archive paths

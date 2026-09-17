@@ -14,6 +14,7 @@ import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { useShippingRules } from "@/hooks/useShippingRules";
 import { calculateDisplayedCheckoutTotals, shouldPromptForInvalidVat } from "@/lib/checkout/vat";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { trackBeginCheckout } from "@/lib/analytics/dataLayer";
 
 type CheckoutFormState = {
   firstName: string;
@@ -2267,6 +2268,25 @@ export default function CheckoutPageClient({
   const [isInvalidVatDialogOpen, setIsInvalidVatDialogOpen] = useState(false);
   const [requiresValidVatCorrection, setRequiresValidVatCorrection] = useState(false);
   const invalidVatAccepted = useRef(false);
+  const beginCheckoutTrackedRef = useRef(false);
+
+  useEffect(() => {
+    if (isDemoMode) return;
+    const checkoutItems = cart.items;
+    if (!beginCheckoutTrackedRef.current && checkoutItems.length > 0) {
+      beginCheckoutTrackedRef.current = true;
+      trackBeginCheckout({
+        items: checkoutItems.map((i) => ({
+          item_id: String(i.sku || i.id),
+          item_name: i.name,
+          price: i.price ?? undefined,
+          quantity: i.quantity,
+        })),
+        totalValue: cart.totalAmount,
+        coupon: cart.couponCode || undefined,
+      });
+    }
+  }, [isDemoMode, cart.items, cart.totalAmount, cart.couponCode]);
 
   useEffect(() => {
     async function loadCountries() {

@@ -22,6 +22,8 @@ import { LOCALE_PATH_HEADER } from '@/lib/i18n/config';
 import { cookies, headers } from "next/headers";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { categoryCanonicalUrlsById, fetchCategoryGroups } from "@/lib/categories/tree";
+import { buildOrganizationSchema, buildWebSiteSchema } from "@/lib/seo/structuredData";
+import { isDevelopmentMode, getRobotsMetadata } from "@/lib/seo/indexing";
 
 const isStaging = process.env.NEXT_PUBLIC_APP_ENV === 'staging' || process.env.VERCEL_ENV === 'preview';
 const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
@@ -53,7 +55,7 @@ export async function generateMetadata() {
         'x-default': absolute(paths.nl),
       },
     },
-    robots: { index: true, follow: true },
+    robots: getRobotsMetadata({ defaultIndex: true }),
   };
 }
 
@@ -94,9 +96,19 @@ export default async function RootLayout({ children }) {
     console.error('Failed to load canonical category URLs for navigation.', error);
   }
 
+  const siteUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || "https://businesslabels.nl").replace(/\/$/, "");
+  const organizationSchema = buildOrganizationSchema(siteUrl);
+  const websiteSchema = buildWebSiteSchema(siteUrl);
+
   return (
     <html lang={locale} className="font-sans" suppressHydrationWarning>
       <head>
+        {isDevelopmentMode() && (
+          <>
+            <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+            <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet" />
+          </>
+        )}
         <link
           rel="preload"
           href="/fonts/segoe-ui-normal.woff2"
@@ -105,8 +117,14 @@ export default async function RootLayout({ children }) {
           crossOrigin="anonymous"
         />
         <script
+          type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: `window.ga=window.ga||function(){(window.ga.q=window.ga.q||[]).push(arguments);};window.ga.l=+new Date;window.ga.getAll=window.ga.getAll||function(){return[];};window.ga.getByName=window.ga.getByName||function(){return null;};`,
+            __html: JSON.stringify([organizationSchema, websiteSchema]),
+          }}
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.dataLayer=window.dataLayer||[];window.ga=window.ga||function(){(window.ga.q=window.ga.q||[]).push(arguments);};window.ga.l=+new Date;window.ga.getAll=window.ga.getAll||function(){return[];};window.ga.getByName=window.ga.getByName||function(){return null;};`,
           }}
         />
       </head>
@@ -149,16 +167,21 @@ export default async function RootLayout({ children }) {
                   'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
                   })(window,document,'script','dataLayer','${gtmId}');
                 }
-                var events = ['scroll', 'touchstart', 'click', 'keydown', 'pointerdown'];
-                function triggerGTM() {
+                var p = window.location.pathname;
+                if (p.indexOf('/bedankt') !== -1 || p.indexOf('/afrekenen') !== -1 || p.indexOf('/checkout') !== -1) {
                   loadGTM();
-                  events.forEach(function(e) { window.removeEventListener(e, triggerGTM, { passive: true }); });
-                }
-                events.forEach(function(e) { window.addEventListener(e, triggerGTM, { passive: true, once: true }); });
-                if ('requestIdleCallback' in window) {
-                  requestIdleCallback(function() { setTimeout(loadGTM, 9000); });
                 } else {
-                  setTimeout(loadGTM, 9000);
+                  var events = ['scroll', 'touchstart', 'click', 'keydown', 'pointerdown'];
+                  function triggerGTM() {
+                    loadGTM();
+                    events.forEach(function(e) { window.removeEventListener(e, triggerGTM, { passive: true }); });
+                  }
+                  events.forEach(function(e) { window.addEventListener(e, triggerGTM, { passive: true, once: true }); });
+                  if ('requestIdleCallback' in window) {
+                    requestIdleCallback(function() { setTimeout(loadGTM, 4000); });
+                  } else {
+                    setTimeout(loadGTM, 4000);
+                  }
                 }
               `,
             }}

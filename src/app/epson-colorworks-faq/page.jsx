@@ -1,6 +1,7 @@
 import { getServerLocale } from "@/lib/i18n/server";
 import { getTranslations } from "next-intl/server";
 import FaqClient from "./FaqClient";
+import { buildFaqSchema, buildBreadcrumbSchema } from "@/lib/seo/structuredData";
 
 export async function generateMetadata({ searchParams }) {
   const search = await searchParams;
@@ -105,11 +106,39 @@ export default async function FaqHubPage({ searchParams }) {
     }
   }
 
+  const siteUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || "https://businesslabels.nl").replace(/\/$/, "");
+  const loc = initialPageData?.locales?.[locale] ?? initialPageData?.locales?.[initialPageData?.main_locale];
+  const faqItems = (loc?.sections || []).flatMap(section => 
+    (section.items || []).map(item => ({
+      question: item.question,
+      answer: item.answer,
+    }))
+  );
+  const faqSchema = faqItems.length > 0 ? buildFaqSchema(faqItems) : null;
+  const breadcrumbItems = [
+    { name: 'Home', url: locale === 'en' ? '/en' : '/' },
+    { name: 'Epson ColorWorks FAQ', url: locale === 'en' ? '/en/epson-colorworks-faq' : '/epson-colorworks-faq' },
+  ];
+  const breadcrumbSchema = buildBreadcrumbSchema(breadcrumbItems, siteUrl);
+
   return (
-    <FaqClient 
-      pagesList={pagesList} 
-      initialPageData={initialPageData} 
-      locale={locale} 
-    />
+    <>
+      {faqSchema ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify([faqSchema, breadcrumbSchema]) }}
+        />
+      ) : (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+        />
+      )}
+      <FaqClient 
+        pagesList={pagesList} 
+        initialPageData={initialPageData} 
+        locale={locale} 
+      />
+    </>
   );
 }

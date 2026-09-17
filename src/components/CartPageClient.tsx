@@ -7,7 +7,8 @@ import { useLocale, useTranslations } from 'next-intl';
 import CartProductSlider from '@/components/CartProductSlider';
 import type { ProductCardData } from '@/components/ProductCard';
 import { localePath } from '@/lib/i18n/utils';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { trackViewCart } from '@/lib/analytics/dataLayer';
 import { getExpectedDeliveryMessage } from '@/lib/utils/delivery';
 import { useShippingRules } from '@/hooks/useShippingRules';
 import { useDeliveryAvailability } from '@/hooks/useDeliveryAvailability';
@@ -79,6 +80,22 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
 
   const [deliveryInfo, setDeliveryInfo] = useState<ReturnType<typeof getExpectedDeliveryMessage> | null>(null);
   const availableDates = useDeliveryAvailability();
+  const viewCartTrackedRef = useRef(false);
+
+  useEffect(() => {
+    if (!viewCartTrackedRef.current && items.length > 0) {
+      viewCartTrackedRef.current = true;
+      trackViewCart({
+        items: items.map((i) => ({
+          item_id: String(i.sku || i.id),
+          item_name: i.name,
+          price: i.price ?? undefined,
+          quantity: i.quantity,
+        })),
+        totalValue: totalAmount,
+      });
+    }
+  }, [items, totalAmount]);
 
   useEffect(() => {
     if (!availableDates?.length) {

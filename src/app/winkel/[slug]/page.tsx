@@ -4,6 +4,7 @@ import ProductPurchase from "@/components/ProductPurchase";
 import ProductCard, { type ProductCardData, type ProductRouteType } from "@/components/ProductCard";
 import ProductCompatibilityDialog from "@/components/ProductCompatibilityDialog";
 import ProductImage from "@/components/ProductImage";
+import ProductViewTracker from "@/components/analytics/ProductViewTracker";
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
 import { localePath } from "@/lib/i18n/utils";
 import { notFound, permanentRedirect } from "next/navigation";
@@ -26,6 +27,8 @@ import { localizeProductSpecValue } from "@/lib/products/specValues";
 import { mapLaravelProductToCardData, type LaravelProduct } from "@/lib/mappings/product";
 import ProductDescriptionAccordion from "@/components/ProductDescriptionAccordion";
 import { htmlToText, sanitizeCmsHtml } from "@/lib/utils";
+import { buildProductSchema, buildBreadcrumbSchema } from "@/lib/seo/structuredData";
+import { getRobotsMetadata } from "@/lib/seo/indexing";
 
 export async function generateMetadata({
   params,
@@ -95,10 +98,7 @@ export async function generateMetadata({
       description,
       images: ogImageUrl ? [ogImageUrl] : [],
     },
-    robots: {
-      index: true,
-      follow: true,
-    },
+    robots: getRobotsMetadata({ defaultIndex: true }),
   };
 }
 
@@ -1175,37 +1175,45 @@ export default async function SingleProductPage({
     brandName = normalizePropertyDisplayValue(props.brand || props.merk) || "Businesslabels";
   }
 
-  const jsonLd = {
-    "@context": "https://schema.org/",
-    "@type": "Product",
-    "name": productName,
-    "image": [mainImage, ...galleryImages].filter(Boolean).map((img) => img.startsWith("http") ? img : `${siteUrl}${img}`),
-    "description": product?.meta_description || shortDescription || t("pages.productMetadataDescription"),
-    "sku": product?.sku,
-    "mpn": product?.sku || product?.article_number,
-    "brand": {
-      "@type": "Brand",
-      "name": brandName
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": productUrl,
-      "priceCurrency": "EUR",
-      "price": (price * 1.23).toFixed(2),
-      "itemCondition": "https://schema.org/NewCondition",
-      "availability": product?.in_stock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-      "seller": {
-        "@type": "Organization",
-        "name": "Businesslabels"
-      }
-    }
-  };
+  const productSchema = buildProductSchema({
+    name: productName,
+    url: productUrl,
+    images: [mainImage, ...galleryImages],
+    description: htmlToText(product?.meta_description || shortDescription || t("pages.productMetadataDescription")),
+    sku: product?.sku,
+    mpn: product?.sku || product?.article_number,
+    brand: brandName,
+    category: breadcrumbCategoryName || undefined,
+    price,
+    inStock: Boolean(product?.in_stock),
+    siteUrl,
+  });
+
+  const breadcrumbItems = [
+    { name: t('common.home') || 'Home', url: localePath('/', locale) },
+    { name: t('common.products') || 'Producten', url: localePath('/product', locale) },
+    ...(breadcrumbCategory && breadcrumbCategoryName ? [{
+      name: breadcrumbCategoryName,
+      url: categoryPublicPathFromSlug(breadcrumbCategorySlug || String(breadcrumbCategory.id), locale),
+    }] : []),
+    { name: productName, url: productUrl },
+  ];
+  const breadcrumbSchema = buildBreadcrumbSchema(breadcrumbItems, siteUrl);
 
   return (
     <div className="bg-white pb-28 lg:pb-0">
+      <ProductViewTracker
+        item={{
+          item_id: String(product?.sku || product?.id || slug),
+          item_name: productName,
+          price,
+          item_brand: brandName,
+          item_category: breadcrumbCategoryName || undefined,
+        }}
+      />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify([productSchema, breadcrumbSchema]) }}
       />
 
       <div className="px-4 md:px-8 lg:px-10 py-6 lg:py-10">

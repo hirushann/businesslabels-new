@@ -8,6 +8,7 @@ import ReviewsSection from "@/components/ReviewsSection";
 import CTABanner from "@/components/CTABanner";
 import { getTranslations } from "next-intl/server";
 import { getHomeData } from "@/lib/api/home";
+import { getRobotsMetadata } from "@/lib/seo/indexing";
 
 export const revalidate = 300;
 
@@ -17,10 +18,7 @@ export async function generateMetadata() {
   return {
     title: t("pages.homeMetadataTitle"),
     description: t("pages.homeMetadataDescription"),
-    robots: {
-      index: true,
-      follow: true,
-    },
+    robots: getRobotsMetadata({ defaultIndex: true }),
   };
 }
 

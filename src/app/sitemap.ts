@@ -3,6 +3,7 @@ import { localePath } from '@/lib/i18n/utils';
 import { fetchCategoryGroups, categoryPublicPath, type CategoryNode } from '@/lib/categories/tree';
 import { getAccessoryCategoryPath } from '@/lib/routes/accessoryCategories';
 import { getLabelCategoryPath } from '@/lib/routes/labelCategories';
+import { isDevelopmentMode } from '@/lib/seo/indexing';
 
 // Define the API base URL
 const baseUrl = process.env.BBNL_API_BASE_URL || 'http://localhost:8000';
@@ -164,6 +165,10 @@ async function fetchApi<T extends SitemapApiItem>(path: string): Promise<T[]> {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  if (isDevelopmentMode()) {
+    return [];
+  }
+
   // Static routes
   const staticRoutes = [
     { path: '' },

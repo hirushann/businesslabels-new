@@ -1,7 +1,8 @@
 import type { MetadataRoute } from 'next';
+import { isDevelopmentMode } from '@/lib/seo/indexing';
 
 export default function robots(): MetadataRoute.Robots {
-  const isStaging = process.env.NEXT_PUBLIC_APP_ENV === 'staging' || process.env.VERCEL_ENV === 'preview';
+  const isDev = isDevelopmentMode();
 
   const getBaseUrl = () => {
     if (process.env.NEXT_PUBLIC_APP_URL && process.env.NEXT_PUBLIC_APP_ENV !== 'staging') {
@@ -15,13 +16,12 @@ export default function robots(): MetadataRoute.Robots {
 
   const baseUrl = getBaseUrl();
 
-  if (isStaging) {
+  if (isDev) {
     return {
       rules: {
         userAgent: '*',
         disallow: '/',
       },
-      sitemap: `${baseUrl}/sitemap.xml`,
     };
   }
 

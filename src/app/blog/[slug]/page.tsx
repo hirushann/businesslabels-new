@@ -16,6 +16,7 @@ import CTABanner from "@/components/CTABanner";
 import InThisArticle from "@/components/blog/InThisArticle";
 import CopyLinkButton from "@/components/blog/CopyLinkButton";
 import ImageCompareSlider from "@/components/blog/ImageCompareSlider";
+import { buildArticleSchema, buildBreadcrumbSchema } from "@/lib/seo/structuredData";
 
 type PostTranslation = {
   language: string;
@@ -279,8 +280,26 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
   const localized = getLocalizedFields(post, locale);
   const { transformedContent: localizedContent, headings: localizedHeadings } = parseAndInjectHeadings(localized.content);
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://businesslabels.nl";
-  const fullPostUrl = `${siteUrl}/${locale}/blog/${localized.slug}`;
+  const siteUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || "https://businesslabels.nl").replace(/\/$/, "");
+  const fullPostUrl = locale === "en" ? `${siteUrl}/en/blog/${localized.slug}` : `${siteUrl}/blog/${localized.slug}`;
+
+  const articleSchema = buildArticleSchema({
+    headline: htmlToText(localized.title),
+    url: fullPostUrl,
+    description: htmlToText(localized.meta_description || localized.excerpt || ""),
+    image: post.image,
+    datePublished: post.created_at,
+    dateModified: post.updated_at || post.created_at,
+    authorName: post.author?.name,
+    siteUrl,
+  });
+
+  const breadcrumbItems = [
+    { name: t("common.home") || "Home", url: localePath("/", locale) },
+    { name: t("common.blogs") || "Blog", url: localePath("/blog", locale) },
+    { name: localized.title, url: fullPostUrl },
+  ];
+  const breadcrumbSchema = buildBreadcrumbSchema(breadcrumbItems, siteUrl);
 
   const recommendedProducts = await getRecommendedProducts(locale as "en" | "nl");
 
@@ -309,6 +328,10 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
 
   return (
     <div className="relative bg-white overflow-hidden w-full">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify([articleSchema, breadcrumbSchema]) }}
+      />
       {/* Glow Effects */}
       <div className="hidden lg:block w-48 h-48 left-0 top-[454px] absolute bg-brand/30 rounded-full blur-[132px] pointer-events-none"></div>
       <div className="hidden lg:block w-48 h-48 right-[100px] top-[858px] absolute bg-brand/30 rounded-full blur-[132px] pointer-events-none"></div>

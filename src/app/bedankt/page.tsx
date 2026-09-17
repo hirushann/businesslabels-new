@@ -8,6 +8,7 @@ import { useCart } from "@/components/CartProvider";
 import { localePath } from "@/lib/i18n/utils";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
+import { trackPurchase } from "@/lib/analytics/dataLayer";
 
 type OrderDetails = {
   id?: number | string;
@@ -167,6 +168,43 @@ export default function ThankYouPage() {
 
     fetchOrder();
   }, [orderNumber]);
+
+  useEffect(() => {
+    if (!order) return;
+
+    const txnId = String(order.number || order.id || orderNumber || "");
+    if (!txnId) return;
+
+    // Deduplication key: ensure purchase event fires exactly once per completed transaction
+    const storageKey = `ga4_purchased_${txnId}`;
+    try {
+      if (typeof window !== "undefined" && window.sessionStorage.getItem(storageKey)) {
+        return;
+      }
+      if (typeof window !== "undefined") {
+        window.sessionStorage.setItem(storageKey, "true");
+      }
+    } catch (e) {
+      // ignore storage access errors
+    }
+
+    const orderItems = order.items || order.order_items || order.line_items || [];
+    const formattedItems = orderItems.map((item) => ({
+      item_id: String(item.id || item.name),
+      item_name: item.name,
+      price: typeof item.price === "number" ? item.price : parseFloat(String(item.price || 0)),
+      quantity: item.quantity,
+    }));
+
+    trackPurchase({
+      transactionId: txnId,
+      totalValue: typeof order.total === "number" ? order.total : parseFloat(String(order.total || 0)),
+      tax: typeof order.tax_amount === "number" ? order.tax_amount : parseFloat(String(order.tax_amount || 0)),
+      shipping: typeof order.shipping_amount === "number" ? order.shipping_amount : parseFloat(String(order.shipping_amount || 0)),
+      coupon: typeof order.purchase_reference === "string" ? order.purchase_reference : undefined,
+      items: formattedItems,
+    });
+  }, [order, orderNumber]);
 
   if (loading) {
     return (
