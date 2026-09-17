@@ -143,6 +143,7 @@ export type ProductCardData = {
   is_group_product?: boolean | null;
   properties?: Record<string, unknown> | null;
   translations?: ProductCardTranslations;
+  moq?: number | null;
 };
 
 type ProductCardProps = {
