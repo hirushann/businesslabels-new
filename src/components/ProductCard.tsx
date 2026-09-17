@@ -436,7 +436,10 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
   }, [kernValue, t]);
 
   const normalizedPackingGroup = normalizePositiveInteger(product.packing_group);
-  const addQuantity = normalizeBoolean(product.allow_singulars) ? 1 : normalizedPackingGroup ?? 1;
+  const normalizedMoq = normalizePositiveInteger(product.moq);
+  // If MOQ is explicitly 1, it implies we can order singulars up to the packing group
+  const effectiveAllowSingulars = normalizeBoolean(product.allow_singulars) || normalizedMoq === 1;
+  const addQuantity = effectiveAllowSingulars ? 1 : normalizedPackingGroup ?? 1;
   const normalizedWarranty = useMemo(() => normalizeWarrantyOptions(product.warranty, locale), [product.warranty, locale]);
   const [isWarrantyPopoverOpen, setIsWarrantyPopoverOpen] = useState(false);
   const warrantyDialogHandledRef = useRef(false);
@@ -477,7 +480,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
         discounts: product.discounts,
         mainImage: productMainImage,
         packingGroup: normalizedPackingGroup,
-        allowSingulars: normalizeBoolean(product.allow_singulars),
+        allowSingulars: effectiveAllowSingulars,
         isLabelProduct: Boolean(product.is_label_product ?? product.is_label ?? false),
       },
       finalQty,
@@ -502,7 +505,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
           itemKind: "warranty",
           linkedToKey: parentKey,
           packingGroup: normalizedPackingGroup,
-          allowSingulars: normalizeBoolean(product.allow_singulars),
+          allowSingulars: effectiveAllowSingulars,
           warranty: {
             optionId: Number(selectedOption.id),
             typeName: selectedOption.typeName,
@@ -778,7 +781,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
       price={productPrice!}
       discounts={product.discounts}
       packingGroup={normalizedPackingGroup}
-      allowSingulars={normalizeBoolean(product.allow_singulars)}
+      allowSingulars={effectiveAllowSingulars}
       rollsStackLabel={rollsStackLabel}
     />
   ) : null;

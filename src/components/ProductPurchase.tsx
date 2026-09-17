@@ -256,7 +256,9 @@ export default function ProductPurchase({
     Number.isFinite(normalizedPackingGroup) &&
     normalizedPackingGroup > 0;
   const normalizedMoq = typeof moq === "number" && Number.isFinite(moq) && moq > 0 ? moq : null;
-  const isStrictPackaging = Boolean(hasPackingGroup && normalizedPackingGroup && !allowSingulars);
+  // If MOQ is explicitly 1, it implies we can order singulars up to the packing group
+  const effectiveAllowSingulars = Boolean(allowSingulars || normalizedMoq === 1);
+  const isStrictPackaging = Boolean(hasPackingGroup && normalizedPackingGroup && !effectiveAllowSingulars);
   const minOrderQuantity = normalizedMoq ?? (isStrictPackaging && normalizedPackingGroup ? normalizedPackingGroup : 1);
   const initialQuantity = minOrderQuantity;
   const [quantity, setQuantity] = useState(initialQuantity);
@@ -269,7 +271,7 @@ export default function ProductPurchase({
     return getPackagingValidation({
       quantity,
       pack: normalizedPackingGroup,
-      allowSingulars: Boolean(allowSingulars),
+      allowSingulars: Boolean(effectiveAllowSingulars),
       moq: normalizedMoq,
     });
   }, [quantity, normalizedPackingGroup, allowSingulars, normalizedMoq]);
@@ -278,7 +280,7 @@ export default function ProductPurchase({
     return formatPackagingBreakdown({
       quantity,
       pack: normalizedPackingGroup,
-      allowSingulars: Boolean(allowSingulars),
+      allowSingulars: Boolean(effectiveAllowSingulars),
       locale,
       isStack: isFanFold,
     });
@@ -311,7 +313,7 @@ export default function ProductPurchase({
   const packagingHint = useMemo(() => {
     return getPackagingHint({
       pack: normalizedPackingGroup,
-      allowSingulars: Boolean(allowSingulars),
+      allowSingulars: Boolean(effectiveAllowSingulars),
       locale,
       isStack: isFanFold,
     });
@@ -386,7 +388,7 @@ export default function ProductPurchase({
       getNextQuantity({
         current: prev,
         pack: normalizedPackingGroup,
-        allowSingulars: Boolean(allowSingulars),
+        allowSingulars: Boolean(effectiveAllowSingulars),
         moq: normalizedMoq,
       })
     );
@@ -398,7 +400,7 @@ export default function ProductPurchase({
       getPreviousQuantity({
         current: prev,
         pack: normalizedPackingGroup,
-        allowSingulars: Boolean(allowSingulars),
+        allowSingulars: Boolean(effectiveAllowSingulars),
         moq: normalizedMoq,
       })
     );
@@ -590,7 +592,7 @@ export default function ProductPurchase({
     const validation = getPackagingValidation({
       quantity: normalizedQuantity,
       pack: normalizedPackingGroup,
-      allowSingulars: Boolean(allowSingulars),
+      allowSingulars: Boolean(effectiveAllowSingulars),
       moq: normalizedMoq,
     });
 
@@ -621,7 +623,7 @@ export default function ProductPurchase({
         mainImage,
         componentCount,
         packingGroup: normalizedPackingGroup,
-        allowSingulars: Boolean(allowSingulars),
+        allowSingulars: Boolean(effectiveAllowSingulars),
         moq: normalizedMoq,
         isLabelProduct: Boolean(isLabelProduct),
       },
@@ -647,7 +649,7 @@ export default function ProductPurchase({
           itemKind: "warranty",
           linkedToKey: parentKey,
           packingGroup: normalizedPackingGroup,
-          allowSingulars: Boolean(allowSingulars),
+          allowSingulars: Boolean(effectiveAllowSingulars),
         moq: normalizedMoq,
           warranty: {
             optionId: Number(selectedOption.id),
@@ -728,7 +730,7 @@ export default function ProductPurchase({
       materialTitle,
       inStock: resolvedInStock,
       packingGroup: normalizedPackingGroup,
-      allowSingulars: Boolean(allowSingulars),
+      allowSingulars: Boolean(effectiveAllowSingulars),
     });
     toast.success(t("product.savedToFavorite"));
   };
@@ -911,9 +913,9 @@ export default function ProductPurchase({
           onOpenChange={handleWarrantyDialogOpenChange}
         >
           <div className="flex flex-col gap-3">
-            <div className="flex flex-col sm:flex-row sm:items-start gap-3 w-full">
+            <div className={`flex ${packagingValidation.isValid ? 'flex-row flex-wrap sm:flex-nowrap items-start' : 'flex-col'} gap-3 w-full`}>
               {/* Quantity Stepper */}
-              <div className="flex flex-col gap-1 shrink-0">
+              <div className="flex flex-col gap-1 shrink-0 w-full sm:w-[140px]">
                 <label className="text-xs font-semibold text-neutral-700 block">
                   {quantityLabel}
                 </label>
@@ -964,8 +966,8 @@ export default function ProductPurchase({
               </div>
 
               {/* Add to Cart Actions */}
-              <div className="flex-1 flex flex-col gap-1.5 w-full">
-                <div className="h-4 hidden sm:block" aria-hidden="true" />
+              <div className="flex-1 min-w-[200px] flex flex-col gap-1.5 w-full">
+                {packagingValidation.isValid && <div className="h-4 hidden sm:block" aria-hidden="true" />}
                 {packagingValidation.isValid ? (
                   <>
                     <button
@@ -984,7 +986,7 @@ export default function ProductPurchase({
                         <path d="M10.083 4.125H14.6663" stroke="white" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
                         <path d="M12.375 1.83301V6.41634" stroke="white" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
-                      <span className="text-white text-base font-bold whitespace-nowrap">{mainOrderButtonText}</span>
+                      <span className="text-white text-base font-bold text-center leading-tight">{mainOrderButtonText}</span>
                     </button>
                     {packagingBreakdown && (
                       <div className="text-center sm:text-left text-xs text-neutral-500 font-medium px-1">
