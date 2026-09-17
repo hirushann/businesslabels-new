@@ -1,14 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect } from 'react';
-import { useCart } from '@/components/CartProvider';
-import { useTranslations } from 'next-intl';
+import { useEffect, useState, useMemo } from 'react';
+import { useCart, type CartItem } from '@/components/CartProvider';
+import { useTranslations, useLocale } from 'next-intl';
 import { useLocalePath } from '@/hooks/useLocalePath';
 import { useShippingRules } from '@/hooks/useShippingRules';
 import CartTotals from '@/components/CartTotals';
 import { useIsBusinessCustomer } from '@/hooks/useIsBusinessCustomer';
 import { toDisplayImageUrl } from '@/lib/utils/imageProxy';
+import { formatPackagingBreakdown, getPackagingValidation } from '@/lib/utils/packaging';
 
 type CartDrawerProps = {
   onClose: () => void;
@@ -25,6 +26,7 @@ function formatEuro(value: number): string {
 
 export default function CartDrawer({ onClose }: CartDrawerProps) {
   const t = useTranslations();
+  const locale = useLocale();
   const lp = useLocalePath();
   const isBusinessCustomer = useIsBusinessCustomer();
   const { defaultRule } = useShippingRules();
@@ -38,6 +40,57 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
     decrementItemQuantity,
     setItemQuantity,
   } = useCart();
+
+  const [draftQuantities, setDraftQuantities] = useState<Record<string, string>>({});
+
+  const handleQuantityInputChange = (key: string, value: string, item: CartItem) => {
+    setDraftQuantities((prev) => ({ ...prev, [key]: value }));
+    const parsed = parseInt(value, 10);
+    if (!Number.isInteger(parsed) || parsed < 1) {
+      return;
+    }
+    const validation = getPackagingValidation({
+      quantity: parsed,
+      pack: item.packingGroup,
+      allowSingulars: item.allowSingulars,
+      moq: item.moq,
+    });
+    if (validation.isValid) {
+      setItemQuantity(key, parsed);
+      setDraftQuantities((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+    }
+  };
+
+  const handleApplyChoice = (key: string, choiceQty: number) => {
+    setItemQuantity(key, choiceQty);
+    setDraftQuantities((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
+  const hasInvalidDraft = useMemo(() => {
+    return items.some((item) => {
+      if (item.itemKind === 'warranty') return false;
+      const draft = draftQuantities[item.key];
+      if (draft !== undefined) {
+        const parsed = parseInt(draft, 10);
+        const validation = getPackagingValidation({
+          quantity: Number.isInteger(parsed) ? parsed : 0,
+          pack: item.packingGroup,
+          allowSingulars: item.allowSingulars,
+          moq: item.moq,
+        });
+        return !validation.isValid;
+      }
+      return false;
+    });
+  }, [items, draftQuantities]);
 
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
@@ -161,6 +214,22 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                     const imageSrc = toDisplayImageUrl(item.mainImage) || '/image-placeholder.svg';
                     const productSlug = item.slug?.trim();
                     const href = productSlug ? lp(`/product/${productSlug}`) : undefined;
+                    const itemBreakdown = formatPackagingBreakdown({
+                      quantity: item.quantity,
+                      pack: item.packingGroup,
+                      allowSingulars: item.allowSingulars,
+                      locale,
+                    });
+
+                    const displayQty = draftQuantities[item.key] ?? String(item.quantity);
+                    const parsedInputQty = parseInt(displayQty, 10);
+                    const itemValidation = getPackagingValidation({
+                      quantity: Number.isInteger(parsedInputQty) ? parsedInputQty : 0,
+                      pack: item.packingGroup,
+                      allowSingulars: item.allowSingulars,
+                      moq: item.moq,
+                    });
+                    const isDraftInvalid = !itemValidation.isValid && draftQuantities[item.key] !== undefined;
 
                     return (
                       <div key={item.key} className="py-4 flex flex-col gap-3">
@@ -235,56 +304,95 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                             </div>
 
                             {/* Quantity and Actions */}
-                            <div className="flex items-center gap-2 flex-wrap mt-1">
-                              {/* Quantity stepper */}
-                              <div className="h-[38px] bg-white rounded-[44px] shadow-[0px_1px_2px_rgba(16,24,40,0.05)] border border-black/10 flex items-center overflow-hidden shrink-0">
-                                <button
-                                  type="button"
-                                  onClick={() => decrementItemQuantity(item.key)}
-                                  className="w-[38px] h-[38px] flex items-center justify-center border-r border-black/10 text-neutral-700 hover:bg-slate-50 transition-colors text-lg"
-                                >
-                                  -
-                                </button>
-                                <input
-                                  type="text"
-                                  inputMode="numeric"
-                                  pattern="[1-9][0-9]*"
-                                  value={item.quantity}
-                                  onChange={(e) => {
-                                    const val = parseInt(e.target.value, 10);
-                                    if (Number.isInteger(val) && val > 0) {
-                                      setItemQuantity(item.key, val);
-                                    }
-                                  }}
-                                  className="w-[38px] h-[38px] border-r border-black/10 bg-transparent text-center text-base font-bold text-ink focus:outline-none focus:ring-0 p-0"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => incrementItemQuantity(item.key)}
-                                  className="w-[38px] h-[38px] flex items-center justify-center text-neutral-700 hover:bg-slate-50 transition-colors text-lg"
-                                >
-                                  +
-                                </button>
-                              </div>
-
-                              {/* Box Option */}
-                              {item.isLabelProduct && item.packingGroup && item.packingGroup > 0 && (
-                                <>
-                                  <span className="text-subtle text-xs font-normal">
-                                    {t('cart.or')}
-                                  </span>
+                            <div className="flex flex-col gap-1.5 mt-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {/* Quantity stepper */}
+                                <div className={`h-[38px] bg-white rounded-[44px] shadow-[0px_1px_2px_rgba(16,24,40,0.05)] border ${isDraftInvalid ? 'border-red-500 ring-1 ring-red-500' : 'border-black/10'} flex items-center overflow-hidden shrink-0`}>
+                                  <button
+                                    type="button"
+                                    disabled={item.quantity <= ((!item.allowSingulars && item.packingGroup) ? item.packingGroup : (item.moq || 1))}
+                                    onClick={() => {
+                                      setDraftQuantities(prev => { const n = { ...prev }; delete n[item.key]; return n; });
+                                      decrementItemQuantity(item.key);
+                                    }}
+                                    className="w-[38px] h-[38px] flex items-center justify-center border-r border-black/10 text-neutral-700 hover:bg-slate-50 transition-colors text-lg disabled:opacity-40 disabled:cursor-not-allowed"
+                                  >
+                                    -
+                                  </button>
+                                  <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    pattern="[1-9][0-9]*"
+                                    value={displayQty}
+                                    onChange={(e) => handleQuantityInputChange(item.key, e.target.value, item)}
+                                    className="w-[44px] h-[38px] border-r border-black/10 bg-transparent text-center text-sm font-bold text-ink focus:outline-none focus:ring-0 p-0"
+                                  />
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      const pg = item.packingGroup!;
-                                      const nextBoxQty = Math.ceil((item.quantity + 1) / pg) * pg;
-                                      setItemQuantity(item.key, nextBoxQty);
+                                      setDraftQuantities(prev => { const n = { ...prev }; delete n[item.key]; return n; });
+                                      incrementItemQuantity(item.key);
                                     }}
-                                    className="h-[38px] px-4 rounded-[100px] border border-brand text-brand text-sm font-semibold hover:bg-brand-soft transition-colors whitespace-nowrap"
+                                    className="w-[38px] h-[38px] flex items-center justify-center text-neutral-700 hover:bg-slate-50 transition-colors text-lg"
                                   >
-                                    {t('cart.boxOption', { count: item.packingGroup })}
+                                    +
                                   </button>
-                                </>
+                                </div>
+
+                                {/* Box Option */}
+                                {item.isLabelProduct && item.packingGroup && item.packingGroup > 0 && (
+                                  <>
+                                    <span className="text-subtle text-xs font-normal">
+                                      {t('cart.or')}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const pg = item.packingGroup!;
+                                        const nextBoxQty = Math.ceil((item.quantity + 1) / pg) * pg;
+                                        setItemQuantity(item.key, nextBoxQty);
+                                      }}
+                                      className="h-[38px] px-4 rounded-[100px] border border-brand text-brand text-sm font-semibold hover:bg-brand-soft transition-colors whitespace-nowrap"
+                                    >
+                                      {t('cart.boxOption', { count: item.packingGroup })}
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+
+                              {/* Error and Choices for invalid draft in cart */}
+                              {isDraftInvalid && (
+                                <div className="flex flex-col gap-1.5 w-full mt-1">
+                                  {itemValidation.choices.length > 0 ? (
+                                    <>
+                                      <span className="text-xs font-semibold text-red-600">
+                                        {t("product.chooseMultipleOf", { pack: item.packingGroup ?? 1 })}
+                                      </span>
+                                      <div className="flex gap-2">
+                                        {itemValidation.choices.map((choice) => (
+                                          <button
+                                            key={choice}
+                                            type="button"
+                                            onClick={() => handleApplyChoice(item.key, choice)}
+                                            className="px-3 py-1 bg-brand text-white text-xs font-bold rounded-full hover:bg-brand-hover transition-colors shadow-sm"
+                                          >
+                                            {t("cart.changeToChoice", { count: choice })}
+                                          </button>
+                                        ))}
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <span className="text-xs font-semibold text-red-600">
+                                      {t("product.enterValidQuantity")}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+
+                              {itemBreakdown && !isDraftInvalid && (
+                                <div className="text-xs text-neutral-500 font-medium w-full mt-0.5">
+                                  {itemBreakdown}
+                                </div>
                               )}
                             </div>
                           </div>
@@ -374,9 +482,13 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
               {/* Action Buttons */}
               <div className="px-6 flex flex-col gap-4">
                 <Link
-                  href={lp('/winkelmand')}
-                  onClick={onClose}
-                  className="w-full h-[38px] bg-brand hover:bg-brand-hover active:bg-brand-active rounded-[100px] flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                  href={hasInvalidDraft ? '#' : lp('/winkelmand')}
+                  onClick={hasInvalidDraft ? (e) => e.preventDefault() : onClose}
+                  className={`w-full h-[38px] rounded-[100px] flex items-center justify-center gap-2 transition-colors ${
+                    hasInvalidDraft
+                      ? 'bg-zinc-300 cursor-not-allowed text-white'
+                      : 'bg-brand hover:bg-brand-hover active:bg-brand-active cursor-pointer text-white'
+                  }`}
                 >
                   <span className="text-center text-white text-base font-medium leading-6 whitespace-nowrap">
                     {t('cart.goToShoppingCart')}
@@ -385,6 +497,11 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                     <path d="M1 9l4-4-4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </Link>
+                {hasInvalidDraft && (
+                  <p className="text-xs text-red-600 font-semibold text-center -mt-2">
+                    {t('cart.checkEnteredQuantity')}
+                  </p>
+                )}
 
                 {/* Free shipping progress */}
                 {totalAmount < shippingThreshold ? (

@@ -1119,6 +1119,8 @@ export const MESSAGES_V4 = {
       apply: 'Apply',
       yourOverview: 'Your Overview',
       proceedToCheckout: 'Proceed to checkout',
+      changeToChoice: 'Change to {count}',
+      checkEnteredQuantity: 'Please check the entered quantity first.',
     },
     help: {
       title: 'How can we help?',
@@ -1313,6 +1315,16 @@ export const MESSAGES_V4 = {
       quantityLimitErrorSingular: 'Only quantities up to {limit} or multiples of {limit} can be added.',
       quantityLimitErrorMultiple: 'Only 1 or multiples of {limit} can be added.',
       priceExclTax: 'ex VAT',
+      chooseMultipleOf: 'Choose a multiple of {pack}:',
+      enterValidQuantity: 'Please enter a valid quantity.',
+      orderRollsButton: 'Order {count} rolls',
+      orderRollButton: 'Order {count} roll',
+      orderStacksButton: 'Order {count} stacks',
+      orderStackButton: 'Order {count} stack',
+      quantityLabelRolls: 'Number of rolls',
+      quantityLabelStacks: 'Number of stacks',
+      quantityLabelPrinters: 'Number of printers',
+      quantityLabelUnits: 'Quantity',
       fromPrice: 'From'
     },
     printer: {
@@ -3236,6 +3248,8 @@ export const MESSAGES_V4 = {
       apply: 'Toepassen',
       yourOverview: 'Jouw overzicht',
       proceedToCheckout: 'Doorgaan naar afrekenen',
+      changeToChoice: 'Wijzig naar {count}',
+      checkEnteredQuantity: 'Controleer eerst het ingevulde aantal.',
     },
     help: {
       title: 'Hoe kunnen we helpen?',
@@ -3431,6 +3445,16 @@ export const MESSAGES_V4 = {
       quantityLimitErrorSingular: 'Alleen aantallen tot {limit} of veelvouden van {limit} kunnen worden toegevoegd.',
       quantityLimitErrorMultiple: 'Alleen 1 of veelvouden van {limit} kunnen worden toegevoegd.',
       priceExclTax: 'ex BTW',
+      chooseMultipleOf: 'Kies een veelvoud van {pack}:',
+      enterValidQuantity: 'Vul een geldig aantal in.',
+      orderRollsButton: '{count} rollen bestellen',
+      orderRollButton: '{count} rol bestellen',
+      orderStacksButton: '{count} stapels bestellen',
+      orderStackButton: '{count} stapel bestellen',
+      quantityLabelRolls: 'Aantal rollen',
+      quantityLabelStacks: 'Aantal stapels',
+      quantityLabelPrinters: 'Aantal printers',
+      quantityLabelUnits: 'Aantal stuks',
       fromPrice: 'Vanaf'
     },
     printer: {
