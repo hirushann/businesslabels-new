@@ -506,6 +506,141 @@ describe('catalog filter metadata from Elasticsearch aggregations', () => {
       },
     ]);
   });
+
+  it('correctly maps simplified Material options (Papier, Kunststof) and finishes (Mat, Glanzend)', () => {
+    const filtersNl = buildCatalogFilters(
+      {
+        options_material: {
+          facet: {
+            buckets: {
+              Papier: { doc_count: 233 },
+              Kunststof: { doc_count: 94 },
+            },
+          },
+        },
+        options_finishing: {
+          facet: {
+            buckets: {
+              Mat: { doc_count: 248 },
+              Glanzend: { doc_count: 79 },
+            },
+          },
+        },
+      },
+      catalogParams({ locale: 'nl' }),
+    );
+
+    expect(filtersNl.options).toEqual([
+      {
+        key: 'material',
+        title: 'Material Type',
+        options: [
+          { value: 'Papier', label: 'Papier', count: 233 },
+          { value: 'Kunststof', label: 'Kunststof', count: 94 },
+        ],
+      },
+      {
+        key: 'finishing',
+        title: 'Finishing',
+        options: [
+          { value: 'Mat', label: 'Mat', count: 248 },
+          { value: 'Glanzend', label: 'Glanzend', count: 79 },
+        ],
+      },
+    ]);
+
+    const filtersEn = buildCatalogFilters(
+      {
+        options_material: {
+          facet: {
+            buckets: {
+              Papier: { doc_count: 233 },
+              Kunststof: { doc_count: 94 },
+            },
+          },
+        },
+        options_finishing: {
+          facet: {
+            buckets: {
+              Mat: { doc_count: 248 },
+              Glanzend: { doc_count: 79 },
+            },
+          },
+        },
+      },
+      catalogParams({ locale: 'en' }),
+    );
+
+    expect(filtersEn.options).toEqual([
+      {
+        key: 'material',
+        title: 'Material Type',
+        options: [
+          { value: 'Papier', label: 'Paper', count: 233 },
+          { value: 'Kunststof', label: 'Synthetic', count: 94 },
+        ],
+      },
+      {
+        key: 'finishing',
+        title: 'Finishing',
+        options: [
+          { value: 'Mat', label: 'Matte', count: 248 },
+          { value: 'Glanzend', label: 'Glossy', count: 79 },
+        ],
+      },
+    ]);
+  });
+});
+
+describe('mapped filter clauses for Material and Finishing', () => {
+  it('builds material query clause matching both code and description for Papier', async () => {
+    const { buildMaterialFilterClause } = await import('./catalogFilterMapping');
+    const clause = buildMaterialFilterClause(['Papier']);
+    expect(clause).toBeDefined();
+    expect(clause?.bool?.should).toBeDefined();
+
+    const serialized = JSON.stringify(clause);
+    expect(serialized).toContain('catalog_material_code.keyword');
+    expect(serialized).toContain('catalog_material.keyword');
+    expect(serialized).toContain('Papier');
+    expect(serialized).toContain('1000D');
+  });
+
+  it('builds material query clause matching codes and descriptions for Kunststof', async () => {
+    const { buildMaterialFilterClause } = await import('./catalogFilterMapping');
+    const clause = buildMaterialFilterClause(['Kunststof']);
+    expect(clause).toBeDefined();
+    expect(clause?.bool?.should).toBeDefined();
+
+    const serialized = JSON.stringify(clause);
+    expect(serialized).toContain('PP (polypropylene)');
+    expect(serialized).toContain('PE (polyethylene)');
+    expect(serialized).toContain('3000T-PP');
+  });
+
+  it('builds finishing query clause matching both codes and nested properties.afwerking for Mat', async () => {
+    const { buildFinishingFilterClause } = await import('./catalogFilterMapping');
+    const clause = buildFinishingFilterClause(['Mat']);
+    expect(clause).toBeDefined();
+    expect(clause?.bool?.should).toBeDefined();
+
+    const serialized = JSON.stringify(clause);
+    expect(serialized).toContain('properties.afwerking.keyword');
+    expect(serialized).toContain('Top coated');
+    expect(serialized).toContain('ECO coated');
+  });
+
+  it('builds finishing query clause matching both codes and nested properties.afwerking for Glanzend', async () => {
+    const { buildFinishingFilterClause } = await import('./catalogFilterMapping');
+    const clause = buildFinishingFilterClause(['Glanzend']);
+    expect(clause).toBeDefined();
+    expect(clause?.bool?.should).toBeDefined();
+
+    const serialized = JSON.stringify(clause);
+    expect(serialized).toContain('properties.afwerking.keyword');
+    expect(serialized).toContain('Glanzend');
+    expect(serialized).toContain('Transparant');
+  });
 });
 
 function catalogParams(overrides: Partial<CatalogSearchParams>): CatalogSearchParams {
