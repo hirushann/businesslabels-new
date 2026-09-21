@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyRecaptcha } from '@/lib/utils/verifyRecaptcha';
 
 type PrintSamplePayload = {
   first_name: string;
@@ -18,6 +19,7 @@ type PrintSamplePayload = {
   application?: string;
   comments?: string;
   locale?: string;
+  recaptcha_token?: string;
 };
 
 function backendUrl(baseUrl: string, path: string) {
@@ -76,11 +78,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const recaptchaToken = typeof body.recaptcha_token === 'string' ? body.recaptcha_token : '';
+    // No expected action enforced — this route serves both print_sample_form (PrintSampleClient)
+    // and support_samples_form (SupportSamplesClient)
+    const recaptchaResult = await verifyRecaptcha(recaptchaToken);
+    if (!recaptchaResult.success) {
+      return NextResponse.json(
+        { message: 'reCAPTCHA verification failed. Please try again.' },
+        { status: 403 }
+      );
+    }
+
     // Forward logic
     let fetchOptions: RequestInit;
 
     if (isFormData && reqFormData) {
       reqFormData.set('locale', body.locale === 'nl' ? 'nl' : 'en');
+      // Strip token from FormData — already verified above
+      reqFormData.delete('recaptcha_token');
       fetchOptions = {
         method: 'POST',
         headers: {
@@ -98,6 +113,7 @@ export async function POST(request: NextRequest) {
         },
         body: JSON.stringify({
           ...body,
+          recaptcha_token: undefined, // already verified above
           locale: body.locale === 'nl' ? 'nl' : 'en',
         }),
       };

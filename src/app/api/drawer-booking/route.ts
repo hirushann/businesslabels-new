@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyRecaptcha } from '@/lib/utils/verifyRecaptcha';
 
 type DrawerBookingPayload = {
   country?: unknown;
@@ -48,6 +49,14 @@ export async function POST(request: NextRequest) {
     const locale = body.locale === 'nl' ? 'nl' : 'en';
     const recaptchaToken = typeof body.recaptcha_token === 'string' ? body.recaptcha_token : '';
 
+    const recaptchaResult = await verifyRecaptcha(recaptchaToken, 'drawer_booking');
+    if (!recaptchaResult.success) {
+      return NextResponse.json(
+        { message: 'reCAPTCHA verification failed. Please try again.' },
+        { status: 403 }
+      );
+    }
+
     if (!phoneNumber) {
       return NextResponse.json(
         {
@@ -73,7 +82,7 @@ export async function POST(request: NextRequest) {
         locale,
         phone_number: phoneNumber,
         full_phone_number: body.full_phone_number || phoneNumber,
-        recaptcha_token: recaptchaToken,
+        // recaptcha_token intentionally omitted — already verified above
       }),
     });
 

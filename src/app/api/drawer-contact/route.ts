@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyRecaptcha } from '@/lib/utils/verifyRecaptcha';
 
 type DrawerContactPayload = {
   email?: unknown;
@@ -46,6 +47,14 @@ export async function POST(request: NextRequest) {
     const message = typeof body.message === 'string' ? body.message.trim() : '';
     const recaptchaToken = typeof body.recaptcha_token === 'string' ? body.recaptcha_token : '';
 
+    const recaptchaResult = await verifyRecaptcha(recaptchaToken, 'drawer_contact');
+    if (!recaptchaResult.success) {
+      return NextResponse.json(
+        { message: 'reCAPTCHA verification failed. Please try again.' },
+        { status: 403 }
+      );
+    }
+
     if (!email || !message) {
       return NextResponse.json(
         {
@@ -69,7 +78,7 @@ export async function POST(request: NextRequest) {
         email,
         locale,
         message,
-        recaptcha_token: recaptchaToken,
+        // recaptcha_token intentionally omitted — already verified above
       }),
     });
 

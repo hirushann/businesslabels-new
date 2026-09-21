@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyRecaptcha } from '@/lib/utils/verifyRecaptcha';
 
 type ContactPayload = {
   name: string;
@@ -8,6 +9,7 @@ type ContactPayload = {
   subject?: string;
   message: string;
   locale?: string;
+  recaptcha_token?: string;
 };
 
 function backendUrl(baseUrl: string, path: string) {
@@ -44,6 +46,15 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = (await request.json()) as ContactPayload;
+    const recaptchaToken = typeof body.recaptcha_token === 'string' ? body.recaptcha_token : '';
+
+    const recaptchaResult = await verifyRecaptcha(recaptchaToken, 'contact_form');
+    if (!recaptchaResult.success) {
+      return NextResponse.json(
+        { message: 'reCAPTCHA verification failed. Please try again.' },
+        { status: 403 }
+      );
+    }
 
     if (!body.name || !body.email || !body.message) {
       return NextResponse.json(
@@ -67,6 +78,7 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         ...body,
+        recaptcha_token: undefined, // already verified above
         locale: body.locale === 'nl' ? 'nl' : 'en',
       }),
     });
