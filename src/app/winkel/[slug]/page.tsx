@@ -29,6 +29,7 @@ import ProductDescriptionAccordion from "@/components/ProductDescriptionAccordio
 import { htmlToText, sanitizeCmsHtml } from "@/lib/utils";
 import { buildProductSchema, buildBreadcrumbSchema } from "@/lib/seo/structuredData";
 import { getRobotsMetadata } from "@/lib/seo/indexing";
+import { getBackendHeaders } from "@/lib/api/backendHeaders";
 
 export async function generateMetadata({
   params,
@@ -833,9 +834,7 @@ async function fetchProductByType(baseUrl: string, type: "simple" | "variable", 
   try {
     const response = await fetch(withLocaleParam(`${baseUrl}/api/products/${type}/slug/${encodeURIComponent(slug)}`, locale), {
       cache: "no-store",
-      headers: {
-        Accept: "application/json",
-      },
+      headers: getBackendHeaders(),
     });
 
     if (!response.ok) {
@@ -854,9 +853,7 @@ async function fetchGroupProductBySlug(baseUrl: string, slug: string, locale: "e
   try {
     const response = await fetch(withLocaleParam(`${baseUrl}/api/group-products/slug/${encodeURIComponent(slug)}`, locale), {
       cache: "no-store",
-      headers: {
-        Accept: "application/json",
-      },
+      headers: getBackendHeaders(),
     });
 
     if (!response.ok) {
@@ -988,7 +985,7 @@ async function fetchRelatedProductSections(
     );
     const response = await fetch(url, {
       cache: "no-store",
-      headers: { Accept: "application/json" },
+      headers: getBackendHeaders(),
     });
 
     if (!response.ok) {

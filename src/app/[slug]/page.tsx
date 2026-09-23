@@ -6,6 +6,7 @@ import { unescapeHtml, htmlToText } from "@/lib/utils";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
+import { getBackendHeaders } from "@/lib/api/backendHeaders";
 
 /** Strip empty/whitespace-only <p> tags and HTML comments injected by the Quill WYSIWYG editor. */
 function cleanCmsContent(html: string): string {
@@ -56,6 +57,7 @@ async function getPage(slug: string, locale: string): Promise<PageData | null> {
 
     const res = await fetch(url, {
       next: { revalidate: 60 },
+      headers: getBackendHeaders(),
     });
 
     if (!res.ok) {

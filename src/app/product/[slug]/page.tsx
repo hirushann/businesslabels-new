@@ -29,6 +29,7 @@ import ProductDescriptionAccordion from "@/components/ProductDescriptionAccordio
 import { htmlToText, sanitizeCmsHtml } from "@/lib/utils";
 import { buildProductSchema, buildBreadcrumbSchema } from "@/lib/seo/structuredData";
 import { getRobotsMetadata } from "@/lib/seo/indexing";
+import { getBackendHeaders } from "@/lib/api/backendHeaders";
 
 export async function generateMetadata({
   params,
@@ -830,17 +831,13 @@ async function fetchProductByType(baseUrl: string, type: "simple" | "variable", 
   try {
     let response = await fetch(withLocaleParam(`${baseUrl}/api/products/${type}/slug/${encodeURIComponent(slug)}`, locale), {
       cache: "no-store",
-      headers: {
-        Accept: "application/json",
-      },
+      headers: getBackendHeaders(),
     });
 
     if (!response.ok && slug !== slug.toLowerCase()) {
       response = await fetch(withLocaleParam(`${baseUrl}/api/products/${type}/slug/${encodeURIComponent(slug.toLowerCase())}`, locale), {
         cache: "no-store",
-        headers: {
-          Accept: "application/json",
-        },
+        headers: getBackendHeaders(),
       });
     }
 
@@ -860,17 +857,13 @@ async function fetchGroupProductBySlug(baseUrl: string, slug: string, locale: "e
   try {
     let response = await fetch(withLocaleParam(`${baseUrl}/api/group-products/slug/${encodeURIComponent(slug)}`, locale), {
       cache: "no-store",
-      headers: {
-        Accept: "application/json",
-      },
+      headers: getBackendHeaders(),
     });
 
     if (!response.ok && slug !== slug.toLowerCase()) {
       response = await fetch(withLocaleParam(`${baseUrl}/api/group-products/slug/${encodeURIComponent(slug.toLowerCase())}`, locale), {
         cache: "no-store",
-        headers: {
-          Accept: "application/json",
-        },
+        headers: getBackendHeaders(),
       });
     }
 
@@ -1016,7 +1009,7 @@ async function fetchRelatedProductSections(
     );
     const response = await fetch(url, {
       cache: "no-store",
-      headers: { Accept: "application/json" },
+      headers: getBackendHeaders(),
     });
 
     if (!response.ok) {

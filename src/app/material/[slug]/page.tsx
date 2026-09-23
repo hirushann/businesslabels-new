@@ -19,6 +19,7 @@ import type { CatalogSearchResponse } from "@/lib/search/types";
 import { htmlToText } from "@/lib/utils";
 import { materialHeading, resolveMaterialImage } from "@/lib/materials/presentation";
 import { categoryPublicPathFromSlug } from "@/lib/categories/tree";
+import { getBackendHeaders } from "@/lib/api/backendHeaders";
 
 type MaterialProduct = {
   id: number;
@@ -246,7 +247,7 @@ async function getMaterial(slug: string): Promise<Material | null> {
     const locale = await getServerLocale();
     let response = await fetch(
       withLocaleParam(`${baseUrl}/api/materials/slug/${slug}`, locale),
-      { cache: "no-store" },
+      { cache: "no-store", headers: getBackendHeaders() },
     );
     if (!response.ok) {
       const decoded = decodeURIComponent(slug).toLowerCase().trim();
@@ -254,7 +255,7 @@ async function getMaterial(slug: string): Promise<Material | null> {
       if (normalizedSlug !== slug) {
         response = await fetch(
           withLocaleParam(`${baseUrl}/api/materials/slug/${normalizedSlug}`, locale),
-          { cache: "no-store" },
+          { cache: "no-store", headers: getBackendHeaders() },
         );
       }
     }
