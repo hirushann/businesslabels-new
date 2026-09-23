@@ -100,6 +100,7 @@ type ProductPurchaseProps = {
   } | null;
   componentCount?: number | null;
   isLabelProduct?: boolean | null;
+  isPrinter?: boolean | null;
   properties?: unknown;
 };
 
@@ -209,6 +210,7 @@ export default function ProductPurchase({
   warranty,
   componentCount,
   isLabelProduct,
+  isPrinter: isPrinterProp,
   properties,
 }: ProductPurchaseProps) {
   const { addItem, openCart, isCartOpen } = useCart();
@@ -243,23 +245,35 @@ export default function ProductPurchase({
     return null;
   }, [properties]);
 
-  const isFanFold = typeof kernValue === "string" && kernValue.toLowerCase() === "fan-fold";
+  const isPrinter = Boolean(
+    isPrinterProp ?? (
+      (typeof name === "string" && name.toLowerCase().includes("printer")) ||
+      (typeof subtitle === "string" && subtitle.toLowerCase().includes("printer"))
+    )
+  );
+
+  const isLabel = Boolean(isLabelProduct) && !isPrinter;
+  const isFanFold = isLabel && typeof kernValue === "string" && kernValue.toLowerCase() === "fan-fold";
   const rollsStackLabel = useMemo(() => {
     if (!kernValue) {
       return t("product.rollsStack");
     }
     return isFanFold ? t("product.stack") : t("product.rolls");
   }, [kernValue, isFanFold, t]);
-  const normalizedPackingGroup = packingGroup ? Number.parseInt(packingGroup, 10) : null;
+  const normalizedPackingGroup =
+    isLabel && packingGroup ? Number.parseInt(String(packingGroup), 10) : null;
   const hasPackingGroup =
+    isLabel &&
     typeof normalizedPackingGroup === "number" &&
     Number.isFinite(normalizedPackingGroup) &&
     normalizedPackingGroup > 0;
   const normalizedMoq = typeof moq === "number" && Number.isFinite(moq) && moq > 0 ? moq : null;
   // If MOQ is explicitly 1, it implies we can order singulars up to the packing group
-  const effectiveAllowSingulars = Boolean(allowSingulars || normalizedMoq === 1);
-  const isStrictPackaging = Boolean(hasPackingGroup && normalizedPackingGroup && !effectiveAllowSingulars);
-  const minOrderQuantity = normalizedMoq ?? (isStrictPackaging && normalizedPackingGroup ? normalizedPackingGroup : 1);
+  const effectiveAllowSingulars = Boolean(isLabel && (allowSingulars || normalizedMoq === 1));
+  const isStrictPackaging = Boolean(isLabel && hasPackingGroup && normalizedPackingGroup && !effectiveAllowSingulars);
+  const minOrderQuantity = isLabel
+    ? (normalizedMoq ?? (isStrictPackaging && normalizedPackingGroup ? normalizedPackingGroup : 1))
+    : (normalizedMoq ?? 1);
   const initialQuantity = minOrderQuantity;
   const [quantity, setQuantity] = useState(initialQuantity);
   const [quantityError, setQuantityError] = useState<string | null>(null);
@@ -268,15 +282,19 @@ export default function ProductPurchase({
   const [isWarrantyPopoverOpen, setIsWarrantyPopoverOpen] = useState(false);
 
   const packagingValidation = useMemo(() => {
+    if (!isLabel) {
+      return { isValid: true, choices: [] };
+    }
     return getPackagingValidation({
       quantity,
       pack: normalizedPackingGroup,
       allowSingulars: Boolean(effectiveAllowSingulars),
       moq: normalizedMoq,
     });
-  }, [quantity, normalizedPackingGroup, allowSingulars, normalizedMoq]);
+  }, [isLabel, quantity, normalizedPackingGroup, effectiveAllowSingulars, normalizedMoq]);
 
   const packagingBreakdown = useMemo(() => {
+    if (!isLabel) return null;
     return formatPackagingBreakdown({
       quantity,
       pack: normalizedPackingGroup,
@@ -284,10 +302,10 @@ export default function ProductPurchase({
       locale,
       isStack: isFanFold,
     });
-  }, [quantity, normalizedPackingGroup, allowSingulars, locale, isFanFold]);
+  }, [isLabel, quantity, normalizedPackingGroup, effectiveAllowSingulars, locale, isFanFold]);
 
   const mainOrderButtonText = useMemo(() => {
-    if (!isLabelProduct && !hasPackingGroup) {
+    if (!isLabel) {
       return t("product.addToCart");
     }
     const targetQty = quantity > 0 ? quantity : initialQuantity;
@@ -299,27 +317,32 @@ export default function ProductPurchase({
     return targetQty === 1
       ? t("product.orderRollButton", { count: targetQty })
       : t("product.orderRollsButton", { count: targetQty });
-  }, [isLabelProduct, hasPackingGroup, quantity, initialQuantity, isFanFold, t]);
-
-  const isPrinter = !isLabelProduct && !hasPackingGroup;
+  }, [isLabel, quantity, initialQuantity, isFanFold, t]);
 
   const quantityLabel = useMemo(() => {
-    if (isPrinter) return t("product.quantityLabelPrinters");
-    if (isFanFold) return t("product.quantityLabelStacks");
-    if (isLabelProduct || hasPackingGroup) return t("product.quantityLabelRolls");
-    return t("product.quantityLabelUnits");
-  }, [isPrinter, isFanFold, isLabelProduct, hasPackingGroup, t]);
+    if (isLabel) {
+      return isFanFold ? t("product.quantityLabelStacks") : t("product.quantityLabelRolls");
+    }
+    return t("product.quantity");
+  }, [isLabel, isFanFold, t]);
 
   const packagingHint = useMemo(() => {
+    if (!isLabel) return null;
     return getPackagingHint({
       pack: normalizedPackingGroup,
       allowSingulars: Boolean(effectiveAllowSingulars),
       locale,
       isStack: isFanFold,
     });
-  }, [normalizedPackingGroup, allowSingulars, locale, isFanFold]);
+  }, [isLabel, normalizedPackingGroup, effectiveAllowSingulars, locale, isFanFold]);
 
-  const showSingularAddToCartBtn = normalizedMoq !== null && normalizedPackingGroup !== null && normalizedMoq < normalizedPackingGroup && quantity < normalizedPackingGroup;
+  const showSingularAddToCartBtn = Boolean(
+    isLabel &&
+    normalizedMoq !== null &&
+    normalizedPackingGroup !== null &&
+    normalizedMoq < normalizedPackingGroup &&
+    quantity < normalizedPackingGroup
+  );
   const warrantyDialogHandledRef = useRef(false);
   const [pendingQuantity, setPendingQuantity] = useState<number | null>(null);
   const [shareUrl, setShareUrl] = useState("");
@@ -384,6 +407,10 @@ export default function ProductPurchase({
 
   const increment = () => {
     setQuantityError(null);
+    if (!isLabel) {
+      setQuantity((prev) => prev + 1);
+      return;
+    }
     setQuantity((prev) =>
       getNextQuantity({
         current: prev,
@@ -396,6 +423,10 @@ export default function ProductPurchase({
 
   const decrement = () => {
     setQuantityError(null);
+    if (!isLabel) {
+      setQuantity((prev) => Math.max(minOrderQuantity, prev - 1));
+      return;
+    }
     setQuantity((prev) =>
       getPreviousQuantity({
         current: prev,
@@ -589,6 +620,14 @@ export default function ProductPurchase({
     const qtyToAdd = customQuantity ?? quantity;
     const normalizedQuantity = Number.isFinite(qtyToAdd) ? Math.floor(qtyToAdd) : 0;
 
+    if (!isLabel) {
+      if (normalizedQuantity < minOrderQuantity) {
+        setQuantityError(t("product.enterValidQuantity"));
+        return null;
+      }
+      return normalizedQuantity;
+    }
+
     const validation = getPackagingValidation({
       quantity: normalizedQuantity,
       pack: normalizedPackingGroup,
@@ -622,10 +661,10 @@ export default function ProductPurchase({
         discounts: discounts,
         mainImage,
         componentCount,
-        packingGroup: normalizedPackingGroup,
+        packingGroup: isLabel ? normalizedPackingGroup : null,
         allowSingulars: Boolean(effectiveAllowSingulars),
         moq: normalizedMoq,
-        isLabelProduct: Boolean(isLabelProduct),
+        isLabelProduct: isLabel,
       },
       qtyToAdd,
     );
@@ -988,11 +1027,6 @@ export default function ProductPurchase({
                       </svg>
                       <span className="text-white text-base font-bold text-center leading-tight">{mainOrderButtonText}</span>
                     </button>
-                    {packagingBreakdown && (
-                      <div className="text-center sm:text-left text-xs text-neutral-500 font-medium px-1">
-                        {packagingBreakdown}
-                      </div>
-                    )}
                   </>
                 ) : packagingValidation.choices.length > 0 ? (
                   <div className="flex flex-col gap-2 w-full">
@@ -1047,7 +1081,13 @@ export default function ProductPurchase({
             {packagingValidation.isValid && quantity > 0 && hasPrice && (
               <div className="flex justify-between items-center pt-3 mt-1 border-t border-slate-100 text-xs text-neutral-600">
                 <span className="truncate pr-2 font-medium">
-                  {packagingBreakdown || `${quantity} ${quantity === 1 ? (isFanFold ? t('product.stack') : isPrinter ? 'printer' : t('product.roll')) : (isFanFold ? t('product.stacks') : isPrinter ? 'printers' : t('product.rolls'))}`}
+                  {isLabel
+                    ? (packagingBreakdown || `${quantity} ${
+                        quantity === 1
+                          ? isFanFold ? t('product.stack') : t('product.roll')
+                          : isFanFold ? t('product.stacks') : t('product.rolls')
+                      }`)
+                    : t("common.total")}
                 </span>
                 <strong className="text-sm font-bold text-neutral-900 shrink-0">
                   {formatEuro(quantity * (activeUnitPrice ?? price ?? 0))}

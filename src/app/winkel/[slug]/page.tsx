@@ -668,7 +668,22 @@ function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t:
     },
   ];
 
-  const isLabelProduct = product?.is_label_product === true || product?.meta?.is_label_product === true;
+  const isPrinterCategory = Boolean(
+    product?.printer_finder_id != null ||
+    product?.categories?.some((c: any) =>
+      c.slug === "labelprinters" ||
+      c.slug?.includes("printer") ||
+      (typeof c.name === "string" && c.name.toLowerCase().includes("printer"))
+    ) ||
+    (typeof product?.name === "string" && product.name.toLowerCase().includes("printer")) ||
+    (typeof product?.subtitle === "string" && product.subtitle.toLowerCase().includes("printer"))
+  );
+  const isLabelProduct = !isPrinterCategory && Boolean(
+    product?.is_label_product === true ||
+    product?.meta?.is_label_product === true ||
+    normalizeBoolean(product?.is_label_product) ||
+    normalizeBoolean(product?.meta?.is_label_product)
+  );
   if (isLabelProduct && product?.labels_per_roll) {
     specRows.push({
       label: getSpecLabel("labels_per_roll", locale, t),
@@ -1132,7 +1147,7 @@ export default async function SingleProductPage({
   // A product linked to a product finder entry (via Printer URL) is a printer:
   // show its compatible consumables instead of generic up-sells.
   const printerFinderId = product.printer_finder_id ?? null;
-  const isPrinterProduct = printerFinderId != null;
+  const isPrinterProduct = isPrinterCategory;
   const relatedProductSections = baseUrl
     ? await fetchRelatedProductSections(baseUrl, product, productRouteType(product, selectedType), locale)
     : [];
@@ -1358,8 +1373,8 @@ export default async function SingleProductPage({
               price={price}
               originalPrice={product?.original_price}
               mainImage={product?.main_image}
-              packingGroup={normalizePackingGroup(product?.packing_group)}
-              allowSingulars={normalizeBoolean(product?.allow_singulars)}
+              packingGroup={isLabelProduct ? normalizePackingGroup(product?.packing_group) : null}
+              allowSingulars={isLabelProduct ? normalizeBoolean(product?.allow_singulars) : false}
               moq={normalizeNumber(product?.moq)}
               stock={product?.stock}
               deliveryDatesInStock={product?.delivery_dates_in_stock}
@@ -1367,7 +1382,8 @@ export default async function SingleProductPage({
               discounts={product?.discounts}
               warranty={product?.warranty}
               componentCount={product?.component_products?.length || null}
-              isLabelProduct={product?.is_label_product == true || product?.meta?.is_label_product === true}
+              isLabelProduct={isLabelProduct}
+              isPrinter={isPrinterProduct}
               properties={product?.properties}
             />
 

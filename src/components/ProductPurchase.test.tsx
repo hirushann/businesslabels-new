@@ -34,8 +34,10 @@ vi.mock("next-intl", () => ({
   useTranslations: () => {
     const messages: Record<string, string> = {
       "product.rollsStack": "Rollen",
-      "product.rolls": "Rollen",
-      "product.stack": "Stapel",
+      "product.rolls": "rollen",
+      "product.roll": "rol",
+      "product.stack": "stapel",
+      "product.stacks": "stapels",
       "product.addToCart": "In winkelwagen",
       "product.unnamedProduct": "Product",
       "product.inStock": "Op voorraad",
@@ -46,6 +48,11 @@ vi.mock("next-intl", () => ({
       "product.orderRollButton": "{count} rol bestellen",
       "product.orderStacksButton": "{count} stapels bestellen",
       "product.orderStackButton": "{count} stapel bestellen",
+      "product.quantityLabelPrinters": "Aantal printers",
+      "product.quantityLabelRolls": "Aantal rollen",
+      "product.quantityLabelStacks": "Aantal stapels",
+      "product.quantityLabelUnits": "Aantal stuks",
+      "product.quantity": "Aantal",
       "common.total": "Totaal",
       "product.exVat": "excl. btw",
     };
@@ -90,6 +97,12 @@ describe("ProductPurchase packaging & quantity component tests", () => {
     const input = screen.getAllByRole("spinbutton")[0] as HTMLInputElement;
     expect(input.value).toBe("1");
 
+    // Quantity label is standard "Aantal"
+    expect(screen.getByText("Aantal")).toBeDefined();
+
+    // Live total displays "Totaal"
+    expect(screen.getAllByText("Totaal")).toHaveLength(2);
+
     const plusBtn = screen.getAllByLabelText("Increase quantity")[0];
     fireEvent.click(plusBtn);
     expect(input.value).toBe("2");
@@ -99,7 +112,7 @@ describe("ProductPurchase packaging & quantity component tests", () => {
 
     fireEvent.click(cartBtn);
     expect(mockAddItem).toHaveBeenCalledWith(
-      expect.objectContaining({ name: "Desktop Labelprinter", price: 249 }),
+      expect.objectContaining({ name: "Desktop Labelprinter", price: 249, isLabelProduct: false }),
       2
     );
     expect(mockOpenCart).toHaveBeenCalled();
@@ -174,19 +187,19 @@ describe("ProductPurchase packaging & quantity component tests", () => {
     const order14Btn = screen.getAllByText("14 rollen bestellen")[0];
     expect(order14Btn).toBeDefined();
 
-    // Breakdown label displayed
-    expect(screen.getAllByText("14 rollen · 2 verpakkingen + 2 losse rollen")[0]).toBeDefined();
+    // Breakdown label displayed once on desktop (2 total in DOM including mobile sticky bar)
+    expect(screen.getAllByText("14 rollen · 2 verpakkingen + 2 losse rollen")).toHaveLength(2);
 
     // Press + jumps to 18
     fireEvent.click(plusBtn);
     expect(input.value).toBe("18");
-    expect(screen.getAllByText("18 rollen · 3 verpakkingen")[0]).toBeDefined();
+    expect(screen.getAllByText("18 rollen · 3 verpakkingen")).toHaveLength(2);
 
     // Press - jumps to 12
     const minusBtn = screen.getAllByLabelText("Decrease quantity")[0];
     fireEvent.click(minusBtn);
     expect(input.value).toBe("12");
-    expect(screen.getAllByText("12 rollen · 2 verpakkingen")[0]).toBeDefined();
+    expect(screen.getAllByText("12 rollen · 2 verpakkingen")).toHaveLength(2);
   });
 
   it("Example 4: Zebra labels (pack 6, strict, moq 6) suggests 6 & 12 when typing 8, and 12 & 18 when typing 14", () => {
@@ -224,5 +237,64 @@ describe("ProductPurchase packaging & quantity component tests", () => {
       18
     );
     expect(mockOpenCart).toHaveBeenCalled();
+  });
+
+  it("Example 5: Standard label roll with no packaging group displays '1 rol' for qty 1 and '2 rollen' for qty 2", () => {
+    render(
+      <ProductPurchase
+        id="label-std-1"
+        name="Standard Label Roll"
+        price={10}
+        inStock={true}
+        packingGroup={null}
+        allowSingulars={false}
+        isLabelProduct={true}
+      />
+    );
+
+    // Quantity defaults to 1, should display "1 rol"
+    expect(screen.getByText("1 rol")).toBeDefined();
+
+    // Increment quantity to 2
+    const plusBtn = screen.getAllByLabelText("Increase quantity")[0];
+    fireEvent.click(plusBtn);
+
+    // Should display "2 rollen"
+    expect(screen.getByText("2 rollen")).toBeDefined();
+  });
+
+  it("Example 6: Printer with backend packing_group='1' still displays 'In winkelwagen' and 'Aantal' / 'Totaal', without packaging hints", () => {
+    render(
+      <ProductPurchase
+        id="printer-tm-c3500"
+        name="Epson ColorWorks TM-C3500"
+        price={1147}
+        inStock={true}
+        packingGroup="1"
+        allowSingulars={false}
+        isLabelProduct={false}
+        isPrinter={true}
+      />
+    );
+
+    // Button MUST be "In winkelwagen", NOT "1 rol bestellen"
+    expect(screen.getAllByText("In winkelwagen")[0]).toBeDefined();
+    expect(screen.queryByText("1 rol bestellen")).toBeNull();
+
+    // Live total MUST show "Totaal", NOT "1 rol"
+    expect(screen.getAllByText("Totaal")).toHaveLength(2);
+    expect(screen.queryByText("1 rol")).toBeNull();
+
+    // No packaging hint ("Per verpakking van...")
+    expect(screen.queryByText(/verpakking/i)).toBeNull();
+
+    // Quantity label should be "Aantal"
+    expect(screen.getByText("Aantal")).toBeDefined();
+
+    // Stepping up to 2
+    const plusBtn = screen.getAllByLabelText("Increase quantity")[0];
+    fireEvent.click(plusBtn);
+    const input = screen.getAllByRole("spinbutton")[0] as HTMLInputElement;
+    expect(input.value).toBe("2");
   });
 });
