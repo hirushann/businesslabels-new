@@ -668,17 +668,7 @@ function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t:
     },
   ];
 
-  const isPrinterCategory = Boolean(
-    product?.printer_finder_id != null ||
-    product?.categories?.some((c: any) =>
-      c.slug === "labelprinters" ||
-      c.slug?.includes("printer") ||
-      (typeof c.name === "string" && c.name.toLowerCase().includes("printer"))
-    ) ||
-    (typeof product?.name === "string" && product.name.toLowerCase().includes("printer")) ||
-    (typeof product?.subtitle === "string" && product.subtitle.toLowerCase().includes("printer"))
-  );
-  const isLabelProduct = !isPrinterCategory && Boolean(
+  const isLabelProduct = Boolean(
     product?.is_label_product === true ||
     product?.meta?.is_label_product === true ||
     normalizeBoolean(product?.is_label_product) ||
@@ -1147,16 +1137,7 @@ export default async function SingleProductPage({
   // A product linked to a product finder entry (via Printer URL) is a printer:
   // show its compatible consumables instead of generic up-sells.
   const printerFinderId = product.printer_finder_id ?? null;
-  const isPrinterProduct = Boolean(
-    printerFinderId != null ||
-    product?.categories?.some((c: any) =>
-      c.slug === "labelprinters" ||
-      c.slug?.includes("printer") ||
-      (typeof c.name === "string" && c.name.toLowerCase().includes("printer"))
-    ) ||
-    (typeof product?.name === "string" && product.name.toLowerCase().includes("printer")) ||
-    (typeof product?.subtitle === "string" && product.subtitle.toLowerCase().includes("printer"))
-  );
+  const isPrinterProduct = printerFinderId != null;
   const isLabelProduct = !isPrinterProduct && Boolean(
     product?.is_label_product === true ||
     product?.meta?.is_label_product === true ||

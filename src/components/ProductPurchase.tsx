@@ -245,14 +245,7 @@ export default function ProductPurchase({
     return null;
   }, [properties]);
 
-  const isPrinter = Boolean(
-    isPrinterProp ?? (
-      (typeof name === "string" && name.toLowerCase().includes("printer")) ||
-      (typeof subtitle === "string" && subtitle.toLowerCase().includes("printer"))
-    )
-  );
-
-  const isLabel = Boolean(isLabelProduct) && !isPrinter;
+  const isLabel = Boolean(isLabelProduct) && !isPrinterProp;
   const isFanFold = isLabel && typeof kernValue === "string" && kernValue.toLowerCase() === "fan-fold";
   const rollsStackLabel = useMemo(() => {
     if (!kernValue) {

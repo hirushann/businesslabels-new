@@ -436,19 +436,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
     return isFanFold ? t("product.stack") : t("product.rolls");
   }, [kernValue, t]);
 
-  const isPrinter = Boolean(
-    product.categories?.some((c) => {
-      const slug = c.slug_nl || c.slug_en || (typeof c.slug === "string" ? c.slug : null);
-      const name = c.name_nl || c.name_en || (typeof c.name === "string" ? c.name : null);
-      return (
-        (typeof slug === "string" && (slug === "labelprinters" || slug.includes("printer"))) ||
-        (typeof name === "string" && name.toLowerCase().includes("printer"))
-      );
-    }) ||
-    (typeof product.name === "string" && product.name.toLowerCase().includes("printer")) ||
-    (typeof product.subtitle === "string" && product.subtitle.toLowerCase().includes("printer"))
-  );
-  const isLabelProduct = !isPrinter && Boolean(product.is_label_product ?? product.is_label ?? false);
+  const isLabelProduct = Boolean(product.is_label_product ?? product.is_label ?? false);
   const normalizedPackingGroup = isLabelProduct ? normalizePositiveInteger(product.packing_group) : null;
   const normalizedMoq = normalizePositiveInteger(product.moq);
   // If MOQ is explicitly 1, it implies we can order singulars up to the packing group

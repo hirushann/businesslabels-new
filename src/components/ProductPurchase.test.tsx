@@ -297,4 +297,39 @@ describe("ProductPurchase packaging & quantity component tests", () => {
     const input = screen.getAllByRole("spinbutton")[0] as HTMLInputElement;
     expect(input.value).toBe("2");
   });
+
+  it("Example 7: Label product with 'printer' in its name still strictly enforces packaging rules", () => {
+    render(
+      <ProductPurchase
+        id="label-printer-media"
+        name="Thermisch Directe printer rollen"
+        price={11.14}
+        inStock={true}
+        packingGroup={12}
+        allowSingulars={false}
+        isLabelProduct={true}
+      />
+    );
+
+    const input = screen.getAllByRole("spinbutton")[0] as HTMLInputElement;
+    expect(input.value).toBe("12");
+
+    // Stepper label is "Aantal rollen"
+    expect(screen.getByText("Aantal rollen")).toBeDefined();
+
+    // Order button is "12 rollen bestellen"
+    expect(screen.getAllByText("12 rollen bestellen")[0]).toBeDefined();
+
+    // Packaging hint shows 12 rollen
+    expect(screen.getByText("Per verpakking van 12 rollen")).toBeDefined();
+
+    // Live total shows breakdown
+    expect(screen.getAllByText("12 rollen · 1 verpakking")).toHaveLength(2);
+
+    // Stepping up jumps to 24
+    const plusBtn = screen.getAllByLabelText("Increase quantity")[0];
+    fireEvent.click(plusBtn);
+    expect(input.value).toBe("24");
+    expect(screen.getAllByText("24 rollen bestellen")[0]).toBeDefined();
+  });
 });
