@@ -168,7 +168,13 @@ export default async function RootLayout({ children }) {
                   })(window,document,'script','dataLayer','${gtmId}');
                 }
                 var p = window.location.pathname;
-                if (p.indexOf('/bedankt') !== -1 || p.indexOf('/afrekenen') !== -1 || p.indexOf('/checkout') !== -1) {
+                var q = window.location.search;
+                // Ad-click / campaign landings must load GTM immediately: client-side
+                // navigation drops these params from the URL before a delayed GTM
+                // could store them (Conversion Linker _gcl_aw, UET msclkid, GA4 source).
+                var isAdLanding = /[?&](gclid|gbraid|wbraid|dclid|msclkid|utm_source|utm_medium|utm_campaign)=/i.test(q);
+                var isCheckoutPath = /\\/(bedankt|thank-you|afrekenen|checkout)(\\/|$)/.test(p);
+                if (isAdLanding || isCheckoutPath) {
                   loadGTM();
                 } else {
                   var events = ['scroll', 'touchstart', 'click', 'keydown', 'pointerdown'];

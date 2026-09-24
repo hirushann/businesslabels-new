@@ -8,7 +8,7 @@ import { useCart } from "@/components/CartProvider";
 import { localePath } from "@/lib/i18n/utils";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
-import { trackPurchase } from "@/lib/analytics/dataLayer";
+import { trackPurchase, type PurchaseCustomerData } from "@/lib/analytics/dataLayer";
 
 type OrderDetails = {
   id?: number | string;
@@ -129,6 +129,70 @@ function readNumberValue(source: Record<string, unknown> | null | undefined, key
   return null;
 }
 
+// Orders in these states never became a sale (e.g. Mollie payment cancelled/failed
+// and the customer was sent back here) — they must not be reported as a purchase.
+// "pending"/"open" stay tracked: Mollie's webhook can land after the redirect.
+const NON_PURCHASE_STATUSES = ["cancelled", "canceled", "failed", "expired", "refunded"];
+
+function isTrackablePurchase(order: OrderDetails): boolean {
+  const status = typeof order.status === "string" ? order.status.trim().toLowerCase() : "";
+  return !NON_PURCHASE_STATUSES.includes(status);
+}
+
+/** Customer details for Enhanced Conversions, using the same lookup order as the page display. */
+function getPurchaseCustomerData(order: OrderDetails): PurchaseCustomerData {
+  const billing = order.selected_billing_address as Record<string, unknown> | undefined;
+  const legacyBilling = order.billing_address as Record<string, unknown> | undefined;
+  const payload = order.original_checkout_payload || {};
+  const user = order.user as Record<string, unknown> | undefined;
+  const orderRecord = order as Record<string, unknown>;
+
+  return {
+    email:
+      readStringValue(billing, ["email"]) ||
+      readStringValue(orderRecord, ["billing_email", "email", "customer_email"]) ||
+      readStringValue(payload, ["billing_email", "email"]) ||
+      readStringValue(legacyBilling, ["email"]) ||
+      readStringValue(user, ["email"]),
+    phone:
+      readStringValue(billing, ["phone", "mobile", "telephone"]) ||
+      readStringValue(orderRecord, ["billing_phone", "phone", "customer_phone"]) ||
+      readStringValue(payload, ["billing_phone", "phone"]) ||
+      readStringValue(legacyBilling, ["phone"]) ||
+      readStringValue(user, ["phone", "mobile"]),
+    firstName:
+      readStringValue(billing, ["firstname", "first_name"]) ||
+      readStringValue(orderRecord, ["billing_firstname", "billing_first_name"]) ||
+      readStringValue(payload, ["billing_firstname", "billing_first_name"]) ||
+      readStringValue(legacyBilling, ["firstname"]),
+    lastName:
+      readStringValue(billing, ["lastname", "last_name"]) ||
+      readStringValue(orderRecord, ["billing_lastname", "billing_last_name"]) ||
+      readStringValue(payload, ["billing_lastname", "billing_last_name"]) ||
+      readStringValue(legacyBilling, ["lastname"]),
+    street:
+      readStringValue(billing, ["address", "address1", "address_1", "street"]) ||
+      readStringValue(legacyBilling, ["address1"]) ||
+      readStringValue(orderRecord, ["billing_address_1", "billing_address"]) ||
+      readStringValue(payload, ["billing_address_1", "billing_address"]),
+    city:
+      readStringValue(billing, ["city"]) ||
+      readStringValue(legacyBilling, ["city"]) ||
+      readStringValue(orderRecord, ["billing_city"]) ||
+      readStringValue(payload, ["billing_city"]),
+    postalCode:
+      readStringValue(billing, ["postalcode", "postcode", "postal_code", "zip"]) ||
+      readStringValue(legacyBilling, ["postcode"]) ||
+      readStringValue(orderRecord, ["billing_postcode", "billing_postalcode"]) ||
+      readStringValue(payload, ["billing_postcode", "billing_postalcode"]),
+    country:
+      readStringValue(billing, ["country", "country_code", "country_id"]) ||
+      readStringValue(legacyBilling, ["country"]) ||
+      readStringValue(orderRecord, ["billing_country_id", "billing_country"]) ||
+      readStringValue(payload, ["billing_country_id", "billing_country"]),
+  };
+}
+
 export default function ThankYouPage() {
   const searchParams = useSearchParams();
   const locale = useLocale();
@@ -154,7 +218,7 @@ export default function ThankYouPage() {
         return;
       }
       try {
-        const response = await fetch(`/api/checkout?number=${orderNumber}`);
+        const response = await fetch(`/api/checkout?number=${encodeURIComponent(orderNumber)}`);
         if (response.ok) {
           const json = await response.json();
           setOrder(json.data);
@@ -171,6 +235,7 @@ export default function ThankYouPage() {
 
   useEffect(() => {
     if (!order) return;
+    if (!isTrackablePurchase(order)) return;
 
     const txnId = String(order.number || order.id || orderNumber || "");
     if (!txnId) return;
@@ -203,6 +268,7 @@ export default function ThankYouPage() {
       shipping: typeof order.shipping_amount === "number" ? order.shipping_amount : parseFloat(String(order.shipping_amount || 0)),
       coupon: typeof order.purchase_reference === "string" ? order.purchase_reference : undefined,
       items: formattedItems,
+      customer: getPurchaseCustomerData(order),
     });
   }, [order, orderNumber]);
 
