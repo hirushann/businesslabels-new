@@ -7,6 +7,7 @@ import {
   trackViewCart,
   trackBeginCheckout,
   trackPurchase,
+  buildEnhancedConversionUserData,
 } from "./dataLayer";
 
 describe("GA4 Ecommerce DataLayer", () => {
@@ -180,5 +181,61 @@ describe("GA4 Ecommerce DataLayer", () => {
         ],
       },
     });
+  });
+
+  it("adds normalized user_data to purchase for Enhanced Conversions", () => {
+    trackPurchase({
+      transactionId: "ORD-1000",
+      totalValue: 50,
+      items: [],
+      customer: {
+        email: "  Jan@Example.NL ",
+        phone: "06 12 34 56 78",
+        firstName: "Jan",
+        lastName: "Jansen",
+        street: "Dorpsstraat 1",
+        city: "Utrecht",
+        postalCode: "1234 AB",
+        country: "nl",
+      },
+    });
+
+    expect(window.dataLayer[1].user_data).toEqual({
+      email: "jan@example.nl",
+      phone_number: "+31612345678",
+      address: {
+        first_name: "Jan",
+        last_name: "Jansen",
+        street: "Dorpsstraat 1",
+        city: "Utrecht",
+        postal_code: "1234 AB",
+        country: "NL",
+      },
+    });
+  });
+
+  it("omits user_data when no customer data is usable", () => {
+    trackPurchase({ transactionId: "ORD-1001", totalValue: 10, items: [], customer: { email: "not-an-email", country: "151" } });
+    expect(window.dataLayer[1]).not.toHaveProperty("user_data");
+  });
+});
+
+describe("buildEnhancedConversionUserData", () => {
+  it("returns null without customer data", () => {
+    expect(buildEnhancedConversionUserData(undefined)).toBeNull();
+    expect(buildEnhancedConversionUserData({})).toBeNull();
+  });
+
+  it("normalizes phone numbers to E.164 and drops ones it cannot convert", () => {
+    expect(buildEnhancedConversionUserData({ phone: "0031 6-1234-5678" })).toEqual({ phone_number: "+31612345678" });
+    expect(buildEnhancedConversionUserData({ phone: "+32 470 12 34 56", country: "BE" })).toEqual({ phone_number: "+32470123456", });
+    expect(buildEnhancedConversionUserData({ phone: "0470 12 34 56", country: "BE" })).toEqual({ phone_number: "+32470123456" });
+    expect(buildEnhancedConversionUserData({ phone: "612345678" })).toBeNull();
+    expect(buildEnhancedConversionUserData({ phone: "0612", })).toBeNull();
+  });
+
+  it("only includes the address when Google's required fields are present", () => {
+    expect(buildEnhancedConversionUserData({ email: "a@b.nl", firstName: "Jan", city: "Utrecht" })).toEqual({ email: "a@b.nl" });
+    expect(buildEnhancedConversionUserData({ firstName: "Jan", lastName: "J", postalCode: "1234AB", country: "Netherlands" })).toBeNull();
   });
 });

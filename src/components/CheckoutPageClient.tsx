@@ -3059,7 +3059,15 @@ export default function CheckoutPageClient({
         window.location.href = json.payment_url;
         return;
       }
-      
+
+      // Orders without an online payment step (e.g. bank transfer / invoice) go to the
+      // thank-you page too, so the purchase conversion fires the same way as for Mollie.
+      const createdOrderNumber = json.data?.number ? String(json.data.number) : "";
+      if (!isDemoMode && createdOrderNumber) {
+        window.location.href = localePath(`/bedankt?order_number=${encodeURIComponent(createdOrderNumber)}`, locale);
+        return;
+      }
+
       setOrderNumber(json.data?.number || null);
       setIsSubmitted(true);
       toast.success(t('checkout.orderSuccess'));
