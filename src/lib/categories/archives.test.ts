@@ -45,6 +45,35 @@ describe("resolveCategoryArchive", () => {
     await expect(resolveCategoryArchive("nl", "missing/archive")).resolves.toBeNull();
   });
 
+  it("handles 401 or backend errors gracefully without throwing", async () => {
+    process.env.BBNL_API_BASE_URL = "https://api.example.test";
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 401 })));
+
+    await expect(resolveCategoryArchive("nl", "labels/thermal-direct")).resolves.toBeNull();
+    expect(consoleSpy).toHaveBeenCalled();
+    consoleSpy.mockRestore();
+  });
+
+  it("attaches Basic Auth header when DOMAIN_LOCK is enabled", async () => {
+    process.env.BBNL_API_BASE_URL = "https://api.example.test";
+    process.env.DOMAIN_LOCK = "true";
+    process.env.DOMAIN_LOCK_USER = "bbnl";
+    process.env.DOMAIN_LOCK_PASSWORD = "secret";
+
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ data: null }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await resolveCategoryArchive("nl", "labels/thermal-direct");
+
+    const expectedAuth = `Basic ${Buffer.from("bbnl:secret").toString("base64")}`;
+    expect(fetchMock.mock.calls[0][1]?.headers?.Authorization).toBe(expectedAuth);
+
+    delete process.env.DOMAIN_LOCK;
+    delete process.env.DOMAIN_LOCK_USER;
+    delete process.env.DOMAIN_LOCK_PASSWORD;
+  });
+
   it("does not throw or guess a route for malformed encoded archive paths", async () => {
     process.env.BBNL_API_BASE_URL = "https://api.example.test";
     const fetchMock = vi.fn();

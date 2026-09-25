@@ -143,6 +143,7 @@ export type ProductCardData = {
   is_group_product?: boolean | null;
   properties?: Record<string, unknown> | null;
   translations?: ProductCardTranslations;
+  moq?: number | null;
 };
 
 type ProductCardProps = {
@@ -435,8 +436,12 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
     return isFanFold ? t("product.stack") : t("product.rolls");
   }, [kernValue, t]);
 
-  const normalizedPackingGroup = normalizePositiveInteger(product.packing_group);
-  const addQuantity = normalizeBoolean(product.allow_singulars) ? 1 : normalizedPackingGroup ?? 1;
+  const isLabelProduct = Boolean(product.is_label_product ?? product.is_label ?? false);
+  const normalizedPackingGroup = isLabelProduct ? normalizePositiveInteger(product.packing_group) : null;
+  const normalizedMoq = normalizePositiveInteger(product.moq);
+  // If MOQ is explicitly 1, it implies we can order singulars up to the packing group
+  const effectiveAllowSingulars = isLabelProduct && (normalizeBoolean(product.allow_singulars) || normalizedMoq === 1);
+  const addQuantity = isLabelProduct ? (effectiveAllowSingulars ? 1 : normalizedPackingGroup ?? 1) : 1;
   const normalizedWarranty = useMemo(() => normalizeWarrantyOptions(product.warranty, locale), [product.warranty, locale]);
   const [isWarrantyPopoverOpen, setIsWarrantyPopoverOpen] = useState(false);
   const warrantyDialogHandledRef = useRef(false);
@@ -477,7 +482,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
         discounts: product.discounts,
         mainImage: productMainImage,
         packingGroup: normalizedPackingGroup,
-        allowSingulars: normalizeBoolean(product.allow_singulars),
+        allowSingulars: effectiveAllowSingulars,
         isLabelProduct: Boolean(product.is_label_product ?? product.is_label ?? false),
       },
       finalQty,
@@ -502,7 +507,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
           itemKind: "warranty",
           linkedToKey: parentKey,
           packingGroup: normalizedPackingGroup,
-          allowSingulars: normalizeBoolean(product.allow_singulars),
+          allowSingulars: effectiveAllowSingulars,
           warranty: {
             optionId: Number(selectedOption.id),
             typeName: selectedOption.typeName,
@@ -778,7 +783,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
       price={productPrice!}
       discounts={product.discounts}
       packingGroup={normalizedPackingGroup}
-      allowSingulars={normalizeBoolean(product.allow_singulars)}
+      allowSingulars={effectiveAllowSingulars}
       rollsStackLabel={rollsStackLabel}
     />
   ) : null;

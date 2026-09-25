@@ -13,6 +13,13 @@ import { useTranslations, useLocale } from "next-intl";
 import { normalizeWarrantyOptions, type NormalizedWarrantyOption as WarrantyOption } from "@/lib/warranty/localize";
 import WarrantyDialogContent from "@/components/WarrantyDialogContent";
 import { useDeliveryAvailability } from "@/hooks/useDeliveryAvailability";
+import {
+  getNextQuantity,
+  getPreviousQuantity,
+  getPackagingValidation,
+  formatPackagingBreakdown,
+  getPackagingHint,
+} from "@/lib/utils/packaging";
 
 type BulkDiscount = {
   discount: string;
@@ -93,6 +100,7 @@ type ProductPurchaseProps = {
   } | null;
   componentCount?: number | null;
   isLabelProduct?: boolean | null;
+  isPrinter?: boolean | null;
   properties?: unknown;
 };
 
@@ -202,6 +210,7 @@ export default function ProductPurchase({
   warranty,
   componentCount,
   isLabelProduct,
+  isPrinter: isPrinterProp,
   properties,
 }: ProductPurchaseProps) {
   const { addItem, openCart, isCartOpen } = useCart();
@@ -236,27 +245,97 @@ export default function ProductPurchase({
     return null;
   }, [properties]);
 
+  const isLabel = Boolean(isLabelProduct) && !isPrinterProp;
+  const isFanFold = isLabel && typeof kernValue === "string" && kernValue.toLowerCase() === "fan-fold";
   const rollsStackLabel = useMemo(() => {
     if (!kernValue) {
       return t("product.rollsStack");
     }
-    const isFanFold = typeof kernValue === "string" && kernValue.toLowerCase() === "fan-fold";
     return isFanFold ? t("product.stack") : t("product.rolls");
-  }, [kernValue, t]);
-  const normalizedPackingGroup = packingGroup ? Number.parseInt(packingGroup, 10) : null;
+  }, [kernValue, isFanFold, t]);
+  const normalizedPackingGroup =
+    isLabel && packingGroup ? Number.parseInt(String(packingGroup), 10) : null;
   const hasPackingGroup =
+    isLabel &&
     typeof normalizedPackingGroup === "number" &&
     Number.isFinite(normalizedPackingGroup) &&
     normalizedPackingGroup > 0;
   const normalizedMoq = typeof moq === "number" && Number.isFinite(moq) && moq > 0 ? moq : null;
-  const initialQuantity = normalizedMoq ?? (!allowSingulars && hasPackingGroup ? normalizedPackingGroup : 1);
+  // If MOQ is explicitly 1, it implies we can order singulars up to the packing group
+  const effectiveAllowSingulars = Boolean(isLabel && (allowSingulars || normalizedMoq === 1));
+  const isStrictPackaging = Boolean(isLabel && hasPackingGroup && normalizedPackingGroup && !effectiveAllowSingulars);
+  const minOrderQuantity = isLabel
+    ? (normalizedMoq ?? (isStrictPackaging && normalizedPackingGroup ? normalizedPackingGroup : 1))
+    : (normalizedMoq ?? 1);
+  const initialQuantity = minOrderQuantity;
   const [quantity, setQuantity] = useState(initialQuantity);
   const [quantityError, setQuantityError] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const availableDates = useDeliveryAvailability();
   const [isWarrantyPopoverOpen, setIsWarrantyPopoverOpen] = useState(false);
 
-  const showSingularAddToCartBtn = normalizedMoq !== null && normalizedPackingGroup !== null && normalizedMoq < normalizedPackingGroup && quantity < normalizedPackingGroup;
+  const packagingValidation = useMemo(() => {
+    if (!isLabel) {
+      return { isValid: true, choices: [] };
+    }
+    return getPackagingValidation({
+      quantity,
+      pack: normalizedPackingGroup,
+      allowSingulars: Boolean(effectiveAllowSingulars),
+      moq: normalizedMoq,
+    });
+  }, [isLabel, quantity, normalizedPackingGroup, effectiveAllowSingulars, normalizedMoq]);
+
+  const packagingBreakdown = useMemo(() => {
+    if (!isLabel) return null;
+    return formatPackagingBreakdown({
+      quantity,
+      pack: normalizedPackingGroup,
+      allowSingulars: Boolean(effectiveAllowSingulars),
+      locale,
+      isStack: isFanFold,
+    });
+  }, [isLabel, quantity, normalizedPackingGroup, effectiveAllowSingulars, locale, isFanFold]);
+
+  const mainOrderButtonText = useMemo(() => {
+    if (!isLabel) {
+      return t("product.addToCart");
+    }
+    const targetQty = quantity > 0 ? quantity : initialQuantity;
+    if (isFanFold) {
+      return targetQty === 1
+        ? t("product.orderStackButton", { count: targetQty })
+        : t("product.orderStacksButton", { count: targetQty });
+    }
+    return targetQty === 1
+      ? t("product.orderRollButton", { count: targetQty })
+      : t("product.orderRollsButton", { count: targetQty });
+  }, [isLabel, quantity, initialQuantity, isFanFold, t]);
+
+  const quantityLabel = useMemo(() => {
+    if (isLabel) {
+      return isFanFold ? t("product.quantityLabelStacks") : t("product.quantityLabelRolls");
+    }
+    return t("product.quantity");
+  }, [isLabel, isFanFold, t]);
+
+  const packagingHint = useMemo(() => {
+    if (!isLabel) return null;
+    return getPackagingHint({
+      pack: normalizedPackingGroup,
+      allowSingulars: Boolean(effectiveAllowSingulars),
+      locale,
+      isStack: isFanFold,
+    });
+  }, [isLabel, normalizedPackingGroup, effectiveAllowSingulars, locale, isFanFold]);
+
+  const showSingularAddToCartBtn = Boolean(
+    isLabel &&
+    normalizedMoq !== null &&
+    normalizedPackingGroup !== null &&
+    normalizedMoq < normalizedPackingGroup &&
+    quantity < normalizedPackingGroup
+  );
   const warrantyDialogHandledRef = useRef(false);
   const [pendingQuantity, setPendingQuantity] = useState<number | null>(null);
   const [shareUrl, setShareUrl] = useState("");
@@ -321,48 +400,36 @@ export default function ProductPurchase({
 
   const increment = () => {
     setQuantityError(null);
-    setQuantity((prev) => {
-      if (!hasPackingGroup || !normalizedPackingGroup) {
-        return prev + 1;
-      }
-
-      if (normalizedMoq && prev < normalizedMoq) {
-        return normalizedMoq;
-      }
-
-      if (prev < normalizedPackingGroup) {
-        if (allowSingulars || (normalizedMoq && prev >= normalizedMoq)) {
-          return prev + 1;
-        }
-        return normalizedPackingGroup;
-      }
-
-      return Math.ceil((prev + 1) / normalizedPackingGroup) * normalizedPackingGroup;
-    });
+    if (!isLabel) {
+      setQuantity((prev) => prev + 1);
+      return;
+    }
+    setQuantity((prev) =>
+      getNextQuantity({
+        current: prev,
+        pack: normalizedPackingGroup,
+        allowSingulars: Boolean(effectiveAllowSingulars),
+        moq: normalizedMoq,
+      })
+    );
   };
+
   const decrement = () => {
     setQuantityError(null);
-    setQuantity((prev) => {
-      const minQty = normalizedMoq ?? (allowSingulars ? 1 : (normalizedPackingGroup ?? 1));
-
-      if (!hasPackingGroup || !normalizedPackingGroup) {
-        return prev > minQty ? prev - 1 : minQty;
-      }
-
-      if (prev <= minQty) {
-        return minQty;
-      }
-
-      if (prev <= normalizedPackingGroup) {
-        if (allowSingulars || (normalizedMoq && prev > normalizedMoq)) {
-          return prev - 1;
-        }
-        return minQty;
-      }
-
-      return Math.max(minQty, Math.floor((prev - 1) / normalizedPackingGroup) * normalizedPackingGroup);
-    });
+    if (!isLabel) {
+      setQuantity((prev) => Math.max(minOrderQuantity, prev - 1));
+      return;
+    }
+    setQuantity((prev) =>
+      getPreviousQuantity({
+        current: prev,
+        pack: normalizedPackingGroup,
+        allowSingulars: Boolean(effectiveAllowSingulars),
+        moq: normalizedMoq,
+      })
+    );
   };
+
   const handleQuantityChange = (value: string) => {
     setQuantityError(null);
     if (value === "") {
@@ -379,17 +446,12 @@ export default function ProductPurchase({
   };
 
   const handleQuantityBlur = () => {
-    const minQty = normalizedMoq ?? (allowSingulars ? 1 : (normalizedPackingGroup ?? 1));
-    if (quantity < minQty) {
+    if (quantity < minOrderQuantity) {
       setQuantity(initialQuantity);
       return;
     }
-
-    if (!allowSingulars && hasPackingGroup && normalizedPackingGroup && !showSingularAddToCartBtn) {
-      if (quantity % normalizedPackingGroup !== 0) {
-        setQuantity(Math.max(minQty, Math.ceil(quantity / normalizedPackingGroup) * normalizedPackingGroup));
-      }
-    }
+    // Note: We intentionally avoid auto-snapping non-multiples for strict packaging
+    // so that the customer sees and can select from the suggestion buttons ("Order X rolls" / "Order Y rolls").
   };
 
   const displaySku = sku?.trim() ? sku : "-";
@@ -551,35 +613,26 @@ export default function ProductPurchase({
     const qtyToAdd = customQuantity ?? quantity;
     const normalizedQuantity = Number.isFinite(qtyToAdd) ? Math.floor(qtyToAdd) : 0;
 
-    const minQty = normalizedMoq ?? (allowSingulars ? 1 : (normalizedPackingGroup ?? 1));
-    if (normalizedQuantity < minQty) {
-      setQuantityError(
-        normalizedMoq
-          ? t("product.quantityMinError", { min: minQty })
-          : allowSingulars
-            ? t("product.quantityMinError")
-            : t("product.quantityLimitErrorMultiple", { limit: normalizedPackingGroup ?? 1 })
-      );
-      return null;
-    }
-
-    if (hasPackingGroup) {
-      const pg = normalizedPackingGroup ?? 1;
-      const moqAllowsSingulars = normalizedMoq !== null && normalizedMoq < pg && normalizedQuantity <= pg;
-      const singularQuantityAllowed = Boolean((allowSingulars && normalizedQuantity <= pg) || moqAllowsSingulars);
-
-      if (
-        !singularQuantityAllowed &&
-        (allowSingulars ? normalizedQuantity !== 1 : true) &&
-        normalizedQuantity % pg !== 0
-      ) {
-        setQuantityError(
-          allowSingulars
-            ? t("product.quantityLimitErrorSingular", { limit: pg })
-            : t("product.quantityLimitErrorMultiple", { limit: pg }),
-        );
+    if (!isLabel) {
+      if (normalizedQuantity < minOrderQuantity) {
+        setQuantityError(t("product.enterValidQuantity"));
         return null;
       }
+      return normalizedQuantity;
+    }
+
+    const validation = getPackagingValidation({
+      quantity: normalizedQuantity,
+      pack: normalizedPackingGroup,
+      allowSingulars: Boolean(effectiveAllowSingulars),
+      moq: normalizedMoq,
+    });
+
+    if (!validation.isValid) {
+      if (validation.choices.length === 0) {
+        setQuantityError(t("product.enterValidQuantity"));
+      }
+      return null;
     }
 
     return normalizedQuantity;
@@ -601,10 +654,10 @@ export default function ProductPurchase({
         discounts: discounts,
         mainImage,
         componentCount,
-        packingGroup: normalizedPackingGroup,
-        allowSingulars: Boolean(allowSingulars),
+        packingGroup: isLabel ? normalizedPackingGroup : null,
+        allowSingulars: Boolean(effectiveAllowSingulars),
         moq: normalizedMoq,
-        isLabelProduct: Boolean(isLabelProduct),
+        isLabelProduct: isLabel,
       },
       qtyToAdd,
     );
@@ -628,7 +681,7 @@ export default function ProductPurchase({
           itemKind: "warranty",
           linkedToKey: parentKey,
           packingGroup: normalizedPackingGroup,
-          allowSingulars: Boolean(allowSingulars),
+          allowSingulars: Boolean(effectiveAllowSingulars),
         moq: normalizedMoq,
           warranty: {
             optionId: Number(selectedOption.id),
@@ -649,20 +702,14 @@ export default function ProductPurchase({
   const handleAddToCart = (customQuantity?: number) => {
     if (!canOrder) return;
 
-    let targetQty = customQuantity ?? quantity;
-
-    // For label products where singulars are not allowed, ensure quantity conforms to packing group (full box multiples)
-    if (!allowSingulars && hasPackingGroup && normalizedPackingGroup && !showSingularAddToCartBtn) {
-      const snapped = Math.max(normalizedPackingGroup, Math.ceil(targetQty / normalizedPackingGroup) * normalizedPackingGroup);
-      if (snapped !== targetQty) {
-        targetQty = snapped;
-        setQuantity(snapped);
-      }
-    }
-
+    const targetQty = customQuantity ?? quantity;
     const qtyToAdd = validateQuantity(targetQty);
     if (!qtyToAdd) {
       return;
+    }
+
+    if (customQuantity !== undefined && customQuantity !== quantity) {
+      setQuantity(customQuantity);
     }
 
     if (hasWarrantyOptions) {
@@ -715,7 +762,7 @@ export default function ProductPurchase({
       materialTitle,
       inStock: resolvedInStock,
       packingGroup: normalizedPackingGroup,
-      allowSingulars: Boolean(allowSingulars),
+      allowSingulars: Boolean(effectiveAllowSingulars),
     });
     toast.success(t("product.savedToFavorite"));
   };
@@ -897,239 +944,150 @@ export default function ProductPurchase({
           open={isWarrantyPopoverOpen}
           onOpenChange={handleWarrantyDialogOpenChange}
         >
-          {isLabelProduct ? (
-            // Label product layout with Rolls/Stack and Box buttons
-            <DialogTrigger asChild>
-              <div className="flex flex-col gap-3">
-                {allowSingulars ? (
+          <div className="flex flex-col gap-3">
+            <div className={`flex ${packagingValidation.isValid ? 'flex-row flex-wrap sm:flex-nowrap items-start' : 'flex-col'} gap-3 w-full`}>
+              {/* Quantity Stepper */}
+              <div className="flex flex-col gap-1 shrink-0 w-full sm:w-[140px]">
+                <label className="text-xs font-semibold text-neutral-700 block">
+                  {quantityLabel}
+                </label>
+                <div
+                  className={`h-12 w-full sm:w-32 px-1 rounded-[50px] outline outline-1 outline-offset-[-1px] ${
+                    !packagingValidation.isValid
+                      ? "outline-red-500 ring-1 ring-red-500"
+                      : "outline-black/10"
+                  } flex justify-between items-center bg-white`}
+                >
+                  <button
+                    onClick={decrement}
+                    type="button"
+                    disabled={quantity <= minOrderQuantity}
+                    className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    aria-label="Decrease quantity"
+                  >
+                    <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
+                      <path strokeLinecap="round" d="M2 6h8" />
+                    </svg>
+                  </button>
+                  <div className="flex-1 self-stretch flex justify-center items-center overflow-hidden">
+                    <input
+                      type="number"
+                      min={minOrderQuantity}
+                      value={quantity === 0 ? "" : quantity}
+                      onChange={(e) => handleQuantityChange(e.target.value)}
+                      onBlur={handleQuantityBlur}
+                      className="w-full text-center text-neutral-800 text-sm font-semibold focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-transparent"
+                    />
+                  </div>
+                  <button
+                    onClick={increment}
+                    type="button"
+                    className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
+                    aria-label="Increase quantity"
+                  >
+                    <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
+                      <path strokeLinecap="round" d="M6 2v8M2 6h8" />
+                    </svg>
+                  </button>
+                </div>
+                {packagingHint && (
+                  <p className="text-[11px] sm:text-xs text-neutral-500 font-normal leading-tight mt-0.5">
+                    {packagingHint}
+                  </p>
+                )}
+              </div>
+
+              {/* Add to Cart Actions */}
+              <div className="flex-1 min-w-[200px] flex flex-col gap-1.5 w-full">
+                {packagingValidation.isValid && <div className="h-4 hidden sm:block" aria-hidden="true" />}
+                {packagingValidation.isValid ? (
                   <>
-                    <div className="flex flex-col sm:flex-row sm:items-end gap-3 w-full">
-                      {/* Quantity selector */}
-                      <div className="h-12 w-full sm:w-32 px-1 rounded-[50px] outline outline-1 outline-offset-[-1px] outline-black/10 flex justify-between items-center bg-white shrink-0">
-                        <button
-                          onClick={decrement}
-                          type="button"
-                          className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
-                        >
-                          <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
-                            <path strokeLinecap="round" d="M2 6h8" />
-                          </svg>
-                        </button>
-                        <div className="flex-1 self-stretch flex justify-center items-center overflow-hidden">
-                          <input
-                            type="number"
-                            min="1"
-                            value={quantity === 0 ? "" : quantity}
-                            onChange={(e) => handleQuantityChange(e.target.value)}
-                            onBlur={handleQuantityBlur}
-                            className="w-full text-center text-neutral-800 text-sm font-semibold focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-transparent"
-                          />
-                        </div>
-                        <button
-                          onClick={increment}
-                          type="button"
-                          className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
-                        >
-                          <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
-                            <path strokeLinecap="round" d="M6 2v8M2 6h8" />
-                          </svg>
-                        </button>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleAddToCart(quantity);
-                        }}
-                        disabled={!canOrder}
-                        aria-describedby={quantityError ? "quantity-error" : undefined}
-                        className="w-full sm:flex-1 h-12 px-4 py-2.5 bg-brand rounded-[100px] justify-center items-center gap-2 hover:bg-brand-hover transition-colors shadow-sm flex disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:hover:bg-zinc-300"
-                      >
-                        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M7.33366 20.1663C7.83992 20.1663 8.25033 19.7559 8.25033 19.2497C8.25033 18.7434 7.83992 18.333 7.33366 18.333C6.8274 18.333 6.41699 18.7434 6.41699 19.2497C6.41699 19.7559 6.8274 20.1663 7.33366 20.1663Z" stroke="white" strokeWidth="1.375" strokeLinecap="round" strokeLinejoin="round" />
-                          <path d="M17.4167 20.1663C17.9229 20.1663 18.3333 19.7559 18.3333 19.2497C18.3333 18.7434 17.9229 18.333 17.4167 18.333C16.9104 18.333 16.5 18.7434 16.5 19.2497C16.5 19.7559 16.9104 20.1663 17.4167 20.1663Z" stroke="white" strokeWidth="1.375" strokeLinecap="round" strokeLinejoin="round" />
-                          <path d="M1.87988 1.87988H3.71322L6.15155 13.2649C6.241 13.6818 6.473 14.0546 6.80762 14.3189C7.14224 14.5833 7.55855 14.7227 7.98488 14.7132H16.9499C17.3671 14.7125 17.7717 14.5696 18.0967 14.3079C18.4217 14.0462 18.6477 13.6815 18.7374 13.274L20.2499 6.46322H16.3609C16.3609 6.46322 15.5833 9.16667 12.375 9.16667C9.16667 9.16667 8.58301 6.46322 8.58301 6.46322H4.69405" stroke="white" strokeWidth="1.375" strokeLinecap="round" strokeLinejoin="round" />
-                          <path d="M10.083 4.125H14.6663" stroke="white" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
-                          <path d="M12.375 1.83301V6.41634" stroke="white" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-
-                        <span className="text-white text-base font-bold whitespace-nowrap">{t("product.addToCart")}</span>
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleAddToCart(quantity);
+                      }}
+                      disabled={!canOrder}
+                      className="w-full h-12 px-4 py-2.5 bg-brand rounded-[100px] justify-center items-center gap-2 hover:bg-brand-hover transition-colors shadow-sm flex disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:hover:bg-zinc-300"
+                    >
+                      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M7.33366 20.1663C7.83992 20.1663 8.25033 19.7559 8.25033 19.2497C8.25033 18.7434 7.83992 18.333 7.33366 18.333C6.8274 18.333 6.41699 18.7434 6.41699 19.2497C6.41699 19.7559 6.8274 20.1663 7.33366 20.1663Z" stroke="white" strokeWidth="1.375" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M17.4167 20.1663C17.9229 20.1663 18.3333 19.7559 18.3333 19.2497C18.3333 18.7434 17.9229 18.333 17.4167 18.333C16.9104 18.333 16.5 18.7434 16.5 19.2497C16.5 19.7559 16.9104 20.1663 17.4167 20.1663Z" stroke="white" strokeWidth="1.375" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M1.87988 1.87988H3.71322L6.15155 13.2649C6.241 13.6818 6.473 14.0546 6.80762 14.3189C7.14224 14.5833 7.55855 14.7227 7.98488 14.7132H16.9499C17.3671 14.7125 17.7717 14.5696 18.0967 14.3079C18.4217 14.0462 18.6477 13.6815 18.7374 13.274L20.2499 6.46322H16.3609C16.3609 6.46322 15.5833 9.16667 12.375 9.16667C9.16667 9.16667 8.58301 6.46322 8.58301 6.46322H4.69405" stroke="white" strokeWidth="1.375" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M10.083 4.125H14.6663" stroke="white" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M12.375 1.83301V6.41634" stroke="white" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <span className="text-white text-base font-bold text-center leading-tight">{mainOrderButtonText}</span>
+                    </button>
                   </>
-                ) : (
-                  <div className="flex flex-col gap-3 w-full">
-                    <div className="flex flex-col sm:flex-row sm:items-end gap-3 w-full">
-                      {/* Quantity selector */}
-                      <div className="h-12 w-full sm:w-32 px-1 rounded-[50px] outline outline-1 outline-offset-[-1px] outline-black/10 flex justify-between items-center bg-white shrink-0">
-                        <button
-                          onClick={decrement}
-                          type="button"
-                          className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
-                        >
-                          <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
-                            <path strokeLinecap="round" d="M2 6h8" />
-                          </svg>
-                        </button>
-                        <div className="flex-1 self-stretch flex justify-center items-center overflow-hidden">
-                          <input
-                            type="number"
-                            min="1"
-                            value={quantity === 0 ? "" : quantity}
-                            onChange={(e) => handleQuantityChange(e.target.value)}
-                            onBlur={handleQuantityBlur}
-                            className="w-full text-center text-neutral-800 text-sm font-semibold focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-transparent"
-                          />
-                        </div>
-                        <button
-                          onClick={increment}
-                          type="button"
-                          className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
-                        >
-                          <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
-                            <path strokeLinecap="round" d="M6 2v8M2 6h8" />
-                          </svg>
-                        </button>
-                      </div>
+                ) : packagingValidation.choices.length > 0 ? (
+                  <div className="flex flex-col gap-2 w-full">
+                    <p className="text-xs sm:text-sm font-semibold text-red-600">
+                      {t("product.chooseMultipleOf", { pack: normalizedPackingGroup ?? 1 })}
+                    </p>
+                    <div className="grid grid-cols-2 gap-2 w-full">
+                      {packagingValidation.choices.map((choiceQty) => {
+                        const btnText = isFanFold
+                          ? choiceQty === 1
+                            ? t("product.orderStackButton", { count: choiceQty })
+                            : t("product.orderStacksButton", { count: choiceQty })
+                          : choiceQty === 1
+                            ? t("product.orderRollButton", { count: choiceQty })
+                            : t("product.orderRollsButton", { count: choiceQty });
 
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleAddToCart(quantity);
-                        }}
-                        disabled={!canOrder}
-                        aria-describedby={quantityError ? "quantity-error" : undefined}
-                        className="w-full sm:flex-1 h-12 px-4 py-2.5 bg-brand rounded-[100px] justify-center items-center gap-2 hover:bg-brand-hover transition-colors shadow-sm flex disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:hover:bg-zinc-300"
-                      >
-                        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M7.33366 20.1663C7.83992 20.1663 8.25033 19.7559 8.25033 19.2497C8.25033 18.7434 7.83992 18.333 7.33366 18.333C6.8274 18.333 6.41699 18.7434 6.41699 19.2497C6.41699 19.7559 6.8274 20.1663 7.33366 20.1663Z" stroke="white" strokeWidth="1.375" strokeLinecap="round" strokeLinejoin="round" />
-                          <path d="M17.4167 20.1663C17.9229 20.1663 18.3333 19.7559 18.3333 19.2497C18.3333 18.7434 17.9229 18.333 17.4167 18.333C16.9104 18.333 16.5 18.7434 16.5 19.2497C16.5 19.7559 16.9104 20.1663 17.4167 20.1663Z" stroke="white" strokeWidth="1.375" strokeLinecap="round" strokeLinejoin="round" />
-                          <path d="M1.87988 1.87988H3.71322L6.15155 13.2649C6.241 13.6818 6.473 14.0546 6.80762 14.3189C7.14224 14.5833 7.55855 14.7227 7.98488 14.7132H16.9499C17.3671 14.7125 17.7717 14.5696 18.0967 14.3079C18.4217 14.0462 18.6477 13.6815 18.7374 13.274L20.2499 6.46322H16.3609C16.3609 6.46322 15.5833 9.16667 12.375 9.16667C9.16667 9.16667 8.58301 6.46322 8.58301 6.46322H4.69405" stroke="white" strokeWidth="1.375" strokeLinecap="round" strokeLinejoin="round" />
-                          <path d="M10.083 4.125H14.6663" stroke="white" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
-                          <path d="M12.375 1.83301V6.41634" stroke="white" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        <span className="text-white text-base font-bold whitespace-nowrap">{t("product.addToCart")}</span>
-                      </button>
-
-                      {/* Box adding button commented out:
-                      {!showSingularAddToCartBtn && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handleAddToCart(Math.max(1, Math.ceil(quantity / (normalizedPackingGroup || 1))) * (normalizedPackingGroup || 1));
-                          }}
-                          disabled={!canOrder}
-                          className="w-full sm:flex-1 h-12 px-4 py-2.5 bg-amber-100 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-amber-300 justify-center items-center gap-2 hover:bg-amber-300 transition-colors flex disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:outline-zinc-200 disabled:hover:bg-zinc-100"
-                        >
-                          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M7.33366 20.1663C7.83992 20.1663 8.25033 19.7559 8.25033 19.2497C8.25033 18.7434 7.83992 18.333 7.33366 18.333C6.8274 18.333 6.41699 18.7434 6.41699 19.2497C6.41699 19.7559 6.8274 20.1663 7.33366 20.1663Z" stroke="orange" strokeWidth="1.375" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M17.4167 20.1663C17.9229 20.1663 18.3333 19.7559 18.3333 19.2497C18.3333 18.7434 17.9229 18.333 17.4167 18.333C16.9104 18.333 16.5 18.7434 16.5 19.2497C16.5 19.7559 16.9104 20.1663 17.4167 20.1663Z" stroke="orange" strokeWidth="1.375" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M1.87988 1.87988H3.71322L6.15155 13.2649C6.241 13.6818 6.473 14.0546 6.80762 14.3189C7.14224 14.5833 7.55855 14.7227 7.98488 14.7132H16.9499C17.3671 14.7125 17.7717 14.5696 18.0967 14.3079C18.4217 14.0462 18.6477 13.6815 18.7374 13.274L20.2499 6.46322H16.3609C16.3609 6.46322 15.5833 9.16667 12.375 9.16667C9.16667 9.16667 8.58301 6.46322 8.58301 6.46322H4.69405" stroke="orange" strokeWidth="1.375" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M10.083 4.125H14.6663" stroke="orange" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M12.375 1.83301V6.41634" stroke="orange" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-
-                          <span className="text-brand text-base font-bold whitespace-nowrap">
-                            {t("product.box")}{" "}
-                            <span className="text-xs text-brand">
-                              ({normalizedPackingGroup ?? 0} {rollsStackLabel})
-                            </span>
-                          </span>
-                        </button>
-                      )}
-                      */}
+                        return (
+                          <button
+                            key={choiceQty}
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleAddToCart(choiceQty);
+                            }}
+                            disabled={!canOrder}
+                            className="h-12 px-3 bg-brand rounded-[100px] justify-center items-center gap-1.5 hover:bg-brand-hover transition-colors shadow-sm flex text-white text-xs sm:text-sm font-bold whitespace-nowrap disabled:cursor-not-allowed disabled:bg-zinc-300"
+                          >
+                            {btnText}
+                          </button>
+                        );
+                      })}
                     </div>
-
-                    {/* Box adding button commented out:
-                    {showSingularAddToCartBtn && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleAddToCart(Math.max(1, Math.ceil(quantity / (normalizedPackingGroup || 1))) * (normalizedPackingGroup || 1));
-                        }}
-                        disabled={!canOrder}
-                        className="w-full h-12 px-4 py-2.5 bg-amber-100 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-amber-300 justify-center items-center gap-2 hover:bg-amber-300 transition-colors flex disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:outline-zinc-200 disabled:hover:bg-zinc-100"
-                      >
-                        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M7.33366 20.1663C7.83992 20.1663 8.25033 19.7559 8.25033 19.2497C8.25033 18.7434 7.83992 18.333 7.33366 18.333C6.8274 18.333 6.41699 18.7434 6.41699 19.2497C6.41699 19.7559 6.8274 20.1663 7.33366 20.1663Z" stroke="orange" strokeWidth="1.375" strokeLinecap="round" strokeLinejoin="round" />
-                          <path d="M17.4167 20.1663C17.9229 20.1663 18.3333 19.7559 18.3333 19.2497C18.3333 18.7434 17.9229 18.333 17.4167 18.333C16.9104 18.333 16.5 18.7434 16.5 19.2497C16.5 19.7559 16.9104 20.1663 17.4167 20.1663Z" stroke="orange" strokeWidth="1.375" strokeLinecap="round" strokeLinejoin="round" />
-                          <path d="M1.87988 1.87988H3.71322L6.15155 13.2649C6.241 13.6818 6.473 14.0546 6.80762 14.3189C7.14224 14.5833 7.55855 14.7227 7.98488 14.7132H16.9499C17.3671 14.7125 17.7717 14.5696 18.0967 14.3079C18.4217 14.0462 18.6477 13.6815 18.7374 13.274L20.2499 6.46322H16.3609C16.3609 6.46322 15.5833 9.16667 12.375 9.16667C9.16667 9.16667 8.58301 6.46322 8.58301 6.46322H4.69405" stroke="orange" strokeWidth="1.375" strokeLinecap="round" strokeLinejoin="round" />
-                          <path d="M10.083 4.125H14.6663" stroke="orange" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
-                          <path d="M12.375 1.83301V6.41634" stroke="orange" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-
-                        <span className="text-brand text-base font-bold whitespace-nowrap">
-                          {t("product.box")}{" "}
-                          <span className="text-xs text-brand">
-                            ({normalizedPackingGroup ?? 0} {rollsStackLabel})
-                          </span>
-                        </span>
-                      </button>
-                    )}
-                    */}
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2 w-full">
+                    <p className="text-xs sm:text-sm font-semibold text-red-600">
+                      {t("product.enterValidQuantity")}
+                    </p>
+                    <button
+                      type="button"
+                      disabled
+                      className="w-full h-12 px-4 py-2.5 bg-zinc-300 rounded-[100px] justify-center items-center gap-2 flex cursor-not-allowed text-white text-base font-bold"
+                    >
+                      {mainOrderButtonText}
+                    </button>
                   </div>
                 )}
               </div>
-            </DialogTrigger>
-          ) : (
-            // Original single-button layout with quantity selector
-            <DialogTrigger asChild>
-              <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-                <div className="flex flex-col gap-3 w-full sm:w-auto">
-                  <span className="text-neutral-800 text-lg font-bold leading-5 w-full">{t("product.selectQuantity")}</span>
-                  <div className="h-12 w-full sm:w-32 px-1 rounded-[50px] outline outline-1 outline-offset-[-1px] outline-black/10 flex justify-between items-center bg-white">
-                    <button
-                      onClick={decrement}
-                      className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
-                    >
-                      <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
-                        <path strokeLinecap="round" d="M2 6h8" />
-                      </svg>
-                    </button>
-                    <div className="flex-1 self-stretch flex justify-center items-center overflow-hidden">
-                      <input
-                        type="number"
-                        min="1"
-                        value={quantity === 0 ? "" : quantity}
-                        onChange={(e) => handleQuantityChange(e.target.value)}
-                        onBlur={handleQuantityBlur}
-                        className="w-full text-center text-neutral-800 text-sm font-semibold focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-transparent"
-                      />
-                    </div>
-                    <button
-                      onClick={increment}
-                      className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
-                    >
-                      <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
-                        <path strokeLinecap="round" d="M6 2v8M2 6h8" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2 w-full sm:flex-1">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleAddToCart(quantity);
-                    }}
-                    disabled={!canOrder}
-                    aria-describedby={quantityError ? "quantity-error" : undefined}
-                    className="flex h-12 px-4 py-2.5 bg-brand rounded-[100px] justify-center items-center gap-2 hover:bg-brand-hover transition-colors shadow-sm disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:hover:bg-zinc-300"
-                  >
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    <span className="text-white text-base font-bold whitespace-nowrap">{t("product.addToCart")}</span>
-                  </button>
-                </div>
+            </div>
+
+            {/* Live Total & Breakdown matching HTML prototype */}
+            {packagingValidation.isValid && quantity > 0 && hasPrice && (
+              <div className="flex justify-between items-center pt-3 mt-1 border-t border-slate-100 text-xs text-neutral-600">
+                <span className="truncate pr-2 font-medium">
+                  {isLabel
+                    ? (packagingBreakdown || `${quantity} ${
+                        quantity === 1
+                          ? isFanFold ? t('product.stack') : t('product.roll')
+                          : isFanFold ? t('product.stacks') : t('product.rolls')
+                      }`)
+                    : t("common.total")}
+                </span>
+                <strong className="text-sm font-bold text-neutral-900 shrink-0">
+                  {formatEuro(quantity * (activeUnitPrice ?? price ?? 0))}
+                </strong>
               </div>
-            </DialogTrigger>
-          )}
+            )}
+          </div>
 
           {hasWarrantyOptions ? (
             <WarrantyDialogContent
@@ -1337,34 +1295,43 @@ export default function ProductPurchase({
           {/* Quantity + Wishlist wrapper */}
           <div className="flex items-center gap-2">
             {/* Compact Quantity selector */}
-            {(!isLabelProduct || allowSingulars) && (
-              <div className="h-9 px-1 rounded-[50px] outline outline-1 outline-black/10 flex items-center bg-white w-24">
-                <button
-                  onClick={decrement}
-                  className="w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
-                >
-                  <svg className="w-2.5 h-2.5 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 12 12">
-                    <path strokeLinecap="round" d="M2 6h8" />
-                  </svg>
-                </button>
-                <input
-                  type="number"
-                  min="1"
-                  value={quantity === 0 ? "" : quantity}
-                  onChange={(e) => handleQuantityChange(e.target.value)}
-                  onBlur={handleQuantityBlur}
-                  className="flex-1 min-w-0 text-center text-sm font-semibold text-neutral-800 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-transparent"
-                />
-                <button
-                  onClick={increment}
-                  className="w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
-                >
-                  <svg className="w-2.5 h-2.5 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 12 12">
-                    <path strokeLinecap="round" d="M6 2v8M2 6h8" />
-                  </svg>
-                </button>
-              </div>
-            )}
+            <div
+              className={`h-9 px-1 rounded-[50px] outline outline-1 ${
+                !packagingValidation.isValid
+                  ? "outline-red-500 ring-1 ring-red-500"
+                  : "outline-black/10"
+              } flex items-center bg-white w-24`}
+            >
+              <button
+                onClick={decrement}
+                type="button"
+                disabled={quantity <= minOrderQuantity}
+                className="w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                aria-label="Decrease quantity"
+              >
+                <svg className="w-2.5 h-2.5 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 12 12">
+                  <path strokeLinecap="round" d="M2 6h8" />
+                </svg>
+              </button>
+              <input
+                type="number"
+                min={minOrderQuantity}
+                value={quantity === 0 ? "" : quantity}
+                onChange={(e) => handleQuantityChange(e.target.value)}
+                onBlur={handleQuantityBlur}
+                className="flex-1 min-w-0 text-center text-sm font-semibold text-neutral-800 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-transparent"
+              />
+              <button
+                onClick={increment}
+                type="button"
+                className="w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
+                aria-label="Increase quantity"
+              >
+                <svg className="w-2.5 h-2.5 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 12 12">
+                  <path strokeLinecap="round" d="M6 2v8M2 6h8" />
+                </svg>
+              </button>
+            </div>
 
             {/* Wishlist Button */}
             <button
@@ -1384,69 +1351,61 @@ export default function ProductPurchase({
 
         {/* Row 2: Add to Cart Button(s) */}
         <div>
-          {isLabelProduct ? (
-            <div className="flex flex-col gap-3 w-full">
-              {allowSingulars ? (
-                <button
-                  type="button"
-                  onClick={() => handleAddToCart(quantity)}
-                  disabled={!canOrder}
-                  aria-describedby={quantityError ? "quantity-error" : undefined}
-                  className="w-full h-11 px-4 bg-brand rounded-[100px] justify-center items-center gap-2 hover:bg-brand-hover transition-colors shadow-sm flex disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:hover:bg-zinc-300"
-                >
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                  <span className="text-white text-sm font-bold whitespace-nowrap">{t("product.addToCart")}</span>
-                </button>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => handleAddToCart(quantity)}
-                    disabled={!canOrder}
-                    aria-describedby={quantityError ? "quantity-error" : undefined}
-                    className="w-full h-11 px-4 bg-brand rounded-[100px] justify-center items-center gap-2 hover:bg-brand-hover transition-colors shadow-sm flex disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:hover:bg-zinc-300"
-                  >
-                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    <span className="text-white text-sm font-bold whitespace-nowrap">{t("product.addToCart")}</span>
-                  </button>
-
-                  {/* Box adding button commented out:
-                  <button
-                    type="button"
-                    onClick={() => handleAddToCart(Math.max(1, Math.ceil(quantity / (normalizedPackingGroup || 1))) * (normalizedPackingGroup || 1))}
-                    disabled={!canOrder}
-                    className="w-full h-11 px-4 bg-amber-100 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-amber-300 justify-center items-center gap-2 hover:bg-amber-300 transition-colors flex disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:outline-zinc-200 disabled:hover:bg-zinc-100"
-                  >
-                    <svg className="w-4 h-4 text-brand" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    <span className="text-brand text-sm font-bold whitespace-nowrap">
-                      {t("product.box")}{" "}
-                      <span className="text-[10px] text-brand">
-                        ({normalizedPackingGroup ?? 0} {rollsStackLabel})
-                      </span>
-                    </span>
-                  </button>
-                  */}
-                </>
+          {packagingValidation.isValid ? (
+            <div className="flex flex-col gap-1 w-full">
+              <button
+                type="button"
+                onClick={() => handleAddToCart(quantity)}
+                disabled={!canOrder}
+                className="w-full h-11 px-4 bg-brand rounded-[100px] justify-center items-center gap-2 hover:bg-brand-hover transition-colors shadow-sm flex disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:hover:bg-zinc-300"
+              >
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <span className="text-white text-sm font-bold whitespace-nowrap">{mainOrderButtonText}</span>
+              </button>
+              {packagingBreakdown && (
+                <div className="text-center text-[11px] text-neutral-500 font-medium">
+                  {packagingBreakdown}
+                </div>
               )}
+            </div>
+          ) : packagingValidation.choices.length > 0 ? (
+            <div className="flex flex-col gap-1.5 w-full">
+              <p className="text-[11px] font-semibold text-red-600 text-center">
+                {t("product.chooseMultipleOf", { pack: normalizedPackingGroup ?? 1 })}
+              </p>
+              <div className="grid grid-cols-2 gap-2 w-full">
+                {packagingValidation.choices.map((choiceQty) => {
+                  const btnText = isFanFold
+                    ? choiceQty === 1
+                      ? t("product.orderStackButton", { count: choiceQty })
+                      : t("product.orderStacksButton", { count: choiceQty })
+                    : choiceQty === 1
+                      ? t("product.orderRollButton", { count: choiceQty })
+                      : t("product.orderRollsButton", { count: choiceQty });
+
+                  return (
+                    <button
+                      key={choiceQty}
+                      type="button"
+                      onClick={() => handleAddToCart(choiceQty)}
+                      disabled={!canOrder}
+                      className="h-10 px-2 bg-brand rounded-[100px] justify-center items-center hover:bg-brand-hover transition-colors shadow-sm flex text-white text-xs font-bold whitespace-nowrap disabled:cursor-not-allowed disabled:bg-zinc-300"
+                    >
+                      {btnText}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           ) : (
             <button
               type="button"
-              onClick={() => handleAddToCart(quantity)}
-              disabled={!canOrder}
-              aria-describedby={quantityError ? "quantity-error" : undefined}
-              className="w-full h-11 bg-brand rounded-[100px] justify-center items-center gap-2 hover:bg-brand-hover transition-colors shadow-sm flex disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:hover:bg-zinc-300"
+              disabled
+              className="w-full h-11 bg-zinc-300 rounded-[100px] justify-center items-center gap-2 flex cursor-not-allowed"
             >
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              <span className="text-white text-base font-bold whitespace-nowrap">{t("product.addToCart")}</span>
+              <span className="text-white text-sm font-bold whitespace-nowrap">{t("product.enterValidQuantity")}</span>
             </button>
           )}
         </div>

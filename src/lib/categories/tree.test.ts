@@ -148,7 +148,7 @@ describe("category tree helpers", () => {
     );
   });
 
-  it("fetches categories without a lang query or persistent cache", async () => {
+  it("fetches categories without a lang query and with default revalidation", async () => {
     const originalBaseUrl = process.env.BBNL_API_BASE_URL;
     process.env.BBNL_API_BASE_URL = "https://example.test";
     const fetchMock = vi.fn().mockResolvedValue({
@@ -160,10 +160,42 @@ describe("category tree helpers", () => {
     await fetchCategoryGroups();
 
     expect(fetchMock).toHaveBeenCalledWith("https://example.test/api/categories", {
-      cache: "no-store",
+      next: { revalidate: 3600 },
+      headers: { Accept: "application/json" },
     });
 
     vi.unstubAllGlobals();
+    process.env.BBNL_API_BASE_URL = originalBaseUrl;
+  });
+
+  it("attaches Basic Auth header when DOMAIN_LOCK is enabled", async () => {
+    const originalBaseUrl = process.env.BBNL_API_BASE_URL;
+    process.env.BBNL_API_BASE_URL = "https://example.test";
+    process.env.DOMAIN_LOCK = "true";
+    process.env.DOMAIN_LOCK_USER = "bbnl";
+    process.env.DOMAIN_LOCK_PASSWORD = "secret";
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: [] }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await fetchCategoryGroups();
+
+    const expectedAuth = `Basic ${Buffer.from("bbnl:secret").toString("base64")}`;
+    expect(fetchMock).toHaveBeenCalledWith("https://example.test/api/categories", {
+      next: { revalidate: 3600 },
+      headers: {
+        Accept: "application/json",
+        Authorization: expectedAuth,
+      },
+    });
+
+    vi.unstubAllGlobals();
+    delete process.env.DOMAIN_LOCK;
+    delete process.env.DOMAIN_LOCK_USER;
+    delete process.env.DOMAIN_LOCK_PASSWORD;
     process.env.BBNL_API_BASE_URL = originalBaseUrl;
   });
 });
