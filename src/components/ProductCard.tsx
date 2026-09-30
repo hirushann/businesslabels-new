@@ -428,13 +428,16 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
   
   const properties = product.properties as Record<string, unknown> | null;
   const kernValue = properties?.kern;
+  const isStack = useMemo(() => {
+    if (!kernValue) return false;
+    return typeof kernValue === "string" && kernValue.toLowerCase() === "fan-fold";
+  }, [kernValue]);
   const rollsStackLabel = useMemo(() => {
     if (!kernValue) {
       return t("product.rollsStack");
     }
-    const isFanFold = typeof kernValue === "string" && kernValue.toLowerCase() === "fan-fold";
-    return isFanFold ? t("product.stack") : t("product.rolls");
-  }, [kernValue, t]);
+    return isStack ? t("product.stack") : t("product.rolls");
+  }, [kernValue, isStack, t]);
 
   const isLabelProduct = Boolean(product.is_label_product ?? product.is_label ?? false);
   const normalizedPackingGroup = isLabelProduct ? normalizePositiveInteger(product.packing_group) : null;
@@ -446,6 +449,8 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
   const [isWarrantyPopoverOpen, setIsWarrantyPopoverOpen] = useState(false);
   const warrantyDialogHandledRef = useRef(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [pendingBulkQty, setPendingBulkQty] = useState<number | null>(null);
+  const [pendingBulkUnitPrice, setPendingBulkUnitPrice] = useState<number | null>(null);
   const hasWarrantyOptions = Boolean(normalizedWarranty.defaultOption) || normalizedWarranty.allOptions.length > 0 || normalizedWarranty.oldOptions.length > 0;
 
   const bulkDiscountTiers = useMemo(
@@ -546,7 +551,16 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
 
   const handleConfirmWarrantyAdd = (selectedOption: WarrantyOption | null) => {
     warrantyDialogHandledRef.current = true;
-    addProductWithWarranty(selectedOption);
+
+    // If warranty was chained from bulk modal, use the pending qty/price
+    if (pendingBulkQty !== null) {
+      addProductWithWarranty(selectedOption, pendingBulkQty, pendingBulkUnitPrice ?? undefined);
+      setPendingBulkQty(null);
+      setPendingBulkUnitPrice(null);
+    } else {
+      addProductWithWarranty(selectedOption);
+    }
+
     setIsWarrantyPopoverOpen(false);
   };
 
@@ -561,13 +575,31 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
 
     if (!warrantyDialogHandledRef.current) {
       warrantyDialogHandledRef.current = true;
-      addProductWithWarranty(null);
+
+      // If warranty was chained from bulk modal, use the pending qty/price
+      if (pendingBulkQty !== null) {
+        addProductWithWarranty(null, pendingBulkQty, pendingBulkUnitPrice ?? undefined);
+        setPendingBulkQty(null);
+        setPendingBulkUnitPrice(null);
+      } else {
+        addProductWithWarranty(null);
+      }
     }
   };
 
   // Called when user confirms from bulk discount modal
   const handleBulkModalConfirm = (quantity: number, unitPrice: number) => {
     setIsBulkModalOpen(false);
+
+    // Chain warranty dialog if product has warranty options (same as ProductPurchase)
+    if (hasWarrantyOptions) {
+      setPendingBulkQty(quantity);
+      setPendingBulkUnitPrice(unitPrice);
+      warrantyDialogHandledRef.current = false;
+      setIsWarrantyPopoverOpen(true);
+      return;
+    }
+
     addProductWithWarranty(null, quantity, unitPrice);
   };
 
@@ -784,7 +816,10 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
       discounts={product.discounts}
       packingGroup={normalizedPackingGroup}
       allowSingulars={effectiveAllowSingulars}
+      moq={normalizedMoq}
       rollsStackLabel={rollsStackLabel}
+      isStack={isStack}
+      isLabelProduct={isLabelProduct}
     />
   ) : null;
 

@@ -2,8 +2,15 @@
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import Image from "next/image";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import type { BulkDiscountTier } from "@/components/ProductCard";
+import {
+  getNextQuantity,
+  getPreviousQuantity,
+  getPackagingValidation,
+  formatPackagingBreakdown,
+  getPackagingHint,
+} from "@/lib/utils/packaging";
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
 
@@ -24,7 +31,10 @@ type BulkDiscountModalProps = {
   discounts: BulkDiscountTier[] | string;
   packingGroup?: number | null;
   allowSingulars?: boolean;
+  moq?: number | null;
   rollsStackLabel?: string;
+  isStack?: boolean;
+  isLabelProduct?: boolean;
 };
 
 /* ─── Helpers ─────────────────────────────────────────────────────────────── */
@@ -87,11 +97,23 @@ export default function BulkDiscountModal({
   discounts,
   packingGroup,
   allowSingulars,
+  moq,
   rollsStackLabel,
+  isStack,
+  isLabelProduct,
 }: BulkDiscountModalProps) {
   const t = useTranslations();
+  const locale = useLocale();
   const normalizedPackingGroup = packingGroup && packingGroup > 0 ? packingGroup : null;
-  const initialQty = !allowSingulars && normalizedPackingGroup ? normalizedPackingGroup : 1;
+  const normalizedMoq = moq && moq > 0 ? moq : null;
+  const effectiveAllowSingulars = Boolean(allowSingulars);
+  const isStrict = Boolean(normalizedPackingGroup && !effectiveAllowSingulars);
+  const isLabel = Boolean(isLabelProduct);
+
+  const minOrderQuantity = isLabel
+    ? (normalizedMoq ?? (isStrict && normalizedPackingGroup ? normalizedPackingGroup : 1))
+    : (normalizedMoq ?? 1);
+  const initialQty = minOrderQuantity;
 
   const [quantity, setQuantity] = useState(initialQty);
   const [inputValue, setInputValue] = useState(String(initialQty));
@@ -135,30 +157,79 @@ export default function BulkDiscountModal({
 
   const qtyToNextTier = nextTier ? nextTier.quantity - quantity : null;
 
-  /* ─── Quantity helpers ──────────────────────────────────────────────── */
-  const snapUp = (qty: number): number => {
-    if (!normalizedPackingGroup) return Math.max(1, qty);
-    if (allowSingulars && qty < normalizedPackingGroup) return Math.max(1, qty);
-    if (qty < normalizedPackingGroup) return normalizedPackingGroup;
-    return Math.ceil(qty / normalizedPackingGroup) * normalizedPackingGroup;
-  };
+  /* ─── Packaging-aware validation ────────────────────────────────────── */
+  const packagingValidation = useMemo(() => {
+    if (!isLabel) {
+      return { isValid: quantity >= minOrderQuantity && quantity > 0, choices: [] as number[] };
+    }
+    return getPackagingValidation({
+      quantity,
+      pack: normalizedPackingGroup,
+      allowSingulars: effectiveAllowSingulars,
+      moq: normalizedMoq,
+    });
+  }, [isLabel, quantity, normalizedPackingGroup, effectiveAllowSingulars, normalizedMoq, minOrderQuantity]);
 
-  const snapDown = (qty: number): number => {
-    if (!normalizedPackingGroup) return Math.max(1, qty);
-    if (qty <= 1) return 1;
-    if (allowSingulars && qty <= normalizedPackingGroup) return Math.max(1, qty - 1);
-    if (qty <= normalizedPackingGroup) return 1;
-    return Math.max(1, Math.floor((qty - 1) / normalizedPackingGroup) * normalizedPackingGroup);
-  };
+  const packagingBreakdown = useMemo(() => {
+    if (!isLabel) return null;
+    return formatPackagingBreakdown({
+      quantity,
+      pack: normalizedPackingGroup,
+      allowSingulars: effectiveAllowSingulars,
+      locale,
+      isStack,
+    });
+  }, [isLabel, quantity, normalizedPackingGroup, effectiveAllowSingulars, locale, isStack]);
 
+  const packagingHintText = useMemo(() => {
+    if (!isLabel) return null;
+    return getPackagingHint({
+      pack: normalizedPackingGroup,
+      allowSingulars: effectiveAllowSingulars,
+      locale,
+      isStack,
+    });
+  }, [isLabel, normalizedPackingGroup, effectiveAllowSingulars, locale, isStack]);
+
+  /* ─── Dynamic button text ───────────────────────────────────────────── */
+  const mainOrderButtonText = useMemo(() => {
+    if (!isLabel) {
+      return t("bulkDiscount.addToCart");
+    }
+    const targetQty = quantity > 0 ? quantity : initialQty;
+    if (isStack) {
+      return targetQty === 1
+        ? t("product.orderStackButton", { count: targetQty })
+        : t("product.orderStacksButton", { count: targetQty });
+    }
+    return targetQty === 1
+      ? t("product.orderRollButton", { count: targetQty })
+      : t("product.orderRollsButton", { count: targetQty });
+  }, [isLabel, quantity, initialQty, isStack, t]);
+
+  /* ─── Quantity helpers using packaging utilities ─────────────────────── */
   const increment = () => {
-    const next = snapUp(quantity + 1);
+    const next = isLabel
+      ? getNextQuantity({
+          current: quantity,
+          pack: normalizedPackingGroup,
+          allowSingulars: effectiveAllowSingulars,
+          moq: normalizedMoq,
+        })
+      : Math.max(minOrderQuantity, quantity + 1);
     setQuantity(next);
     setInputValue(String(next));
   };
 
   const decrement = () => {
-    const next = snapDown(quantity - 1);
+    const next = isLabel
+      ? getPreviousQuantity({
+          current: quantity,
+          pack: normalizedPackingGroup,
+          allowSingulars: effectiveAllowSingulars,
+          moq: normalizedMoq,
+        })
+      : Math.max(minOrderQuantity, quantity - 1);
     setQuantity(next);
     setInputValue(String(next));
   };
@@ -171,7 +242,7 @@ export default function BulkDiscountModal({
   };
 
   const handleInputBlur = () => {
-    if (!Number.isFinite(quantity) || quantity < 1) {
+    if (!Number.isFinite(quantity) || quantity < minOrderQuantity) {
       setQuantity(initialQty);
       setInputValue(String(initialQty));
     } else {
@@ -188,14 +259,36 @@ export default function BulkDiscountModal({
     setInputValue(String(snapped));
   };
 
+  /* ─── Get unit price for a specific quantity ────────────────────────── */
+  const getUnitPriceForQuantity = (qty: number): number => {
+    const tierForQty = [...tiers].reverse().find((t) => qty >= t.quantity) ?? null;
+    return tierForQty ? tierForQty.unitPrice : price;
+  };
+
   /* ─── Confirm ───────────────────────────────────────────────────────── */
-  const handleConfirm = (usePackingGroup = false) => {
-    const qty = usePackingGroup && normalizedPackingGroup
+  const handleConfirm = (overrideQty?: number) => {
+    const qty = overrideQty ?? quantity;
+    const finalQty = Math.max(1, qty);
+    const finalPrice = getUnitPriceForQuantity(finalQty);
+    onConfirm(finalQty, finalPrice);
+    onClose();
+  };
+
+  const handleConfirmBox = () => {
+    const qty = normalizedPackingGroup
       ? Math.max(1, Math.ceil(quantity / normalizedPackingGroup)) * normalizedPackingGroup
       : Math.max(1, quantity);
-    const tierForQty = [...tiers].reverse().find((t) => qty >= t.quantity) ?? null;
-    const finalPrice = tierForQty ? tierForQty.unitPrice : price;
+    const finalPrice = getUnitPriceForQuantity(qty);
     onConfirm(qty, finalPrice);
+    onClose();
+  };
+
+  /* ─── Choice button click (for invalid strict packaging) ────────────── */
+  const handleChoiceClick = (choiceQty: number) => {
+    setQuantity(choiceQty);
+    setInputValue(String(choiceQty));
+    const finalPrice = getUnitPriceForQuantity(choiceQty);
+    onConfirm(choiceQty, finalPrice);
     onClose();
   };
 
@@ -216,6 +309,18 @@ export default function BulkDiscountModal({
   const totalSavings = activeTier
     ? (price - activeTier.unitPrice) * quantity
     : 0;
+
+  /* ─── Choice button label helper ─────────────────────────────────────── */
+  const choiceButtonLabel = (choiceQty: number): string => {
+    if (isStack) {
+      return choiceQty === 1
+        ? t("product.orderStackButton", { count: choiceQty })
+        : t("product.orderStacksButton", { count: choiceQty });
+    }
+    return choiceQty === 1
+      ? t("product.orderRollButton", { count: choiceQty })
+      : t("product.orderRollsButton", { count: choiceQty });
+  };
 
   /* ─── Render ──────────────────────────────────────────────────────────── */
   if (!isOpen) return null;
@@ -337,12 +442,16 @@ export default function BulkDiscountModal({
             </div>
           </div>
 
-          {/* Quantity Selector */}
-          {/* Add to Cart Section */}
+          {/* Quantity Selector + Add to Cart Section */}
           <div className="flex flex-col gap-3">
+            {/* Packaging hint */}
+            {packagingHintText && (
+              <p className="text-xs text-neutral-500 font-medium">{packagingHintText}</p>
+            )}
+
             {normalizedPackingGroup && normalizedPackingGroup > 1 ? (
-              // Label product layout with Rolls/Stack and Box buttons
-              allowSingulars ? (
+              // Label product layout
+              effectiveAllowSingulars ? (
                 <>
                   <div className="flex flex-col sm:flex-row sm:items-end gap-3 w-full">
                     {/* Quantity selector */}
@@ -377,93 +486,164 @@ export default function BulkDiscountModal({
                       </button>
                     </div>
 
+                    {packagingValidation.isValid ? (
+                      <button
+                        type="button"
+                        id="bulk-modal-add-rolls"
+                        onClick={() => handleConfirm()}
+                        className="w-full sm:flex-1 h-12 px-4 py-2.5 bg-brand rounded-[100px] justify-center items-center gap-2 hover:bg-brand-hover transition-colors shadow-sm flex"
+                      >
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        <span className="text-white text-base font-bold whitespace-nowrap">{mainOrderButtonText}</span>
+                      </button>
+                    ) : packagingValidation.choices.length > 0 ? (
+                      <div className="flex-1 flex flex-col gap-2">
+                        <p className="text-xs font-semibold text-red-600">
+                          {t("product.chooseMultipleOf", { pack: normalizedPackingGroup })}
+                        </p>
+                        <div className="grid grid-cols-2 gap-2">
+                          {packagingValidation.choices.map((choiceQty) => (
+                            <button
+                              key={choiceQty}
+                              type="button"
+                              onClick={() => handleChoiceClick(choiceQty)}
+                              className="h-12 px-3 bg-brand rounded-[100px] justify-center items-center gap-1.5 hover:bg-brand-hover transition-colors shadow-sm flex text-white text-xs sm:text-sm font-bold whitespace-nowrap"
+                            >
+                              {choiceButtonLabel(choiceQty)}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex-1 flex flex-col gap-2">
+                        <p className="text-xs font-semibold text-red-600">
+                          {t("product.enterValidQuantity")}
+                        </p>
+                        <button
+                          type="button"
+                          disabled
+                          className="w-full h-12 px-4 py-2.5 bg-zinc-300 rounded-[100px] justify-center items-center gap-2 flex cursor-not-allowed text-white text-base font-bold"
+                        >
+                          {mainOrderButtonText}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {packagingValidation.isValid && (
                     <button
                       type="button"
-                      id="bulk-modal-add-rolls"
-                      onClick={() => handleConfirm(false)}
-                      className="w-full sm:flex-1 h-12 px-4 py-2.5 bg-brand rounded-[100px] justify-center items-center gap-2 hover:bg-brand-hover transition-colors shadow-sm flex"
+                      id="bulk-modal-add-box"
+                      onClick={handleConfirmBox}
+                      className="w-full h-12 px-4 py-2.5 bg-amber-100 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-amber-300 justify-center items-center gap-2 hover:bg-amber-300 transition-colors flex"
                     >
-                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-brand" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                       </svg>
-                      <span className="text-white text-base font-bold whitespace-nowrap">{t("bulkDiscount.addToCart")}</span>
-                    </button>
-                  </div>
-
-                  <button
-                    type="button"
-                    id="bulk-modal-add-box"
-                    onClick={() => handleConfirm(true)}
-                    className="w-full h-12 px-4 py-2.5 bg-amber-100 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-amber-300 justify-center items-center gap-2 hover:bg-amber-300 transition-colors flex"
-                  >
-                    <svg className="w-5 h-5 text-brand" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    <span className="text-brand text-base font-bold whitespace-nowrap">
-                      {t("bulkDiscount.box")}{" "}
-                      <span className="text-xs text-brand">
-                        ({normalizedPackingGroup} {rollsStackLabel ? rollsStackLabel.toLowerCase() : t("bulkDiscount.rollsStack").toLowerCase()})
+                      <span className="text-brand text-base font-bold whitespace-nowrap">
+                        {t("bulkDiscount.box")}{" "}
+                        <span className="text-xs text-brand">
+                          ({normalizedPackingGroup} {rollsStackLabel ? rollsStackLabel.toLowerCase() : t("bulkDiscount.rollsStack").toLowerCase()})
+                        </span>
                       </span>
-                    </span>
-                  </button>
+                    </button>
+                  )}
                 </>
               ) : (
-                <div className="flex flex-col sm:flex-row sm:items-end gap-3 w-full">
-                  {/* Quantity selector */}
-                  <div className="h-12 w-full sm:w-32 px-1 rounded-[50px] outline outline-1 outline-offset-[-1px] outline-black/10 flex justify-between items-center bg-white shrink-0">
-                    <button
-                      type="button"
-                      onClick={decrement}
-                      className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
-                    >
-                      <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
-                        <path strokeLinecap="round" d="M2 6h8" />
-                      </svg>
-                    </button>
-                    <div className="flex-1 self-stretch flex justify-center items-center overflow-hidden">
-                      <input
-                        type="number"
-                        min="1"
-                        value={inputValue}
-                        onChange={(e) => handleInputChange(e.target.value)}
-                        onBlur={handleInputBlur}
-                        className="w-full text-center text-neutral-800 text-sm font-semibold focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-transparent"
-                      />
+                // Strict packaging — must be multiples of packing group
+                <div className="flex flex-col gap-3 w-full">
+                  <div className="flex flex-col sm:flex-row sm:items-end gap-3 w-full">
+                    {/* Quantity selector */}
+                    <div className="h-12 w-full sm:w-32 px-1 rounded-[50px] outline outline-1 outline-offset-[-1px] outline-black/10 flex justify-between items-center bg-white shrink-0">
+                      <button
+                        type="button"
+                        onClick={decrement}
+                        className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
+                      >
+                        <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
+                          <path strokeLinecap="round" d="M2 6h8" />
+                        </svg>
+                      </button>
+                      <div className="flex-1 self-stretch flex justify-center items-center overflow-hidden">
+                        <input
+                          type="number"
+                          min="1"
+                          value={inputValue}
+                          onChange={(e) => handleInputChange(e.target.value)}
+                          onBlur={handleInputBlur}
+                          className="w-full text-center text-neutral-800 text-sm font-semibold focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-transparent"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={increment}
+                        className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
+                      >
+                        <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
+                          <path strokeLinecap="round" d="M6 2v8M2 6h8" />
+                        </svg>
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={increment}
-                      className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
-                    >
-                      <svg className="w-3 h-3 text-neutral-800" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 12 12">
-                        <path strokeLinecap="round" d="M6 2v8M2 6h8" />
-                      </svg>
-                    </button>
-                  </div>
 
-                  <button
-                    type="button"
-                    id="bulk-modal-add-box"
-                    onClick={() => handleConfirm(true)}
-                    className="w-full sm:flex-1 h-12 px-4 py-2.5 bg-amber-100 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-amber-300 justify-center items-center gap-2 hover:bg-amber-300 transition-colors flex"
-                  >
-                    <svg className="w-5 h-5 text-brand" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    <span className="text-brand text-base font-bold whitespace-nowrap">
-                      {t("bulkDiscount.box")}{" "}
-                      <span className="text-xs text-brand">
-                        ({normalizedPackingGroup} {rollsStackLabel ? rollsStackLabel.toLowerCase() : t("bulkDiscount.rollsStack").toLowerCase()})
-                      </span>
-                    </span>
-                  </button>
+                    {packagingValidation.isValid ? (
+                      <button
+                        type="button"
+                        id="bulk-modal-add-box"
+                        onClick={handleConfirmBox}
+                        className="w-full sm:flex-1 h-12 px-4 py-2.5 bg-amber-100 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-amber-300 justify-center items-center gap-2 hover:bg-amber-300 transition-colors flex"
+                      >
+                        <svg className="w-5 h-5 text-brand" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        <span className="text-brand text-base font-bold whitespace-nowrap">
+                          {t("bulkDiscount.box")}{" "}
+                          <span className="text-xs text-brand">
+                            ({normalizedPackingGroup} {rollsStackLabel ? rollsStackLabel.toLowerCase() : t("bulkDiscount.rollsStack").toLowerCase()})
+                          </span>
+                        </span>
+                      </button>
+                    ) : packagingValidation.choices.length > 0 ? (
+                      <div className="flex-1 flex flex-col gap-2">
+                        <p className="text-xs font-semibold text-red-600">
+                          {t("product.chooseMultipleOf", { pack: normalizedPackingGroup })}
+                        </p>
+                        <div className="grid grid-cols-2 gap-2">
+                          {packagingValidation.choices.map((choiceQty) => (
+                            <button
+                              key={choiceQty}
+                              type="button"
+                              onClick={() => handleChoiceClick(choiceQty)}
+                              className="h-12 px-3 bg-brand rounded-[100px] justify-center items-center gap-1.5 hover:bg-brand-hover transition-colors shadow-sm flex text-white text-xs sm:text-sm font-bold whitespace-nowrap"
+                            >
+                              {choiceButtonLabel(choiceQty)}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex-1 flex flex-col gap-2">
+                        <p className="text-xs font-semibold text-red-600">
+                          {t("product.enterValidQuantity")}
+                        </p>
+                        <button
+                          type="button"
+                          disabled
+                          className="w-full h-12 px-4 py-2.5 bg-zinc-300 rounded-[100px] justify-center items-center gap-2 flex cursor-not-allowed text-white text-base font-bold"
+                        >
+                          {mainOrderButtonText}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )
             ) : (
-              // Original single-button layout with quantity selector
+              // Non-label / no packing group — simple quantity + add to cart
               <div className="flex flex-col sm:flex-row sm:items-end gap-4 w-full">
                 <div className="flex flex-col gap-3 w-full sm:w-auto">
-                  <span className="text-neutral-800 text-sm font-bold w-full">Quantity</span>
+                  <span className="text-neutral-800 text-sm font-bold w-full">{t("product.quantity")}</span>
                   <div className="h-12 w-full sm:w-32 px-1 rounded-[50px] outline outline-1 outline-offset-[-1px] outline-black/10 flex justify-between items-center bg-white">
                     <button
                       type="button"
@@ -498,7 +678,7 @@ export default function BulkDiscountModal({
                 <button
                   type="button"
                   id="bulk-modal-add-to-cart"
-                  onClick={() => handleConfirm(false)}
+                  onClick={() => handleConfirm()}
                   className="w-full sm:flex-1 h-12 px-4 py-2.5 bg-brand rounded-[100px] justify-center items-center gap-2 hover:bg-brand-hover transition-colors shadow-sm flex"
                 >
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -513,8 +693,26 @@ export default function BulkDiscountModal({
           {/* Divider */}
           <div className="h-px bg-slate-100" />
 
-          {/* Banners Container - Fixed minimum height to prevent layout shift when banners appear/disappear */}
-          <div className="flex flex-col gap-3 min-h-[140px]">
+          {/* Banners Container */}
+          <div className="flex flex-col gap-3 min-h-[80px]">
+            {/* Live Total & Breakdown */}
+            {packagingValidation.isValid && quantity > 0 && (
+              <div className="flex justify-between items-center px-4 py-3 rounded-2xl bg-slate-50 border border-slate-100">
+                <span className="text-sm text-neutral-600 font-medium truncate pr-2">
+                  {isLabel
+                    ? (packagingBreakdown || `${quantity} ${
+                        quantity === 1
+                          ? isStack ? t("product.stack") : t("product.roll")
+                          : isStack ? t("product.stacks") : t("product.rolls")
+                      }`)
+                    : `${quantity}× ${formatEuro(activeUnitPrice)}`}
+                </span>
+                <strong className="text-base font-bold text-neutral-900 shrink-0">
+                  {formatEuro(quantity * activeUnitPrice)}
+                </strong>
+              </div>
+            )}
+
             {/* Savings Banner */}
             {activeTier && totalSavings > 0 ? (
               <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-green-50 border border-green-100">

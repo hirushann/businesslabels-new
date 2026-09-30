@@ -24,7 +24,6 @@ import { ScrollToTop } from "@/components/ScrollToTop";
 import { categoryCanonicalUrlsById, fetchCategoryGroups } from "@/lib/categories/tree";
 import { buildOrganizationSchema, buildWebSiteSchema } from "@/lib/seo/structuredData";
 import { isDevelopmentMode, getRobotsMetadata } from "@/lib/seo/indexing";
-
 const isStaging = process.env.NEXT_PUBLIC_APP_ENV === 'staging' || process.env.VERCEL_ENV === 'preview';
 const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
 
@@ -124,7 +123,7 @@ export default async function RootLayout({ children }) {
         />
         <script
           dangerouslySetInnerHTML={{
-            __html: `window.dataLayer=window.dataLayer||[];`,
+            __html: `window.dataLayer=window.dataLayer||[];window.ga=window.ga||function(){(window.ga.q=window.ga.q||[]).push(arguments);};window.ga.l=+new Date;window.ga.getAll=window.ga.getAll||function(){return[];};window.ga.getByName=window.ga.getByName||function(){return null;};`,
           }}
         />
       </head>
