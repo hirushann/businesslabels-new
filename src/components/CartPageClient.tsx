@@ -7,7 +7,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import CartProductSlider from '@/components/CartProductSlider';
 import type { ProductCardData } from '@/components/ProductCard';
 import { localePath } from '@/lib/i18n/utils';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { trackViewCart } from '@/lib/analytics/dataLayer';
 import { getExpectedDeliveryMessage } from '@/lib/utils/delivery';
 import { useShippingRules } from '@/hooks/useShippingRules';
@@ -15,6 +15,7 @@ import { useDeliveryAvailability } from '@/hooks/useDeliveryAvailability';
 import CartTotals from '@/components/CartTotals';
 import { useIsBusinessCustomer } from '@/hooks/useIsBusinessCustomer';
 import { toDisplayImageUrl } from '@/lib/utils/imageProxy';
+import { formatPackagingBreakdown, getPackagingValidation } from '@/lib/utils/packaging';
 
 function formatEuro(value: number): string {
   return new Intl.NumberFormat('nl-NL', {
@@ -81,6 +82,57 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
   const [deliveryInfo, setDeliveryInfo] = useState<ReturnType<typeof getExpectedDeliveryMessage> | null>(null);
   const availableDates = useDeliveryAvailability();
   const viewCartTrackedRef = useRef(false);
+
+  const [draftQuantities, setDraftQuantities] = useState<Record<string, string>>({});
+
+  const handleQuantityInputChange = (key: string, value: string, item: CartItem) => {
+    setDraftQuantities((prev) => ({ ...prev, [key]: value }));
+    const parsed = parseInt(value, 10);
+    if (!Number.isInteger(parsed) || parsed < 1) {
+      return;
+    }
+    const validation = getPackagingValidation({
+      quantity: parsed,
+      pack: item.packingGroup,
+      allowSingulars: item.allowSingulars,
+      moq: item.moq,
+    });
+    if (validation.isValid) {
+      setItemQuantity(key, parsed);
+      setDraftQuantities((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+    }
+  };
+
+  const handleApplyChoice = (key: string, choiceQty: number) => {
+    setItemQuantity(key, choiceQty);
+    setDraftQuantities((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
+  const hasInvalidDraft = useMemo(() => {
+    return items.some((item) => {
+      if (item.itemKind === 'warranty') return false;
+      const draft = draftQuantities[item.key];
+      if (draft !== undefined) {
+        const parsed = parseInt(draft, 10);
+        const validation = getPackagingValidation({
+          quantity: Number.isInteger(parsed) ? parsed : 0,
+          pack: item.packingGroup,
+          allowSingulars: item.allowSingulars,
+          moq: item.moq,
+        });
+        return !validation.isValid;
+      }
+      return false;
+    });
+  }, [items, draftQuantities]);
 
   useEffect(() => {
     if (!viewCartTrackedRef.current && items.length > 0) {
@@ -218,6 +270,22 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                       : Array.isArray(item.discounts) && item.discounts.length > 0
                   );
                   const warrantyTypeName = warrantyTypeNameFor(linkedWarranty);
+                  const itemBreakdown = formatPackagingBreakdown({
+                    quantity: item.quantity,
+                    pack: item.packingGroup,
+                    allowSingulars: item.allowSingulars,
+                    locale,
+                  });
+
+                  const displayQty = draftQuantities[item.key] ?? String(item.quantity);
+                  const parsedInputQty = parseInt(displayQty, 10);
+                  const itemValidation = getPackagingValidation({
+                    quantity: Number.isInteger(parsedInputQty) ? parsedInputQty : 0,
+                    pack: item.packingGroup,
+                    allowSingulars: item.allowSingulars,
+                    moq: item.moq,
+                  });
+                  const isDraftInvalid = !itemValidation.isValid && draftQuantities[item.key] !== undefined;
 
                   return (
                     <div key={item.key} className="flex flex-col gap-3">
@@ -300,13 +368,18 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                         </div>
 
                         {/* Quantity Selector */}
-                        <div className="flex flex-wrap items-center gap-2 pl-7 md:pl-0">
+                        <div className="flex flex-col gap-1 pl-7 md:pl-0">
+                          <div className="flex flex-wrap items-center gap-2">
                             {/* Pill Input */}
-                            <div className="h-[38px] bg-white rounded-[44px] shadow-[0px_1px_2px_rgba(16,24,40,0.05)] border border-black/10 flex items-center overflow-hidden shrink-0">
+                            <div className={`h-[38px] bg-white rounded-[44px] shadow-[0px_1px_2px_rgba(16,24,40,0.05)] border ${isDraftInvalid ? 'border-red-500 ring-1 ring-red-500' : 'border-black/10'} flex items-center overflow-hidden shrink-0`}>
                               <button
                                 type="button"
-                                onClick={() => decrementItemQuantity(item.key)}
-                                className="w-[38px] h-[38px] flex items-center justify-center border-r border-black/10 text-ink hover:bg-slate-50 transition-colors text-lg"
+                                disabled={item.quantity <= ((!item.allowSingulars && item.packingGroup) ? item.packingGroup : (item.moq || 1))}
+                                onClick={() => {
+                                  setDraftQuantities(prev => { const n = { ...prev }; delete n[item.key]; return n; });
+                                  decrementItemQuantity(item.key);
+                                }}
+                                className="w-[38px] h-[38px] flex items-center justify-center border-r border-black/10 text-ink hover:bg-slate-50 transition-colors text-lg disabled:opacity-40 disabled:cursor-not-allowed"
                               >
                                 -
                               </button>
@@ -314,18 +387,16 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                                 type="text"
                                 inputMode="numeric"
                                 pattern="[1-9][0-9]*"
-                                value={String(item.quantity)}
-                                onChange={(e) => {
-                                  const val = parseInt(e.target.value, 10);
-                                  if (Number.isInteger(val) && val > 0) {
-                                    setItemQuantity(item.key, val);
-                                  }
-                                }}
-                                className="w-[38px] h-[38px] border-r border-black/10 bg-transparent text-center text-base font-bold text-ink focus:outline-none focus:ring-0 p-0"
+                                value={displayQty}
+                                onChange={(e) => handleQuantityInputChange(item.key, e.target.value, item)}
+                                className="w-[44px] h-[38px] border-r border-black/10 bg-transparent text-center text-sm font-bold text-ink focus:outline-none focus:ring-0 p-0"
                               />
                               <button
                                 type="button"
-                                onClick={() => incrementItemQuantity(item.key)}
+                                onClick={() => {
+                                  setDraftQuantities(prev => { const n = { ...prev }; delete n[item.key]; return n; });
+                                  incrementItemQuantity(item.key);
+                                }}
                                 className="w-[38px] h-[38px] flex items-center justify-center text-ink hover:bg-slate-50 transition-colors text-lg"
                               >
                                 +
@@ -347,6 +418,42 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                                 </button>
                               </>
                             ) : null}
+                          </div>
+
+                          {/* Error and Choices for invalid draft in cart */}
+                          {isDraftInvalid && (
+                            <div className="flex flex-col gap-1.5 w-full mt-1">
+                              {itemValidation.choices.length > 0 ? (
+                                <>
+                                  <span className="text-xs font-semibold text-red-600">
+                                    {t("product.chooseMultipleOf", { pack: item.packingGroup ?? 1 })}
+                                  </span>
+                                  <div className="flex gap-2">
+                                    {itemValidation.choices.map((choice) => (
+                                      <button
+                                        key={choice}
+                                        type="button"
+                                        onClick={() => handleApplyChoice(item.key, choice)}
+                                        className="px-3 py-1 bg-brand text-white text-xs font-bold rounded-full hover:bg-brand-hover transition-colors shadow-sm"
+                                      >
+                                        {t("cart.changeToChoice", { count: choice })}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </>
+                              ) : (
+                                <span className="text-xs font-semibold text-red-600">
+                                  {t("product.enterValidQuantity")}
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          {itemBreakdown && !isDraftInvalid && (
+                            <span className="text-xs text-neutral-500 font-medium">
+                              {itemBreakdown}
+                            </span>
+                          )}
                         </div>
 
                         {/* Line Total */}
@@ -658,13 +765,23 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
 
                 {/* Checkout CTA */}
                 <Link
-                  href={localePath("/afrekenen", locale)}
-                  className="w-full h-13 bg-brand hover:bg-brand-hover active:bg-brand-active rounded-[100px] flex items-center justify-center cursor-pointer transition-colors px-6"
+                  href={hasInvalidDraft ? '#' : localePath("/afrekenen", locale)}
+                  onClick={hasInvalidDraft ? (e) => e.preventDefault() : undefined}
+                  className={`w-full h-13 rounded-[100px] flex items-center justify-center transition-colors px-6 ${
+                    hasInvalidDraft
+                      ? 'bg-zinc-300 cursor-not-allowed text-white'
+                      : 'bg-brand hover:bg-brand-hover active:bg-brand-active cursor-pointer text-white'
+                  }`}
                 >
                   <span className="text-center text-white text-lg font-medium leading-6 whitespace-nowrap">
                     {t('cart.proceedToCheckout')}
                   </span>
                 </Link>
+                {hasInvalidDraft && (
+                  <p className="text-xs text-red-600 font-semibold text-center mt-2">
+                    {t('cart.checkEnteredQuantity')}
+                  </p>
+                )}
               </div>
             </aside>
           </div>

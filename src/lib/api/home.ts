@@ -25,15 +25,15 @@ export interface HomeApiResponse {
  * Fetch home page content and images from backend.
  * Endpoint: /api/home
  */
+import { getBackendHeaders } from './backendHeaders';
+
 export async function getHomeData(): Promise<HomePageData | null> {
   const baseUrl = (process.env.BBNL_API_BASE_URL || 'http://127.0.0.1:8000').replace(/\/$/, '');
 
   try {
     const response = await fetch(`${baseUrl}/api/home`, {
       next: { revalidate: 300 },
-      headers: {
-        Accept: 'application/json',
-      },
+      headers: getBackendHeaders(),
     });
 
     if (!response.ok) {

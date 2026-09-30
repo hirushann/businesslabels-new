@@ -46,18 +46,37 @@ export async function resolveCategoryArchive(
   url.searchParams.set("locale", locale);
   url.searchParams.set("path", path);
 
-  const response = await fetch(url, {
-    headers: { Accept: "application/json" },
-    cache: "no-store",
-  });
-
-  if (response.status === 404) return null;
-  if (!response.ok) {
-    throw new Error(`Category archive resolver returned ${response.status}.`);
+  const headers: Record<string, string> = { Accept: "application/json" };
+  if (
+    process.env.DOMAIN_LOCK === "true" &&
+    process.env.DOMAIN_LOCK_USER &&
+    process.env.DOMAIN_LOCK_PASSWORD
+  ) {
+    headers.Authorization = `Basic ${Buffer.from(
+      `${process.env.DOMAIN_LOCK_USER}:${process.env.DOMAIN_LOCK_PASSWORD}`,
+    ).toString("base64")}`;
   }
 
-  const payload = (await response.json()) as { data?: ResolvedCategoryArchive };
-  return payload.data ?? null;
+  try {
+    const response = await fetch(url, {
+      headers,
+      cache: "no-store",
+    });
+
+    if (response.status === 404) return null;
+    if (!response.ok) {
+      console.error(
+        `Category archive resolver returned ${response.status} for ${path}.`,
+      );
+      return null;
+    }
+
+    const payload = (await response.json()) as { data?: ResolvedCategoryArchive };
+    return payload.data ?? null;
+  } catch (error) {
+    console.error(`Failed to resolve category archive for ${path}:`, error);
+    return null;
+  }
 }
 
 type CategoryArchiveRoute = {

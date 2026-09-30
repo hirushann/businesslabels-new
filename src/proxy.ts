@@ -138,6 +138,32 @@ function persistLocale(response: NextResponse, locale: 'en' | 'nl') {
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
+  if (process.env.DOMAIN_LOCK === 'true') {
+    const basicAuth = request.headers.get('authorization');
+    let isAuthenticated = false;
+
+    if (basicAuth) {
+      const authValue = basicAuth.split(' ')[1];
+      const [user, pwd] = atob(authValue).split(':');
+
+      const expectedUser = process.env.DOMAIN_LOCK_USER || 'bbnl';
+      const expectedPwd = process.env.DOMAIN_LOCK_PASSWORD || 'bbnl';
+
+      if (user === expectedUser && pwd === expectedPwd) {
+        isAuthenticated = true;
+      }
+    }
+    
+    if (!isAuthenticated) {
+      return new NextResponse('Authentication required', {
+        status: 401,
+        headers: {
+          'WWW-Authenticate': 'Basic realm="Secure Area"',
+        },
+      });
+    }
+  }
+
   if (isMaintenanceMode()) {
     if (pathname === '/maintenance.html') {
       return applyResponseHeaders(NextResponse.next());

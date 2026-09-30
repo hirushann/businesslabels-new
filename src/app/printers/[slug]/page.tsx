@@ -17,6 +17,7 @@ import {
   getPrinterTranslation,
 } from "@/lib/routes/printers";
 import { htmlToText, sanitizeCmsHtml } from "@/lib/utils";
+import { getBackendHeaders } from "@/lib/api/backendHeaders";
 
 type PrinterResponse = {
   data: Printer;
@@ -62,7 +63,7 @@ async function getPrinter(slug: string): Promise<Printer | null> {
     const locale = await getServerLocale();
     let response = await fetch(
       withLocaleParam(`${baseUrl}/api/printers/slug/${slug}`, locale),
-      { cache: "no-store" },
+      { cache: "no-store", headers: getBackendHeaders() },
     );
 
     if (!response.ok) {
@@ -70,7 +71,7 @@ async function getPrinter(slug: string): Promise<Printer | null> {
       if (cleaned && cleaned !== slug.toLowerCase()) {
         response = await fetch(
           withLocaleParam(`${baseUrl}/api/printers/slug/${cleaned}`, locale),
-          { cache: "no-store" },
+          { cache: "no-store", headers: getBackendHeaders() },
         );
       }
     }

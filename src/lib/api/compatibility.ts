@@ -10,6 +10,7 @@
 
 import type { Printer, PrinterProperties } from '@/lib/types/printer';
 import type { Product, ProductProperties } from '@/lib/types/product';
+import { getBackendHeaders } from './backendHeaders';
 
 // ─── Response Types ──────────────────────────────────────────────────────
 
@@ -98,10 +99,9 @@ export async function getPrinterProducts(
   
   const response = await fetch(`${baseUrl}/api/products/printer-products`, {
     method: 'POST',
-    headers: {
+    headers: getBackendHeaders({
       'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
+    }),
     body: JSON.stringify({
       printer_id: printerId,
       product_type: options?.productType,
@@ -138,10 +138,9 @@ export async function getProductPrinters(
   
   const response = await fetch(`${baseUrl}/api/products/product-printers`, {
     method: 'POST',
-    headers: {
+    headers: getBackendHeaders({
       'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
+    }),
     body: JSON.stringify({
       product_id: productId,
       per_page: options?.perPage || 20,
@@ -178,10 +177,9 @@ export async function getMaterialProducts(
   
   const response = await fetch(`${baseUrl}/api/products/material-products`, {
     method: 'POST',
-    headers: {
+    headers: getBackendHeaders({
       'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
+    }),
     body: JSON.stringify({
       material_id: materialId,
       product_type: options?.productType,
@@ -218,10 +216,9 @@ export async function checkCompatibility(
   
   const response = await fetch(`${baseUrl}/api/products/compatibility`, {
     method: 'POST',
-    headers: {
+    headers: getBackendHeaders({
       'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
+    }),
     body: JSON.stringify({
       product_id: productId,
       printer_id: printerId,

@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ProductRouteType } from "@/components/ProductCard";
 import { trackAddToCart, trackRemoveFromCart, trackViewCart } from "@/lib/analytics/dataLayer";
+import { getNextQuantity, getPreviousQuantity } from "@/lib/utils/packaging";
 
 const CART_STORAGE_KEY = "businesslabels-cart";
 const PURCHASE_REFERENCE_STORAGE_KEY = "businesslabels-purchase-reference";
@@ -95,46 +96,21 @@ function normalizePackingGroup(value: unknown): number | null {
 }
 
 function nextQuantityForItem(item: CartItem): number {
-  const packingGroup = normalizePackingGroup(item.packingGroup);
-  const moq = item.moq ?? null;
-  
-  if (!packingGroup) {
-    return item.quantity + 1;
-  }
-
-  if (moq && item.quantity < moq) {
-    return moq;
-  }
-
-  if (item.quantity < packingGroup) {
-    if (item.allowSingulars || (moq && item.quantity >= moq)) {
-      return item.quantity + 1;
-    }
-    return packingGroup;
-  }
-
-  return Math.ceil((item.quantity + 1) / packingGroup) * packingGroup;
+  return getNextQuantity({
+    current: item.quantity,
+    pack: normalizePackingGroup(item.packingGroup),
+    allowSingulars: Boolean(item.allowSingulars),
+    moq: item.moq ?? null,
+  });
 }
 
 function previousQuantityForItem(item: CartItem): number {
-  const packingGroup = normalizePackingGroup(item.packingGroup);
-  if (!packingGroup) {
-    return item.quantity > 1 ? item.quantity - 1 : 1;
-  }
-
-  if (item.quantity <= 1) {
-    return 1;
-  }
-
-  if (item.allowSingulars && item.quantity <= packingGroup) {
-    return item.quantity - 1;
-  }
-
-  if (item.quantity <= packingGroup) {
-    return packingGroup;
-  }
-
-  return Math.max(packingGroup, Math.floor((item.quantity - 1) / packingGroup) * packingGroup);
+  return getPreviousQuantity({
+    current: item.quantity,
+    pack: normalizePackingGroup(item.packingGroup),
+    allowSingulars: Boolean(item.allowSingulars),
+    moq: item.moq ?? null,
+  });
 }
 
 function isCartDiscountTier(value: unknown): value is CartDiscountTier {

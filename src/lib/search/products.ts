@@ -16,6 +16,14 @@ import {
   type CatalogSearchResponse,
   type CatalogSortValue,
 } from "@/lib/search/types";
+import {
+  buildFinishingFilterAggregation,
+  buildFinishingFilterClause,
+  buildMaterialFilterAggregation,
+  buildMaterialFilterClause,
+  normalizeAfwerkingFilterCategory,
+  normalizeMaterialFilterCategory,
+} from "@/lib/search/catalogFilterMapping";
 
 export type WarrantyRawData = {
   is_available: boolean;
@@ -1072,13 +1080,14 @@ function buildBaseFilters(
  */
 function buildFacetFilters(
   params: CatalogSearchParams,
+  omittedFacetKey?: CatalogOptionFilterKey,
 ): Partial<Record<CatalogOptionFilterKey, estypes.QueryDslQueryContainer>> {
   const entries: Array<[CatalogOptionFilterKey, estypes.QueryDslQueryContainer | null]> = [
     ["category", categorySlugFilter(params.categories)],
     ["brand", wildcardKeywordFilter("catalog_brand.keyword", params.brands)],
     ["material_code", termsFilter("catalog_material_code.keyword", params.materialCodes)],
-    ["material", termsFilter("catalog_material.keyword", params.materials)],
-    ["finishing", nestedTermsFilter("properties", "properties.afwerking.keyword", params.finishings)],
+    ["material", buildMaterialFilterClause(params.materials)],
+    ["finishing", buildFinishingFilterClause(params.finishings)],
     ["glue", nestedTermsFilter("properties", "properties.lijm.keyword", params.glues)],
     ["print_method", nestedTermsFilter("properties", "properties.printmethode.keyword", params.printMethods)],
     ["printer_type", nestedTermsFilter("properties", "properties.printer_type.keyword", params.printerTypes)],
@@ -1088,7 +1097,7 @@ function buildFacetFilters(
 
   const result: Partial<Record<CatalogOptionFilterKey, estypes.QueryDslQueryContainer>> = {};
   for (const [key, value] of entries) {
-    if (value !== null) result[key] = value;
+    if (key !== omittedFacetKey && value !== null) result[key] = value;
   }
   return result;
 }
@@ -1097,8 +1106,12 @@ function buildFilters(
   params: CatalogSearchParams,
   printerInfo?: PrinterInfo,
   omittedRangeKey?: CatalogRangeKey,
+  omittedFacetKey?: CatalogOptionFilterKey,
 ): estypes.QueryDslQueryContainer[] {
-  return [...buildBaseFilters(params, printerInfo, omittedRangeKey), ...Object.values(buildFacetFilters(params))];
+  return [
+    ...buildBaseFilters(params, printerInfo, omittedRangeKey),
+    ...Object.values(buildFacetFilters(params, omittedFacetKey)),
+  ];
 }
 
 function sortClauses(sort: CatalogSortValue): estypes.Sort | undefined {
@@ -1119,10 +1132,50 @@ function aggregations(
   params: CatalogSearchParams,
   printerInfo?: PrinterInfo,
 ): Record<string, estypes.AggregationsAggregationContainer> {
-  const filters = buildFilters(params, printerInfo);
+  const defaultFilters = buildFilters(params, printerInfo);
 
   const optionAggs = Object.fromEntries(
     OPTION_FILTERS.map((filter) => {
+      if (filter.key === "material") {
+        return [
+          `options_${filter.key}`,
+          {
+            global: {},
+            aggs: {
+              scoped: {
+                filter: {
+                  bool: {
+                    must: [textQuery(params.search)],
+                    filter: buildFilters(params, printerInfo, undefined, "material"),
+                  },
+                },
+                aggs: { facet: buildMaterialFilterAggregation() },
+              },
+            },
+          } satisfies estypes.AggregationsAggregationContainer,
+        ];
+      }
+
+      if (filter.key === "finishing") {
+        return [
+          `options_${filter.key}`,
+          {
+            global: {},
+            aggs: {
+              scoped: {
+                filter: {
+                  bool: {
+                    must: [textQuery(params.search)],
+                    filter: buildFilters(params, printerInfo, undefined, "finishing"),
+                  },
+                },
+                aggs: { facet: buildFinishingFilterAggregation() },
+              },
+            },
+          } satisfies estypes.AggregationsAggregationContainer,
+        ];
+      }
+
       const termsAgg: estypes.AggregationsAggregationContainer = {
         terms: {
           field: filter.field,
@@ -1164,7 +1217,7 @@ function aggregations(
           filter: {
             bool: {
               must: [textQuery(params.search)],
-              filter: filters,
+              filter: defaultFilters,
             },
           },
           aggs: { facet: innerAgg },
@@ -1230,6 +1283,16 @@ const FILTER_VALUE_TRANSLATIONS: Partial<
   material: {
     paper: { en: "Paper", nl: "Papier" },
     papier: { en: "Paper", nl: "Papier" },
+    kunststof: { en: "Synthetic", nl: "Kunststof" },
+    synthetic: { en: "Synthetic", nl: "Kunststof" },
+    plastic: { en: "Synthetic", nl: "Kunststof" },
+  },
+  finishing: {
+    mat: { en: "Matte", nl: "Mat" },
+    matte: { en: "Matte", nl: "Mat" },
+    glanzend: { en: "Glossy", nl: "Glanzend" },
+    glossy: { en: "Glossy", nl: "Glanzend" },
+    glans: { en: "Glossy", nl: "Glanzend" },
   },
 };
 
@@ -1241,10 +1304,16 @@ function localizedFilterOptionLabel(
 ): string {
   if (indexedLabel?.trim()) return indexedLabel.trim();
 
-  const fallback = labelFromCode(value);
-  if (!locale) return fallback;
+  if (locale && FILTER_VALUE_TRANSLATIONS[key]?.[normalizeLabelToken(value)]?.[locale]) {
+    return FILTER_VALUE_TRANSLATIONS[key]![normalizeLabelToken(value)]![locale]!;
+  }
 
-  return FILTER_VALUE_TRANSLATIONS[key]?.[normalizeLabelToken(value)]?.[locale] ?? fallback;
+  if (key === "finishing" && value.toLowerCase() === "mat") return "Mat";
+  if (key === "finishing" && value.toLowerCase() === "glanzend") return "Glanzend";
+  if (key === "material" && value.toLowerCase() === "papier") return "Papier";
+  if (key === "material" && value.toLowerCase() === "kunststof") return "Kunststof";
+
+  return labelFromCode(value);
 }
 
 function localizedCategoryNameFromRecord(
@@ -1348,7 +1417,7 @@ function aggregationBuckets(
   if (!agg || typeof agg !== "object") return [];
   // Walk a fixed list of paths down through the wrapper aggregations.
   // After the faceted-search refactor: agg = global > scoped(filter) >
-  // facet (terms) > [optional nested `values` for nested fields) > buckets.
+  // facet (terms/filters) > [optional nested `values` for nested fields) > buckets.
   type B = { buckets?: unknown };
   const root = agg as Record<string, unknown> & B;
   const scoped = (root as { scoped?: B & Record<string, unknown> }).scoped;
@@ -1360,20 +1429,32 @@ function aggregationBuckets(
     : (root as { values?: B }).values;
 
   for (const candidate of [values, facet, scoped, root]) {
-    if (candidate && Array.isArray(candidate.buckets)) {
-      return candidate.buckets.map((bucket) => {
-        if (!bucket || typeof bucket !== "object") {
-          return bucket as { key?: string | number; doc_count?: number };
-        }
+    if (candidate && candidate.buckets) {
+      if (Array.isArray(candidate.buckets)) {
+        return candidate.buckets.map((bucket) => {
+          if (!bucket || typeof bucket !== "object") {
+            return bucket as { key?: string | number; doc_count?: number };
+          }
 
-        const record = bucket as Record<string, unknown>;
-        const value = typeof record.key === "string" ? record.key : String(record.key ?? "");
-        return {
-          key: record.key as string | number | undefined,
-          doc_count: typeof record.doc_count === "number" ? record.doc_count : undefined,
-          label: key === "category" ? categoryBucketLabel(record, value, locale) ?? undefined : undefined,
-        };
-      });
+          const record = bucket as Record<string, unknown>;
+          const value = typeof record.key === "string" ? record.key : String(record.key ?? "");
+          return {
+            key: record.key as string | number | undefined,
+            doc_count: typeof record.doc_count === "number" ? record.doc_count : undefined,
+            label: key === "category" ? categoryBucketLabel(record, value, locale) ?? undefined : undefined,
+          };
+        });
+      }
+
+      if (typeof candidate.buckets === "object") {
+        return Object.entries(candidate.buckets as Record<string, unknown>).map(([bucketKey, bucketVal]) => {
+          const record = (bucketVal && typeof bucketVal === "object") ? (bucketVal as Record<string, unknown>) : {};
+          return {
+            key: bucketKey,
+            doc_count: typeof record.doc_count === "number" ? record.doc_count : 0,
+          };
+        });
+      }
     }
   }
   return [];
@@ -1420,7 +1501,7 @@ export function buildCatalogFilters(
   params?: CatalogSearchParams,
 ): CatalogFilters {
   const options = OPTION_FILTERS.map((filter) => {
-    const activeValues = params ? params[filter.paramValues] : [];
+    const rawActiveValues = params ? params[filter.paramValues] : [];
     const aggregatedOptions = aggregationBuckets(aggregationsResult, filter.key, params?.locale)
       .map((bucket) => {
         const value = typeof bucket.key === "string" ? bucket.key : String(bucket.key ?? "");
@@ -1433,6 +1514,18 @@ export function buildCatalogFilters(
       .filter((option) => option.value.trim() !== "");
 
     const existingValues = new Set(aggregatedOptions.map((option) => option.value));
+    const activeValues = rawActiveValues.map((val) => {
+      if (filter.key === "material") {
+        const norm = normalizeMaterialFilterCategory(val);
+        if (norm && existingValues.has(norm)) return norm;
+      }
+      if (filter.key === "finishing") {
+        const norm = normalizeAfwerkingFilterCategory(val);
+        if (norm && existingValues.has(norm)) return norm;
+      }
+      return val;
+    });
+
     activeValues.forEach((value) => {
       if (!existingValues.has(value)) {
         aggregatedOptions.push({

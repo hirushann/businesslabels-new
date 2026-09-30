@@ -41,12 +41,42 @@ describe("getHomeData", () => {
     const result = await getHomeData();
 
     expect(fetchMock).toHaveBeenCalledWith("https://api.example.test/api/home", {
-      cache: "no-store",
+      next: { revalidate: 300 },
       headers: {
         Accept: "application/json",
       },
     });
     expect(result).toEqual(mockData);
+  });
+
+  it("attaches Basic Auth header when DOMAIN_LOCK is enabled", async () => {
+    process.env.BBNL_API_BASE_URL = "https://api.example.test";
+    process.env.DOMAIN_LOCK = "true";
+    process.env.DOMAIN_LOCK_USER = "bbnl";
+    process.env.DOMAIN_LOCK_PASSWORD = "secret";
+
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ data: { hero_banner: "banner.webp" } }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await getHomeData();
+
+    const expectedAuth = `Basic ${Buffer.from("bbnl:secret").toString("base64")}`;
+    expect(fetchMock).toHaveBeenCalledWith("https://api.example.test/api/home", {
+      next: { revalidate: 300 },
+      headers: {
+        Accept: "application/json",
+        Authorization: expectedAuth,
+      },
+    });
+
+    delete process.env.DOMAIN_LOCK;
+    delete process.env.DOMAIN_LOCK_USER;
+    delete process.env.DOMAIN_LOCK_PASSWORD;
   });
 
   it("falls back to default http://127.0.0.1:8000 if BBNL_API_BASE_URL is not set", async () => {
@@ -62,7 +92,7 @@ describe("getHomeData", () => {
     const result = await getHomeData();
 
     expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:8000/api/home", {
-      cache: "no-store",
+      next: { revalidate: 300 },
       headers: {
         Accept: "application/json",
       },

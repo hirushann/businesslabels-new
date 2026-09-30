@@ -29,6 +29,7 @@ import ProductDescriptionAccordion from "@/components/ProductDescriptionAccordio
 import { htmlToText, sanitizeCmsHtml } from "@/lib/utils";
 import { buildProductSchema, buildBreadcrumbSchema } from "@/lib/seo/structuredData";
 import { getRobotsMetadata } from "@/lib/seo/indexing";
+import { getBackendHeaders } from "@/lib/api/backendHeaders";
 
 export async function generateMetadata({
   params,
@@ -667,7 +668,12 @@ function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t:
     },
   ];
 
-  const isLabelProduct = product?.is_label_product === true || product?.meta?.is_label_product === true;
+  const isLabelProduct = Boolean(
+    product?.is_label_product === true ||
+    product?.meta?.is_label_product === true ||
+    normalizeBoolean(product?.is_label_product) ||
+    normalizeBoolean(product?.meta?.is_label_product)
+  );
   if (isLabelProduct && product?.labels_per_roll) {
     specRows.push({
       label: getSpecLabel("labels_per_roll", locale, t),
@@ -830,17 +836,13 @@ async function fetchProductByType(baseUrl: string, type: "simple" | "variable", 
   try {
     let response = await fetch(withLocaleParam(`${baseUrl}/api/products/${type}/slug/${encodeURIComponent(slug)}`, locale), {
       cache: "no-store",
-      headers: {
-        Accept: "application/json",
-      },
+      headers: getBackendHeaders(),
     });
 
     if (!response.ok && slug !== slug.toLowerCase()) {
       response = await fetch(withLocaleParam(`${baseUrl}/api/products/${type}/slug/${encodeURIComponent(slug.toLowerCase())}`, locale), {
         cache: "no-store",
-        headers: {
-          Accept: "application/json",
-        },
+        headers: getBackendHeaders(),
       });
     }
 
@@ -860,17 +862,13 @@ async function fetchGroupProductBySlug(baseUrl: string, slug: string, locale: "e
   try {
     let response = await fetch(withLocaleParam(`${baseUrl}/api/group-products/slug/${encodeURIComponent(slug)}`, locale), {
       cache: "no-store",
-      headers: {
-        Accept: "application/json",
-      },
+      headers: getBackendHeaders(),
     });
 
     if (!response.ok && slug !== slug.toLowerCase()) {
       response = await fetch(withLocaleParam(`${baseUrl}/api/group-products/slug/${encodeURIComponent(slug.toLowerCase())}`, locale), {
         cache: "no-store",
-        headers: {
-          Accept: "application/json",
-        },
+        headers: getBackendHeaders(),
       });
     }
 
@@ -1016,7 +1014,7 @@ async function fetchRelatedProductSections(
     );
     const response = await fetch(url, {
       cache: "no-store",
-      headers: { Accept: "application/json" },
+      headers: getBackendHeaders(),
     });
 
     if (!response.ok) {
@@ -1164,6 +1162,12 @@ export default async function SingleProductPage({
   // show its compatible consumables instead of generic up-sells.
   const printerFinderId = product.printer_finder_id ?? null;
   const isPrinterProduct = printerFinderId != null;
+  const isLabelProduct = !isPrinterProduct && Boolean(
+    product?.is_label_product === true ||
+    product?.meta?.is_label_product === true ||
+    normalizeBoolean(product?.is_label_product) ||
+    normalizeBoolean(product?.meta?.is_label_product)
+  );
   const relatedProductSections = baseUrl
     ? await fetchRelatedProductSections(baseUrl, product, productRouteType(product, selectedType), locale)
     : [];
@@ -1389,8 +1393,8 @@ export default async function SingleProductPage({
               price={price}
               originalPrice={product?.original_price}
               mainImage={product?.main_image}
-              packingGroup={normalizePackingGroup(product?.packing_group)}
-              allowSingulars={normalizeBoolean(product?.allow_singulars)}
+              packingGroup={isLabelProduct ? normalizePackingGroup(product?.packing_group) : null}
+              allowSingulars={isLabelProduct ? normalizeBoolean(product?.allow_singulars) : false}
               moq={normalizeNumber(product?.moq)}
               stock={product?.stock}
               deliveryDatesInStock={product?.delivery_dates_in_stock}
@@ -1398,7 +1402,8 @@ export default async function SingleProductPage({
               discounts={product?.discounts}
               warranty={product?.warranty}
               componentCount={product?.component_products?.length || null}
-              isLabelProduct={product?.is_label_product == true || product?.meta?.is_label_product === true}
+              isLabelProduct={isLabelProduct}
+              isPrinter={isPrinterProduct}
               properties={product?.properties}
             />
 

@@ -540,6 +540,18 @@ export async function fetchCategoryGroups(options?: {
       fetchOptions.next = { revalidate: 3600 };
     }
 
+    const headers: Record<string, string> = { Accept: "application/json" };
+    if (
+      process.env.DOMAIN_LOCK === "true" &&
+      process.env.DOMAIN_LOCK_USER &&
+      process.env.DOMAIN_LOCK_PASSWORD
+    ) {
+      headers.Authorization = `Basic ${Buffer.from(
+        `${process.env.DOMAIN_LOCK_USER}:${process.env.DOMAIN_LOCK_PASSWORD}`,
+      ).toString("base64")}`;
+    }
+    fetchOptions.headers = headers;
+
     const response = await fetch(url, fetchOptions);
     if (!response.ok) return [];
 
