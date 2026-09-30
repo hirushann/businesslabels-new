@@ -124,7 +124,7 @@ export default async function RootLayout({ children }) {
         />
         <script
           dangerouslySetInnerHTML={{
-            __html: `window.dataLayer=window.dataLayer||[];window.ga=window.ga||function(){(window.ga.q=window.ga.q||[]).push(arguments);};window.ga.l=+new Date;window.ga.getAll=window.ga.getAll||function(){return[];};window.ga.getByName=window.ga.getByName||function(){return null;};`,
+            __html: `window.dataLayer=window.dataLayer||[];`,
           }}
         />
       </head>
