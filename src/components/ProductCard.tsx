@@ -490,6 +490,10 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
         packingGroup: normalizedPackingGroup,
         allowSingulars: effectiveAllowSingulars,
         isLabelProduct: Boolean(product.is_label_product ?? product.is_label ?? false),
+        stock: product.stock != null ? Number(product.stock) : null,
+        inStock: product.inStock != null ? Boolean(product.inStock) : null,
+        delivery_dates_in_stock: product.delivery_dates_in_stock != null ? product.delivery_dates_in_stock : null,
+        delivery_dates_no_stock: product.delivery_dates_no_stock != null ? product.delivery_dates_no_stock : null,
       },
       finalQty,
     );
@@ -738,6 +742,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
           {/* Shipping Notice */}
           <ShippingNoticeBanner
             stock={product.stock}
+            inStock={product.inStock}
             delivery_dates_in_stock={product.delivery_dates_in_stock}
             delivery_dates_no_stock={product.delivery_dates_no_stock}
             variant="compact"

@@ -6,21 +6,24 @@
  *  • cut-off time (default 15:00 Europe/Amsterdam)
  *  • delivery_dates_in_stock / delivery_dates_no_stock (DSO in working days)
  *
- * Rules
+ * Rules:
  * ─────────────────────────────────────────────────────────────────────
- *  In stock + before cutoff  → "Order now, we ship today"
- *  In stock + after cutoff   → next shipping working day
- *    • if that day is tomorrow → "Order now, we ship tomorrow"
- *    • otherwise              → "Order now, we ship [day name]"
- *  Out of stock              → count DSO working days from today
- *    → "Order now, [date] shipped"
+ *  In stock + before cutoff (15:00) on working day:
+ *    → "Bestel nu, vandaag verstuurd" / "Order now, we ship today"
+ *  In stock + after cutoff (or weekend) and shipping is next day:
+ *    → "Bestel nu, morgen verstuurd" / "Order now, we ship tomorrow"
+ *  In stock + after cutoff (or weekend) and shipping is not tomorrow:
+ *    → "Bestel nu, maandag verstuurd" / "Order now, we ship Monday"
+ *  Not on stock:
+ *    → "Bestel nu, 12 oktober verstuurd" / "Order now, 12 October shipped"
+ *    (Count amount of working days from the DSO on the day from today)
  * ─────────────────────────────────────────────────────────────────────
  */
 
 const DEFAULT_CUTOFF = "15:00";
 const DEFAULT_TIMEZONE = "Europe/Amsterdam";
 
-type NumericLike = number | string | null | undefined;
+export type NumericLike = number | string | null | undefined;
 
 function toFiniteNumber(value: NumericLike): number | null {
   if (typeof value === "number") return Number.isFinite(value) ? value : null;
@@ -106,10 +109,6 @@ function isTomorrow(today: DateParts, target: DateParts): boolean {
   );
 }
 
-function isSameDay(a: DateParts, b: DateParts): boolean {
-  return a.year === b.year && a.month === b.month && a.day === b.day;
-}
-
 /** Format a day name: "maandag" / "Monday" */
 function formatDayName(date: Date, locale: "en" | "nl", timeZone: string): string {
   return new Intl.DateTimeFormat(locale === "nl" ? "nl-NL" : "en-GB", {
@@ -134,7 +133,7 @@ export type ShippingNoticeResult = {
   notice: string;
   /** The ship-date portion only, e.g. "vandaag" / "morgen" / "maandag" / "12 oktober" */
   shipLabel: string;
-  /** True when item is in stock and ships today or within a day. */
+  /** True when item is in stock. */
   isInStock: boolean;
   /** The JS Date of the shipping day (in Amsterdam timezone wall-clock). */
   shipDate: Date;
@@ -142,6 +141,7 @@ export type ShippingNoticeResult = {
 
 export type ShippingNoticeParams = {
   stock?: NumericLike;
+  inStock?: boolean | null;
   delivery_dates_in_stock?: NumericLike;
   delivery_dates_no_stock?: NumericLike;
   now?: Date;
@@ -152,6 +152,7 @@ export type ShippingNoticeParams = {
 
 export function getShippingNotice({
   stock,
+  inStock,
   delivery_dates_in_stock,
   delivery_dates_no_stock,
   now = new Date(),
@@ -160,11 +161,29 @@ export function getShippingNotice({
   locale = "nl",
 }: ShippingNoticeParams): ShippingNoticeResult | null {
   const stockCount = toFiniteNumber(stock);
-  if (stockCount === null) return null;
+  const dsoNoStock = toFiniteNumber(delivery_dates_no_stock);
 
-  const inStock = stockCount > 0;
-  const dso = toFiniteNumber(inStock ? delivery_dates_in_stock : delivery_dates_no_stock);
-  if (dso === null || dso < 0) return null;
+  // End of life products (stock <= 0 and delivery_dates_no_stock === 100) are discontinued
+  if (stockCount !== null && stockCount <= 0 && dsoNoStock === 100) {
+    return null;
+  }
+
+  // Determine whether item is in stock
+  let isInStock: boolean;
+  if (stockCount !== null) {
+    isInStock = stockCount > 0;
+  } else if (typeof inStock === "boolean") {
+    isInStock = inStock;
+  } else {
+    // Default to in-stock when neither stock nor inStock is passed (e.g. cart default)
+    isInStock = true;
+  }
+
+  const dso = isInStock
+    ? (toFiniteNumber(delivery_dates_in_stock) ?? 0)
+    : (dsoNoStock ?? 5);
+
+  if (dso < 0) return null;
 
   const [cutH, cutM] = cutoffTime.split(":").map(Number);
   if (!Number.isInteger(cutH) || !Number.isInteger(cutM)) return null;
@@ -172,10 +191,11 @@ export function getShippingNotice({
   const todayParts = zonedParts(now, timeZone);
   const cutoff = zonedDate(todayParts.year, todayParts.month, todayParts.day, cutH, cutM, timeZone);
   const beforeCutoff = now < cutoff;
+  const isTodayWorkingDay = isWorkingDay(now, timeZone);
 
-  if (inStock) {
+  if (isInStock) {
     // ── In stock ──────────────────────────────────────────────────────
-    if (beforeCutoff && isWorkingDay(now, timeZone)) {
+    if (beforeCutoff && isTodayWorkingDay) {
       // Ships today
       const shipDate = now;
       const shipLabel = locale === "nl" ? "vandaag" : "today";
@@ -220,30 +240,13 @@ export function getShippingNotice({
   // ── Out of stock ─────────────────────────────────────────────────────
   // Count DSO working days from today to get the shipping date.
   const startOfToday = zonedDate(todayParts.year, todayParts.month, todayParts.day, 0, 0, timeZone);
-  const shipDate = addWorkingDays(startOfToday, dso, timeZone);
-  const shipDateParts = zonedParts(shipDate, timeZone);
+  const baseDate = (beforeCutoff && isTodayWorkingDay)
+    ? startOfToday
+    : nextWorkingDayOnOrAfter(addDays(startOfToday, 1), timeZone);
 
-  if (isSameDay(todayParts, shipDateParts)) {
-    const shipLabel = locale === "nl" ? "vandaag" : "today";
-    return {
-      notice: locale === "nl" ? "Bestel nu, vandaag verstuurd" : "Order now, shipped today",
-      shipLabel,
-      isInStock: false,
-      shipDate,
-    };
-  }
-
-  if (isTomorrow(todayParts, shipDateParts)) {
-    const shipLabel = locale === "nl" ? "morgen" : "tomorrow";
-    return {
-      notice: locale === "nl" ? "Bestel nu, morgen verstuurd" : "Order now, shipped tomorrow",
-      shipLabel,
-      isInStock: false,
-      shipDate,
-    };
-  }
-
+  const shipDate = addWorkingDays(baseDate, dso, timeZone);
   const dateStr = formatFullDate(shipDate, locale, timeZone);
+
   return {
     notice: locale === "nl"
       ? `Bestel nu, ${dateStr} verstuurd`
@@ -252,4 +255,59 @@ export function getShippingNotice({
     isInStock: false,
     shipDate,
   };
+}
+
+/* ── Cart helper ──────────────────────────────────────────────────────── */
+
+export type CartItemShippingInput = {
+  stock?: NumericLike;
+  inStock?: boolean | null;
+  delivery_dates_in_stock?: NumericLike;
+  delivery_dates_no_stock?: NumericLike;
+  itemKind?: string;
+};
+
+/**
+ * Derives shipping notice parameters for the entire cart.
+ * If any product in the cart is out of stock, the order ships together
+ * on the latest out-of-stock delivery date (max DSO).
+ * Otherwise, standard in-stock notice is used.
+ */
+export function getCartShippingParams(items: CartItemShippingInput[]): {
+  stock: number;
+  inStock: boolean;
+  delivery_dates_in_stock: number;
+  delivery_dates_no_stock: number;
+} {
+  const productItems = items.filter((i) => i.itemKind !== "warranty");
+  if (productItems.length === 0) {
+    return { stock: 1, inStock: true, delivery_dates_in_stock: 0, delivery_dates_no_stock: 0 };
+  }
+
+  const outOfStockItems = productItems.filter((i) => {
+    if (typeof i.inStock === "boolean") return !i.inStock;
+    const stockCount = toFiniteNumber(i.stock);
+    if (stockCount !== null) return stockCount <= 0;
+    return false;
+  });
+
+  if (outOfStockItems.length > 0) {
+    const maxDso = Math.max(
+      ...outOfStockItems.map((i) => {
+        const val = toFiniteNumber(i.delivery_dates_no_stock);
+        return val !== null && val > 0 && val !== 100 ? val : 5;
+      }),
+      5,
+    );
+    return { stock: 0, inStock: false, delivery_dates_in_stock: 0, delivery_dates_no_stock: maxDso };
+  }
+
+  const maxInStockDso = Math.max(
+    ...productItems.map((i) => {
+      const val = toFiniteNumber(i.delivery_dates_in_stock);
+      return val !== null && val > 0 ? val : 0;
+    }),
+    0,
+  );
+  return { stock: 1, inStock: true, delivery_dates_in_stock: maxInStockDso, delivery_dates_no_stock: 0 };
 }

@@ -659,6 +659,10 @@ export default function ProductPurchase({
         allowSingulars: Boolean(effectiveAllowSingulars),
         moq: normalizedMoq,
         isLabelProduct: isLabel,
+        stock: typeof stock === 'number' ? stock : null,
+        inStock: typeof inStock === 'boolean' ? inStock : null,
+        delivery_dates_in_stock: deliveryDatesInStock != null ? deliveryDatesInStock : null,
+        delivery_dates_no_stock: deliveryDatesNoStock != null ? deliveryDatesNoStock : null,
       },
       qtyToAdd,
     );
@@ -1210,6 +1214,7 @@ export default function ProductPurchase({
         {/* Shipping Notice */}
         <ShippingNoticeBanner
           stock={stock}
+          inStock={inStock}
           delivery_dates_in_stock={deliveryDatesInStock}
           delivery_dates_no_stock={deliveryDatesNoStock}
         />

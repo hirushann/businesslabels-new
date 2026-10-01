@@ -6,15 +6,17 @@ import { getShippingNotice, type ShippingNoticeParams } from "@/lib/utils/shippi
 
 type ShippingNoticeBannerProps = {
   stock?: ShippingNoticeParams["stock"];
+  inStock?: ShippingNoticeParams["inStock"];
   delivery_dates_in_stock?: ShippingNoticeParams["delivery_dates_in_stock"];
   delivery_dates_no_stock?: ShippingNoticeParams["delivery_dates_no_stock"];
-  /** Compact variant for product cards (smaller text, no icon). */
+  /** Compact variant for product cards, default for single product/cart/checkout. */
   variant?: "default" | "compact" | "inline";
   className?: string;
 };
 
 export default function ShippingNoticeBanner({
   stock,
+  inStock,
   delivery_dates_in_stock,
   delivery_dates_no_stock,
   variant = "default",
@@ -25,21 +27,22 @@ export default function ShippingNoticeBanner({
   const notice = useMemo(() => {
     return getShippingNotice({
       stock,
+      inStock,
       delivery_dates_in_stock,
       delivery_dates_no_stock,
       locale: locale === "nl" ? "nl" : "en",
     });
-  }, [stock, delivery_dates_in_stock, delivery_dates_no_stock, locale]);
+  }, [stock, inStock, delivery_dates_in_stock, delivery_dates_no_stock, locale]);
 
   if (!notice) return null;
 
-  const orderNowText = locale === "nl" ? "Bestel nu," : "Order now,";
+  const isNl = locale === "nl";
 
   if (variant === "inline") {
     return (
-      <p className={`text-xs text-green-700 font-medium ${className}`}>
+      <p className={`text-xs text-green-700 font-medium flex items-center gap-1.5 ${className}`}>
         <svg
-          className="inline-block w-3.5 h-3.5 mr-1 -mt-0.5 text-green-600"
+          className="w-3.5 h-3.5 text-green-600 shrink-0"
           fill="none"
           stroke="currentColor"
           strokeWidth={2}
@@ -51,7 +54,26 @@ export default function ShippingNoticeBanner({
             d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"
           />
         </svg>
-        {notice.notice}
+        <span>
+          {isNl ? (
+            <>
+              Bestel nu,{" "}
+              <span className="font-bold">{notice.shipLabel}</span>{" "}
+              verstuurd
+            </>
+          ) : notice.isInStock ? (
+            <>
+              Order now, we ship{" "}
+              <span className="font-bold">{notice.shipLabel}</span>
+            </>
+          ) : (
+            <>
+              Order now,{" "}
+              <span className="font-bold">{notice.shipLabel}</span>{" "}
+              shipped
+            </>
+          )}
+        </span>
       </p>
     );
   }
@@ -73,9 +95,24 @@ export default function ShippingNoticeBanner({
           />
         </svg>
         <span className="text-xs text-green-700 font-medium leading-tight">
-          {orderNowText}{" "}
-          <span className="font-bold">{notice.shipLabel}</span>{" "}
-          {locale === "nl" ? "verstuurd" : "shipped"}
+          {isNl ? (
+            <>
+              Bestel nu,{" "}
+              <span className="font-bold">{notice.shipLabel}</span>{" "}
+              verstuurd
+            </>
+          ) : notice.isInStock ? (
+            <>
+              Order now, we ship{" "}
+              <span className="font-bold">{notice.shipLabel}</span>
+            </>
+          ) : (
+            <>
+              Order now,{" "}
+              <span className="font-bold">{notice.shipLabel}</span>{" "}
+              shipped
+            </>
+          )}
         </span>
       </div>
     );
@@ -99,9 +136,24 @@ export default function ShippingNoticeBanner({
           />
         </svg>
         <p className="text-sm text-neutral-800 font-medium leading-5">
-          {orderNowText}{" "}
-          <span className="text-green-600 font-bold">{notice.shipLabel}</span>{" "}
-          {locale === "nl" ? "verstuurd" : "shipped"}
+          {isNl ? (
+            <>
+              Bestel nu,{" "}
+              <span className="text-green-600 font-bold">{notice.shipLabel}</span>{" "}
+              verstuurd
+            </>
+          ) : notice.isInStock ? (
+            <>
+              Order now, we ship{" "}
+              <span className="text-green-600 font-bold">{notice.shipLabel}</span>
+            </>
+          ) : (
+            <>
+              Order now,{" "}
+              <span className="text-green-600 font-bold">{notice.shipLabel}</span>{" "}
+              shipped
+            </>
+          )}
         </p>
       </div>
     </div>

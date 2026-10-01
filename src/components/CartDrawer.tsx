@@ -10,6 +10,8 @@ import CartTotals from '@/components/CartTotals';
 import { useIsBusinessCustomer } from '@/hooks/useIsBusinessCustomer';
 import { toDisplayImageUrl } from '@/lib/utils/imageProxy';
 import { formatPackagingBreakdown, getPackagingValidation } from '@/lib/utils/packaging';
+import ShippingNoticeBanner from '@/components/ShippingNoticeBanner';
+import { getCartShippingParams } from '@/lib/utils/shippingNotice';
 
 type CartDrawerProps = {
   onClose: () => void;
@@ -40,6 +42,8 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
     decrementItemQuantity,
     setItemQuantity,
   } = useCart();
+
+  const cartShippingParams = useMemo(() => getCartShippingParams(items), [items]);
 
   const [draftQuantities, setDraftQuantities] = useState<Record<string, string>>({});
 
@@ -481,6 +485,14 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
 
               {/* Action Buttons */}
               <div className="px-6 flex flex-col gap-4">
+                <ShippingNoticeBanner
+                  stock={cartShippingParams.stock}
+                  inStock={cartShippingParams.inStock}
+                  delivery_dates_in_stock={cartShippingParams.delivery_dates_in_stock}
+                  delivery_dates_no_stock={cartShippingParams.delivery_dates_no_stock}
+                  variant="compact"
+                />
+
                 <Link
                   href={hasInvalidDraft ? '#' : lp('/winkelmand')}
                   onClick={hasInvalidDraft ? (e) => e.preventDefault() : onClose}

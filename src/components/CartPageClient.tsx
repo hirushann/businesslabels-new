@@ -11,6 +11,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { trackViewCart } from '@/lib/analytics/dataLayer';
 import { getExpectedDeliveryMessage } from '@/lib/utils/delivery';
 import ShippingNoticeBanner from '@/components/ShippingNoticeBanner';
+import { getCartShippingParams } from '@/lib/utils/shippingNotice';
 import { useShippingRules } from '@/hooks/useShippingRules';
 import { useDeliveryAvailability } from '@/hooks/useDeliveryAvailability';
 import CartTotals from '@/components/CartTotals';
@@ -83,6 +84,8 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
   const [deliveryInfo, setDeliveryInfo] = useState<ReturnType<typeof getExpectedDeliveryMessage> | null>(null);
   const availableDates = useDeliveryAvailability();
   const viewCartTrackedRef = useRef(false);
+
+  const cartShippingParams = useMemo(() => getCartShippingParams(items), [items]);
 
   const [draftQuantities, setDraftQuantities] = useState<Record<string, string>>({});
 
@@ -561,9 +564,10 @@ export default function CartPageClient({ popularProducts = [] }: { popularProduc
                 <div className="flex flex-col gap-4">
                   {/* Shipping Notice */}
                   <ShippingNoticeBanner
-                    stock={1}
-                    delivery_dates_in_stock={0}
-                    delivery_dates_no_stock={0}
+                    stock={cartShippingParams.stock}
+                    inStock={cartShippingParams.inStock}
+                    delivery_dates_in_stock={cartShippingParams.delivery_dates_in_stock}
+                    delivery_dates_no_stock={cartShippingParams.delivery_dates_no_stock}
                   />
 
                   {/* Free Delivery Threshold */}

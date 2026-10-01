@@ -2055,6 +2055,12 @@ async function applyProductConfigOverrides(products: CatalogProductResult[], loc
         delivery_dates_no_stock: deliveryWindow?.deliveryDatesNoStock ?? null,
       });
       p.product.stock = liveStock;
+      if (deliveryWindow?.deliveryDatesInStock != null) {
+        p.product.delivery_dates_in_stock = deliveryWindow.deliveryDatesInStock;
+      }
+      if (deliveryWindow?.deliveryDatesNoStock != null) {
+        p.product.delivery_dates_no_stock = deliveryWindow.deliveryDatesNoStock;
+      }
       p.product.inStock = liveDeliveryStockStatus
         ?? productConfig.rawInStock
         ?? Boolean((liveStock ?? 0) > 0);
