@@ -4,13 +4,9 @@ import { CartProvider } from "@/components/CartProvider";
 import { WishlistProvider } from "@/components/WishlistProvider";
 import { HelpProvider } from "@/components/HelpProvider";
 import Header from "@/components/Header";
-
-
 import StoreNotice from "@/components/StoreNotice";
 import MaintenancePage from "@/components/MaintenancePage";
 import { isMaintenanceMode } from "@/lib/maintenance";
-
-
 import Footer from "@/components/Footer";
 import { Toaster } from "@/components/ui/sonner";
 import { getServerLocale } from "@/lib/i18n/server";

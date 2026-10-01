@@ -20,6 +20,7 @@ import {
   formatPackagingBreakdown,
   getPackagingHint,
 } from "@/lib/utils/packaging";
+import ShippingNoticeBanner from "@/components/ShippingNoticeBanner";
 
 type BulkDiscount = {
   discount: string;
@@ -1206,27 +1207,12 @@ export default function ProductPurchase({
           </Popover>
         </div>
 
-        {/* Delivery Estimate — hidden per UI requirement */}
-        {false && deliveryInfo && (
-          <div className="p-3 bg-green-600/10 rounded-[10px] outline outline-1 outline-offset-[-1px] outline-green-600/20">
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" strokeWidth={1.67} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0 m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0 m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
-                </svg>
-                <span className="text-neutral-800 text-base font-semibold leading-5">{t("product.expectedDelivery")}</span>
-              </div>
-              <p className="text-xs text-neutral-700 leading-5">
-                {t("product.orderWithinPrefix")}
-                <span className="text-green-600 font-semibold">
-                  {deliveryInfo!.countdown.hours} {t("product.hours")} {deliveryInfo!.countdown.formattedMinutes} {t("product.minutes")}
-                </span>
-                {t("product.forDelivery")}
-                <span className="text-green-600 font-semibold">{deliveryInfo!.deliveryLabel}</span>
-              </p>
-            </div>
-          </div>
-        )}
+        {/* Shipping Notice */}
+        <ShippingNoticeBanner
+          stock={stock}
+          delivery_dates_in_stock={deliveryDatesInStock}
+          delivery_dates_no_stock={deliveryDatesNoStock}
+        />
 
         {/* Need Help Section with Custom Icons */}
         <div className="flex flex-col gap-4">

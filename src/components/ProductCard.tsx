@@ -19,6 +19,7 @@ import { localizeProductSpecValue } from "@/lib/products/specValues";
 import { normalizeWarrantyOptions, type NormalizedWarrantyOption as WarrantyOption } from "@/lib/warranty/localize";
 import WarrantyDialogContent from "@/components/WarrantyDialogContent";
 import { isEndOfLife } from "@/lib/utils/delivery";
+import ShippingNoticeBanner from "@/components/ShippingNoticeBanner";
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 import { unescapeHtml } from "@/lib/utils";
 
@@ -734,6 +735,13 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
         </div>
 
         <div className="flex flex-col gap-4 mt-auto">
+          {/* Shipping Notice */}
+          <ShippingNoticeBanner
+            stock={product.stock}
+            delivery_dates_in_stock={product.delivery_dates_in_stock}
+            delivery_dates_no_stock={product.delivery_dates_no_stock}
+            variant="compact"
+          />
           <div className="bg-slate-100" />
           <div className="flex justify-between items-center">
             <div className="flex flex-col gap-2">
