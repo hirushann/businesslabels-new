@@ -150,6 +150,10 @@ export type Product = {
   delivery_dates_no_stock?: string | null;
   delivery_dates_in_stock?: string | null;
   packing_group?: string | null;
+  /** Usable quantity per roll/stack; 1 means continuous media (length = height in mm) */
+  labels_per_roll?: number | string | null;
+  /** Product unit for quantity wording ("roll" | "stack"); not yet exposed by the API */
+  unit_type?: string | null;
   dimensions?: {
     weight: number | null;
     width: number | null;

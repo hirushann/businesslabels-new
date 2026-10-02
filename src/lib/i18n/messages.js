@@ -1279,7 +1279,20 @@ export const MESSAGES_V4 = {
       stacks: 'stacks',
       box: 'Box',
       boxDesc: '({count} Rolls/Stack)',
-      perBox: '{count} per box',
+      quantityPerUnit: '{quantity} per {unit}',
+      metersPerUnit: '{meters} meter per {unit}',
+      unitType: {
+        roll: 'roll',
+        stack: 'stack',
+      },
+      simplifiedMaterial: {
+        paper: 'Paper',
+        plastic: 'Plastic',
+      },
+      simplifiedFinish: {
+        matte: 'Matte',
+        glossy: 'Glossy',
+      },
       selectQuantity: 'Select Quantity',
       addToCart: 'Add to Cart',
       addProductToCart: 'Add {name} to cart',
@@ -3411,7 +3424,20 @@ export const MESSAGES_V4 = {
       stacks: 'stapels',
       box: 'Doos',
       boxDesc: '({count} Rollen/Stapel)',
-      perBox: '{count} per doos',
+      quantityPerUnit: '{quantity} per {unit}',
+      metersPerUnit: '{meters} meter per {unit}',
+      unitType: {
+        roll: 'rol',
+        stack: 'stapel',
+      },
+      simplifiedMaterial: {
+        paper: 'Papier',
+        plastic: 'Kunststof',
+      },
+      simplifiedFinish: {
+        matte: 'Mat',
+        glossy: 'Glanzend',
+      },
       selectQuantity: 'Selecteer aantal',
       addToCart: 'In winkelwagen',
       addProductToCart: '{name} toevoegen aan winkelwagen',
