@@ -3391,7 +3391,7 @@ export const MESSAGES_V4 = {
       suitablePrinters: 'Geschikte printers',
       inkAndAccessories: 'Inkt & Accessoires',
       thisMightBeInteresting: 'Dit vind je misschien interessant',
-      componentProduct: 'In this set',
+      componentProduct: 'In deze set',
       sku: 'SKU: {sku}',
       articleNumber: 'Artikelnummer: {number}',
       inStock: 'Op voorraad',
