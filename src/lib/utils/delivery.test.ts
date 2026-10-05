@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getAvailableDeliveryDates, getEffectiveDeliveryDays, getExpectedDeliveryMessage, isDeliverableInStock, isEndOfLife } from "./delivery";
+import { getAvailableDeliveryDates, getEffectiveDeliveryDays, getExpectedDeliveryMessage, getStockStatus, isDeliverableInStock, isEndOfLife } from "./delivery";
 
 describe("delivery lead times", () => {
   it("returns no estimate for missing backend data without replacing zero", () => {
@@ -20,6 +20,30 @@ describe("delivery lead times", () => {
     expect(isEndOfLife({ stock: -1, delivery_dates_no_stock: "100" })).toBe(true);
     expect(isEndOfLife({ stock: 1, delivery_dates_no_stock: 100 })).toBe(false);
     expect(isEndOfLife({ stock: 0, delivery_dates_no_stock: 99 })).toBe(false);
+  });
+});
+
+describe("getStockStatus", () => {
+  it("treats orderable products without stock as backorder, even when in_stock is false", () => {
+    // Production example: ExpoBadge startset (stock 0, in_stock false, no lead times).
+    expect(getStockStatus({ stock: 0, in_stock: false, delivery_dates_in_stock: null, delivery_dates_no_stock: null })).toBe("backorder");
+    expect(getStockStatus({ stock: "0", delivery_dates_no_stock: 5 })).toBe("backorder");
+    expect(getStockStatus({ stock: -2, delivery_dates_no_stock: 30 })).toBe("backorder");
+  });
+
+  it("marks end of life before backorder", () => {
+    expect(getStockStatus({ stock: 0, delivery_dates_no_stock: 100, in_stock: false })).toBe("end_of_life");
+  });
+
+  it("uses the delivery window for products with stock", () => {
+    expect(getStockStatus({ stock: 5, delivery_dates_in_stock: 2 })).toBe("in_stock");
+    expect(getStockStatus({ stock: 5, delivery_dates_in_stock: 11, in_stock: true })).toBe("out_of_stock");
+  });
+
+  it("falls back to in_stock when stock and lead times are unknown", () => {
+    expect(getStockStatus({ stock: null, in_stock: true })).toBe("in_stock");
+    expect(getStockStatus({ stock: null, in_stock: false })).toBe("out_of_stock");
+    expect(getStockStatus({})).toBe("out_of_stock");
   });
 });
 

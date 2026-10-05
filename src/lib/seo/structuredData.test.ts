@@ -44,7 +44,7 @@ describe("Structured Data (Schema.org) Builders", () => {
       brand: "Epson",
       category: "Labelprinters",
       price: 1895.0,
-      inStock: true,
+      stockStatus: "in_stock",
       siteUrl,
     });
 
@@ -69,6 +69,17 @@ describe("Structured Data (Schema.org) Builders", () => {
       priceCurrency: "EUR",
       valueAddedTaxIncluded: false,
     });
+  });
+
+  it("maps stock status to schema.org availability, using BackOrder for orderable products without stock", () => {
+    const availability = (stockStatus: "in_stock" | "backorder" | "end_of_life" | "out_of_stock") =>
+      (buildProductSchema({ name: "Label", url: "https://businesslabels.nl/product/x", images: [], price: 10, stockStatus, siteUrl }) as any)
+        .offers.availability;
+
+    expect(availability("in_stock")).toBe("https://schema.org/InStock");
+    expect(availability("backorder")).toBe("https://schema.org/BackOrder");
+    expect(availability("end_of_life")).toBe("https://schema.org/Discontinued");
+    expect(availability("out_of_stock")).toBe("https://schema.org/OutOfStock");
   });
 
   it("builds valid BreadcrumbList schema with sequential positions and absolute URLs", () => {

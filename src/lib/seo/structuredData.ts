@@ -1,5 +1,14 @@
 // Structured Data (Schema.org) Builders according to Google Rich Results Guidelines
 
+import type { StockStatus } from "@/lib/utils/delivery";
+
+const SCHEMA_AVAILABILITY: Record<StockStatus, string> = {
+  in_stock: "https://schema.org/InStock",
+  backorder: "https://schema.org/BackOrder",
+  end_of_life: "https://schema.org/Discontinued",
+  out_of_stock: "https://schema.org/OutOfStock",
+};
+
 export function buildOrganizationSchema(siteUrl: string) {
   const cleanUrl = siteUrl.replace(/\/$/, "");
   return {
@@ -49,7 +58,7 @@ export type ProductSchemaParams = {
   brand?: string | null;
   category?: string | null;
   price: number;
-  inStock?: boolean | null;
+  stockStatus: StockStatus;
   siteUrl: string;
 };
 
@@ -109,10 +118,7 @@ export function buildProductSchema(params: ProductSchemaParams) {
       price: price.toFixed(2),
       priceValidUntil,
       itemCondition: "https://schema.org/NewCondition",
-      availability:
-        params.inStock !== false
-          ? "https://schema.org/InStock"
-          : "https://schema.org/OutOfStock",
+      availability: SCHEMA_AVAILABILITY[params.stockStatus],
       seller: {
         "@type": "Organization",
         name: "Businesslabels B.V.",

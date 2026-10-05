@@ -28,6 +28,7 @@ import { mapLaravelProductToCardData, type LaravelProduct } from "@/lib/mappings
 import ProductDescriptionAccordion from "@/components/ProductDescriptionAccordion";
 import { htmlToText, sanitizeCmsHtml } from "@/lib/utils";
 import { buildProductSchema, buildBreadcrumbSchema } from "@/lib/seo/structuredData";
+import { getStockStatus } from "@/lib/utils/delivery";
 import { getRobotsMetadata } from "@/lib/seo/indexing";
 import { getBackendHeaders } from "@/lib/api/backendHeaders";
 
@@ -1217,7 +1218,13 @@ export default async function SingleProductPage({
     brand: brandName,
     category: breadcrumbCategoryName || undefined,
     price,
-    inStock: Boolean(product?.in_stock),
+    // Same status as the purchase box, so orderable products are BackOrder, not OutOfStock.
+    stockStatus: getStockStatus({
+      stock: product?.stock,
+      delivery_dates_in_stock: product?.delivery_dates_in_stock,
+      delivery_dates_no_stock: product?.delivery_dates_no_stock,
+      in_stock: product?.in_stock,
+    }),
     siteUrl,
   });
 

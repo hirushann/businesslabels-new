@@ -43,6 +43,21 @@ export function isEndOfLife({ stock, delivery_dates_no_stock }: StockStatusParam
   return stockCount !== null && stockCount <= 0 && toFiniteNumber(delivery_dates_no_stock) === 100;
 }
 
+export type StockStatus = "in_stock" | "backorder" | "end_of_life" | "out_of_stock";
+
+/**
+ * Stock status as shown in the product purchase box: end of life first, then
+ * backorder (no stock but still orderable), then the delivery-window check.
+ */
+export function getStockStatus(params: StockStatusParams & { in_stock?: boolean | null }): StockStatus {
+  if (isEndOfLife(params)) return "end_of_life";
+
+  const stockCount = toFiniteNumber(params.stock);
+  if (stockCount !== null && stockCount <= 0) return "backorder";
+
+  return (isDeliverableInStock(params) ?? Boolean(params.in_stock)) ? "in_stock" : "out_of_stock";
+}
+
 type DeliveryMessageParams = StockStatusParams & {
   stock: NumericLike;
   now?: Date;
