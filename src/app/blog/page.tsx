@@ -29,14 +29,14 @@ type PostCategoryData = {
   post_count: number;
 };
 
-async function getPostCategories(locale?: string): Promise<PostCategoryData[]> {
+async function getPostCategories(locale?: string, taxonomy = "post-category"): Promise<PostCategoryData[]> {
   const apiBaseUrl = process.env.BBNL_API_BASE_URL;
   if (!apiBaseUrl) return [];
 
   try {
-    let url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts/categories`;
+    let url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts/categories?taxonomy=${encodeURIComponent(taxonomy)}`;
     if (locale) {
-      url += `?locale=${encodeURIComponent(locale)}`;
+      url += `&locale=${encodeURIComponent(locale)}`;
     }
     const res = await fetch(url, { next: { revalidate: 60 } });
     if (!res.ok) return [];
@@ -69,14 +69,14 @@ type Post = {
   translations?: Array<Record<string, any>>;
 };
 
-async function getPosts(search?: string, locale?: string): Promise<Post[]> {
+async function getPosts(search?: string, locale?: string, type = "post"): Promise<Post[]> {
   try {
     const apiBaseUrl = process.env.BBNL_API_BASE_URL;
     if (!apiBaseUrl) return [];
 
     let url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts`;
     const urlParams = new URLSearchParams();
-    urlParams.append("type", "kennisbank");
+    urlParams.append("type", type);
     if (search) urlParams.append("search", search);
     if (locale) urlParams.append("locale", locale);
 
@@ -154,16 +154,19 @@ async function getRecommendedMaterials(locale: "en" | "nl"): Promise<any[]> {
 export default async function BlogsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string; category?: string }>;
+  searchParams: Promise<{ search?: string; category?: string; type?: string }>;
 }) {
   const t = await getTranslations();
   const locale = await getServerLocale();
   const searchParamsResolved = await searchParams;
   const search = searchParamsResolved.search;
+  const postType = searchParamsResolved.type === "kennisbank" ? "kennisbank" : "post";
+  const taxonomy = postType === "kennisbank" ? "kennisbank-category" : "post-category";
 
   if (searchParamsResolved.category === "all") {
     const nextParams = new URLSearchParams();
     if (search) nextParams.set("search", search);
+    if (searchParamsResolved.type) nextParams.set("type", searchParamsResolved.type);
     const qs = nextParams.toString();
     const destination = localePath(`/blog${qs ? `?${qs}` : ""}`, locale);
     permanentRedirect(destination);
@@ -171,8 +174,8 @@ export default async function BlogsPage({
 
   const activeCategory = searchParamsResolved.category || "all";
   
-  const allPosts = await getPosts(search, locale);
-  const categories = await getPostCategories(locale);
+  const allPosts = await getPosts(search, locale, postType);
+  const categories = await getPostCategories(locale, taxonomy);
   
   const posts = activeCategory === "all" 
     ? allPosts 
@@ -213,28 +216,35 @@ export default async function BlogsPage({
             {/* Categories Tab */}
             <div className="w-full flex flex-col justify-end items-start">
               <div className="w-full flex overflow-x-auto no-scrollbar items-start">
-                <Link
-                  href={localePath("/blog", locale)}
-                  className={`px-2.5 flex justify-center items-center gap-2.5 relative transition-colors ${activeCategory === "all" ? "text-brand font-bold" : "text-neutral-700 font-semibold hover:text-brand"}`}
-                >
-                  <span className="text-base leading-5 whitespace-nowrap p-3">{t("blogsPage.categoryAll")}</span>
-                  {activeCategory === "all" && (
-                    <div className="w-full h-0.5 absolute bottom-0 bg-brand rounded-sm z-10"></div>
-                  )}
-                </Link>
-                
-                {categories.map(category => (
-                  <Link
-                    key={category.slug}
-                    href={localePath(`/blog?category=${category.slug}`, locale)}
-                    className={`px-2.5 flex justify-center items-center gap-2.5 relative transition-colors ${activeCategory === category.slug ? "text-brand font-bold" : "text-neutral-700 font-semibold hover:text-brand"}`}
-                  >
-                    <span className="text-base leading-5 whitespace-nowrap p-3">{category.name}</span>
-                    {activeCategory === category.slug && (
-                      <div className="w-full h-0.5 absolute bottom-0 bg-brand rounded-sm z-10"></div>
-                    )}
-                  </Link>
-                ))}
+                {(() => {
+                  const baseBlogPath = postType === "kennisbank" ? "/blog?type=kennisbank" : "/blog";
+                  return (
+                    <>
+                      <Link
+                        href={localePath(baseBlogPath, locale)}
+                        className={`px-2.5 flex justify-center items-center gap-2.5 relative transition-colors ${activeCategory === "all" ? "text-brand font-bold" : "text-neutral-700 font-semibold hover:text-brand"}`}
+                      >
+                        <span className="text-base leading-5 whitespace-nowrap p-3">{t("blogsPage.categoryAll")}</span>
+                        {activeCategory === "all" && (
+                          <div className="w-full h-0.5 absolute bottom-0 bg-brand rounded-sm z-10"></div>
+                        )}
+                      </Link>
+                      
+                      {categories.map(category => (
+                        <Link
+                          key={category.slug}
+                          href={localePath(`${baseBlogPath}${baseBlogPath.includes('?') ? '&' : '?'}category=${category.slug}`, locale)}
+                          className={`px-2.5 flex justify-center items-center gap-2.5 relative transition-colors ${activeCategory === category.slug ? "text-brand font-bold" : "text-neutral-700 font-semibold hover:text-brand"}`}
+                        >
+                          <span className="text-base leading-5 whitespace-nowrap p-3">{category.name}</span>
+                          {activeCategory === category.slug && (
+                            <div className="w-full h-0.5 absolute bottom-0 bg-brand rounded-sm z-10"></div>
+                          )}
+                        </Link>
+                      ))}
+                    </>
+                  );
+                })()}
               </div>
               <div className="w-full h-px bg-slate-200"></div>
             </div>

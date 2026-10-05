@@ -64,7 +64,7 @@ async function getPostCategories(locale: string): Promise<PostCategoryData[]> {
   if (!apiBaseUrl) return [];
 
   try {
-    const url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts/categories?locale=${locale}`;
+    const url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts/categories?taxonomy=kennisbank-category&type=kennisbank&locale=${locale}`;
     const res = await fetch(url, { 
       headers: { 'Accept-Language': locale, 'X-Locale': locale },
       next: { revalidate: 60 } 
@@ -243,7 +243,7 @@ export default async function KnowledgeBaseArchive() {
               } as Record<string, any>)[category.slug] || BookOpen;
 
               return (
-                <Link key={category.id} href={localePath(`/blog?category=${categorySlug}`, locale)} className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 flex items-center gap-6 transition-all group">
+                <Link key={category.id} href={localePath(`/blog?type=kennisbank&category=${categorySlug}`, locale)} className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 flex items-center gap-6 transition-all group">
                   <div className="w-20 h-20 bg-brand-soft rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform flex-shrink-0">
                     <Icon className="w-10 h-10 text-brand" />
                   </div>

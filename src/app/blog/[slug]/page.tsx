@@ -68,12 +68,13 @@ async function getPost(slug: string): Promise<PostData | null> {
     }
 
     // Fallback: fetch posts and find the one with matching slug or translation slug
-    const listRes = await fetch(`${apiBaseUrl.replace(/\/$/, "")}/api/posts?type=kennisbank`, {
-      next: { revalidate: 60 },
-    });
-    if (listRes.ok) {
-      const listJson = await listRes.json();
-      const posts = (listJson.data as PostData[]) || [];
+    const [postsRes, kennisRes] = await Promise.all([
+      fetch(`${apiBaseUrl.replace(/\/$/, "")}/api/posts?type=post`, { next: { revalidate: 60 } }),
+      fetch(`${apiBaseUrl.replace(/\/$/, "")}/api/posts?type=kennisbank`, { next: { revalidate: 60 } }),
+    ]);
+    const postsData = postsRes.ok ? ((await postsRes.json()).data || []) : [];
+    const kennisData = kennisRes.ok ? ((await kennisRes.json()).data || []) : [];
+    const posts = [...postsData, ...kennisData] as PostData[];
       const found = posts.find(post => {
         if (post.slug === slug) return true;
         if (post.translations && post.translations.length > 0) {
