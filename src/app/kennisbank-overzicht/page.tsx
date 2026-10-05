@@ -224,101 +224,105 @@ export default async function KnowledgeBaseArchive() {
       </div>
 
       {/* Article Categories */}
-      <div className="w-full px-4 sm:px-6 lg:px-10">
-        <div className="w-full max-w-360 mx-auto mt-24 flex flex-col gap-8">
-          <h2 className="text-neutral-800 text-3xl font-bold">{t('articleCategories')}</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {postCategories.map((category) => {
-              const categoryName = typeof category.name === 'object' && category.name !== null ? ((category.name as any)[locale] ?? (category.name as any).en ?? (category.name as any).nl) : category.name;
-              const categorySlug = typeof category.slug === 'object' && category.slug !== null ? ((category.slug as any)[locale] ?? (category.slug as any).en ?? (category.slug as any).nl) : category.slug;
-              
-              const Icon = ({
-                'printer-setup-installation': Settings,
-                'materials-substrates': Layers,
-                'print-configuration': Sliders,
-                'troubleshooting-guide': AlertTriangle,
-                'software-drivers': Download,
-                'printer-maintenance': Wrench,
-              } as Record<string, any>)[category.slug] || BookOpen;
+      {postCategories.length > 0 && (
+        <div className="w-full px-4 sm:px-6 lg:px-10">
+          <div className="w-full max-w-360 mx-auto mt-24 flex flex-col gap-8">
+            <h2 className="text-neutral-800 text-3xl font-bold">{t('articleCategories')}</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {postCategories.map((category) => {
+                const categoryName = typeof category.name === 'object' && category.name !== null ? ((category.name as any)[locale] ?? (category.name as any).en ?? (category.name as any).nl) : category.name;
+                const categorySlug = typeof category.slug === 'object' && category.slug !== null ? ((category.slug as any)[locale] ?? (category.slug as any).en ?? (category.slug as any).nl) : category.slug;
+                
+                const Icon = ({
+                  'printer-setup-installation': Settings,
+                  'materials-substrates': Layers,
+                  'print-configuration': Sliders,
+                  'troubleshooting-guide': AlertTriangle,
+                  'software-drivers': Download,
+                  'printer-maintenance': Wrench,
+                } as Record<string, any>)[category.slug] || BookOpen;
 
-              return (
-                <Link key={category.id} href={localePath(`/blog?type=kennisbank&category=${categorySlug}`, locale)} className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 flex items-center gap-6 transition-all group">
-                  <div className="w-20 h-20 bg-brand-soft rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform flex-shrink-0">
-                    <Icon className="w-10 h-10 text-brand" />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <h3 className="text-neutral-800 text-xl font-bold group-hover:text-brand transition-colors line-clamp-2">{categoryName}</h3>
-                    <p className="text-neutral-500">{category.post_count} {category.post_count === 1 ? t('articleSingular') : t('articlePlural')}</p>
-                  </div>
-                </Link>
-              );
-            })}
+                return (
+                  <Link key={category.id} href={localePath(`/blog?type=kennisbank&category=${categorySlug}`, locale)} className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 flex items-center gap-6 transition-all group">
+                    <div className="w-20 h-20 bg-brand-soft rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform flex-shrink-0">
+                      <Icon className="w-10 h-10 text-brand" />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <h3 className="text-neutral-800 text-xl font-bold group-hover:text-brand transition-colors line-clamp-2">{categoryName}</h3>
+                      <p className="text-neutral-500">{category.post_count} {category.post_count === 1 ? t('articleSingular') : t('articlePlural')}</p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Popular Articles */}
-      <div className="w-full px-4 sm:px-6 lg:px-10">
-        <div className="w-full max-w-360 mx-auto mt-24 flex flex-col gap-8">
-          <h2 className="text-neutral-800 text-3xl font-bold">{t('popularArticles')}</h2>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {popularArticles.map((article) => {
-              const rawCatName = article.categories?.[0]?.name || "Article";
-              const categoryName = typeof rawCatName === 'object' && rawCatName !== null ? ((rawCatName as any)[locale] ?? (rawCatName as any).en ?? (rawCatName as any).nl) : rawCatName;
-              
-              // Prefer explicit translations if available from the backend
-              const translation = article.translations?.find((t) => t[locale])?.[locale];
-              const title = translation?.title || article.title;
-              const excerpt = translation?.excerpt || article.excerpt;
-              const slug = translation?.slug || article.slug;
-              
-              return (
-                <Link key={article.id} href={localePath(`/blog/${slug}`, locale)} className="bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 p-5 flex flex-col sm:flex-row gap-6 transition-all group">
-                  <div className="w-full sm:w-48 aspect-square rounded-lg bg-slate-100 overflow-hidden flex-shrink-0 relative">
-                    <Image 
-                      src={toDisplayImageUrl(article.image) || "/image-placeholder.svg"}
-                      alt={title} 
-                      fill 
-                      unoptimized
-                      className="object-cover group-hover:scale-105 transition-transform duration-500" 
-                    />
-                  </div>
-                  <div className="flex flex-col gap-4 justify-between py-2 flex-1">
-                    <div className="flex flex-col gap-2">
-                      <span className="text-blue-500 font-medium text-sm uppercase tracking-wider">{categoryName}</span>
-                      <h3 className="text-neutral-800 text-xl font-bold group-hover:text-brand transition-colors line-clamp-2">{title}</h3>
-                      <p className="text-neutral-500 line-clamp-2">{excerpt}</p>
+      {popularArticles.length > 0 && (
+        <div className="w-full px-4 sm:px-6 lg:px-10">
+          <div className="w-full max-w-360 mx-auto mt-24 flex flex-col gap-8">
+            <h2 className="text-neutral-800 text-3xl font-bold">{t('popularArticles')}</h2>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {popularArticles.map((article) => {
+                const rawCatName = article.categories?.[0]?.name || "Article";
+                const categoryName = typeof rawCatName === 'object' && rawCatName !== null ? ((rawCatName as any)[locale] ?? (rawCatName as any).en ?? (rawCatName as any).nl) : rawCatName;
+                
+                // Prefer explicit translations if available from the backend
+                const translation = article.translations?.find((t) => t[locale])?.[locale];
+                const title = translation?.title || article.title;
+                const excerpt = translation?.excerpt || article.excerpt;
+                const slug = translation?.slug || article.slug;
+                
+                return (
+                  <Link key={article.id} href={localePath(`/blog/${slug}`, locale)} className="bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 p-5 flex flex-col sm:flex-row gap-6 transition-all group">
+                    <div className="w-full sm:w-48 aspect-square rounded-lg bg-slate-100 overflow-hidden flex-shrink-0 relative">
+                      <Image 
+                        src={toDisplayImageUrl(article.image) || "/image-placeholder.svg"}
+                        alt={title} 
+                        fill 
+                        unoptimized
+                        className="object-cover group-hover:scale-105 transition-transform duration-500" 
+                      />
                     </div>
-                    <div className="flex items-center gap-3">
-                      {article.author?.avatar ? (
-                        <div className="w-9 h-9 relative rounded-full overflow-hidden">
-                          <Image 
-                            src={toDisplayImageUrl(article.author.avatar) as string} 
-                            alt={article.author.name} 
-                            fill 
-                            className="object-cover" 
-                            unoptimized 
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center text-[10px] font-bold text-brand">
-                          {article.author?.name
-                            ? article.author.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
-                            : "BL"}
-                        </div>
-                      )}
-                      {/* <span className="font-medium text-neutral-700">{article.author?.name || "Admin"}</span> */}
-                      <span className="font-medium text-neutral-700">Levi van der Molen</span>
+                    <div className="flex flex-col gap-4 justify-between py-2 flex-1">
+                      <div className="flex flex-col gap-2">
+                        <span className="text-blue-500 font-medium text-sm uppercase tracking-wider">{categoryName}</span>
+                        <h3 className="text-neutral-800 text-xl font-bold group-hover:text-brand transition-colors line-clamp-2">{title}</h3>
+                        <p className="text-neutral-500 line-clamp-2">{excerpt}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {article.author?.avatar ? (
+                          <div className="w-9 h-9 relative rounded-full overflow-hidden">
+                            <Image 
+                              src={toDisplayImageUrl(article.author.avatar) as string} 
+                              alt={article.author.name} 
+                              fill 
+                              className="object-cover" 
+                              unoptimized 
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center text-[10px] font-bold text-brand">
+                            {article.author?.name
+                              ? article.author.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
+                              : "BL"}
+                          </div>
+                        )}
+                        {/* <span className="font-medium text-neutral-700">{article.author?.name || "Admin"}</span> */}
+                        <span className="font-medium text-neutral-700">Levi van der Molen</span>
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              );
-            })}
+                  </Link>
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Troubleshooting Tree */}
       <div className="w-full bg-zinc-100 py-24 mt-24 px-4 sm:px-6 lg:px-10">
