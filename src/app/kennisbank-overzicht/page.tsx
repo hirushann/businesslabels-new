@@ -13,6 +13,8 @@ import KnowledgeSearchBar from "@/components/KnowledgeSearchBar";
 import { localePath } from "@/lib/i18n/utils";
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 
+import { getBackendHeaders } from "@/lib/api/backendHeaders";
+
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('knowledgePage');
   return {
@@ -42,7 +44,10 @@ async function getFaqPages(): Promise<FaqPageData[]> {
 
   try {
     const url = `${apiBaseUrl.replace(/\/$/, "")}/api/faq`;
-    const res = await fetch(url, { next: { revalidate: 60 } });
+    const res = await fetch(url, { 
+      headers: getBackendHeaders(),
+      next: { revalidate: 60 } 
+    });
     if (!res.ok) return [];
     const json = await res.json();
     return (json?.data as FaqPageData[]) ?? [];
@@ -63,15 +68,73 @@ async function getPostCategories(locale: string): Promise<PostCategoryData[]> {
   const apiBaseUrl = process.env.BBNL_API_BASE_URL;
   if (!apiBaseUrl) return [];
 
+  const headers = getBackendHeaders({ 
+    'Accept-Language': locale, 
+    'X-Locale': locale 
+  });
+
   try {
     const url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts/categories?taxonomy=kennisbank-category&type=kennisbank&locale=${locale}`;
-    const res = await fetch(url, { 
-      headers: { 'Accept-Language': locale, 'X-Locale': locale },
+    let res = await fetch(url, { 
+      headers,
       next: { revalidate: 60 } 
     });
-    if (!res.ok) return [];
-    const json = await res.json();
-    const categories = (json?.data as PostCategoryData[]) ?? [];
+    let json = res.ok ? await res.json() : null;
+    let categories = (json?.data as PostCategoryData[]) ?? [];
+
+    // Fallback 1: Try legacy taxonomy slug 'kennis-category'
+    if (categories.length === 0) {
+      const fallbackUrl = `${apiBaseUrl.replace(/\/$/, "")}/api/posts/categories?taxonomy=kennis-category&type=kennisbank&locale=${locale}`;
+      res = await fetch(fallbackUrl, { headers, next: { revalidate: 60 } });
+      if (res.ok) {
+        json = await res.json();
+        categories = (json?.data as PostCategoryData[]) ?? [];
+      }
+    }
+
+    // Fallback 2: Try without taxonomy parameter
+    if (categories.length === 0) {
+      const genericUrl = `${apiBaseUrl.replace(/\/$/, "")}/api/posts/categories?locale=${locale}`;
+      res = await fetch(genericUrl, { headers, next: { revalidate: 60 } });
+      if (res.ok) {
+        json = await res.json();
+        categories = (json?.data as PostCategoryData[]) ?? [];
+      }
+    }
+
+    // Fallback 3: Try post-category taxonomy if kennisbank categories aren't configured yet
+    if (categories.length === 0) {
+      const postCatUrl = `${apiBaseUrl.replace(/\/$/, "")}/api/posts/categories?taxonomy=post-category&locale=${locale}`;
+      res = await fetch(postCatUrl, { headers, next: { revalidate: 60 } });
+      if (res.ok) {
+        json = await res.json();
+        categories = (json?.data as PostCategoryData[]) ?? [];
+      }
+    }
+
+    // Fallback 4: Check /api/categories tree
+    if (categories.length === 0) {
+      const treeUrl = `${apiBaseUrl.replace(/\/$/, "")}/api/categories`;
+      res = await fetch(treeUrl, { headers, next: { revalidate: 60 } });
+      if (res.ok) {
+        const treeJson = await res.json();
+        const groups = (treeJson?.data || []) as Array<{ slug?: string; name?: string; categories?: Array<{ id: number; name: any; slug: any; count?: number }> }>;
+        const targetGroup = groups.find(g => 
+          g.slug === "kennisbank-category" || 
+          g.slug === "kennis-category" ||
+          g.slug === "post-category"
+        );
+        if (targetGroup && Array.isArray(targetGroup.categories) && targetGroup.categories.length > 0) {
+          categories = targetGroup.categories.map(c => ({
+            id: c.id,
+            name: localizedText(c.name, locale),
+            slug: localizedText(c.slug, locale),
+            post_count: c.count ?? 0,
+          }));
+        }
+      }
+    }
+
     return dedupeAndFilterTestCategories(categories, locale);
   } catch (err) {
     console.error("Failed to fetch post categories:", err);
@@ -132,15 +195,31 @@ async function getPopularArticles(locale: string): Promise<ArticleData[]> {
   const apiBaseUrl = process.env.BBNL_API_BASE_URL;
   if (!apiBaseUrl) return [];
 
+  const headers = getBackendHeaders({ 
+    'Accept-Language': locale, 
+    'X-Locale': locale 
+  });
+
   try {
     const url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts?random=4&locale=${locale}&type=kennisbank`;
-    const res = await fetch(url, { 
-      headers: { 'Accept-Language': locale, 'X-Locale': locale },
+    let res = await fetch(url, { 
+      headers,
       next: { revalidate: 60 } 
     });
-    if (!res.ok) return [];
-    const json = await res.json();
-    return (json?.data as ArticleData[]) ?? [];
+    let json = res.ok ? await res.json() : null;
+    let articles = (json?.data as ArticleData[]) ?? [];
+
+    // Fallback: If type=kennisbank returned empty, try without type
+    if (articles.length === 0) {
+      const fallbackUrl = `${apiBaseUrl.replace(/\/$/, "")}/api/posts?random=4&locale=${locale}`;
+      res = await fetch(fallbackUrl, { headers, next: { revalidate: 60 } });
+      if (res.ok) {
+        json = await res.json();
+        articles = (json?.data as ArticleData[]) ?? [];
+      }
+    }
+
+    return articles;
   } catch (err) {
     console.error("Failed to fetch popular articles:", err);
     return [];

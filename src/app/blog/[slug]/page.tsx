@@ -17,6 +17,7 @@ import InThisArticle from "@/components/blog/InThisArticle";
 import CopyLinkButton from "@/components/blog/CopyLinkButton";
 import ImageCompareSlider from "@/components/blog/ImageCompareSlider";
 import { buildArticleSchema, buildBreadcrumbSchema } from "@/lib/seo/structuredData";
+import { getBackendHeaders } from "@/lib/api/backendHeaders";
 
 type PostTranslation = {
   language: string;
@@ -58,7 +59,10 @@ async function getPost(slug: string): Promise<PostData | null> {
     const apiBaseUrl = process.env.BBNL_API_BASE_URL;
     if (!apiBaseUrl) return null;
 
+    const headers = getBackendHeaders();
+
     const res = await fetch(`${apiBaseUrl.replace(/\/$/, "")}/api/posts/slug/${slug}`, {
+      headers,
       next: { revalidate: 60 },
     });
 
@@ -69,8 +73,8 @@ async function getPost(slug: string): Promise<PostData | null> {
 
     // Fallback: fetch posts and find the one with matching slug or translation slug
     const [postsRes, kennisRes] = await Promise.all([
-      fetch(`${apiBaseUrl.replace(/\/$/, "")}/api/posts?type=post`, { next: { revalidate: 60 } }),
-      fetch(`${apiBaseUrl.replace(/\/$/, "")}/api/posts?type=kennisbank`, { next: { revalidate: 60 } }),
+      fetch(`${apiBaseUrl.replace(/\/$/, "")}/api/posts?type=post`, { headers, next: { revalidate: 60 } }),
+      fetch(`${apiBaseUrl.replace(/\/$/, "")}/api/posts?type=kennisbank`, { headers, next: { revalidate: 60 } }),
     ]);
     const postsData = postsRes.ok ? ((await postsRes.json()).data || []) : [];
     const kennisData = kennisRes.ok ? ((await kennisRes.json()).data || []) : [];
@@ -186,7 +190,7 @@ async function getRecommendedProducts(locale: "en" | "nl"): Promise<LaravelProdu
     
     const url = withLocaleParam(`${backendUrl}/api/products`, locale);
     const response = await fetch(url, {
-      headers: { 'Accept': 'application/json' },
+      headers: getBackendHeaders(),
       next: { revalidate: 0 },
     });
     if (response.ok) {

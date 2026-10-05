@@ -13,6 +13,8 @@ import { searchMaterials } from "@/lib/search/materials";
 import RecommendedProductsSlider from "@/components/blog/RecommendedProductsSlider";
 import RecommendedMaterialsSlider from "@/components/materials/RecommendedMaterialsSlider";
 
+import { getBackendHeaders } from "@/lib/api/backendHeaders";
+
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations();
 
@@ -22,10 +24,20 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+function localizedText(value: unknown, locale?: string): string {
+  if (typeof value === "string") return value;
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    const localized = (locale ? record[locale] : undefined) ?? record.nl ?? record.en;
+    return typeof localized === "string" ? localized : "";
+  }
+  return "";
+}
+
 type PostCategoryData = {
   id: number;
-  name: string;
-  slug: string;
+  name: any;
+  slug: any;
   post_count: number;
 };
 
@@ -33,15 +45,76 @@ async function getPostCategories(locale?: string, taxonomy = "post-category"): P
   const apiBaseUrl = process.env.BBNL_API_BASE_URL;
   if (!apiBaseUrl) return [];
 
+  const headers = getBackendHeaders();
+  if (locale) {
+    headers["Accept-Language"] = locale;
+    headers["X-Locale"] = locale;
+  }
+
   try {
     let url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts/categories?taxonomy=${encodeURIComponent(taxonomy)}`;
     if (locale) {
       url += `&locale=${encodeURIComponent(locale)}`;
     }
-    const res = await fetch(url, { next: { revalidate: 60 } });
-    if (!res.ok) return [];
-    const json = await res.json();
-    return (json?.data as PostCategoryData[]) ?? [];
+    let res = await fetch(url, { headers, next: { revalidate: 60 } });
+    let json = res.ok ? await res.json() : null;
+    let categories = (json?.data as PostCategoryData[]) ?? [];
+
+    // Fallback 1: If requested taxonomy returned empty and was kennisbank-category, try legacy slug 'kennis-category'
+    if (categories.length === 0 && taxonomy === "kennisbank-category") {
+      const fallbackUrl = `${apiBaseUrl.replace(/\/$/, "")}/api/posts/categories?taxonomy=kennis-category${locale ? `&locale=${encodeURIComponent(locale)}` : ""}`;
+      res = await fetch(fallbackUrl, { headers, next: { revalidate: 60 } });
+      if (res.ok) {
+        json = await res.json();
+        categories = (json?.data as PostCategoryData[]) ?? [];
+      }
+    }
+
+    // Fallback 2: If still empty, try without taxonomy query parameter (calls default backend postCategories)
+    if (categories.length === 0) {
+      const genericUrl = `${apiBaseUrl.replace(/\/$/, "")}/api/posts/categories${locale ? `?locale=${encodeURIComponent(locale)}` : ""}`;
+      res = await fetch(genericUrl, { headers, next: { revalidate: 60 } });
+      if (res.ok) {
+        json = await res.json();
+        categories = (json?.data as PostCategoryData[]) ?? [];
+      }
+    }
+
+    // Fallback 3: If still empty, check taxonomy post-category if we were asking for kennisbank, or vice versa
+    if (categories.length === 0) {
+      const altTaxonomy = taxonomy === "post-category" ? "kennisbank-category" : "post-category";
+      const altUrl = `${apiBaseUrl.replace(/\/$/, "")}/api/posts/categories?taxonomy=${encodeURIComponent(altTaxonomy)}${locale ? `&locale=${encodeURIComponent(locale)}` : ""}`;
+      res = await fetch(altUrl, { headers, next: { revalidate: 60 } });
+      if (res.ok) {
+        json = await res.json();
+        categories = (json?.data as PostCategoryData[]) ?? [];
+      }
+    }
+
+    // Fallback 4: Check /api/categories tree for matching taxonomy group
+    if (categories.length === 0) {
+      const treeUrl = `${apiBaseUrl.replace(/\/$/, "")}/api/categories`;
+      res = await fetch(treeUrl, { headers, next: { revalidate: 60 } });
+      if (res.ok) {
+        const treeJson = await res.json();
+        const groups = (treeJson?.data || []) as Array<{ slug?: string; name?: string; categories?: Array<{ id: number; name: any; slug: any; count?: number }> }>;
+        const targetGroup = groups.find(g => 
+          g.slug === taxonomy || 
+          (taxonomy.startsWith("kennis") && (g.slug === "kennisbank-category" || g.slug === "kennis-category")) ||
+          (taxonomy === "post-category" && g.slug === "post-category")
+        );
+        if (targetGroup && Array.isArray(targetGroup.categories) && targetGroup.categories.length > 0) {
+          categories = targetGroup.categories.map(c => ({
+            id: c.id,
+            name: localizedText(c.name, locale),
+            slug: localizedText(c.slug, locale),
+            post_count: c.count ?? 0,
+          }));
+        }
+      }
+    }
+
+    return categories;
   } catch (err) {
     console.error("Failed to fetch post categories:", err);
     return [];
@@ -63,8 +136,8 @@ type Post = {
     about?: string;
   } | null;
   categories?: Array<{
-    name: string;
-    slug: string;
+    name: any;
+    slug: any;
   }>;
   translations?: Array<Record<string, any>>;
 };
@@ -73,6 +146,12 @@ async function getPosts(search?: string, locale?: string, type = "post"): Promis
   try {
     const apiBaseUrl = process.env.BBNL_API_BASE_URL;
     if (!apiBaseUrl) return [];
+
+    const headers = getBackendHeaders();
+    if (locale) {
+      headers["Accept-Language"] = locale;
+      headers["X-Locale"] = locale;
+    }
 
     let url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts`;
     const urlParams = new URLSearchParams();
@@ -86,12 +165,26 @@ async function getPosts(search?: string, locale?: string, type = "post"): Promis
     }
 
     const res = await fetch(url, {
+      headers,
       next: { revalidate: search ? 0 : 60 },
     });
 
     if (!res.ok) return [];
     const json = await res.json();
-    return json.data || [];
+    let posts = json.data || [];
+
+    // Fallback: If type === 'post' returned 0 posts (e.g. on production where existing posts are 'kennisbank'),
+    // fall back to fetching 'kennisbank' so the blog page doesn't show an empty list
+    if (posts.length === 0 && type === "post") {
+      const fallbackUrl = `${apiBaseUrl.replace(/\/$/, "")}/api/posts?type=kennisbank${search ? `&search=${encodeURIComponent(search)}` : ""}${locale ? `&locale=${encodeURIComponent(locale)}` : ""}`;
+      const fallbackRes = await fetch(fallbackUrl, { headers, next: { revalidate: search ? 0 : 60 } });
+      if (fallbackRes.ok) {
+        const fallbackJson = await fallbackRes.json();
+        posts = fallbackJson.data || [];
+      }
+    }
+
+    return posts;
   } catch (error) {
     console.error("Error fetching posts:", error);
     return [];
@@ -116,7 +209,7 @@ async function getRecommendedProducts(locale: "en" | "nl"): Promise<LaravelProdu
     
     const url = withLocaleParam(`${backendUrl}/api/products`, locale);
     const response = await fetch(url, {
-      headers: { 'Accept': 'application/json' },
+      headers: getBackendHeaders(),
       next: { revalidate: 0 }, // Disable caching so it randomizes per request
     });
     if (response.ok) {
@@ -179,7 +272,10 @@ export default async function BlogsPage({
   
   const posts = activeCategory === "all" 
     ? allPosts 
-    : allPosts.filter(p => p.categories?.some(c => c.slug === activeCategory));
+    : allPosts.filter(p => p.categories?.some(c => {
+        const catSlug = localizedText(c.slug, locale);
+        return catSlug === activeCategory || c.slug === activeCategory;
+      }));
 
   const recommendedProducts = await getRecommendedProducts(locale as "en" | "nl");
   const recommendedMaterials = await getRecommendedMaterials(locale as "en" | "nl");
@@ -230,18 +326,23 @@ export default async function BlogsPage({
                         )}
                       </Link>
                       
-                      {categories.map(category => (
-                        <Link
-                          key={category.slug}
-                          href={localePath(`${baseBlogPath}${baseBlogPath.includes('?') ? '&' : '?'}category=${category.slug}`, locale)}
-                          className={`px-2.5 flex justify-center items-center gap-2.5 relative transition-colors ${activeCategory === category.slug ? "text-brand font-bold" : "text-neutral-700 font-semibold hover:text-brand"}`}
-                        >
-                          <span className="text-base leading-5 whitespace-nowrap p-3">{category.name}</span>
-                          {activeCategory === category.slug && (
-                            <div className="w-full h-0.5 absolute bottom-0 bg-brand rounded-sm z-10"></div>
-                          )}
-                        </Link>
-                      ))}
+                      {categories.map(category => {
+                        const catName = localizedText(category.name, locale);
+                        const catSlug = localizedText(category.slug, locale);
+                        if (!catSlug) return null;
+                        return (
+                          <Link
+                            key={catSlug}
+                            href={localePath(`${baseBlogPath}${baseBlogPath.includes('?') ? '&' : '?'}category=${catSlug}`, locale)}
+                            className={`px-2.5 flex justify-center items-center gap-2.5 relative transition-colors ${activeCategory === catSlug ? "text-brand font-bold" : "text-neutral-700 font-semibold hover:text-brand"}`}
+                          >
+                            <span className="text-base leading-5 whitespace-nowrap p-3">{catName || catSlug}</span>
+                            {activeCategory === catSlug && (
+                              <div className="w-full h-0.5 absolute bottom-0 bg-brand rounded-sm z-10"></div>
+                            )}
+                          </Link>
+                        );
+                      })}
                     </>
                   );
                 })()}
