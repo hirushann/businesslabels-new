@@ -64,7 +64,7 @@ async function getPostCategories(locale: string): Promise<PostCategoryData[]> {
   if (!apiBaseUrl) return [];
 
   try {
-    const url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts/categories?locale=${locale}`;
+    const url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts/categories?locale=${locale}&type=post&taxonomy=post-category`;
     const res = await fetch(url, { 
       headers: { 'Accept-Language': locale, 'X-Locale': locale },
       next: { revalidate: 60 } 
@@ -89,7 +89,7 @@ function localizedText(value: unknown, locale: string): string {
   return '';
 }
 
-// Guards against stray CMS content: hides an obvious "test" category and
+// Guards against stray CMS content: hides obvious "test" categories and
 // collapses accidental duplicate categories so neither surfaces publicly.
 function dedupeAndFilterTestCategories(categories: PostCategoryData[], locale: string): PostCategoryData[] {
   const seenSlugs = new Set<string>();
@@ -100,7 +100,14 @@ function dedupeAndFilterTestCategories(categories: PostCategoryData[], locale: s
     const localizedSlug = localizedText(category.slug, locale).trim().toLowerCase();
     const normalizedSlug = localizedSlug || String(category.id);
 
-    if (normalizedName === 'test' || normalizedSlug === 'test') continue;
+    if (
+      normalizedName === 'test' ||
+      normalizedSlug === 'test' ||
+      normalizedName.startsWith('test') ||
+      normalizedSlug.startsWith('test')
+    ) {
+      continue;
+    }
     if (seenSlugs.has(normalizedSlug)) continue;
 
     seenSlugs.add(normalizedSlug);
@@ -133,7 +140,7 @@ async function getPopularArticles(locale: string): Promise<ArticleData[]> {
   if (!apiBaseUrl) return [];
 
   try {
-    const url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts?random=4&locale=${locale}&type=kennisbank`;
+    const url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts?random=4&locale=${locale}&type=post`;
     const res = await fetch(url, { 
       headers: { 'Accept-Language': locale, 'X-Locale': locale },
       next: { revalidate: 60 } 
@@ -183,6 +190,7 @@ export default async function KnowledgeBaseArchive() {
                 <KnowledgeSearchBar 
                   apiBaseUrl={process.env.BBNL_API_BASE_URL || ""} 
                   placeholder={t('searchPlaceholder')}
+                  type="post"
                 />
               </div>
               <div className="w-full lg:w-[40%]">

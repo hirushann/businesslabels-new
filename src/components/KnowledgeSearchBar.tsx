@@ -18,9 +18,10 @@ type SearchResult = {
 type KnowledgeSearchBarProps = {
   apiBaseUrl: string;
   placeholder?: string;
+  type?: string;
 };
 
-export default function KnowledgeSearchBar({ apiBaseUrl, placeholder }: KnowledgeSearchBarProps) {
+export default function KnowledgeSearchBar({ apiBaseUrl, placeholder, type = 'post' }: KnowledgeSearchBarProps) {
   const locale = useLocale();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -45,7 +46,8 @@ export default function KnowledgeSearchBar({ apiBaseUrl, placeholder }: Knowledg
 
     const fetchResults = async () => {
       try {
-        const url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts?type=kennisbank&locale=${locale}&search=${encodeURIComponent(query)}`;
+        const postType = type || 'post';
+        const url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts?type=${encodeURIComponent(postType)}&locale=${locale}&search=${encodeURIComponent(query)}`;
         const res = await fetch(url, { cache: 'no-store' });
         if (res.ok) {
           const json = await res.json();
@@ -62,7 +64,7 @@ export default function KnowledgeSearchBar({ apiBaseUrl, placeholder }: Knowledg
 
     const timer = setTimeout(fetchResults, 300);
     return () => clearTimeout(timer);
-  }, [query, apiBaseUrl, locale]);
+  }, [query, apiBaseUrl, locale, type]);
 
   return (
     <div className="relative w-full" ref={dropdownRef}>

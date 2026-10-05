@@ -68,7 +68,7 @@ async function getPost(slug: string): Promise<PostData | null> {
     }
 
     // Fallback: fetch posts and find the one with matching slug or translation slug
-    const listRes = await fetch(`${apiBaseUrl.replace(/\/$/, "")}/api/posts?type=kennisbank`, {
+    const listRes = await fetch(`${apiBaseUrl.replace(/\/$/, "")}/api/posts?type=post`, {
       next: { revalidate: 60 },
     });
     if (listRes.ok) {

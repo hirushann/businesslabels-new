@@ -34,14 +34,19 @@ async function getPostCategories(locale?: string): Promise<PostCategoryData[]> {
   if (!apiBaseUrl) return [];
 
   try {
-    let url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts/categories`;
+    let url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts/categories?type=post&taxonomy=post-category`;
     if (locale) {
-      url += `?locale=${encodeURIComponent(locale)}`;
+      url += `&locale=${encodeURIComponent(locale)}`;
     }
     const res = await fetch(url, { next: { revalidate: 60 } });
     if (!res.ok) return [];
     const json = await res.json();
-    return (json?.data as PostCategoryData[]) ?? [];
+    const categories = (json?.data as PostCategoryData[]) ?? [];
+    return categories.filter(
+      (c) =>
+        !c.name.toLowerCase().startsWith("test") &&
+        !c.slug.toLowerCase().startsWith("test")
+    );
   } catch (err) {
     console.error("Failed to fetch post categories:", err);
     return [];
@@ -76,7 +81,7 @@ async function getPosts(search?: string, locale?: string): Promise<Post[]> {
 
     let url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts`;
     const urlParams = new URLSearchParams();
-    urlParams.append("type", "kennisbank");
+    urlParams.append("type", "post");
     if (search) urlParams.append("search", search);
     if (locale) urlParams.append("locale", locale);
 
