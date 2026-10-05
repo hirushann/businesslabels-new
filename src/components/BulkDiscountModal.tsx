@@ -11,6 +11,7 @@ import {
   formatPackagingBreakdown,
   getPackagingHint,
 } from "@/lib/utils/packaging";
+import type { ProductDisplayTitle } from "@/lib/products/productDisplay";
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
 
@@ -25,6 +26,9 @@ type BulkDiscountModalProps = {
   onClose: () => void;
   onConfirm: (quantity: number, unitPrice: number) => void;
   productName: string;
+  /** Shared detail-page title; falls back to productName when null */
+  displayTitle?: ProductDisplayTitle | null;
+  displaySubtitle?: string | null;
   productSku?: string | null;
   productImage?: string | null;
   price: number;
@@ -91,6 +95,8 @@ export default function BulkDiscountModal({
   onClose,
   onConfirm,
   productName,
+  displayTitle,
+  displaySubtitle,
   productSku,
   productImage,
   price,
@@ -374,8 +380,16 @@ export default function BulkDiscountModal({
                 </span>
               ) : null}
               <h2 className="text-neutral-800 text-lg font-bold leading-tight">
-                {productName}
+                {displayTitle ? displayTitle.main : productName}
+                {displayTitle?.quantity ? (
+                  <span className="ml-1.5 align-top text-neutral-500 text-sm font-normal whitespace-nowrap">
+                    ({displayTitle.quantity})
+                  </span>
+                ) : null}
               </h2>
+              {displayTitle && displaySubtitle ? (
+                <span className="text-neutral-600 text-sm font-medium leading-5">{displaySubtitle}</span>
+              ) : null}
               <div className="flex items-baseline gap-1.5 mt-1">
                 <span className="text-neutral-800 text-2xl font-bold">
                   {formatEuro(activeUnitPrice)}

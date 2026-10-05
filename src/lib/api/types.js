@@ -156,6 +156,8 @@
  * @property {string|null} [delivery_dates_no_stock]
  * @property {string|null} [delivery_dates_in_stock]
  * @property {string|null} [packing_group]
+ * @property {number|string|null} [labels_per_roll] Usable quantity per roll/stack; 1 means continuous media (length = height in mm).
+ * @property {string|null} [unit_type] Product unit for quantity wording ("roll" | "stack"). Not yet exposed by the API — frontend falls back to properties.kern.
  * @property {{ weight: number|null, width: number|null, height: number|null, length: number|null }} [dimensions]
  * @property {GalleryImage[]} [gallery_images]
  * @property {ProductVariant[]} [variants]

@@ -202,6 +202,8 @@ const RESULT_SOURCE_FIELDS = [
   "packing_group",
   "allow_singulars",
   "discounts",
+  "labels_per_roll",
+  "unit_type",
 ] as const;
 
 type ProductSource = Record<string, unknown>;
@@ -1893,6 +1895,8 @@ function mapProductHit(hit: estypes.SearchHit<ProductSource>, index: number, loc
     inStock: deliveryStockStatus ?? (booleanValue(source.in_stock) || Boolean((stockCount ?? 0) > 0)),
     packing_group: numberValue(source.packing_group),
     allow_singulars: firstScalar(source.allow_singulars),
+    labels_per_roll: numberValue(source.labels_per_roll),
+    unit_type: stringValue(source.unit_type),
     mainImage: imageUrl(stringValue(source.main_image) ?? stringValue(source.image)),
     categories: categoriesFromSource(source),
     slug,
@@ -1973,6 +1977,8 @@ async function applyProductConfigOverrides(products: CatalogProductResult[], loc
         originalPrice: number | null;
         stock: number | null;
         rawInStock: boolean | null;
+        labelsPerRoll: number | null;
+        unitType: string | null;
       }
     >();
 
@@ -1987,6 +1993,8 @@ async function applyProductConfigOverrides(products: CatalogProductResult[], loc
       originalPrice: number | null;
       stock: number | null;
       rawInStock: boolean | null;
+      labelsPerRoll: number | null;
+      unitType: string | null;
     }) => {
       const normalized = key?.trim();
       if (normalized) productConfigMap.set(normalized, config);
@@ -2008,6 +2016,8 @@ async function applyProductConfigOverrides(products: CatalogProductResult[], loc
         originalPrice: numberValue(p.original_price),
         stock: numberValue(p.stock),
         rawInStock: typeof p.in_stock === "boolean" ? p.in_stock : null,
+        labelsPerRoll: numberValue(p.labels_per_roll),
+        unitType: typeof p.unit_type === "string" && p.unit_type.trim() ? p.unit_type.trim() : null,
       };
 
       const slugValues = typeof p.slug === "string"
@@ -2034,6 +2044,9 @@ async function applyProductConfigOverrides(products: CatalogProductResult[], loc
       p.product.is_label = productConfig?.isLabelProduct ?? null;
       p.product.is_group_product = productConfig?.isGroupProduct ?? null;
       p.product.warranty = productConfig?.warranty ?? p.product.warranty ?? null;
+      // Quantity per roll/stack for the card badge; the live API wins over the index.
+      p.product.labels_per_roll = productConfig.labelsPerRoll ?? p.product.labels_per_roll ?? null;
+      p.product.unit_type = productConfig.unitType ?? p.product.unit_type ?? null;
 
       // Prefer the live price over whatever the ES index had cached.
       if (productConfig.price != null) {
