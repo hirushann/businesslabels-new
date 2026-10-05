@@ -656,7 +656,7 @@ function specOrderIndex(key: string): number {
   return index === -1 ? SPEC_ORDER.length : index;
 }
 
-function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t: TranslationLookup): Array<{ label: string; value: ReactNode }> {
+function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t: TranslationLookup): SpecRow[] {
   const missing = "-";
   const booleanLabels = { yes: t("common.yes"), no: t("common.no") };
   const categoryLinks = (product?.categories ?? [])
@@ -760,8 +760,7 @@ function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t:
     .filter((entry): entry is SpecRow => entry !== null);
 
   return [...specRows, ...metaRows]
-    .sort((a, b) => specOrderIndex(a.key) - specOrderIndex(b.key))
-    .map(({ label, value }) => ({ label, value }));
+    .sort((a, b) => specOrderIndex(a.key) - specOrderIndex(b.key));
 }
 
 function getProductTranslation(product: ProductDetail, locale: "en" | "nl"): ProductTranslation | null {
@@ -1140,7 +1139,12 @@ export default async function SingleProductPage({
     .filter((url): url is string => Boolean(url));
   const specs = specsFromProduct(product, locale, t);
   const displayTitle = getProductDisplayTitle(product, locale, t);
-  const displaySubtitle = displayTitle ? getProductDisplaySubtitle(product, locale, t) : null;
+  const afwerkingSpec = specs.find(
+    (spec) =>
+      ["afwerking", "finish", "finishing"].includes(spec.key) ||
+      spec.label.toLowerCase() === getSpecLabel("afwerking", locale, t).toLowerCase()
+  );
+  const displaySubtitle = afwerkingSpec?.value ?? (displayTitle ? getProductDisplaySubtitle(product, locale, t) : null);
 
   console.log('Specs:', specs);
   const compatiblePrinterIds = normalizeIdList(product.printer_ids ?? product.meta?.printer_ids);
@@ -1292,9 +1296,14 @@ export default async function SingleProductPage({
                   ) : null}
                 </div>
               ) : productName ? (
-                <h1 className="text-ink text-[32px] font-semibold leading-10">
-                  {productName}
-                </h1>
+                <div className="flex flex-col gap-2">
+                  <h1 className="text-ink text-[32px] font-semibold leading-10">
+                    {productName}
+                  </h1>
+                  {displaySubtitle ? (
+                    <p className="text-neutral-600 text-lg font-medium leading-7">{displaySubtitle}</p>
+                  ) : null}
+                </div>
               ) : null}
               {shortDescription ? (
                 <div className="text-neutral-700 text-lg font-normal leading-7 [&_a]:text-brand [&_a]:underline hover:[&_a]:text-[var(--brand-hover)] [&_a]:transition-colors" dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(shortDescription) }}>
@@ -1385,7 +1394,7 @@ export default async function SingleProductPage({
                 <div className="rounded-lg -mx-6 overflow-hidden flex flex-col gap-2">
                   {specs.map((spec, i) => (
                     <div
-                      key={spec.label}
+                      key={spec.key || spec.label}
                       className={`flex px-6 py-3 justify-between items-start gap-4 rounded-md ${i % 2 === 0 ? "bg-white/50" : ""}`}
                     >
                       <span className="shrink-0 text-neutral-500 text-base font-normal">{spec.label}</span>
