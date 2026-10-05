@@ -110,6 +110,11 @@ describe("getProductDisplaySubtitle", () => {
     expect(getProductDisplaySubtitle(product, "en", en)).toBe("TT, Plastic, Glossy, Permanent");
   });
 
+  it("allows overriding the finish part with an exact specification value", () => {
+    const product = { properties: { printmethode: "Inkjet", materiaal: "Kunststof", afwerking: "Glanzend", lijm: "Permanent" } };
+    expect(getProductDisplaySubtitle(product, "nl", nl, "Glanzend Zilver")).toBe("Inkjet, Kunststof, Glanzend Zilver, Permanent");
+  });
+
   it("keeps unknown values as-is and skips missing parts", () => {
     expect(getProductDisplaySubtitle({ properties: { printmethode: "Inkjet", materiaal: "Onbekend" } }, "en", en)).toBe("Inkjet, Onbekend");
     expect(getProductDisplaySubtitle({}, "en", en)).toBeNull();

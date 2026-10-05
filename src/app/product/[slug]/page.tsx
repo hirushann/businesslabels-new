@@ -1168,7 +1168,8 @@ export default async function SingleProductPage({
       ["afwerking", "finish", "finishing"].includes(spec.key) ||
       spec.label.toLowerCase() === getSpecLabel("afwerking", locale, t).toLowerCase()
   );
-  const displaySubtitle = afwerkingSpec?.value ?? (displayTitle ? getProductDisplaySubtitle(product, locale, t) : null);
+  const exactFinish = afwerkingSpec?.value ? String(afwerkingSpec.value) : null;
+  const displaySubtitle = displayTitle ? getProductDisplaySubtitle(product, locale, t, exactFinish) : null;
 
   console.log('Specs:', specs);
   const compatiblePrinterIds = normalizeIdList(product.printer_ids ?? product.meta?.printer_ids);
