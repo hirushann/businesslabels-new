@@ -16,7 +16,6 @@ import { calculateDisplayedCheckoutTotals, shouldPromptForInvalidVat } from "@/l
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { trackBeginCheckout } from "@/lib/analytics/dataLayer";
 import ShippingNoticeBanner from "@/components/ShippingNoticeBanner";
-import { getCartShippingParams } from "@/lib/utils/shippingNotice";
 
 type CheckoutFormState = {
   firstName: string;
@@ -386,7 +385,6 @@ function CheckoutShell({
 }) {
   const t = useTranslations();
   const locale = useLocale();
-  const checkoutShippingParams = useMemo(() => getCartShippingParams(items), [items]);
   const { shippingRules, defaultRule } = useShippingRules();
   const selectedCountry = form.sameAsBilling ? form.country : form.shippingCountry;
   const selectedRule = useMemo(() => {
@@ -1730,14 +1728,6 @@ function CheckoutShell({
               </div>
 
               <div className="p-4 flex flex-col gap-4">
-                {/* Shipping Notice */}
-                <ShippingNoticeBanner
-                  stock={checkoutShippingParams.stock}
-                  inStock={checkoutShippingParams.inStock}
-                  delivery_dates_in_stock={checkoutShippingParams.delivery_dates_in_stock}
-                  delivery_dates_no_stock={checkoutShippingParams.delivery_dates_no_stock}
-                />
-
                 {/* Product List */}
                 <div className="flex flex-col gap-4">
                   {items.map((item) => {
@@ -1768,6 +1758,16 @@ function CheckoutShell({
                               )}
                             </h4>
                             <span className="text-subtle text-sm mt-1">{item.quantity} {item.quantity === 1 ? t('checkout.item') : t('checkout.items')}</span>
+                            {item.itemKind !== "warranty" && (
+                              <ShippingNoticeBanner
+                                stock={item.stock}
+                                inStock={item.inStock}
+                                delivery_dates_in_stock={item.delivery_dates_in_stock}
+                                delivery_dates_no_stock={item.delivery_dates_no_stock}
+                                variant="inline"
+                                className="mt-1"
+                              />
+                            )}
                           </div>
                           <span className="text-ink text-[18px] font-bold shrink-0">{formatEuro(linePrice(item))}</span>
                         </div>

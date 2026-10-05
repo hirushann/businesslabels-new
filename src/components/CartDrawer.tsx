@@ -11,7 +11,6 @@ import { useIsBusinessCustomer } from '@/hooks/useIsBusinessCustomer';
 import { toDisplayImageUrl } from '@/lib/utils/imageProxy';
 import { formatPackagingBreakdown, getPackagingValidation } from '@/lib/utils/packaging';
 import ShippingNoticeBanner from '@/components/ShippingNoticeBanner';
-import { getCartShippingParams } from '@/lib/utils/shippingNotice';
 
 type CartDrawerProps = {
   onClose: () => void;
@@ -43,7 +42,6 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
     setItemQuantity,
   } = useCart();
 
-  const cartShippingParams = useMemo(() => getCartShippingParams(items), [items]);
 
   const [draftQuantities, setDraftQuantities] = useState<Record<string, string>>({});
 
@@ -398,6 +396,15 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                                   {itemBreakdown}
                                 </div>
                               )}
+
+                              <ShippingNoticeBanner
+                                stock={item.stock}
+                                inStock={item.inStock}
+                                delivery_dates_in_stock={item.delivery_dates_in_stock}
+                                delivery_dates_no_stock={item.delivery_dates_no_stock}
+                                variant="inline"
+                                className="mt-1"
+                              />
                             </div>
                           </div>
                         </div>
@@ -485,14 +492,6 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
 
               {/* Action Buttons */}
               <div className="px-6 flex flex-col gap-4">
-                <ShippingNoticeBanner
-                  stock={cartShippingParams.stock}
-                  inStock={cartShippingParams.inStock}
-                  delivery_dates_in_stock={cartShippingParams.delivery_dates_in_stock}
-                  delivery_dates_no_stock={cartShippingParams.delivery_dates_no_stock}
-                  variant="compact"
-                />
-
                 <Link
                   href={hasInvalidDraft ? '#' : lp('/winkelmand')}
                   onClick={hasInvalidDraft ? (e) => e.preventDefault() : onClose}

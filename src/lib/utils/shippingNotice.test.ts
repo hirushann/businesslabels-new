@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getShippingNotice, getCartShippingParams } from "./shippingNotice";
+import { getShippingNotice } from "./shippingNotice";
 
 describe("shipping notice rules", () => {
   // Wednesday at 10:00 (before 15:00 cutoff)
@@ -134,27 +134,6 @@ describe("shipping notice rules", () => {
         now: wednesdayMorning,
       });
       expect(result).toBeNull();
-    });
-  });
-
-  describe("getCartShippingParams", () => {
-    it("returns in-stock when all items in stock", () => {
-      const params = getCartShippingParams([
-        { stock: 10, delivery_dates_in_stock: 0 },
-        { stock: 2, delivery_dates_in_stock: 0 },
-      ]);
-      expect(params.inStock).toBe(true);
-      expect(params.stock).toBe(1);
-    });
-
-    it("returns out-of-stock with max DSO when any item is out of stock", () => {
-      const params = getCartShippingParams([
-        { stock: 10, delivery_dates_in_stock: 0 },
-        { stock: 0, delivery_dates_no_stock: 10 },
-      ]);
-      expect(params.inStock).toBe(false);
-      expect(params.stock).toBe(0);
-      expect(params.delivery_dates_no_stock).toBe(10);
     });
   });
 });
