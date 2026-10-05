@@ -75,18 +75,17 @@ async function getPost(slug: string): Promise<PostData | null> {
     const postsData = postsRes.ok ? ((await postsRes.json()).data || []) : [];
     const kennisData = kennisRes.ok ? ((await kennisRes.json()).data || []) : [];
     const posts = [...postsData, ...kennisData] as PostData[];
-      const found = posts.find(post => {
-        if (post.slug === slug) return true;
-        if (post.translations && post.translations.length > 0) {
-          return post.translations.some(entry => {
-            const translation = Object.values(entry)[0];
-            return translation && translation.slug === slug;
-          });
-        }
-        return false;
-      });
-      if (found) return found;
-    }
+    const found = posts.find(post => {
+      if (post.slug === slug) return true;
+      if (post.translations && post.translations.length > 0) {
+        return post.translations.some(entry => {
+          const translation = Object.values(entry)[0];
+          return translation && translation.slug === slug;
+        });
+      }
+      return false;
+    });
+    if (found) return found;
 
     if (
       slug === "epson-mk-bk-keuze" ||
