@@ -86,7 +86,7 @@ export default function RecommendedProductsSlider({
           const href = cardProduct.slug ? `/product/${cardProduct.slug}` : undefined;
 
           return (
-            <CarouselItem key={cardProduct.sku} className="pl-6 basis-full sm:basis-1/2 md:basis-1/3">
+            <CarouselItem key={`${cardProduct.id}-${cardProduct.sku}`} className="pl-6 basis-full sm:basis-1/2 md:basis-1/3">
               <ProductCard product={cardProduct} href={href} />
             </CarouselItem>
           );

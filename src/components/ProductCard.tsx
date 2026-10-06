@@ -202,75 +202,107 @@ function normalizeProductLocale(locale: string): "en" | "nl" {
   return locale === "nl" ? "nl" : "en";
 }
 
+function getTranslationsList(translations: ProductCardData["translations"]): Array<Record<string, unknown>> {
+  if (!translations) return [];
+  let parsed: unknown = translations;
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      return [];
+    }
+  }
+  if (!parsed || typeof parsed !== "object") return [];
+
+  const rawEntries = Array.isArray(parsed) ? parsed : Object.values(parsed);
+  const list: Array<Record<string, unknown>> = [];
+
+  for (const entry of rawEntries) {
+    if (!entry) continue;
+    let item = entry;
+    if (typeof item === "string") {
+      try {
+        item = JSON.parse(item);
+      } catch {
+        continue;
+      }
+    }
+    if (item && typeof item === "object") {
+      list.push(item as Record<string, unknown>);
+    }
+  }
+
+  if (!Array.isArray(parsed) && typeof parsed === "object") {
+    list.push(parsed as Record<string, unknown>);
+  }
+
+  return list;
+}
+
 function localizedProductField(
   translations: ProductCardData["translations"],
   locale: "en" | "nl",
   fields: Array<keyof ProductCardTranslation>,
 ): string | null {
-  if (!translations) return null;
-
-  let parsed: NonNullable<ProductCardData["translations"]> = translations;
-  if (typeof parsed === "string") {
-    try {
-      parsed = JSON.parse(parsed) as NonNullable<ProductCardData["translations"]>;
-    } catch {
-      return null;
-    }
-  }
+  const list = getTranslationsList(translations);
+  if (list.length === 0) return null;
 
   const valueFromRecord = (record: Record<string, unknown> | null | undefined): string | null => {
-    if (!record) return null;
+    if (!record || typeof record !== "object") return null;
     for (const field of fields) {
       const value = record[field];
       if (typeof value === "string" && value.trim() !== "") {
-        return value;
+        return value.trim();
       }
     }
     return null;
   };
 
-  if (Array.isArray(parsed)) {
-    for (const entry of parsed) {
-      let item = entry;
-      if (typeof item === "string") {
-        try {
-          item = JSON.parse(item) as ProductCardTranslation;
-        } catch {
-          continue;
+  const findInItem = (item: Record<string, unknown>, loc: "en" | "nl"): string | null => {
+    // 1. Direct language match: { language: "nl", title: "..." }
+    if (item.language === loc) {
+      const val = valueFromRecord(item);
+      if (val) return val;
+    }
+
+    // 2. Keyed by locale: { nl: { title: "..." } }
+    const keyed = item[loc];
+    if (keyed && typeof keyed === "object") {
+      const val = valueFromRecord(keyed as Record<string, unknown>);
+      if (val) return val;
+    }
+
+    // 3. Field localized: { title: { nl: "..." } }
+    for (const field of fields) {
+      const byField = item[field];
+      if (byField && typeof byField === "object") {
+        const val = (byField as Record<string, unknown>)[loc];
+        if (typeof val === "string" && val.trim() !== "") {
+          return val.trim();
         }
       }
-
-      if (!item || typeof item !== "object") continue;
-      const keyed = (item as Record<string, ProductCardTranslation | null>)[locale];
-      const keyedValue = valueFromRecord(keyed as Record<string, unknown> | null);
-      if (keyedValue) return keyedValue;
-
-      const direct = item as ProductCardTranslation;
-      if (direct.language === locale) {
-        const directValue = valueFromRecord(direct as Record<string, unknown>);
-        if (directValue) return directValue;
-      }
     }
+
+    return null;
+  };
+
+  // 1. First search for the requested locale
+  for (const item of list) {
+    const val = findInItem(item, locale);
+    if (val) return val;
   }
 
-  if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-    const record = parsed as Record<string, Record<string, string | null> | string | null>;
+  // 2. Fall back to the alternate locale
+  const fallbackLocale = locale === "nl" ? "en" : "nl";
+  for (const item of list) {
+    const val = findInItem(item, fallbackLocale);
+    if (val) return val;
+  }
 
-    for (const field of fields) {
-      const localizedByField = record[field];
-      if (localizedByField && typeof localizedByField === "object") {
-        const value = localizedByField[locale];
-        if (typeof value === "string" && value.trim() !== "") {
-          return value;
-        }
-      }
-    }
-
-    const localizedEntry = record[locale];
-    if (localizedEntry && typeof localizedEntry === "object") {
-      const value = valueFromRecord(localizedEntry);
-      if (value) return value;
-    }
+  // 3. Fall back to any non-empty field in any entry
+  for (const item of list) {
+    const val = valueFromRecord(item);
+    if (val) return val;
   }
 
   return null;
@@ -398,9 +430,17 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
   const locale = useLocale();
   const productLocale = normalizeProductLocale(locale);
   const t = useTranslations();
-  const { addItem, openCart } = useCart();
-  const productName = localizedProductField(product.translations, productLocale, ["title", "name"]) ?? product.name ?? product.title ?? t("product.unnamedProduct");
-  const productSlug = localizedProductField(product.translations, productLocale, ["slug"]) ?? product.slug ?? slugFromApiPath(product.api_path_by_slug);
+  const productName =
+    localizedProductField(product.translations, productLocale, ["title", "name"]) ??
+    (product.name && product.name !== "Unnamed Product" ? product.name : null) ??
+    (product.title && product.title !== "Unnamed Product" ? product.title : null) ??
+    (product.article_number ? `Product ${product.article_number}` : null) ??
+    (product.sku && product.sku !== "-" ? `Product ${product.sku}` : null) ??
+    t("product.unnamedProduct");
+  const productSlug =
+    localizedProductField(product.translations, productLocale, ["slug"]) ??
+    product.slug ??
+    slugFromApiPath(product.api_path_by_slug);
   const categoryBadge = lastCategoryLabel(product.categories, productLocale);
   const features = featureLines(product, productLocale);
   const productPrice = product.price;

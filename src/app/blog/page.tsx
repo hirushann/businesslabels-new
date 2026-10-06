@@ -12,6 +12,7 @@ import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 import { searchMaterials } from "@/lib/search/materials";
 import RecommendedProductsSlider from "@/components/blog/RecommendedProductsSlider";
 import RecommendedMaterialsSlider from "@/components/materials/RecommendedMaterialsSlider";
+import BlogCategoryTabs, { type PostCategoryData } from "@/components/blog/BlogCategoryTabs";
 
 import { getBackendHeaders } from "@/lib/api/backendHeaders";
 
@@ -34,12 +35,37 @@ function localizedText(value: unknown, locale?: string): string {
   return "";
 }
 
-type PostCategoryData = {
-  id: number;
-  name: any;
-  slug: any;
-  post_count: number;
-};
+function buildCategoryTree(categories: PostCategoryData[]): PostCategoryData[] {
+  const map = new Map<number, PostCategoryData>();
+  const roots: PostCategoryData[] = [];
+
+  for (const cat of categories) {
+    map.set(cat.id, { ...cat, children: [] });
+  }
+
+  for (const cat of categories) {
+    const item = map.get(cat.id)!;
+    if (cat.parent_id && map.has(cat.parent_id)) {
+      map.get(cat.parent_id)!.children!.push(item);
+    } else {
+      roots.push(item);
+    }
+  }
+
+  return roots;
+}
+
+function getCategoryAndDescendantSlugs(categoryNode?: PostCategoryData, locale?: string): string[] {
+  if (!categoryNode) return [];
+  const selfSlug = localizedText(categoryNode.slug, locale);
+  const slugs = selfSlug ? [selfSlug] : [];
+  if (categoryNode.children && categoryNode.children.length > 0) {
+    for (const child of categoryNode.children) {
+      slugs.push(...getCategoryAndDescendantSlugs(child, locale));
+    }
+  }
+  return slugs;
+}
 
 async function getPostCategories(locale?: string, taxonomy = "post-category"): Promise<PostCategoryData[]> {
   const apiBaseUrl = process.env.BBNL_API_BASE_URL;
@@ -114,7 +140,11 @@ async function getPostCategories(locale?: string, taxonomy = "post-category"): P
       }
     }
 
-    return categories;
+    return categories.filter((c) => {
+      const name = localizedText(c.name, locale).trim().toLowerCase();
+      const slug = localizedText(c.slug, locale).trim().toLowerCase();
+      return !name.startsWith("test") && !slug.startsWith("test");
+    });
   } catch (err) {
     console.error("Failed to fetch post categories:", err);
     return [];
@@ -268,13 +298,32 @@ export default async function BlogsPage({
   const activeCategory = searchParamsResolved.category || "all";
   
   const allPosts = await getPosts(search, locale, postType);
-  const categories = await getPostCategories(locale, taxonomy);
+  const rawCategories = await getPostCategories(locale, taxonomy);
+  const categories = buildCategoryTree(rawCategories);
   
+  let matchingCategorySlugs: string[] = [];
+  if (activeCategory !== "all") {
+    const findNode = (nodes: PostCategoryData[]): PostCategoryData | null => {
+      for (const node of nodes) {
+        const nodeSlug = localizedText(node.slug, locale);
+        if (nodeSlug === activeCategory || node.slug === activeCategory) return node;
+        if (node.children && node.children.length > 0) {
+          const found = findNode(node.children);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
+    const targetNode = findNode(categories);
+    matchingCategorySlugs = targetNode ? getCategoryAndDescendantSlugs(targetNode, locale) : [activeCategory];
+  }
+
   const posts = activeCategory === "all" 
     ? allPosts 
     : allPosts.filter(p => p.categories?.some(c => {
         const catSlug = localizedText(c.slug, locale);
-        return catSlug === activeCategory || c.slug === activeCategory;
+        return matchingCategorySlugs.includes(catSlug) || matchingCategorySlugs.includes(c.slug);
       }));
 
   const recommendedProducts = await getRecommendedProducts(locale as "en" | "nl");
@@ -310,45 +359,13 @@ export default async function BlogsPage({
           {/* Content Section */}
           <div className="flex flex-col justify-start items-start gap-6">
             {/* Categories Tab */}
-            <div className="w-full flex flex-col justify-end items-start">
-              <div className="w-full flex overflow-x-auto no-scrollbar items-start">
-                {(() => {
-                  const baseBlogPath = postType === "kennisbank" ? "/blog?type=kennisbank" : "/blog";
-                  return (
-                    <>
-                      <Link
-                        href={localePath(baseBlogPath, locale)}
-                        className={`px-2.5 flex justify-center items-center gap-2.5 relative transition-colors ${activeCategory === "all" ? "text-brand font-bold" : "text-neutral-700 font-semibold hover:text-brand"}`}
-                      >
-                        <span className="text-base leading-5 whitespace-nowrap p-3">{t("blogsPage.categoryAll")}</span>
-                        {activeCategory === "all" && (
-                          <div className="w-full h-0.5 absolute bottom-0 bg-brand rounded-sm z-10"></div>
-                        )}
-                      </Link>
-                      
-                      {categories.map(category => {
-                        const catName = localizedText(category.name, locale);
-                        const catSlug = localizedText(category.slug, locale);
-                        if (!catSlug) return null;
-                        return (
-                          <Link
-                            key={catSlug}
-                            href={localePath(`${baseBlogPath}${baseBlogPath.includes('?') ? '&' : '?'}category=${catSlug}`, locale)}
-                            className={`px-2.5 flex justify-center items-center gap-2.5 relative transition-colors ${activeCategory === catSlug ? "text-brand font-bold" : "text-neutral-700 font-semibold hover:text-brand"}`}
-                          >
-                            <span className="text-base leading-5 whitespace-nowrap p-3">{catName || catSlug}</span>
-                            {activeCategory === catSlug && (
-                              <div className="w-full h-0.5 absolute bottom-0 bg-brand rounded-sm z-10"></div>
-                            )}
-                          </Link>
-                        );
-                      })}
-                    </>
-                  );
-                })()}
-              </div>
-              <div className="w-full h-px bg-slate-200"></div>
-            </div>
+            <BlogCategoryTabs
+              categories={categories}
+              activeCategory={activeCategory}
+              locale={locale}
+              allLabel={t("blogsPage.categoryAll")}
+              basePath={postType === "kennisbank" ? "/blog?type=kennisbank" : "/blog"}
+            />
 
             {/* Articles Grid */}
             <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -357,6 +374,17 @@ export default async function BlogsPage({
                 const title = translation?.title || post.title;
                 const excerpt = translation?.excerpt || post.excerpt;
                 const slug = translation?.slug || post.slug;
+
+                const matchingCategory = activeCategory !== "all"
+                  ? post.categories?.find((c) => {
+                      const cSlug = localizedText(c.slug, locale);
+                      return matchingCategorySlugs.includes(cSlug) || matchingCategorySlugs.includes(c.slug);
+                    })
+                  : null;
+                const targetCategory = matchingCategory || post.categories?.[0];
+                const categoryName = targetCategory
+                  ? localizedText(targetCategory.name, locale) || targetCategory.name
+                  : "";
 
                 return (
                   <Link key={post.id} href={localePath(`/blog/${slug}`, locale)} className="flex flex-col bg-white rounded-2xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-100 overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
@@ -371,9 +399,11 @@ export default async function BlogsPage({
                     </div>
                     <div className="p-4 flex flex-col justify-between flex-1 gap-4">
                       <div className="flex flex-col justify-start items-start gap-2">
-                        <div className="text-blue-400 text-base font-light leading-5">
-                          {post.categories?.[0]?.name || "Article"}
-                        </div>
+                        {categoryName ? (
+                          <div className="text-blue-400 text-base font-light leading-5">
+                            {categoryName}
+                          </div>
+                        ) : null}
                         <div className="text-neutral-800 text-xl font-bold leading-6 group-hover:text-brand transition-colors line-clamp-2">
                           {title}
                         </div>
@@ -418,15 +448,21 @@ export default async function BlogsPage({
           {/* Knowledge Base Callout */}
           <div className="w-full p-6 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mt-8">
             <div className="inline-flex flex-col justify-start items-start gap-2">
-              <div className="text-neutral-800 text-2xl font-bold leading-7">Looking for in-depth information?</div>
-              <div className="text-neutral-700 text-base font-normal leading-6">Step-by-step guides, troubleshooting trees, and printer manuals live in the Knowledge Base.</div>
+              <div className="text-neutral-800 text-2xl font-bold leading-7">
+                {t("blogsPage.calloutTitle") || "Looking for in-depth information?"}
+              </div>
+              <div className="text-neutral-700 text-base font-normal leading-6">
+                {t("blogsPage.calloutDescription") || "Step-by-step guides, troubleshooting trees, and printer manuals live in the Knowledge Base."}
+              </div>
             </div>
             <Link href={localePath("/kennisbank-overzicht", locale)} className="h-12 px-6 py-2.5 bg-brand hover:bg-brand-hover transition-colors rounded-[100px] flex justify-center items-center gap-2.5 flex-shrink-0">
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M9 5.25V15.75" stroke="#F5F1EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M2.25 13.5C2.05109 13.5 1.86032 13.421 1.71967 13.2803C1.57902 13.1397 1.5 12.9489 1.5 12.75V3C1.5 2.80109 1.57902 2.61032 1.71967 2.46967C1.86032 2.32902 2.05109 2.25 2.25 2.25H6C6.79565 2.25 7.55871 2.56607 8.12132 3.12868C8.68393 3.69129 9 4.45435 9 5.25C9 4.45435 9.31607 3.69129 9.87868 3.12868C10.4413 2.56607 11.2043 2.25 12 2.25H15.75C15.9489 2.25 16.1397 2.32902 16.2803 2.46967C16.421 2.61032 16.5 2.80109 16.5 3V12.75C16.5 12.9489 16.421 13.1397 16.2803 13.2803C16.1397 13.421 15.9489 13.5 15.75 13.5H11.25C10.6533 13.5 10.081 13.7371 9.65901 14.159C9.23705 14.581 9 15.1533 9 15.75C9 15.1533 8.76295 14.581 8.34099 14.159C7.91903 13.7371 7.34674 13.5 6.75 13.5H2.25Z" stroke="#F5F1EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              <span className="text-white text-lg font-medium leading-6">Browse Knowledge Base</span>
+              <span className="text-white text-lg font-medium leading-6">
+                {t("blogsPage.calloutButton") || "Browse Knowledge Base"}
+              </span>
             </Link>
           </div>
         </div>

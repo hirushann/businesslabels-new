@@ -815,6 +815,9 @@ export const MESSAGES_V4 = {
       breadcrumbKnowledgeCenter: 'Knowledge Center',
       breadcrumbArticlesGuides: 'Articles & Guides',
       categoryAll: 'All',
+      calloutTitle: 'Looking for in-depth information?',
+      calloutDescription: 'Step-by-step guides, troubleshooting trees, and printer manuals live in the Knowledge Base.',
+      calloutButton: 'Browse Knowledge Base',
     },
     faqPage: {
       metadataTitle: 'Epson ColorWorks Label Printers FAQ | Businesslabels',
@@ -2946,6 +2949,9 @@ export const MESSAGES_V4 = {
       breadcrumbKnowledgeCenter: 'Kennisbank',
       breadcrumbArticlesGuides: 'Artikelen & Gidsen',
       categoryAll: 'Alle',
+      calloutTitle: 'Op zoek naar diepgaande informatie?',
+      calloutDescription: 'Stap-voor-stap handleidingen, probleemoplossingsbomen en printerhandleidingen vindt u in de Kennisbank.',
+      calloutButton: 'Kennisbank bekijken',
     },
     faqPage: {
       metadataTitle: 'Epson ColorWorks Veelgestelde Vragen | Businesslabels',

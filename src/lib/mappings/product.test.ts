@@ -103,4 +103,61 @@ describe("mapLaravelProductToCardData", () => {
       delivery_dates_no_stock: 100,
     });
   });
+
+  it("recovers title, slug and excerpt from alternate translations when requested locale has nulls (Laravel API shape)", () => {
+    const product: LaravelProduct = {
+      id: 693,
+      sku: "C33S020601",
+      article_number: "25000430",
+      title: null,
+      name: null,
+      slug: null,
+      excerpt: null,
+      type: "simple",
+      translations: {
+        "0": {
+          en: {
+            language: "en",
+            name: "TM-C3500 Inktcartridge Zwart",
+            title: "TM-C3500 Inktcartridge Zwart",
+            slug: "tm-c3500-inktcartridge-zwart",
+            excerpt: "Originele zwarte inktcartridge voor TM-C3500.",
+          },
+        },
+        "2": {
+          nl: {
+            language: "nl",
+            name: null,
+            title: null,
+            slug: null,
+            excerpt: null,
+          },
+        },
+      } as any,
+    };
+
+    const cardData = mapLaravelProductToCardData(product, "nl");
+    expect(cardData.name).toBe("TM-C3500 Inktcartridge Zwart");
+    expect(cardData.slug).toBe("tm-c3500-inktcartridge-zwart");
+    expect(cardData.excerpt).toBe("Originele zwarte inktcartridge voor TM-C3500.");
+  });
+
+  it("falls back to meta_title or article_number if title and translations are absent", () => {
+    const productWithMeta: LaravelProduct = {
+      id: 5,
+      sku: "SKU-999",
+      article_number: "ART-999",
+      meta_title: "Seo Meta Title",
+      type: "simple",
+    };
+    expect(mapLaravelProductToCardData(productWithMeta, "nl").name).toBe("Seo Meta Title");
+
+    const productOnlyArticle: LaravelProduct = {
+      id: 6,
+      sku: "SKU-888",
+      article_number: "ART-888",
+      type: "simple",
+    };
+    expect(mapLaravelProductToCardData(productOnlyArticle, "nl").name).toBe("Product ART-888");
+  });
 });
