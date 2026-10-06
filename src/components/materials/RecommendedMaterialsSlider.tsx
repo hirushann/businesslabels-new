@@ -8,12 +8,14 @@ interface RecommendedMaterialsSliderProps {
   materials: any[];
   locale: string;
   title?: string;
+  hidePlaceholderImage?: boolean;
 }
 
 export default function RecommendedMaterialsSlider({
   materials,
   locale,
   title = "Recommended Materials",
+  hidePlaceholderImage = true,
 }: RecommendedMaterialsSliderProps) {
   const [api, setApi] = React.useState<CarouselApi>();
   const [canScrollPrev, setCanScrollPrev] = React.useState(false);
@@ -79,9 +81,13 @@ export default function RecommendedMaterialsSlider({
       </div>
 
       <CarouselContent className="-ml-6">
-        {materials.map((material) => (
-          <CarouselItem key={material.id} className="pl-6 basis-full sm:basis-1/2 md:basis-1/3">
-            <MaterialCard material={material} locale={locale} />
+        {materials.map((material, index) => (
+          <CarouselItem key={material.id ?? index} className="pl-6 basis-full sm:basis-1/2 md:basis-1/3 flex flex-col">
+            <MaterialCard
+              material={material}
+              locale={locale}
+              hidePlaceholderImage={hidePlaceholderImage}
+            />
           </CarouselItem>
         ))}
       </CarouselContent>

@@ -685,7 +685,12 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
         <div className="w-full py-24 bg-white border-t border-slate-100 flex flex-col justify-start items-center px-4 sm:px-6 lg:px-10">
           <div className="w-full max-w-360 mx-auto">
             {recommendedMaterials.length > 0 && (
-              <RecommendedMaterialsSlider materials={recommendedMaterials} locale={locale} title={t("blogDetail.recommendedMaterials")} />
+              <RecommendedMaterialsSlider
+                materials={recommendedMaterials}
+                locale={locale}
+                title={t("blogDetail.recommendedMaterials")}
+                hidePlaceholderImage
+              />
             )}
           </div>
         </div>

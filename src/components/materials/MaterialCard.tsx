@@ -7,6 +7,7 @@ import { useState } from "react";
 import type { Material } from "@/lib/search/materials";
 import { localePath } from "@/lib/i18n/utils";
 import { materialMeasurements, resolveMaterialImage } from "@/lib/materials/presentation";
+import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 
 const getLocalizedLabel = (key: string, locale: string) => {
   const dictionary: Record<string, Record<string, string>> = {
@@ -213,56 +214,104 @@ function plainText(value?: string | null): string {
     .trim();
 }
 
+function isPlaceholderImage(url?: string | null): boolean {
+  if (!url) return true;
+  const trimmed = url.trim().toLowerCase();
+  return (
+    trimmed === "" ||
+    trimmed === "null" ||
+    trimmed === "undefined" ||
+    trimmed === "/empty.png" ||
+    trimmed === "/images/material-placeholder.svg" ||
+    trimmed.endsWith("/material-placeholder.svg")
+  );
+}
+
 export default function MaterialCard({
   material,
   locale,
   printMethod,
+  hidePlaceholderImage = false,
 }: {
   material: Material;
   locale: string;
   printMethod?: string;
+  hidePlaceholderImage?: boolean;
 }) {
   const { printTechs, baseMat, finish, adhesive, weight, thickness } = deriveMaterialAttributes(material, printMethod);
-  const cardImage = resolveMaterialImage(material.main_image) || "/images/material-placeholder.svg";
+  const rawImage = material.main_image?.trim() || "";
+  const hasRealImageSource = !isPlaceholderImage(rawImage);
+  const resolvedImage = hasRealImageSource ? toDisplayImageUrl(rawImage) : null;
+  const cardImage = resolvedImage && !isPlaceholderImage(resolvedImage) ? resolvedImage : null;
   const [imgError, setImgError] = useState(false);
+  const hasValidImage = Boolean(cardImage && !imgError);
+  const shouldRenderImage = hasValidImage || !hidePlaceholderImage;
+  const fallbackPlaceholder = resolveMaterialImage(material.main_image) || "/images/material-placeholder.svg";
+  const imageSrc = imgError ? "/empty.png" : (cardImage || fallbackPlaceholder);
+
   const materialSummary = plainText(material.excerpt || material.description || material.subtitle);
   const materialHref = localePath(`/material/${material.slug}`, locale);
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_4px_20px_rgba(109,109,120,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(109,109,120,0.12)]">
-      <Link href={materialHref} className="relative block h-60 w-full overflow-hidden bg-slate-50">
-        <Image
-          src={imgError ? "/empty.png" : cardImage}
-          alt={material.title || "Material"}
-          fill
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-          onError={() => setImgError(true)}
-        />
-        <div className="absolute left-4 top-4 flex flex-wrap gap-2 z-10">
-          {printTechs.map((tech) => {
-            const isInkjet = tech === "Inkjet";
-            const isTtr = tech === "Thermal Transfer";
-            return (
-              <span
-                key={tech}
-                className={`rounded-full px-3 py-1.5 text-xs font-normal bg-white text-slate-600 shadow-sm flex items-center gap-1.5 ${isInkjet
-                  ? ""
-                  : isTtr
-                    ? "bg-slate-700"
-                    : "bg-emerald-600"
-                  }`}
-              >
-                <PrintMethodBadgeIcon tech={tech} />
-                {getLocalizedLabel(tech, locale)}
-              </span>
-            );
-          })}
-        </div>
-      </Link>
+      {shouldRenderImage ? (
+        <Link href={materialHref} className="relative block h-60 w-full overflow-hidden bg-slate-50">
+          <Image
+            src={imageSrc}
+            alt={material.title || "Material"}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            onError={() => setImgError(true)}
+          />
+          <div className="absolute left-4 top-4 flex flex-wrap gap-2 z-10">
+            {printTechs.map((tech) => {
+              const isInkjet = tech === "Inkjet";
+              const isTtr = tech === "Thermal Transfer";
+              return (
+                <span
+                  key={tech}
+                  className={`rounded-full px-3 py-1.5 text-xs font-normal bg-white text-slate-600 shadow-sm flex items-center gap-1.5 ${isInkjet
+                    ? ""
+                    : isTtr
+                      ? "bg-slate-700"
+                      : "bg-emerald-600"
+                    }`}
+                >
+                  <PrintMethodBadgeIcon tech={tech} />
+                  {getLocalizedLabel(tech, locale)}
+                </span>
+              );
+            })}
+          </div>
+        </Link>
+      ) : null}
 
       <div className="flex flex-1 flex-col p-5">
         <div className="flex-1">
+          {!shouldRenderImage && printTechs.length > 0 && (
+            <div className="mb-3 flex flex-wrap gap-2">
+              {printTechs.map((tech) => {
+                const isInkjet = tech === "Inkjet";
+                const isTtr = tech === "Thermal Transfer";
+                return (
+                  <span
+                    key={tech}
+                    className={`rounded-full px-3 py-1.5 text-xs font-normal border border-slate-200 bg-slate-50 text-slate-700 shadow-sm flex items-center gap-1.5 ${isInkjet
+                      ? ""
+                      : isTtr
+                        ? "bg-slate-700 text-white border-transparent"
+                        : "bg-emerald-600 text-white border-transparent"
+                      }`}
+                  >
+                    <PrintMethodBadgeIcon tech={tech} />
+                    {getLocalizedLabel(tech, locale)}
+                  </span>
+                );
+              })}
+            </div>
+          )}
+
           <div className="mb-2 flex items-center gap-2">
             <Link href={materialHref} className="inline-block text-lg rounded-md font-bold uppercase tracking-wide text-link transition-colors">
               {material.code}
@@ -310,7 +359,7 @@ export default function MaterialCard({
           </div> : null}
         </div>
 
-        <div className="pt-4">
+        <div className="pt-4 mt-auto">
           <Link
             href={materialHref}
             className="flex h-11 items-center justify-center rounded-full bg-brand px-5 text-normal font-bold text-white shadow-sm transition-all duration-200 hover:bg-brand-hover hover:shadow-md hover:shadow-brand/10"
