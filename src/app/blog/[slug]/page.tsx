@@ -16,6 +16,7 @@ import CTABanner from "@/components/CTABanner";
 import InThisArticle from "@/components/blog/InThisArticle";
 import CopyLinkButton from "@/components/blog/CopyLinkButton";
 import ImageCompareSlider from "@/components/blog/ImageCompareSlider";
+import DownloadBlogPdfButton from "@/components/blog/DownloadBlogPdfButton";
 import { buildArticleSchema, buildBreadcrumbSchema } from "@/lib/seo/structuredData";
 import { getBackendHeaders } from "@/lib/api/backendHeaders";
 
@@ -307,18 +308,23 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
 
   const recommendedProducts = await getRecommendedProducts(locale as "en" | "nl");
 
-  const materialResponse = await searchMaterials({
-    page: 1,
-    perPage: 6,
-    search: "",
-    sort: "latest",
-    printMethod: "",
-    baseMaterial: [],
-    finish: [],
-    adhesive: [],
-    locale: locale as "en" | "nl",
-  });
-  const recommendedMaterials = materialResponse.materials;
+  let recommendedMaterials: import("@/lib/search/materials").Material[] = [];
+  try {
+    const materialResponse = await searchMaterials({
+      page: 1,
+      perPage: 6,
+      search: "",
+      sort: "latest",
+      printMethod: "",
+      baseMaterial: [],
+      finish: [],
+      adhesive: [],
+      locale: locale as "en" | "nl",
+    });
+    recommendedMaterials = materialResponse.materials;
+  } catch (err) {
+    console.warn("Failed to fetch recommended materials:", err);
+  }
 
   const formattedDate = new Date(post.created_at).toLocaleDateString("en-GB", {
     day: "2-digit",
@@ -633,16 +639,31 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
                   </div>
                 </div>
                 
-                {/* Download Markdown */}
+                {/* Download PDF */}
                 <div className="w-full p-5 bg-gradient-to-br from-orange-50 to-white rounded-xl border-2 border-orange-100 flex flex-col gap-4">
                   <div className="flex flex-col gap-1">
-                    <div className="text-neutral-800 text-2xl font-semibold leading-[28.80px]">{t("blogDetail.downloadMarkdown")}</div>
-                    <div className="text-neutral-600 text-sm">{t("blogDetail.downloadMarkdownDescription")}</div>
+                    <div className="text-neutral-800 text-2xl font-semibold leading-[28.80px]">
+                      {t("blogDetail.downloadPdf")}
+                    </div>
+                    <div className="text-neutral-600 text-sm">
+                      {t("blogDetail.downloadPdfDescription")}
+                    </div>
                   </div>
-                  <button className="text-brand font-bold flex items-center gap-2 hover:text-brand underline">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                    {t("blogDetail.downloadMarkdownButton")}
-                  </button>
+                  <DownloadBlogPdfButton
+                    post={{
+                      title: localized.title,
+                      content: localizedContent,
+                      excerpt: localized.excerpt,
+                      authorName: post.author?.name || "Businesslabels",
+                      date: formattedDate,
+                      category: post.categories?.[0]?.name,
+                      image: post.image,
+                      slug: localized.slug,
+                      url: fullPostUrl,
+                    }}
+                    locale={locale}
+                    label={t("blogDetail.downloadPdfButton")}
+                  />
                 </div>
               </div>
             </div>
