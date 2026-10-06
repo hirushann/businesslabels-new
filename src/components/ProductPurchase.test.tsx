@@ -305,7 +305,7 @@ describe("ProductPurchase packaging & quantity component tests", () => {
         name="Thermisch Directe printer rollen"
         price={11.14}
         inStock={true}
-        packingGroup={12}
+        packingGroup="12"
         allowSingulars={false}
         isLabelProduct={true}
       />

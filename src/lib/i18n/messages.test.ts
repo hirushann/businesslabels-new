@@ -99,5 +99,19 @@ describe('checkout translations', () => {
     expect(MESSAGES_V4.en.storeNotice.message).toContain('<phone>Call</phone>');
     expect(MESSAGES_V4.en.storeNotice.message).toContain('<email>email</email>');
   });
+
+  it('provides blogsPage knowledge base callout translations in both Dutch and English', () => {
+    expect(MESSAGES_V4.en.blogsPage.kbCalloutTitle).toBe('Looking for in-depth information?');
+    expect(MESSAGES_V4.en.blogsPage.kbCalloutDescription).toBe(
+      'Step-by-step guides, troubleshooting trees, and printer manuals live in the Knowledge Base.'
+    );
+    expect(MESSAGES_V4.en.blogsPage.kbCalloutButton).toBe('Browse Knowledge Base');
+
+    expect(MESSAGES_V4.nl.blogsPage.kbCalloutTitle).toBe('Op zoek naar diepgaande informatie?');
+    expect(MESSAGES_V4.nl.blogsPage.kbCalloutDescription).toBe(
+      'Stap-voor-stap handleidingen, probleemoplossingsbomen en printerhandleidingen vind je in de Kennisbank.'
+    );
+    expect(MESSAGES_V4.nl.blogsPage.kbCalloutButton).toBe('Kennisbank bekijken');
+  });
 });
 

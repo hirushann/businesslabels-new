@@ -449,10 +449,10 @@ export default async function BlogsPage({
           <div className="w-full p-6 bg-white rounded-xl shadow-[2px_4px_20px_0px_rgba(109,109,120,0.06)] outline outline-1 outline-offset-[-1px] outline-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mt-8">
             <div className="inline-flex flex-col justify-start items-start gap-2">
               <div className="text-neutral-800 text-2xl font-bold leading-7">
-                {t("blogsPage.calloutTitle") || "Looking for in-depth information?"}
+                {t("blogsPage.kbCalloutTitle") || "Looking for in-depth information?"}
               </div>
               <div className="text-neutral-700 text-base font-normal leading-6">
-                {t("blogsPage.calloutDescription") || "Step-by-step guides, troubleshooting trees, and printer manuals live in the Knowledge Base."}
+                {t("blogsPage.kbCalloutDescription") || "Step-by-step guides, troubleshooting trees, and printer manuals live in the Knowledge Base."}
               </div>
             </div>
             <Link href={localePath("/kennisbank-overzicht", locale)} className="h-12 px-6 py-2.5 bg-brand hover:bg-brand-hover transition-colors rounded-[100px] flex justify-center items-center gap-2.5 flex-shrink-0">
@@ -461,7 +461,7 @@ export default async function BlogsPage({
                 <path d="M2.25 13.5C2.05109 13.5 1.86032 13.421 1.71967 13.2803C1.57902 13.1397 1.5 12.9489 1.5 12.75V3C1.5 2.80109 1.57902 2.61032 1.71967 2.46967C1.86032 2.32902 2.05109 2.25 2.25 2.25H6C6.79565 2.25 7.55871 2.56607 8.12132 3.12868C8.68393 3.69129 9 4.45435 9 5.25C9 4.45435 9.31607 3.69129 9.87868 3.12868C10.4413 2.56607 11.2043 2.25 12 2.25H15.75C15.9489 2.25 16.1397 2.32902 16.2803 2.46967C16.421 2.61032 16.5 2.80109 16.5 3V12.75C16.5 12.9489 16.421 13.1397 16.2803 13.2803C16.1397 13.421 15.9489 13.5 15.75 13.5H11.25C10.6533 13.5 10.081 13.7371 9.65901 14.159C9.23705 14.581 9 15.1533 9 15.75C9 15.1533 8.76295 14.581 8.34099 14.159C7.91903 13.7371 7.34674 13.5 6.75 13.5H2.25Z" stroke="#F5F1EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
               <span className="text-white text-lg font-medium leading-6">
-                {t("blogsPage.calloutButton") || "Browse Knowledge Base"}
+                {t("blogsPage.kbCalloutButton") || "Browse Knowledge Base"}
               </span>
             </Link>
           </div>

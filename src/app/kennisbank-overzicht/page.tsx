@@ -44,9 +44,9 @@ async function getFaqPages(): Promise<FaqPageData[]> {
 
   try {
     const url = `${apiBaseUrl.replace(/\/$/, "")}/api/faq`;
-    const res = await fetch(url, { 
+    const res = await fetch(url, {
       headers: getBackendHeaders(),
-      next: { revalidate: 60 } 
+      next: { revalidate: 60 }
     });
     if (!res.ok) return [];
     const json = await res.json();
@@ -68,23 +68,23 @@ async function getPostCategories(locale: string): Promise<PostCategoryData[]> {
   const apiBaseUrl = process.env.BBNL_API_BASE_URL;
   if (!apiBaseUrl) return [];
 
-  const headers = getBackendHeaders({ 
-    'Accept-Language': locale, 
-    'X-Locale': locale 
+  const headers = getBackendHeaders({
+    'Accept-Language': locale,
+    'X-Locale': locale
   });
 
   try {
-    const url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts/categories?taxonomy=kennisbank-category&type=kennisbank&locale=${locale}`;
-    let res = await fetch(url, { 
+    const url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts/categories?taxonomy=kennisbank-category&type=post&locale=${locale}`;
+    let res = await fetch(url, {
       headers,
-      next: { revalidate: 60 } 
+      next: { revalidate: 60 }
     });
     let json = res.ok ? await res.json() : null;
     let categories = (json?.data as PostCategoryData[]) ?? [];
 
     // Fallback 1: Try legacy taxonomy slug 'kennis-category'
     if (categories.length === 0) {
-      const fallbackUrl = `${apiBaseUrl.replace(/\/$/, "")}/api/posts/categories?taxonomy=kennis-category&type=kennisbank&locale=${locale}`;
+      const fallbackUrl = `${apiBaseUrl.replace(/\/$/, "")}/api/posts/categories?taxonomy=kennis-category&type=post&locale=${locale}`;
       res = await fetch(fallbackUrl, { headers, next: { revalidate: 60 } });
       if (res.ok) {
         json = await res.json();
@@ -119,8 +119,8 @@ async function getPostCategories(locale: string): Promise<PostCategoryData[]> {
       if (res.ok) {
         const treeJson = await res.json();
         const groups = (treeJson?.data || []) as Array<{ slug?: string; name?: string; categories?: Array<{ id: number; name: any; slug: any; count?: number }> }>;
-        const targetGroup = groups.find(g => 
-          g.slug === "kennisbank-category" || 
+        const targetGroup = groups.find(g =>
+          g.slug === "kennisbank-category" ||
           g.slug === "kennis-category" ||
           g.slug === "post-category"
         );
@@ -189,27 +189,27 @@ type ArticleData = {
     slug: string;
   }>;
   translations?: Array<Record<string, any>>;
-};      
+};
 
 async function getPopularArticles(locale: string): Promise<ArticleData[]> {
   const apiBaseUrl = process.env.BBNL_API_BASE_URL;
   if (!apiBaseUrl) return [];
 
-  const headers = getBackendHeaders({ 
-    'Accept-Language': locale, 
-    'X-Locale': locale 
+  const headers = getBackendHeaders({
+    'Accept-Language': locale,
+    'X-Locale': locale
   });
 
   try {
-    const url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts?random=4&locale=${locale}&type=kennisbank`;
-    let res = await fetch(url, { 
+    const url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts?random=4&locale=${locale}&type=post`;
+    let res = await fetch(url, {
       headers,
-      next: { revalidate: 60 } 
+      next: { revalidate: 60 }
     });
     let json = res.ok ? await res.json() : null;
     let articles = (json?.data as ArticleData[]) ?? [];
 
-    // Fallback: If type=kennisbank returned empty, try without type
+    // Fallback: If type=post returned empty, try without type
     if (articles.length === 0) {
       const fallbackUrl = `${apiBaseUrl.replace(/\/$/, "")}/api/posts?random=4&locale=${locale}`;
       res = await fetch(fallbackUrl, { headers, next: { revalidate: 60 } });
@@ -244,7 +244,7 @@ export default async function KnowledgeBaseArchive() {
         <div className="w-full py-12 md:py-16 px-6 md:px-12 relative z-20 mt-8 max-w-360 rounded-[24px] mx-auto overflow-visible shadow-2xl bg-zinc-800 bg-[url('/images/archive-banner.jpg')] bg-cover bg-center">
           <div className="absolute inset-0 bg-black/20 z-0 rounded-[24px]" />
           <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent z-0 rounded-[24px]" />
-          
+
           <div className="max-w-360 mx-auto flex flex-col relative z-10">
             <div className="inline-flex justify-start items-center gap-2 mb-4">
               <Link href="/" className="text-white/70 hover:text-white transition-colors">
@@ -253,14 +253,14 @@ export default async function KnowledgeBaseArchive() {
               <div className="text-white/70 text-sm font-normal">/</div>
               <div className="text-white text-sm font-bold">{t('heroTitle')}</div>
             </div>
-            
+
             <div className="flex flex-col lg:flex-row gap-8 lg:gap-16 items-center w-full justify-between">
               <div className="w-full lg:w-[55%] flex flex-col gap-6">
                 <h1 className="text-white text-5xl md:text-6xl font-bold tracking-tight">
                   {t('heroTitle')}
                 </h1>
-                <KnowledgeSearchBar 
-                  apiBaseUrl={process.env.BBNL_API_BASE_URL || ""} 
+                <KnowledgeSearchBar
+                  apiBaseUrl={process.env.BBNL_API_BASE_URL || ""}
                   placeholder={t('searchPlaceholder')}
                 />
               </div>
@@ -278,14 +278,14 @@ export default async function KnowledgeBaseArchive() {
       <div className="w-full px-4 sm:px-6 lg:px-10">
         <div className="w-full max-w-360 mx-auto mt-16 flex flex-col gap-8">
           <h2 className="text-neutral-800 text-3xl font-bold">{t('whatLookingFor')}</h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {faqPages.map((page) => {
               const pageData = page.locales[locale] ?? page.locales[page.main_locale];
               const title = pageData?.title || "Untitled";
               const slug = page.slugs[locale] ?? page.slugs[page.main_locale];
               const IconComponent = sectionIcon(page.icon) || HelpCircle;
-              
+
               return (
                 <Link key={page.id} href={localePath(`/epson-colorworks-faq?topic=${slug}`, locale)} className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 flex flex-col items-center gap-4 transition-all group">
                   <IconComponent className="w-14 h-14 text-zinc-500 group-hover:text-brand transition-colors" />
@@ -293,7 +293,7 @@ export default async function KnowledgeBaseArchive() {
                 </Link>
               );
             })}
-            
+
             <Link href={localePath("/contact-us", locale)} className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 flex flex-col items-center gap-4 transition-all group">
               <HelpCircle className="w-14 h-14 text-zinc-500 group-hover:text-brand transition-colors" />
               <h3 className="text-center text-neutral-800 text-xl font-bold">{t('wantToKnowMore')}</h3>
@@ -307,12 +307,12 @@ export default async function KnowledgeBaseArchive() {
         <div className="w-full px-4 sm:px-6 lg:px-10">
           <div className="w-full max-w-360 mx-auto mt-24 flex flex-col gap-8">
             <h2 className="text-neutral-800 text-3xl font-bold">{t('articleCategories')}</h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {postCategories.map((category) => {
                 const categoryName = typeof category.name === 'object' && category.name !== null ? ((category.name as any)[locale] ?? (category.name as any).en ?? (category.name as any).nl) : category.name;
                 const categorySlug = typeof category.slug === 'object' && category.slug !== null ? ((category.slug as any)[locale] ?? (category.slug as any).en ?? (category.slug as any).nl) : category.slug;
-                
+
                 const Icon = ({
                   'printer-setup-installation': Settings,
                   'materials-substrates': Layers,
@@ -323,7 +323,7 @@ export default async function KnowledgeBaseArchive() {
                 } as Record<string, any>)[category.slug] || BookOpen;
 
                 return (
-                  <Link key={category.id} href={localePath(`/blog?type=kennisbank&category=${categorySlug}`, locale)} className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 flex items-center gap-6 transition-all group">
+                  <Link key={category.id} href={localePath(`/blog?type=post&category=${categorySlug}`, locale)} className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 flex items-center gap-6 transition-all group">
                     <div className="w-20 h-20 bg-brand-soft rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform flex-shrink-0">
                       <Icon className="w-10 h-10 text-brand" />
                     </div>
@@ -344,27 +344,27 @@ export default async function KnowledgeBaseArchive() {
         <div className="w-full px-4 sm:px-6 lg:px-10">
           <div className="w-full max-w-360 mx-auto mt-24 flex flex-col gap-8">
             <h2 className="text-neutral-800 text-3xl font-bold">{t('popularArticles')}</h2>
-            
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {popularArticles.map((article) => {
                 const rawCatName = article.categories?.[0]?.name || "Article";
                 const categoryName = typeof rawCatName === 'object' && rawCatName !== null ? ((rawCatName as any)[locale] ?? (rawCatName as any).en ?? (rawCatName as any).nl) : rawCatName;
-                
+
                 // Prefer explicit translations if available from the backend
                 const translation = article.translations?.find((t) => t[locale])?.[locale];
                 const title = translation?.title || article.title;
                 const excerpt = translation?.excerpt || article.excerpt;
                 const slug = translation?.slug || article.slug;
-                
+
                 return (
                   <Link key={article.id} href={localePath(`/blog/${slug}`, locale)} className="bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-100 p-5 flex flex-col sm:flex-row gap-6 transition-all group">
                     <div className="w-full sm:w-48 aspect-square rounded-lg bg-slate-100 overflow-hidden flex-shrink-0 relative">
-                      <Image 
+                      <Image
                         src={toDisplayImageUrl(article.image) || "/image-placeholder.svg"}
-                        alt={title} 
-                        fill 
+                        alt={title}
+                        fill
                         unoptimized
-                        className="object-cover group-hover:scale-105 transition-transform duration-500" 
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     </div>
                     <div className="flex flex-col gap-4 justify-between py-2 flex-1">
@@ -376,12 +376,12 @@ export default async function KnowledgeBaseArchive() {
                       <div className="flex items-center gap-3">
                         {article.author?.avatar ? (
                           <div className="w-9 h-9 relative rounded-full overflow-hidden">
-                            <Image 
-                              src={toDisplayImageUrl(article.author.avatar) as string} 
-                              alt={article.author.name} 
-                              fill 
-                              className="object-cover" 
-                              unoptimized 
+                            <Image
+                              src={toDisplayImageUrl(article.author.avatar) as string}
+                              alt={article.author.name}
+                              fill
+                              className="object-cover"
+                              unoptimized
                             />
                           </div>
                         ) : (
@@ -409,9 +409,9 @@ export default async function KnowledgeBaseArchive() {
           <div className="flex flex-col gap-8">
             <div className="flex items-center gap-3 text-brand font-bold uppercase tracking-wider text-md">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
-                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#F18800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M12 8V12" stroke="#F18800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M12 16H12.009" stroke="#F18800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#F18800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M12 8V12" stroke="#F18800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M12 16H12.009" stroke="#F18800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               {t('troubleshootingTree')}
             </div>
@@ -436,7 +436,7 @@ export default async function KnowledgeBaseArchive() {
               </p>
             </div>
           </div>
-          
+
           <div className="flex flex-col gap-6">
             <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 flex flex-col gap-8">
               <div className="flex gap-4 items-start">
@@ -448,15 +448,15 @@ export default async function KnowledgeBaseArchive() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
                 <button className="py-4 px-6 bg-brand hover:bg-brand-hover transition-colors rounded-full text-white font-normal flex items-center justify-center gap-2">
                   <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
-                    <path d="M19.9847 9.16849C20.4033 11.223 20.105 13.359 19.1394 15.2201C18.1738 17.0813 16.5994 18.5552 14.6786 19.396C12.7578 20.2369 10.6069 20.3938 8.5844 19.8407C6.56193 19.2875 4.79022 18.0578 3.56471 16.3565C2.3392 14.6551 1.73399 12.5851 1.84998 10.4916C1.96598 8.39806 2.79618 6.40757 4.20214 4.85206C5.60809 3.29655 7.50482 2.27005 9.57602 1.94374C11.6472 1.61742 13.7677 2.01103 15.5838 3.0589" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M8.25 10.0846L11 12.8346L20.1667 3.66797" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M19.9847 9.16849C20.4033 11.223 20.105 13.359 19.1394 15.2201C18.1738 17.0813 16.5994 18.5552 14.6786 19.396C12.7578 20.2369 10.6069 20.3938 8.5844 19.8407C6.56193 19.2875 4.79022 18.0578 3.56471 16.3565C2.3392 14.6551 1.73399 12.5851 1.84998 10.4916C1.96598 8.39806 2.79618 6.40757 4.20214 4.85206C5.60809 3.29655 7.50482 2.27005 9.57602 1.94374C11.6472 1.61742 13.7677 2.01103 15.5838 3.0589" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M8.25 10.0846L11 12.8346L20.1667 3.66797" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                   {t('yesRecognized')}
                 </button>
                 <button className="py-4 px-6 border-2 border-brand hover:bg-brand-soft transition-colors rounded-full text-brand font-normal flex items-center justify-center gap-2">
                   <svg width="22" height="24" viewBox="0 0 22 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
-                    <path d="M16.5 6L5.5 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M5.5 6L16.5 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M16.5 6L5.5 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M5.5 6L16.5 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                   {t('noNotSeen')}
                 </button>
