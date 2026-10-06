@@ -227,6 +227,30 @@ function isPlaceholderImage(url?: string | null): boolean {
   );
 }
 
+function getPrintTechBadgeClass(tech: string, onImage: boolean): string {
+  const isInkjet = tech === "Inkjet";
+  const isTtr = tech === "Thermal Transfer";
+
+  if (onImage) {
+    if (isInkjet) {
+      return "bg-white text-slate-700 border border-slate-200/60 shadow-sm";
+    }
+    if (isTtr) {
+      return "bg-slate-800 text-white border border-slate-700 shadow-sm";
+    }
+    return "bg-emerald-600 text-white border border-emerald-500 shadow-sm";
+  }
+
+  // Inside card body (no image)
+  if (isInkjet) {
+    return "bg-slate-100 text-slate-700 border border-slate-200";
+  }
+  if (isTtr) {
+    return "bg-slate-800 text-white border border-slate-700 shadow-sm";
+  }
+  return "bg-emerald-600 text-white border border-emerald-500 shadow-sm";
+}
+
 export default function MaterialCard({
   material,
   locale,
@@ -265,24 +289,15 @@ export default function MaterialCard({
             onError={() => setImgError(true)}
           />
           <div className="absolute left-4 top-4 flex flex-wrap gap-2 z-10">
-            {printTechs.map((tech) => {
-              const isInkjet = tech === "Inkjet";
-              const isTtr = tech === "Thermal Transfer";
-              return (
-                <span
-                  key={tech}
-                  className={`rounded-full px-3 py-1.5 text-xs font-normal bg-white text-slate-600 shadow-sm flex items-center gap-1.5 ${isInkjet
-                    ? ""
-                    : isTtr
-                      ? "bg-slate-700"
-                      : "bg-emerald-600"
-                    }`}
-                >
-                  <PrintMethodBadgeIcon tech={tech} />
-                  {getLocalizedLabel(tech, locale)}
-                </span>
-              );
-            })}
+            {printTechs.map((tech) => (
+              <span
+                key={tech}
+                className={`rounded-full px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 ${getPrintTechBadgeClass(tech, true)}`}
+              >
+                <PrintMethodBadgeIcon tech={tech} />
+                {getLocalizedLabel(tech, locale)}
+              </span>
+            ))}
           </div>
         </Link>
       ) : null}
@@ -291,24 +306,15 @@ export default function MaterialCard({
         <div className="flex-1">
           {!shouldRenderImage && printTechs.length > 0 && (
             <div className="mb-3 flex flex-wrap gap-2">
-              {printTechs.map((tech) => {
-                const isInkjet = tech === "Inkjet";
-                const isTtr = tech === "Thermal Transfer";
-                return (
-                  <span
-                    key={tech}
-                    className={`rounded-full px-3 py-1.5 text-xs font-normal border border-slate-200 bg-slate-50 text-slate-700 shadow-sm flex items-center gap-1.5 ${isInkjet
-                      ? ""
-                      : isTtr
-                        ? "bg-slate-700 text-white border-transparent"
-                        : "bg-emerald-600 text-white border-transparent"
-                      }`}
-                  >
-                    <PrintMethodBadgeIcon tech={tech} />
-                    {getLocalizedLabel(tech, locale)}
-                  </span>
-                );
-              })}
+              {printTechs.map((tech) => (
+                <span
+                  key={tech}
+                  className={`rounded-full px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 ${getPrintTechBadgeClass(tech, false)}`}
+                >
+                  <PrintMethodBadgeIcon tech={tech} />
+                  {getLocalizedLabel(tech, locale)}
+                </span>
+              ))}
             </div>
           )}
 
