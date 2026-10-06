@@ -94,7 +94,8 @@ export type ProductCardTranslation = {
 
 export type ProductCardTranslations =
   | Array<Record<string, ProductCardTranslation | null> | ProductCardTranslation | string>
-  | Record<string, Record<string, string | null> | string | null>
+  | Record<string, Record<string, unknown> | ProductCardTranslation | string | null>
+  | Record<string, unknown>
   | string
   | null;
 
@@ -430,6 +431,7 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
   const locale = useLocale();
   const productLocale = normalizeProductLocale(locale);
   const t = useTranslations();
+  const { addItem, openCart } = useCart();
   const productName =
     localizedProductField(product.translations, productLocale, ["title", "name"]) ??
     (product.name && product.name !== "Unnamed Product" ? product.name : null) ??
