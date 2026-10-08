@@ -46,14 +46,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Strip the token before forwarding — already verified above
-    const { recaptcha_token: _token, ...forwardBody } = body;
+    // Strip the token and honeypot before forwarding — already verified above
+    const { recaptcha_token: _token, website_url: _honeypot, ...forwardBody } = body;
 
     const response = await fetch(backendUrl(apiBaseUrl, '/api/custom-made-request'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'X-Internal-Secret': process.env.INTERNAL_API_SECRET || '',
       },
       body: JSON.stringify(forwardBody),
     });

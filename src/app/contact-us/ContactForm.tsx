@@ -16,7 +16,6 @@ export default function ContactForm() {
     phone: '',
     subject: '',
     message: '',
-    website_url: '', // Honeypot
   });
 
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -53,7 +52,7 @@ export default function ContactForm() {
 
       setStatus('success');
       trackFormSuccess('contact');
-      setFormData({ name: '', company: '', email: '', phone: '', subject: '', message: '', website_url: '' });
+      setFormData({ name: '', company: '', email: '', phone: '', subject: '', message: '' });
     } catch (err: any) {
       console.error('Contact form error:', err);
       setStatus('error');
@@ -182,20 +181,6 @@ export default function ContactForm() {
             </button>
           </form>
         )}
-
-        {/* Honeypot field - hidden from humans, filled by bots */}
-        <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }} aria-hidden="true">
-          <label htmlFor="website_url">Website</label>
-          <input
-            type="text"
-            id="website_url"
-            name="website_url"
-            value={formData.website_url}
-            onChange={handleChange}
-            tabIndex={-1}
-            autoComplete="off"
-          />
-        </div>
       </div>
     </div>
   );

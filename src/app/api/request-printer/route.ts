@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyRecaptcha } from '@/lib/utils/verifyRecaptcha';
 
 function backendUrl(baseUrl: string, path: string) {
   return `${baseUrl.replace(/\/$/, '')}${path}`;
@@ -34,14 +35,27 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
+    const recaptchaToken = typeof body.recaptcha_token === 'string' ? body.recaptcha_token : '';
+
+    const recaptchaResult = await verifyRecaptcha(recaptchaToken, 'request_printer');
+    if (!recaptchaResult.success) {
+      return NextResponse.json(
+        { message: 'reCAPTCHA verification failed. Please try again.' },
+        { status: 403 }
+      );
+    }
+
+    // Strip the token before forwarding — already verified above
+    const { recaptcha_token: _token, ...forwardBody } = body;
 
     const response = await fetch(backendUrl(apiBaseUrl, '/api/request-printer'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'X-Internal-Secret': process.env.INTERNAL_API_SECRET || '',
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(forwardBody),
     });
 
     const data = await readResponseBody(response);

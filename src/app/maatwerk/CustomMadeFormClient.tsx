@@ -152,7 +152,6 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
   const [phone, setPhone] = useState<string>('');
   const [quantity, setQuantity] = useState<string>('');
   const [comments, setComments] = useState<string>('');
-  const [websiteUrl, setWebsiteUrl] = useState<string>('');
   const [hoveredMaterialId, setHoveredMaterialId] = useState<string | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -326,7 +325,6 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
           comments,
           locale,
           recaptcha_token,
-          website_url: websiteUrl,
         }),
       });
 
@@ -1074,20 +1072,6 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
                 )}
               </div>
             </section>
-
-            {/* Honeypot field - hidden from humans, filled by bots */}
-            <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }} aria-hidden="true">
-              <label htmlFor="website_url">Website</label>
-              <input
-                type="text"
-                id="website_url"
-                name="website_url"
-                value={websiteUrl}
-                onChange={(e) => setWebsiteUrl(e.target.value)}
-                tabIndex={-1}
-                autoComplete="off"
-              />
-            </div>
           </form>
         </div>
 

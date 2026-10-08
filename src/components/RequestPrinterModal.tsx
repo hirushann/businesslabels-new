@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -33,6 +34,7 @@ export function RequestPrinterModal({
 }: RequestPrinterModalProps) {
   const t = useTranslations();
   const locale = useLocale() === "nl" ? "nl" : "en";
+  const { executeRecaptcha } = useGoogleReCaptcha();
   const [form, setForm] = useState<FormState>({
     brand: "",
     model: "",
@@ -55,10 +57,19 @@ export function RequestPrinterModal({
     setErrorMsg(null);
 
     try {
+      let recaptcha_token = "";
+      if (executeRecaptcha) {
+        try {
+          recaptcha_token = await executeRecaptcha("request_printer");
+        } catch (err) {
+          console.error("reCAPTCHA execution error:", err);
+        }
+      }
+
       const response = await fetch('/api/request-printer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, locale }),
+        body: JSON.stringify({ ...form, locale, recaptcha_token }),
       });
 
       if (response.ok) {

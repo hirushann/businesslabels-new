@@ -25,7 +25,10 @@ import { categoryCanonicalUrlsById, fetchCategoryGroups } from "@/lib/categories
 import { buildOrganizationSchema, buildWebSiteSchema } from "@/lib/seo/structuredData";
 import { isDevelopmentMode, getRobotsMetadata } from "@/lib/seo/indexing";
 const isStaging = process.env.NEXT_PUBLIC_APP_ENV === 'staging' || process.env.VERCEL_ENV === 'preview';
-const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
+const isDev = process.env.NODE_ENV === 'development';
+const enableGtmInDev = process.env.NEXT_PUBLIC_ENABLE_GTM_DEV === 'true';
+const shouldLoadGTM = Boolean(process.env.NEXT_PUBLIC_GTM_ID) && (!isDev || enableGtmInDev);
+const gtmId = shouldLoadGTM ? process.env.NEXT_PUBLIC_GTM_ID : null;
 
 export async function generateMetadata() {
   if (isMaintenanceMode()) {
@@ -159,6 +162,8 @@ export default async function RootLayout({ children }) {
               __html: `
                 function loadGTM() {
                   if (window._gtmLoaded) return;
+                  var isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                  if (isLocalhost && !${enableGtmInDev}) return;
                   window._gtmLoaded = true;
                   (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
                   new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],

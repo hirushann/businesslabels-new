@@ -100,6 +100,7 @@ export async function POST(request: NextRequest) {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
+          'X-Internal-Secret': process.env.INTERNAL_API_SECRET || '',
           // Omit Content-Type so fetch can set the correct boundary for multipart/form-data
         },
         body: reqFormData,
@@ -110,6 +111,7 @@ export async function POST(request: NextRequest) {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'X-Internal-Secret': process.env.INTERNAL_API_SECRET || '',
         },
         body: JSON.stringify({
           ...body,

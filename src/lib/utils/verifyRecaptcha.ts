@@ -32,14 +32,27 @@ export async function verifyRecaptcha(
   expectedAction?: string,
   scoreThreshold = DEFAULT_SCORE_THRESHOLD,
 ): Promise<RecaptchaVerifyResult> {
+  if (process.env.SKIP_RECAPTCHA === 'true') {
+    return { success: true, score: 1, action: expectedAction ?? '' };
+  }
+
+  const isDev = process.env.NODE_ENV === 'development';
   const secretKey = process.env.RECAPTCHA_SECRET_KEY;
 
   if (!secretKey) {
+    if (isDev) {
+      console.warn('[verifyRecaptcha] Bypassing reCAPTCHA: RECAPTCHA_SECRET_KEY is not configured in development.');
+      return { success: true, score: 1, action: expectedAction ?? '' };
+    }
     console.error('[verifyRecaptcha] RECAPTCHA_SECRET_KEY is not configured.');
     return { success: false, score: 0, action: '', reason: 'reCAPTCHA is not configured on the server.' };
   }
 
   if (!token) {
+    if (isDev) {
+      console.warn('[verifyRecaptcha] Bypassing reCAPTCHA: token is missing in development.');
+      return { success: true, score: 1, action: expectedAction ?? '' };
+    }
     return { success: false, score: 0, action: '', reason: 'reCAPTCHA token is missing.' };
   }
 
@@ -60,6 +73,10 @@ export async function verifyRecaptcha(
     data = await response.json();
   } catch (err) {
     console.error('[verifyRecaptcha] Network error contacting Google siteverify:', err);
+    if (isDev) {
+      console.warn('[verifyRecaptcha] Bypassing network error in development environment.');
+      return { success: true, score: 1, action: expectedAction ?? '' };
+    }
     return { success: false, score: 0, action: '', reason: 'Could not reach reCAPTCHA verification service.' };
   }
 
@@ -68,16 +85,28 @@ export async function verifyRecaptcha(
 
   if (!data.success) {
     const errorCodes = data['error-codes']?.join(', ') ?? 'unknown';
+    if (isDev) {
+      console.warn(`[verifyRecaptcha] Bypassing token failure in development environment. Error codes: ${errorCodes}`);
+      return { success: true, score: 1, action: expectedAction ?? '' };
+    }
     console.warn(`[verifyRecaptcha] Token invalid. Error codes: ${errorCodes}`);
     return { success: false, score, action, reason: 'reCAPTCHA token is invalid or expired.' };
   }
 
   if (score < scoreThreshold) {
+    if (isDev) {
+      console.warn(`[verifyRecaptcha] Bypassing low score (${score}) in development environment.`);
+      return { success: true, score: 1, action: expectedAction ?? '' };
+    }
     console.warn(`[verifyRecaptcha] Score ${score} is below threshold ${scoreThreshold}. Action: ${action}`);
     return { success: false, score, action, reason: 'reCAPTCHA score too low. Possible bot activity.' };
   }
 
   if (expectedAction && action !== expectedAction) {
+    if (isDev) {
+      console.warn(`[verifyRecaptcha] Bypassing action mismatch ("${action}" vs "${expectedAction}") in development environment.`);
+      return { success: true, score: 1, action: expectedAction ?? '' };
+    }
     console.warn(`[verifyRecaptcha] Action mismatch: expected "${expectedAction}", got "${action}".`);
     return { success: false, score, action, reason: 'reCAPTCHA action mismatch.' };
   }

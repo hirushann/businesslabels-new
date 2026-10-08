@@ -70,15 +70,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const { recaptcha_token: _token, website_url: _honeypot, ...forwardBody } = body as Record<string, unknown>;
+
     const response = await fetch(backendUrl(apiBaseUrl, '/api/contact'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'X-Internal-Secret': process.env.INTERNAL_API_SECRET || '',
       },
       body: JSON.stringify({
-        ...body,
-        recaptcha_token: undefined, // already verified above
+        ...forwardBody,
         locale: body.locale === 'nl' ? 'nl' : 'en',
       }),
     });
