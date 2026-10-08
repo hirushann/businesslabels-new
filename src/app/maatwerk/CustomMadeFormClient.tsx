@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
+import { trackFormSuccess } from '@/lib/analytics/dataLayer';
 import PrinterModelSelect from '@/components/PrinterModelSelect';
 import MaterialModelSelect from '@/components/MaterialModelSelect';
 import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogHeader, DialogDescription, DialogClose } from '@/components/ui/dialog';
@@ -331,6 +332,7 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
 
       if (response.ok) {
         setSubmitStatus('success');
+        trackFormSuccess('maatwerk');
         toast.success(t('successMessage'));
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {

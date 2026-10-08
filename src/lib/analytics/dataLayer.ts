@@ -318,3 +318,14 @@ export function trackPurchase(params: {
     ...(userData ? { user_data: userData } : {}),
   });
 }
+
+/**
+ * Trigger a lead-form conversion event. Call only from the success handler
+ * after the server has confirmed the submission (2xx).
+ */
+export function trackFormSuccess(formId: "contact" | "maatwerk"): void {
+  pushToDataLayer({
+    event: `${formId}_form_success`,
+    form_id: formId,
+  });
+}

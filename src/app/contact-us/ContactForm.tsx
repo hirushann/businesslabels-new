@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
+import { trackFormSuccess } from '@/lib/analytics/dataLayer';
 
 export default function ContactForm() {
   const locale = useLocale();
@@ -20,6 +21,7 @@ export default function ContactForm() {
 
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const isSubmittingRef = useRef(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -27,6 +29,8 @@ export default function ContactForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     setStatus('loading');
     setErrorMessage('');
 
@@ -48,11 +52,14 @@ export default function ContactForm() {
       }
 
       setStatus('success');
+      trackFormSuccess('contact');
       setFormData({ name: '', company: '', email: '', phone: '', subject: '', message: '', website_url: '' });
     } catch (err: any) {
       console.error('Contact form error:', err);
       setStatus('error');
       setErrorMessage(err.message || t('errorUnexpected'));
+    } finally {
+      isSubmittingRef.current = false;
     }
   };
 
