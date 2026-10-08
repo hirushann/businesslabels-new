@@ -254,7 +254,6 @@ export default function CustomMadeFormClient({ matCode }: { matCode: string | un
     setEmail('');
     setPhone('');
     setComments('');
-    setWebsiteUrl('');
     setFieldErrors({});
   }
 
