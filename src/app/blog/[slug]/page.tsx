@@ -13,6 +13,8 @@ import { searchMaterials } from "@/lib/search/materials";
 import RecommendedProductsSlider from "@/components/blog/RecommendedProductsSlider";
 import RecommendedMaterialsSlider from "@/components/materials/RecommendedMaterialsSlider";
 import CTABanner from "@/components/CTABanner";
+import BlogHelpful from "@/components/blog/BlogHelpful";
+import ReCaptchaProvider from "@/components/ReCaptchaProvider";
 import InThisArticle from "@/components/blog/InThisArticle";
 import CopyLinkButton from "@/components/blog/CopyLinkButton";
 import ImageCompareSlider from "@/components/blog/ImageCompareSlider";
@@ -485,40 +487,9 @@ export default async function SingleBlogPage({ params }: { params: Promise<{ slu
                   </div>
                 </div>
                 
-                 {/* Was this helpful */}
-                 <div className="w-full px-6 py-4 bg-white shadow-[2px_4px_20px_rgba(109,109,120,0.06)] overflow-hidden rounded-xl border border-[#EDF2F7] justify-start items-center gap-6 inline-flex">
-                   <div className="text-neutral-800 text-lg font-bold leading-normal">{t("blogDetail.wasThisHelpful")}</div>
-                   <div className="justify-start items-center gap-2 flex">
-                     <button className="px-3 py-1.5 bg-brand hover:bg-brand-hover transition-colors rounded flex justify-start items-center gap-2">
-                       <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-                         <g clipPath="url(#clip0_2064_10311)">
-                           <path d="M4.375 6.25V13.75" stroke="white" strokeWidth="1.08333" strokeLinecap="round" strokeLinejoin="round"/>
-                           <path d="M9.375 3.675L8.75 6.25H12.3937C12.5878 6.25 12.7792 6.29518 12.9528 6.38197C13.1263 6.46875 13.2773 6.59476 13.3938 6.75C13.5102 6.90525 13.5889 7.08547 13.6236 7.27639C13.6583 7.46732 13.6481 7.66371 13.5938 7.85L12.1375 12.85C12.0618 13.1096 11.9039 13.3377 11.6875 13.5C11.4711 13.6623 11.208 13.75 10.9375 13.75H2.5C2.16848 13.75 1.85054 13.6183 1.61612 13.3839C1.3817 13.1495 1.25 12.8315 1.25 12.5V7.5C1.25 7.16848 1.3817 6.85054 1.61612 6.61612C1.85054 6.3817 2.16848 6.25 2.5 6.25H4.225C4.45755 6.24988 4.68546 6.18488 4.8831 6.06233C5.08073 5.93977 5.24026 5.76451 5.34375 5.55625L7.5 1.25C7.79474 1.25365 8.08484 1.32386 8.34863 1.45537C8.61242 1.58689 8.84308 1.77632 9.02338 2.0095C9.20368 2.24269 9.32895 2.5136 9.38984 2.802C9.45072 3.0904 9.44565 3.38883 9.375 3.675Z" stroke="white" strokeWidth="1.08333" strokeLinecap="round" strokeLinejoin="round"/>
-                         </g>
-                         <defs>
-                           <clipPath id="clip0_2064_10311">
-                             <rect width="15" height="15" fill="white"/>
-                           </clipPath>
-                         </defs>
-                       </svg>
-                       <span className="text-white text-base font-bold leading-6">{t("blogDetail.yes")}</span>
-                     </button>
-                     <button className="h-9 px-3 py-1.5 bg-white border border-[#D7DDE5] hover:bg-slate-50 transition-colors rounded flex justify-start items-center gap-2">
-                       <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-                         <g clipPath="url(#clip0_2064_10316)">
-                           <path d="M10.625 8.75V1.25" stroke="#F18800" strokeWidth="1.08333" strokeLinecap="round" strokeLinejoin="round"/>
-                           <path d="M5.6252 11.325L6.2502 8.75H2.60645C2.41239 8.75 2.221 8.70482 2.04743 8.61803C1.87386 8.53125 1.72288 8.40525 1.60645 8.25C1.49001 8.09476 1.41132 7.91453 1.37661 7.72361C1.34189 7.53268 1.35211 7.33629 1.40645 7.15L2.8627 2.15C2.93842 1.89036 3.09633 1.66228 3.3127 1.5C3.52907 1.33772 3.79223 1.25 4.0627 1.25H12.5002C12.8317 1.25 13.1497 1.3817 13.3841 1.61612C13.6185 1.85054 13.7502 2.16848 13.7502 2.5V7.5C13.7502 7.83152 13.6185 8.14946 13.3841 8.38388C13.1497 8.6183 12.8317 8.75 12.5002 8.75H10.7752C10.5426 8.75012 10.3147 8.81512 10.1171 8.93768C9.91946 9.06023 9.75993 9.23549 9.65645 9.44375L7.5002 13.75C7.20546 13.7464 6.91536 13.6761 6.65157 13.5446C6.38778 13.4131 6.15712 13.2237 5.97682 12.9905C5.79652 12.7573 5.67125 12.4864 5.61036 12.198C5.54947 11.9096 5.55454 11.6112 5.6252 11.325Z" stroke="#F18800" strokeWidth="1.08333" strokeLinecap="round" strokeLinejoin="round"/>
-                         </g>
-                         <defs>
-                           <clipPath id="clip0_2064_10316">
-                             <rect width="15" height="15" fill="white"/>
-                           </clipPath>
-                         </defs>
-                       </svg>
-                       <span className="text-brand text-base font-bold leading-6">{t("blogDetail.no")}</span>
-                     </button>
-                   </div>
-                 </div>
+                <ReCaptchaProvider>
+                  <BlogHelpful postId={post.id} postTitle={localized.title} postUrl={fullPostUrl} />
+                </ReCaptchaProvider>
               </div>
               
               {/* Sidebar */}
