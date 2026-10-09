@@ -24,6 +24,7 @@ import type { ReactNode } from "react";
 import LocaleLink from "@/components/LocaleLink";
 import { categoryNameFallback, categoryPublicPathFromSlug } from "@/lib/categories/tree";
 import { localizeProductSpecValue } from "@/lib/products/specValues";
+import { getProductDisplaySubtitle, getProductDisplayTitle, getQuantityDisplay } from "@/lib/products/productDisplay";
 import { mapLaravelProductToCardData, type LaravelProduct } from "@/lib/mappings/product";
 import ProductDescriptionAccordion from "@/components/ProductDescriptionAccordion";
 import { htmlToText, sanitizeCmsHtml } from "@/lib/utils";
@@ -260,6 +261,7 @@ type ProductDetail = {
   allow_singulars?: string | number | boolean | null;
   moq?: number | null;
   labels_per_roll?: string | number | null;
+  unit_type?: string | null;
   discounts?: string | Array<{ discount?: string | number | null; quantity?: string | number | null }> | null;
   discount?: number | null;
   dimensions?: {
@@ -630,7 +632,32 @@ function appendUnitIfMissing(value: string, unit: string = "mm"): string {
   return `${trimmed} ${unit}`;
 }
 
-function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t: TranslationLookup): Array<{ label: string; value: ReactNode }> {
+type SpecRow = { key: string; label: string; value: ReactNode };
+
+// Client-requested specification order; anything not listed follows in API order.
+const SPEC_ORDER: readonly (readonly string[])[] = [
+  ["article_number"],
+  ["category"],
+  ["breedte", "width"],
+  ["hoogte", "height"],
+  ["quantity"],
+  ["kern", "core"],
+  ["buiten-diameter", "buitendiameter", "buiten_diameter"],
+  ["material_code", "materiaal_code", "material-code", "materiaal-code"],
+  ["printmethode", "print_method"],
+  ["materiaal", "material"],
+  ["afwerking", "finish"],
+  ["lijm", "adhesive", "glue"],
+];
+
+const QUANTITY_PROPERTY_KEYS = new Set(["labels_per_roll", "labels_per_rol"]);
+
+function specOrderIndex(key: string): number {
+  const index = SPEC_ORDER.findIndex((keys) => keys.includes(key));
+  return index === -1 ? SPEC_ORDER.length : index;
+}
+
+function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t: TranslationLookup): SpecRow[] {
   const missing = "-";
   const booleanLabels = { yes: t("common.yes"), no: t("common.no") };
   const categoryLinks = (product?.categories ?? [])
@@ -640,9 +667,10 @@ function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t:
       return { name, slug: localizedCategorySlug(category, locale) };
     })
     .filter((entry): entry is { name: string; slug: string | null } => Boolean(entry));
-  const specRows: Array<{ label: string; value: ReactNode }> = [
-    { label: getSpecLabel("article_number", locale, t), value: normalizeDisplayValue(product?.article_number, booleanLabels) || missing },
+  const specRows: SpecRow[] = [
+    { key: "article_number", label: getSpecLabel("article_number", locale, t), value: normalizeDisplayValue(product?.article_number, booleanLabels) || missing },
     {
+      key: "category",
       label: getSpecLabel("category", locale, t),
       value:
         categoryLinks.length > 0 ? (
@@ -669,27 +697,25 @@ function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t:
     },
   ];
 
-  const isLabelProduct = Boolean(
-    product?.is_label_product === true ||
-    product?.meta?.is_label_product === true ||
-    normalizeBoolean(product?.is_label_product) ||
-    normalizeBoolean(product?.meta?.is_label_product)
-  );
-  if (isLabelProduct && product?.labels_per_roll) {
-    specRows.push({
-      label: getSpecLabel("labels_per_roll", locale, t),
-      value: normalizeDisplayValue(product.labels_per_roll, booleanLabels) || missing,
-    });
+  const quantityValue = product
+    ? getQuantityDisplay(product, locale, t) ?? normalizeDisplayValue(product.labels_per_roll, booleanLabels)
+    : null;
+  if (quantityValue) {
+    specRows.push({ key: "quantity", label: t("product.quantity"), value: quantityValue });
   }
 
   const metaRows = Object.entries(product?.properties ?? {})
-    .map(([key, value]): { label: string; value: ReactNode } | null => {
+    .map(([key, value]): SpecRow | null => {
+      const cleanKey = key.toLowerCase().trim();
+      if (quantityValue && QUANTITY_PROPERTY_KEYS.has(cleanKey)) {
+        return null;
+      }
+
       const normalizedValue = normalizePropertyDisplayValue(value, booleanLabels);
       if (!normalizedValue) {
         return null;
       }
 
-      const cleanKey = key.toLowerCase().trim();
       const needsMmSuffix = [
         "breedte",
         "hoogte",
@@ -727,13 +753,15 @@ function specsFromProduct(product: ProductDetail | null, locale: "en" | "nl", t:
       }
 
       return {
+        key: cleanKey,
         label: getSpecLabel(key, locale, t),
         value: finalValue,
       };
     })
-    .filter((entry): entry is { label: string; value: ReactNode } => entry !== null);
+    .filter((entry): entry is SpecRow => entry !== null);
 
-  return [...specRows, ...metaRows];
+  return [...specRows, ...metaRows]
+    .sort((a, b) => specOrderIndex(a.key) - specOrderIndex(b.key));
 }
 
 function getProductTranslation(product: ProductDetail, locale: "en" | "nl"): ProductTranslation | null {
@@ -1111,6 +1139,13 @@ export default async function SingleProductPage({
     .map((item) => toDisplayImageUrl(item.url))
     .filter((url): url is string => Boolean(url));
   const specs = specsFromProduct(product, locale, t);
+  const displayTitle = getProductDisplayTitle(product, locale, t);
+  const afwerkingSpec = specs.find(
+    (spec) =>
+      ["afwerking", "finish", "finishing"].includes(spec.key) ||
+      spec.label.toLowerCase() === getSpecLabel("afwerking", locale, t).toLowerCase()
+  );
+  const displaySubtitle = afwerkingSpec?.value ?? (displayTitle ? getProductDisplaySubtitle(product, locale, t) : null);
 
   console.log('Specs:', specs);
   const compatiblePrinterIds = normalizeIdList(product.printer_ids ?? product.meta?.printer_ids);
@@ -1253,10 +1288,29 @@ export default async function SingleProductPage({
           <div className="w-full lg:flex-1 min-w-0 flex flex-col gap-8 lg:gap-12">
             {/* Title & Description */}
             <div className="flex flex-col gap-4">
-              {productName ? (
-                <h1 className="text-ink text-[32px] font-semibold leading-10">
-                  {productName}
-                </h1>
+              {displayTitle ? (
+                <div className="flex flex-col gap-2">
+                  <h1 className="text-ink text-[32px] font-semibold leading-10">
+                    {displayTitle.main}
+                    {displayTitle.quantity ? (
+                      <span className="ml-2 align-top text-neutral-500 text-lg font-normal leading-7 whitespace-nowrap">
+                        ({displayTitle.quantity})
+                      </span>
+                    ) : null}
+                  </h1>
+                  {displaySubtitle ? (
+                    <p className="text-neutral-600 text-lg font-medium leading-7">{displaySubtitle}</p>
+                  ) : null}
+                </div>
+              ) : productName ? (
+                <div className="flex flex-col gap-2">
+                  <h1 className="text-ink text-[32px] font-semibold leading-10">
+                    {productName}
+                  </h1>
+                  {displaySubtitle ? (
+                    <p className="text-neutral-600 text-lg font-medium leading-7">{displaySubtitle}</p>
+                  ) : null}
+                </div>
               ) : null}
               {shortDescription ? (
                 <div className="text-neutral-700 text-lg font-normal leading-7 [&_a]:text-brand [&_a]:underline hover:[&_a]:text-[var(--brand-hover)] [&_a]:transition-colors" dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(shortDescription) }}>
@@ -1347,7 +1401,7 @@ export default async function SingleProductPage({
                 <div className="rounded-lg -mx-6 overflow-hidden flex flex-col gap-2">
                   {specs.map((spec, i) => (
                     <div
-                      key={spec.label}
+                      key={spec.key || spec.label}
                       className={`flex px-6 py-3 justify-between items-start gap-4 rounded-md ${i % 2 === 0 ? "bg-white/50" : ""}`}
                     >
                       <span className="shrink-0 text-neutral-500 text-base font-normal">{spec.label}</span>

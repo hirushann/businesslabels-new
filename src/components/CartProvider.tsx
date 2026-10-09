@@ -34,6 +34,10 @@ export type CartItem = {
   componentCount?: number | null;
   basePrice?: number | null;
   discounts?: string | CartDiscountTier[] | null;
+  stock?: number | null;
+  inStock?: boolean | null;
+  delivery_dates_in_stock?: number | string | null;
+  delivery_dates_no_stock?: number | string | null;
   warrantyOptionId?: number | string | null;
   warranty?: {
     optionId: number;

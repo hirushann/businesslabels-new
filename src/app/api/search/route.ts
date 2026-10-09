@@ -1067,6 +1067,10 @@ async function injectProductOverrides(results: Array<Record<string, unknown>>, l
         allowSingulars: unknown;
         discounts: unknown;
         warranty: unknown;
+        stock: number | null;
+        inStock: boolean | null;
+        deliveryDatesInStock: number | null;
+        deliveryDatesNoStock: number | null;
       }
     >();
 
@@ -1086,6 +1090,10 @@ async function injectProductOverrides(results: Array<Record<string, unknown>>, l
         allowSingulars: p.allow_singulars ?? null,
         discounts: p.discounts ?? null,
         warranty: p.warranty ?? null,
+        stock: p.stock != null ? Number(p.stock) : null,
+        inStock: p.in_stock != null ? Boolean(p.in_stock) : null,
+        deliveryDatesInStock: p.delivery_dates_in_stock != null ? Number(p.delivery_dates_in_stock) : null,
+        deliveryDatesNoStock: p.delivery_dates_no_stock != null ? Number(p.delivery_dates_no_stock) : null,
       });
     });
 
@@ -1103,6 +1111,18 @@ async function injectProductOverrides(results: Array<Record<string, unknown>>, l
         r.warranty = { raw: config.warranty };
         if (config.discounts) {
           r.discounts = { raw: typeof config.discounts === 'object' ? JSON.stringify(config.discounts) : config.discounts };
+        }
+        if (config.stock !== null) {
+          r.stock = { raw: config.stock };
+        }
+        if (config.inStock !== null) {
+          r.in_stock = { raw: config.inStock };
+        }
+        if (config.deliveryDatesInStock !== null) {
+          r.delivery_dates_in_stock = { raw: config.deliveryDatesInStock };
+        }
+        if (config.deliveryDatesNoStock !== null) {
+          r.delivery_dates_no_stock = { raw: config.deliveryDatesNoStock };
         }
       }
     });

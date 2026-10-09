@@ -16,9 +16,11 @@ import { useLocale, useTranslations } from "next-intl";
 import BulkDiscountModal from "@/components/BulkDiscountModal";
 import { localePath } from "@/lib/i18n/utils";
 import { localizeProductSpecValue } from "@/lib/products/specValues";
+import { getProductDisplaySubtitle, getProductDisplayTitle, getQuantityDisplay } from "@/lib/products/productDisplay";
 import { normalizeWarrantyOptions, type NormalizedWarrantyOption as WarrantyOption } from "@/lib/warranty/localize";
 import WarrantyDialogContent from "@/components/WarrantyDialogContent";
 import { isEndOfLife } from "@/lib/utils/delivery";
+import ShippingNoticeBanner from "@/components/ShippingNoticeBanner";
 import { toDisplayImageUrl } from "@/lib/utils/imageProxy";
 import { unescapeHtml } from "@/lib/utils";
 
@@ -136,6 +138,8 @@ export type ProductCardData = {
   type?: ProductRouteType | null;
   packing_group?: number | null;
   allow_singulars?: string | number | boolean | null;
+  labels_per_roll?: number | string | null;
+  unit_type?: string | null;
   warranty?: ProductWarrantyData | null;
   discount?: number | 0;
   discounts?: BulkDiscountTier[] | string | null;
@@ -482,6 +486,9 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
   }, [kernValue, isStack, t]);
 
   const isLabelProduct = Boolean(product.is_label_product ?? product.is_label ?? false);
+  const quantityDisplay = getQuantityDisplay(product, productLocale, t);
+  const displayTitle = getProductDisplayTitle(product, productLocale, t);
+  const displaySubtitle = displayTitle ? getProductDisplaySubtitle(product, productLocale, t) : null;
   const normalizedPackingGroup = isLabelProduct ? normalizePositiveInteger(product.packing_group) : null;
   const normalizedMoq = normalizePositiveInteger(product.moq);
   // If MOQ is explicitly 1, it implies we can order singulars up to the packing group
@@ -545,6 +552,10 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
         allowSingulars: effectiveAllowSingulars,
         isLabelProduct: Boolean(product.is_label_product ?? product.is_label ?? false),
         warrantyOptionId: parentWarrantyOptionId,
+        stock: product.stock != null ? Number(product.stock) : null,
+        inStock: product.inStock != null ? Boolean(product.inStock) : null,
+        delivery_dates_in_stock: product.delivery_dates_in_stock != null ? product.delivery_dates_in_stock : null,
+        delivery_dates_no_stock: product.delivery_dates_no_stock != null ? product.delivery_dates_no_stock : null,
       },
       finalQty,
     );
@@ -740,10 +751,10 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
           onError={() => setImgError(true)}
         />
         </Link>
-        {product.is_label_product === true && product.packing_group != null && Number(product.packing_group) > 0 && (
+        {quantityDisplay && (
           <div className="absolute bottom-4 right-4 z-10 px-2.5 py-1 bg-white rounded-full flex items-center gap-1.5 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.08)] border border-slate-100">
             <span className="text-neutral-700 text-xs font-normal leading-4">
-              {t("product.perBox", { count: product.packing_group })}
+              {quantityDisplay}
             </span>
           </div>
         )}
@@ -784,6 +795,14 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
         </div>
 
         <div className="flex flex-col gap-4 mt-auto">
+          {/* Shipping Notice */}
+          <ShippingNoticeBanner
+            stock={product.stock}
+            inStock={product.inStock}
+            delivery_dates_in_stock={product.delivery_dates_in_stock}
+            delivery_dates_no_stock={product.delivery_dates_no_stock}
+            variant="compact"
+          />
           <div className="bg-slate-100" />
           <div className="flex justify-between items-center">
             <div className="flex flex-col gap-2">
@@ -860,6 +879,8 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
       onClose={() => setIsBulkModalOpen(false)}
       onConfirm={handleBulkModalConfirm}
       productName={productName}
+      displayTitle={displayTitle}
+      displaySubtitle={displaySubtitle}
       productSku={product.sku}
       productImage={normalizeText(productMainImage)}
       price={productPrice!}
