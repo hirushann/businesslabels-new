@@ -23,7 +23,7 @@ describe('verifyRecaptcha', () => {
 
   it('bypasses verification failure in development mode when token fails', async () => {
     process.env.SKIP_RECAPTCHA = 'false';
-    process.env.NODE_ENV = 'development';
+    (process.env as any).NODE_ENV = 'development';
     process.env.RECAPTCHA_SECRET_KEY = 'test-secret';
 
     vi.spyOn(global, 'fetch').mockResolvedValueOnce({
@@ -40,7 +40,7 @@ describe('verifyRecaptcha', () => {
 
   it('fails in production mode when token is invalid', async () => {
     process.env.SKIP_RECAPTCHA = 'false';
-    process.env.NODE_ENV = 'production';
+    (process.env as any).NODE_ENV = 'production';
     process.env.RECAPTCHA_SECRET_KEY = 'test-secret';
 
     vi.spyOn(global, 'fetch').mockResolvedValueOnce({
@@ -57,7 +57,7 @@ describe('verifyRecaptcha', () => {
 
   it('fails in production mode when score is below threshold', async () => {
     process.env.SKIP_RECAPTCHA = 'false';
-    process.env.NODE_ENV = 'production';
+    (process.env as any).NODE_ENV = 'production';
     process.env.RECAPTCHA_SECRET_KEY = 'test-secret';
 
     vi.spyOn(global, 'fetch').mockResolvedValueOnce({
@@ -75,7 +75,7 @@ describe('verifyRecaptcha', () => {
 
   it('succeeds in production mode when score and action match', async () => {
     process.env.SKIP_RECAPTCHA = 'false';
-    process.env.NODE_ENV = 'production';
+    (process.env as any).NODE_ENV = 'production';
     process.env.RECAPTCHA_SECRET_KEY = 'test-secret';
 
     vi.spyOn(global, 'fetch').mockResolvedValueOnce({
