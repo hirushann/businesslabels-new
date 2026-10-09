@@ -54,10 +54,22 @@ export type WarrantyTypeInput = {
 };
 
 export type WarrantyInput = {
-  default_option?: WarrantyDefaultOptionInput | null;
+  default_option?: (WarrantyDefaultOptionInput & { pdf_url?: string | null; download_url?: string | null; pdf_name?: string | null }) | null;
   types?: WarrantyTypeInput[] | null;
   options?: WarrantyOptionInput[] | null;
+  pdf_url?: string | null;
+  download_url?: string | null;
+  pdf_name?: string | null;
 } | null | undefined;
+
+export type NormalizedWarrantyData = {
+  defaultOption: NormalizedWarrantyOption | null;
+  types: NormalizedWarrantyType[];
+  oldOptions: NormalizedWarrantyOption[];
+  allOptions: NormalizedWarrantyOption[];
+  pdfUrl?: string | null;
+  pdfName?: string | null;
+};
 
 export type NormalizedWarrantyOption = {
   id: number | string;
@@ -140,11 +152,24 @@ export function normalizeWarrantyOptions(warranty: WarrantyInput, locale: string
     allOptions = [...allOptions, ...oldOptions];
   }
 
+  const pdfUrl =
+    warranty?.pdf_url ||
+    warranty?.download_url ||
+    (warranty?.default_option as any)?.pdf_url ||
+    (warranty?.default_option as any)?.download_url ||
+    null;
+  const pdfName =
+    warranty?.pdf_name ||
+    (warranty?.default_option as any)?.pdf_name ||
+    null;
+
   return {
     defaultOption,
     types,
     oldOptions: types[0]?.id === "legacy" ? [] : oldOptions,
     allOptions,
+    pdfUrl,
+    pdfName,
   };
 }
 

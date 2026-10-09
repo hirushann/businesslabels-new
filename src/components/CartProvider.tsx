@@ -34,6 +34,7 @@ export type CartItem = {
   componentCount?: number | null;
   basePrice?: number | null;
   discounts?: string | CartDiscountTier[] | null;
+  warrantyOptionId?: number | string | null;
   warranty?: {
     optionId: number;
     type?: string | null;
@@ -77,13 +78,27 @@ type CartContextValue = {
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-export function buildCartItemKey(item: Pick<CartInput, "id" | "slug" | "type">): string {
+export function buildCartItemKey(
+  item: Pick<CartInput, "id" | "slug" | "type"> & {
+    itemKind?: "product" | "warranty";
+    warrantyOptionId?: number | string | null;
+  }
+): string {
+  if (item.itemKind === "warranty") {
+    return String(item.id);
+  }
+
   const slug = item.slug?.trim();
   const type = item.type?.trim();
+  const warrantySuffix =
+    item.warrantyOptionId != null && item.warrantyOptionId !== ""
+      ? `::warranty-${String(item.warrantyOptionId)}`
+      : "";
+
   if (slug) {
-    return type ? `${slug}::${type}` : slug;
+    return type ? `${slug}::${type}${warrantySuffix}` : `${slug}${warrantySuffix}`;
   }
-  return type ? `${item.id}::${type}` : String(item.id);
+  return type ? `${item.id}::${type}${warrantySuffix}` : `${item.id}${warrantySuffix}`;
 }
 
 function normalizePackingGroup(value: unknown): number | null {
@@ -264,6 +279,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
               packingGroup: item.packingGroup ?? currentItem.packingGroup,
               allowSingulars: item.allowSingulars ?? currentItem.allowSingulars,
               isLabelProduct: item.isLabelProduct ?? currentItem.isLabelProduct,
+              warrantyOptionId:
+                item.warrantyOptionId !== undefined ? item.warrantyOptionId : currentItem.warrantyOptionId,
               quantity: currentItem.quantity + normalizedQuantity,
             };
             return {
@@ -308,7 +325,52 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (target.itemKind === "warranty") {
-        return currentItems.filter((item) => item.key !== key);
+        const parentKey = target.linkedToKey;
+        const remaining = currentItems.filter((item) => item.key !== key);
+        if (!parentKey) {
+          return remaining;
+        }
+
+        const parentIndex = remaining.findIndex((item) => item.key === parentKey);
+        if (parentIndex === -1) {
+          return remaining;
+        }
+
+        const parent = remaining[parentIndex];
+        const newParentKey = buildCartItemKey({
+          id: parent.id,
+          slug: parent.slug,
+          type: parent.type,
+          warrantyOptionId: null,
+        });
+
+        const existingBaseItemIndex = remaining.findIndex(
+          (item) => item.key === newParentKey && item.key !== parentKey
+        );
+
+        if (existingBaseItemIndex !== -1) {
+          return remaining
+            .filter((_, idx) => idx !== parentIndex)
+            .map((item) => {
+              if (item.key === newParentKey) {
+                const mergedQuantity = item.quantity + parent.quantity;
+                const updated = { ...item, quantity: mergedQuantity };
+                return { ...updated, price: calculateUnitPrice(updated) ?? updated.price };
+              }
+              return item;
+            });
+        }
+
+        return remaining.map((item, idx) => {
+          if (idx === parentIndex) {
+            return {
+              ...item,
+              key: newParentKey,
+              warrantyOptionId: null,
+            };
+          }
+          return item;
+        });
       }
 
       return currentItems.filter((item) => item.key !== key && item.linkedToKey !== key);

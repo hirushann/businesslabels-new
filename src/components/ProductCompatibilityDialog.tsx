@@ -214,6 +214,19 @@ export default function ProductCompatibilityDialog({
   const addProductWithWarranty = (selectedOption: WarrantyOption | null) => {
     if (!productId && !productSku) return;
 
+    const warrantyPrice =
+      selectedOption && typeof selectedOption.price === "number" && Number.isFinite(selectedOption.price)
+        ? selectedOption.price
+        : 0;
+    const hasActiveWarranty = Boolean(selectedOption && warrantyPrice > 0 && selectedOption.id !== "default");
+    const parentWarrantyOptionId = hasActiveWarranty && selectedOption ? selectedOption.id : null;
+    const parentKey = buildCartItemKey({
+      id: productId ?? productSku ?? "",
+      slug: productSlug,
+      type: normalizedProductType,
+      warrantyOptionId: parentWarrantyOptionId,
+    });
+
     addItem(
       {
         id: productId ?? productSku ?? "",
@@ -226,21 +239,12 @@ export default function ProductCompatibilityDialog({
         mainImage: productImage,
         packingGroup: packingGroup ? Math.floor(Number(packingGroup)) : undefined,
         allowSingulars: allowSingulars != null ? Boolean(allowSingulars) : undefined,
+        warrantyOptionId: parentWarrantyOptionId,
       },
       1
     );
 
-    const warrantyPrice =
-      selectedOption && typeof selectedOption.price === "number" && Number.isFinite(selectedOption.price)
-        ? selectedOption.price
-        : 0;
-
-    if (selectedOption && warrantyPrice > 0) {
-      const parentKey = buildCartItemKey({
-        id: productId ?? productSku ?? "",
-        slug: productSlug,
-        type: normalizedProductType,
-      });
+    if (hasActiveWarranty && selectedOption) {
       const warrantyName = selectedOption.name || `${productName ?? t("product.unnamedProduct")} ${t("product.extendedWarranty")}`;
 
       addItem(

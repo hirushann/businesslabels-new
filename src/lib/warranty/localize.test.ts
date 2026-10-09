@@ -108,4 +108,18 @@ describe("normalizeWarrantyOptions", () => {
       description: "NL testomschrijving voor 4 jaar garantie.",
     });
   });
+
+  it("extracts pdfUrl and pdfName when provided on warranty or default_option", () => {
+    const result = normalizeWarrantyOptions(
+      {
+        ...warranty,
+        pdf_url: "https://example.com/api/warranty-groups/1/pdf?lang=nl",
+        pdf_name: "warranty-terms.pdf",
+      },
+      "nl"
+    );
+
+    expect(result.pdfUrl).toBe("https://example.com/api/warranty-groups/1/pdf?lang=nl");
+    expect(result.pdfName).toBe("warranty-terms.pdf");
+  });
 });

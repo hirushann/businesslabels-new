@@ -641,6 +641,19 @@ export default function ProductPurchase({
   const addProductWithWarranty = (qtyToAdd: number, selectedOption: WarrantyOption | null) => {
     const itemPrice = getUnitPriceForQuantity(qtyToAdd) ?? price;
 
+    const warrantyPrice =
+      selectedOption && typeof selectedOption.price === "number" && Number.isFinite(selectedOption.price)
+        ? selectedOption.price
+        : 0;
+    const hasActiveWarranty = Boolean(selectedOption && warrantyPrice > 0 && selectedOption.id !== "default");
+    const parentWarrantyOptionId = hasActiveWarranty && selectedOption ? selectedOption.id : null;
+    const parentKey = buildCartItemKey({
+      id: id ?? displaySku,
+      slug,
+      type,
+      warrantyOptionId: parentWarrantyOptionId,
+    });
+
     addItem(
       {
         id: id ?? displaySku,
@@ -658,17 +671,12 @@ export default function ProductPurchase({
         allowSingulars: Boolean(effectiveAllowSingulars),
         moq: normalizedMoq,
         isLabelProduct: isLabel,
+        warrantyOptionId: parentWarrantyOptionId,
       },
       qtyToAdd,
     );
 
-    const warrantyPrice =
-      selectedOption && typeof selectedOption.price === "number" && Number.isFinite(selectedOption.price)
-        ? selectedOption.price
-        : 0;
-
-    if (selectedOption && warrantyPrice > 0) {
-      const parentKey = buildCartItemKey({ id: id ?? displaySku, slug, type });
+    if (hasActiveWarranty && selectedOption) {
       const warrantyName = selectedOption.name || `${displayName} ${t("product.extendedWarranty")}`;
 
       addItem(
@@ -682,7 +690,7 @@ export default function ProductPurchase({
           linkedToKey: parentKey,
           packingGroup: normalizedPackingGroup,
           allowSingulars: Boolean(effectiveAllowSingulars),
-        moq: normalizedMoq,
+          moq: normalizedMoq,
           warranty: {
             optionId: Number(selectedOption.id),
             typeName: selectedOption.typeName,

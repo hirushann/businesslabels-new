@@ -516,6 +516,19 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
     const finalQty = overrideQty ?? addQuantity;
     const finalPrice = overridePrice ?? productPrice ?? null;
 
+    const warrantyPrice =
+      selectedOption && typeof selectedOption.price === "number" && Number.isFinite(selectedOption.price)
+        ? selectedOption.price
+        : 0;
+    const hasActiveWarranty = Boolean(selectedOption && warrantyPrice > 0 && selectedOption.id !== "default");
+    const parentWarrantyOptionId = hasActiveWarranty && selectedOption ? selectedOption.id : null;
+    const parentKey = buildCartItemKey({
+      id: product.id,
+      slug: productSlug,
+      type: product.type,
+      warrantyOptionId: parentWarrantyOptionId,
+    });
+
     addItem(
       {
         id: product.id,
@@ -531,17 +544,12 @@ export default function ProductCard({ product, href, onClick }: ProductCardProps
         packingGroup: normalizedPackingGroup,
         allowSingulars: effectiveAllowSingulars,
         isLabelProduct: Boolean(product.is_label_product ?? product.is_label ?? false),
+        warrantyOptionId: parentWarrantyOptionId,
       },
       finalQty,
     );
 
-    const warrantyPrice =
-      selectedOption && typeof selectedOption.price === "number" && Number.isFinite(selectedOption.price)
-        ? selectedOption.price
-        : 0;
-
-    if (selectedOption && warrantyPrice > 0) {
-      const parentKey = buildCartItemKey({ id: product.id, slug: productSlug, type: product.type });
+    if (hasActiveWarranty && selectedOption) {
       const warrantyName = selectedOption.name || `${productName} ${t("product.extendedWarranty")}`;
 
       addItem(

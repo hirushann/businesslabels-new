@@ -11,11 +11,32 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
+  BadgeCheckIcon,
+  Building2Icon,
+  CalendarIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  CpuIcon,
   DownloadIcon,
+  FileCheckIcon,
+  HeartIcon,
   HomeIcon,
   InfoIcon,
+  LifeBuoyIcon,
+  LockIcon,
+  MapPinIcon,
+  MessageSquareIcon,
+  PackageIcon,
+  PhoneIcon,
+  RefreshCwIcon,
+  SettingsIcon,
+  ShieldCheckIcon,
   ShoppingCart,
+  SparklesIcon,
+  StarIcon,
   TruckIcon,
+  WrenchIcon,
+  ZapIcon,
   type LucideIcon,
 } from "lucide-react";
 import type {
@@ -28,6 +49,8 @@ type NormalizedWarrantyData = {
   types: NormalizedWarrantyType[];
   oldOptions: NormalizedWarrantyOption[];
   allOptions: NormalizedWarrantyOption[];
+  pdfUrl?: string | null;
+  pdfName?: string | null;
 };
 
 type WarrantyDialogContentProps = {
@@ -106,23 +129,84 @@ function getWarrantyBadgeClass(color: string): string {
 }
 
 function getWarrantyTypeIcon(iconName: string | null | undefined): LucideIcon {
-  const normalizedIconName = iconName?.toLowerCase().replace(/[_\s]/g, "-") ?? "";
+  const normalized = iconName?.toLowerCase().replace(/[_\s]/g, "-") ?? "";
+
+  if (!normalized) return InfoIcon;
+
+  if (normalized.includes("shield")) return ShieldCheckIcon;
+  if (normalized.includes("badge")) return BadgeCheckIcon;
+  if (normalized.includes("document-check") || normalized.includes("sla") || normalized.includes("contract")) return FileCheckIcon;
+  if (normalized.includes("check")) return CheckCircleIcon;
+  if (normalized.includes("lock")) return LockIcon;
 
   if (
-    normalizedIconName.includes("home") ||
-    normalizedIconName.includes("site") ||
-    normalizedIconName.includes("engineer")
-  ) {
-    return HomeIcon;
-  }
-
-  if (
-    normalizedIconName.includes("truck") ||
-    normalizedIconName.includes("return") ||
-    normalizedIconName.includes("shipping")
+    normalized.includes("truck") ||
+    normalized.includes("return") ||
+    normalized.includes("shipping") ||
+    normalized.includes("delivery")
   ) {
     return TruckIcon;
   }
+  if (
+    normalized.includes("home") ||
+    normalized.includes("site") ||
+    normalized.includes("engineer")
+  ) {
+    return HomeIcon;
+  }
+  if (normalized.includes("pin") || normalized.includes("map") || normalized.includes("location")) {
+    return MapPinIcon;
+  }
+  if (normalized.includes("building") || normalized.includes("office") || normalized.includes("center")) {
+    return Building2Icon;
+  }
+
+  if (normalized.includes("wrench") || normalized.includes("repair") || normalized.includes("tool")) {
+    return WrenchIcon;
+  }
+  if (normalized.includes("cog") || normalized.includes("gear") || normalized.includes("setting")) {
+    return SettingsIcon;
+  }
+  if (
+    normalized.includes("arrow-path") ||
+    normalized.includes("cycle") ||
+    normalized.includes("refresh") ||
+    normalized.includes("swap")
+  ) {
+    return RefreshCwIcon;
+  }
+  if (normalized.includes("cube") || normalized.includes("box") || normalized.includes("part")) {
+    return PackageIcon;
+  }
+  if (normalized.includes("cpu") || normalized.includes("chip")) {
+    return CpuIcon;
+  }
+
+  if (normalized.includes("clock") || normalized.includes("time") || normalized.includes("hour")) {
+    return ClockIcon;
+  }
+  if (
+    normalized.includes("bolt") ||
+    normalized.includes("zap") ||
+    normalized.includes("express") ||
+    normalized.includes("fast")
+  ) {
+    return ZapIcon;
+  }
+  if (normalized.includes("calendar")) return CalendarIcon;
+
+  if (normalized.includes("lifebuoy") || normalized.includes("support")) return LifeBuoyIcon;
+  if (normalized.includes("phone")) return PhoneIcon;
+  if (normalized.includes("chat") || normalized.includes("message")) return MessageSquareIcon;
+  if (
+    normalized.includes("sparkle") ||
+    normalized.includes("vip") ||
+    normalized.includes("premium")
+  ) {
+    return SparklesIcon;
+  }
+  if (normalized.includes("star")) return StarIcon;
+  if (normalized.includes("heart")) return HeartIcon;
 
   return InfoIcon;
 }
@@ -188,6 +272,24 @@ function WarrantyDialogContentBody({
         </div>
 
         <div className="flex flex-col gap-5">
+          {!warranty.defaultOption && warranty.pdfUrl && (
+            <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-3 sm:p-3.5">
+              <span className="text-sm font-medium text-foreground">
+                {title}
+              </span>
+              <a
+                href={warranty.pdfUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                download
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand underline underline-offset-2 hover:text-brand-hover"
+              >
+                <DownloadIcon className="size-3.5" strokeWidth={1.8} />
+                {downloadLabel}
+              </a>
+            </div>
+          )}
+
           {warranty.defaultOption && (
             <button
               type="button"
@@ -208,10 +310,21 @@ function WarrantyDialogContentBody({
                   <p className="mt-2 text-sm leading-5 text-muted-foreground">
                     {warranty.defaultOption.description || defaultWarrantyDescription}
                   </p>
-                  <span className="mt-2 flex items-center gap-1.5 text-sm font-semibold leading-normal text-brand underline underline-offset-2">
-                    <DownloadIcon className="size-3.5" strokeWidth={1.8} />
-                    {downloadLabel}
-                  </span>
+                  {warranty.pdfUrl ? (
+                    <a
+                      href={warranty.pdfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download
+                      onClick={(e) => {
+                        e.stopPropagation();
+                      }}
+                      className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold leading-normal text-brand underline underline-offset-2 hover:text-brand-hover"
+                    >
+                      <DownloadIcon className="size-3.5" strokeWidth={1.8} />
+                      {downloadLabel}
+                    </a>
+                  ) : null}
                 </div>
               </div>
             </button>
