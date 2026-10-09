@@ -285,16 +285,23 @@ function WarrantyDialogContentBody({
                 className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand underline underline-offset-2 hover:text-brand-hover"
               >
                 <DownloadIcon className="size-3.5" strokeWidth={1.8} />
-                {downloadLabel}
+                {downloadLabel || "Download warranty terms (PDF)"}
               </a>
             </div>
           )}
 
           {warranty.defaultOption && (
-            <button
-              type="button"
+            <div
+              role="button"
+              tabIndex={0}
               onClick={() => setSelectedWarrantyId(warranty.defaultOption?.id ?? "default")}
-              className={`w-full rounded-lg border p-3.5 text-left transition-colors sm:p-4 ${
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setSelectedWarrantyId(warranty.defaultOption?.id ?? "default");
+                }
+              }}
+              className={`w-full cursor-pointer rounded-lg border p-3.5 text-left transition-colors sm:p-4 ${
                 selectedWarrantyId === defaultWarrantyId
                   ? "border-brand bg-brand-soft/60 ring-2 ring-brand/15"
                   : "border-brand bg-brand-soft/30 hover:bg-brand-soft/60"
@@ -303,7 +310,7 @@ function WarrantyDialogContentBody({
             >
               <div className="flex items-start gap-2">
                 <InfoIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground" strokeWidth={1.8} />
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <h3 className="text-sm font-bold leading-5 text-foreground sm:text-base">
                     {warranty.defaultOption.name}
                   </h3>
@@ -311,23 +318,25 @@ function WarrantyDialogContentBody({
                     {warranty.defaultOption.description || defaultWarrantyDescription}
                   </p>
                   {warranty.pdfUrl ? (
-                    <a
-                      href={warranty.pdfUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      download
-                      onClick={(e) => {
-                        e.stopPropagation();
-                      }}
-                      className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold leading-normal text-brand underline underline-offset-2 hover:text-brand-hover"
-                    >
-                      <DownloadIcon className="size-3.5" strokeWidth={1.8} />
-                      {downloadLabel}
-                    </a>
+                    <div className="mt-2.5">
+                      <a
+                        href={warranty.pdfUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        download
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                        className="inline-flex items-center gap-1.5 text-sm font-semibold leading-normal text-brand underline underline-offset-2 hover:text-brand-hover"
+                      >
+                        <DownloadIcon className="size-3.5" strokeWidth={1.8} />
+                        {downloadLabel || "Download warranty terms (PDF)"}
+                      </a>
+                    </div>
                   ) : null}
                 </div>
               </div>
-            </button>
+            </div>
           )}
 
           <div className="flex flex-col gap-5" role="group" aria-label={groupLabel}>
