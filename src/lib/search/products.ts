@@ -2044,8 +2044,9 @@ async function applyProductConfigOverrides(products: CatalogProductResult[], loc
       p.product.is_label = productConfig?.isLabelProduct ?? null;
       p.product.is_group_product = productConfig?.isGroupProduct ?? null;
       p.product.warranty = productConfig?.warranty ?? p.product.warranty ?? null;
-      // Quantity per roll/stack for the card badge; the live API wins over the index.
-      p.product.labels_per_roll = productConfig.labelsPerRoll ?? p.product.labels_per_roll ?? null;
+      // Quantity per roll/stack for the card badge. The live API always sends
+      // labels_per_roll, so its value (including null) wins over the index.
+      p.product.labels_per_roll = productConfig.labelsPerRoll;
       p.product.unit_type = productConfig.unitType ?? p.product.unit_type ?? null;
 
       // Prefer the live price over whatever the ES index had cached.

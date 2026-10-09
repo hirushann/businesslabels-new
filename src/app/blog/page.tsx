@@ -78,7 +78,7 @@ async function getPostCategories(locale?: string, taxonomy = "post-category"): P
   }
 
   try {
-    let url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts/categories?taxonomy=${encodeURIComponent(taxonomy)}`;
+    let url = `${apiBaseUrl.replace(/\/$/, "")}/api/posts/categories?taxonomy=${encodeURIComponent(taxonomy)}&type=post`;
     if (locale) {
       url += `&locale=${encodeURIComponent(locale)}`;
     }

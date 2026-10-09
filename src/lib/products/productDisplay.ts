@@ -248,17 +248,19 @@ export function getSimplifiedFinish(
 
 /**
  * "{print method}, {material - simplified}, {finish - simplified}, {adhesive}".
+ * If finishOverride is provided, it replaces the simplified finish.
  * Empty parts are skipped; returns null when nothing is available.
  */
 export function getProductDisplaySubtitle(
   product: ProductDisplaySource,
   locale: DisplayLocale,
   t: DisplayTranslator,
+  finishOverride?: string | null,
 ): string | null {
   const parts = [
     propertyText(product, PROPERTY_KEYS.printMethod, locale),
     getSimplifiedMaterial(product, locale, t),
-    getSimplifiedFinish(product, locale, t),
+    finishOverride || getSimplifiedFinish(product, locale, t),
     propertyText(product, PROPERTY_KEYS.adhesive, locale),
   ].filter((part): part is string => Boolean(part));
 
