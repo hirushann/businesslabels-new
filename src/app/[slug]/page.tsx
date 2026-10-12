@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { unescapeHtml, htmlToText } from "@/lib/utils";
+import { ensureImgAlt, unescapeHtml, htmlToText } from "@/lib/utils";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 import { getServerLocale, withLocaleParam } from "@/lib/i18n/server";
@@ -131,7 +131,7 @@ export default async function DynamicCMSPage({ params }: { params: Promise<{ slu
         {/* Page Content */}
         <article
           className="cms-content"
-          dangerouslySetInnerHTML={{ __html: cleanCmsContent(unescapeHtml(page.content)) }}
+          dangerouslySetInnerHTML={{ __html: ensureImgAlt(cleanCmsContent(unescapeHtml(page.content))) }}
         />
       </div>
     </div>

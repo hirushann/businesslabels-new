@@ -19,6 +19,7 @@ import {
 import type { CatalogSearchResponse } from "@/lib/search/types";
 import type { PrinterSearchResponse } from "@/lib/search/printerTypes";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { ensureImgAlt } from "@/lib/utils";
 
 export async function generateMetadata({
   searchParams,
@@ -233,7 +234,7 @@ function PrinterSummary({
               </div>
               <div
                 className="mt-2 text-sm leading-relaxed text-neutral-700 font-normal [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-brand [&_a]:underline hover:[&_a]:text-[var(--brand-hover)] [&_a]:transition-colors"
-                dangerouslySetInnerHTML={{ __html: printer.content }}
+                dangerouslySetInnerHTML={{ __html: ensureImgAlt(printer.content) }}
               />
             </div>
           ) : printer.excerpt ? (
@@ -243,7 +244,7 @@ function PrinterSummary({
               </div>
               <div
                 className="mt-2 text-sm leading-relaxed text-neutral-700 font-normal [&_p]:mb-2 [&_a]:text-brand [&_a]:underline hover:[&_a]:text-[var(--brand-hover)] [&_a]:transition-colors"
-                dangerouslySetInnerHTML={{ __html: printer.excerpt }}
+                dangerouslySetInnerHTML={{ __html: ensureImgAlt(printer.excerpt) }}
               />
             </div>
           ) : null}

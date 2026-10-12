@@ -188,7 +188,12 @@ export async function generateMetadata({ params }: ProductCategoryPageProps): Pr
     const lookup = findCategoryBySlug(categoryGroups, route.segments.at(-1)!, route.locale);
     if (lookup) {
       const name = unescapeHtml(categoryName(lookup.category, route.locale));
-      const canonical = lookup.category.canonical_urls?.[route.locale] || categoryPublicPath(lookup.category, lookup.ancestors, route.locale);
+      // Without a backend canonical, self-canonicalize to the requested URL
+      // (it renders 200). The legacy slug map yields paths without `/en` that
+      // redirect, which Screaming Frog flags as a non-indexable canonical.
+      const routeBase = route.locale === "en" ? "/en/product-category" : "/product-categorie";
+      const requestedPath = `${routeBase}/${route.segments.map(encodeURIComponent).join("/")}`;
+      const canonical = lookup.category.canonical_urls?.[route.locale] || requestedPath;
       const rawMetaDesc = lookup.category.meta_description;
       const metaDesc = typeof rawMetaDesc === "string" ? rawMetaDesc : rawMetaDesc?.[route.locale];
       return {

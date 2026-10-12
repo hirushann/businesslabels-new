@@ -2,8 +2,10 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useLocalePath } from '@/hooks/useLocalePath';
+import { getLabelCategoryPath } from '@/lib/routes/labelCategories';
+import { getPrinterCategoryPath } from '@/lib/routes/printerCategories';
 
 const trustItems = [
   {
@@ -44,11 +46,11 @@ const trustItems = [
   },
 ];
 
-const footerLinks = {
+const getFooterLinks = (locale) => ({
   products: [
-    { nameKey: 'footer.links.labelPrinters', href: '/product-categorie/labelprinters' },
-    { nameKey: 'footer.links.labelRolls', href: '/product-categorie/labels-en-tickets' },
-    { nameKey: 'footer.links.inkSupplies', href: '/product-categorie/labelprinters/verbruiksmaterialen-nl' },
+    { nameKey: 'footer.links.labelPrinters', href: getPrinterCategoryPath(locale, 'root') },
+    { nameKey: 'footer.links.labelRolls', href: getLabelCategoryPath(locale, 'root') },
+    { nameKey: 'footer.links.inkSupplies', href: getPrinterCategoryPath(locale, 'consumables') },
     { nameKey: 'footer.links.specialLabels', href: '/product-categorie/specials' },
   ],
   printers: [
@@ -66,11 +68,13 @@ const footerLinks = {
     { nameKey: 'footer.links.knowledgeBase', href: '/kennisbank-overzicht' },
     { nameKey: 'footer.links.faq', href: '/epson-colorworks-faq' },
   ],
-};
+});
 
 export default function Footer() {
   const t = useTranslations();
   const lp = useLocalePath();
+  const locale = useLocale();
+  const footerLinks = getFooterLinks(locale);
   return (
     <footer className="w-full flex flex-col">
       {/* Trust bar */}

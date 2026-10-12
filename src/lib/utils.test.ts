@@ -1,7 +1,7 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { htmlToText, sanitizeCmsHtml, unescapeHtml } from "./utils";
+import { ensureImgAlt, htmlToText, sanitizeCmsHtml, unescapeHtml } from "./utils";
 
 describe("HTML entity decoding", () => {
   it("decodes numeric entities once for descriptions and metadata text", () => {
@@ -27,5 +27,21 @@ describe("HTML entity decoding", () => {
     const input = '<img src="https://dashboard.businesslabels.nl/storage/12327/C6500A-printer-plate-17.png" alt="Plate" />';
     const output = sanitizeCmsHtml(input);
     expect(output).toContain('/api/media-proxy?url=https%3A%2F%2Fdashboard.businesslabels.nl%2Fstorage%2F12327%2FC6500A-printer-plate-17.png');
+  });
+});
+
+describe("ensureImgAlt", () => {
+  it("derives alt text from the filename when missing or empty", () => {
+    expect(ensureImgAlt('<img src="/wp-content/uploads/2021/11/Loftware_Nicelabel_Logo_Stacked-1-300x87.png">')).toBe(
+      '<img alt="Loftware Nicelabel Logo Stacked 1" src="/wp-content/uploads/2021/11/Loftware_Nicelabel_Logo_Stacked-1-300x87.png">',
+    );
+    expect(ensureImgAlt('<img class="a" alt="" src="/x/manual-printing.png" />')).toBe(
+      '<img class="a" alt="manual printing" src="/x/manual-printing.png" />',
+    );
+  });
+
+  it("keeps existing alt text", () => {
+    const html = '<img alt="Existing" src="/x/y.png">';
+    expect(ensureImgAlt(html)).toBe(html);
   });
 });

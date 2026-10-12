@@ -3,21 +3,23 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useLocalePath } from '@/hooks/useLocalePath';
+import { getLabelCategoryPath } from '@/lib/routes/labelCategories';
+import { getPrinterCategoryPath } from '@/lib/routes/printerCategories';
 import { toDisplayImageUrl } from '@/lib/utils/imageProxy';
 
 const defaultSections = [
   {
     key: 'section1',
-    href: '/product-categorie/labelprinters',
+    category: 'printers',
     defaultImage: '/home_epson_printer.webp',
     imageLeft: false,
     bullets: 3,
   },
   {
     key: 'section2',
-    href: '/product-categorie/labels-en-tickets',
+    category: 'labels',
     defaultImage: '/find_labels_and_materials.webp',
     imageLeft: true,
     bullets: 3,
@@ -34,6 +36,13 @@ const defaultSections = [
 export default function FeatureSections({ quickLinks = {} } = {}) {
   const t = useTranslations();
   const localePath = useLocalePath();
+  const locale = useLocale();
+
+  const sectionHref = (section) => {
+    if (section.category === 'printers') return getPrinterCategoryPath(locale, 'root');
+    if (section.category === 'labels') return getLabelCategoryPath(locale, 'root');
+    return localePath(section.href);
+  };
 
   const [imageErrors, setImageErrors] = useState({});
 
@@ -99,8 +108,8 @@ export default function FeatureSections({ quickLinks = {} } = {}) {
                 </div>
               </div>
               <Link
-                href={localePath(section.href)}
-                rel={section.href.includes('/my-account') ? 'nofollow' : undefined}
+                href={sectionHref(section)}
+                rel={section.href?.includes('/my-account') ? 'nofollow' : undefined}
                 className="px-7 py-4 bg-brand rounded-full inline-flex items-center gap-2.5 text-white text-base sm:text-lg font-semibold leading-6 hover:bg-brand-hover transition-colors self-start"
               >
                 {t(`features.${section.key}Cta`)}
