@@ -24,7 +24,7 @@ type HeaderSuggestionItem = {
   image?: string;
 };
 
-type ProductSuggestionGroupId = "printers" | "labels" | "accessories";
+type ProductSuggestionGroupId = "printers" | "labels" | "accessories" | "consumables" | "other";
 
 const PRODUCT_GROUPS: Array<{
   id: ProductSuggestionGroupId;
@@ -53,6 +53,22 @@ const PRODUCT_GROUPS: Array<{
     path: (locale, canonicalUrls) => getAccessoryCategoryPath(locale, "root", canonicalUrls),
     slugs: ["accessories", "accessoires", "re-unwinders", "applicators", "dispensers", "printer-add-ons", "cutters", "dongles", "maintenance"],
     names: ["accessory", "accessories", "accessoire", "applicator", "dispenser", "cutter", "rewinder"],
+  },
+  {
+    id: "consumables",
+    title: { en: "Ink and consumables", nl: "Inkt en verbruiksmaterialen" },
+    path: (locale, canonicalUrls) => getPrinterCategoryPath(locale, "consumables", canonicalUrls),
+    slugs: ["consumables", "verbruiksmaterialen", "ink-cartridges", "inkt-cartridges", "ink-pouches", "inkt-pouches"],
+    names: ["ink cartridge", "inkt cartridge", "inktcartridge", "ink pouch", "inkt pouch", "consumable", "verbruiksmateria"],
+  },
+  {
+    // Catch-all so search hits outside the known category groups are never
+    // silently dropped from the header suggestions.
+    id: "other",
+    title: { en: "Other products", nl: "Overige producten" },
+    path: (locale) => localizedPath("/product", locale === "en" ? "en" : "nl"),
+    slugs: [],
+    names: [],
   },
 ];
 
@@ -104,18 +120,21 @@ function isGroupProduct(product: CatalogProductResult): boolean {
   return product.product.type === "group_product" || product.product.is_group_product === true || sku.startsWith("grp-");
 }
 
-function groupForProduct(product: CatalogProductResult): ProductSuggestionGroupId | null {
+function groupForProduct(product: CatalogProductResult): ProductSuggestionGroupId {
   const text = productCategoryText(product);
-  if (!text) return null;
+  if (!text) return "other";
 
-  const accessoryMatch = PRODUCT_GROUPS.find((group) => group.id === "accessories" && group.slugs.some((slug) => text.includes(slug)));
-  if (accessoryMatch) return accessoryMatch.id;
+  // Accessories and consumables are checked first: an ink cartridge is also
+  // filed under "labelprinters", but belongs in the consumables group.
+  const priorityMatch = PRODUCT_GROUPS.find((group) =>
+    (group.id === "accessories" || group.id === "consumables") && group.slugs.some((slug) => text.includes(slug)));
+  if (priorityMatch) return priorityMatch.id;
 
   const slugMatch = PRODUCT_GROUPS.find((group) => group.slugs.some((slug) => text.includes(slug)));
   if (slugMatch) return slugMatch.id;
 
   const nameMatch = PRODUCT_GROUPS.find((group) => group.names.some((name) => text.includes(name)));
-  return nameMatch?.id ?? null;
+  return nameMatch?.id ?? "other";
 }
 
 function mapProductItem(result: CatalogProductResult, locale: "en" | "nl"): HeaderSuggestionItem {
@@ -189,7 +208,6 @@ export async function GET(request: NextRequest) {
     const buckets = new Map<ProductSuggestionGroupId, CatalogProductResult[]>();
     products.products.filter((product) => !isGroupProduct(product)).forEach((product) => {
       const group = groupForProduct(product);
-      if (!group) return;
       buckets.set(group, [...(buckets.get(group) ?? []), product]);
     });
 
